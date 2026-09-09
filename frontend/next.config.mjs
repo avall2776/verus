@@ -7,6 +7,10 @@ const nextConfig = {
         source: '/api-backend/:path*',
         destination: 'http://187.127.10.166:3001/:path*',
       },
+      {
+        source: '/socket.io/:path*',
+        destination: 'http://187.127.10.166:3001/socket.io/:path*',
+      },
     ];
   },
 };
