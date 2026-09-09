@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
-import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../../shared/database/prisma/prisma.service';
 
 export interface SendMessagePayload {
   tenantId: string;
@@ -11,39 +11,52 @@ export interface SendMessagePayload {
 @Injectable()
 export class MessagingService {
   private readonly logger = new Logger(MessagingService.name);
-  private readonly evolutionApiUrl: string;
-  private readonly evolutionApiKey: string;
 
-  constructor(private readonly configService: ConfigService) {
-    this.evolutionApiUrl = this.configService.get<string>('EVOLUTION_API_URL') || 'http://localhost:8080';
-    this.evolutionApiKey = this.configService.get<string>('EVOLUTION_API_KEY') || '';
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Dispara uma mensagem de texto via Evolution API
+   * Dispara uma mensagem de texto via WhatsApp Cloud API Oficial da Meta
    */
-  async sendText(payload: SendMessagePayload, instanceName: string = 'default'): Promise<any> {
+  async sendText(payload: SendMessagePayload): Promise<any> {
     try {
-      const url = `${this.evolutionApiUrl}/message/sendText/${instanceName}`;
+      // 1. Busca as credenciais oficiais da Meta salvas no Tenant
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: payload.tenantId },
+        select: { metaToken: true, metaPhoneNumberId: true }
+      });
+
+      if (!tenant || !tenant.metaToken || !tenant.metaPhoneNumberId) {
+        this.logger.error(`Credenciais da Meta ausentes para o tenant ${payload.tenantId}`);
+        return null;
+      }
+
+      // 2. Dispara a mensagem via Graph API do Facebook/Meta
+      const url = `https://graph.facebook.com/v19.0/${tenant.metaPhoneNumberId}/messages`;
       
       const response = await axios.post(
         url,
         {
-          number: payload.phone,
-          text: payload.content,
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: payload.phone,
+          type: "text",
+          text: {
+            preview_url: false,
+            body: payload.content
+          }
         },
         {
           headers: {
-            'apikey': this.evolutionApiKey,
+            'Authorization': `Bearer ${tenant.metaToken}`,
             'Content-Type': 'application/json'
           }
         }
       );
 
-      this.logger.log(`Mensagem enviada com sucesso para ${payload.phone}`);
+      this.logger.log(`Mensagem enviada via Meta API com sucesso para ${payload.phone}`);
       return response.data;
     } catch (error) {
-      this.logger.error(`Falha ao enviar mensagem para ${payload.phone}: ${error.message}`);
+      this.logger.error(`Falha ao enviar mensagem Meta para ${payload.phone}: ${error.response?.data?.error?.message || error.message}`);
       return null;
     }
   }
