@@ -101,7 +101,7 @@ export default function ContactsPage() {
                   {/* Tags */}
                   <td className="p-4">
                     <div className="flex flex-wrap gap-1 max-w-[200px]">
-                      {contact.tags.map(tag => (
+                      {contact.tags?.map((tag: string) => (
                         <span key={tag} className={`text-[0.65rem] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider
                           ${tag === 'Quente' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
                             tag === 'Frio' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 

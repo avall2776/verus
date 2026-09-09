@@ -21,7 +21,6 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] Lógica de registro dinâmico de contatos (Contact) e histórico de conversas.
 - [x] Ajustes finos no core relacional do Prisma (chaves únicas para `contactId`).
 
-### Fase 4: Orquestração de IA e Cérebro (08/09/2026 - Tarde)
 - [x] **[15:45]** Integração com OpenAI API utilizando `Structured Outputs` e Zod (garantia de respostas em formato fixo).
 - [x] **[16:25]** Validação de chaves da OpenAI em ambiente de produção real.
 - [x] **[16:35]** Validação de sucesso do protocolo de "Transbordo Automático" (Handoff): a IA passou a identificar quando um lead está quente, repassando o controle para o time de vendas humano (marcando `human_takeover`) e pausando as próprias respostas automaticamente.
@@ -66,8 +65,14 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Lógica de Encerramento (UX):** Botão verde "Finalizar Atendimento" para reiniciar o ciclo da IA após transbordo. [2026-09-09 16:30]
 - [x] **Memória de Longo Prazo (RAG):** Injeção dinâmica do histórico do cliente (nome e deals anteriores do CRM) no System Prompt. IA agora reconhece clientes antigos pelo nome e resgata contexto do último atendimento, atuando como um vendedor sênior. [2026-09-09 17:35]
 
+### Fase 11: Integração de Dados Reais (Unmocking)
+- [x] Login real com JWT e Bcrypt implementado.
+- [x] Dashboard dinâmico integrado com `GET /metrics/dashboard` calculando KPI's do PostgreSQL.
+- [x] Tela de Contatos consumindo dados reais do banco `GET /contacts`.
+- [x] Limpeza de Mocks no Perfil do Cliente (Inbox). [2026-09-09 17:49]
+
 ---
-*Documento autogerado e contínuo - Última atualização: 09/09/2026 às 17:35*
+*Documento autogerado e contínuo - Última atualização: 09/09/2026 às 17:50*
 
 ---
 
