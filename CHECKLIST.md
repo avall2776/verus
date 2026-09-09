@@ -65,14 +65,26 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Lógica de Encerramento (UX):** Botão verde "Finalizar Atendimento" para reiniciar o ciclo da IA após transbordo. [2026-09-09 16:30]
 - [x] **Memória de Longo Prazo (RAG):** Injeção dinâmica do histórico do cliente (nome e deals anteriores do CRM) no System Prompt. IA agora reconhece clientes antigos pelo nome e resgata contexto do último atendimento, atuando como um vendedor sênior. [2026-09-09 17:35]
 
-### Fase 11: Integração de Dados Reais (Unmocking)
+### Fase 11: Integração de Dados Reais (Unmocking) e Go-Live Stability (09/09/2026)
 - [x] Login real com JWT e Bcrypt implementado.
 - [x] Dashboard dinâmico integrado com `GET /metrics/dashboard` calculando KPI's do PostgreSQL.
 - [x] Tela de Contatos consumindo dados reais do banco `GET /contacts`.
 - [x] Limpeza de Mocks no Perfil do Cliente (Inbox). [2026-09-09 17:49]
+- [x] Tratamento de Erros de UX: Redirecionamento automático (401 Unauthorized) em caso de token expirado nas páginas principais. [2026-09-09 17:53]
+- [x] Estabilização de Backend (Bugfix 502 Bad Gateway): Injeção do `AuthModule` no escopo global para resolução de instâncias do `JwtAuthGuard`. [2026-09-09 17:58]
 
 ---
-*Documento autogerado e contínuo - Última atualização: 09/09/2026 às 17:50*
+
+## 🎯 O que faremos amanhã (Roadmap Imediato)
+
+### Fase 12: Unmocking Final e Escalonamento
+- [ ] **Unmocking do Playground (Agent Page):** Remover as mensagens estáticas do componente `Playground` e integrá-lo em tempo real para permitir que o dono da empresa converse com a IA simulando um lead real na tela de configurações.
+- [ ] **Integração Base de Conhecimento (RAG Avançado):** Evoluir a memória da IA. Criar uma interface para o cliente fazer upload de PDFs (ex: Tabela de Preços, Catálogos) e processar esses dados em um Vector Database (Pinecone/Supabase pgvector) para a IA ler.
+- [ ] **Múltiplos Tenants Dinâmicos (Onboarding):** Testar e preparar a plataforma para criar novos clientes "self-service" (Empresa A, Empresa B) sem necessidade de popular o banco manualmente via script.
+- [ ] **Testes End-to-End (E2E):** Revisão completa de fluxo: Lead manda zap -> Cai no Dashboard -> Notifica Web -> IA responde -> Humano assume -> IA retoma.
+
+---
+*Documento autogerado e contínuo - Última atualização: 09/09/2026 às 18:05*
 
 ---
 
