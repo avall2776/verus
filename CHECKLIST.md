@@ -62,8 +62,12 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Integração com WhatsApp Cloud API:** Receber chaves da Meta (Token Permanente e Phone ID) do cliente e refatorar o `MessagingService` para disparar respostas oficiais via Graph API. [2026-09-09 14:45]
 - [x] **Go-Live:** Plugar o número oficial de WhatsApp no Webhook da Meta, aprovar Modo Público (Live) e testar integração de ponta a ponta (E2E). [2026-09-09 15:52]
 
+### Fase 10: Refinamento de Operação e RAG (Memória de IA) (09/09/2026 - Final do dia)
+- [x] **Lógica de Encerramento (UX):** Botão verde "Finalizar Atendimento" para reiniciar o ciclo da IA após transbordo. [2026-09-09 16:30]
+- [x] **Memória de Longo Prazo (RAG):** Injeção dinâmica do histórico do cliente (nome e deals anteriores do CRM) no System Prompt. IA agora reconhece clientes antigos pelo nome e resgata contexto do último atendimento, atuando como um vendedor sênior. [2026-09-09 17:35]
+
 ---
-*Documento autogerado e contínuo - Última atualização: 09/09/2026 às 11:13*
+*Documento autogerado e contínuo - Última atualização: 09/09/2026 às 17:35*
 
 ---
 

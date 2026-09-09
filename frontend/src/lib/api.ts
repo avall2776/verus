@@ -9,13 +9,12 @@ const api = axios.create({
 
 // Interceptor para injetar o Token JWT
 api.interceptors.request.use((config) => {
-  // Mock JWT Token para desenvolvimento
-  const mockToken = 'mock-jwt-token-tenant-1';
+  // Pega o token real gerado pelo login
+  const token = typeof window !== 'undefined' ? localStorage.getItem('versus_auth_token') : null;
   
-  if (mockToken) {
-    config.headers.Authorization = `Bearer ${mockToken}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  
   return config;
 });
 

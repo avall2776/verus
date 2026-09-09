@@ -17,6 +17,8 @@ const ai_module_1 = require("./modules/ai/ai.module");
 const chat_module_1 = require("./modules/chat/chat.module");
 const crm_module_1 = require("./modules/crm/crm.module");
 const agent_module_1 = require("./modules/agent/agent.module");
+const dashboard_module_1 = require("./modules/dashboard/dashboard.module");
+const contacts_module_1 = require("./modules/contacts/contacts.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -32,6 +34,8 @@ exports.AppModule = AppModule = __decorate([
             chat_module_1.ChatModule,
             crm_module_1.CrmModule,
             agent_module_1.AgentModule,
+            dashboard_module_1.DashboardModule,
+            contacts_module_1.ContactsModule,
         ],
         controllers: [],
         providers: [],

@@ -52,8 +52,20 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
             role: msg.senderType === 'contact' ? 'user' : 'assistant',
             content: msg.content
         }));
+        const pastDeals = await this.prisma.deal.findMany({
+            where: { contactId: conversation.contact.id },
+            orderBy: { updatedAt: 'desc' },
+            take: 2,
+        });
+        let dynamicContext = `\n\n=== CONTEXTO DO CLIENTE ===\nNome do Cliente: ${conversation.contact.name}\n`;
+        if (pastDeals.length > 0) {
+            dynamicContext += `O cliente já teve os seguintes atendimentos anteriores (use para ter contexto, não repita se não for necessário):\n`;
+            pastDeals.forEach(d => {
+                dynamicContext += `- Interesse Anterior: ${d.title} | Notas: ${d.notes || 'Sem detalhes'}\n`;
+            });
+        }
         this.logger.log(`Enviando ${historyForAi.length} mensagens de histórico para a OpenAI (Tenant: ${conversation.contact.tenant.name})...`);
-        const aiResponse = await this.aiService.processConversation(historyForAi, conversation.contact.tenant);
+        const aiResponse = await this.aiService.processConversation(historyForAi, conversation.contact.tenant, dynamicContext);
         if (aiResponse.resposta_cliente) {
             await this.messagingService.sendText({
                 tenantId,

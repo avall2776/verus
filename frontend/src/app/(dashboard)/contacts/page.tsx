@@ -1,15 +1,23 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Search, Filter, Download, MoreHorizontal, User, Mail, Phone, Tag } from "lucide-react";
+import api from "@/lib/api";
 
 export default function ContactsPage() {
-  const contacts = [
-    { id: 1, name: "Maria Silva", phone: "+55 11 99999-1111", email: "maria@email.com", tags: ["B2B", "Quente"], source: "WhatsApp", lastActive: "10 min atrás" },
-    { id: 2, name: "João Carlos", phone: "+55 21 98888-2222", email: "joao@empresa.com", tags: ["Frio"], source: "Instagram", lastActive: "Ontem" },
-    { id: 3, name: "Tech Solutions Corp", phone: "+55 41 97777-3333", email: "contato@techsol.com", tags: ["Enterprise", "Quente"], source: "Site", lastActive: "2 horas atrás" },
-    { id: 4, name: "Ana Beatriz", phone: "+55 31 96666-4444", email: "ana.b@gmail.com", tags: ["Morno"], source: "WhatsApp", lastActive: "Hoje, 09:15" },
-    { id: 5, name: "Roberto Alves", phone: "+55 51 95555-5555", email: "roberto@vendas.com", tags: ["B2B"], source: "Indicação", lastActive: "Há 3 dias" },
-  ];
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get('/contacts')
+      .then(res => setContacts(res.data))
+      .catch(err => console.error("Erro ao carregar contatos", err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return <div className="p-8 text-gray-500">Carregando Base de Leads...</div>;
+  }
 
   return (
     <div className="flex flex-col gap-6 w-full h-full pb-8">
@@ -75,10 +83,10 @@ export default function ContactsPage() {
                   <td className="p-4">
                     <div className="flex flex-col gap-1 min-w-[150px]">
                       <div className="flex items-center gap-2 text-xs text-gray-300">
-                        <Phone size={12} className="text-accent" /> {contact.phone}
+                        <Phone size={12} className="text-accent" /> {contact.phone || 'N/A'}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-gray-400">
-                        <Mail size={12} className="text-gray-500" /> {contact.email}
+                        <Mail size={12} className="text-gray-500" /> {contact.email || 'N/A'}
                       </div>
                     </div>
                   </td>
@@ -107,7 +115,7 @@ export default function ContactsPage() {
 
                   {/* Tempo */}
                   <td className="p-4">
-                    <span className="text-xs text-text-secondary">{contact.lastActive}</span>
+                    <span className="text-xs text-text-secondary">{new Date(contact.lastActive).toLocaleDateString()}</span>
                   </td>
 
                   {/* Ação */}
@@ -125,7 +133,7 @@ export default function ContactsPage() {
 
         {/* Paginação */}
         <div className="p-4 border-t border-gray-800/60 bg-panel/30 flex items-center justify-between text-xs text-gray-500 font-semibold mt-auto">
-          <span>Mostrando 1 a 5 de 148 leads</span>
+          <span>Mostrando {contacts.length} leads</span>
           <div className="flex gap-2">
             <button className="px-3 py-1 bg-background border border-gray-800 rounded hover:bg-gray-800 text-gray-400 disabled:opacity-50" disabled>Anterior</button>
             <button className="px-3 py-1 bg-primary text-white rounded shadow-[0_0_10px_rgba(0,85,255,0.3)]">1</button>

@@ -14,5 +14,5 @@ export declare class AiService {
         aiKnowledgeBase: string;
         aiTemperature: number;
         aiModel: string;
-    }): Promise<AiResponseDto>;
+    }, dynamicContext?: string): Promise<AiResponseDto>;
 }

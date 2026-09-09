@@ -68,7 +68,7 @@ let ChatService = class ChatService {
         }
         return this.prisma.conversation.update({
             where: { id: conversationId },
-            data: { status: 'bot_active' }
+            data: { status: 'resolved' }
         });
     }
     async sendManualMessage(tenantId, conversationId, content) {

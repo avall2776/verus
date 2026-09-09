@@ -8,6 +8,8 @@ import { AiModule } from './modules/ai/ai.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { CrmModule } from './modules/crm/crm.module';
 import { AgentModule } from './modules/agent/agent.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { ContactsModule } from './modules/contacts/contacts.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { AgentModule } from './modules/agent/agent.module';
     ChatModule,
     CrmModule,
     AgentModule,
+    DashboardModule,
+    ContactsModule,
   ],
   controllers: [],
   providers: [],

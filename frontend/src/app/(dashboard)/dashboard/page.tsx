@@ -1,21 +1,35 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Users, Bot, MessageSquareWarning, DollarSign, ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
+import api from "@/lib/api";
 
 export default function DashboardPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get('/metrics/dashboard')
+      .then(res => {
+        setData(res.data);
+      })
+      .catch(err => console.error("Erro ao carregar dashboard", err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading || !data) {
+    return <div className="p-8 text-gray-500">Carregando Dashboard...</div>;
+  }
+
   const kpis = [
-    { title: "Total de Leads (Hoje)", value: "148", change: "+12%", trend: "up", icon: Users, color: "text-blue-400" },
-    { title: "Taxa de Qualificação (IA)", value: "68%", change: "+5%", trend: "up", icon: Bot, color: "text-accent" },
-    { title: "Aguardando Humano", value: "12", change: "-2", trend: "down", icon: MessageSquareWarning, color: "text-red-400", alert: true },
-    { title: "Receita em Pipeline", value: "R$ 42.500", change: "+24%", trend: "up", icon: DollarSign, color: "text-green-400" },
+    { title: "Total de Leads (Hoje)", value: data.kpis.totalLeadsToday.toString(), change: "+100%", trend: "up", icon: Users, color: "text-blue-400" },
+    { title: "Taxa de Qualificação (IA)", value: `${data.kpis.qualRate}%`, change: "Real", trend: "up", icon: Bot, color: "text-accent" },
+    { title: "Aguardando Humano", value: data.kpis.waitingHuman.toString(), change: "Ação", trend: "down", icon: MessageSquareWarning, color: "text-red-400", alert: data.kpis.waitingHuman > 0 },
+    { title: "Receita em Pipeline", value: `R$ ${data.kpis.pipelineRevenue}`, change: "+100%", trend: "up", icon: DollarSign, color: "text-green-400" },
   ];
 
-  const recentLeads = [
-    { id: 1, name: "Mariana Souza", source: "WhatsApp", temp: "Quente", time: "Há 10 min", value: "R$ 2.500" },
-    { id: 2, name: "Empresa XPTO", source: "Instagram", temp: "Morno", time: "Há 45 min", value: "R$ 8.000" },
-    { id: 3, name: "Carlos Eduardo", source: "Site", temp: "Quente", time: "Há 2 horas", value: "R$ 3.200" },
-    { id: 4, name: "Juliana Santos", source: "WhatsApp", temp: "Frio", time: "Há 3 horas", value: "R$ 800" },
-  ];
+  const recentLeads = data.recentLeads;
+
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-8">
@@ -74,8 +88,8 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            {/* Barras do Gráfico (Mock) */}
-            {[40, 65, 45, 80, 55, 90, 75].map((height, i) => (
+            {/* Barras do Gráfico */}
+            {data.chartData.map((height: number, i: number) => (
               <div key={i} className="flex-1 flex flex-col justify-end items-center gap-2 relative z-10 group cursor-pointer h-full">
                 <div 
                   className="w-full max-w-[40px] bg-gradient-to-t from-primary/20 to-accent/80 rounded-t-md relative transition-all group-hover:brightness-125"
@@ -99,7 +113,9 @@ export default function DashboardPage() {
           </div>
           
           <div className="flex flex-col gap-4">
-            {recentLeads.map((lead) => (
+            {recentLeads.length === 0 ? (
+               <div className="text-gray-500 text-xs text-center p-4">Nenhum lead qualificado ainda.</div>
+            ) : recentLeads.map((lead: any) => (
               <div key={lead.id} className="flex items-center justify-between p-3 bg-background/50 border border-gray-800/80 rounded-xl hover:border-gray-700 transition-colors cursor-pointer group">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-gray-700 to-gray-800 flex items-center justify-center text-white font-bold text-xs">
@@ -118,7 +134,7 @@ export default function DashboardPage() {
                   `}>
                     {lead.temp}
                   </span>
-                  <p className="text-xs text-gray-400 mt-1">{lead.time}</p>
+                  <p className="text-[0.65rem] text-accent mt-1">{lead.value}</p>
                 </div>
               </div>
             ))}

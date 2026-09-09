@@ -389,9 +389,15 @@ export default function InboxPage() {
             <div className="flex flex-col gap-3">
               <h3 className="text-[0.7rem] uppercase tracking-widest font-bold text-gray-500">Tags</h3>
               <div className="flex flex-wrap gap-2">
-                <span className="bg-gray-800 border border-gray-700 text-xs px-2 py-1 rounded-md text-gray-300 flex items-center gap-1">
-                  <Tag size={10} /> B2B
-                </span>
+                {activeContactData.tags?.length > 0 ? (
+                  activeContactData.tags.map((tag: string) => (
+                    <span key={tag} className="bg-gray-800 border border-gray-700 text-xs px-2 py-1 rounded-md text-gray-300 flex items-center gap-1">
+                      <Tag size={10} /> {tag}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs text-gray-500">Nenhuma tag.</span>
+                )}
               </div>
             </div>
 

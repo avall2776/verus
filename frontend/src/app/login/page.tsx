@@ -170,15 +170,18 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    setTimeout(() => {
-      if (email === "admin@versus.com" && password === "admin") {
-        localStorage.setItem("versus_auth_token", "mock-token-tenant-1");
-        router.push("/dashboard");
-      } else {
-        setError("Credenciais inválidas. Tente admin@versus.com / admin");
-        setLoading(false);
-      }
-    }, 1500);
+    try {
+      // Usando fetch direto ou api do axios. Como temos axios configurado em lib/api.ts:
+      const { default: api } = await import('@/lib/api');
+      const { data } = await api.post('/auth/login', { email, password });
+      
+      localStorage.setItem("versus_auth_token", data.access_token);
+      localStorage.setItem("versus_user", JSON.stringify(data.user));
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Erro ao conectar com o servidor.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -270,7 +273,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-background/60 border border-gray-800/40 text-text-primary rounded-[10px] px-4 py-[0.85rem] text-[0.95rem] outline-none transition-all focus:border-accent focus:shadow-[0_0_15px_rgba(0,210,255,0.25)] focus:bg-background/90 placeholder:text-gray-600"
-                placeholder="nome@empresa.com"
+                placeholder="admin@verto.com"
                 required
               />
             </div>

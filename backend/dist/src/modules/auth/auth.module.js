@@ -11,6 +11,8 @@ const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const passport_1 = require("@nestjs/passport");
 const jwt_strategy_1 = require("./jwt.strategy");
+const auth_controller_1 = require("./auth.controller");
+const auth_service_1 = require("./auth.service");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
@@ -23,8 +25,9 @@ exports.AuthModule = AuthModule = __decorate([
                 signOptions: { expiresIn: '1d' },
             }),
         ],
-        providers: [jwt_strategy_1.JwtStrategy],
-        exports: [jwt_strategy_1.JwtStrategy, passport_1.PassportModule],
+        controllers: [auth_controller_1.AuthController],
+        providers: [jwt_strategy_1.JwtStrategy, auth_service_1.AuthService],
+        exports: [jwt_strategy_1.JwtStrategy, passport_1.PassportModule, auth_service_1.AuthService],
     })
 ], AuthModule);
 //# sourceMappingURL=auth.module.js.map

@@ -13,31 +13,43 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MessagingService = void 0;
 const common_1 = require("@nestjs/common");
 const axios_1 = require("axios");
-const config_1 = require("@nestjs/config");
+const prisma_service_1 = require("../../shared/database/prisma.service");
 let MessagingService = MessagingService_1 = class MessagingService {
-    constructor(configService) {
-        this.configService = configService;
+    constructor(prisma) {
+        this.prisma = prisma;
         this.logger = new common_1.Logger(MessagingService_1.name);
-        this.evolutionApiUrl = this.configService.get('EVOLUTION_API_URL') || 'http://localhost:8080';
-        this.evolutionApiKey = this.configService.get('EVOLUTION_API_KEY') || '';
     }
-    async sendText(payload, instanceName = 'default') {
+    async sendText(payload) {
         try {
-            const url = `${this.evolutionApiUrl}/message/sendText/${instanceName}`;
+            const tenant = await this.prisma.tenant.findUnique({
+                where: { id: payload.tenantId },
+                select: { metaToken: true, metaPhoneNumberId: true }
+            });
+            if (!tenant || !tenant.metaToken || !tenant.metaPhoneNumberId) {
+                this.logger.error(`Credenciais da Meta ausentes para o tenant ${payload.tenantId}`);
+                return null;
+            }
+            const url = `https://graph.facebook.com/v19.0/${tenant.metaPhoneNumberId}/messages`;
             const response = await axios_1.default.post(url, {
-                number: payload.phone,
-                text: payload.content,
+                messaging_product: "whatsapp",
+                recipient_type: "individual",
+                to: payload.phone,
+                type: "text",
+                text: {
+                    preview_url: false,
+                    body: payload.content
+                }
             }, {
                 headers: {
-                    'apikey': this.evolutionApiKey,
+                    'Authorization': `Bearer ${tenant.metaToken}`,
                     'Content-Type': 'application/json'
                 }
             });
-            this.logger.log(`Mensagem enviada com sucesso para ${payload.phone}`);
+            this.logger.log(`Mensagem enviada via Meta API com sucesso para ${payload.phone}`);
             return response.data;
         }
         catch (error) {
-            this.logger.error(`Falha ao enviar mensagem para ${payload.phone}: ${error.message}`);
+            this.logger.error(`Falha ao enviar mensagem Meta para ${payload.phone}: ${error.response?.data?.error?.message || error.message}`);
             return null;
         }
     }
@@ -45,6 +57,6 @@ let MessagingService = MessagingService_1 = class MessagingService {
 exports.MessagingService = MessagingService;
 exports.MessagingService = MessagingService = MessagingService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [config_1.ConfigService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], MessagingService);
 //# sourceMappingURL=messaging.service.js.map

@@ -1,14 +1,12 @@
-import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../../shared/database/prisma.service';
 export interface SendMessagePayload {
     tenantId: string;
     phone: string;
     content: string;
 }
 export declare class MessagingService {
-    private readonly configService;
+    private readonly prisma;
     private readonly logger;
-    private readonly evolutionApiUrl;
-    private readonly evolutionApiKey;
-    constructor(configService: ConfigService);
-    sendText(payload: SendMessagePayload, instanceName?: string): Promise<any>;
+    constructor(prisma: PrismaService);
+    sendText(payload: SendMessagePayload): Promise<any>;
 }

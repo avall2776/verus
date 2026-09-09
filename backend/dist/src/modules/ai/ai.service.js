@@ -29,11 +29,11 @@ Responda de forma curta e objetiva. Transfira para um humano se pedirem preços 
         }
         this.openai = new openai_1.default({ apiKey: apiKey || 'test-key' });
     }
-    async processConversation(history, tenantConfig) {
+    async processConversation(history, tenantConfig, dynamicContext) {
         try {
             const finalPrompt = tenantConfig?.aiPrompt || this.fallbackPrompt;
             const knowledgeBase = tenantConfig?.aiKnowledgeBase ? `\n\n=== BASE DE CONHECIMENTO DA EMPRESA ===\nUse os dados abaixo para responder o cliente:\n${tenantConfig.aiKnowledgeBase}` : '';
-            const systemMessage = finalPrompt + knowledgeBase;
+            const systemMessage = finalPrompt + (dynamicContext || '') + knowledgeBase;
             const messages = [
                 { role: 'system', content: systemMessage },
                 ...history
