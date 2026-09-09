@@ -147,6 +147,16 @@ export default function InboxPage() {
     }
   };
 
+  const handleRelease = async () => {
+    if (!activeChat) return;
+    try {
+      await api.patch(`/conversations/${activeChat}/release`);
+      setContacts(prev => prev.map(c => c.id === activeChat ? { ...c, isAi: false, status: 'resolved' } : c));
+    } catch (error) {
+      console.error("Erro ao finalizar conversa", error);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!activeChat || !inputText.trim()) return;
     const content = inputText;
@@ -269,9 +279,19 @@ export default function InboxPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={handleTakeover} className="bg-primary hover:bg-primary/90 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(0,85,255,0.3)]">
-              Assumir Conversa
-            </button>
+            {activeContactData?.status === 'bot_active' ? (
+              <button onClick={handleTakeover} className="bg-primary hover:bg-primary/90 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(0,85,255,0.3)]">
+                Assumir Conversa
+              </button>
+            ) : activeContactData?.status === 'human_takeover' ? (
+              <button onClick={handleRelease} className="bg-green-600 hover:bg-green-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                Finalizar Atendimento
+              </button>
+            ) : (
+              <span className="text-gray-500 text-xs font-bold px-4 py-2 bg-gray-800 rounded-lg">
+                Resolvido
+              </span>
+            )}
             <button className="text-gray-400 hover:text-white transition-colors"><MoreVertical size={20} /></button>
           </div>
         </div>
@@ -381,9 +401,11 @@ export default function InboxPage() {
               <div className={`w-full text-center py-2 rounded-lg text-sm font-bold shadow-[0_0_10px_rgba(0,0,0,0.15)] cursor-pointer transition-colors ${
                 activeContactData.status === 'bot_active' 
                   ? 'bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30' 
+                  : activeContactData.status === 'resolved'
+                  ? 'bg-gray-800 text-gray-400 border border-gray-700'
                   : 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30'
               }`}>
-                {activeContactData.status === 'bot_active' ? 'IA Atendendo' : 'Atendimento Humano'}
+                {activeContactData.status === 'bot_active' ? 'IA Atendendo' : activeContactData.status === 'resolved' ? 'Resolvido' : 'Atendimento Humano'}
               </div>
             </div>
           </div>
