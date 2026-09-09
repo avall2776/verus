@@ -32,7 +32,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Conecta ao Back-end (NestJS) na porta 3001
     const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001', {
-      transports: ['websocket'],
       autoConnect: true,
     });
 
