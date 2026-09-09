@@ -1,24 +1,45 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Users, Bot, MessageSquareWarning, DollarSign, ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
 import api from "@/lib/api";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     api.get('/metrics/dashboard')
       .then(res => {
         setData(res.data);
       })
-      .catch(err => console.error("Erro ao carregar dashboard", err))
+      .catch(err => {
+        console.error("Erro ao carregar dashboard", err);
+        if (err.response?.status === 401) {
+          router.push('/login');
+        } else {
+          setError(true);
+        }
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
 
-  if (loading || !data) {
+  if (loading) {
     return <div className="p-8 text-gray-500">Carregando Dashboard...</div>;
+  }
+
+  if (error || !data) {
+    return (
+      <div className="p-8 text-red-400 flex flex-col gap-4">
+        <h2>Sua sessão expirou ou ocorreu um erro.</h2>
+        <button onClick={() => router.push('/login')} className="px-4 py-2 bg-primary text-white w-fit rounded">
+          Fazer Login Novamente
+        </button>
+      </div>
+    );
   }
 
   const kpis = [
