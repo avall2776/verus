@@ -30,8 +30,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const clearGlobalUnread = () => setHasGlobalUnread(false);
 
   useEffect(() => {
-    // Conecta ao Back-end (NestJS) na porta 3001
-    const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001', {
+    // Conecta ao próprio domínio (Vercel), que fará o proxy para a VPS
+    const socketInstance = io({
       autoConnect: true,
     });
 
