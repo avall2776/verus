@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
-import { PrismaService } from '../../shared/database/prisma/prisma.service';
+import { PrismaService } from '../../shared/database/prisma.service';
 
 export interface SendMessagePayload {
   tenantId: string;
