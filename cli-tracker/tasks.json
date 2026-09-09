@@ -1,0 +1,65 @@
+[
+  {
+    "id": "1.1",
+    "gate": "1. Conhecer e organizar tudo",
+    "title": "Levantar tudo que já existe",
+    "description": "Listar sistemas, arquivos, contas, ferramentas e materiais já criados.",
+    "runbook": "ssh root@srv1777994.hstgr.cloud\nhostnamectl\ndocker ps --no-trunc",
+    "status": "CONCLUIDO",
+    "completedAt": "2026-09-04T09:18:00Z"
+  },
+  {
+    "id": "1.2",
+    "gate": "1. Conhecer e organizar tudo",
+    "title": "Organizar acessos e responsáveis",
+    "description": "Registrar onde cada acesso está e quem é responsável.",
+    "runbook": "Validar acessos Hostinger, Meta, OpenAI e contas vinculadas.",
+    "status": "CONCLUIDO",
+    "completedAt": "2026-09-04T09:28:00Z"
+  },
+  {
+    "id": "1.3",
+    "gate": "1. Conhecer e organizar tudo",
+    "title": "Organizar o que está pronto e o que falta",
+    "description": "Separar o que funciona, o que precisa de correção e o que ainda será criado.",
+    "runbook": "Auditar workflows n8n e colocar PROSPECTOR em quarentena.",
+    "status": "CONCLUIDO",
+    "completedAt": "2026-09-04T12:43:18.401Z"
+  },
+  {
+    "id": "1.4",
+    "gate": "1. Conhecer e organizar tudo",
+    "title": "Montar a lista de prioridades",
+    "description": "Definir o que precisa ser feito primeiro para o projeto avançar.",
+    "runbook": "Consolidar checklist de segurança e gates do Documento Mestre.",
+    "status": "CONCLUIDO",
+    "completedAt": "2026-09-04T12:53:18.582Z"
+  },
+  {
+    "id": "2.1",
+    "gate": "2. Proteger acessos e criar cópia de segurança",
+    "title": "Revisar acessos importantes",
+    "description": "Verificar senhas, permissões e acessos que precisam ser trocados ou protegidos.",
+    "runbook": "Revogar token Apify no console e executar secret scan nos JSONs.",
+    "status": "CONCLUIDO",
+    "completedAt": "2026-09-04T13:00:40.025Z"
+  },
+  {
+    "id": "2.2",
+    "gate": "2. Proteger acessos e criar cópia de segurança",
+    "title": "Criar cópia de segurança",
+    "description": "Fazer backup dos itens importantes.",
+    "runbook": "docker stop --time 60 n8n\ntar -C /root -czf /root/n8n-backup-$(date +%Y%m%d).tar.gz .n8n\nsha256sum /root/n8n-backup-*.tar.gz\ndocker start n8n",
+    "status": "CONCLUIDO",
+    "completedAt": "2026-09-04T18:28:32.222Z"
+  },
+  {
+    "id": "2.3",
+    "gate": "2. Proteger acessos e criar cópia de segurança",
+    "title": "Testar recuperação",
+    "description": "Confirmar que a cópia realmente pode ser usada para recuperar o projeto.",
+    "runbook": "mkdir -p /root/n8n-restore-test\ntar -xzf /root/n8n-backup-*.tar.gz -C /root/n8n-restore-test",
+    "status": "CONCLUIDO",
+    "completedAt": "2026-09-04T18:32:58.750Z"
+  }
+]

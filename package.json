@@ -1,0 +1,20 @@
+{
+  "name": "versus",
+  "version": "1.0.0",
+  "description": "Transformação do MVP/n8n em uma **Plataforma Comercial de IA Segura, Escalável e Vendável (SaaS)** com motor próprio em Node.js/TypeScript, integração oficial com Meta Cloud API (WhatsApp), Base de Conhecimento RAG, Trava de Handoff (IA vs. Humano) e PWA para vendedores.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0"
+  }
+}

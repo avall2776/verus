@@ -1,0 +1,22 @@
+{
+  "name": "VERSUS Omnichannel",
+  "short_name": "VERSUS",
+  "theme_color": "#050814",
+  "background_color": "#050814",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/chat",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

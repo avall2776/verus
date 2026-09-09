@@ -1,0 +1,49 @@
+### 1. Testar Verificação de Segurança (GET)
+# Simula a Meta verificando a autenticidade da sua URL
+GET http://localhost:3001/api/webhooks/meta/tenant_123?hub.mode=subscribe&hub.verify_token=versus_secreto_123&hub.challenge=CHALLENGE_ACEITO
+Accept: application/json
+
+### 2. Testar Recebimento de Mensagem (POST)
+# Simula um cliente (Lead) enviando um "Oi, gostaria de saber os preços" no WhatsApp
+POST http://localhost:3001/api/webhooks/meta/tenant_123
+Content-Type: application/json
+
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "5511999999999",
+              "phone_number_id": "PHONE_NUMBER_ID"
+            },
+            "contacts": [
+              {
+                "profile": {
+                  "name": "João Cliente"
+                },
+                "wa_id": "5511988887777"
+              }
+            ],
+            "messages": [
+              {
+                "from": "5511988887777",
+                "id": "wamid.HBgLNTUxMTk5OT...",
+                "timestamp": "1725812345",
+                "text": {
+                  "body": "Oi, gostaria de saber os preços dos planos."
+                },
+                "type": "text"
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

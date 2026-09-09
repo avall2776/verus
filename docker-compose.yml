@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # PostgreSQL com suporte a pgvector (Embeddings para RAG da IA)
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: verus_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: verus_user
+      POSTGRES_PASSWORD: verus_password
+      POSTGRES_DB: verus_db
+    volumes:
+      - verus_pgdata:/var/lib/postgresql/data
+
+  # Redis para filas (BullMQ), cache de sessões e Trava de Handoff em tempo real
+  redis:
+    image: redis:7-alpine
+    container_name: verus_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - verus_redisdata:/data
+
+  # MinIO (Object Storage compatível com S3 para armazenar PDFs de treinamento da IA)
+  minio:
+    image: minio/minio:latest
+    container_name: verus_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: verus_minio_admin
+      MINIO_ROOT_PASSWORD: verus_minio_secret
+    volumes:
+      - verus_miniodata:/data
+
+volumes:
+  verus_pgdata:
+  verus_redisdata:
+  verus_miniodata:

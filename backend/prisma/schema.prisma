@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ------------------------------------------------------
+// SUPER ADMIN (Dono do SaaS) & TENANTS (Assinantes)
+// ------------------------------------------------------
+
+model SuperAdmin {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Plan {
+  id           String   @id @default(uuid())
+  name         String   // Basic, Pro, Enterprise
+  price        Decimal
+  hasCRM       Boolean  @default(false)
+  hasWhatsApp  Boolean  @default(true)
+  hasInstagram Boolean  @default(false)
+  hasAIAgent   Boolean  @default(false)
+  maxUsers     Int      @default(1)
+  maxAIMsgs    Int      @default(0)
+  tenants      Tenant[]
+}
+
+model Tenant {
+  id         String   @id @default(uuid())
+  name       String
+  cnpj       String?
+  isActive   Boolean  @default(true)
+  planId     String
+  plan       Plan     @relation(fields: [planId], references: [id])
+  users      User[]
+  contacts   Contact[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Configurações da IA
+  aiName          String? 
+  aiModel         String  @default("gpt-4o-mini")
+  aiPrompt        String?
+  aiKnowledgeBase String?
+  aiTemperature   Float   @default(0.7)
+}
+
+// ------------------------------------------------------
+// USUÁRIOS DO TENANT E CRM
+// ------------------------------------------------------
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   // ADMIN, AGENT
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Contact {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  email     String?
+  source    String   // WhatsApp, Instagram, Web
+  tags      String[] // Quente, Frio
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  conversations Conversation[]
+  messages  Message[]
+  deals     Deal[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, phone])
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  tenantId  String
+  contactId String
+  status    String   @default("bot_active") // bot_active, human_takeover, resolved
+  contact   Contact  @relation(fields: [contactId], references: [id])
+  messages  Message[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Message {
+  id                String   @id @default(uuid())
+  tenantId          String
+  conversationId    String
+  providerMessageId String?
+  content           String
+  fromMe            Boolean  @default(false)
+  direction         String   @default("INBOUND") // INBOUND, OUTBOUND
+  senderType        String   @default("contact") // contact, system, agent
+  status            String   @default("delivered")
+  contactId         String
+  contact           Contact  @relation(fields: [contactId], references: [id])
+  conversation      Conversation @relation(fields: [conversationId], references: [id])
+  createdAt         DateTime @default(now())
+
+  @@unique([tenantId, providerMessageId])
+}
+
+model Deal {
+  id        String   @id @default(uuid())
+  tenantId  String
+  contactId String
+  title     String
+  value     Decimal  @default(0)
+  status    String   @default("new")
+  notes     String?
+  contact   Contact  @relation(fields: [contactId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

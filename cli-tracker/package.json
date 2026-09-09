@@ -1,0 +1,17 @@
+{
+  "name": "versus-cli-tracker",
+  "version": "1.0.0",
+  "description": "Assistente CLI de controle de cronograma para o projeto VERSUS",
+  "main": "tracker.ts",
+  "scripts": {
+    "task": "ts-node tracker.ts next",
+    "task:list": "ts-node tracker.ts list",
+    "task:done": "ts-node tracker.ts done"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.0"
+  }
+}

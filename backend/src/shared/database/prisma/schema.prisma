@@ -1,0 +1,196 @@
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+// -----------------------------------------------------------------------------
+// MULTI-TENANCY & USUÁRIOS
+// -----------------------------------------------------------------------------
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users              User[]
+  contacts           Contact[]
+  conversations      Conversation[]
+  messages           Message[]
+  pipelineStages     PipelineStage[]
+  deals              Deal[]
+  knowledgeEmbeddings KnowledgeEmbedding[]
+  auditLogs          AuditLog[]
+
+  @@map("tenants")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  email     String   @unique
+  password  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  conversations Conversation[] @relation("ConversationAssignedUser")
+  auditLogs     AuditLog[]
+
+  @@index([tenantId])
+  @@map("users")
+}
+
+// -----------------------------------------------------------------------------
+// CONTATOS & MENSAGERIA (CRM BASE)
+// -----------------------------------------------------------------------------
+model Contact {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String?
+  phone     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+  deals         Deal[]
+
+  @@unique([tenantId, phone])
+  @@index([tenantId])
+  @@map("contacts")
+}
+
+// MÁQUINA DE ESTADOS - REGRA DE OURO
+enum ConversationStatus {
+  bot_active
+  human_takeover
+  paused
+  resolved
+}
+
+model Conversation {
+  id              String             @id @default(uuid())
+  tenantId        String
+  contactId       String
+  assignedUserId  String?
+  status          ConversationStatus @default(bot_active)
+  lastMessageAt   DateTime           @default(now())
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contact      Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  assignedUser User?     @relation("ConversationAssignedUser", fields: [assignedUserId], references: [id])
+  messages     Message[]
+
+  @@index([tenantId, status])
+  @@map("conversations")
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+model Message {
+  id                String           @id @default(uuid())
+  tenantId          String
+  conversationId    String
+  providerMessageId String?
+  direction         MessageDirection
+  content           String
+  senderType        String           // "bot", "human", "customer"
+  status            String           @default("delivered") // "pending", "delivered"
+  metadata          Json?            // Ex: Message ID do Meta, Status de entrega
+  createdAt         DateTime         @default(now())
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, providerMessageId])
+  @@index([conversationId, createdAt])
+  @@index([tenantId])
+  @@map("messages")
+}
+
+// -----------------------------------------------------------------------------
+// GESTÃO COMERCIAL (DEALS / KANBAN)
+// -----------------------------------------------------------------------------
+model PipelineStage {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deals  Deal[]
+
+  @@index([tenantId])
+  @@map("pipeline_stages")
+}
+
+model Deal {
+  id        String   @id @default(uuid())
+  tenantId  String
+  contactId String
+  stageId   String?
+  title     String
+  value     Float?
+  status    String   @default("new")
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant  Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contact Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  stage   PipelineStage? @relation(fields: [stageId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, stageId])
+  @@map("deals")
+}
+
+// -----------------------------------------------------------------------------
+// BASE DE CONHECIMENTO (RAG) & AUDITORIA
+// -----------------------------------------------------------------------------
+model KnowledgeEmbedding {
+  id         String   @id @default(uuid())
+  tenantId   String
+  content    String
+  embedding  Unsupported("vector(1536)")
+  source     String?  // Ex: ID do arquivo PDF ou URL
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("knowledge_embeddings")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  tenantId    String
+  userId      String?
+  action      String   // Ex: "HANDOFF_TRIGGERED", "LEAD_EXPORTED"
+  entity      String   // Ex: "Conversation", "Contact"
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, action])
+  @@map("audit_logs")
+}
