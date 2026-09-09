@@ -1,7 +1,15 @@
 import { withSentryConfig } from "@sentry/nextjs";
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: '/api-backend/:path*',
+        destination: 'http://187.127.10.166:3001/:path*',
+      },
+    ];
+  },
+};
 
 export default withSentryConfig(nextConfig, {
   // For all available options, see:

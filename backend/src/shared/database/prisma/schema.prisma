@@ -19,6 +19,9 @@ model Tenant {
   slug      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  metaToken         String?
+  metaPhoneNumberId String?
 
   users              User[]
   contacts           Contact[]

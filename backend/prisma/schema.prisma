@@ -51,6 +51,9 @@ model Tenant {
   aiPrompt        String?
   aiKnowledgeBase String?
   aiTemperature   Float   @default(0.7)
+  
+  metaToken         String?
+  metaPhoneNumberId String?
 }
 
 // ------------------------------------------------------
