@@ -54,9 +54,24 @@ export class AiProcessor extends WorkerHost {
         content: msg.content
       }));
 
-    // 3. Chamar OpenAI com a configuração dinâmica do Tenant
+    // 2.5 Buscar Histórico Recente no CRM (Para dar memória longa à IA)
+    const pastDeals = await this.prisma.deal.findMany({
+      where: { contactId: conversation.contact.id },
+      orderBy: { updatedAt: 'desc' },
+      take: 2,
+    });
+
+    let dynamicContext = `\n\n=== CONTEXTO DO CLIENTE ===\nNome do Cliente: ${conversation.contact.name}\n`;
+    if (pastDeals.length > 0) {
+      dynamicContext += `O cliente já teve os seguintes atendimentos anteriores (use para ter contexto, não repita se não for necessário):\n`;
+      pastDeals.forEach(d => {
+        dynamicContext += `- Interesse Anterior: ${d.title} | Notas: ${d.notes || 'Sem detalhes'}\n`;
+      });
+    }
+
+    // 3. Chamar OpenAI com a configuração dinâmica do Tenant e o Contexto
     this.logger.log(`Enviando ${historyForAi.length} mensagens de histórico para a OpenAI (Tenant: ${conversation.contact.tenant.name})...`);
-    const aiResponse = await this.aiService.processConversation(historyForAi, conversation.contact.tenant);
+    const aiResponse = await this.aiService.processConversation(historyForAi, conversation.contact.tenant, dynamicContext);
 
     // 4. Despachar a resposta para o Lead
     if (aiResponse.resposta_cliente) {

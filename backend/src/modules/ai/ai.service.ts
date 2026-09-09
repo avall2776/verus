@@ -28,13 +28,14 @@ Responda de forma curta e objetiva. Transfira para um humano se pedirem preços 
    */
   async processConversation(
     history: { role: 'user' | 'assistant', content: string }[],
-    tenantConfig?: { aiPrompt: string, aiKnowledgeBase: string, aiTemperature: number, aiModel: string }
+    tenantConfig?: { aiPrompt: string, aiKnowledgeBase: string, aiTemperature: number, aiModel: string },
+    dynamicContext?: string
   ): Promise<AiResponseDto> {
     try {
       const finalPrompt = tenantConfig?.aiPrompt || this.fallbackPrompt;
       const knowledgeBase = tenantConfig?.aiKnowledgeBase ? `\n\n=== BASE DE CONHECIMENTO DA EMPRESA ===\nUse os dados abaixo para responder o cliente:\n${tenantConfig.aiKnowledgeBase}` : '';
       
-      const systemMessage = finalPrompt + knowledgeBase;
+      const systemMessage = finalPrompt + (dynamicContext || '') + knowledgeBase;
 
       const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
         { role: 'system', content: systemMessage },
