@@ -79,6 +79,7 @@ model User {
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
   isOnline  Boolean  @default(false)
   departments UserDepartment[]
+  deals     Deal[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -172,13 +173,16 @@ model Deal {
   id        String   @id @default(uuid())
   tenantId  String
   contactId String
-  title     String
-  value     Decimal  @default(0)
-  status    String   @default("new")
-  notes     String?
-  contact   Contact  @relation(fields: [contactId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  title      String
+  value      Decimal  @default(0)
+  status     String   @default("new")
+  notes      String?
+  metadata   Json?
+  assignedTo String?
+  contact    Contact  @relation(fields: [contactId], references: [id])
+  assignee   User?    @relation(fields: [assignedTo], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([tenantId])
   @@index([tenantId, status])

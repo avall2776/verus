@@ -13,12 +13,12 @@ export class CrmController {
     return this.crmService.findAllDeals(tenantId);
   }
 
-  @Patch(':id/status')
-  async updateDealStatus(
+  @Patch(':id')
+  async updateDeal(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
-    @Body('status') status: string
+    @Body() updateData: { status?: string; value?: number; assignedTo?: string }
   ) {
-    return this.crmService.updateDealStatus(tenantId, id, status);
+    return this.crmService.updateDeal(tenantId, id, updateData);
   }
 }

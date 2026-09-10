@@ -11,8 +11,16 @@ export class CrmService {
       include: {
         contact: {
           select: {
+            id: true,
             name: true,
             phone: true,
+            tags: true,
+          }
+        },
+        assignee: {
+          select: {
+            id: true,
+            name: true,
           }
         }
       },
@@ -20,10 +28,10 @@ export class CrmService {
     });
   }
 
-  async updateDealStatus(tenantId: string, dealId: string, status: string) {
+  async updateDeal(tenantId: string, dealId: string, data: { status?: string; value?: number; assignedTo?: string }) {
     return this.prisma.deal.updateMany({
       where: { id: dealId, tenantId },
-      data: { status }
+      data
     });
   }
 }
