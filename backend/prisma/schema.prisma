@@ -43,10 +43,13 @@ model Tenant {
   planId     String
   plan       Plan     @relation(fields: [planId], references: [id])
   users      User[]
-  contacts   Contact[]
-  departments Department[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  contacts     Contact[]
+  departments  Department[]
+  quickReplies QuickReply[]
+  channels     Channel[]
+  businessHours BusinessHours[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   documents  KnowledgeDocument[]
   chunks     DocumentChunk[]
@@ -148,6 +151,10 @@ model Message {
   conversationId    String
   providerMessageId String?
   content           String
+  type              String   @default("text") // text, image, audio, video, document
+  mediaUrl          String?
+  audioTranscription String?
+  isInternal        Boolean  @default(false)
   fromMe            Boolean  @default(false)
   direction         String   @default("INBOUND") // INBOUND, OUTBOUND
   senderType        String   @default("contact") // contact, system, agent
@@ -174,6 +181,44 @@ model Deal {
 
   @@index([tenantId])
   @@index([tenantId, status])
+}
+
+model QuickReply {
+  id        String   @id @default(uuid())
+  tenantId  String
+  shortcut  String   // ex: "/bomdia"
+  content   String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, shortcut])
+  @@index([tenantId])
+}
+
+model Channel {
+  id         String   @id @default(uuid())
+  tenantId   String
+  name       String   // Ex: Suporte WhatsApp
+  type       String   // whatsapp, instagram, web
+  identifier String   // Ex: 554999999999
+  status     String   @default("connected")
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([tenantId, identifier])
+}
+
+model BusinessHours {
+  id           String   @id @default(uuid())
+  tenantId     String
+  departmentId String?  // Opcional: pode ser geral do tenant ou por departamento
+  dayOfWeek    Int      // 0 = Domingo, 1 = Segunda, etc.
+  startTime    String   // Ex: "08:00"
+  endTime      String   // Ex: "18:00"
+  isActive     Boolean  @default(true)
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  
+  @@unique([tenantId, departmentId, dayOfWeek])
 }
 
 // ------------------------------------------------------

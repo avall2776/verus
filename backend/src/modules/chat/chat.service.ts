@@ -89,9 +89,38 @@ export class ChatService {
     });
     if (!dept || dept.tenantId !== tenantId) throw new NotFoundException('Departamento inválido.');
 
+    // ROLETA ROUND-ROBIN
+    // Buscar todos os atendentes online do departamento
+    const onlineAgents = await this.prisma.userDepartment.findMany({
+      where: { departmentId, user: { isOnline: true } },
+      include: { user: true }
+    });
+
+    if (onlineAgents.length === 0) {
+      // Nenhum online: fica na fila geral aguardando
+      return this.prisma.conversation.update({
+        where: { id: conversationId },
+        data: { departmentId, status: 'waiting', assignedTo: null } 
+      });
+    }
+
+    // Descobrir qual agente online tem MENOS conversas ativas no momento (Balanceamento de Carga / Round Robin Dinâmico)
+    let selectedUserId = onlineAgents[0].userId;
+    let minLoad = Infinity;
+
+    for (const agent of onlineAgents) {
+      const activeCount = await this.prisma.conversation.count({
+        where: { assignedTo: agent.userId, status: 'human_takeover' }
+      });
+      if (activeCount < minLoad) {
+        minLoad = activeCount;
+        selectedUserId = agent.userId;
+      }
+    }
+
     return this.prisma.conversation.update({
       where: { id: conversationId },
-      data: { departmentId, status: 'open', assignedTo: null } 
+      data: { departmentId, status: 'human_takeover', assignedTo: selectedUserId } 
     });
   }
 
