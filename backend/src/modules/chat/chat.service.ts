@@ -158,46 +158,39 @@ export class ChatService {
     const type = payload.type || 'text';
     const mediaUrl = payload.mediaUrl || null;
 
-    // Paralelizando envio da API externa com as chamadas de banco
-    const operations: Promise<any>[] = [
-      this.prisma.message.create({
-        data: {
-          tenantId,
-          conversationId,
-          providerMessageId: `manual_${Date.now()}`,
-          contactId: conversation.contactId,
-          content: payload.content,
-          type,
-          mediaUrl,
-          isInternal,
-          direction: 'OUTBOUND',
-          senderType: 'user', // Atendente humano
-          status: 'delivered',
-        }
-      })
-    ];
+    // Execução sequencial p/ evitar lock de banco serverless
+    const msg = await this.prisma.message.create({
+      data: {
+        tenantId,
+        conversationId,
+        providerMessageId: `manual_${Date.now()}`,
+        contactId: conversation.contactId,
+        content: payload.content,
+        type,
+        mediaUrl,
+        isInternal,
+        direction: 'OUTBOUND',
+        senderType: 'user', // Atendente humano
+        status: 'delivered',
+      }
+    });
 
     // Só envia para o WhatsApp/API externa se NÃO for nota interna
     if (!isInternal) {
-      operations.push(
-        this.messagingService.sendText({
-          tenantId,
-          phone: conversation.contact.phone,
-          content: payload.content,
-        })
-      );
+      await this.messagingService.sendText({
+        tenantId,
+        phone: conversation.contact.phone,
+        content: payload.content,
+      });
     }
 
     if (conversation.status === 'bot_active' && !isInternal) {
-      operations.push(
-        this.prisma.conversation.update({
-          where: { id: conversationId },
-          data: { status: 'human_takeover' }
-        })
-      );
+      await this.prisma.conversation.update({
+        where: { id: conversationId },
+        data: { status: 'human_takeover' }
+      });
     }
 
-    const results = await Promise.all(operations);
-    return results[0]; // Retorna a mensagem criada
+    return msg; // Retorna a mensagem criada
   }
 }

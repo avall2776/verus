@@ -65,6 +65,11 @@ export class ChatController {
     @Param('id') conversationId: string,
     @Body() payload: SendMessageDto,
   ) {
-    return this.chatService.sendManualMessage(tenantId, conversationId, payload);
+    try {
+      return await this.chatService.sendManualMessage(tenantId, conversationId, payload);
+    } catch (error) {
+      console.error('ERRO AO ENVIAR MENSAGEM MANUAL:', error);
+      throw error;
+    }
   }
 }
