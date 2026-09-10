@@ -89,7 +89,11 @@ export default function InboxPage() {
       
       // Se a mensagem for para a conversa ativa, joga na tela
       if (activeChat === data.conversationId) {
-        setMessages((prev) => [...prev, data]);
+        setMessages((prev) => {
+          // Evita duplicação se o usuário for quem enviou (a API já adicionou no state local)
+          if (prev.some(m => m.id === data.id)) return prev;
+          return [...prev, data];
+        });
       } else if (!activeChat) {
         setActiveChat(data.conversationId);
         setMessages([data]);

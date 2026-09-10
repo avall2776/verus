@@ -11,6 +11,7 @@ conn.on('ready', () => {
     git reset --hard &&
     git pull && 
     npm install --legacy-peer-deps && 
+    npx prisma generate &&
     npm run build && 
     pm2 restart versus-engine &&
     echo "Deploy Backend finalizado!"
