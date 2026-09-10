@@ -2,8 +2,6 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule } from '@nestjs/config';
 import { WebhooksController } from './webhooks.controller';
-import { WebhookProcessor } from '../queues/processors/webhook.processor';
-
 @Module({
   imports: [
     ConfigModule,
@@ -15,6 +13,5 @@ import { WebhookProcessor } from '../queues/processors/webhook.processor';
     }),
   ],
   controllers: [WebhooksController],
-  providers: [WebhookProcessor],
 })
 export class WebhooksModule {}

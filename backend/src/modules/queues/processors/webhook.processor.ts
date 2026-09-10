@@ -4,6 +4,8 @@ import { Logger } from '@nestjs/common';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { ChatGateway } from '../../chat/chat.gateway';
 
+import { MessagingService } from '../../messaging/messaging.service';
+
 @Processor('webhook-ingress')
 export class WebhookProcessor extends WorkerHost {
   private readonly logger = new Logger(WebhookProcessor.name);
@@ -12,13 +14,13 @@ export class WebhookProcessor extends WorkerHost {
     private readonly prisma: PrismaService,
     @InjectQueue('ai-processing') private readonly aiQueue: Queue,
     private readonly chatGateway: ChatGateway,
+    private readonly messagingService: MessagingService,
   ) {
     super();
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
     const { tenantId, webhookData } = job.data;
-    
     // Parse Meta API Payload
     const entry = webhookData.entry?.[0];
     const change = entry?.changes?.[0];
@@ -74,6 +76,35 @@ export class WebhookProcessor extends WorkerHost {
       }
     });
 
+    // Validar Horário de Expediente
+    const currentDay = new Date().getDay(); // 0 = Domingo
+    const currentHourStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute:'2-digit', timeZone: 'America/Sao_Paulo' });
+    
+    const bh = await this.prisma.businessHours.findFirst({
+      where: { tenantId, dayOfWeek: currentDay, isActive: true }
+    });
+
+    let isWithinBusinessHours = true;
+    if (bh) {
+      if (currentHourStr < bh.startTime || currentHourStr > bh.endTime) {
+        isWithinBusinessHours = false;
+      }
+    }
+
+    if (!isWithinBusinessHours) {
+      this.logger.log(`Fora do horário comercial. Enviando fallback para ${phone}.`);
+      
+      const fallbackMsg = "Olá! Nosso horário de atendimento é de segunda a sexta, das 08h às 18h. Já recebemos sua mensagem e retornaremos assim que nossa equipe iniciar o expediente!";
+      
+      await this.messagingService.sendText({
+        tenantId,
+        phone,
+        content: fallbackMsg
+      });
+
+      // Salva a mensagem no banco? Sim, mas precisamos da conversa primeiro.
+    }
+
     // 4. Buscar a conversa (só pode haver UMA por contato agora)
     let conversation = await this.prisma.conversation.upsert({
       where: {
@@ -121,8 +152,34 @@ export class WebhookProcessor extends WorkerHost {
       contact: { phone: contact.phone, name: contact.name }
     });
 
-    // 6. Integração com Fase 4: Despachar para fila de IA APENAS se o bot estiver ativo! (Handoff)
+    // 6. Integração com Fase 4: Despachar para fila de IA APENAS se o bot estiver ativo e DENTRO do horário comercial!
     if (conversation.status === 'bot_active') {
+      if (!isWithinBusinessHours) {
+        this.logger.log(`Conversa [${conversation.id}] mantida sem IA por estar fora do expediente.`);
+        
+        // Salva a mensagem de fallback como se o bot tivesse respondido
+        const fallbackMsgText = "Olá! Nosso horário de atendimento é de segunda a sexta, das 08h às 18h. Já recebemos sua mensagem e retornaremos assim que nossa equipe iniciar o expediente!";
+        const fallbackMessage = await this.prisma.message.create({
+          data: {
+            tenantId,
+            conversationId: conversation.id,
+            contactId: contact.id,
+            providerMessageId: `fallback_${Date.now()}`,
+            direction: 'OUTBOUND',
+            content: fallbackMsgText,
+            senderType: 'system',
+            status: 'delivered', 
+          }
+        });
+        
+        this.chatGateway.emitNewMessage(tenantId, {
+          ...fallbackMessage,
+          contact: { phone: contact.phone, name: contact.name }
+        });
+
+        return { status: 'out_of_business_hours' };
+      }
+
       const jobId = `ai_reply_${conversation.id}`;
       
       // Debounce: Remove job anterior se ainda não começou a processar

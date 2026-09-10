@@ -5,6 +5,8 @@ import { Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, 
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { supabase } from "@/lib/supabase";
+import { v4 as uuidv4 } from "uuid";
 
 export default function InboxPage() {
   const [activeChat, setActiveChat] = useState<string | null>(null);
@@ -16,7 +18,16 @@ export default function InboxPage() {
   const [isInternalMode, setIsInternalMode] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [quickReplies, setQuickReplies] = useState<any[]>([]);
+  const [showQuickReplies, setShowQuickReplies] = useState(false);
+  const [quickReplyFilter, setQuickReplyFilter] = useState('');
+  const [newTagInput, setNewTagInput] = useState('');
   const { socket, isConnected, clearGlobalUnread } = useSocket();
+
+  useEffect(() => {
+    // Busca macros na montagem
+    api.get('/quick-replies').then(res => setQuickReplies(res.data)).catch(console.error);
+  }, []);
 
   const { data: initialContacts, isLoading, error: fetchErrorQuery } = useQuery({
     queryKey: ['conversations'],
@@ -24,18 +35,19 @@ export default function InboxPage() {
       const { data } = await api.get('/conversations');
       return data.map((conv: any) => {
         const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
-        return {
-          id: conv.id,
-          contactId: conv.contact.id,
-          name: conv.contact.name,
-          phone: conv.contact.phone,
-          email: conv.contact.email,
-          lastMsg: lastMsg,
-          time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          isAi: conv.status === 'bot_active',
-          unread: 0,
-          status: conv.status
-        };
+          return {
+            id: conv.id,
+            contactId: conv.contact.id,
+            name: conv.contact.name,
+            phone: conv.contact.phone,
+            email: conv.contact.email,
+            tags: conv.contact.tags || [],
+            lastMsg: lastMsg,
+            time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isAi: conv.status === 'bot_active',
+            unread: 0,
+            status: conv.status
+          };
       });
     },
     retry: false,
@@ -184,13 +196,36 @@ export default function InboxPage() {
     setShowAttachments(false);
     setSelectedFile(null);
     
-    // WIP: Lógica de upload p/ Supabase
+    // Upload real p/ Supabase
     let mediaUrl = null;
     let type = 'text';
     if (selectedFile) {
-      // Mocked URL. In production, upload to Supabase Storage 'versus-media' bucket
-      mediaUrl = `https://storage.supabase.com/versus-media/${selectedFile.name}`;
       type = selectedFile.type.startsWith('image/') ? 'image' : selectedFile.type.startsWith('audio/') ? 'audio' : 'document';
+      
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${uuidv4()}.${fileExt}`;
+      const filePath = `chat/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase
+        .storage
+        .from('versus-media')
+        .upload(filePath, selectedFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error("Erro no upload do Supabase:", uploadError);
+        alert("Falha ao enviar arquivo. Verifique se o bucket 'versus-media' existe e é público.");
+        return;
+      }
+
+      const { data: publicUrlData } = supabase
+        .storage
+        .from('versus-media')
+        .getPublicUrl(filePath);
+        
+      mediaUrl = publicUrlData.publicUrl;
     }
 
     try {
@@ -221,6 +256,45 @@ export default function InboxPage() {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
       setShowAttachments(false);
+    }
+  };
+
+  const handleAddTag = async (contactId: string) => {
+    if (!newTagInput.trim()) return;
+    
+    const targetContact = contacts.find(c => c.contactId === contactId);
+    if (!targetContact) return;
+    
+    // Supondo que tags vem no objeto contact
+    const currentTags = targetContact.tags || [];
+    if (currentTags.includes(newTagInput.trim())) {
+      setNewTagInput('');
+      return;
+    }
+    
+    const updatedTags = [...currentTags, newTagInput.trim()];
+    
+    try {
+      await api.patch(`/contacts/${contactId}/tags`, { tags: updatedTags });
+      // Atualiza estado local
+      setContacts(prev => prev.map(c => c.contactId === contactId ? { ...c, tags: updatedTags } : c));
+      setNewTagInput('');
+    } catch (e) {
+      console.error("Erro ao adicionar tag", e);
+    }
+  };
+
+  const handleRemoveTag = async (contactId: string, tagToRemove: string) => {
+    const targetContact = contacts.find(c => c.contactId === contactId);
+    if (!targetContact) return;
+    
+    const updatedTags = (targetContact.tags || []).filter((t: string) => t !== tagToRemove);
+    
+    try {
+      await api.patch(`/contacts/${contactId}/tags`, { tags: updatedTags });
+      setContacts(prev => prev.map(c => c.contactId === contactId ? { ...c, tags: updatedTags } : c));
+    } catch (e) {
+      console.error("Erro ao remover tag", e);
     }
   };
 
@@ -531,14 +605,50 @@ export default function InboxPage() {
               `}
               rows={1}
               value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setInputText(val);
+                
+                // UX de Resposta Rápida
+                if (val.startsWith('/')) {
+                  setShowQuickReplies(true);
+                  setQuickReplyFilter(val.substring(1).toLowerCase());
+                } else {
+                  setShowQuickReplies(false);
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  handleSendMessage();
+                  // Se o popover estiver aberto, não envia ainda
+                  if (!showQuickReplies) {
+                    handleSendMessage();
+                  }
                 }
               }}
             />
+            
+            {/* Popover de Respostas Rápidas */}
+            {showQuickReplies && quickReplies.length > 0 && (
+              <div className="absolute bottom-14 left-12 w-[300px] bg-[#1E293B] border border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
+                <div className="px-3 py-2 bg-gray-800/50 text-xs font-bold text-gray-400 border-b border-gray-700">Respostas Rápidas</div>
+                <div className="max-h-48 overflow-y-auto">
+                  {quickReplies.filter(qr => qr.shortcut.toLowerCase().includes(quickReplyFilter)).map(qr => (
+                    <div 
+                      key={qr.id}
+                      onClick={() => {
+                        setInputText(qr.content);
+                        setShowQuickReplies(false);
+                      }}
+                      className="px-3 py-2 border-b border-gray-800/50 hover:bg-gray-800 cursor-pointer transition-colors"
+                    >
+                      <div className="text-accent text-xs font-bold mb-0.5">{qr.shortcut}</div>
+                      <div className="text-gray-300 text-xs line-clamp-1">{qr.content}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <button 
               onClick={handleSendMessage} 
               className={`p-3 rounded-lg transition-colors shadow-md flex items-center justify-center
@@ -585,13 +695,31 @@ export default function InboxPage() {
               <div className="flex flex-wrap gap-2">
                 {activeContactData.tags?.length > 0 ? (
                   activeContactData.tags.map((tag: string) => (
-                    <span key={tag} className="bg-gray-800 border border-gray-700 text-xs px-2 py-1 rounded-md text-gray-300 flex items-center gap-1">
+                    <span key={tag} className="bg-gray-800 border border-gray-700 text-xs px-2 py-1 rounded-md text-gray-300 flex items-center gap-1 group">
                       <Tag size={10} /> {tag}
+                      <button onClick={() => handleRemoveTag(activeContactData.contactId, tag)} className="ml-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X size={10} />
+                      </button>
                     </span>
                   ))
                 ) : (
                   <span className="text-xs text-gray-500">Nenhuma tag.</span>
                 )}
+              </div>
+              <div className="flex gap-2 mt-1">
+                <input 
+                  type="text" 
+                  value={newTagInput}
+                  onChange={e => setNewTagInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleAddTag(activeContactData.contactId);
+                  }}
+                  placeholder="Nova tag..." 
+                  className="flex-1 bg-[#1E293B] border border-gray-700 rounded p-1.5 text-xs text-white outline-none focus:border-accent"
+                />
+                <button onClick={() => handleAddTag(activeContactData.contactId)} className="bg-gray-800 hover:bg-gray-700 text-white text-xs px-2 rounded font-bold">
+                  +
+                </button>
               </div>
             </div>
 

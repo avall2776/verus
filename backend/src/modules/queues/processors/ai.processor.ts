@@ -107,10 +107,30 @@ export class AiProcessor extends WorkerHost {
     if (aiResponse.transferir_vendedor) {
       this.logger.log(`Lead solicitou atendimento humano. Executando protocolo de Transbordo...`);
 
-      // 5.1 Atualizar status da conversa (Trava Handoff)
+      // 5.1 Round-Robin: Buscar atendente online com menor carga
+      let assignedTo = null;
+      
+      const onlineAgents = await this.prisma.user.findMany({
+        where: { tenantId, isOnline: true }
+      });
+
+      if (onlineAgents.length > 0) {
+        let minLoad = Infinity;
+        for (const agent of onlineAgents) {
+          const activeCount = await this.prisma.conversation.count({
+            where: { assignedTo: agent.id, status: { in: ['open', 'human_takeover'] } }
+          });
+          if (activeCount < minLoad) {
+            minLoad = activeCount;
+            assignedTo = agent.id;
+          }
+        }
+      }
+
+      // Atualizar status da conversa (Trava Handoff) com o atendente sorteado
       await this.prisma.conversation.update({
         where: { id: conversationId },
-        data: { status: 'human_takeover' }
+        data: { status: 'human_takeover', assignedTo }
       });
 
       // 5.2 Atualizar/Criar o Deal no CRM
