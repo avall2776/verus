@@ -27,6 +27,7 @@ let ChatService = class ChatService {
             where: whereClause,
             include: {
                 contact: true,
+                department: true,
                 messages: {
                     orderBy: { createdAt: 'desc' },
                     take: 1
@@ -71,7 +72,62 @@ let ChatService = class ChatService {
             data: { status: 'resolved' }
         });
     }
-    async sendManualMessage(tenantId, conversationId, content) {
+    async transferToDepartment(tenantId, conversationId, departmentId) {
+        const conversation = await this.prisma.conversation.findUnique({
+            where: { id: conversationId }
+        });
+        if (!conversation || conversation.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        const dept = await this.prisma.department.findUnique({
+            where: { id: departmentId }
+        });
+        if (!dept || dept.tenantId !== tenantId)
+            throw new common_1.NotFoundException('Departamento inválido.');
+        const onlineAgents = await this.prisma.userDepartment.findMany({
+            where: { departmentId, user: { isOnline: true } },
+            include: { user: true }
+        });
+        if (onlineAgents.length === 0) {
+            return this.prisma.conversation.update({
+                where: { id: conversationId },
+                data: { departmentId, status: 'waiting', assignedTo: null }
+            });
+        }
+        let selectedUserId = onlineAgents[0].userId;
+        let minLoad = Infinity;
+        for (const agent of onlineAgents) {
+            const activeCount = await this.prisma.conversation.count({
+                where: { assignedTo: agent.userId, status: 'human_takeover' }
+            });
+            if (activeCount < minLoad) {
+                minLoad = activeCount;
+                selectedUserId = agent.userId;
+            }
+        }
+        return this.prisma.conversation.update({
+            where: { id: conversationId },
+            data: { departmentId, status: 'human_takeover', assignedTo: selectedUserId }
+        });
+    }
+    async assignToUser(tenantId, conversationId, userId) {
+        const conversation = await this.prisma.conversation.findUnique({
+            where: { id: conversationId }
+        });
+        if (!conversation || conversation.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId }
+        });
+        if (!user || user.tenantId !== tenantId)
+            throw new common_1.NotFoundException('Usuário inválido.');
+        return this.prisma.conversation.update({
+            where: { id: conversationId },
+            data: { assignedTo: userId, status: 'human_takeover' }
+        });
+    }
+    async sendManualMessage(tenantId, conversationId, payload) {
         const conversation = await this.prisma.conversation.findUnique({
             where: { id: conversationId },
             include: { contact: true }
@@ -79,33 +135,41 @@ let ChatService = class ChatService {
         if (!conversation || conversation.tenantId !== tenantId) {
             throw new common_1.NotFoundException('Conversa não encontrada.');
         }
+        const isInternal = payload.isInternal || false;
+        const type = payload.type || 'text';
+        const mediaUrl = payload.mediaUrl || null;
         const operations = [
-            this.messagingService.sendText({
-                tenantId,
-                phone: conversation.contact.phone,
-                content,
-            }),
             this.prisma.message.create({
                 data: {
                     tenantId,
                     conversationId,
                     providerMessageId: `manual_${Date.now()}`,
                     contactId: conversation.contactId,
-                    content,
+                    content: payload.content,
+                    type,
+                    mediaUrl,
+                    isInternal,
                     direction: 'OUTBOUND',
                     senderType: 'user',
                     status: 'delivered',
                 }
             })
         ];
-        if (conversation.status === 'bot_active') {
+        if (!isInternal) {
+            operations.push(this.messagingService.sendText({
+                tenantId,
+                phone: conversation.contact.phone,
+                content: payload.content,
+            }));
+        }
+        if (conversation.status === 'bot_active' && !isInternal) {
             operations.push(this.prisma.conversation.update({
                 where: { id: conversationId },
                 data: { status: 'human_takeover' }
             }));
         }
         const results = await Promise.all(operations);
-        return results[1];
+        return results[0];
     }
 };
 exports.ChatService = ChatService;

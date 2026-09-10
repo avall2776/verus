@@ -77,8 +77,8 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             where: {
                 tenantId,
                 contactId: contact.id,
-                status: { not: 'resolved' }
-            }
+            },
+            orderBy: { updatedAt: 'desc' }
         });
         if (!conversation) {
             conversation = await this.prisma.conversation.create({
@@ -88,6 +88,13 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                     status: 'bot_active',
                 }
             });
+        }
+        else if (conversation.status === 'resolved') {
+            conversation = await this.prisma.conversation.update({
+                where: { id: conversation.id },
+                data: { status: 'bot_active' }
+            });
+            this.logger.log(`Conversa [${conversation.id}] reaberta (status -> bot_active).`);
         }
         const savedMessage = await this.prisma.message.create({
             data: {

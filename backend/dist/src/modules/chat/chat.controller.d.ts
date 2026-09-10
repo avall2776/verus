@@ -6,64 +6,110 @@ export declare class ChatController {
     listConversations(tenantId: string, status?: string): Promise<({
         contact: {
             id: string;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            source: string;
+            tags: string[];
             tenantId: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
-            email: string | null;
-            phone: string | null;
-            source: string;
-            tags: string[];
         };
         messages: {
             id: string;
             tenantId: string;
-            status: string;
             createdAt: Date;
             contactId: string;
-            conversationId: string;
+            status: string;
             providerMessageId: string | null;
             content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            isInternal: boolean;
             fromMe: boolean;
             direction: string;
             senderType: string;
+            conversationId: string;
         }[];
+        department: {
+            id: string;
+            name: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            color: string | null;
+        };
     } & {
         id: string;
         tenantId: string;
-        status: string;
         createdAt: Date;
         updatedAt: Date;
         contactId: string;
+        departmentId: string | null;
+        assignedTo: string | null;
+        status: string;
     })[]>;
     getMessages(tenantId: string, conversationId: string): Promise<{
         id: string;
         tenantId: string;
-        status: string;
         createdAt: Date;
         contactId: string;
-        conversationId: string;
+        status: string;
         providerMessageId: string | null;
         content: string;
+        type: string;
+        mediaUrl: string | null;
+        audioTranscription: string | null;
+        isInternal: boolean;
         fromMe: boolean;
         direction: string;
         senderType: string;
+        conversationId: string;
     }[]>;
     takeover(tenantId: string, conversationId: string): Promise<{
         id: string;
         tenantId: string;
-        status: string;
         createdAt: Date;
         updatedAt: Date;
         contactId: string;
+        departmentId: string | null;
+        assignedTo: string | null;
+        status: string;
     }>;
     release(tenantId: string, conversationId: string): Promise<{
         id: string;
         tenantId: string;
-        status: string;
         createdAt: Date;
         updatedAt: Date;
         contactId: string;
+        departmentId: string | null;
+        assignedTo: string | null;
+        status: string;
+    }>;
+    transfer(tenantId: string, conversationId: string, body: {
+        departmentId: string;
+    }): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        contactId: string;
+        departmentId: string | null;
+        assignedTo: string | null;
+        status: string;
+    }>;
+    assign(tenantId: string, conversationId: string, body: {
+        userId: string;
+    }): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        contactId: string;
+        departmentId: string | null;
+        assignedTo: string | null;
+        status: string;
     }>;
     sendMessage(tenantId: string, conversationId: string, payload: SendMessageDto): Promise<any>;
 }

@@ -34,8 +34,14 @@ let ChatController = class ChatController {
     async release(tenantId, conversationId) {
         return this.chatService.releaseConversation(tenantId, conversationId);
     }
+    async transfer(tenantId, conversationId, body) {
+        return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId);
+    }
+    async assign(tenantId, conversationId, body) {
+        return this.chatService.assignToUser(tenantId, conversationId, body.userId);
+    }
     async sendMessage(tenantId, conversationId, payload) {
-        return this.chatService.sendManualMessage(tenantId, conversationId, payload.content);
+        return this.chatService.sendManualMessage(tenantId, conversationId, payload);
     }
 };
 exports.ChatController = ChatController;
@@ -71,6 +77,24 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "release", null);
+__decorate([
+    (0, common_1.Patch)(':id/transfer'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "transfer", null);
+__decorate([
+    (0, common_1.Patch)(':id/assign'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "assign", null);
 __decorate([
     (0, common_1.Post)(':id/messages'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

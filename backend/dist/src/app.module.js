@@ -20,6 +20,7 @@ const agent_module_1 = require("./modules/agent/agent.module");
 const dashboard_module_1 = require("./modules/dashboard/dashboard.module");
 const contacts_module_1 = require("./modules/contacts/contacts.module");
 const rag_module_1 = require("./modules/rag/rag.module");
+const departments_module_1 = require("./modules/departments/departments.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -38,6 +39,7 @@ exports.AppModule = AppModule = __decorate([
             dashboard_module_1.DashboardModule,
             contacts_module_1.ContactsModule,
             rag_module_1.RagModule,
+            departments_module_1.DepartmentsModule,
         ],
         controllers: [],
         providers: [],

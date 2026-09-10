@@ -10,12 +10,12 @@ export declare class CrmController {
     } & {
         id: string;
         tenantId: string;
-        status: string;
         createdAt: Date;
         updatedAt: Date;
         contactId: string;
-        value: import("@prisma/client/runtime/library").Decimal;
+        status: string;
         title: string;
+        value: import("@prisma/client/runtime/library").Decimal;
         notes: string | null;
     })[]>;
     updateDealStatus(tenantId: string, id: string, status: string): Promise<import(".prisma/client").Prisma.BatchPayload>;
