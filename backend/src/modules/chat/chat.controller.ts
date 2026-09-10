@@ -65,6 +65,6 @@ export class ChatController {
     @Param('id') conversationId: string,
     @Body() payload: SendMessageDto,
   ) {
-    return this.chatService.sendManualMessage(tenantId, conversationId, payload.content);
+    return this.chatService.sendManualMessage(tenantId, conversationId, payload);
   }
 }

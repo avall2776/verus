@@ -144,7 +144,7 @@ export class ChatService {
     });
   }
 
-  async sendManualMessage(tenantId: string, conversationId: string, content: string) {
+  async sendManualMessage(tenantId: string, conversationId: string, payload: { content: string, isInternal?: boolean, type?: string, mediaUrl?: string }) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
       include: { contact: true }
@@ -154,20 +154,22 @@ export class ChatService {
       throw new NotFoundException('Conversa não encontrada.');
     }
 
+    const isInternal = payload.isInternal || false;
+    const type = payload.type || 'text';
+    const mediaUrl = payload.mediaUrl || null;
+
     // Paralelizando envio da API externa com as chamadas de banco
     const operations: Promise<any>[] = [
-      this.messagingService.sendText({
-        tenantId,
-        phone: conversation.contact.phone,
-        content,
-      }),
       this.prisma.message.create({
         data: {
           tenantId,
           conversationId,
           providerMessageId: `manual_${Date.now()}`,
           contactId: conversation.contactId,
-          content,
+          content: payload.content,
+          type,
+          mediaUrl,
+          isInternal,
           direction: 'OUTBOUND',
           senderType: 'user', // Atendente humano
           status: 'delivered',
@@ -175,7 +177,18 @@ export class ChatService {
       })
     ];
 
-    if (conversation.status === 'bot_active') {
+    // Só envia para o WhatsApp/API externa se NÃO for nota interna
+    if (!isInternal) {
+      operations.push(
+        this.messagingService.sendText({
+          tenantId,
+          phone: conversation.contact.phone,
+          content: payload.content,
+        })
+      );
+    }
+
+    if (conversation.status === 'bot_active' && !isInternal) {
       operations.push(
         this.prisma.conversation.update({
           where: { id: conversationId },
@@ -185,6 +198,6 @@ export class ChatService {
     }
 
     const results = await Promise.all(operations);
-    return results[1]; // Retorna a mensagem criada
+    return results[0]; // Retorna a mensagem criada
   }
 }
