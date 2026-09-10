@@ -13,10 +13,12 @@ exports.ChatService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const messaging_service_1 = require("../messaging/messaging.service");
+const chat_gateway_1 = require("./chat.gateway");
 let ChatService = class ChatService {
-    constructor(prisma, messagingService) {
+    constructor(prisma, messagingService, chatGateway) {
         this.prisma = prisma;
         this.messagingService = messagingService;
+        this.chatGateway = chatGateway;
     }
     async findAllConversations(tenantId, status) {
         const whereClause = { tenantId };
@@ -138,44 +140,43 @@ let ChatService = class ChatService {
         const isInternal = payload.isInternal || false;
         const type = payload.type || 'text';
         const mediaUrl = payload.mediaUrl || null;
-        const operations = [
-            this.prisma.message.create({
-                data: {
-                    tenantId,
-                    conversationId,
-                    providerMessageId: `manual_${Date.now()}`,
-                    contactId: conversation.contactId,
-                    content: payload.content,
-                    type,
-                    mediaUrl,
-                    isInternal,
-                    direction: 'OUTBOUND',
-                    senderType: 'user',
-                    status: 'delivered',
-                }
-            })
-        ];
+        const msg = await this.prisma.message.create({
+            data: {
+                tenantId,
+                conversationId,
+                providerMessageId: `manual_${Date.now()}`,
+                contactId: conversation.contactId,
+                content: payload.content,
+                type,
+                mediaUrl,
+                isInternal,
+                direction: 'OUTBOUND',
+                senderType: 'user',
+                status: 'delivered',
+            }
+        });
         if (!isInternal) {
-            operations.push(this.messagingService.sendText({
+            await this.messagingService.sendText({
                 tenantId,
                 phone: conversation.contact.phone,
                 content: payload.content,
-            }));
+            });
         }
         if (conversation.status === 'bot_active' && !isInternal) {
-            operations.push(this.prisma.conversation.update({
+            await this.prisma.conversation.update({
                 where: { id: conversationId },
                 data: { status: 'human_takeover' }
-            }));
+            });
         }
-        const results = await Promise.all(operations);
-        return results[0];
+        this.chatGateway.emitNewMessage(tenantId, msg);
+        return msg;
     }
 };
 exports.ChatService = ChatService;
 exports.ChatService = ChatService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        messaging_service_1.MessagingService])
+        messaging_service_1.MessagingService,
+        chat_gateway_1.ChatGateway])
 ], ChatService);
 //# sourceMappingURL=chat.service.js.map

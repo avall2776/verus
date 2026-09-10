@@ -111,5 +111,21 @@ export declare class ChatController {
         assignedTo: string | null;
         status: string;
     }>;
-    sendMessage(tenantId: string, conversationId: string, payload: SendMessageDto): Promise<any>;
+    sendMessage(tenantId: string, conversationId: string, payload: SendMessageDto): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        contactId: string;
+        status: string;
+        providerMessageId: string | null;
+        content: string;
+        type: string;
+        mediaUrl: string | null;
+        audioTranscription: string | null;
+        isInternal: boolean;
+        fromMe: boolean;
+        direction: string;
+        senderType: string;
+        conversationId: string;
+    }>;
 }

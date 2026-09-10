@@ -41,7 +41,13 @@ let ChatController = class ChatController {
         return this.chatService.assignToUser(tenantId, conversationId, body.userId);
     }
     async sendMessage(tenantId, conversationId, payload) {
-        return this.chatService.sendManualMessage(tenantId, conversationId, payload);
+        try {
+            return await this.chatService.sendManualMessage(tenantId, conversationId, payload);
+        }
+        catch (error) {
+            console.error('ERRO AO ENVIAR MENSAGEM MANUAL:', error);
+            throw error;
+        }
     }
 };
 exports.ChatController = ChatController;

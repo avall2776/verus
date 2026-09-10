@@ -1,9 +1,11 @@
 import { PrismaService } from '../../shared/database/prisma.service';
 import { MessagingService } from '../messaging/messaging.service';
+import { ChatGateway } from './chat.gateway';
 export declare class ChatService {
     private readonly prisma;
     private readonly messagingService;
-    constructor(prisma: PrismaService, messagingService: MessagingService);
+    private readonly chatGateway;
+    constructor(prisma: PrismaService, messagingService: MessagingService, chatGateway: ChatGateway);
     findAllConversations(tenantId: string, status?: string): Promise<({
         contact: {
             id: string;
@@ -113,5 +115,21 @@ export declare class ChatService {
         isInternal?: boolean;
         type?: string;
         mediaUrl?: string;
-    }): Promise<any>;
+    }): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        contactId: string;
+        status: string;
+        providerMessageId: string | null;
+        content: string;
+        type: string;
+        mediaUrl: string | null;
+        audioTranscription: string | null;
+        isInternal: boolean;
+        fromMe: boolean;
+        direction: string;
+        senderType: string;
+        conversationId: string;
+    }>;
 }
