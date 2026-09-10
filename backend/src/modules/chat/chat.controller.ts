@@ -41,6 +41,24 @@ export class ChatController {
     return this.chatService.releaseConversation(tenantId, conversationId);
   }
 
+  @Patch(':id/transfer')
+  async transfer(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+    @Body() body: { departmentId: string },
+  ) {
+    return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId);
+  }
+
+  @Patch(':id/assign')
+  async assign(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+    @Body() body: { userId: string },
+  ) {
+    return this.chatService.assignToUser(tenantId, conversationId, body.userId);
+  }
+
   @Post(':id/messages')
   async sendMessage(
     @CurrentTenant() tenantId: string,

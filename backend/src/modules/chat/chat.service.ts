@@ -19,6 +19,7 @@ export class ChatService {
       where: whereClause,
       include: { 
         contact: true,
+        department: true,
         messages: {
           orderBy: { createdAt: 'desc' },
           take: 1
@@ -71,6 +72,46 @@ export class ChatService {
     return this.prisma.conversation.update({
       where: { id: conversationId },
       data: { status: 'resolved' }
+    });
+  }
+
+  async transferToDepartment(tenantId: string, conversationId: string, departmentId: string) {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId }
+    });
+
+    if (!conversation || conversation.tenantId !== tenantId) {
+      throw new NotFoundException('Conversa não encontrada.');
+    }
+
+    const dept = await this.prisma.department.findUnique({
+      where: { id: departmentId }
+    });
+    if (!dept || dept.tenantId !== tenantId) throw new NotFoundException('Departamento inválido.');
+
+    return this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { departmentId, status: 'open', assignedTo: null } 
+    });
+  }
+
+  async assignToUser(tenantId: string, conversationId: string, userId: string) {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId }
+    });
+
+    if (!conversation || conversation.tenantId !== tenantId) {
+      throw new NotFoundException('Conversa não encontrada.');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId }
+    });
+    if (!user || user.tenantId !== tenantId) throw new NotFoundException('Usuário inválido.');
+
+    return this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { assignedTo: userId, status: 'human_takeover' }
     });
   }
 

@@ -44,6 +44,7 @@ model Tenant {
   plan       Plan     @relation(fields: [planId], references: [id])
   users      User[]
   contacts   Contact[]
+  departments Department[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -73,8 +74,35 @@ model User {
   role      String   // ADMIN, AGENT
   tenantId  String
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  isOnline  Boolean  @default(false)
+  departments UserDepartment[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ------------------------------------------------------
+// TRIAGEM, FILAS E DEPARTAMENTOS
+// ------------------------------------------------------
+
+model Department {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String   // Ex: Vendas, Suporte
+  color     String?
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  users     UserDepartment[]
+  conversations Conversation[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserDepartment {
+  userId       String
+  departmentId String
+  user         User       @relation(fields: [userId], references: [id])
+  department   Department @relation(fields: [departmentId], references: [id])
+  
+  @@id([userId, departmentId])
 }
 
 model Contact {
@@ -97,17 +125,21 @@ model Contact {
 }
 
 model Conversation {
-  id        String   @id @default(uuid())
-  tenantId  String
-  contactId String
-  status    String   @default("bot_active") // bot_active, human_takeover, resolved
-  contact   Contact  @relation(fields: [contactId], references: [id])
-  messages  Message[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  tenantId     String
+  contactId    String
+  departmentId String?
+  assignedTo   String?  // ID do Atendente (User)
+  status       String   @default("waiting") // waiting, bot_active, human_takeover, open, resolved
+  contact      Contact  @relation(fields: [contactId], references: [id])
+  department   Department? @relation(fields: [departmentId], references: [id])
+  messages     Message[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([tenantId])
   @@index([tenantId, status])
+  @@index([departmentId])
 }
 
 model Message {
