@@ -3,41 +3,61 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Bot, MessageSquareWarning, DollarSign, ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    api.get('/metrics/dashboard')
-      .then(res => {
-        setData(res.data);
-      })
-      .catch(err => {
-        console.error("Erro ao carregar dashboard", err);
-        if (err.response?.status === 401) {
-          router.push('/login');
-        } else {
-          setError(true);
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [router]);
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['dashboardMetrics'],
+    queryFn: async () => {
+      const res = await api.get('/metrics/dashboard');
+      return res.data;
+    },
+    retry: false
+  });
 
-  if (loading) {
-    return <div className="p-8 text-gray-500">Carregando Dashboard...</div>;
-  }
-
-  if (error || !data) {
+  if (isError) {
+    if ((error as any).response?.status === 401) {
+      router.push('/login');
+      return null;
+    }
     return (
       <div className="p-8 text-red-400 flex flex-col gap-4">
         <h2>Sua sessão expirou ou ocorreu um erro.</h2>
         <button onClick={() => router.push('/login')} className="px-4 py-2 bg-primary text-white w-fit rounded">
           Fazer Login Novamente
         </button>
+      </div>
+    );
+  }
+
+  if (isLoading || !data) {
+    return (
+      <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-8">
+        <div>
+          <div className="h-8 w-48 bg-gray-800/80 rounded animate-pulse mb-2"></div>
+          <div className="h-4 w-96 bg-gray-800/50 rounded animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-[#0B1224] border border-[#162038] rounded-2xl p-5 flex flex-col gap-4 h-[120px] animate-pulse">
+              <div className="flex justify-between items-start">
+                <div className="w-10 h-10 rounded-xl bg-gray-800/80"></div>
+                <div className="w-16 h-6 rounded-md bg-gray-800/50"></div>
+              </div>
+              <div>
+                <div className="w-32 h-3 bg-gray-800/80 mb-2 rounded"></div>
+                <div className="w-24 h-6 bg-gray-800/80 rounded"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-[#0B1224] border border-[#162038] rounded-2xl p-6 h-[350px] animate-pulse"></div>
+          <div className="bg-[#0B1224] border border-[#162038] rounded-2xl p-6 h-[350px] animate-pulse"></div>
+        </div>
       </div>
     );
   }

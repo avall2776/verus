@@ -78,13 +78,14 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 ## 🎯 O que faremos amanhã (Roadmap Imediato)
 
 ### Fase 12: Unmocking Final e Escalonamento
-- [ ] **Unmocking do Playground (Agent Page):** Remover as mensagens estáticas do componente `Playground` e integrá-lo em tempo real para permitir que o dono da empresa converse com a IA simulando um lead real na tela de configurações.
+- [x] **Unmocking do Playground (Agent Page):** Remover as mensagens estáticas do componente `Playground` e integrá-lo em tempo real para permitir que o dono da empresa converse com a IA simulando um lead real na tela de configurações. [2026-09-10 09:25]
+- [ ] **Otimização de Performance (Routing & Cache):** Diagnóstico e resolução de lentidão ao trocar de telas no frontend, com uso de SWR/React Query e Suspense.
 - [ ] **Integração Base de Conhecimento (RAG Avançado):** Evoluir a memória da IA. Criar uma interface para o cliente fazer upload de PDFs (ex: Tabela de Preços, Catálogos) e processar esses dados em um Vector Database (Pinecone/Supabase pgvector) para a IA ler.
 - [ ] **Múltiplos Tenants Dinâmicos (Onboarding):** Testar e preparar a plataforma para criar novos clientes "self-service" (Empresa A, Empresa B) sem necessidade de popular o banco manualmente via script.
 - [ ] **Testes End-to-End (E2E):** Revisão completa de fluxo: Lead manda zap -> Cai no Dashboard -> Notifica Web -> IA responde -> Humano assume -> IA retoma.
 
 ---
-*Documento autogerado e contínuo - Última atualização: 09/09/2026 às 18:05*
+*Documento autogerado e contínuo - Última atualização: 10/09/2026 às 09:35*
 
 ---
 

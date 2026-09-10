@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, BrainCircuit } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
+import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 
 export default function InboxPage() {
@@ -13,42 +14,52 @@ export default function InboxPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const { socket, isConnected, clearGlobalUnread } = useSocket();
 
-  // 1. Carga inicial: Buscar lista de conversas
+  const { data: initialContacts, isLoading, error: fetchErrorQuery } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: async () => {
+      const { data } = await api.get('/conversations');
+      return data.map((conv: any) => {
+        const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
+        return {
+          id: conv.id,
+          contactId: conv.contact.id,
+          name: conv.contact.name,
+          phone: conv.contact.phone,
+          email: conv.contact.email,
+          lastMsg: lastMsg,
+          time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          isAi: conv.status === 'bot_active',
+          unread: 0,
+          status: conv.status
+        };
+      });
+    },
+    retry: false,
+    refetchOnWindowFocus: false, // Prevents overwriting local websocket state on focus
+  });
+
+  // 1. Sincronizar dados do React Query com o estado local
   useEffect(() => {
-    // Ao abrir a Caixa de Entrada, limpamos a notificação piscante global da Sidebar
     clearGlobalUnread();
-    const fetchConversations = async () => {
-      try {
-        const { data } = await api.get('/conversations');
-        // Mapear para o formato do frontend
-        const mappedContacts = data.map((conv: any) => {
-          const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
-          return {
-            id: conv.id,
-            contactId: conv.contact.id,
-            name: conv.contact.name,
-            phone: conv.contact.phone,
-            email: conv.contact.email,
-            lastMsg: lastMsg,
-            time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            isAi: conv.status === 'bot_active',
-            unread: 0,
-            status: conv.status
-          };
-        });
-        setContacts(mappedContacts);
-        
-        // Auto-selecionar a primeira conversa se nenhuma estiver ativa
-        if (mappedContacts.length > 0) {
-          setActiveChat(prev => prev ? prev : mappedContacts[0].id);
+    if (initialContacts) {
+      setContacts(prev => {
+        // Only update if we don't have contacts yet to prevent overwriting websocket changes
+        if (prev.length === 0) {
+          return initialContacts;
         }
-      } catch (error: any) {
-        console.error("Erro ao buscar conversas:", error);
-        setFetchError(error.message || "Falha de rede (CORS ou Servidor Desligado)");
+        return prev; // Very basic merge strategy to avoid losing unread state
+      });
+      if (initialContacts.length > 0) {
+        setActiveChat(prev => prev ? prev : initialContacts[0].id);
       }
-    };
-    fetchConversations();
-  }, []);
+    }
+  }, [initialContacts, clearGlobalUnread]);
+
+  useEffect(() => {
+    if (fetchErrorQuery) {
+      setFetchError((fetchErrorQuery as any).message || "Falha de rede");
+    }
+  }, [fetchErrorQuery]);
 
   // 2. Buscar mensagens quando o chat ativo mudar
   useEffect(() => {
@@ -212,7 +223,22 @@ export default function InboxPage() {
               ERRO F5: {fetchError}. O navegador bloqueou o carregamento!
             </div>
           )}
-          {contacts.map((contact) => (
+          
+          {isLoading && contacts.length === 0 ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="p-4 border-b border-[#162038] flex items-start gap-3 animate-pulse">
+                <div className="w-10 h-10 rounded-full bg-gray-800/80 shrink-0"></div>
+                <div className="flex-1">
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="h-3 w-20 bg-gray-800/80 rounded"></div>
+                    <div className="h-2 w-8 bg-gray-800/50 rounded"></div>
+                  </div>
+                  <div className="h-2 w-32 bg-gray-800/50 rounded"></div>
+                </div>
+              </div>
+            ))
+          ) : (
+            contacts.map((contact) => (
             <div 
               key={contact.id} 
               onClick={() => {
@@ -253,7 +279,7 @@ export default function InboxPage() {
                 </div>
               )}
             </div>
-          ))}
+          )))}
         </div>
       </div>
 

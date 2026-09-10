@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { Save, Sliders, Bot, AlertCircle, RefreshCw, Send, Loader2, BookOpen } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 
 export default function AgentPage() {
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
   const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([]);
@@ -21,29 +21,26 @@ export default function AgentPage() {
     aiTemperature: 0.7
   });
 
-  useEffect(() => {
-    fetchConfig();
-  }, []);
-
-  const fetchConfig = async () => {
-    try {
-      setLoading(true);
+  const { data, isLoading } = useQuery({
+    queryKey: ['agentConfig'],
+    queryFn: async () => {
       const res = await api.get('/agent/config');
-      if (res.data) {
-        setConfig({
-          aiName: res.data.aiName || "Vitor (IA)",
-          aiModel: res.data.aiModel || "gpt-4o-mini",
-          aiPrompt: res.data.aiPrompt || "",
-          aiKnowledgeBase: res.data.aiKnowledgeBase || "",
-          aiTemperature: typeof res.data.aiTemperature === 'number' ? res.data.aiTemperature : 0.7
-        });
-      }
-    } catch (error) {
-      toast.error("Erro ao carregar configurações da IA.");
-    } finally {
-      setLoading(false);
+      return res.data;
+    },
+    retry: false
+  });
+
+  useEffect(() => {
+    if (data) {
+      setConfig({
+        aiName: data.aiName || "Vitor (IA)",
+        aiModel: data.aiModel || "gpt-4o-mini",
+        aiPrompt: data.aiPrompt || "",
+        aiKnowledgeBase: data.aiKnowledgeBase || "",
+        aiTemperature: typeof data.aiTemperature === 'number' ? data.aiTemperature : 0.7
+      });
     }
-  };
+  }, [data]);
 
   const handleSave = async () => {
     try {
@@ -93,10 +90,14 @@ export default function AgentPage() {
     setCurrentMessage("");
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full w-full">
-        <Loader2 className="animate-spin text-accent" size={32} />
+      <div className="flex flex-col lg:flex-row h-full w-full gap-6">
+        <div className="flex-1 flex flex-col gap-6">
+          <div className="h-16 w-3/4 bg-[#0B1224] border border-[#162038] rounded-2xl animate-pulse"></div>
+          <div className="bg-[#0B1224] border border-[#162038] rounded-2xl p-6 flex flex-col gap-6 h-[600px] animate-pulse"></div>
+        </div>
+        <div className="w-full lg:w-[400px] bg-[#0B1224] border border-[#162038] rounded-2xl h-[600px] animate-pulse"></div>
       </div>
     );
   }
