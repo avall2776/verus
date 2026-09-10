@@ -190,12 +190,15 @@ export default function InboxPage() {
     }
 
     try {
-      const payload = { 
+      const payload: any = { 
         content: content || (selectedFile ? selectedFile.name : ''),
         isInternal: isInternalMode,
-        type,
-        mediaUrl
+        type
       };
+      
+      if (mediaUrl) {
+        payload.mediaUrl = mediaUrl;
+      }
       
       const { data } = await api.post(`/conversations/${activeChat}/messages`, payload);
       setMessages(prev => [...prev, data]);
