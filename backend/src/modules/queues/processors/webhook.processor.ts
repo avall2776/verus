@@ -74,13 +74,13 @@ export class WebhookProcessor extends WorkerHost {
       }
     });
 
-    // 4. Upsert da Conversation (Sempre pega a conversa ativa, ou cria uma)
+    // 4. Buscar a conversa mais recente ou criar uma
     let conversation = await this.prisma.conversation.findFirst({
       where: {
         tenantId,
         contactId: contact.id,
-        status: { not: 'resolved' } // bot_active ou human_takeover
-      }
+      },
+      orderBy: { updatedAt: 'desc' }
     });
 
     if (!conversation) {
@@ -91,6 +91,13 @@ export class WebhookProcessor extends WorkerHost {
           status: 'bot_active',
         }
       });
+    } else if (conversation.status === 'resolved') {
+      // Reabre a mesma conversa se o cliente voltar a mandar mensagem
+      conversation = await this.prisma.conversation.update({
+        where: { id: conversation.id },
+        data: { status: 'bot_active' }
+      });
+      this.logger.log(`Conversa [${conversation.id}] reaberta (status -> bot_active).`);
     }
 
     // 5. Persistir a Mensagem (Inbound)
