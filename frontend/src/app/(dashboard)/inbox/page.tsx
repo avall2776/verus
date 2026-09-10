@@ -207,8 +207,9 @@ export default function InboxPage() {
       if (!isInternalMode) {
         setContacts(prev => prev.map(c => c.id === activeChat ? { ...c, isAi: false, status: 'human_takeover', lastMsg: content } : c));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao enviar mensagem", error);
+      alert(`ERRO CRÍTICO AO ENVIAR: ${error.response?.data?.message || error.message || 'Erro Desconhecido'}`);
     }
   };
 
