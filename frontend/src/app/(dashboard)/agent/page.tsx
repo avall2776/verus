@@ -128,8 +128,8 @@ export default function AgentPage() {
         config: config
       });
       
-      if (res.data && res.data.resposta_para_cliente) {
-        setMessages([...newMessages, { role: 'assistant', content: res.data.resposta_para_cliente }]);
+      if (res.data && res.data.resposta_cliente) {
+        setMessages([...newMessages, { role: 'assistant', content: res.data.resposta_cliente }]);
       } else {
         toast.error("Erro ao processar resposta.");
       }
