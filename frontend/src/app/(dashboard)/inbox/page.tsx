@@ -188,31 +188,41 @@ export default function InboxPage() {
   const unreadCount = contacts.filter(c => c.unread > 0).length;
 
   return (
-    <div className="flex h-full w-full gap-4 pb-4 overflow-hidden">
+    <div className="flex h-full w-full bg-[#0B1224] overflow-hidden">
       
       {/* 1. PAINEL ESQUERDO: Lista de Conversas */}
-      <div className="w-80 flex-shrink-0 bg-panel/40 border border-gray-800/60 rounded-2xl flex flex-col overflow-hidden backdrop-blur-xl">
+      <div className="w-[340px] flex-shrink-0 bg-[#0F172A] border-r border-gray-800 flex flex-col overflow-hidden z-10">
         {/* Header Lista */}
-        <div className="p-4 border-b border-gray-800/60 flex flex-col gap-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            Mensagens 
-            {unreadCount > 0 && (
-              <span className="text-xs bg-accent/20 text-accent px-2 py-0.5 rounded-full">
-                {unreadCount} {unreadCount === 1 ? 'Nova' : 'Novas'}
-              </span>
-            )}
-          </h2>
+        <div className="p-4 border-b border-gray-800 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-white tracking-tight">Atendimentos</h2>
+            <div className="flex gap-2">
+              <button className="text-gray-400 hover:text-white transition-colors"><Filter size={18} /></button>
+              <button className="text-gray-400 hover:text-white transition-colors"><MoreVertical size={18} /></button>
+            </div>
+          </div>
+          
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
             <input 
               type="text" 
-              placeholder="Buscar nas conversas..." 
-              className="w-full bg-background border border-gray-800 rounded-lg pl-9 pr-3 py-2 text-sm text-text-primary outline-none focus:border-accent/50"
+              placeholder="Pesquisar..." 
+              className="w-full bg-[#1E293B] border border-gray-700/50 rounded-lg pl-9 pr-3 py-1.5 text-sm text-text-primary outline-none focus:border-accent/50 focus:bg-[#0B1224] transition-all"
             />
           </div>
-          <div className="flex gap-2">
-            <button className="flex-1 text-xs font-semibold bg-primary/20 text-primary py-1.5 rounded-md hover:bg-primary/30 transition-colors">Todos</button>
-            <button className="flex-1 text-xs font-semibold bg-gray-800 text-text-secondary py-1.5 rounded-md hover:bg-gray-700 transition-colors">Aguardando</button>
+          
+          {/* Abas Estilo Lero */}
+          <div className="flex gap-1 bg-[#1E293B] p-1 rounded-lg mt-1">
+            <button className="flex-1 text-xs font-bold bg-[#0B1224] text-white py-1.5 rounded shadow-sm flex items-center justify-center gap-1">
+              Aguardando
+              {unreadCount > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 rounded-full">{unreadCount}</span>}
+            </button>
+            <button className="flex-1 text-xs font-semibold text-gray-400 py-1.5 rounded hover:text-gray-200 transition-colors">
+              Ativos
+            </button>
+            <button className="flex-1 text-xs font-semibold text-gray-400 py-1.5 rounded hover:text-gray-200 transition-colors">
+              Fechados
+            </button>
           </div>
         </div>
 
@@ -246,9 +256,9 @@ export default function InboxPage() {
                 // Limpa a notificação de piscar quando o usuário clica
                 setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, hasNewMessage: false, unread: 0 } : c));
               }}
-              className={`p-4 border-b border-gray-800/40 cursor-pointer transition-all hover:bg-gray-800/30 flex items-start gap-3 relative
-                ${activeChat === contact.id ? 'bg-gray-800/50 shadow-[inset_3px_0_0_0_rgba(0,210,255,1)]' : ''}
-                ${contact.hasNewMessage ? 'bg-primary/10 border-primary/50 shadow-[0_0_15px_rgba(0,210,255,0.3)] animate-pulse' : ''}
+              className={`p-3 border-b border-gray-800/40 cursor-pointer transition-all hover:bg-gray-800/60 flex items-start gap-3 relative group
+                ${activeChat === contact.id ? 'bg-[#1E293B] border-l-2 border-l-accent' : 'border-l-2 border-l-transparent'}
+                ${contact.hasNewMessage ? 'bg-primary/5 animate-pulse' : ''}
               `}
             >
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white font-bold shrink-0 relative">
@@ -284,12 +294,13 @@ export default function InboxPage() {
       </div>
 
       {/* 2. PAINEL CENTRAL: Janela de Chat */}
-      <div className="flex-1 bg-panel/30 border border-gray-800/60 rounded-2xl flex flex-col overflow-hidden backdrop-blur-md relative">
-        {/* Glow de Fundo */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-background/0 to-background/0 pointer-events-none" />
+      <div className="flex-1 bg-background flex flex-col overflow-hidden relative border-r border-gray-800">
+        
+        {/* Glow de Fundo Super Sutil */}
+        <div className="absolute inset-0 bg-[url('https://i.ibb.co/3s1f9bM/wa-bg.png')] opacity-[0.03] pointer-events-none" />
 
         {/* Chat Header */}
-        <div className="h-16 px-6 border-b border-gray-800/60 flex items-center justify-between bg-panel/50 backdrop-blur-xl z-10">
+        <div className="h-16 px-4 border-b border-gray-800 flex items-center justify-between bg-[#0F172A] z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-700 to-gray-800 flex items-center justify-center text-white font-bold">
               {activeContactData ? activeContactData.name.charAt(0) : 'C'}
@@ -318,7 +329,7 @@ export default function InboxPage() {
                 Resolvido
               </span>
             )}
-            <button className="text-gray-400 hover:text-white transition-colors"><MoreVertical size={20} /></button>
+            <button className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-800"><MoreVertical size={20} /></button>
           </div>
         </div>
 
@@ -361,14 +372,14 @@ export default function InboxPage() {
         </div>
 
         {/* Chat Input */}
-        <div className="p-4 border-t border-gray-800/60 bg-panel/50 backdrop-blur-xl z-10">
-          <div className="bg-background border border-gray-800/80 rounded-xl p-2 flex items-end gap-2 focus-within:border-primary/50 transition-colors">
-            <button className="p-2 text-gray-400 hover:text-accent transition-colors rounded-lg hover:bg-gray-800/50">
-              <Paperclip size={20} />
+        <div className="p-3 border-t border-gray-800 bg-[#0F172A] z-10">
+          <div className="bg-[#1E293B] border border-gray-700 rounded-xl p-1.5 flex items-end gap-2 focus-within:border-gray-500 transition-colors shadow-sm">
+            <button className="p-2 text-gray-400 hover:text-accent transition-colors rounded-lg hover:bg-gray-800/80">
+              <Paperclip size={22} />
             </button>
             <textarea 
-              placeholder="Digite uma mensagem interna ou assuma a conversa..." 
-              className="flex-1 bg-transparent text-sm text-white resize-none outline-none py-2 max-h-32 placeholder:text-gray-600"
+              placeholder="Digite uma mensagem ou digite / para respostas rápidas..." 
+              className="flex-1 bg-transparent text-[0.95rem] text-white resize-none outline-none py-2.5 max-h-32 placeholder:text-gray-500"
               rows={1}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
@@ -379,16 +390,16 @@ export default function InboxPage() {
                 }
               }}
             />
-            <button onClick={handleSendMessage} className="p-3 bg-primary text-white rounded-lg hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(0,85,255,0.4)] transition-all">
-              <Send size={18} />
+            <button onClick={handleSendMessage} className="p-3 bg-accent text-[#0B1224] rounded-lg hover:bg-accent/90 transition-colors shadow-md">
+              <Send size={18} className="ml-1" />
             </button>
           </div>
         </div>
       </div>
 
       {/* 3. PAINEL DIREITO: Contexto do Lead */}
-      <div className="w-72 flex-shrink-0 bg-panel/40 border border-gray-800/60 rounded-2xl flex flex-col overflow-y-auto backdrop-blur-xl">
-        <div className="p-6 flex flex-col items-center border-b border-gray-800/60">
+      <div className="w-[320px] flex-shrink-0 bg-[#0F172A] flex flex-col overflow-y-auto">
+        <div className="p-6 flex flex-col items-center border-b border-gray-800">
           <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-black text-3xl shadow-[0_0_20px_rgba(0,210,255,0.2)] mb-4">
             {activeContactData ? activeContactData.name.charAt(0) : '?'}
           </div>

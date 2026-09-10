@@ -10,8 +10,8 @@ export declare class ChatController {
             createdAt: Date;
             updatedAt: Date;
             name: string;
-            phone: string | null;
             email: string | null;
+            phone: string | null;
             source: string;
             tags: string[];
         };

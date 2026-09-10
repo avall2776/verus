@@ -11,8 +11,8 @@ export declare class ChatService {
             createdAt: Date;
             updatedAt: Date;
             name: string;
-            phone: string | null;
             email: string | null;
+            phone: string | null;
             source: string;
             tags: string[];
         };

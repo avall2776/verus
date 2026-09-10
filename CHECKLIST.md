@@ -84,7 +84,18 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [ ] **Testes End-to-End (E2E):** Revisão completa de fluxo: Lead manda zap -> Cai no Dashboard -> Notifica Web -> IA responde -> Humano assume -> IA retoma.
 
 ---
-*Documento autogerado e contínuo - Última atualização: 10/09/2026 às 13:40*
+
+## 🎯 O que faremos agora (Roadmap Imediato)
+
+### Fase 13: Evolução Omnichannel Enterprise
+- [ ] **Etapa 0: Revamp Visual e UX (High Density):** Redesenhar o layout do `/inbox` para adotar a estrutura de 3 colunas (estilo WhatsApp Web Pro), com ícones de status, barra de pesquisa refinada, e Modal expansível no Kanban do CRM.
+- [ ] **Etapa 1: Triagem e Filas:** Implementar `Departamentos` no banco de dados e UI para abas (Aguardando, Meus Atendimentos, Resolvidos).
+- [ ] **Etapa 2: Mensageria Avançada:** Suporte a arquivos (upload S3), Notas Internas (Privadas) e Respostas Rápidas (`/`).
+- [ ] **Etapa 3: CRM 360 Extensível:** Gerenciador de `Tags` coloridas dinâmicas e `Custom Fields` acoplados na barra lateral direita do Chat e no Card do Lead.
+- [ ] **Etapa 4: Automações (Workflow Builder):** Motor de disparos automáticos baseados em tempo e gatilhos lógicos acionados via BullMQ.
+
+---
+*Documento autogerado e contínuo - Última atualização: 10/09/2026 às 14:05*
 
 ---
 

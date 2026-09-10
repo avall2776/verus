@@ -28,18 +28,16 @@ export default function Sidebar() {
   const { hasGlobalUnread } = useSocket();
 
   return (
-    <aside className="w-16 md:w-64 bg-panel border-r border-gray-800 flex flex-col justify-between h-full transition-all duration-300 relative z-20">
+    <aside className="w-16 bg-[#0B1224] border-r border-gray-800 flex flex-col justify-between h-full transition-all duration-300 relative z-20 shrink-0">
       
       {/* Logo Area */}
       <div>
-        <div className="h-16 flex items-center justify-center md:justify-start md:px-6 border-b border-gray-800">
-          <span className="font-black text-white hidden md:block text-[1.35rem] tracking-widest uppercase">Logotipo</span>
-          <span className="font-black text-white md:hidden text-2xl">L</span>
+        <div className="h-16 flex items-center justify-center border-b border-gray-800">
+          <span className="font-black text-white text-2xl tracking-tighter">V<span className="text-accent">.</span></span>
         </div>
 
         {/* Navegação Principal */}
-        <nav className="p-4 flex flex-col gap-2 mt-2">
-          <p className="hidden md:block text-[0.65rem] text-gray-500 uppercase font-bold tracking-widest px-2 mb-2">Menu Principal</p>
+        <nav className="p-3 flex flex-col gap-3 mt-2 items-center">
           
           {MAIN_MENU.map((item) => {
             const isActive = pathname.startsWith(item.href);
@@ -51,18 +49,21 @@ export default function Sidebar() {
                 key={item.href} 
                 href={item.href} 
                 prefetch={true}
-                className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group relative
+                title={item.name}
+                className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 group relative
                   ${isActive 
-                    ? 'bg-primary/10 text-accent shadow-[inset_4px_0_0_0_rgba(0,210,255,1)]' 
+                    ? 'bg-primary/20 text-accent shadow-[inset_2px_0_0_0_rgba(0,210,255,1)]' 
                     : 'text-text-secondary hover:bg-gray-800/50 hover:text-white'
                   }
                   ${shouldBlink ? 'bg-primary/20 border border-primary/50 shadow-[0_0_15px_rgba(0,210,255,0.4)] animate-pulse text-white' : ''}
                 `}
               >
-                <item.icon size={20} className={isActive || shouldBlink ? 'text-accent drop-shadow-[0_0_8px_rgba(0,210,255,0.6)]' : 'group-hover:text-accent transition-colors'} />
-                <span className={`hidden md:block font-semibold text-[0.9rem] ${isActive || shouldBlink ? 'text-white' : ''}`}>
+                <item.icon size={22} className={isActive || shouldBlink ? 'text-accent drop-shadow-[0_0_8px_rgba(0,210,255,0.6)]' : 'group-hover:text-accent transition-colors'} />
+                
+                {/* Tooltip on Hover */}
+                <div className="absolute left-14 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-lg border border-gray-700">
                   {item.name}
-                </span>
+                </div>
               </Link>
             );
           })}
@@ -70,30 +71,30 @@ export default function Sidebar() {
       </div>
 
       {/* Configurações & Perfil */}
-      <div className="p-4 border-t border-gray-800 flex flex-col gap-2">
+      <div className="p-3 border-t border-gray-800 flex flex-col gap-3 items-center">
         <Link 
           href="/settings" 
           prefetch={true}
-          className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group
+          title="Configurações"
+          className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 group relative
             ${pathname.startsWith('/settings') 
-              ? 'bg-primary/10 text-accent shadow-[inset_4px_0_0_0_rgba(0,210,255,1)]' 
+              ? 'bg-primary/20 text-accent shadow-[inset_2px_0_0_0_rgba(0,210,255,1)]' 
               : 'text-text-secondary hover:bg-gray-800/50 hover:text-white'
             }`}
         >
-          <Settings size={20} className={pathname.startsWith('/settings') ? 'text-accent' : 'group-hover:text-accent transition-colors'} />
-          <span className="hidden md:block font-semibold text-[0.9rem]">Configurações</span>
+          <Settings size={22} className={pathname.startsWith('/settings') ? 'text-accent' : 'group-hover:text-accent transition-colors'} />
+          <div className="absolute left-14 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-lg border border-gray-700">
+            Configurações
+          </div>
         </Link>
         
-        {/* User Card */}
-        <div className="mt-2 flex items-center gap-3 p-3 bg-[#0B1224] border border-gray-800/60 rounded-xl cursor-pointer hover:border-accent/40 transition-colors group">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-bold text-sm shrink-0">
-            A
+        {/* User Card Slim */}
+        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-bold text-sm shrink-0 cursor-pointer shadow-md hover:shadow-accent/50 transition-shadow relative group">
+          A
+          <div className="absolute left-14 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-lg border border-gray-700 flex flex-col">
+            <span className="font-bold">Admin VERSUS</span>
+            <span className="text-[10px] text-gray-400">Sair da conta</span>
           </div>
-          <div className="hidden md:flex flex-col overflow-hidden w-full">
-            <span className="text-sm font-bold text-white truncate">Admin VERSUS</span>
-            <span className="text-xs text-text-secondary truncate">Plano Enterprise</span>
-          </div>
-          <LogOut size={16} className="text-gray-500 group-hover:text-red-400 hidden md:block shrink-0 transition-colors" />
         </div>
       </div>
     </aside>
