@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, BrainCircuit } from "lucide-react";
+import { Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, BrainCircuit, Lock, Image as ImageIcon, FileText, Mic, X } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
@@ -13,6 +13,9 @@ export default function InboxPage() {
   const [inputText, setInputText] = useState("");
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'waiting' | 'active' | 'resolved'>('active');
+  const [isInternalMode, setIsInternalMode] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { socket, isConnected, clearGlobalUnread } = useSocket();
 
   const { data: initialContacts, isLoading, error: fetchErrorQuery } = useQuery({
@@ -170,18 +173,46 @@ export default function InboxPage() {
   };
 
   const handleSendMessage = async () => {
-    if (!activeChat || !inputText.trim()) return;
+    if (!activeChat || (!inputText.trim() && !selectedFile)) return;
+    
     const content = inputText;
     setInputText(""); // limpa o input
+    setShowAttachments(false);
+    setSelectedFile(null);
+    
+    // WIP: Lógica de upload p/ Supabase
+    let mediaUrl = null;
+    let type = 'text';
+    if (selectedFile) {
+      // Mocked URL. In production, upload to Supabase Storage 'versus-media' bucket
+      mediaUrl = `https://storage.supabase.com/versus-media/${selectedFile.name}`;
+      type = selectedFile.type.startsWith('image/') ? 'image' : selectedFile.type.startsWith('audio/') ? 'audio' : 'document';
+    }
+
     try {
-      const { data } = await api.post(`/conversations/${activeChat}/messages`, { content });
-      // Inserimos a mensagem disparada localmente
+      const payload = { 
+        content: content || (selectedFile ? selectedFile.name : ''),
+        isInternal: isInternalMode,
+        type,
+        mediaUrl
+      };
+      
+      const { data } = await api.post(`/conversations/${activeChat}/messages`, payload);
       setMessages(prev => [...prev, data]);
       
       // Auto-assume a conversa se era robô, já que um humano mandou a mensagem
-      setContacts(prev => prev.map(c => c.id === activeChat ? { ...c, isAi: false, status: 'human_takeover', lastMsg: content } : c));
+      if (!isInternalMode) {
+        setContacts(prev => prev.map(c => c.id === activeChat ? { ...c, isAi: false, status: 'human_takeover', lastMsg: content } : c));
+      }
     } catch (error) {
       console.error("Erro ao enviar mensagem", error);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+      setShowAttachments(false);
     }
   };
 
@@ -378,15 +409,36 @@ export default function InboxPage() {
               return (
                 <div key={i} className={`flex flex-col gap-1 max-w-[70%] ${isMe ? 'self-end items-end' : ''}`}>
                   <div className={`p-3 text-sm border shadow-sm relative ${
-                    isMe 
-                      ? 'bg-primary/20 text-blue-100 rounded-2xl rounded-tr-sm border-primary/30 shadow-[0_0_15px_rgba(0,85,255,0.1)]' 
-                      : 'bg-gray-800/80 text-text-primary rounded-2xl rounded-tl-sm border-gray-700/50'
+                    msg.isInternal
+                      ? 'bg-amber-500/10 text-amber-100 rounded-2xl rounded-tr-sm border-amber-500/30'
+                      : isMe 
+                        ? 'bg-primary/20 text-blue-100 rounded-2xl rounded-tr-sm border-primary/30 shadow-[0_0_15px_rgba(0,85,255,0.1)]' 
+                        : 'bg-gray-800/80 text-text-primary rounded-2xl rounded-tl-sm border-gray-700/50'
                   }`}>
-                    {isAi && (
+                    {msg.isInternal && (
+                      <div className="flex items-center gap-1 text-amber-500 font-bold mb-1 border-b border-amber-500/20 pb-1">
+                        <Lock size={12} /> <span className="text-[0.65rem] uppercase tracking-wider">Nota Interna (Visível apenas p/ Equipe)</span>
+                      </div>
+                    )}
+                    {isAi && !msg.isInternal && (
                       <div className="absolute -top-3 -right-2 bg-[#0B1224] border border-accent/50 text-accent text-[0.55rem] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                         <Bot size={10} /> IA VITOR
                       </div>
                     )}
+                    
+                    {/* Renderização de Mídia */}
+                    {msg.mediaUrl && (
+                      <div className="mb-2">
+                        {msg.type === 'image' && <img src={msg.mediaUrl} alt="Anexo" className="rounded-lg max-h-48 object-cover" />}
+                        {msg.type === 'audio' && <audio src={msg.mediaUrl} controls className="h-8 max-w-[200px]" />}
+                        {msg.type === 'document' && (
+                          <div className="flex items-center gap-2 p-2 bg-black/20 rounded border border-white/10">
+                            <FileText size={16} /> <span className="text-xs truncate">{msg.content}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     {msg.content}
                   </div>
                   <span className="text-[0.65rem] text-gray-500 mx-1">
@@ -399,15 +451,76 @@ export default function InboxPage() {
 
         </div>
 
-        {/* Chat Input */}
-        <div className="p-3 border-t border-gray-800 bg-[#0F172A] z-10">
-          <div className="bg-[#1E293B] border border-gray-700 rounded-xl p-1.5 flex items-end gap-2 focus-within:border-gray-500 transition-colors shadow-sm">
-            <button className="p-2 text-gray-400 hover:text-accent transition-colors rounded-lg hover:bg-gray-800/80">
-              <Paperclip size={22} />
+        {/* Chat Input Area */}
+        <div className="p-3 border-t border-gray-800 bg-[#0F172A] z-10 flex flex-col gap-2">
+          
+          {/* File Preview */}
+          {selectedFile && (
+            <div className="bg-[#1E293B] border border-gray-700 rounded-lg p-2 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-gray-300">
+                <FileText size={16} className="text-accent" />
+                <span className="truncate max-w-[200px]">{selectedFile.name}</span>
+              </div>
+              <button onClick={() => setSelectedFile(null)} className="text-gray-500 hover:text-red-400 p-1">
+                <X size={16} />
+              </button>
+            </div>
+          )}
+          
+          {/* Abas Externa / Interna */}
+          <div className="flex gap-4 px-1">
+            <button 
+              onClick={() => setIsInternalMode(false)}
+              className={`text-[0.7rem] uppercase tracking-wider font-bold pb-1 transition-all ${!isInternalMode ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-300'}`}
+            >
+              Mensagem Externa
             </button>
+            <button 
+              onClick={() => setIsInternalMode(true)}
+              className={`text-[0.7rem] uppercase tracking-wider font-bold pb-1 transition-all ${isInternalMode ? 'text-amber-500 border-b-2 border-amber-500' : 'text-gray-500 hover:text-gray-300 flex items-center gap-1'}`}
+            >
+              <Lock size={10} className="inline mb-0.5"/> Nota Interna (Equipe)
+            </button>
+          </div>
+
+          <div className={`border rounded-xl p-1.5 flex items-end gap-2 transition-colors shadow-sm relative
+            ${isInternalMode 
+              ? 'bg-amber-500/10 border-amber-500/40 focus-within:border-amber-500' 
+              : 'bg-[#1E293B] border-gray-700 focus-within:border-gray-500'
+            }
+          `}>
+            
+            {/* Popover de Anexos */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowAttachments(!showAttachments)}
+                className={`p-2 transition-colors rounded-lg ${isInternalMode ? 'text-amber-400 hover:bg-amber-500/20' : 'text-gray-400 hover:text-accent hover:bg-gray-800/80'}`}
+              >
+                <Paperclip size={22} />
+              </button>
+              
+              {showAttachments && (
+                <div className="absolute bottom-12 left-0 bg-[#1E293B] border border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-xl p-2 flex flex-col gap-1 w-48 z-50 animate-in slide-in-from-bottom-2">
+                  <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg cursor-pointer transition-colors">
+                    <ImageIcon size={16} className="text-blue-400" /> Foto / Vídeo
+                    <input type="file" className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
+                  </label>
+                  <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg cursor-pointer transition-colors">
+                    <FileText size={16} className="text-purple-400" /> Documento
+                    <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileSelect} />
+                  </label>
+                  <button className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors text-left">
+                    <Mic size={16} className="text-green-400" /> Gravar Áudio
+                  </button>
+                </div>
+              )}
+            </div>
+
             <textarea 
-              placeholder="Digite uma mensagem ou digite / para respostas rápidas..." 
-              className="flex-1 bg-transparent text-[0.95rem] text-white resize-none outline-none py-2.5 max-h-32 placeholder:text-gray-500"
+              placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem ou digite / para respostas rápidas..."} 
+              className={`flex-1 bg-transparent text-[0.95rem] resize-none outline-none py-2.5 max-h-32 
+                ${isInternalMode ? 'text-amber-100 placeholder:text-amber-500/50' : 'text-white placeholder:text-gray-500'}
+              `}
               rows={1}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
@@ -418,8 +531,16 @@ export default function InboxPage() {
                 }
               }}
             />
-            <button onClick={handleSendMessage} className="p-3 bg-accent text-[#0B1224] rounded-lg hover:bg-accent/90 transition-colors shadow-md">
-              <Send size={18} className="ml-1" />
+            <button 
+              onClick={handleSendMessage} 
+              className={`p-3 rounded-lg transition-colors shadow-md flex items-center justify-center
+                ${isInternalMode 
+                  ? 'bg-amber-500 hover:bg-amber-600 text-amber-950' 
+                  : 'bg-accent text-[#0B1224] hover:bg-accent/90'
+                }
+              `}
+            >
+              <Send size={18} className={!isInternalMode ? "ml-1" : ""} />
             </button>
           </div>
         </div>
