@@ -9,6 +9,10 @@ export default function AgentPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
+  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([]);
+  const [currentMessage, setCurrentMessage] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  
   const [config, setConfig] = useState({
     aiName: "Vitor (IA)",
     aiModel: "gpt-4o-mini",
@@ -56,6 +60,37 @@ export default function AgentPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setConfig(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSendMessage = async () => {
+    if (!currentMessage.trim() || isGenerating) return;
+    
+    const newMessages = [...messages, { role: 'user', content: currentMessage }] as {role: 'user' | 'assistant', content: string}[];
+    setMessages(newMessages);
+    setCurrentMessage("");
+    setIsGenerating(true);
+
+    try {
+      const res = await api.post('/agent/playground', {
+        messages: newMessages,
+        config: config
+      });
+      
+      if (res.data && res.data.resposta_para_cliente) {
+        setMessages([...newMessages, { role: 'assistant', content: res.data.resposta_para_cliente }]);
+      } else {
+        toast.error("Erro ao processar resposta.");
+      }
+    } catch (error) {
+      toast.error("Erro na comunicação com a IA.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const clearChat = () => {
+    setMessages([]);
+    setCurrentMessage("");
   };
 
   if (loading) {
@@ -187,21 +222,42 @@ export default function AgentPage() {
                 <p className="text-[0.65rem] text-gray-400">Fale com {config.aiName}</p>
               </div>
             </div>
-            <button className="text-gray-500 hover:text-accent transition-colors" title="Limpar conversa">
+            <button 
+              onClick={clearChat}
+              className="text-gray-500 hover:text-accent transition-colors" 
+              title="Limpar conversa"
+            >
               <RefreshCw size={16} />
             </button>
           </div>
 
-          {/* Área de Mensagens (Mock) */}
+          {/* Área de Mensagens */}
           <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-background/0 to-background/0">
             
-            <div className="bg-gray-800/80 text-text-primary p-3 rounded-2xl rounded-tr-sm text-sm border border-gray-700/50 max-w-[85%] self-end">
-              Olá, tem alguém aí?
-            </div>
+            {messages.length === 0 && (
+              <div className="bg-primary/20 text-blue-100 p-3 rounded-2xl rounded-tl-sm text-sm border border-primary/30 shadow-[0_0_15px_rgba(0,85,255,0.1)] max-w-[85%] self-start relative">
+                 Olá! Aqui é {config.aiName}. Teste as configurações me enviando uma mensagem abaixo!
+              </div>
+            )}
 
-            <div className="bg-primary/20 text-blue-100 p-3 rounded-2xl rounded-tl-sm text-sm border border-primary/30 shadow-[0_0_15px_rgba(0,85,255,0.1)] max-w-[85%] self-start relative">
-               Olá! Aqui é {config.aiName}. Tudo ótimo por aqui! Como posso ajudar sua empresa hoje a vender mais?
-            </div>
+            {messages.map((msg, idx) => (
+              <div 
+                key={idx}
+                className={`p-3 rounded-2xl text-sm border max-w-[85%] ${
+                  msg.role === 'user' 
+                  ? 'bg-gray-800/80 text-text-primary rounded-tr-sm border-gray-700/50 self-end' 
+                  : 'bg-primary/20 text-blue-100 rounded-tl-sm border-primary/30 shadow-[0_0_15px_rgba(0,85,255,0.1)] self-start'
+                }`}
+              >
+                {msg.content}
+              </div>
+            ))}
+
+            {isGenerating && (
+              <div className="bg-primary/20 text-blue-100 p-3 rounded-2xl rounded-tl-sm text-sm border border-primary/30 shadow-[0_0_15px_rgba(0,85,255,0.1)] max-w-[85%] self-start flex items-center gap-2">
+                <Loader2 size={14} className="animate-spin" /> Digitando...
+              </div>
+            )}
 
           </div>
 
@@ -210,10 +266,17 @@ export default function AgentPage() {
             <div className="bg-background border border-gray-700 rounded-xl p-1.5 flex items-center gap-2">
               <input 
                 type="text" 
+                value={currentMessage}
+                onChange={(e) => setCurrentMessage(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Teste uma mensagem..." 
                 className="flex-1 bg-transparent px-3 text-sm text-white outline-none placeholder:text-gray-600"
               />
-              <button className="p-2 bg-accent text-background rounded-lg hover:bg-accent/80 transition-colors">
+              <button 
+                onClick={handleSendMessage}
+                disabled={isGenerating || !currentMessage.trim()}
+                className="p-2 bg-accent text-background rounded-lg hover:bg-accent/80 disabled:opacity-50 transition-colors"
+              >
                 <Send size={16} />
               </button>
             </div>
