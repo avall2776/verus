@@ -117,6 +117,19 @@ export class WebhookProcessor extends WorkerHost {
 
     // 6. Integração com Fase 4: Despachar para fila de IA APENAS se o bot estiver ativo! (Handoff)
     if (conversation.status === 'bot_active') {
+      const jobId = `ai_reply_${conversation.id}`;
+      
+      // Debounce: Remove job anterior se ainda não começou a processar
+      const existingJob = await this.aiQueue.getJob(jobId);
+      if (existingJob) {
+        const state = await existingJob.getState();
+        if (state === 'delayed' || state === 'waiting') {
+          await existingJob.remove();
+          this.logger.debug(`Debounce: Job anterior cancelado para conversa [${conversation.id}]`);
+        }
+      }
+
+      // Adiciona o novo job com delay de 10 segundos
       await this.aiQueue.add(
         'generate-reply',
         {
@@ -124,9 +137,14 @@ export class WebhookProcessor extends WorkerHost {
           conversationId: conversation.id,
           contactId: contact.id,
         },
-        { attempts: 2, backoff: { type: 'fixed', delay: 2000 } }
+        { 
+          jobId, 
+          delay: 10000, // 10 segundos de buffer
+          attempts: 2, 
+          backoff: { type: 'fixed', delay: 2000 } 
+        }
       );
-      this.logger.log(`Conversa [${conversation.id}] encaminhada para processamento de IA.`);
+      this.logger.log(`Conversa [${conversation.id}] agendada para IA em 10 segundos (Buffer).`);
     } else {
       this.logger.log(`Conversa [${conversation.id}] ignorada pela IA. O status atual é Humano (${conversation.status}).`);
     }
