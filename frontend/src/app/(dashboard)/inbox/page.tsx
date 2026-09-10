@@ -12,6 +12,7 @@ export default function InboxPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState("");
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'waiting' | 'active' | 'resolved'>('active');
   const { socket, isConnected, clearGlobalUnread } = useSocket();
 
   const { data: initialContacts, isLoading, error: fetchErrorQuery } = useQuery({
@@ -184,6 +185,14 @@ export default function InboxPage() {
     }
   };
 
+  // Filter contacts based on active tab
+  const filteredContacts = contacts.filter(c => {
+    if (activeTab === 'waiting') return c.status === 'waiting' || c.status === 'open';
+    if (activeTab === 'active') return c.status === 'bot_active' || c.status === 'human_takeover';
+    if (activeTab === 'resolved') return c.status === 'resolved';
+    return true;
+  });
+
   // Calcular total de contatos com mensagens não lidas
   const unreadCount = contacts.filter(c => c.unread > 0).length;
 
@@ -213,14 +222,29 @@ export default function InboxPage() {
           
           {/* Abas Estilo Lero */}
           <div className="flex gap-1 bg-[#1E293B] p-1 rounded-lg mt-1">
-            <button className="flex-1 text-xs font-bold bg-[#0B1224] text-white py-1.5 rounded shadow-sm flex items-center justify-center gap-1">
+            <button 
+              onClick={() => setActiveTab('waiting')}
+              className={`flex-1 text-xs py-1.5 rounded shadow-sm flex items-center justify-center gap-1 transition-colors ${
+                activeTab === 'waiting' ? 'font-bold bg-[#0B1224] text-white' : 'font-semibold text-gray-400 hover:text-gray-200'
+              }`}
+            >
               Aguardando
+            </button>
+            <button 
+              onClick={() => setActiveTab('active')}
+              className={`flex-1 text-xs py-1.5 rounded flex items-center justify-center gap-1 transition-colors ${
+                activeTab === 'active' ? 'font-bold bg-[#0B1224] text-white shadow-sm' : 'font-semibold text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              Ativos
               {unreadCount > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 rounded-full">{unreadCount}</span>}
             </button>
-            <button className="flex-1 text-xs font-semibold text-gray-400 py-1.5 rounded hover:text-gray-200 transition-colors">
-              Ativos
-            </button>
-            <button className="flex-1 text-xs font-semibold text-gray-400 py-1.5 rounded hover:text-gray-200 transition-colors">
+            <button 
+              onClick={() => setActiveTab('resolved')}
+              className={`flex-1 text-xs py-1.5 rounded flex items-center justify-center gap-1 transition-colors ${
+                activeTab === 'resolved' ? 'font-bold bg-[#0B1224] text-white shadow-sm' : 'font-semibold text-gray-400 hover:text-gray-200'
+              }`}
+            >
               Fechados
             </button>
           </div>
@@ -247,8 +271,12 @@ export default function InboxPage() {
                 </div>
               </div>
             ))
+          ) : filteredContacts.length === 0 ? (
+            <div className="p-6 text-center text-sm text-gray-500 flex flex-col items-center justify-center h-40">
+              <span className="block mb-2">Nenhum chat nesta fila</span>
+            </div>
           ) : (
-            contacts.map((contact) => (
+            filteredContacts.map((contact) => (
             <div 
               key={contact.id} 
               onClick={() => {
