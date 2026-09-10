@@ -13,12 +13,13 @@ const ai_service_1 = require("./ai.service");
 const ai_processor_1 = require("../queues/processors/ai.processor");
 const database_module_1 = require("../../shared/database/database.module");
 const messaging_module_1 = require("../messaging/messaging.module");
+const rag_module_1 = require("../rag/rag.module");
 let AiModule = class AiModule {
 };
 exports.AiModule = AiModule;
 exports.AiModule = AiModule = __decorate([
     (0, common_1.Module)({
-        imports: [config_1.ConfigModule, database_module_1.DatabaseModule, messaging_module_1.MessagingModule],
+        imports: [config_1.ConfigModule, database_module_1.DatabaseModule, messaging_module_1.MessagingModule, rag_module_1.RagModule],
         providers: [ai_service_1.AiService, ai_processor_1.AiProcessor],
         exports: [ai_service_1.AiService],
     })

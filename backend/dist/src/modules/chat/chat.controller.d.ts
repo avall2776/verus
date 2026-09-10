@@ -65,17 +65,5 @@ export declare class ChatController {
         updatedAt: Date;
         contactId: string;
     }>;
-    sendMessage(tenantId: string, conversationId: string, payload: SendMessageDto): Promise<{
-        id: string;
-        tenantId: string;
-        status: string;
-        createdAt: Date;
-        contactId: string;
-        conversationId: string;
-        providerMessageId: string | null;
-        content: string;
-        fromMe: boolean;
-        direction: string;
-        senderType: string;
-    }>;
+    sendMessage(tenantId: string, conversationId: string, payload: SendMessageDto): Promise<any>;
 }

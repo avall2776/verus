@@ -5,8 +5,10 @@ import { AiProcessor } from '../queues/processors/ai.processor';
 import { DatabaseModule } from '../../shared/database/database.module';
 import { MessagingModule } from '../messaging/messaging.module';
 
+import { RagModule } from '../rag/rag.module';
+
 @Module({
-  imports: [ConfigModule, DatabaseModule, MessagingModule],
+  imports: [ConfigModule, DatabaseModule, MessagingModule, RagModule],
   providers: [AiService, AiProcessor],
   exports: [AiService],
 })

@@ -107,12 +107,26 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             contact: { phone: contact.phone, name: contact.name }
         });
         if (conversation.status === 'bot_active') {
+            const jobId = `ai_reply_${conversation.id}`;
+            const existingJob = await this.aiQueue.getJob(jobId);
+            if (existingJob) {
+                const state = await existingJob.getState();
+                if (state === 'delayed' || state === 'waiting') {
+                    await existingJob.remove();
+                    this.logger.debug(`Debounce: Job anterior cancelado para conversa [${conversation.id}]`);
+                }
+            }
             await this.aiQueue.add('generate-reply', {
                 tenantId,
                 conversationId: conversation.id,
                 contactId: contact.id,
-            }, { attempts: 2, backoff: { type: 'fixed', delay: 2000 } });
-            this.logger.log(`Conversa [${conversation.id}] encaminhada para processamento de IA.`);
+            }, {
+                jobId,
+                delay: 10000,
+                attempts: 2,
+                backoff: { type: 'fixed', delay: 2000 }
+            });
+            this.logger.log(`Conversa [${conversation.id}] agendada para IA em 10 segundos (Buffer).`);
         }
         else {
             this.logger.log(`Conversa [${conversation.id}] ignorada pela IA. O status atual é Humano (${conversation.status}).`);

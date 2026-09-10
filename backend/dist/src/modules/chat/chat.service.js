@@ -79,29 +79,33 @@ let ChatService = class ChatService {
         if (!conversation || conversation.tenantId !== tenantId) {
             throw new common_1.NotFoundException('Conversa não encontrada.');
         }
+        const operations = [
+            this.messagingService.sendText({
+                tenantId,
+                phone: conversation.contact.phone,
+                content,
+            }),
+            this.prisma.message.create({
+                data: {
+                    tenantId,
+                    conversationId,
+                    providerMessageId: `manual_${Date.now()}`,
+                    contactId: conversation.contactId,
+                    content,
+                    direction: 'OUTBOUND',
+                    senderType: 'user',
+                    status: 'delivered',
+                }
+            })
+        ];
         if (conversation.status === 'bot_active') {
-            await this.prisma.conversation.update({
+            operations.push(this.prisma.conversation.update({
                 where: { id: conversationId },
                 data: { status: 'human_takeover' }
-            });
+            }));
         }
-        await this.messagingService.sendText({
-            tenantId,
-            phone: conversation.contact.phone,
-            content,
-        });
-        return this.prisma.message.create({
-            data: {
-                tenantId,
-                conversationId,
-                providerMessageId: `manual_${Date.now()}`,
-                contactId: conversation.contactId,
-                content,
-                direction: 'OUTBOUND',
-                senderType: 'user',
-                status: 'delivered',
-            }
-        });
+        const results = await Promise.all(operations);
+        return results[1];
     }
 };
 exports.ChatService = ChatService;

@@ -10,6 +10,7 @@ import { CrmModule } from './modules/crm/crm.module';
 import { AgentModule } from './modules/agent/agent.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
+import { RagModule } from './modules/rag/rag.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ContactsModule } from './modules/contacts/contacts.module';
     AgentModule,
     DashboardModule,
     ContactsModule,
+    RagModule,
   ],
   controllers: [],
   providers: [],

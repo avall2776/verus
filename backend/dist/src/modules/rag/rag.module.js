@@ -6,19 +6,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DashboardModule = void 0;
+exports.RagModule = void 0;
 const common_1 = require("@nestjs/common");
-const dashboard_controller_1 = require("./dashboard.controller");
-const dashboard_service_1 = require("./dashboard.service");
-const auth_module_1 = require("../auth/auth.module");
-let DashboardModule = class DashboardModule {
+const rag_controller_1 = require("./rag.controller");
+const rag_service_1 = require("./services/rag.service");
+let RagModule = class RagModule {
 };
-exports.DashboardModule = DashboardModule;
-exports.DashboardModule = DashboardModule = __decorate([
+exports.RagModule = RagModule;
+exports.RagModule = RagModule = __decorate([
     (0, common_1.Module)({
-        imports: [auth_module_1.AuthModule],
-        controllers: [dashboard_controller_1.DashboardController],
-        providers: [dashboard_service_1.DashboardService],
+        controllers: [rag_controller_1.RagController],
+        providers: [rag_service_1.RagService],
+        exports: [rag_service_1.RagService],
     })
-], DashboardModule);
-//# sourceMappingURL=dashboard.module.js.map
+], RagModule);
+//# sourceMappingURL=rag.module.js.map

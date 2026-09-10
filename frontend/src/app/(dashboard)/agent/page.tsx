@@ -13,6 +13,9 @@ export default function AgentPage() {
   const [currentMessage, setCurrentMessage] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   
+  const [documents, setDocuments] = useState<{id: string, filename: string}[]>([]);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  
   const [config, setConfig] = useState({
     aiName: "Vitor (IA)",
     aiModel: "gpt-4o-mini",
@@ -30,6 +33,15 @@ export default function AgentPage() {
     retry: false
   });
 
+  const { data: docsData, refetch: refetchDocs } = useQuery({
+    queryKey: ['agentDocuments'],
+    queryFn: async () => {
+      const res = await api.get('/agent/documents');
+      return res.data;
+    },
+    retry: false
+  });
+
   useEffect(() => {
     if (data) {
       setConfig({
@@ -41,6 +53,12 @@ export default function AgentPage() {
       });
     }
   }, [data]);
+
+  useEffect(() => {
+    if (docsData) {
+      setDocuments(docsData);
+    }
+  }, [docsData]);
 
   const handleSave = async () => {
     try {
@@ -57,6 +75,43 @@ export default function AgentPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setConfig(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      toast.error('Apenas arquivos PDF são aceitos.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setUploadingDoc(true);
+      await api.post('/agent/documents/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success('Documento indexado com sucesso!');
+      refetchDocs();
+    } catch (error) {
+      toast.error('Erro ao fazer upload do documento.');
+    } finally {
+      setUploadingDoc(false);
+      e.target.value = ''; // clear input
+    }
+  };
+
+  const handleDeleteDoc = async (id: string) => {
+    try {
+      await api.delete(`/agent/documents/${id}`);
+      toast.success('Documento removido.');
+      refetchDocs();
+    } catch (error) {
+      toast.error('Erro ao remover documento.');
+    }
   };
 
   const handleSendMessage = async () => {
@@ -182,6 +237,49 @@ export default function AgentPage() {
               placeholder="Ex: Nossos preços são: Corte R$ 50, Barba R$ 35. Não aceitamos cheque. Nosso endereço é Rua Y..."
               className="w-full bg-background/80 border border-gray-800 text-purple-100/90 rounded-xl p-4 text-sm outline-none transition-all focus:border-purple-500 focus:shadow-[0_0_15px_rgba(168,85,247,0.15)] resize-none"
             />
+          </div>
+
+          {/* Sessão RAG */}
+          <div className="flex flex-col gap-4 border-t border-gray-800/60 pt-6">
+            <div className="flex justify-between items-center">
+              <label className="text-[0.75rem] font-bold text-accent uppercase tracking-[0.12rem] flex items-center gap-2">
+                <BookOpen size={14} /> Base de Conhecimento Inteligente (PDFs)
+              </label>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <input 
+                type="file" 
+                accept="application/pdf"
+                id="doc-upload"
+                className="hidden"
+                onChange={handleFileUpload}
+                disabled={uploadingDoc}
+              />
+              <label 
+                htmlFor="doc-upload"
+                className={`cursor-pointer bg-background/80 border border-gray-800 hover:border-accent text-text-primary px-4 py-2 rounded-xl text-sm transition-all flex items-center gap-2 ${uploadingDoc ? 'opacity-50 pointer-events-none' : ''}`}
+              >
+                {uploadingDoc ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} 
+                Fazer Upload de PDF (RAG)
+              </label>
+            </div>
+
+            {documents.length > 0 && (
+              <div className="flex flex-col gap-2 mt-2">
+                {documents.map(doc => (
+                  <div key={doc.id} className="flex items-center justify-between bg-[#0B1224] border border-[#162038] p-3 rounded-lg text-sm">
+                    <span className="text-gray-300 truncate max-w-[300px]">{doc.filename}</span>
+                    <button 
+                      onClick={() => handleDeleteDoc(doc.id)}
+                      className="text-red-400 hover:text-red-300 transition-colors text-xs font-bold"
+                    >
+                      REMOVER
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-4 border-t border-gray-800/60 pt-6">

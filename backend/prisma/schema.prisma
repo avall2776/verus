@@ -1,11 +1,13 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [vector]
 }
 
 // ------------------------------------------------------
@@ -44,6 +46,9 @@ model Tenant {
   contacts   Contact[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  documents  KnowledgeDocument[]
+  chunks     DocumentChunk[]
 
   // Configurações da IA
   aiName          String? 
@@ -137,4 +142,34 @@ model Deal {
 
   @@index([tenantId])
   @@index([tenantId, status])
+}
+
+// ------------------------------------------------------
+// RAG (Base de Conhecimento Vetorial)
+// ------------------------------------------------------
+
+model KnowledgeDocument {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  filename  String
+  fileSize  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chunks    DocumentChunk[]
+
+  @@index([tenantId])
+}
+
+model DocumentChunk {
+  id         String   @id @default(uuid())
+  documentId String
+  document   KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  content    String
+  embedding  Unsupported("vector(1536)")?
+
+  @@index([tenantId])
+  @@index([documentId])
 }

@@ -17,9 +17,11 @@ const common_1 = require("@nestjs/common");
 const agent_service_1 = require("./agent.service");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
+const ai_service_1 = require("../ai/ai.service");
 let AgentController = class AgentController {
-    constructor(agentService) {
+    constructor(agentService, aiService) {
         this.agentService = agentService;
+        this.aiService = aiService;
     }
     async getConfig(tenantId) {
         return this.agentService.getConfig(tenantId);
@@ -27,26 +29,38 @@ let AgentController = class AgentController {
     async updateConfig(tenantId, body) {
         return this.agentService.updateConfig(tenantId, body);
     }
+    async testPlayground(body) {
+        const result = await this.aiService.processConversation(body.messages, body.config);
+        return result;
+    }
 };
 exports.AgentController = AgentController;
 __decorate([
-    (0, common_1.Get)(),
+    (0, common_1.Get)('config'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AgentController.prototype, "getConfig", null);
 __decorate([
-    (0, common_1.Patch)(),
+    (0, common_1.Patch)('config'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AgentController.prototype, "updateConfig", null);
+__decorate([
+    (0, common_1.Post)('playground'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AgentController.prototype, "testPlayground", null);
 exports.AgentController = AgentController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Controller)('agent/config'),
-    __metadata("design:paramtypes", [agent_service_1.AgentService])
+    (0, common_1.Controller)('agent'),
+    __metadata("design:paramtypes", [agent_service_1.AgentService,
+        ai_service_1.AiService])
 ], AgentController);
 //# sourceMappingURL=agent.controller.js.map

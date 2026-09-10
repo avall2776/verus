@@ -12,12 +12,13 @@ const agent_controller_1 = require("./agent.controller");
 const agent_service_1 = require("./agent.service");
 const database_module_1 = require("../../shared/database/database.module");
 const auth_module_1 = require("../auth/auth.module");
+const ai_module_1 = require("../ai/ai.module");
 let AgentModule = class AgentModule {
 };
 exports.AgentModule = AgentModule;
 exports.AgentModule = AgentModule = __decorate([
     (0, common_1.Module)({
-        imports: [database_module_1.DatabaseModule, auth_module_1.AuthModule],
+        imports: [database_module_1.DatabaseModule, auth_module_1.AuthModule, ai_module_1.AiModule],
         controllers: [agent_controller_1.AgentController],
         providers: [agent_service_1.AgentService],
         exports: [agent_service_1.AgentService],

@@ -10,11 +10,13 @@ exports.ContactsModule = void 0;
 const common_1 = require("@nestjs/common");
 const contacts_controller_1 = require("./contacts.controller");
 const contacts_service_1 = require("./contacts.service");
+const auth_module_1 = require("../auth/auth.module");
 let ContactsModule = class ContactsModule {
 };
 exports.ContactsModule = ContactsModule;
 exports.ContactsModule = ContactsModule = __decorate([
     (0, common_1.Module)({
+        imports: [auth_module_1.AuthModule],
         controllers: [contacts_controller_1.ContactsController],
         providers: [contacts_service_1.ContactsService],
     })

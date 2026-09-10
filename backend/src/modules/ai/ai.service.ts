@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { AiResponseSchema, AiResponseDto } from './schemas/response.schema';
+import { RagService } from '../rag/services/rag.service';
 
 @Injectable()
 export class AiService {
@@ -18,7 +19,10 @@ DIRETRIZES ESTRITAS DE COMPORTAMENTO:
 4. PROIBIDO usar clichês de SAC ou encerramentos telemarketing como 'Como posso ajudar hoje?', 'Estou à disposição', 'Se tiver mais dúvidas me avise' ou 'Algo mais?'.
 5. Transbordo: Se decidir transferir para um humano, você DEVE obrigatoriamente fornecer uma última resposta amigável avisando o cliente que está repassando o contato.`;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly ragService: RagService
+  ) {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
 
     if (!apiKey) {
@@ -33,13 +37,25 @@ DIRETRIZES ESTRITAS DE COMPORTAMENTO:
    */
   async processConversation(
     history: { role: 'user' | 'assistant', content: string }[],
-    tenantConfig?: { aiPrompt: string, aiKnowledgeBase: string, aiTemperature: number, aiModel: string },
+    tenantConfig?: { id?: string, aiPrompt?: string, aiKnowledgeBase?: string, aiTemperature?: number, aiModel?: string },
     dynamicContext?: string
   ): Promise<AiResponseDto> {
     try {
       const finalPrompt = tenantConfig?.aiPrompt || this.fallbackPrompt;
-      const knowledgeBase = tenantConfig?.aiKnowledgeBase ? `\n\n=== BASE DE CONHECIMENTO DA EMPRESA ===\nUse os dados abaixo para responder o cliente:\n${tenantConfig.aiKnowledgeBase}` : '';
+      let knowledgeBase = tenantConfig?.aiKnowledgeBase ? `\n\n=== BASE DE CONHECIMENTO MANUAL ===\nUse os dados abaixo para responder o cliente:\n${tenantConfig.aiKnowledgeBase}` : '';
       
+      // Busca Semântica via RAG
+      if (tenantConfig?.id) {
+        const lastUserMessage = history.filter(m => m.role === 'user').pop();
+        if (lastUserMessage) {
+          const similarChunks = await this.ragService.searchSimilarChunks(tenantConfig.id, lastUserMessage.content, 3);
+          if (similarChunks.length > 0) {
+            knowledgeBase += `\n\n=== BASE DE CONHECIMENTO DINÂMICA (RAG PDF) ===\nUse APENAS as informações abaixo para responder a pergunta se forem relevantes:\n${similarChunks.join('\n---\n')}\n`;
+            this.logger.debug(`Injetou ${similarChunks.length} blocos RAG no contexto.`);
+          }
+        }
+      }
+
       const systemMessage = finalPrompt + (dynamicContext || '') + knowledgeBase;
 
       const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [

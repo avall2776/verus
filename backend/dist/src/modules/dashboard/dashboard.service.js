@@ -19,36 +19,32 @@ let DashboardService = class DashboardService {
     async getMetrics(tenantId) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const totalLeadsToday = await this.prisma.contact.count({
-            where: {
-                tenantId,
-                createdAt: { gte: today }
-            }
-        });
-        const totalContacts = await this.prisma.contact.count({
-            where: { tenantId }
-        });
-        const totalDeals = await this.prisma.deal.count({
-            where: { tenantId }
-        });
+        const [totalLeadsToday, totalContacts, totalDeals, waitingHuman, pipelineRevenueResult, recentLeadsRaw] = await Promise.all([
+            this.prisma.contact.count({
+                where: { tenantId, createdAt: { gte: today } }
+            }),
+            this.prisma.contact.count({
+                where: { tenantId }
+            }),
+            this.prisma.deal.count({
+                where: { tenantId }
+            }),
+            this.prisma.conversation.count({
+                where: { tenantId, status: 'human_takeover' }
+            }),
+            this.prisma.deal.aggregate({
+                where: { tenantId },
+                _sum: { value: true }
+            }),
+            this.prisma.contact.findMany({
+                where: { tenantId },
+                orderBy: { createdAt: 'desc' },
+                take: 5,
+                include: { deals: true }
+            })
+        ]);
         const qualRate = totalContacts > 0 ? Math.round((totalDeals / totalContacts) * 100) : 0;
-        const waitingHuman = await this.prisma.conversation.count({
-            where: {
-                tenantId,
-                status: 'human_takeover'
-            }
-        });
-        const pipelineRevenueResult = await this.prisma.deal.aggregate({
-            where: { tenantId },
-            _sum: { value: true }
-        });
         const pipelineRevenue = pipelineRevenueResult._sum.value ? pipelineRevenueResult._sum.value.toNumber() : 0;
-        const recentLeadsRaw = await this.prisma.contact.findMany({
-            where: { tenantId },
-            orderBy: { createdAt: 'desc' },
-            take: 5,
-            include: { deals: true }
-        });
         const recentLeads = recentLeadsRaw.map((c, idx) => {
             let temp = c.deals.length > 0 ? 'Quente' : 'Frio';
             let value = c.deals.reduce((acc, d) => acc + (d.value ? d.value.toNumber() : 0), 0);

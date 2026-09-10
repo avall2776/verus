@@ -66,17 +66,5 @@ export declare class ChatService {
         updatedAt: Date;
         contactId: string;
     }>;
-    sendManualMessage(tenantId: string, conversationId: string, content: string): Promise<{
-        id: string;
-        tenantId: string;
-        status: string;
-        createdAt: Date;
-        contactId: string;
-        conversationId: string;
-        providerMessageId: string | null;
-        content: string;
-        fromMe: boolean;
-        direction: string;
-        senderType: string;
-    }>;
+    sendManualMessage(tenantId: string, conversationId: string, content: string): Promise<any>;
 }
