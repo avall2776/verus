@@ -74,24 +74,23 @@ export class WebhookProcessor extends WorkerHost {
       }
     });
 
-    // 4. Buscar a conversa mais recente ou criar uma
-    let conversation = await this.prisma.conversation.findFirst({
+    // 4. Buscar a conversa (só pode haver UMA por contato agora)
+    let conversation = await this.prisma.conversation.upsert({
       where: {
+        tenantId_contactId: {
+          tenantId,
+          contactId: contact.id
+        }
+      },
+      create: {
         tenantId,
         contactId: contact.id,
+        status: 'bot_active',
       },
-      orderBy: { updatedAt: 'desc' }
+      update: {} // Apenas recupera se já existir
     });
 
-    if (!conversation) {
-      conversation = await this.prisma.conversation.create({
-        data: {
-          tenantId,
-          contactId: contact.id,
-          status: 'bot_active',
-        }
-      });
-    } else if (conversation.status === 'resolved') {
+    if (conversation.status === 'resolved') {
       // Reabre a mesma conversa se o cliente voltar a mandar mensagem
       conversation = await this.prisma.conversation.update({
         where: { id: conversation.id },

@@ -143,6 +143,7 @@ model Conversation {
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([departmentId])
+  @@unique([tenantId, contactId])
 }
 
 model Message {
