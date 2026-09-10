@@ -50,6 +50,7 @@ export default function Sidebar() {
               <Link 
                 key={item.href} 
                 href={item.href} 
+                prefetch={true}
                 className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group relative
                   ${isActive 
                     ? 'bg-primary/10 text-accent shadow-[inset_4px_0_0_0_rgba(0,210,255,1)]' 
@@ -72,6 +73,7 @@ export default function Sidebar() {
       <div className="p-4 border-t border-gray-800 flex flex-col gap-2">
         <Link 
           href="/settings" 
+          prefetch={true}
           className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group
             ${pathname.startsWith('/settings') 
               ? 'bg-primary/10 text-accent shadow-[inset_4px_0_0_0_rgba(0,210,255,1)]' 

@@ -9,50 +9,41 @@ export class DashboardService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Total Leads Hoje
-    const totalLeadsToday = await this.prisma.contact.count({
-      where: {
-        tenantId,
-        createdAt: { gte: today }
-      }
-    });
-
-    // Total Contatos
-    const totalContacts = await this.prisma.contact.count({
-      where: { tenantId }
-    });
-
-    // Total Deals (Qualificados pela IA)
-    const totalDeals = await this.prisma.deal.count({
-      where: { tenantId }
-    });
+    // Busca em paralelo para zerar o gargalo
+    const [
+      totalLeadsToday,
+      totalContacts,
+      totalDeals,
+      waitingHuman,
+      pipelineRevenueResult,
+      recentLeadsRaw
+    ] = await Promise.all([
+      this.prisma.contact.count({
+        where: { tenantId, createdAt: { gte: today } }
+      }),
+      this.prisma.contact.count({
+        where: { tenantId }
+      }),
+      this.prisma.deal.count({
+        where: { tenantId }
+      }),
+      this.prisma.conversation.count({
+        where: { tenantId, status: 'human_takeover' }
+      }),
+      this.prisma.deal.aggregate({
+        where: { tenantId },
+        _sum: { value: true }
+      }),
+      this.prisma.contact.findMany({
+        where: { tenantId },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: { deals: true }
+      })
+    ]);
 
     const qualRate = totalContacts > 0 ? Math.round((totalDeals / totalContacts) * 100) : 0;
-
-    // Aguardando Humano (Handoff)
-    const waitingHuman = await this.prisma.conversation.count({
-      where: {
-        tenantId,
-        status: 'human_takeover'
-      }
-    });
-
-    // Receita em Pipeline (Soma de Deals)
-    const pipelineRevenueResult = await this.prisma.deal.aggregate({
-      where: { tenantId },
-      _sum: { value: true }
-    });
-    
-    // Convertendo Decimal para número ou formatando
     const pipelineRevenue = pipelineRevenueResult._sum.value ? pipelineRevenueResult._sum.value.toNumber() : 0;
-    
-    // Recentes (5 últimos contatos)
-    const recentLeadsRaw = await this.prisma.contact.findMany({
-      where: { tenantId },
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-      include: { deals: true }
-    });
     
     const recentLeads = recentLeadsRaw.map((c, idx) => {
       // Calcular "temp" com base em se tem Deal

@@ -84,33 +84,37 @@ export class ChatService {
       throw new NotFoundException('Conversa não encontrada.');
     }
 
-    // Regra Compulsória: se estiver com bot, vira humano antes/junto com o envio
+    // Paralelizando envio da API externa com as chamadas de banco
+    const operations: Promise<any>[] = [
+      this.messagingService.sendText({
+        tenantId,
+        phone: conversation.contact.phone,
+        content,
+      }),
+      this.prisma.message.create({
+        data: {
+          tenantId,
+          conversationId,
+          providerMessageId: `manual_${Date.now()}`,
+          contactId: conversation.contactId,
+          content,
+          direction: 'OUTBOUND',
+          senderType: 'user', // Atendente humano
+          status: 'delivered',
+        }
+      })
+    ];
+
     if (conversation.status === 'bot_active') {
-      await this.prisma.conversation.update({
-        where: { id: conversationId },
-        data: { status: 'human_takeover' }
-      });
+      operations.push(
+        this.prisma.conversation.update({
+          where: { id: conversationId },
+          data: { status: 'human_takeover' }
+        })
+      );
     }
 
-    // Dispara via API da Evolution (MessagingService)
-    await this.messagingService.sendText({
-      tenantId,
-      phone: conversation.contact.phone,
-      content,
-    });
-
-    // Salva no banco como atendente (senderType: user)
-    return this.prisma.message.create({
-      data: {
-        tenantId,
-        conversationId,
-        providerMessageId: `manual_${Date.now()}`,
-        contactId: conversation.contactId,
-        content,
-        direction: 'OUTBOUND',
-        senderType: 'user', // Atendente humano
-        status: 'delivered',
-      }
-    });
+    const results = await Promise.all(operations);
+    return results[1]; // Retorna a mensagem criada
   }
 }
