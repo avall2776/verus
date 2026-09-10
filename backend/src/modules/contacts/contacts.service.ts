@@ -32,7 +32,6 @@ export class ContactsService {
         lastActive: c.updatedAt.toISOString()
       };
     });
-    });
   }
 
   async updateTags(tenantId: string, contactId: string, tags: string[]) {
