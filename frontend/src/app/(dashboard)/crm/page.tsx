@@ -154,9 +154,14 @@ export default function CrmPage() {
                                   <DollarSign size={14} className="text-green-400" />
                                   {deal.value || '0'}
                                 </div>
-                                
-                                <div className="text-[0.65rem] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
-                                  Quente
+                                <div className="flex gap-1 flex-wrap justify-end max-w-[50%]">
+                                  {deal.contact?.tags && deal.contact.tags.length > 0 ? (
+                                    deal.contact.tags.map((tag: string) => (
+                                      <div key={tag} className="text-[0.65rem] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-gray-700/50 text-gray-300 border border-gray-600/50 truncate max-w-[80px]" title={tag}>
+                                        {tag}
+                                      </div>
+                                    ))
+                                  ) : null}
                                 </div>
                               </div>
                             </div>

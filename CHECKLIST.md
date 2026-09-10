@@ -82,6 +82,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Otimização de Performance (Routing & Cache):** Diagnóstico e resolução de lentidão ao trocar de telas no frontend, com uso de SWR/React Query e Suspense. [2026-09-10 10:15]
 - [x] **Integração Base de Conhecimento (RAG Avançado):** Evoluir a memória da IA. Criar uma interface para o cliente fazer upload de PDFs (ex: Tabela de Preços, Catálogos) e processar esses dados em um Vector Database (Pinecone/Supabase pgvector) para a IA ler. [2026-09-10 11:35]
 - [ ] **Testes End-to-End (E2E):** Revisão completa de fluxo: Lead manda zap -> Cai no Dashboard -> Notifica Web -> IA responde -> Humano assume -> IA retoma.
+- [ ] **Configurações de Respostas Rápidas (UI):** Criar tela administrativa para que gestores possam criar, editar e excluir macros e atalhos (`/`) sem precisar usar o banco de dados.
 
 ---
 
