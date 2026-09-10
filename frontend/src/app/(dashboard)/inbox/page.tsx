@@ -296,8 +296,8 @@ export default function InboxPage() {
       {/* 2. PAINEL CENTRAL: Janela de Chat */}
       <div className="flex-1 bg-background flex flex-col overflow-hidden relative border-r border-gray-800">
         
-        {/* Glow de Fundo Super Sutil */}
-        <div className="absolute inset-0 bg-[url('https://i.ibb.co/3s1f9bM/wa-bg.png')] opacity-[0.03] pointer-events-none" />
+        {/* Pattern de Fundo Super Sutil via CSS puro */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
 
         {/* Chat Header */}
         <div className="h-16 px-4 border-b border-gray-800 flex items-center justify-between bg-[#0F172A] z-10">
