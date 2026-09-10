@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { MessagingService } from '../messaging/messaging.service';
+import { ChatGateway } from './chat.gateway';
 
 @Injectable()
 export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly messagingService: MessagingService,
+    private readonly chatGateway: ChatGateway,
   ) {}
 
   async findAllConversations(tenantId: string, status?: string) {
@@ -190,6 +192,9 @@ export class ChatService {
         data: { status: 'human_takeover' }
       });
     }
+
+    // Emite o evento via WebSocket para atualizar todos os clientes (outros atendentes na mesma tela)
+    this.chatGateway.emitNewMessage(tenantId, msg);
 
     return msg; // Retorna a mensagem criada
   }
