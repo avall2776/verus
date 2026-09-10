@@ -32,5 +32,13 @@ export class ContactsService {
         lastActive: c.updatedAt.toISOString()
       };
     });
+    });
+  }
+
+  async updateTags(tenantId: string, contactId: string, tags: string[]) {
+    return this.prisma.contact.update({
+      where: { id: contactId, tenantId },
+      data: { tags }
+    });
   }
 }

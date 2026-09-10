@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards, Request } from '@nestjs/common';
 import { QuickRepliesService } from './quick-replies.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
 @Controller('quick-replies')
