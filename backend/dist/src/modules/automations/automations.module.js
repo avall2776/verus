@@ -11,11 +11,17 @@ const common_1 = require("@nestjs/common");
 const automations_controller_1 = require("./automations.controller");
 const automations_service_1 = require("./automations.service");
 const prisma_service_1 = require("../../shared/database/prisma.service");
+const messaging_module_1 = require("../messaging/messaging.module");
+const bullmq_1 = require("@nestjs/bullmq");
 let AutomationsModule = class AutomationsModule {
 };
 exports.AutomationsModule = AutomationsModule;
 exports.AutomationsModule = AutomationsModule = __decorate([
     (0, common_1.Module)({
+        imports: [
+            messaging_module_1.MessagingModule,
+            bullmq_1.BullModule.registerQueue({ name: 'automations' })
+        ],
         controllers: [automations_controller_1.AutomationsController],
         providers: [automations_service_1.AutomationsService, prisma_service_1.PrismaService],
         exports: [automations_service_1.AutomationsService]
