@@ -14,7 +14,7 @@ export default function Page() {
           <Users size={32} />
         </div>
         
-        <h1 className="text-xl font-bold text-white mb-2 text-center relative z-10">{title}</h1>
+        <h1 className="text-xl font-bold text-white mb-2 text-center relative z-10">Usuários & Acessos</h1>
         
         <p className="text-sm text-gray-400 text-center mb-8 relative z-10">
           Este módulo está atualmente em construção. Estamos preparando novas funcionalidades incríveis para você.
