@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Construction } from "lucide-react";
+import { Users, Construction } from "lucide-react";
 
 export default function Page() {
   return (
@@ -11,7 +11,7 @@ export default function Page() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[200px] bg-primary/20 blur-[100px] rounded-full pointer-events-none"></div>
 
         <div className="w-16 h-16 rounded-2xl bg-gray-900 border border-gray-800 flex items-center justify-center text-primary mb-6 shadow-lg relative z-10">
-          <Zap size={32} />
+          <Users size={32} />
         </div>
         
         <h1 className="text-xl font-bold text-white mb-2 text-center relative z-10">{title}</h1>
