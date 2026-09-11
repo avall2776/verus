@@ -8,8 +8,8 @@ conn.on('ready', () => {
   console.log('Conexão SSH estabelecida. Executando comandos...');
   conn.exec(`
     cd /root/verus/backend && 
-    git reset --hard &&
-    git pull && 
+    git fetch origin &&
+    git reset --hard origin/main && 
     npm install --legacy-peer-deps && 
     npx prisma generate &&
     npm run build && 
