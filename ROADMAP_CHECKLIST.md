@@ -151,17 +151,39 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
   - Taxa de conversão por etapa do funil.
   - Relatório de motivos de perda e valor total ganho/perdido por período.
 
-### 🟢 FASE 6: HOMOLOGAÇÃO E AUDITORIA GERAL
-- [x] Teste de ponta a ponta: Lead entra via WhatsApp -> IA atende -> Transborda -> Cria Deal no CRM -> Notifica no Monitor -> Dispara Automação.
-- [x] Integração do Histórico (Modal de Deal): Ver e responder chat do cliente sem sair do Kanban.
-- [x] Validação do Modo Tela Cheia e redimensionamento individual das colunas do Kanban.
-- [x] Auditoria de segurança e tratamento de exceções (sem quebras em tela preta).
+### 🟢 FASE 7: SUÍTE DE ANÁLISES & RELATÓRIOS PADRÃO LERO (/dashboard/atendimento)
+- [x] Criação do `AnalyticsModule` com endpoints `/overview`, `/charts`, `/agent-performance`, `/csat` e `/ai-costs`.
+- [x] Tabela de Desempenho por Colaborador com ordenação dinâmica por coluna, badges de status, campo de busca e exportação CSV UTF-8.
+- [x] Gráficos Donut por Operador e Motivo de Finalização.
+- [x] Painel de Pesquisas de Satisfação (CSAT) e Auditoria de Custos de IA.
+- [x] Modal "Dias Úteis da Empresa" e Tooltips Comparativos nos cards de KPI (+/- % vs período anterior).
+
+### 🟢 FASE 8: FLUXO DE ENTRADA VIA IA, MODAL DE ASSUNÇÃO & TOOLBAR WHATSAPP (/inbox)
+- [x] **Fluxo de Entrada com IA Vitor Online**: Chamados novos ou reabertos iniciam com `bot_active` e `assignedTo = null`, caindo exclusivamente na aba "Aguardando" sem auto-atribuição ao operador.
+- [x] **Modal Central de Assunção de Fila**: Interceptação de clique nos cards em espera com opções de Atribuir para mim (Takeover), Transferir de setor e Espiar conversa (somente-leitura).
+- [x] **Modo Espiar Ativo**: Banner informativo no topo do chat e bloqueio de input com botão de takeover imediato.
+- [x] **Toolbar Superior da Lista de WhatsApp**: 4 botões de atalho integrados (Agenda de Contatos, Agendamento de Mensagens, Menu Rápido e Discador VoIP Flutuante).
+- [x] **Reorganização de Navegação**: Aba "WhatsApp" como menu principal e "Conexões WhatsApp" movida para "SISTEMA / ADMINISTRAÇÃO".
 
 ---
-*Documento autogerado e contínuo - Última atualização: 11/09/2026 às 11:45*
+
+## 🎯 Roteiro para Segunda-feira (14/09/2026 - Manhã)
+
+### 🧪 Bateria de Testes Ponta a Ponta na Aba WhatsApp (/inbox)
+- [ ] **Teste 1 - Entrada de Mensagem e Resposta da IA**: Validar que mensagens recebidas caem na aba "Aguardando", a IA Vitor Online responde automaticamente e o card não é atribuído a nenhum operador.
+- [ ] **Teste 2 - Modal de Assunção**: Testar o clique no card na fila, abrir o Modal Central e executar o botão verde "Atribuir atendimento para mim" (validar status `human_takeover` e ida para a aba "Meus").
+- [ ] **Teste 3 - Modo Espiar Conversa**: Abrir chat em modo somente-leitura, validar banner de alerta, bloqueio do input e takeover em um clique.
+- [ ] **Teste 4 - Transferência de Setor**: Testar transferência entre departamentos direto pelo modal de assunção.
+- [ ] **Teste 5 - Toolbar de Atalhos**: Testar Agenda de Contatos, Agendamento de Mensagem, Menu Rápido (`Zap`) e Discador VoIP.
+- [ ] **Teste 6 - Finalização e Reabertura**: Finalizar atendimento e testar reabertura automática na fila do bot com nova mensagem do lead.
+
+---
+*Documento autogerado e contínuo - Última atualização: 11/09/2026 às 18:05*
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
 - **[11/09/2026 - 08:15]** 🟢 Início da jornada de desenvolvimento (Foco: Triagem, Filas e Configuração de Macros).
+- **[11/09/2026 - 13:30]** 🟢 Início do turno da tarde (Foco: Analytics Padrão Lero, Fluxo de IA, Modal de Assunção e Toolbar WhatsApp).
+- **[11/09/2026 - 18:05]** 🏁 Finalização da jornada de sexta-feira com builds 100% aprovados e produção atualizada.
 
 ---
 
