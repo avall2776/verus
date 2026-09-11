@@ -33,6 +33,9 @@ export default function CrmPage() {
 
   const [showStageModal, setShowStageModal] = useState(false);
   const [showManageStagesModal, setShowManageStagesModal] = useState(false);
+  const [lossModalState, setLossModalState] = useState<{isOpen: boolean, dealId: string | null, destColId: string | null}>({isOpen: false, dealId: null, destColId: null});
+  const [lossReason, setLossReason] = useState("");
+  const [lossComment, setLossComment] = useState("");
 
   useEffect(() => {
     const savedCols = localStorage.getItem('crm_columns');
@@ -79,6 +82,12 @@ export default function CrmPage() {
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
     const newStatus = destination.droppableId;
+    
+    if (newStatus === 'lost' || newStatus === 'disqualified') {
+      setLossModalState({ isOpen: true, dealId: draggableId, destColId: newStatus });
+      return;
+    }
+
     handleUpdateDeal(draggableId, { status: newStatus });
   };
 
@@ -102,6 +111,57 @@ export default function CrmPage() {
         onClose={() => setSelectedDeal(null)} 
         onUpdate={handleUpdateDeal}
       />
+
+      {lossModalState.isOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#161b22] border border-gray-800 w-full max-w-sm rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95">
+            <h2 className="text-lg font-bold text-white mb-4">Marcar como Perdido</h2>
+            <div className="space-y-3 mb-4">
+              {["Cliente achou caro", "Cliente enrolou", "Comprou do concorrente", "Contato inválido / sem interesse"].map(reason => (
+                <label key={reason} className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                  <input type="radio" name="lossReason" value={reason} checked={lossReason === reason} onChange={(e) => setLossReason(e.target.value)} className="accent-rose-500" />
+                  {reason}
+                </label>
+              ))}
+              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                <input type="radio" name="lossReason" value="outro" checked={lossReason === 'outro'} onChange={(e) => setLossReason(e.target.value)} className="accent-rose-500" />
+                Outro...
+              </label>
+            </div>
+            <textarea 
+              placeholder="Comentário (opcional)..."
+              value={lossComment}
+              onChange={(e) => setLossComment(e.target.value)}
+              className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2.5 text-sm text-slate-200 outline-none focus:border-rose-500 mb-6 min-h-[80px]"
+            />
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => { setLossModalState({ isOpen: false, dealId: null, destColId: null }); setLossReason(""); setLossComment(""); }} 
+                className="text-slate-400 text-sm font-bold hover:text-white transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  if (lossModalState.dealId && lossModalState.destColId) {
+                    handleUpdateDeal(lossModalState.dealId, { 
+                      status: lossModalState.destColId, 
+                      lossReason: lossReason === 'outro' ? lossComment : lossReason, 
+                      lossComment 
+                    });
+                  }
+                  setLossModalState({ isOpen: false, dealId: null, destColId: null });
+                  setLossReason("");
+                  setLossComment("");
+                }} 
+                className="bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold px-4 py-2 rounded-lg transition-colors"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toolbar Superior */}
       <div className="bg-[#1c1d22] border border-gray-800 rounded-xl p-4 flex flex-col lg:flex-row items-center justify-between gap-4 shadow-sm">
@@ -214,7 +274,7 @@ export default function CrmPage() {
                     <div 
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`flex-1 flex flex-col gap-3 overflow-y-auto rounded-xl p-1 transition-colors custom-scrollbar min-h-[150px] ${snapshot.isDraggingOver ? `${col.bgLight} ring-2 ring-dashed ring-gray-700` : ''}`}
+                      className={`flex-1 flex flex-col gap-3 overflow-y-auto rounded-xl p-1 transition-all duration-200 ease-out custom-scrollbar min-h-[150px] ${snapshot.isDraggingOver ? `border-2 border-dashed ${col.borderColor.replace('border-t-', 'border-')}/40 bg-${col.color.replace('text-', '').split('-')[0]}-500/5` : 'border-2 border-transparent'}`}
                     >
                       {columnDeals.map((deal, index) => (
                         <DealCard 
@@ -347,11 +407,11 @@ function DealCard({ deal, index, col, setSelectedDeal, router }: any) {
           {/* AVATAR DO LEAD + NOME + TELEFONE */}
           <div className="flex flex-col mt-1">
             <div className="flex items-center gap-3">
-              <div className={`flex shrink-0 h-9 w-9 items-center justify-center rounded-full bg-[#0d1117] text-sm font-bold text-slate-300 shadow-sm ring-2 ${col.color.replace('text-', 'ring-')}/30`}>
+              <div className={`flex shrink-0 h-9 w-9 items-center justify-center rounded-full bg-[#0d1117] text-sm font-bold shadow-sm ring-2 ${col.color.replace('text-', 'ring-')}/40 ${col.color.replace('500', '400').replace('600', '400')}`}>
                 {deal.contact?.name?.[0]?.toUpperCase() || "?"}
               </div>
               <div className="flex flex-col">
-                <h4 className="text-[15px] font-bold text-white leading-snug">
+                <h4 className={`text-[15px] font-bold leading-snug ${col.color.replace('500', '400').replace('600', '400')}`}>
                   {deal.contact?.name || "Nome do Contato"}
                 </h4>
                 <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
@@ -400,9 +460,9 @@ function DealCard({ deal, index, col, setSelectedDeal, router }: any) {
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); toast.success("Copiado!"); }}
-                  className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-200"
+                  className="group/btn flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-200 transition-colors"
                 >
-                  📋 Copiar descrição
+                  <Copy size={13} className="text-slate-500 group-hover/btn:text-slate-300 transition-colors" /> Copiar descrição
                 </button>
               )}
             </div>
