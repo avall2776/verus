@@ -22,6 +22,7 @@ import {
   Menu
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
+import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
 
 const NAV_GROUPS = [
   {
@@ -62,6 +63,7 @@ const NAV_GROUPS = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { hasGlobalUnread } = useSocket();
+  const { status: waStatus } = useWhatsApp();
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
@@ -190,13 +192,23 @@ export default function Sidebar() {
           {/* WA Status */}
           <div className={`flex items-center gap-3 px-2 py-1.5 rounded-lg bg-gray-900/50 border border-gray-800 ${!isExpanded && 'justify-center'}`}>
             <div className="relative flex items-center justify-center w-2 h-2 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              {waStatus.status === 'connected' ? (
+                <>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </>
+              ) : (
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+              )}
             </div>
             {isExpanded && (
               <div className="flex flex-col overflow-hidden">
-                <span className="text-xs text-white truncate">WhatsApp Conectado</span>
-                <span className="text-[10px] text-gray-500 truncate">+55 11 99999-9999</span>
+                <span className="text-xs text-white truncate">
+                  {waStatus.status === 'connected' ? 'WhatsApp Conectado' : 'Desconectado'}
+                </span>
+                <span className="text-[10px] text-gray-500 truncate">
+                  {waStatus.metaPhoneNumberId ? `ID: ${waStatus.metaPhoneNumberId}` : 'Sem Instância'}
+                </span>
               </div>
             )}
           </div>

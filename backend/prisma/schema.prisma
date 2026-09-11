@@ -64,6 +64,7 @@ model Tenant {
   
   metaToken         String?
   metaPhoneNumberId String?
+  whatsappSettings  Json?    // { antiBanEnabled: boolean, typingDelayMs: number, messageDelayMs: number }
 }
 
 // ------------------------------------------------------

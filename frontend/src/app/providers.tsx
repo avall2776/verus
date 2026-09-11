@@ -2,6 +2,9 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { Toaster } from "sonner";
+import { SocketProvider } from "@/components/ui/SocketProvider";
+import { WhatsAppProvider } from "@/components/ui/WhatsAppProvider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -19,7 +22,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <SocketProvider>
+        <WhatsAppProvider>
+          {children}
+          <Toaster position="top-right" theme="dark" />
+        </WhatsAppProvider>
+      </SocketProvider>
     </QueryClientProvider>
   );
 }

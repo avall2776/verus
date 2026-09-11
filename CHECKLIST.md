@@ -115,11 +115,11 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 
 ### 🟢 FASE 1: CONEXÕES WHATSAPP & ENGINE DE MENSAGERIA (/settings/whatsapp)
-- [ ] Criar tela de pareamento com suporte a QR Code dinâmico e Meta Cloud API oficial.
-- [ ] Implementar polling/WebSocket para detectar conexão da instância em tempo real.
-- [ ] Adicionar controles operacionais: Reconectar, Reiniciar Instância e Importar Contatos.
-- [ ] Configurar Modo Anti-bloqueio (ritmo de digitação simulada e pausas entre envios).
-- [ ] Exibir status dinâmico com indicador verde na Sidebar e contagem de mensagens trafegadas.
+- [x] Criar tela de pareamento com suporte a QR Code dinâmico e Meta Cloud API oficial.
+- [x] Implementar polling/WebSocket para detectar conexão da instância em tempo real.
+- [x] Adicionar controles operacionais: Reconectar, Reiniciar Instância e Importar Contatos.
+- [x] Configurar Modo Anti-bloqueio (ritmo de digitação simulada e pausas entre envios).
+- [x] Exibir status dinâmico com indicador verde na Sidebar e contagem de mensagens trafegadas.
 
 ### 🟢 FASE 2: OPERAÇÃO - MONITOR AO VIVO EM TEMPO REAL (/monitor)
 - [ ] Montar Grid de Atendimentos ativos agrupados por setor/departamento (Comercial, Suporte, etc.).

@@ -14,6 +14,7 @@ import { RagModule } from './modules/rag/rag.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { QuickRepliesModule } from './modules/quick-replies/quick-replies.module';
 import { AutomationsModule } from './modules/automations/automations.module';
+import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AutomationsModule } from './modules/automations/automations.module';
     DepartmentsModule,
     QuickRepliesModule,
     AutomationsModule,
+    WhatsappModule,
   ],
   controllers: [],
   providers: [],
