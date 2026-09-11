@@ -37,7 +37,7 @@ export default function CrmPage() {
   const [lossReason, setLossReason] = useState("");
   const [lossComment, setLossComment] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [colWidth, setColWidth] = useState(300);
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const savedCols = localStorage.getItem('crm_columns');
@@ -47,13 +47,21 @@ export default function CrmPage() {
       setColumns(DEFAULT_COLUMNS);
       localStorage.setItem('crm_columns', JSON.stringify(DEFAULT_COLUMNS));
     }
-    const savedWidth = localStorage.getItem('crm_col_width');
-    if (savedWidth) setColWidth(Number(savedWidth));
+    const savedWidths = localStorage.getItem('crm_columns_widths');
+    if (savedWidths) setColumnWidths(JSON.parse(savedWidths));
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('crm_col_width', colWidth.toString());
-  }, [colWidth]);
+    localStorage.setItem('crm_columns_widths', JSON.stringify(columnWidths));
+  }, [columnWidths]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   const fetchDeals = async () => {
     try {
@@ -109,17 +117,17 @@ export default function CrmPage() {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
   };
 
-  const handleResizeStart = (e: React.MouseEvent) => {
+  const handleResizeStart = (e: React.MouseEvent, colId: string) => {
     e.preventDefault();
     const startX = e.pageX;
-    const startWidth = colWidth;
+    const startWidth = columnWidths[colId] || 300;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.pageX - startX;
       let newWidth = startWidth + deltaX;
       if (newWidth < 260) newWidth = 260;
-      if (newWidth > 480) newWidth = 480;
-      setColWidth(newWidth);
+      if (newWidth > 550) newWidth = 550;
+      setColumnWidths(prev => ({ ...prev, [colId]: newWidth }));
     };
 
     const handleMouseUp = () => {
@@ -129,6 +137,18 @@ export default function CrmPage() {
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => console.error(err));
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    }
   };
 
   if (loading) return <div className="p-8 text-gray-500">Carregando CRM...</div>;
@@ -252,7 +272,7 @@ export default function CrmPage() {
 
           <button 
             title="Expanda o CRM em tela cheia"
-            onClick={() => setIsFullscreen(!isFullscreen)} 
+            onClick={toggleFullscreen} 
             className="ml-2 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 p-2 rounded-full transition-all flex items-center justify-center"
           >
             {isFullscreen ? <Minimize2 size={16}/> : <Maximize2 size={16}/>}
@@ -275,7 +295,7 @@ export default function CrmPage() {
               <React.Fragment key={col.id}>
                 <div 
                   className={`flex flex-col h-full shrink-0 transition-all duration-300 ease-out`}
-                  style={{ width: isCollapsed ? '60px' : `${colWidth}px` }}
+                  style={{ width: isCollapsed ? '60px' : `${columnWidths[col.id] || 300}px` }}
                 >
                   {isCollapsed ? (
                     <div className={`w-full h-full flex-shrink-0 flex flex-col bg-[#1c1d22] border border-gray-800 border-t-2 ${borderTopClass} rounded-xl items-center py-4 cursor-pointer hover:bg-gray-800/50 transition-colors group`} onClick={() => toggleColumn(col.id)}>
@@ -342,7 +362,7 @@ export default function CrmPage() {
                 {/* Resizer Handle */}
                 {idx < columns.length - 1 && (
                   <div 
-                    onMouseDown={handleResizeStart}
+                    onMouseDown={(e) => handleResizeStart(e, col.id)}
                     className="w-1.5 hover:w-2 shrink-0 h-full rounded-full hover:bg-slate-700/50 cursor-col-resize transition-all self-stretch"
                   />
                 )}
