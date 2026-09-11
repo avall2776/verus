@@ -23,6 +23,7 @@
     "react-hot-toast": "^2.6.0",
     "react-parallax-tilt": "^1.7.341",
     "socket.io-client": "^4.7.5",
+    "sonner": "^2.0.8",
     "tailwind-merge": "^2.6.1",
     "three": "^0.185.1",
     "uuid": "^14.0.2",

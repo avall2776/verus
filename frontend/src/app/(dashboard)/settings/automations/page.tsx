@@ -12,6 +12,7 @@ interface Automation {
   triggerType: string;
   conditions: any;
   actions: any[];
+  createdAt: string;
 }
 
 interface AutomationLog {

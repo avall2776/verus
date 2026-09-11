@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, Hash, User as UserIcon, Send, Smile, Paperclip, Plus, ShieldCheck } from "lucide-react";
+import { Search, Hash, Plus, MessageSquare, Send, Paperclip, Smile, Image as ImageIcon, CheckCircle2, ChevronDown, User as UserIcon, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { useSocket } from "@/components/ui/SocketProvider";
