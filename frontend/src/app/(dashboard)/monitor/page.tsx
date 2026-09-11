@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { 
   Activity, CheckCircle, Clock, MessageSquare, UserPlus, 
   Users, LayoutGrid, List, ChevronDown, ChevronRight, 
-  Search, RefreshCw, Phone
+  Search, RefreshCw, Phone, AlertCircle, MoreHorizontal, X, ArrowRightLeft
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -30,11 +30,18 @@ interface TeamUser {
   role: string;
 }
 
+interface Department {
+  id: string;
+  name: string;
+  color?: string;
+}
+
 export default function MonitorPage() {
   const router = useRouter();
   const { socket } = useSocket();
   const [conversations, setConversations] = useState<MonitorConversation[]>([]);
   const [users, setUsers] = useState<TeamUser[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [now, setNow] = useState(new Date());
   
@@ -45,14 +52,43 @@ export default function MonitorPage() {
   const [expandedDepts, setExpandedDepts] = useState<Record<string, boolean>>({});
   const [refreshCountdown, setRefreshCountdown] = useState(30);
 
+  // Popover State
+  const [selectedCard, setSelectedCard] = useState<MonitorConversation | null>(null);
+  const [transferDeptId, setTransferDeptId] = useState('');
+  const [showTransferInline, setShowTransferInline] = useState(false);
+
+  const formatPhone = (phone?: string) => {
+    if (!phone) return 'Sem telefone';
+    const clean = phone.replace(/\D/g, '');
+    if (clean.length === 13 && clean.startsWith('55')) {
+      return `+55 (${clean.substring(2, 4)}) ${clean.substring(4, 9)}-${clean.substring(9)}`;
+    } else if (clean.length === 12 && clean.startsWith('55')) {
+      return `+55 (${clean.substring(2, 4)}) ${clean.substring(4, 8)}-${clean.substring(8)}`;
+    } else if (clean.length === 11) {
+      return `(${clean.substring(0, 2)}) ${clean.substring(2, 7)}-${clean.substring(7)}`;
+    }
+    return phone.startsWith('+') ? phone : `+${phone}`;
+  };
+
+  const formatStartTime = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      return `Início às ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • WhatsApp`;
+    } catch {
+      return 'Início recente • WhatsApp';
+    }
+  };
+
   const fetchData = async () => {
     try {
-      const [convRes, usersRes] = await Promise.all([
+      const [convRes, usersRes, deptRes] = await Promise.all([
         api.get('/monitor/active'),
-        api.get('/team-chat/users') // Reaproveitando do TeamChat
+        api.get('/team-chat/users'),
+        api.get('/departments')
       ]);
       setConversations(convRes.data || []);
       setUsers(usersRes.data || []);
+      setDepartments(deptRes.data || []);
       setRefreshCountdown(30);
     } catch (error) {
       toast.error("Erro ao carregar dados da torre de controle.");
@@ -93,10 +129,27 @@ export default function MonitorPage() {
   const handleTakeover = async (id: string) => {
     try {
       await api.patch(`/conversations/${id}/takeover`);
-      toast.success("Atendimento assumido!");
+      toast.success("Atendimento assumido com sucesso!");
+      if (selectedCard?.id === id) {
+        setSelectedCard(prev => prev ? { ...prev, status: 'human_takeover' } : null);
+      }
       fetchData();
     } catch (error) {
       toast.error("Erro ao assumir atendimento.");
+    }
+  };
+
+  const handleTransfer = async (conversationId: string, departmentId: string) => {
+    if (!departmentId) return;
+    try {
+      await api.patch(`/conversations/${conversationId}/transfer`, { departmentId });
+      toast.success("Atendimento transferido!");
+      setSelectedCard(null);
+      setShowTransferInline(false);
+      setTransferDeptId('');
+      fetchData();
+    } catch (error) {
+      toast.error("Erro ao transferir atendimento.");
     }
   };
 
@@ -287,66 +340,66 @@ export default function MonitorPage() {
                   {!isCollapsed && (
                     <div className="p-4">
                       {layoutMode === 'grid' ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                           {deptConvs.map(conv => {
                             const sla = getSLAInfo(conv);
                             
                             return (
-                              <div key={conv.id} className="bg-[#050A15] border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition-colors flex flex-col group">
-                                <div className="p-4 flex flex-col gap-2">
-                                  <div className="flex justify-between items-start">
-                                    <div className="flex-1 overflow-hidden pr-2">
-                                      <h3 className="text-sm font-bold text-white truncate" title={conv.contact.name}>{conv.contact.name}</h3>
-                                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                                        <Phone size={10} /> {conv.contact.phone || 'Sem número'}
+                              <div 
+                                key={conv.id} 
+                                onClick={() => {
+                                  setSelectedCard(conv);
+                                  setShowTransferInline(false);
+                                  setTransferDeptId('');
+                                }}
+                                className="relative bg-[#0b101b] hover:bg-[#111726] border border-slate-800/90 hover:border-slate-700/80 rounded-xl p-3 flex flex-col justify-between transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md group min-h-[135px]"
+                              >
+                                {/* Topo do Card */}
+                                <div>
+                                  <div className="flex items-start justify-between gap-1.5">
+                                    <div className="min-w-0 flex-1">
+                                      <h3 className="text-slate-100 font-semibold text-sm truncate" title={conv.contact.name}>
+                                        {conv.contact.name || 'Contato Sem Nome'}
+                                      </h3>
+                                      <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5 truncate">
+                                        <Phone size={10} className="text-slate-500 shrink-0" />
+                                        <span>{formatPhone(conv.contact.phone)}</span>
                                       </p>
                                     </div>
-                                    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-bold shrink-0 ${sla.colorClass}`}>
-                                      <div className={`w-1.5 h-1.5 rounded-full ${sla.dotClass} ${sla.isPulsing ? 'animate-ping opacity-75' : ''}`}></div>
-                                      <Clock size={12} />
-                                      {sla.timeStr}
+                                    <div className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 border flex items-center gap-1 ${sla.colorClass}`}>
+                                      <div className={`w-1.5 h-1.5 rounded-full ${sla.dotClass} ${sla.isPulsing ? 'animate-ping' : ''}`} />
+                                      <span>{sla.timeStr}</span>
                                     </div>
                                   </div>
-                                  
-                                  {conv.lastMessage && (
-                                    <div className="bg-[#0B1224] rounded-lg p-2.5 border border-gray-800 mt-2">
-                                      <p className="text-xs text-gray-400 line-clamp-2">
-                                        <span className="font-semibold text-gray-500 mr-1">{conv.lastMessage.fromMe ? 'Atendente:' : 'Contato:'}</span>
-                                        "{conv.lastMessage.content}"
-                                      </p>
+
+                                  {/* Centro do Card: Atraso Crítico / Alerta */}
+                                  {sla.isUnanswered && sla.diffMins >= 15 ? (
+                                    <div className="mt-2.5 mb-1 px-2 py-1 rounded bg-red-500/10 border border-red-500/25 flex items-center gap-1.5 text-[11px] text-red-400 font-medium">
+                                      <AlertCircle size={12} className="shrink-0 text-red-400 animate-pulse" />
+                                      <span className="truncate">sem resposta há {sla.timeStr}</span>
                                     </div>
+                                  ) : conv.lastMessage ? (
+                                    <p className="text-[11px] text-slate-500 truncate mt-2 mb-1">
+                                      <span className="text-slate-400 font-medium">{conv.lastMessage.fromMe ? 'Atendente: ' : 'Cliente: '}</span>
+                                      {conv.lastMessage.content}
+                                    </p>
+                                  ) : (
+                                    <div className="h-4 mt-2 mb-1" />
                                   )}
                                 </div>
-                                
-                                {/* Card Footer */}
-                                <div className="mt-auto border-t border-gray-800/80 bg-[#0B1224]/50 p-3 flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center font-bold text-white text-[10px] uppercase">
-                                      {conv.assignee ? conv.assignee.name.substring(0,2) : 'FL'}
+
+                                {/* Rodapé do Card */}
+                                <div className="border-t border-slate-800/80 pt-2 mt-auto flex items-center justify-between">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-200 text-[9px] uppercase shrink-0">
+                                      {conv.assignee ? conv.assignee.name.substring(0, 2) : 'FL'}
                                     </div>
-                                    <span className={`text-xs font-medium truncate max-w-[100px] ${conv.assignee ? 'text-blue-400' : 'text-yellow-500'}`}>
-                                      {conv.assignee ? conv.assignee.name : 'Na Fila'}
+                                    <span className={`text-xs truncate max-w-[120px] font-medium ${conv.assignee ? 'text-slate-300' : 'text-amber-400/90'}`}>
+                                      {conv.assignee ? conv.assignee.name : 'Aguardando na Fila'}
                                     </span>
                                   </div>
 
-                                  <div className="flex items-center gap-2">
-                                    {conv.status === 'waiting' && !conv.assignedTo && (
-                                      <button 
-                                        onClick={() => handleTakeover(conv.id)}
-                                        title="Assumir Chat"
-                                        className="p-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded transition-colors"
-                                      >
-                                        <UserPlus size={14} />
-                                      </button>
-                                    )}
-                                    <button 
-                                      onClick={() => router.push(`/inbox?contactId=${conv.contact.id}`)}
-                                      title="Abrir no Inbox"
-                                      className="p-1.5 bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
-                                    >
-                                      <MessageSquare size={14} />
-                                    </button>
-                                  </div>
+                                  <MoreHorizontal size={14} className="text-slate-600 group-hover:text-slate-400 transition-colors shrink-0" />
                                 </div>
                               </div>
                             );
@@ -368,7 +421,15 @@ export default function MonitorPage() {
                               {deptConvs.map(conv => {
                                 const sla = getSLAInfo(conv);
                                 return (
-                                  <tr key={conv.id} className="hover:bg-gray-800/30 transition-colors">
+                                  <tr 
+                                    key={conv.id} 
+                                    onClick={() => {
+                                      setSelectedCard(conv);
+                                      setShowTransferInline(false);
+                                      setTransferDeptId('');
+                                    }}
+                                    className="hover:bg-gray-800/30 transition-colors cursor-pointer"
+                                  >
                                     <td className="p-3">
                                       <div className="font-bold text-gray-200">{conv.contact.name}</div>
                                       <div className="text-xs text-gray-500">{conv.contact.phone}</div>
@@ -384,19 +445,19 @@ export default function MonitorPage() {
                                         {conv.assignee ? conv.assignee.name : 'Aguardando na Fila'}
                                       </span>
                                     </td>
-                                    <td className="p-3 text-right">
+                                    <td className="p-3 text-right" onClick={(e) => e.stopPropagation()}>
                                       <div className="flex justify-end gap-2">
                                         {conv.status === 'waiting' && !conv.assignedTo && (
                                           <button 
                                             onClick={() => handleTakeover(conv.id)}
-                                            className="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded text-xs font-semibold transition-colors flex items-center gap-1"
+                                            className="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
                                           >
                                             Assumir
                                           </button>
                                         )}
                                         <button 
                                           onClick={() => router.push(`/inbox?contactId=${conv.contact.id}`)}
-                                          className="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded text-xs font-semibold transition-colors flex items-center gap-1"
+                                          className="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
                                         >
                                           Abrir
                                         </button>
@@ -417,6 +478,153 @@ export default function MonitorPage() {
           </div>
         )}
       </div>
+
+      {/* CARD POPOVER DE DETALHES - PADRÃO LERO */}
+      {selectedCard && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={() => setSelectedCard(null)}
+        >
+          <div 
+            className="bg-[#161b26] border border-slate-700 rounded-2xl p-5 shadow-2xl w-full max-w-sm text-slate-200 animate-in zoom-in-95 duration-150 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Popover Header */}
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Card de Atendimento
+                </span>
+              </div>
+              <button 
+                onClick={() => setSelectedCard(null)} 
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Detalhes do Contato */}
+            <div className="py-4 space-y-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">NOME</span>
+                <p className="text-sm font-semibold text-slate-100 mt-0.5">
+                  {selectedCard.contact.name || 'Contato Sem Nome'}
+                </p>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">TELEFONE</span>
+                <p className="text-sm text-slate-300 font-mono mt-0.5 flex items-center gap-1.5">
+                  <Phone size={12} className="text-emerald-400" />
+                  {formatPhone(selectedCard.contact.phone)}
+                </p>
+              </div>
+
+              <div className="pt-1">
+                <span className="text-xs text-slate-400 flex items-center gap-1.5">
+                  <Clock size={12} className="text-blue-400" />
+                  {formatStartTime(selectedCard.updatedAt)}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">OPERADOR</span>
+                  <p className={`text-xs font-medium mt-0.5 truncate ${selectedCard.assignee ? 'text-slate-200' : 'text-amber-400'}`}>
+                    {selectedCard.assignee ? selectedCard.assignee.name : 'Na Fila Geral'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">SETOR</span>
+                  <p className="text-xs font-medium text-slate-200 mt-0.5 truncate">
+                    {selectedCard.department?.name || 'Sem Setor'}
+                  </p>
+                </div>
+              </div>
+
+              {/* SLA Status */}
+              {(() => {
+                const sla = getSLAInfo(selectedCard);
+                return (
+                  <div className={`mt-2 px-2.5 py-1.5 rounded-lg border flex items-center justify-between text-xs font-medium ${sla.colorClass}`}>
+                    <span className="flex items-center gap-1.5">
+                      <div className={`w-1.5 h-1.5 rounded-full ${sla.dotClass}`} />
+                      {sla.isUnanswered ? `Sem resposta há ${sla.timeStr}` : `Última interação há ${sla.timeStr}`}
+                    </span>
+                    <span className="text-[10px] font-bold uppercase">{sla.label}</span>
+                  </div>
+                );
+              })()}
+
+              {/* Seletor Inline de Transferência */}
+              {showTransferInline && (
+                <div className="p-3 bg-slate-900/90 border border-slate-700/80 rounded-xl space-y-2 animate-in fade-in duration-100">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Escolha o Setor de Destino:
+                  </label>
+                  <div className="flex gap-2">
+                    <select 
+                      value={transferDeptId} 
+                      onChange={(e) => setTransferDeptId(e.target.value)}
+                      className="flex-1 bg-[#161b26] border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-blue-500"
+                    >
+                      <option value="">Selecione o setor...</option>
+                      {departments.map(d => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+                    <button 
+                      onClick={() => handleTransfer(selectedCard.id, transferDeptId)}
+                      disabled={!transferDeptId}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-lg disabled:opacity-40 transition-colors shadow-sm cursor-pointer"
+                    >
+                      Confirmar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Barra de Ações Rápidas */}
+            <div className="pt-3 border-t border-slate-800 grid grid-cols-3 gap-2">
+              <button
+                onClick={() => {
+                  router.push(`/inbox?contactId=${selectedCard.contact.id}`);
+                }}
+                className="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs py-2 px-2 rounded-lg flex items-center justify-center gap-1 transition-all shadow-sm cursor-pointer"
+                title="Abrir no Inbox"
+              >
+                <MessageSquare size={13} />
+                <span>Abrir Chat</span>
+              </button>
+
+              <button
+                onClick={() => handleTakeover(selectedCard.id)}
+                className="bg-emerald-600/90 hover:bg-emerald-500 text-white font-semibold text-xs py-2 px-2 rounded-lg flex items-center justify-center gap-1 transition-all shadow-sm cursor-pointer"
+                title="Assumir Atendimento"
+              >
+                <UserPlus size={13} />
+                <span>Assumir</span>
+              </button>
+
+              <button
+                onClick={() => setShowTransferInline(prev => !prev)}
+                className={`font-semibold text-xs py-2 px-2 rounded-lg flex items-center justify-center gap-1 transition-all border cursor-pointer ${
+                  showTransferInline 
+                    ? 'bg-slate-700 border-slate-600 text-white' 
+                    : 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 text-slate-300'
+                }`}
+                title="Transferir para outro setor"
+              >
+                <ArrowRightLeft size={13} />
+                <span>Transferir</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FOOTER: ONLINE USERS & SLA LEGEND */}
       <div className="border-t border-gray-800 bg-[#0B1224] shrink-0 p-4 pb-2">
