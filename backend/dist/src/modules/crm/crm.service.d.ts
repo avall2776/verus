@@ -1,11 +1,19 @@
 import { PrismaService } from '../../shared/database/prisma.service';
+import { AutomationsService } from '../automations/automations.service';
 export declare class CrmService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly automationsService;
+    constructor(prisma: PrismaService, automationsService: AutomationsService);
     findAllDeals(tenantId: string): Promise<({
         contact: {
+            id: string;
             name: string;
             phone: string;
+            tags: string[];
+        };
+        assignee: {
+            id: string;
+            name: string;
         };
     } & {
         id: string;
@@ -13,10 +21,37 @@ export declare class CrmService {
         createdAt: Date;
         updatedAt: Date;
         contactId: string;
-        status: string;
         title: string;
         value: import("@prisma/client/runtime/library").Decimal;
+        status: string;
         notes: string | null;
+        metadata: import("@prisma/client/runtime/library").JsonValue | null;
+        assignedTo: string | null;
     })[]>;
-    updateDealStatus(tenantId: string, dealId: string, status: string): Promise<import(".prisma/client").Prisma.BatchPayload>;
+    createDeal(tenantId: string, data: any): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        contactId: string;
+        title: string;
+        value: import("@prisma/client/runtime/library").Decimal;
+        status: string;
+        notes: string | null;
+        metadata: import("@prisma/client/runtime/library").JsonValue | null;
+        assignedTo: string | null;
+    }>;
+    updateDeal(tenantId: string, id: string, data: any): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        contactId: string;
+        title: string;
+        value: import("@prisma/client/runtime/library").Decimal;
+        status: string;
+        notes: string | null;
+        metadata: import("@prisma/client/runtime/library").JsonValue | null;
+        assignedTo: string | null;
+    }>;
 }

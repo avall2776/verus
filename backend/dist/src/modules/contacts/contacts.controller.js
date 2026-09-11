@@ -24,6 +24,9 @@ let ContactsController = class ContactsController {
     async listContacts(tenantId) {
         return this.contactsService.findAll(tenantId);
     }
+    async updateTags(tenantId, contactId, tags) {
+        return this.contactsService.updateTags(tenantId, contactId, tags);
+    }
 };
 exports.ContactsController = ContactsController;
 __decorate([
@@ -33,6 +36,15 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], ContactsController.prototype, "listContacts", null);
+__decorate([
+    (0, common_1.Patch)(':id/tags'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)('tags')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Array]),
+    __metadata("design:returntype", Promise)
+], ContactsController.prototype, "updateTags", null);
 exports.ContactsController = ContactsController = __decorate([
     (0, common_1.Controller)('contacts'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

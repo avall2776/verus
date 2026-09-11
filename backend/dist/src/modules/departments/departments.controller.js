@@ -32,6 +32,12 @@ let DepartmentsController = class DepartmentsController {
     async removeUser(req, id, userId) {
         return this.departmentsService.removeUserFromDepartment(req.user.tenantId, id, userId);
     }
+    async update(req, id, body) {
+        return this.departmentsService.update(req.user.tenantId, id, body);
+    }
+    async delete(req, id) {
+        return this.departmentsService.delete(req.user.tenantId, id);
+    }
 };
 exports.DepartmentsController = DepartmentsController;
 __decorate([
@@ -67,6 +73,23 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", Promise)
 ], DepartmentsController.prototype, "removeUser", null);
+__decorate([
+    (0, common_1.Patch)(':id'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", Promise)
+], DepartmentsController.prototype, "update", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], DepartmentsController.prototype, "delete", null);
 exports.DepartmentsController = DepartmentsController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('departments'),

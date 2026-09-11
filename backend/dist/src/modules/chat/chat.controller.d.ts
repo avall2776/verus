@@ -3,7 +3,7 @@ import { SendMessageDto } from './dto/send-message.dto';
 export declare class ChatController {
     private readonly chatService;
     constructor(chatService: ChatService);
-    listConversations(tenantId: string, status?: string): Promise<({
+    listConversations(tenantId: string, req: any, tab?: string): Promise<({
         contact: {
             id: string;
             name: string;
@@ -67,7 +67,7 @@ export declare class ChatController {
         senderType: string;
         conversationId: string;
     }[]>;
-    takeover(tenantId: string, conversationId: string): Promise<{
+    takeover(tenantId: string, conversationId: string, req: any): Promise<{
         id: string;
         tenantId: string;
         createdAt: Date;

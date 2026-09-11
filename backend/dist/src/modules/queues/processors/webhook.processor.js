@@ -19,12 +19,16 @@ const bullmq_2 = require("bullmq");
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../../shared/database/prisma.service");
 const chat_gateway_1 = require("../../chat/chat.gateway");
+const messaging_service_1 = require("../../messaging/messaging.service");
+const automations_service_1 = require("../../automations/automations.service");
 let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullmq_1.WorkerHost {
-    constructor(prisma, aiQueue, chatGateway) {
+    constructor(prisma, aiQueue, chatGateway, messagingService, automationsService) {
         super();
         this.prisma = prisma;
         this.aiQueue = aiQueue;
         this.chatGateway = chatGateway;
+        this.messagingService = messagingService;
+        this.automationsService = automationsService;
         this.logger = new common_1.Logger(WebhookProcessor_1.name);
     }
     async process(job) {
@@ -73,23 +77,41 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 name: pushName
             }
         });
-        let conversation = await this.prisma.conversation.findFirst({
-            where: {
-                tenantId,
-                contactId: contact.id,
-            },
-            orderBy: { updatedAt: 'desc' }
+        const currentDay = new Date().getDay();
+        const currentHourStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+        const bh = await this.prisma.businessHours.findFirst({
+            where: { tenantId, dayOfWeek: currentDay, isActive: true }
         });
-        if (!conversation) {
-            conversation = await this.prisma.conversation.create({
-                data: {
-                    tenantId,
-                    contactId: contact.id,
-                    status: 'bot_active',
-                }
+        let isWithinBusinessHours = true;
+        if (bh) {
+            if (currentHourStr < bh.startTime || currentHourStr > bh.endTime) {
+                isWithinBusinessHours = false;
+            }
+        }
+        if (!isWithinBusinessHours) {
+            this.logger.log(`Fora do horário comercial. Enviando fallback para ${phone}.`);
+            const fallbackMsg = "Olá! Nosso horário de atendimento é de segunda a sexta, das 08h às 18h. Já recebemos sua mensagem e retornaremos assim que nossa equipe iniciar o expediente!";
+            await this.messagingService.sendText({
+                tenantId,
+                phone,
+                content: fallbackMsg
             });
         }
-        else if (conversation.status === 'resolved') {
+        let conversation = await this.prisma.conversation.upsert({
+            where: {
+                tenantId_contactId: {
+                    tenantId,
+                    contactId: contact.id
+                }
+            },
+            create: {
+                tenantId,
+                contactId: contact.id,
+                status: 'bot_active',
+            },
+            update: {}
+        });
+        if (conversation.status === 'resolved') {
             conversation = await this.prisma.conversation.update({
                 where: { id: conversation.id },
                 data: { status: 'bot_active' }
@@ -109,11 +131,42 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             }
         });
         this.logger.log(`Mensagem [${messageId}] salva com sucesso na conversa [${conversation.id}]`);
+        if (conversation.status === 'waiting' || conversation.status === 'bot_active') {
+            await this.automationsService.evaluateEvent(tenantId, 'NEW_CONVERSATION', {
+                contactId: contact.id,
+                conversationId: conversation.id
+            });
+        }
+        await this.automationsService.evaluateEvent(tenantId, 'INACTIVITY', {
+            contactId: contact.id,
+            conversationId: conversation.id
+        });
         this.chatGateway.emitNewMessage(tenantId, {
             ...savedMessage,
             contact: { phone: contact.phone, name: contact.name }
         });
         if (conversation.status === 'bot_active') {
+            if (!isWithinBusinessHours) {
+                this.logger.log(`Conversa [${conversation.id}] mantida sem IA por estar fora do expediente.`);
+                const fallbackMsgText = "Olá! Nosso horário de atendimento é de segunda a sexta, das 08h às 18h. Já recebemos sua mensagem e retornaremos assim que nossa equipe iniciar o expediente!";
+                const fallbackMessage = await this.prisma.message.create({
+                    data: {
+                        tenantId,
+                        conversationId: conversation.id,
+                        contactId: contact.id,
+                        providerMessageId: `fallback_${Date.now()}`,
+                        direction: 'OUTBOUND',
+                        content: fallbackMsgText,
+                        senderType: 'system',
+                        status: 'delivered',
+                    }
+                });
+                this.chatGateway.emitNewMessage(tenantId, {
+                    ...fallbackMessage,
+                    contact: { phone: contact.phone, name: contact.name }
+                });
+                return { status: 'out_of_business_hours' };
+            }
             const jobId = `ai_reply_${conversation.id}`;
             const existingJob = await this.aiQueue.getJob(jobId);
             if (existingJob) {
@@ -147,6 +200,8 @@ exports.WebhookProcessor = WebhookProcessor = WebhookProcessor_1 = __decorate([
     __param(1, (0, bullmq_1.InjectQueue)('ai-processing')),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         bullmq_2.Queue,
-        chat_gateway_1.ChatGateway])
+        chat_gateway_1.ChatGateway,
+        messaging_service_1.MessagingService,
+        automations_service_1.AutomationsService])
 ], WebhookProcessor);
 //# sourceMappingURL=webhook.processor.js.map

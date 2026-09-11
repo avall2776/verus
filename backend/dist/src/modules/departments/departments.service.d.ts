@@ -43,4 +43,23 @@ export declare class DepartmentsService {
         departmentId: string;
         userId: string;
     }>;
+    update(tenantId: string, id: string, data: {
+        name?: string;
+        color?: string;
+    }): Promise<{
+        id: string;
+        name: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        color: string | null;
+    }>;
+    delete(tenantId: string, id: string): Promise<{
+        id: string;
+        name: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        color: string | null;
+    }>;
 }

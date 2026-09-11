@@ -6,7 +6,7 @@ export declare class ChatService {
     private readonly messagingService;
     private readonly chatGateway;
     constructor(prisma: PrismaService, messagingService: MessagingService, chatGateway: ChatGateway);
-    findAllConversations(tenantId: string, status?: string): Promise<({
+    findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string): Promise<({
         contact: {
             id: string;
             name: string;
@@ -70,7 +70,7 @@ export declare class ChatService {
         senderType: string;
         conversationId: string;
     }[]>;
-    takeoverConversation(tenantId: string, conversationId: string): Promise<{
+    takeoverConversation(tenantId: string, conversationId: string, userId: string): Promise<{
         id: string;
         tenantId: string;
         createdAt: Date;
@@ -90,7 +90,7 @@ export declare class ChatService {
         assignedTo: string | null;
         status: string;
     }>;
-    transferToDepartment(tenantId: string, conversationId: string, departmentId: string): Promise<{
+    assignToUser(tenantId: string, conversationId: string, userId: string): Promise<{
         id: string;
         tenantId: string;
         createdAt: Date;
@@ -100,7 +100,7 @@ export declare class ChatService {
         assignedTo: string | null;
         status: string;
     }>;
-    assignToUser(tenantId: string, conversationId: string, userId: string): Promise<{
+    transferToDepartment(tenantId: string, conversationId: string, departmentId: string): Promise<{
         id: string;
         tenantId: string;
         createdAt: Date;

@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
 import { AutomationsService } from './automations.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
-import { CurrentTenant } from '../../shared/decorators/current-tenant.decorator';
+import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('automations')

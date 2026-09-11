@@ -48,4 +48,23 @@ export declare class DepartmentsController {
         departmentId: string;
         userId: string;
     }>;
+    update(req: any, id: string, body: {
+        name?: string;
+        color?: string;
+    }): Promise<{
+        id: string;
+        name: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        color: string | null;
+    }>;
+    delete(req: any, id: string): Promise<{
+        id: string;
+        name: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        color: string | null;
+    }>;
 }

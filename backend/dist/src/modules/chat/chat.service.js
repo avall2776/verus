@@ -20,10 +20,26 @@ let ChatService = class ChatService {
         this.messagingService = messagingService;
         this.chatGateway = chatGateway;
     }
-    async findAllConversations(tenantId, status) {
+    async findAllConversations(tenantId, userId, userRole, tab = 'waiting') {
         const whereClause = { tenantId };
-        if (status) {
-            whereClause.status = status;
+        if (tab === 'resolved') {
+            whereClause.status = 'resolved';
+        }
+        else if (tab === 'mine') {
+            whereClause.status = { not: 'resolved' };
+            whereClause.assignedTo = userId;
+        }
+        else {
+            whereClause.status = { not: 'resolved' };
+            whereClause.assignedTo = null;
+            if (userRole === 'AGENT') {
+                const userDepts = await this.prisma.userDepartment.findMany({ where: { userId } });
+                const deptIds = userDepts.map(d => d.departmentId);
+                whereClause.OR = [
+                    { departmentId: { in: deptIds } },
+                    { departmentId: null }
+                ];
+            }
         }
         return this.prisma.conversation.findMany({
             where: whereClause,
@@ -50,7 +66,7 @@ let ChatService = class ChatService {
             orderBy: { createdAt: 'asc' }
         });
     }
-    async takeoverConversation(tenantId, conversationId) {
+    async takeoverConversation(tenantId, conversationId, userId) {
         const conversation = await this.prisma.conversation.findUnique({
             where: { id: conversationId }
         });
@@ -59,7 +75,7 @@ let ChatService = class ChatService {
         }
         return this.prisma.conversation.update({
             where: { id: conversationId },
-            data: { status: 'human_takeover' }
+            data: { status: 'human_takeover', assignedTo: userId }
         });
     }
     async releaseConversation(tenantId, conversationId) {
@@ -72,6 +88,18 @@ let ChatService = class ChatService {
         return this.prisma.conversation.update({
             where: { id: conversationId },
             data: { status: 'resolved' }
+        });
+    }
+    async assignToUser(tenantId, conversationId, userId) {
+        const conversation = await this.prisma.conversation.findUnique({
+            where: { id: conversationId }
+        });
+        if (!conversation || conversation.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        return this.prisma.conversation.update({
+            where: { id: conversationId },
+            data: { assignedTo: userId, status: 'open' }
         });
     }
     async transferToDepartment(tenantId, conversationId, departmentId) {
@@ -110,23 +138,6 @@ let ChatService = class ChatService {
         return this.prisma.conversation.update({
             where: { id: conversationId },
             data: { departmentId, status: 'human_takeover', assignedTo: selectedUserId }
-        });
-    }
-    async assignToUser(tenantId, conversationId, userId) {
-        const conversation = await this.prisma.conversation.findUnique({
-            where: { id: conversationId }
-        });
-        if (!conversation || conversation.tenantId !== tenantId) {
-            throw new common_1.NotFoundException('Conversa não encontrada.');
-        }
-        const user = await this.prisma.user.findUnique({
-            where: { id: userId }
-        });
-        if (!user || user.tenantId !== tenantId)
-            throw new common_1.NotFoundException('Usuário inválido.');
-        return this.prisma.conversation.update({
-            where: { id: conversationId },
-            data: { assignedTo: userId, status: 'human_takeover' }
         });
     }
     async sendManualMessage(tenantId, conversationId, payload) {

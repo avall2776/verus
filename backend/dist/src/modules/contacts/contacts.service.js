@@ -12,9 +12,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ContactsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
+const automations_service_1 = require("../automations/automations.service");
 let ContactsService = class ContactsService {
-    constructor(prisma) {
+    constructor(prisma, automationsService) {
         this.prisma = prisma;
+        this.automationsService = automationsService;
     }
     async findAll(tenantId) {
         const contacts = await this.prisma.contact.findMany({
@@ -43,10 +45,23 @@ let ContactsService = class ContactsService {
             };
         });
     }
+    async updateTags(tenantId, contactId, tags) {
+        const contact = await this.prisma.contact.update({
+            where: { id: contactId, tenantId },
+            data: { tags }
+        });
+        if (tags && tags.length > 0) {
+            for (const tag of tags) {
+                await this.automationsService.evaluateEvent(tenantId, 'TAG_ADDED', { contactId, tag });
+            }
+        }
+        return contact;
+    }
 };
 exports.ContactsService = ContactsService;
 exports.ContactsService = ContactsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        automations_service_1.AutomationsService])
 ], ContactsService);
 //# sourceMappingURL=contacts.service.js.map

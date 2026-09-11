@@ -21,6 +21,8 @@ const dashboard_module_1 = require("./modules/dashboard/dashboard.module");
 const contacts_module_1 = require("./modules/contacts/contacts.module");
 const rag_module_1 = require("./modules/rag/rag.module");
 const departments_module_1 = require("./modules/departments/departments.module");
+const quick_replies_module_1 = require("./modules/quick-replies/quick-replies.module");
+const automations_module_1 = require("./modules/automations/automations.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -40,6 +42,8 @@ exports.AppModule = AppModule = __decorate([
             contacts_module_1.ContactsModule,
             rag_module_1.RagModule,
             departments_module_1.DepartmentsModule,
+            quick_replies_module_1.QuickRepliesModule,
+            automations_module_1.AutomationsModule,
         ],
         controllers: [],
         providers: [],

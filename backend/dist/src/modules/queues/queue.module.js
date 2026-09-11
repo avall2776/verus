@@ -16,6 +16,8 @@ const database_module_1 = require("../../shared/database/database.module");
 const ai_module_1 = require("../ai/ai.module");
 const messaging_module_1 = require("../messaging/messaging.module");
 const chat_module_1 = require("../chat/chat.module");
+const automations_processor_1 = require("./processors/automations.processor");
+const automations_module_1 = require("../automations/automations.module");
 let QueueModule = class QueueModule {
 };
 exports.QueueModule = QueueModule;
@@ -44,8 +46,10 @@ exports.QueueModule = QueueModule = __decorate([
             }),
             bullmq_1.BullModule.registerQueue({ name: 'webhook-ingress' }),
             bullmq_1.BullModule.registerQueue({ name: 'ai-processing' }),
+            bullmq_1.BullModule.registerQueue({ name: 'automations' }),
+            automations_module_1.AutomationsModule,
         ],
-        providers: [webhook_processor_1.WebhookProcessor, ai_processor_1.AiProcessor],
+        providers: [webhook_processor_1.WebhookProcessor, ai_processor_1.AiProcessor, automations_processor_1.AutomationsProcessor],
         exports: [bullmq_1.BullModule],
     })
 ], QueueModule);

@@ -53,6 +53,24 @@ let DepartmentsService = class DepartmentsService {
             }
         });
     }
+    async update(tenantId, id, data) {
+        return this.prisma.department.update({
+            where: { id, tenantId },
+            data,
+        });
+    }
+    async delete(tenantId, id) {
+        await this.prisma.userDepartment.deleteMany({
+            where: { departmentId: id }
+        });
+        await this.prisma.conversation.updateMany({
+            where: { departmentId: id, tenantId },
+            data: { departmentId: null }
+        });
+        return this.prisma.department.delete({
+            where: { id, tenantId }
+        });
+    }
 };
 exports.DepartmentsService = DepartmentsService;
 exports.DepartmentsService = DepartmentsService = __decorate([

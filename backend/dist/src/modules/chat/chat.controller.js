@@ -22,14 +22,14 @@ let ChatController = class ChatController {
     constructor(chatService) {
         this.chatService = chatService;
     }
-    async listConversations(tenantId, status) {
-        return this.chatService.findAllConversations(tenantId, status);
+    async listConversations(tenantId, req, tab) {
+        return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, tab || 'waiting');
     }
     async getMessages(tenantId, conversationId) {
         return this.chatService.getConversationMessages(tenantId, conversationId);
     }
-    async takeover(tenantId, conversationId) {
-        return this.chatService.takeoverConversation(tenantId, conversationId);
+    async takeover(tenantId, conversationId, req) {
+        return this.chatService.takeoverConversation(tenantId, conversationId, req.user.id);
     }
     async release(tenantId, conversationId) {
         return this.chatService.releaseConversation(tenantId, conversationId);
@@ -54,9 +54,10 @@ exports.ChatController = ChatController;
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
-    __param(1, (0, common_1.Query)('status')),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Query)('tab')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, Object, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "listConversations", null);
 __decorate([
@@ -71,8 +72,9 @@ __decorate([
     (0, common_1.Patch)(':id/takeover'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "takeover", null);
 __decorate([

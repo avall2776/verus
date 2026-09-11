@@ -8,18 +8,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CrmModule = void 0;
 const common_1 = require("@nestjs/common");
-const database_module_1 = require("../../shared/database/database.module");
-const auth_module_1 = require("../auth/auth.module");
-const crm_service_1 = require("./crm.service");
 const crm_controller_1 = require("./crm.controller");
+const crm_service_1 = require("./crm.service");
+const prisma_service_1 = require("../../shared/database/prisma.service");
+const automations_module_1 = require("../automations/automations.module");
 let CrmModule = class CrmModule {
 };
 exports.CrmModule = CrmModule;
 exports.CrmModule = CrmModule = __decorate([
     (0, common_1.Module)({
-        imports: [database_module_1.DatabaseModule, auth_module_1.AuthModule],
-        providers: [crm_service_1.CrmService],
+        imports: [automations_module_1.AutomationsModule],
         controllers: [crm_controller_1.CrmController],
+        providers: [crm_service_1.CrmService, prisma_service_1.PrismaService],
+        exports: [crm_service_1.CrmService],
     })
 ], CrmModule);
 //# sourceMappingURL=crm.module.js.map

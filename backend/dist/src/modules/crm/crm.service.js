@@ -12,9 +12,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CrmService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
+const automations_service_1 = require("../automations/automations.service");
 let CrmService = class CrmService {
-    constructor(prisma) {
+    constructor(prisma, automationsService) {
         this.prisma = prisma;
+        this.automationsService = automationsService;
     }
     async findAllDeals(tenantId) {
         return this.prisma.deal.findMany({
@@ -22,24 +24,51 @@ let CrmService = class CrmService {
             include: {
                 contact: {
                     select: {
+                        id: true,
                         name: true,
                         phone: true,
+                        tags: true,
+                    }
+                },
+                assignee: {
+                    select: {
+                        id: true,
+                        name: true,
                     }
                 }
             },
             orderBy: { updatedAt: 'desc' }
         });
     }
-    async updateDealStatus(tenantId, dealId, status) {
-        return this.prisma.deal.updateMany({
-            where: { id: dealId, tenantId },
-            data: { status }
+    async createDeal(tenantId, data) {
+        return this.prisma.deal.create({
+            data: {
+                tenantId,
+                ...data
+            }
         });
+    }
+    async updateDeal(tenantId, id, data) {
+        const deal = await this.prisma.deal.findUnique({ where: { id } });
+        if (!deal || deal.tenantId !== tenantId)
+            throw new common_1.NotFoundException('Deal não encontrado');
+        const updated = await this.prisma.deal.update({
+            where: { id },
+            data
+        });
+        if (data.status && data.status !== deal.status) {
+            await this.automationsService.evaluateEvent(tenantId, 'STAGE_CHANGED', {
+                contactId: deal.contactId,
+                stage: data.status
+            });
+        }
+        return updated;
     }
 };
 exports.CrmService = CrmService;
 exports.CrmService = CrmService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        automations_service_1.AutomationsService])
 ], CrmService);
 //# sourceMappingURL=crm.service.js.map

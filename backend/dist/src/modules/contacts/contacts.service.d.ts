@@ -1,7 +1,9 @@
 import { PrismaService } from '../../shared/database/prisma.service';
+import { AutomationsService } from '../automations/automations.service';
 export declare class ContactsService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly automationsService;
+    constructor(prisma: PrismaService, automationsService: AutomationsService);
     findAll(tenantId: string): Promise<{
         id: string;
         name: string;
@@ -11,4 +13,15 @@ export declare class ContactsService {
         tags: string[];
         lastActive: string;
     }[]>;
+    updateTags(tenantId: string, contactId: string, tags: string[]): Promise<{
+        id: string;
+        tenantId: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        phone: string | null;
+        email: string | null;
+        source: string;
+        tags: string[];
+    }>;
 }

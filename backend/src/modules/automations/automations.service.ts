@@ -131,9 +131,7 @@ export class AutomationsService {
         await this.messagingService.sendText({
           tenantId: automation.tenantId,
           phone: contact.phone,
-          content: finalMsg,
-          contactId: contact.id,
-          provider: 'meta'
+          content: finalMsg
         });
         
         await this.prisma.message.create({

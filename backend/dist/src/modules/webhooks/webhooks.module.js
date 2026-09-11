@@ -11,7 +11,6 @@ const common_1 = require("@nestjs/common");
 const bullmq_1 = require("@nestjs/bullmq");
 const config_1 = require("@nestjs/config");
 const webhooks_controller_1 = require("./webhooks.controller");
-const webhook_processor_1 = require("../queues/processors/webhook.processor");
 let WebhooksModule = class WebhooksModule {
 };
 exports.WebhooksModule = WebhooksModule;
@@ -27,7 +26,6 @@ exports.WebhooksModule = WebhooksModule = __decorate([
             }),
         ],
         controllers: [webhooks_controller_1.WebhooksController],
-        providers: [webhook_processor_1.WebhookProcessor],
     })
 ], WebhooksModule);
 //# sourceMappingURL=webhooks.module.js.map
