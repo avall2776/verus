@@ -95,10 +95,13 @@ export class ChatService {
       throw new NotFoundException('Conversa não encontrada.');
     }
 
-    return this.prisma.conversation.update({
+    const updated = await this.prisma.conversation.update({
       where: { id: conversationId },
       data: { status: 'human_takeover', assignedTo: userId }
     });
+    
+    this.chatGateway.emitConversationUpdated(tenantId, updated);
+    return updated;
   }
 
   async releaseConversation(tenantId: string, conversationId: string) {
@@ -110,10 +113,13 @@ export class ChatService {
       throw new NotFoundException('Conversa não encontrada.');
     }
 
-    return this.prisma.conversation.update({
+    const updated = await this.prisma.conversation.update({
       where: { id: conversationId },
       data: { status: 'resolved' }
     });
+    
+    this.chatGateway.emitConversationUpdated(tenantId, updated);
+    return updated;
   }
 
   async assignToUser(tenantId: string, conversationId: string, userId: string) {

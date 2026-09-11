@@ -123,12 +123,15 @@ export class WebhookProcessor extends WorkerHost {
     });
 
     if (conversation.status === 'resolved') {
-      // Reabre a mesma conversa se o cliente voltar a mandar mensagem
+      // Reabre a mesma conversa se o cliente voltar a mandar mensagem (Fila Geral)
       conversation = await this.prisma.conversation.update({
         where: { id: conversation.id },
-        data: { status: 'bot_active' }
+        data: { status: 'waiting', assignedTo: null }
       });
-      this.logger.log(`Conversa [${conversation.id}] reaberta (status -> bot_active).`);
+      this.logger.log(`Conversa [${conversation.id}] reaberta (status -> waiting).`);
+      
+      // Emite atualização para as telas (mover de Resolvidos -> Aguardando)
+      this.chatGateway.emitConversationUpdated(tenantId, conversation);
     }
 
     // 5. Persistir a Mensagem (Inbound)

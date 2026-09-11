@@ -159,12 +159,43 @@ export default function InboxPage() {
       });
     };
 
+    const handleConversationUpdated = (data: any) => {
+      console.log('Conversation Updated via WebSocket:', data);
+      // Recarrega a lista silenciosamente mantendo unread
+      api.get(`/conversations?tab=${activeTab}`).then((res) => {
+        const mapped = res.data.map((conv: any) => {
+          const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
+          return {
+            id: conv.id,
+            contactId: conv.contact.id,
+            name: conv.contact.name,
+            phone: conv.contact.phone,
+            email: conv.contact.email,
+            tags: conv.contact.tags || [],
+            lastMsg: lastMsg,
+            time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isAi: conv.status === 'bot_active',
+            status: conv.status
+          };
+        });
+        
+        setContacts((prev) => {
+           return mapped.map((newC: any) => {
+              const old = prev.find(p => p.id === newC.id);
+              return { ...newC, unread: old?.unread || 0, hasNewMessage: old?.hasNewMessage || false };
+           });
+        });
+      });
+    };
+
     socket.on('newMessage', handleNewMessage);
+    socket.on('conversationUpdated', handleConversationUpdated);
 
     return () => {
       socket.off('newMessage', handleNewMessage);
+      socket.off('conversationUpdated', handleConversationUpdated);
     };
-  }, [socket, activeChat]);
+  }, [socket, activeChat, activeTab]);
 
   // Derivar contato ativo
   const activeContactData = contacts.find(c => c.id === activeChat);
@@ -173,8 +204,7 @@ export default function InboxPage() {
     if (!activeChat) return;
     try {
       await api.patch(`/conversations/${activeChat}/takeover`);
-      // Atualiza o state local para refletir a mudança
-      setContacts(prev => prev.map(c => c.id === activeChat ? { ...c, isAi: false, status: 'human_takeover' } : c));
+      // O state local será atualizado pelo listener do socket (conversationUpdated)
     } catch (error) {
       console.error("Erro ao assumir conversa", error);
     }
@@ -184,8 +214,8 @@ export default function InboxPage() {
     if (!activeChat) return;
     try {
       await api.patch(`/conversations/${activeChat}/release`);
-      setContacts(prev => prev.filter(c => c.id !== activeChat)); // Remove from 'mine' list visually
-      setActiveChat(null);
+      setActiveChat(null); // Deseleciona o chat
+      // O socket removerá ou atualizará a lista visualmente com base na aba atual
     } catch (error) {
       console.error("Erro ao finalizar", error);
     }
@@ -512,8 +542,17 @@ export default function InboxPage() {
           {messages.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-gray-500 gap-2">
               <Bot size={40} className="text-gray-700" />
-              <p>Aguardando mensagens ao vivo...</p>
-              <p className="text-xs">Rode o script de simulação no backend!</p>
+              {activeContactData?.status === 'resolved' ? (
+                <>
+                  <p>Atendimento Finalizado</p>
+                  <p className="text-xs">O cliente pode reabrir o ticket enviando uma nova mensagem.</p>
+                </>
+              ) : (
+                <>
+                  <p>Aguardando mensagens ao vivo...</p>
+                  <p className="text-xs">Rode o script de simulação no backend!</p>
+                </>
+              )}
             </div>
           ) : (
             messages.map((msg, i) => {
