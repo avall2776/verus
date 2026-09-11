@@ -14,15 +14,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    const { sub: userId, tenantId } = payload;
+    const { sub: userId, tenantId, role } = payload;
     
     if (!userId || !tenantId) {
       throw new UnauthorizedException('Token inválido ou sem contexto de Tenant.');
     }
 
-    // Opcional: checar se o tenant existe no banco para máxima segurança
-    // Mas por questão de performance, podemos confiar no token assinado na maioria das rotas
-    
-    return { userId, tenantId };
+    return { id: userId, userId, tenantId, role: role || 'AGENT' };
   }
 }
