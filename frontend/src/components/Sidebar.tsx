@@ -162,13 +162,13 @@ export default function Sidebar() {
                         flex items-center gap-3 rounded-lg transition-all duration-200 relative
                         ${isExpanded ? 'px-3 py-2' : 'w-10 h-10 justify-center'}
                         ${isActive 
-                          ? 'bg-slate-800 text-emerald-400 font-semibold border-l-2 border-emerald-500' 
-                          : 'text-gray-400 hover:bg-gray-800/50 hover:text-white'
+                          ? 'text-blue-400 bg-blue-600/15 border-l-2 border-blue-500 font-medium' 
+                          : 'text-gray-400 hover:bg-slate-800/60 hover:text-slate-200'
                         }
                         ${shouldBlink ? 'bg-primary/20 shadow-[0_0_15px_rgba(0,210,255,0.2)] animate-pulse text-white' : ''}
                       `}
                     >
-                      <item.icon size={isExpanded ? 18 : 20} className={isActive ? 'text-emerald-400' : 'text-gray-400'} />
+                      <item.icon size={isExpanded ? 18 : 20} className={isActive ? 'text-blue-400' : 'text-gray-400'} />
                       
                       {isExpanded && (
                         <span className="text-sm truncate">{item.name}</span>
