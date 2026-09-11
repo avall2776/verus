@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Filter, MoreHorizontal, MessageCircle, Copy, FileText, ChevronRight, Minimize2, Maximize2, Users, Building, Activity, LayoutDashboard } from "lucide-react";
+import { Search, Filter, MoreHorizontal, MessageCircle, Copy, FileText, Maximize2, Minimize2, Activity, Users, Building, LayoutDashboard, Plus, Settings, DollarSign, Target } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 
 import { DealModal } from "@/components/crm/DealModal";
 
-const COLUMNS = [
+const DEFAULT_COLUMNS = [
   { id: "seed", title: "LEADS SEED", color: "text-gray-400", bgLight: "bg-gray-500/10", borderLight: "border-gray-500/30", borderColor: "border-t-gray-500" },
   { id: "new", title: "Novo Contato", color: "text-blue-500", bgLight: "bg-blue-500/10", borderLight: "border-blue-500/30", borderColor: "border-t-blue-500" },
   { id: "qualified", title: "Em Qualificação", color: "text-purple-500", bgLight: "bg-purple-500/10", borderLight: "border-purple-500/30", borderColor: "border-t-purple-500" },
@@ -22,11 +22,25 @@ const COLUMNS = [
 
 export default function CrmPage() {
   const [deals, setDeals] = useState<any[]>([]);
+  const [columns, setColumns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDeal, setSelectedDeal] = useState<any | null>(null);
-  const [collapsedCols, setCollapsedCols] = useState<string[]>(["disqualified"]); // Desqualificados vem fechado por padrão
+  const [collapsedCols, setCollapsedCols] = useState<string[]>(["disqualified"]);
   const [neutralMode, setNeutralMode] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
+
+  const [showStageModal, setShowStageModal] = useState(false);
+  const [showManageStagesModal, setShowManageStagesModal] = useState(false);
+
+  useEffect(() => {
+    const savedCols = localStorage.getItem('crm_columns');
+    if (savedCols) {
+      setColumns(JSON.parse(savedCols));
+    } else {
+      setColumns(DEFAULT_COLUMNS);
+      localStorage.setItem('crm_columns', JSON.stringify(DEFAULT_COLUMNS));
+    }
+  }, []);
 
   const fetchDeals = async () => {
     try {
@@ -79,7 +93,7 @@ export default function CrmPage() {
   if (loading) return <div className="p-8 text-gray-500">Carregando CRM...</div>;
 
   return (
-    <div className="flex flex-col h-full w-full gap-4">
+    <div className="flex flex-col h-full w-full gap-4 relative">
       <DealModal 
         deal={selectedDeal} 
         isOpen={!!selectedDeal} 
@@ -98,7 +112,6 @@ export default function CrmPage() {
             </select>
           </div>
           
-          {/* Quick Filters */}
           <div className="flex bg-gray-900 rounded-lg p-1 border border-gray-800 overflow-x-auto">
             {[
               { id: 'all', label: 'Tudo', icon: Activity },
@@ -118,22 +131,31 @@ export default function CrmPage() {
           </div>
         </div>
         
-        <div className="flex items-center gap-3 w-full lg:w-auto">
-          <div className="relative flex-1 lg:w-64">
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+          <div className="relative flex-1 lg:w-48">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
             <input 
               type="text" 
               placeholder="Buscar Negócio..." 
-              className="bg-[#0B1224] border border-gray-800 rounded-full pl-9 pr-4 py-2 text-sm text-text-primary outline-none focus:border-primary w-full transition-colors"
+              className="bg-[#0B1224] border border-gray-800 rounded-full pl-9 pr-4 py-1.5 text-sm text-text-primary outline-none focus:border-primary w-full transition-colors"
             />
           </div>
           
           <button 
             onClick={() => setNeutralMode(!neutralMode)}
-            className={`px-3 py-2 rounded-full border text-sm font-bold transition-all whitespace-nowrap ${neutralMode ? 'bg-gray-100 text-black border-gray-100' : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'}`}
-            title="Desativar Cores do Funil"
+            className={`px-3 py-1.5 rounded-full border text-xs font-bold transition-all whitespace-nowrap ${neutralMode ? 'bg-gray-100 text-black border-gray-100' : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'}`}
           >
-            Modo Neutro
+            Neutro
+          </button>
+          
+          <div className="h-6 w-px bg-gray-800"></div>
+
+          <button onClick={() => setShowStageModal(true)} className="bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1">
+            <Plus size={14}/> Nova Etapa
+          </button>
+          
+          <button onClick={() => setShowManageStagesModal(true)} className="bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1">
+            <Settings size={14}/> Gerenciar Etapas
           </button>
         </div>
       </div>
@@ -141,7 +163,7 @@ export default function CrmPage() {
       {/* Kanban Board */}
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex-1 flex gap-4 overflow-x-auto pb-4 custom-scrollbar items-start">
-          {COLUMNS.map(col => {
+          {columns.map(col => {
             const isCollapsed = collapsedCols.includes(col.id);
             const columnDeals = deals.filter(d => d.status === col.id);
             const totalValue = columnDeals.reduce((acc, curr) => acc + Number(curr.value || 0), 0);
@@ -166,19 +188,15 @@ export default function CrmPage() {
 
             return (
               <div key={col.id} className="w-[320px] flex-shrink-0 flex flex-col h-full gap-3">
-                
-                {/* Header Expandido */}
-                <div className={`p-4 rounded-xl border border-gray-800 bg-[#1c1d22] border-t-2 ${borderTopClass} flex flex-col shadow-sm`}>
+                {/* Column Header */}
+                <div className={`p-4 rounded-xl border border-gray-800 bg-[#1c1d22] border-t-2 ${borderTopClass} flex flex-col shadow-sm shrink-0`}>
                   <div className="flex justify-between items-center mb-2">
                     <h3 className={`text-sm font-black uppercase tracking-wider ${colColorClass}`}>
                       {col.title}
                     </h3>
                     <div className="flex gap-1">
-                      <button onClick={() => toggleColumn(col.id)} className="text-gray-500 hover:text-white p-1 rounded hover:bg-gray-700 transition-colors" title="Colapsar Coluna">
+                      <button onClick={() => toggleColumn(col.id)} className="text-gray-500 hover:text-white p-1 rounded hover:bg-gray-700 transition-colors">
                         <Minimize2 size={14} />
-                      </button>
-                      <button className="text-gray-500 hover:text-white p-1 rounded hover:bg-gray-700 transition-colors">
-                        <MoreHorizontal size={14}/>
                       </button>
                     </div>
                   </div>
@@ -194,7 +212,7 @@ export default function CrmPage() {
                     <div 
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`flex-1 flex flex-col gap-3 overflow-y-auto rounded-xl p-1 transition-colors custom-scrollbar min-h-[150px] ${snapshot.isDraggingOver ? 'bg-gray-800/20 border border-dashed border-gray-700' : ''}`}
+                      className={`flex-1 flex flex-col gap-3 overflow-y-auto rounded-xl p-1 transition-colors custom-scrollbar min-h-[150px] ${snapshot.isDraggingOver ? 'bg-gray-800/20 ring-2 ring-dashed ring-gray-700' : ''}`}
                     >
                       {columnDeals.map((deal, index) => {
                         const contactTags = deal.contact?.tags || [];
@@ -209,46 +227,75 @@ export default function CrmPage() {
                                 {...provided.dragHandleProps}
                                 style={{ ...provided.draggableProps.style }}
                                 onClick={() => setSelectedDeal(deal)}
-                                className={`bg-[#25262c] border border-gray-800 rounded-xl p-4 cursor-pointer transition-all duration-200 group relative overflow-hidden ${
-                                  snapshot.isDragging ? 'shadow-2xl shadow-black ring-1 ring-primary z-50 scale-105 opacity-90' : 'hover:border-gray-600 hover:shadow-lg hover:-translate-y-0.5'
+                                className={`bg-[#25262c] border rounded-xl p-4 cursor-pointer transition-all duration-200 group relative overflow-hidden flex flex-col gap-2 ${
+                                  snapshot.isDragging ? `shadow-2xl shadow-black/80 rotate-3 scale-105 opacity-90 ring-1 ${col.borderLight} bg-gray-800` : 'border-gray-800 hover:border-gray-600 hover:-translate-y-0.5 shadow-sm'
                                 }`}
                               >
-                                <div className="flex justify-between items-start mb-3">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] text-gray-400 font-mono bg-gray-800 px-1.5 py-0.5 rounded">
-                                      #{deal.id.split('-')[0].toUpperCase()}
+                                {/* Topo: ID + Tag */}
+                                <div className="flex justify-between items-start mb-1">
+                                  <span className="text-[11px] text-gray-400 font-bold bg-gray-800/80 px-2 py-0.5 rounded-md font-mono">
+                                    #{deal.id.split('-')[0].toUpperCase()}
+                                  </span>
+                                  {primaryTag && (
+                                    <span className="text-[10px] bg-primary/20 text-primary border border-primary/20 font-bold px-2 py-0.5 rounded-md uppercase">
+                                      {primaryTag}
                                     </span>
-                                    {primaryTag && (
-                                      <span className="text-[10px] bg-primary/20 text-primary font-bold px-1.5 py-0.5 rounded">
-                                        {primaryTag}
-                                      </span>
-                                    )}
-                                  </div>
-                                  
-                                  {deal.assignee ? (
-                                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-bold text-white shadow-sm ring-2 ring-[#25262c]" title={deal.assignee.name}>
-                                      {deal.assignee.name.charAt(0)}
-                                    </div>
-                                  ) : (
-                                    <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-gray-500" title="Não atribuído">
-                                      ?
-                                    </div>
                                   )}
                                 </div>
                                 
-                                <h4 className="text-sm font-bold text-white mb-1 leading-tight group-hover:text-primary transition-colors">{deal.title}</h4>
-                                <div className="text-xs text-gray-400 font-medium mb-3">
-                                  {deal.contact?.name || 'Sem Contato'} • {deal.contact?.phone || 'Sem número'}
+                                {/* Linha 1: Nome + WA */}
+                                <div>
+                                  <h4 className="text-sm font-bold text-white leading-tight group-hover:text-primary transition-colors">{deal.contact?.name || 'Sem Contato'}</h4>
+                                  <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium mt-1">
+                                    <MessageCircle size={12} className="text-[#25D366]" />
+                                    {deal.contact?.phone || 'Sem número'}
+                                  </div>
+                                </div>
+
+                                {/* Linha 2: Entidade */}
+                                <div className="text-[11px] font-semibold text-gray-500">
+                                  • Lead
+                                </div>
+
+                                {/* Linha 3: Metadados */}
+                                <div className="bg-[#1a1f26] rounded-md p-2 mt-1 flex flex-col gap-1 border border-gray-800/80">
+                                  <div className="flex items-center justify-between text-[10px] font-mono text-gray-500 uppercase">
+                                    <span>Origem:</span>
+                                    <span className="text-gray-400 font-bold truncate ml-2">[{deal.contact?.source || 'ORGÂNICO'}]</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[10px] font-mono text-gray-500 uppercase">
+                                    <span>Formulário:</span>
+                                    <span className="text-gray-400 font-bold truncate ml-2">Padrão</span>
+                                  </div>
                                 </div>
                                 
-                                <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-800/50">
-                                  <span className="text-sm font-black text-white bg-[#1c1d22] px-2 py-1 rounded-md border border-gray-800">
-                                    {formatCurrency(Number(deal.value))}
-                                  </span>
+                                {/* Linha 4: Valor */}
+                                <div className="mt-2 flex items-center gap-1 text-emerald-400 bg-emerald-500/10 w-fit px-2 py-1 rounded-md border border-emerald-500/20">
+                                  <DollarSign size={14} />
+                                  <span className="text-sm font-black">{formatCurrency(Number(deal.value))}</span>
+                                </div>
+
+                                {/* Rodapé: Avatar */}
+                                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-800/50">
+                                  {deal.assignee ? (
+                                    <>
+                                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-bold text-white shadow-sm ring-2 ring-[#25262c]" title={deal.assignee.name}>
+                                        {deal.assignee.name.charAt(0)}
+                                      </div>
+                                      <span className="text-xs text-gray-400 font-semibold">{deal.assignee.name.split(' ')[0]}</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div className="w-6 h-6 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-500" title="Não atribuído">
+                                        ?
+                                      </div>
+                                      <span className="text-xs text-gray-600 font-semibold italic">Sem dono</span>
+                                    </>
+                                  )}
                                 </div>
 
                                 {/* Gaveta Expansível no Hover (Puro CSS) */}
-                                <div className="max-h-0 opacity-0 group-hover:max-h-[120px] group-hover:opacity-100 group-hover:mt-4 transition-all duration-300 ease-in-out overflow-hidden border-t border-dashed border-gray-700 flex flex-col gap-2 pt-0 group-hover:pt-3">
+                                <div className="max-h-0 opacity-0 group-hover:max-h-[120px] group-hover:opacity-100 group-hover:mt-2 transition-all duration-300 ease-in-out overflow-hidden flex flex-col gap-2 pt-0 group-hover:pt-2 border-t border-transparent group-hover:border-dashed group-hover:border-gray-700">
                                   <div className="text-[10px] text-gray-500 font-mono flex items-center gap-1">
                                     <Activity size={10} />
                                     <span>Criado há 2h por Sistema</span>
@@ -263,7 +310,7 @@ export default function CrmPage() {
                                     <button 
                                       className="w-8 h-7 bg-gray-800 hover:bg-[#25D366] hover:text-white text-gray-400 rounded-md flex items-center justify-center transition-colors"
                                       title="WhatsApp"
-                                      onClick={(e) => { e.stopPropagation(); /* go to chat */ }}
+                                      onClick={(e) => { e.stopPropagation(); }}
                                     >
                                       <MessageCircle size={14} />
                                     </button>
@@ -286,6 +333,11 @@ export default function CrmPage() {
                         );
                       })}
                       {provided.placeholder}
+                      
+                      {/* Add Card Button */}
+                      <button className="mt-2 w-full border-2 border-dashed border-gray-800 hover:border-primary/50 text-gray-500 hover:text-primary rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 bg-[#1c1d22]/50 hover:bg-primary/5">
+                        <Plus size={14} /> Adicionar Cartão
+                      </button>
                     </div>
                   )}
                 </Droppable>
@@ -294,6 +346,74 @@ export default function CrmPage() {
           })}
         </div>
       </DragDropContext>
+
+      {/* MODAL NOVA ETAPA (Mock) */}
+      {showStageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#1c1d22] border border-gray-800 w-full max-w-sm rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95">
+            <h2 className="text-lg font-bold text-white mb-4">Nova Etapa</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-gray-400 uppercase font-bold mb-1 block">Nome da Etapa</label>
+                <input type="text" className="w-full bg-[#0B1224] border border-gray-700 rounded-lg p-2 text-white outline-none focus:border-primary" placeholder="Ex: Demonstração" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 uppercase font-bold mb-2 block">Cor</label>
+                <div className="flex gap-2 flex-wrap">
+                  {['bg-blue-500', 'bg-purple-500', 'bg-yellow-500', 'bg-emerald-500', 'bg-orange-500', 'bg-rose-500'].map(color => (
+                    <button key={color} className={`w-8 h-8 rounded-full ${color} cursor-pointer hover:scale-110 transition-transform ring-2 ring-transparent focus:ring-white`}></button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-8">
+              <button onClick={() => setShowStageModal(false)} className="text-gray-400 text-sm font-bold">Cancelar</button>
+              <button onClick={() => { setShowStageModal(false); toast.success("Etapa Criada (Simulado)"); }} className="bg-primary hover:bg-primary/90 text-white text-sm font-bold px-4 py-2 rounded-lg">Salvar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL GERENCIAR ETAPAS (Mock) */}
+      {showManageStagesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#1c1d22] border border-gray-800 w-full max-w-lg rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95 max-h-[80vh] overflow-y-auto">
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Settings size={18} className="text-primary" /> Gerenciar Etapas do Funil
+            </h2>
+            <p className="text-xs text-gray-400 mb-4">Arraste para reordenar, ou altere as propriedades abaixo.</p>
+            
+            <div className="flex flex-col gap-2">
+              {columns.map((col, idx) => (
+                <div key={col.id} className="bg-[#25262c] border border-gray-800 rounded-lg p-3 flex items-center justify-between group cursor-move hover:border-gray-600 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full ${col.color.replace('text-', 'bg-')}`}></div>
+                    <span className="text-sm font-bold text-white">{col.title}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="p-1.5 bg-gray-800 rounded text-gray-400 hover:text-white" title="Alerta de estagnação">
+                      <Clock size={14} />
+                    </button>
+                    {idx === columns.length - 2 && (
+                       <button className="p-1.5 bg-green-500/10 rounded text-green-500" title="Marcar como Ganho">
+                         <Target size={14} />
+                       </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-3 mt-8">
+              <button onClick={() => setShowManageStagesModal(false)} className="bg-gray-800 hover:bg-gray-700 text-white text-sm font-bold px-4 py-2 rounded-lg">Concluído</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
+
+// Icone extra pro Modal de Manage
+import { Clock } from "lucide-react";

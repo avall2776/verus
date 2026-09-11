@@ -125,10 +125,15 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                   value={deal.status}
                   onChange={(e) => onUpdate(deal.id, { status: e.target.value })}
                 >
-                  <option value="new">Novos Leads</option>
-                  <option value="qualified">Qualificados</option>
-                  <option value="proposal">Proposta Enviada</option>
-                  <option value="won">Ganhos</option>
+                  <option value="seed">LEADS SEED</option>
+                  <option value="new">Novo Contato</option>
+                  <option value="qualified">Em Qualificação</option>
+                  <option value="follow-up">Follow-up</option>
+                  <option value="proposal">Proposta</option>
+                  <option value="negotiation">Negociação</option>
+                  <option value="won">Fechado/Ganho</option>
+                  <option value="lost">Fechado/Perdido</option>
+                  <option value="disqualified">Duplicados/Desqualificados</option>
                 </select>
               </div>
 
