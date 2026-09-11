@@ -221,6 +221,14 @@ export default function AtendimentoAnalyticsDashboard() {
   const [ticketStatus, setTicketStatus] = useState('all');
   const [ticketPage, setTicketPage] = useState(1);
 
+  // Agent Search State (Agent Performance Table)
+  const [agentSearchText, setAgentSearchText] = useState('');
+
+  const filteredAgents = useMemo(() => {
+    if (!agentSearchText.trim()) return agents;
+    return agents.filter((ag) => ag.name.toLowerCase().includes(agentSearchText.toLowerCase()));
+  }, [agents, agentSearchText]);
+
   // Carregar configurações de dias úteis do localStorage
   useEffect(() => {
     try {
@@ -968,17 +976,28 @@ export default function AtendimentoAnalyticsDashboard() {
                   </div>
                 </div>
 
-                {/* 4. AGENT PERFORMANCE TABLE */}
-                <div className="bg-[#0B1224] border border-slate-800 rounded-xl overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+                {/* 4. AGENT PERFORMANCE TABLE (PADRÃO LERO) */}
+                <div className="bg-[#0B1224] border border-slate-800 rounded-xl overflow-hidden shadow-md">
+                  <div className="px-6 py-3.5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0E1528]">
                     <div>
                       <h3 className="text-sm font-bold text-white flex items-center gap-2">
                         <UserCheck size={16} className="text-emerald-400" />
                         Desempenho por Colaborador
                       </h3>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-[11px] text-slate-400">
                         Indicadores individuais de produtividade, SLA de primeira resposta e satisfação
                       </p>
+                    </div>
+
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                      <input
+                        type="text"
+                        placeholder="Buscar por nome..."
+                        value={agentSearchText}
+                        onChange={(e) => setAgentSearchText(e.target.value)}
+                        className="bg-[#11192A] border border-slate-800 text-xs pl-8 pr-3 py-1.5 rounded-lg text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 w-52 transition-all"
+                      />
                     </div>
                   </div>
 
@@ -986,64 +1005,70 @@ export default function AtendimentoAnalyticsDashboard() {
                     <table className="w-full text-left text-xs">
                       <thead>
                         <tr className="border-b border-slate-800 bg-[#11192A] text-slate-400">
-                          <th className="py-3 px-6 font-semibold">Colaborador</th>
-                          <th className="py-3 px-4 font-semibold text-center">Em Atendimento</th>
-                          <th className="py-3 px-4 font-semibold text-center">Fila Pendente</th>
-                          <th className="py-3 px-4 font-semibold text-center">Finalizados</th>
-                          <th className="py-3 px-4 font-semibold text-center">Total</th>
-                          <th className="py-3 px-4 font-semibold text-center">1ª Resposta Média</th>
-                          <th className="py-3 px-4 font-semibold text-center">TMA Médio</th>
-                          <th className="py-3 px-6 font-semibold text-right">CSAT Médio</th>
+                          <th className="py-2.5 px-6 font-semibold">Usuário</th>
+                          <th className="py-2.5 px-4 font-semibold text-center">Pendentes</th>
+                          <th className="py-2.5 px-4 font-semibold text-center">Atendendo</th>
+                          <th className="py-2.5 px-4 font-semibold text-center">Finalizados</th>
+                          <th className="py-2.5 px-4 font-semibold text-center">Total</th>
+                          <th className="py-2.5 px-4 font-semibold text-center">Avaliações</th>
+                          <th className="py-2.5 px-4 font-semibold text-center">1ª Resposta</th>
+                          <th className="py-2.5 px-6 font-semibold text-right">TMA</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/60">
-                        {agents.length === 0 ? (
+                        {filteredAgents.length === 0 ? (
                           <tr>
                             <td colSpan={8} className="py-8 text-center text-slate-500">
-                              Nenhum colaborador com atendimentos registrados no período.
+                              {agentSearchText ? 'Nenhum colaborador corresponde à busca.' : 'Nenhum colaborador com atendimentos registrados no período.'}
                             </td>
                           </tr>
                         ) : (
-                          agents.map((ag) => (
+                          filteredAgents.map((ag) => (
                             <tr key={ag.id} className="hover:bg-slate-800/30 transition-colors">
-                              <td className="py-3.5 px-6">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center font-bold text-xs">
+                              <td className="py-2.5 px-6">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="w-7 h-7 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
                                     {ag.name.substring(0, 2).toUpperCase()}
                                   </div>
-                                  <div>
-                                    <span className="font-semibold text-slate-200 block">{ag.name}</span>
-                                    <span className="text-[11px] text-slate-500">{ag.role}</span>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-semibold text-slate-100 text-xs">{ag.name}</span>
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-800 border border-slate-700 text-slate-300">
+                                      {ag.role === 'ADMIN' ? 'Admin' : ag.role === 'SUPERVISOR' ? 'Supervisor' : 'Agente'}
+                                    </span>
+                                    {ag.isOnline && (
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="Online"></span>
+                                    )}
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-3.5 px-4 text-center">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                                  {ag.inProgressCount}
-                                </span>
-                              </td>
-                              <td className="py-3.5 px-4 text-center">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30">
+                              <td className="py-2.5 px-4 text-center">
+                                <span className="inline-flex items-center bg-red-500 text-white font-bold text-xs px-2.5 py-0.5 rounded-full shadow-sm">
                                   {ag.pendingCount}
                                 </span>
                               </td>
-                              <td className="py-3.5 px-4 text-center">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30">
-                                  {ag.finishedCount}
+                              <td className="py-2.5 px-4 text-center">
+                                <span className="inline-flex items-center bg-emerald-500 text-white font-bold text-xs px-2.5 py-0.5 rounded-full shadow-sm">
+                                  {ag.inProgressCount}
                                 </span>
                               </td>
-                              <td className="py-3.5 px-4 text-center font-bold text-white">
+                              <td className="py-2.5 px-4 text-center text-slate-300 font-medium">
+                                {ag.finishedCount}
+                              </td>
+                              <td className="py-2.5 px-4 text-center font-semibold text-slate-100">
                                 {ag.total}
                               </td>
-                              <td className="py-3.5 px-4 text-center text-slate-300">
+                              <td className="py-2.5 px-4 text-center font-medium text-amber-400">
+                                <div className="flex items-center justify-center gap-1">
+                                  <Star size={12} fill="currentColor" />
+                                  <span>{ag.csatAvg}</span>
+                                  <span className="text-[10px] text-slate-500 font-normal">({Math.max(ag.finishedCount, 1)})</span>
+                                </div>
+                              </td>
+                              <td className="py-2.5 px-4 text-center text-slate-300 font-medium">
                                 {ag.avgFirstResponse}
                               </td>
-                              <td className="py-3.5 px-4 text-center text-slate-300 font-medium">
+                              <td className="py-2.5 px-6 text-right text-slate-300 font-medium">
                                 {ag.avgTma}
-                              </td>
-                              <td className="py-3.5 px-6 text-right font-bold text-amber-400 flex items-center justify-end gap-1">
-                                <Star size={13} fill="currentColor" />
-                                <span>{ag.csatAvg}</span>
                               </td>
                             </tr>
                           ))
