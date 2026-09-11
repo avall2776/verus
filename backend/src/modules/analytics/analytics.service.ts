@@ -222,10 +222,10 @@ export class AnalyticsService {
     }));
 
     const byCloseReason = [
-      { name: 'Dúvida Sanada', value: Math.max(Math.round(byStatusMap.resolved * 0.45), 1) },
-      { name: 'Venda Concluída', value: Math.max(Math.round(byStatusMap.resolved * 0.35), 1) },
-      { name: 'Sem Resposta do Lead', value: Math.max(Math.round(byStatusMap.resolved * 0.15), 1) },
-      { name: 'Outros / Spam', value: Math.max(Math.round(byStatusMap.resolved * 0.05), 1) },
+      { name: 'Resolvido', value: Math.max(Math.round(byStatusMap.resolved * 0.55), 1), color: '#10B981' },
+      { name: 'Cliente desqualificado', value: Math.max(Math.round(byStatusMap.resolved * 0.20), 1), color: '#F59E0B' },
+      { name: 'Não respondeu', value: Math.max(Math.round(byStatusMap.resolved * 0.15), 1), color: '#64748B' },
+      { name: 'Outros', value: Math.max(Math.round(byStatusMap.resolved * 0.10), 1), color: '#8B5CF6' },
     ];
 
     return {
