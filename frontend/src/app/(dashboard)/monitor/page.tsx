@@ -126,14 +126,16 @@ export default function MonitorPage() {
     };
   }, [socket]);
 
-  const handleTakeover = async (id: string) => {
+  const handleTakeover = async (id: string, contactIdParam?: string) => {
     try {
       await api.patch(`/conversations/${id}/takeover`);
       toast.success("Atendimento assumido com sucesso!");
-      if (selectedCard?.id === id) {
-        setSelectedCard(prev => prev ? { ...prev, status: 'human_takeover' } : null);
-      }
-      fetchData();
+      
+      const conv = conversations.find(c => c.id === id) || selectedCard;
+      const targetContactId = contactIdParam || conv?.contact?.id || (conv as any)?.contactId || '';
+
+      setSelectedCard(null); // Fecha o modal
+      router.push(`/inbox?contactId=${targetContactId}&conversationId=${id}`);
     } catch (error) {
       toast.error("Erro ao assumir atendimento.");
     }
@@ -450,7 +452,7 @@ export default function MonitorPage() {
                                       <div className="flex justify-end gap-2">
                                         {conv.status === 'waiting' && !conv.assignedTo && (
                                           <button 
-                                            onClick={() => handleTakeover(conv.id)}
+                                            onClick={() => handleTakeover(conv.id, conv.contact?.id)}
                                             className="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
                                           >
                                             Assumir
@@ -602,7 +604,7 @@ export default function MonitorPage() {
               </button>
 
               <button
-                onClick={() => handleTakeover(selectedCard.id)}
+                onClick={() => handleTakeover(selectedCard.id, selectedCard.contact?.id)}
                 className="bg-emerald-600/90 hover:bg-emerald-500 text-white font-semibold text-xs py-2 px-2 rounded-lg flex items-center justify-center gap-1 transition-all shadow-sm cursor-pointer"
                 title="Assumir Atendimento"
               >

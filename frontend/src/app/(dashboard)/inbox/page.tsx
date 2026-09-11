@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, BrainCircuit, Lock, Image as ImageIcon, FileText, Mic, X, ArrowRightLeft, Network } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
@@ -13,6 +13,7 @@ function InboxContent() {
   const searchParams = useSearchParams();
   const contactIdParam = searchParams.get('contactId');
   const conversationIdParam = searchParams.get('conversationId') || searchParams.get('chat');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [contacts, setContacts] = useState<any[]>([]);
@@ -68,6 +69,8 @@ function InboxContent() {
         if (conv.status === 'resolved' || conv.status === 'closed') {
           targetTab = 'resolved';
         } else if (conv.assignedTo && conv.assignedTo === currentUserId) {
+          targetTab = 'mine';
+        } else if (conv.status === 'human_takeover' || conv.status === 'open' || conv.assignedTo) {
           targetTab = 'mine';
         } else {
           targetTab = 'waiting';
@@ -170,6 +173,9 @@ function InboxContent() {
       try {
         const { data } = await api.get(`/conversations/${activeChat}/messages`);
         setMessages(data);
+        setTimeout(() => {
+          textareaRef.current?.focus();
+        }, 150);
       } catch (error) {
         console.error("Erro ao buscar mensagens:", error);
       }
@@ -850,6 +856,7 @@ function InboxContent() {
                   </div>
 
                   <textarea 
+                    ref={textareaRef}
                     placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem ou digite / para respostas rápidas..."} 
                     className={`flex-1 bg-transparent text-[0.95rem] resize-none outline-none py-2.5 max-h-32 
                       ${isInternalMode ? 'text-amber-100 placeholder:text-amber-500/50' : 'text-white placeholder:text-gray-500'}
