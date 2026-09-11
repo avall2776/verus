@@ -5,6 +5,7 @@ import { Search, Filter, MoreHorizontal, MessageCircle, Copy, FileText, Maximize
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 import { DealModal } from "@/components/crm/DealModal";
 
@@ -21,12 +22,12 @@ const DEFAULT_COLUMNS = [
 ];
 
 export default function CrmPage() {
+  const router = useRouter();
   const [deals, setDeals] = useState<any[]>([]);
   const [columns, setColumns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDeal, setSelectedDeal] = useState<any | null>(null);
   const [collapsedCols, setCollapsedCols] = useState<string[]>(["disqualified"]);
-  const [expandedCards, setExpandedCards] = useState<string[]>([]);
   const [neutralMode, setNeutralMode] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
@@ -84,13 +85,6 @@ export default function CrmPage() {
   const toggleColumn = (colId: string) => {
     setCollapsedCols(prev => 
       prev.includes(colId) ? prev.filter(id => id !== colId) : [...prev, colId]
-    );
-  };
-
-  const toggleCardAccordion = (e: React.MouseEvent, dealId: string) => {
-    e.stopPropagation();
-    setExpandedCards(prev => 
-      prev.includes(dealId) ? prev.filter(id => id !== dealId) : [...prev, dealId]
     );
   };
 
@@ -222,151 +216,25 @@ export default function CrmPage() {
                       {...provided.droppableProps}
                       className={`flex-1 flex flex-col gap-3 overflow-y-auto rounded-xl p-1 transition-colors custom-scrollbar min-h-[150px] ${snapshot.isDraggingOver ? 'bg-gray-800/20 ring-2 ring-dashed ring-gray-700' : ''}`}
                     >
-                      {columnDeals.map((deal, index) => {
-                        const contactTags = deal.contact?.tags || [];
-                        const primaryTag = contactTags.length > 0 ? contactTags[0] : null;
-                        const isExpanded = expandedCards.includes(deal.id);
-
-                        return (
-                          <Draggable key={deal.id} draggableId={deal.id} index={index}>
-                            {(provided, snapshot) => (
-                              <div 
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                style={{ ...provided.draggableProps.style }}
-                                onClick={() => setSelectedDeal(deal)}
-                                className={`bg-[#161b22] border rounded-xl p-4.5 cursor-pointer transition-all duration-200 relative overflow-hidden flex flex-col gap-3 ${
-                                  snapshot.isDragging ? `shadow-2xl shadow-black/80 rotate-3 scale-105 opacity-90 ring-1 ${col.borderLight} bg-gray-800` : 'border-gray-800 hover:border-gray-600 hover:-translate-y-0.5 shadow-sm'
-                                }`}
-                              >
-                                {/* Topo: ID + Tag */}
-                                <div className="flex justify-between items-start">
-                                  <span className="text-[11px] text-gray-400 font-bold bg-gray-800/80 px-2 py-0.5 rounded-md font-mono">
-                                    #{deal.id.split('-')[0].toUpperCase()}
-                                  </span>
-                                  {primaryTag && (
-                                    <span className="text-[10px] bg-primary/20 text-primary border border-primary/20 font-bold px-2 py-0.5 rounded-md uppercase">
-                                      {primaryTag}
-                                    </span>
-                                  )}
-                                </div>
-                                
-                                {/* Linha 1: Nome + WA + Telefone */}
-                                <div>
-                                  <h4 className="text-base font-semibold text-white leading-tight mb-1">{deal.contact?.name || 'Sem Contato'}</h4>
-                                  <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
-                                    <MessageCircle size={13} className="text-[#25D366]" />
-                                    {deal.contact?.phone || 'Sem número'}
-                                  </div>
-                                </div>
-
-                                {/* Linha 2: Entidade */}
-                                <div className="text-[11px] font-semibold text-gray-500 flex items-center gap-1.5">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> Lead
-                                </div>
-
-                                {/* Accordion / Box de Metadados */}
-                                <div className="bg-[#0d1117] rounded-lg p-3 flex flex-col gap-2 border border-gray-800/80 mt-1">
-                                  <div className="flex items-center justify-between text-[10px] font-mono text-gray-500 uppercase">
-                                    <span>Origem: <span className="text-gray-400 font-bold ml-1">[{deal.contact?.source || 'ORGÂNICO'}]</span></span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-[10px] font-mono text-gray-500 uppercase">
-                                    <span>Formulário: <span className="text-gray-400 font-bold ml-1">VERSÁTIL</span></span>
-                                  </div>
-                                  
-                                  <p className="text-xs text-gray-400 leading-relaxed mt-1 line-clamp-2">
-                                    Lead recebido pelo formulário nativo da Meta Ads solicitando contato comercial urgente.
-                                  </p>
-
-                                  {/* expanded content */}
-                                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100 mt-2 border-t border-gray-800 pt-3' : 'max-h-0 opacity-0'}`}>
-                                    <div className="flex flex-col gap-2">
-                                      <div className="text-xs text-gray-300"><span className="text-gray-500 font-bold">Email:</span> {deal.contact?.name.toLowerCase().replace(' ', '')}@email.com</div>
-                                      <div className="text-xs text-gray-300"><span className="text-gray-500 font-bold">Equipamento:</span> Elevador Monta Carga</div>
-                                      <div className="text-xs text-gray-300"><span className="text-gray-500 font-bold">Cidade:</span> São Paulo - SP</div>
-                                    </div>
-                                    <button 
-                                      className="mt-3 w-full bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs py-1.5 rounded flex items-center justify-center gap-1.5 font-semibold transition-colors"
-                                      onClick={(e) => { e.stopPropagation(); toast.success("Descrição copiada!"); }}
-                                    >
-                                      <Copy size={12} /> Copiar descrição
-                                    </button>
-                                  </div>
-                                  
-                                  <button 
-                                    className="text-xs text-primary font-bold hover:underline flex items-center gap-1 mt-1 w-fit"
-                                    onClick={(e) => toggleCardAccordion(e, deal.id)}
-                                  >
-                                    {isExpanded ? (
-                                      <><ChevronUp size={14} /> Menos</>
-                                    ) : (
-                                      <><ChevronDown size={14} /> Mais</>
-                                    )}
-                                  </button>
-                                </div>
-                                
-                                {/* Barra de Ícones de Ação */}
-                                <div className="flex items-center gap-2 mt-1">
-                                  <button onClick={(e) => { e.stopPropagation(); /* go to chat */ }} className="p-1.5 bg-[#161b22] border border-gray-800 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Enviar mensagem">
-                                    <MessageCircle size={14} />
-                                  </button>
-                                  <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 bg-[#161b22] border border-gray-800 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Criar evento">
-                                    <Calendar size={14} />
-                                  </button>
-                                  <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 bg-[#161b22] border border-gray-800 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Criar tarefa">
-                                    <CheckSquare size={14} />
-                                  </button>
-                                  <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 bg-[#161b22] border border-gray-800 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 transition-colors ml-auto" title="Ir para o atendimento">
-                                    <ArrowRight size={14} />
-                                  </button>
-                                </div>
-
-                                {/* Auditoria de tempo */}
-                                <div className="text-[10px] text-gray-500 font-medium">
-                                  Criado há cerca de 2 horas
-                                </div>
-
-                                {/* Linha 4: Valor */}
-                                <div className="flex items-center gap-1 text-emerald-400 bg-emerald-500/10 w-fit px-2 py-1 rounded-md border border-emerald-500/20 my-1">
-                                  <DollarSign size={14} />
-                                  <span className="text-sm font-black">{formatCurrency(Number(deal.value))}</span>
-                                </div>
-
-                                {/* Rodapé: Avatar */}
-                                <div className="flex items-center gap-2 mt-1 pt-3 border-t border-gray-800/50">
-                                  {deal.assignee ? (
-                                    <>
-                                      <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-[11px] font-bold text-white shadow-sm ring-2 ring-[#161b22]" title={deal.assignee.name}>
-                                        {deal.assignee.name.charAt(0)}
-                                      </div>
-                                      <span className="text-xs text-gray-400 font-semibold">{deal.assignee.name.split(' ')[0]}</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <div className="w-7 h-7 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-500" title="Não atribuído">
-                                        ?
-                                      </div>
-                                      <span className="text-xs text-gray-600 font-semibold italic">Sem responsável</span>
-                                    </>
-                                  )}
-                                </div>
-
-                              </div>
-                            )}
-                          </Draggable>
-                        );
-                      })}
+                      {columnDeals.map((deal, index) => (
+                        <DealCard 
+                          key={deal.id} 
+                          deal={deal} 
+                          index={index} 
+                          col={col} 
+                          setSelectedDeal={setSelectedDeal} 
+                          router={router}
+                        />
+                      ))}
                       {provided.placeholder}
                       
+                      {/* Add Card Button (Footer da coluna) */}
+                      <button className="mt-auto shrink-0 w-full bg-[#161b22] border border-gray-800 hover:border-gray-600 text-gray-400 hover:text-white rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm">
+                        <Plus size={16} /> Adicionar novo cartão
+                      </button>
                     </div>
                   )}
                 </Droppable>
-
-                {/* Add Card Button (Footer da coluna) */}
-                <button className="mt-auto shrink-0 w-full bg-[#161b22] border border-gray-800 hover:border-gray-600 text-gray-400 hover:text-white rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm">
-                  <Plus size={16} /> Adicionar novo cartão
-                </button>
               </div>
             );
           })}
@@ -438,5 +306,139 @@ export default function CrmPage() {
       )}
 
     </div>
+  );
+}
+
+// Componente Isolado do Card
+function DealCard({ deal, index, col, setSelectedDeal, router }: any) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const contactTags = deal.contact?.tags || [];
+  const primaryTag = contactTags.length > 0 ? contactTags[0] : null;
+
+  return (
+    <Draggable draggableId={deal.id} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          style={{ ...provided.draggableProps.style }}
+          onClick={() => setSelectedDeal(deal)}
+          className={`group relative flex flex-col gap-2.5 rounded-xl border border-slate-800/80 bg-[#161b22] p-4 text-slate-200 shadow-md transition-all hover:border-slate-700 cursor-pointer ${
+            snapshot.isDragging ? `shadow-2xl shadow-black/80 rotate-3 scale-105 opacity-90 ring-1 ${col.borderLight} bg-gray-800 z-50` : ''
+          }`}
+        >
+          
+          {/* CABEÇALHO: ID E BADGE */}
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-mono font-medium text-slate-400">
+              #{deal.id.split('-')[0].toUpperCase()}
+            </span>
+            {primaryTag ? (
+              <span className="rounded bg-rose-500/10 px-2 py-0.5 text-[11px] font-semibold text-rose-400 uppercase">
+                {primaryTag}
+              </span>
+            ) : (
+              <span className="rounded bg-slate-800/80 px-2 py-0.5 text-[11px] font-semibold text-slate-400 uppercase">
+                NOVO
+              </span>
+            )}
+          </div>
+
+          {/* NOME E TELEFONE */}
+          <div className="flex flex-col">
+            <h4 className="text-[15px] font-bold text-white leading-snug">
+              {deal.contact?.name || "Nome do Contato"}
+            </h4>
+            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
+              <span className="text-[#25D366]">🟢</span>
+              <span>{deal.contact?.phone || "+55 00 00000-0000"}</span>
+            </div>
+          </div>
+
+          {/* BADGE DE TIPO */}
+          <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400">
+            <span className="text-emerald-400">•</span>
+            <span>Lead</span>
+          </div>
+
+          {/* CAIXA CINZA DE METADADOS & ACCORDION */}
+          <div className="rounded-lg bg-[#0d1117] p-3 text-xs text-slate-300 border border-slate-800/60" onClick={(e) => e.stopPropagation()}>
+            <p className="font-bold text-slate-200">ORIGEM: [{deal.contact?.source || 'ORGÂNICO'}]</p>
+            <p className="font-semibold text-slate-400">FORMULÁRIO: VERSÁTIL</p>
+            <p className="mt-1 text-slate-400 line-clamp-2">
+              Lead recebido pelo formulário nativo da Meta Ads solicitando contato comercial urgente.
+            </p>
+
+            {/* CONTEÚDO EXPANSÍVEL (CONTROLADO POR ESTADO isExpanded) */}
+            {isExpanded && (
+              <div className="mt-2.5 space-y-1.5 border-t border-slate-800/80 pt-2 text-slate-300 text-[11px] animate-in slide-in-from-top-2">
+                <p className="font-bold text-slate-200">RESPOSTAS DO FORMULÁRIO:</p>
+                <p>• <span className="text-slate-400">Qual modelo:</span> Versátil Tractor</p>
+                <p>• <span className="text-slate-400">Cidade:</span> São Paulo - SP</p>
+                <p>• <span className="text-slate-400">E-mail:</span> {deal.contact?.email || "contato@email.com"}</p>
+              </div>
+            )}
+
+            {/* BOTÕES DO ACCORDION: MAIS / MENOS & COPIAR */}
+            <div className="mt-2.5 flex items-center justify-between pt-1 border-t border-slate-800/40">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+                className="flex items-center gap-1 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+              >
+                <span>{isExpanded ? "⌃ Menos" : "⌵ Mais"}</span>
+              </button>
+
+              {isExpanded && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); toast.success("Copiado!"); }}
+                  className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-200"
+                >
+                  📋 Copiar descrição
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* BARRA HORIZONTAL DE FERRAMENTAS / TOOLBOX RÁPIDA */}
+          <div className="flex items-center gap-2 border-y border-slate-800/60 py-2 text-slate-400">
+            <button title="Enviar Mensagem" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-800 hover:text-white transition-colors">💬</button>
+            <button title="Criar Evento" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-800 hover:text-white transition-colors">📅</button>
+            <button title="Criar Tarefa" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-800 hover:text-white transition-colors">📋</button>
+            <button
+              title="Ir para Atendimento"
+              onClick={(e) => { e.stopPropagation(); router.push(`/inbox?contactId=${deal.contactId}`); }}
+              className="ml-auto rounded p-1.5 hover:bg-slate-800 hover:text-emerald-400 transition-colors"
+            >
+              ➡️
+            </button>
+          </div>
+
+          {/* AUDITORIA DE TEMPO */}
+          <p className="text-[11px] text-slate-400">
+            Criado há cerca de 10 horas.
+          </p>
+
+          {/* VALOR EM VERDE DESTAQUE */}
+          <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-400 bg-emerald-950/20 px-2.5 py-1 rounded-md border border-emerald-800/30 w-fit">
+            <span>💲</span>
+            <span>{deal.value ? `R$ ${Number(deal.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ 0,00"}</span>
+          </div>
+
+          {/* RESPONSÁVEL / ASSIGNEE */}
+          <div className="mt-1 flex items-center gap-2 border-t border-slate-800/40 pt-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white shadow-md">
+              {deal.assignedTo?.name?.[0] || "?"}
+            </div>
+            <span className="text-xs text-slate-400">
+              {deal.assignedTo?.name || "Sem Responsável"}
+            </span>
+          </div>
+
+        </div>
+      )}
+    </Draggable>
   );
 }
