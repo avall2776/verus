@@ -27,7 +27,7 @@ export default function CrmPage() {
   const [columns, setColumns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDeal, setSelectedDeal] = useState<any | null>(null);
-  const [collapsedCols, setCollapsedCols] = useState<string[]>(["disqualified"]);
+  const [collapsedCols, setCollapsedCols] = useState<string[]>([]);
   const [neutralMode, setNeutralMode] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
@@ -189,7 +189,7 @@ export default function CrmPage() {
             }
 
             return (
-              <div key={col.id} className="w-full min-w-[280px] max-w-[320px] flex-shrink-0 flex flex-col h-full gap-3">
+              <div key={col.id} className="w-[300px] shrink-0 flex flex-col h-full gap-3">
                 {/* Column Header */}
                 <div className={`p-4 rounded-xl border border-gray-800 bg-[#1c1d22] border-t-2 ${borderTopClass} flex flex-col shadow-sm shrink-0`}>
                   <div className="flex justify-between items-center mb-2">
@@ -214,7 +214,7 @@ export default function CrmPage() {
                     <div 
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`flex-1 flex flex-col gap-3 overflow-y-auto rounded-xl p-1 transition-colors custom-scrollbar min-h-[150px] ${snapshot.isDraggingOver ? 'bg-gray-800/20 ring-2 ring-dashed ring-gray-700' : ''}`}
+                      className={`flex-1 flex flex-col gap-3 overflow-y-auto rounded-xl p-1 transition-colors custom-scrollbar min-h-[150px] ${snapshot.isDraggingOver ? `${col.bgLight} ring-2 ring-dashed ring-gray-700` : ''}`}
                     >
                       {columnDeals.map((deal, index) => (
                         <DealCard 
@@ -311,6 +311,7 @@ export default function CrmPage() {
 
 // Componente Isolado do Card
 function DealCard({ deal, index, col, setSelectedDeal, router }: any) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const contactTags = deal.contact?.tags || [];
   const primaryTag = contactTags.length > 0 ? contactTags[0] : null;
 
@@ -324,11 +325,10 @@ function DealCard({ deal, index, col, setSelectedDeal, router }: any) {
           style={{ ...provided.draggableProps.style }}
           onClick={() => setSelectedDeal(deal)}
           className={`group relative flex flex-col gap-2.5 rounded-xl border border-slate-800/80 bg-[#161b22] p-4 text-slate-200 shadow-md transition-all hover:border-slate-700 cursor-pointer ${
-            snapshot.isDragging ? `shadow-2xl shadow-black/80 rotate-3 scale-105 opacity-90 ring-1 ${col.borderLight} bg-gray-800 z-50` : ''
+            snapshot.isDragging ? `rotate-2 scale-[1.02] shadow-2xl transition-transform duration-150 z-50 ring-1 ${col.borderLight} bg-gray-800` : ''
           }`}
         >
-          
-          {/* CABEÇALHO: ID E BADGE (HERANÇA DE COR DA COLUNA) */}
+          {/* CABEÇALHO: ID E BADGE */}
           <div className="flex items-center justify-between text-xs">
             <span className={`font-mono font-bold ${col.color}`}>
               #{deal.id.split('-')[0].toUpperCase()}
@@ -344,48 +344,75 @@ function DealCard({ deal, index, col, setSelectedDeal, router }: any) {
             )}
           </div>
 
-          {/* AVATAR + NOME + TELEFONE */}
-          <div className="flex items-start gap-3 mt-1">
-             <div className={`flex shrink-0 h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-sm font-bold text-white shadow-md ring-2 ${col.color.replace('text-', 'ring-')}/30`} title={deal.assignedTo?.name || "Sem Responsável"}>
-              {deal.assignedTo?.name?.[0] || "?"}
-            </div>
-            <div className="flex flex-col">
-              <h4 className="text-[15px] font-bold text-white leading-snug">
-                {deal.contact?.name || "Nome do Contato"}
-              </h4>
-              <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
-                <MessageCircle size={13} className="text-[#25D366]" />
-                <span>{deal.contact?.phone || "+55 00 00000-0000"}</span>
+          {/* AVATAR DO LEAD + NOME + TELEFONE */}
+          <div className="flex flex-col mt-1">
+            <div className="flex items-center gap-3">
+              <div className={`flex shrink-0 h-9 w-9 items-center justify-center rounded-full bg-[#0d1117] text-sm font-bold text-slate-300 shadow-sm ring-2 ${col.color.replace('text-', 'ring-')}/30`}>
+                {deal.contact?.name?.[0]?.toUpperCase() || "?"}
+              </div>
+              <div className="flex flex-col">
+                <h4 className="text-[15px] font-bold text-white leading-snug">
+                  {deal.contact?.name || "Nome do Contato"}
+                </h4>
+                <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
+                  <span className="text-[#25D366]">🟢</span>
+                  <span>{deal.contact?.phone || "+55 00 00000-0000"}</span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* BADGE DE TIPO */}
-          <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400">
+          <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400 mt-1">
             <span className="text-emerald-400">•</span>
             <span>Lead</span>
           </div>
 
-          {/* CAIXA DE METADADOS (RESUMIDA) */}
-          <div className="rounded-lg bg-[#0d1117] p-2.5 text-[11px] text-slate-300 border border-slate-800/60 flex flex-col gap-1 mt-1">
-            <p><span className="font-bold text-slate-400">ORIGEM:</span> [{deal.contact?.source || 'ORGÂNICO'}]</p>
-            <p><span className="font-bold text-slate-400">FORMULÁRIO:</span> VERSÁTIL</p>
+          {/* CAIXA CINZA DE METADADOS & ACCORDION */}
+          <div className="rounded-lg bg-[#0d1117] p-3 text-xs text-slate-300 border border-slate-800/60" onClick={(e) => e.stopPropagation()}>
+            <p className="font-bold text-slate-200">ORIGEM: [{deal.contact?.source || 'ORGÂNICO'}]</p>
+            <p className="font-semibold text-slate-400">FORMULÁRIO: VERSÁTIL</p>
+            <p className="mt-1 text-slate-400 line-clamp-2">
+              Lead recebido pelo formulário nativo da Meta Ads solicitando contato comercial urgente.
+            </p>
+
+            {/* CONTEÚDO EXPANSÍVEL */}
+            {isExpanded && (
+              <div className="mt-2.5 space-y-1.5 border-t border-slate-800/80 pt-2 text-slate-300 text-[11px] animate-in slide-in-from-top-2">
+                <p className="font-bold text-slate-200">RESPOSTAS DO FORMULÁRIO:</p>
+                <p>• <span className="text-slate-400">Qual modelo:</span> Versátil Tractor</p>
+                <p>• <span className="text-slate-400">Cidade:</span> São Paulo - SP</p>
+                <p>• <span className="text-slate-400">E-mail:</span> {deal.contact?.email || "contato@email.com"}</p>
+              </div>
+            )}
+
+            {/* BOTÕES DO ACCORDION: MAIS / MENOS & COPIAR */}
+            <div className="mt-2.5 flex items-center justify-between pt-1 border-t border-slate-800/40">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+                className="flex items-center gap-1 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+              >
+                <span>{isExpanded ? "⌃ Menos" : "⌵ Mais"}</span>
+              </button>
+
+              {isExpanded && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); toast.success("Copiado!"); }}
+                  className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-200"
+                >
+                  📋 Copiar descrição
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* VALOR EM VERDE DESTAQUE */}
-          <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-400 bg-emerald-950/20 px-2.5 py-1 rounded-md border border-emerald-800/30 w-fit mt-0.5">
-            <span>💲</span>
-            <span>{deal.value ? `R$ ${Number(deal.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ 0,00"}</span>
-          </div>
-
-          {/* GAVETA INFERIOR (HOVER DRAWER) */}
+          {/* BARRA DE FERRAMENTAS E AUDITORIA (HOVER DRAWER) */}
           <div className="max-h-0 opacity-0 group-hover:max-h-[100px] group-hover:opacity-100 transition-all duration-300 ease-in-out overflow-hidden flex flex-col gap-2 pt-0 group-hover:pt-2 border-t border-transparent group-hover:border-slate-800/40">
-            {/* AUDITORIA DE TEMPO */}
             <p className="text-[10px] text-slate-500 font-medium">
               Criado há cerca de 10 horas por {deal.assignedTo?.name || "Sistema"}.
             </p>
-
-            {/* BARRA HORIZONTAL DE FERRAMENTAS / TOOLBOX RÁPIDA */}
             <div className="flex items-center gap-2 text-slate-400">
               <button title="Enviar Mensagem" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"><MessageSquare size={15} /></button>
               <button title="Criar Evento" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"><Calendar size={15} /></button>
@@ -398,6 +425,37 @@ function DealCard({ deal, index, col, setSelectedDeal, router }: any) {
                 <ArrowUpRight size={15} />
               </button>
             </div>
+          </div>
+
+          {/* VALOR EM VERDE DESTAQUE */}
+          <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-400 bg-emerald-950/20 px-2.5 py-1 rounded-md border border-emerald-800/30 w-fit">
+              <span>💲</span>
+              <span>{deal.value ? `R$ ${Number(deal.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ 0,00"}</span>
+            </div>
+          </div>
+
+          {/* RESPONSÁVEL / ASSIGNEE */}
+          <div className="mt-1 flex items-center gap-2 border-t border-slate-800/40 pt-3">
+            {deal.assignedTo ? (
+               <>
+                 <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[9px] font-bold text-white shadow-md">
+                   {deal.assignedTo.name[0]}
+                 </div>
+                 <span className="text-[11px] text-slate-400 font-semibold">
+                   {deal.assignedTo.name}
+                 </span>
+               </>
+            ) : (
+               <>
+                 <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-[9px] font-bold text-slate-300 shadow-md">
+                   F
+                 </div>
+                 <span className="text-[11px] text-slate-400 font-semibold italic">
+                   Fila Geral
+                 </span>
+               </>
+            )}
           </div>
 
         </div>
