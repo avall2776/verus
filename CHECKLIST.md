@@ -144,10 +144,10 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 - [ ] Listagem de automações ativas com switch Ativar/Desativar e visualizador de logs.
 
 ### 🟢 FASE 5: ANALYTICS, DASHBOARDS E RELATÓRIOS
-- [ ] Métricas de Atendimento (`/dashboard/atendimento`):
+- [x] Métricas de Atendimento (`/dashboard/atendimento`):
   - Gráficos de TMA (Tempo Médio de Atendimento) e TMR (Tempo Médio de Resposta).
   - Volume de chamados receptivos vs. ativos e desempenho individual por operador.
-- [ ] Métricas de Vendas (`/dashboard/crm`):
+- [x] Métricas de Vendas (`/dashboard/crm`):
   - Taxa de conversão por etapa do funil.
   - Relatório de motivos de perda e valor total ganho/perdido por período.
 
