@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, Building, Users, CreditCard, Save, Upload, Plus, Shield, CheckCircle2, MessageSquare } from "lucide-react";
+import { User, Building, Users, CreditCard, Save, Upload, Plus, Shield, CheckCircle2, MessageSquare, Network } from "lucide-react";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -11,6 +11,7 @@ export default function SettingsPage() {
     { id: "company", name: "Dados da Empresa", icon: Building },
     { id: "team", name: "Equipe e Usuários", icon: Users },
     { id: "billing", name: "Assinatura", icon: CreditCard },
+    { id: "departments", name: "Departamentos e Filas", icon: Network, href: "/settings/departments" },
     { id: "quick-replies", name: "Respostas Rápidas", icon: MessageSquare, href: "/settings/quick-replies" },
   ];
 

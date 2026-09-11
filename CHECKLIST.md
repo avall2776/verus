@@ -90,7 +90,10 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ### Fase 13: Evolução Omnichannel Enterprise
 - [x] **Etapa 0: Revamp Visual e UX (High Density):** Redesenhar o layout do `/inbox` para adotar a estrutura de 3 colunas (estilo WhatsApp Web Pro), com ícones de status, barra de pesquisa refinada, e Modal expansível no Kanban do CRM. [2026-09-10 18:00]
-- [ ] **Etapa 1: Triagem e Filas:** Implementar `Departamentos` no banco de dados e UI para abas (Aguardando, Meus Atendimentos, Resolvidos).
+- [x] **Etapa 1: Triagem e Filas (Departamentos)** [2026-09-11 08:39]
+  - Abas na caixa de entrada: "Aguardando" (Fila Geral), "Meus Atendimentos" e "Resolvidos".
+  - Botão de "Assumir Conversa" (tira da fila e vincula ao atendente).
+  - Encaminhamento interno (Ex: Vendas transfere para Suporte).
 - [x] **Etapa 2: Mensageria Avançada:** Suporte a arquivos (upload S3), Notas Internas (Privadas) e Respostas Rápidas (`/`). [2026-09-10 17:30]
 - [x] **Etapa 3: CRM 360 Extensível:** Gerenciador de `Tags` coloridas dinâmicas e `Custom Fields` acoplados na barra lateral direita do Chat e no Card do Lead. [2026-09-10 17:40]
 - [x] **Etapa 3.5: Redesign CRM Lero:** Evolução do CRM Kanban para padrão Enterprise, com modal rico, alteração de etapa, totais por coluna e atribuição de Responsável. [2026-09-10 18:00]

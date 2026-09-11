@@ -47,4 +47,29 @@ export class DepartmentsService {
       }
     });
   }
+
+  async update(tenantId: string, id: string, data: { name?: string, color?: string }) {
+    return this.prisma.department.update({
+      where: { id, tenantId },
+      data,
+    });
+  }
+
+  async delete(tenantId: string, id: string) {
+    // First, delete all UserDepartment relations
+    await this.prisma.userDepartment.deleteMany({
+      where: { departmentId: id }
+    });
+
+    // Also update all conversations that were in this department to have null department
+    await this.prisma.conversation.updateMany({
+      where: { departmentId: id, tenantId },
+      data: { departmentId: null }
+    });
+
+    // Finally delete the department
+    return this.prisma.department.delete({
+      where: { id, tenantId }
+    });
+  }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Patch, UseGuards, Request } from '@nestjs/common';
 import { DepartmentsService } from './departments.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
@@ -26,5 +26,15 @@ export class DepartmentsController {
   @Delete(':id/users/:userId')
   async removeUser(@Request() req, @Param('id') id: string, @Param('userId') userId: string) {
     return this.departmentsService.removeUserFromDepartment(req.user.tenantId, id, userId);
+  }
+
+  @Patch(':id')
+  async update(@Request() req, @Param('id') id: string, @Body() body: { name?: string, color?: string }) {
+    return this.departmentsService.update(req.user.tenantId, id, body);
+  }
+
+  @Delete(':id')
+  async delete(@Request() req, @Param('id') id: string) {
+    return this.departmentsService.delete(req.user.tenantId, id);
   }
 }

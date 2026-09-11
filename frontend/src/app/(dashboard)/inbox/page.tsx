@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, BrainCircuit, Lock, Image as ImageIcon, FileText, Mic, X } from "lucide-react";
+import { Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, BrainCircuit, Lock, Image as ImageIcon, FileText, Mic, X, ArrowRightLeft, Network } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
@@ -14,7 +14,7 @@ export default function InboxPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState("");
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'waiting' | 'active' | 'resolved'>('active');
+  const [activeTab, setActiveTab] = useState<'waiting' | 'mine' | 'resolved'>('waiting');
   const [isInternalMode, setIsInternalMode] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -22,6 +22,8 @@ export default function InboxPage() {
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [quickReplyFilter, setQuickReplyFilter] = useState('');
   const [newTagInput, setNewTagInput] = useState('');
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [departments, setDepartments] = useState<any[]>([]);
   const { socket, isConnected, clearGlobalUnread } = useSocket();
 
   useEffect(() => {
@@ -29,10 +31,10 @@ export default function InboxPage() {
     api.get('/quick-replies').then(res => setQuickReplies(res.data)).catch(console.error);
   }, []);
 
-  const { data: initialContacts, isLoading, error: fetchErrorQuery } = useQuery({
-    queryKey: ['conversations'],
+  const { data: initialContacts, isLoading, error: fetchErrorQuery, refetch: refetchConversations } = useQuery({
+    queryKey: ['conversations', activeTab],
     queryFn: async () => {
-      const { data } = await api.get('/conversations');
+      const { data } = await api.get(`/conversations?tab=${activeTab}`);
       return data.map((conv: any) => {
         const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
           return {
@@ -182,9 +184,32 @@ export default function InboxPage() {
     if (!activeChat) return;
     try {
       await api.patch(`/conversations/${activeChat}/release`);
-      setContacts(prev => prev.map(c => c.id === activeChat ? { ...c, isAi: false, status: 'resolved' } : c));
+      setContacts(prev => prev.filter(c => c.id !== activeChat)); // Remove from 'mine' list visually
+      setActiveChat(null);
     } catch (error) {
-      console.error("Erro ao finalizar conversa", error);
+      console.error("Erro ao finalizar", error);
+    }
+  };
+
+  const loadDepartmentsAndShowTransfer = async () => {
+    try {
+      const { data } = await api.get('/departments');
+      setDepartments(data);
+      setShowTransferModal(true);
+    } catch (e) {
+      console.error("Erro ao buscar deptos", e);
+    }
+  };
+
+  const handleTransfer = async (departmentId: string) => {
+    if (!activeChat) return;
+    try {
+      await api.patch(`/conversations/${activeChat}/transfer`, { departmentId });
+      setShowTransferModal(false);
+      setContacts(prev => prev.filter(c => c.id !== activeChat)); // Remove from current view
+      setActiveChat(null);
+    } catch (e) {
+      console.error("Erro ao transferir", e);
     }
   };
 
@@ -300,8 +325,8 @@ export default function InboxPage() {
 
   // Filter contacts based on active tab
   const filteredContacts = contacts.filter(c => {
-    if (activeTab === 'waiting') return c.status === 'waiting' || c.status === 'open';
-    if (activeTab === 'active') return c.status === 'bot_active' || c.status === 'human_takeover';
+    if (activeTab === 'waiting') return c.status === 'waiting';
+    if (activeTab === 'mine') return c.status === 'bot_active' || c.status === 'human_takeover' || c.status === 'open';
     if (activeTab === 'resolved') return c.status === 'resolved';
     return true;
   });
@@ -344,12 +369,12 @@ export default function InboxPage() {
               Aguardando
             </button>
             <button 
-              onClick={() => setActiveTab('active')}
+              onClick={() => setActiveTab('mine')}
               className={`flex-1 text-xs py-1.5 rounded flex items-center justify-center gap-1 transition-colors ${
-                activeTab === 'active' ? 'font-bold bg-[#0B1224] text-white shadow-sm' : 'font-semibold text-gray-400 hover:text-gray-200'
+                activeTab === 'mine' ? 'font-bold bg-[#0B1224] text-white shadow-sm' : 'font-semibold text-gray-400 hover:text-gray-200'
               }`}
             >
-              Ativos
+              Meus
               {unreadCount > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 rounded-full">{unreadCount}</span>}
             </button>
             <button 
@@ -358,7 +383,7 @@ export default function InboxPage() {
                 activeTab === 'resolved' ? 'font-bold bg-[#0B1224] text-white shadow-sm' : 'font-semibold text-gray-400 hover:text-gray-200'
               }`}
             >
-              Fechados
+              Resolvidos
             </button>
           </div>
         </div>
@@ -457,7 +482,7 @@ export default function InboxPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {activeContactData?.status === 'bot_active' ? (
+            {(activeContactData?.status === 'bot_active' || activeContactData?.status === 'waiting' || activeContactData?.status === 'open') ? (
               <button onClick={handleTakeover} className="bg-primary hover:bg-primary/90 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(0,85,255,0.3)]">
                 Assumir Conversa
               </button>
@@ -470,6 +495,13 @@ export default function InboxPage() {
                 Resolvido
               </span>
             )}
+            
+            {(activeContactData?.status === 'human_takeover' || activeContactData?.status === 'open') && (
+              <button onClick={loadDepartmentsAndShowTransfer} title="Transferir" className="text-gray-400 hover:text-white bg-gray-800 p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                <ArrowRightLeft size={16} />
+              </button>
+            )}
+            
             <button className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-800"><MoreVertical size={20} /></button>
           </div>
         </div>
@@ -740,6 +772,49 @@ export default function InboxPage() {
         )}
       </div>
 
+      {/* MODAL DE TRANSFERENCIA */}
+      {showTransferModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#1c1d22] border border-gray-800 w-full max-w-md rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-[#25262c] rounded-t-xl">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <ArrowRightLeft size={18} className="text-primary" />
+                Transferir Conversa
+              </h2>
+              <button onClick={() => setShowTransferModal(false)} className="text-gray-400 hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-400 mb-4">
+                Selecione o departamento para o qual deseja enviar este lead. A roleta distribuirá para um agente online automaticamente.
+              </p>
+              
+              <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                {departments.length === 0 ? (
+                  <p className="text-xs text-gray-500 text-center">Nenhum departamento encontrado.</p>
+                ) : (
+                  departments.map(dept => (
+                    <button
+                      key={dept.id}
+                      onClick={() => handleTransfer(dept.id)}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 hover:bg-gray-700/80 border border-gray-700 hover:border-primary transition-all text-left"
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${dept.color || '#3b82f6'}30` }}>
+                        <Network size={16} style={{ color: dept.color || '#3b82f6' }} />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-white text-sm">{dept.name}</h4>
+                        <p className="text-xs text-gray-400">{dept.users?.length || 0} membros</p>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

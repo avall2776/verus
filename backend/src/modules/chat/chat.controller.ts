@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards, Request } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
@@ -12,9 +12,10 @@ export class ChatController {
   @Get()
   async listConversations(
     @CurrentTenant() tenantId: string,
-    @Query('status') status?: string,
+    @Request() req: any,
+    @Query('tab') tab?: string,
   ) {
-    return this.chatService.findAllConversations(tenantId, status);
+    return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, tab || 'waiting');
   }
 
   @Get(':id/messages')
@@ -29,8 +30,9 @@ export class ChatController {
   async takeover(
     @CurrentTenant() tenantId: string,
     @Param('id') conversationId: string,
+    @Request() req: any,
   ) {
-    return this.chatService.takeoverConversation(tenantId, conversationId);
+    return this.chatService.takeoverConversation(tenantId, conversationId, req.user.id);
   }
 
   @Patch(':id/release')
