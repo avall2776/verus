@@ -118,17 +118,18 @@ export class WebhookProcessor extends WorkerHost {
         tenantId,
         contactId: contact.id,
         status: 'bot_active',
+        assignedTo: null,
       },
       update: {} // Apenas recupera se já existir
     });
 
-    if (conversation.status === 'resolved') {
-      // Reabre a mesma conversa se o cliente voltar a mandar mensagem (Fila Geral)
+    if (conversation.status === 'resolved' || conversation.status === 'closed') {
+      // Reabre a mesma conversa com IA Ativa na Fila Aguardando (assignedTo = null)
       conversation = await this.prisma.conversation.update({
         where: { id: conversation.id },
-        data: { status: 'waiting', assignedTo: null }
+        data: { status: 'bot_active', assignedTo: null }
       });
-      this.logger.log(`Conversa [${conversation.id}] reaberta (status -> waiting).`);
+      this.logger.log(`Conversa [${conversation.id}] reaberta (status -> bot_active, assignedTo -> null).`);
       
       // Emite atualização para as telas (mover de Resolvidos -> Aguardando)
       this.chatGateway.emitConversationUpdated(tenantId, conversation);

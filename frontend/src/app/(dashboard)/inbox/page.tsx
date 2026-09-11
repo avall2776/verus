@@ -5,7 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { 
   Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, 
   BrainCircuit, Lock, Image as ImageIcon, FileText, Mic, X, ArrowRightLeft, Network,
-  RefreshCw, TrendingUp, Calendar, MessageSquare, CheckCircle2, Plus, Sparkles
+  RefreshCw, TrendingUp, Calendar, MessageSquare, CheckCircle2, Plus, Sparkles,
+  BookUser, CalendarClock, PhoneCall, Zap, Eye, ShieldCheck, PhoneForwarded, UserCheck
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -43,6 +44,20 @@ function InboxContent() {
   const [onlyUnread, setOnlyUnread] = useState(false);
   const [taggingContactId, setTaggingContactId] = useState<string | null>(null);
   const [customTagInput, setCustomTagInput] = useState('');
+
+  // Estados de Assunção de Fila & Espiar (Padrão Lero)
+  const [showTakeoverModal, setShowTakeoverModal] = useState(false);
+  const [selectedQueueChat, setSelectedQueueChat] = useState<any | null>(null);
+  const [isPeeking, setIsPeeking] = useState(false);
+
+  // Estados dos 4 Atalhos da Toolbar Superior
+  const [showContactsModal, setShowContactsModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showVoipDialer, setShowVoipDialer] = useState(false);
+  const [voipNumber, setVoipNumber] = useState('');
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
+  const [scheduleMessage, setScheduleMessage] = useState('');
 
   const SUGGESTED_TAGS = ['Lead Quente', 'Suporte VIP', 'Negociação', 'Financeiro', 'Aguardando'];
 
@@ -327,11 +342,18 @@ function InboxContent() {
   // Derivar contato ativo
   const activeContactData = contacts.find(c => c.id === activeChat);
 
-  const handleTakeover = async () => {
-    if (!activeChat) return;
+  const handleTakeover = async (targetChatId?: string) => {
+    const targetId = targetChatId || activeChat;
+    if (!targetId) return;
     try {
-      await api.patch(`/conversations/${activeChat}/takeover`);
-      // O state local será atualizado pelo listener do socket (conversationUpdated)
+      await api.patch(`/conversations/${targetId}/takeover`);
+      setIsPeeking(false);
+      setShowTakeoverModal(false);
+      setSelectedQueueChat(null);
+      setActiveTab('mine');
+      setActiveChat(targetId);
+      setContacts(prev => prev.map(c => c.id === targetId ? { ...c, status: 'human_takeover', isAi: false, assignedTo: 'me' } : c));
+      refetchConversations();
     } catch (error) {
       console.error("Erro ao assumir conversa", error);
     }
@@ -374,12 +396,18 @@ function InboxContent() {
   };
 
   const handleTransfer = async (departmentId: string) => {
-    if (!activeChat) return;
+    const targetId = selectedQueueChat?.id || activeChat;
+    if (!targetId) return;
     try {
-      await api.patch(`/conversations/${activeChat}/transfer`, { departmentId });
+      await api.patch(`/conversations/${targetId}/transfer`, { departmentId });
       setShowTransferModal(false);
-      setContacts(prev => prev.filter(c => c.id !== activeChat)); // Remove from current view
-      setActiveChat(null);
+      setShowTakeoverModal(false);
+      setSelectedQueueChat(null);
+      setContacts(prev => prev.filter(c => c.id !== targetId)); // Remove from current view
+      if (activeChat === targetId) {
+        setActiveChat(null);
+      }
+      refetchConversations();
     } catch (e) {
       console.error("Erro ao transferir", e);
     }
@@ -599,15 +627,54 @@ function InboxContent() {
             </div>
           </div>
           
-          <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input 
-              type="text" 
-              placeholder="Pesquisar por nome ou telefone..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#1E293B] border border-gray-700/50 rounded-lg pl-9 pr-3 py-1.5 text-xs text-text-primary outline-none focus:border-accent/50 focus:bg-[#0B1224] transition-all"
-            />
+          {/* Barra de Busca + 4 Botões de Atalho da Toolbar Superior */}
+          <div className="flex items-center gap-1.5">
+            <div className="relative flex-1 min-w-0">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input 
+                type="text" 
+                placeholder="Buscar contatos..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#1E293B] border border-gray-700/50 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-text-primary outline-none focus:border-accent/50 focus:bg-[#0B1224] transition-all"
+              />
+            </div>
+
+            {/* 4 Atalhos: Agenda, Agendamento, Menu Rápido, Discador VoIP */}
+            <div className="flex items-center gap-1 shrink-0">
+              <button 
+                onClick={() => setShowContactsModal(true)}
+                title="Agenda de Contatos"
+                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/50 text-gray-400 hover:text-white hover:border-accent/50 hover:bg-[#0B1224] transition-all cursor-pointer"
+              >
+                <BookUser size={14} />
+              </button>
+              <button 
+                onClick={() => setShowScheduleModal(true)}
+                title="Agendamento de Mensagens"
+                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/50 text-gray-400 hover:text-blue-400 hover:border-blue-500/50 hover:bg-[#0B1224] transition-all cursor-pointer"
+              >
+                <CalendarClock size={14} />
+              </button>
+              <button 
+                onClick={() => setShowQuickReplies(prev => !prev)}
+                title="Menu Rápido (Notas internas / Favoritas)"
+                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/50 text-gray-400 hover:text-amber-400 hover:border-amber-500/50 hover:bg-[#0B1224] transition-all cursor-pointer"
+              >
+                <Zap size={14} />
+              </button>
+              <button 
+                onClick={() => setShowVoipDialer(prev => !prev)}
+                title="Discador VoIP Flutuante"
+                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                  showVoipDialer 
+                    ? 'bg-emerald-600/30 border-emerald-500 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]' 
+                    : 'bg-[#1E293B] border-gray-700/50 text-gray-400 hover:text-emerald-400 hover:border-emerald-500/50 hover:bg-[#0B1224]'
+                }`}
+              >
+                <PhoneCall size={14} />
+              </button>
+            </div>
           </div>
           
           {/* Abas Estilo Lero + Pílula de Filtro Rápido [Não lidas] */}
@@ -698,6 +765,13 @@ function InboxContent() {
             <div 
               key={contact.id} 
               onClick={() => {
+                const isQueueOrBot = contact.status === 'waiting' || contact.status === 'bot_active' || !contact.assignedTo;
+                if (isQueueOrBot && activeTab !== 'mine') {
+                  setSelectedQueueChat(contact);
+                  setShowTakeoverModal(true);
+                  return;
+                }
+                setIsPeeking(false);
                 setActiveChat(contact.id);
                 // Limpa a notificação de piscar quando o usuário clica
                 setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, hasNewMessage: false, unread: 0 } : c));
@@ -977,7 +1051,8 @@ function InboxContent() {
                     </button>
                   </div>
                 ) : (activeContactData.status === 'bot_active' || activeContactData.status === 'waiting' || activeContactData.status === 'open') ? (
-                  <button onClick={handleTakeover} className="bg-primary hover:bg-primary/90 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(0,85,255,0.3)] cursor-pointer">
+                  <button onClick={() => handleTakeover()} className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-pointer flex items-center gap-1.5">
+                    <UserCheck size={14} />
                     Assumir Conversa
                   </button>
                 ) : activeContactData.status === 'human_takeover' ? (
@@ -995,6 +1070,23 @@ function InboxContent() {
                 <button className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-800"><MoreVertical size={20} /></button>
               </div>
             </div>
+
+            {/* Banner de Modo Espiar */}
+            {isPeeking && (
+              <div className="bg-amber-500/15 border-b border-amber-500/30 px-6 py-2.5 flex items-center justify-between text-amber-300 text-xs shrink-0 backdrop-blur-sm z-20">
+                <div className="flex items-center gap-2">
+                  <Eye size={15} className="text-amber-400 animate-pulse shrink-0" />
+                  <span><strong>Modo Espiar Ativo:</strong> Visualizando conversa em modo somente-leitura. A IA ou fila continuam ativas.</span>
+                </div>
+                <button 
+                  onClick={() => handleTakeover(activeChat!)}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-[0_0_10px_rgba(16,185,129,0.3)] cursor-pointer shrink-0 ml-3"
+                >
+                  <UserCheck size={13} />
+                  Assumir atendimento
+                </button>
+              </div>
+            )}
 
             {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 z-10">
@@ -1101,119 +1193,137 @@ function InboxContent() {
                   </div>
                 )}
                 
-                {/* Abas Externa / Interna */}
-                <div className="flex gap-4 px-1">
-                  <button 
-                    onClick={() => setIsInternalMode(false)}
-                    className={`text-[0.7rem] uppercase tracking-wider font-bold pb-1 transition-all ${!isInternalMode ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-300'}`}
-                  >
-                    Mensagem Externa
-                  </button>
-                  <button 
-                    onClick={() => setIsInternalMode(true)}
-                    className={`text-[0.7rem] uppercase tracking-wider font-bold pb-1 transition-all ${isInternalMode ? 'text-amber-500 border-b-2 border-amber-500' : 'text-gray-500 hover:text-gray-300 flex items-center gap-1'}`}
-                  >
-                    <Lock size={10} className="inline mb-0.5"/> Nota Interna (Equipe)
-                  </button>
-                </div>
-
-                <div className={`border rounded-xl p-1.5 flex items-end gap-2 transition-colors shadow-sm relative
-                  ${isInternalMode 
-                    ? 'bg-amber-500/10 border-amber-500/40 focus-within:border-amber-500' 
-                    : 'bg-[#1E293B] border-gray-700 focus-within:border-gray-500'
-                  }
-                `}>
-                  
-                  {/* Popover de Anexos */}
-                  <div className="relative">
-                    <button 
-                      onClick={() => setShowAttachments(!showAttachments)}
-                      className={`p-2 transition-colors rounded-lg ${isInternalMode ? 'text-amber-400 hover:bg-amber-500/20' : 'text-gray-400 hover:text-accent hover:bg-gray-800/80'}`}
-                    >
-                      <Paperclip size={22} />
-                    </button>
-                    
-                    {showAttachments && (
-                      <div className="absolute bottom-12 left-0 bg-[#1E293B] border border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-xl p-2 flex flex-col gap-1 w-48 z-50 animate-in slide-in-from-bottom-2">
-                        <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg cursor-pointer transition-colors">
-                          <ImageIcon size={16} className="text-blue-400" /> Foto / Vídeo
-                          <input type="file" className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
-                        </label>
-                        <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg cursor-pointer transition-colors">
-                          <FileText size={16} className="text-purple-400" /> Documento
-                          <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileSelect} />
-                        </label>
-                        <button className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors text-left">
-                          <Mic size={16} className="text-green-400" /> Gravar Áudio
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  <textarea 
-                    ref={textareaRef}
-                    placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem ou digite / para respostas rápidas..."} 
-                    className={`flex-1 bg-transparent text-[0.95rem] resize-none outline-none py-2.5 max-h-32 
-                      ${isInternalMode ? 'text-amber-100 placeholder:text-amber-500/50' : 'text-white placeholder:text-gray-500'}
-                    `}
-                    rows={1}
-                    value={inputText}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setInputText(val);
-                      
-                      // UX de Resposta Rápida
-                      if (val.startsWith('/')) {
-                        setShowQuickReplies(true);
-                        setQuickReplyFilter(val.substring(1).toLowerCase());
-                      } else {
-                        setShowQuickReplies(false);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        // Se o popover estiver aberto, não envia ainda
-                        if (!showQuickReplies) {
-                          handleSendMessage();
-                        }
-                      }
-                    }}
-                  />
-                  
-                  {/* Popover de Respostas Rápidas */}
-                  {showQuickReplies && quickReplies.length > 0 && (
-                    <div className="absolute bottom-14 left-12 w-[300px] bg-[#1E293B] border border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
-                      <div className="px-3 py-2 bg-gray-800/50 text-xs font-bold text-gray-400 border-b border-gray-700">Respostas Rápidas</div>
-                      <div className="max-h-48 overflow-y-auto">
-                        {quickReplies.filter(qr => qr.shortcut.toLowerCase().includes(quickReplyFilter)).map(qr => (
-                          <div 
-                            key={qr.id}
-                            onClick={() => {
-                              setInputText(qr.content);
-                              setShowQuickReplies(false);
-                            }}
-                            className="px-3 py-2 border-b border-gray-800/50 hover:bg-gray-800 cursor-pointer transition-colors"
-                          >
-                            <div className="text-accent text-xs font-bold mb-0.5">{qr.shortcut}</div>
-                            <div className="text-gray-300 text-xs line-clamp-1">{qr.content}</div>
-                          </div>
-                        ))}
-                      </div>
+                {isPeeking ? (
+                  <div className="p-4 bg-[#0F172A] border border-amber-500/30 rounded-xl flex items-center justify-between shadow-lg">
+                    <div className="flex items-center gap-2.5 text-xs text-amber-300">
+                      <Lock size={15} className="text-amber-400 shrink-0" />
+                      <span>Modo somente-leitura (Espiando). Envio bloqueado para não interferir no fluxo do bot ou fila.</span>
                     </div>
-                  )}
-                  <button 
-                    onClick={handleSendMessage} 
-                    className={`p-3 rounded-lg transition-colors shadow-md flex items-center justify-center
+                    <button
+                      onClick={() => handleTakeover(activeChat!)}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] flex items-center gap-1.5 cursor-pointer shrink-0 ml-3"
+                    >
+                      <UserCheck size={14} />
+                      Atribuir atendimento para mim
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Abas Externa / Interna */}
+                    <div className="flex gap-4 px-1">
+                      <button 
+                        onClick={() => setIsInternalMode(false)}
+                        className={`text-[0.7rem] uppercase tracking-wider font-bold pb-1 transition-all ${!isInternalMode ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-300'}`}
+                      >
+                        Mensagem Externa
+                      </button>
+                      <button 
+                        onClick={() => setIsInternalMode(true)}
+                        className={`text-[0.7rem] uppercase tracking-wider font-bold pb-1 transition-all ${isInternalMode ? 'text-amber-500 border-b-2 border-amber-500' : 'text-gray-500 hover:text-gray-300 flex items-center gap-1'}`}
+                      >
+                        <Lock size={10} className="inline mb-0.5"/> Nota Interna (Equipe)
+                      </button>
+                    </div>
+
+                    <div className={`border rounded-xl p-1.5 flex items-end gap-2 transition-colors shadow-sm relative
                       ${isInternalMode 
-                        ? 'bg-amber-500 hover:bg-amber-600 text-amber-950' 
-                        : 'bg-accent text-[#0B1224] hover:bg-accent/90'
+                        ? 'bg-amber-500/10 border-amber-500/40 focus-within:border-amber-500' 
+                        : 'bg-[#1E293B] border-gray-700 focus-within:border-gray-500'
                       }
-                    `}
-                  >
-                    <Send size={18} className={!isInternalMode ? "ml-1" : ""} />
-                  </button>
-                </div>
+                    `}>
+                      
+                      {/* Popover de Anexos */}
+                      <div className="relative">
+                        <button 
+                          onClick={() => setShowAttachments(!showAttachments)}
+                          className={`p-2 transition-colors rounded-lg ${isInternalMode ? 'text-amber-400 hover:bg-amber-500/20' : 'text-gray-400 hover:text-accent hover:bg-gray-800/80'}`}
+                        >
+                          <Paperclip size={22} />
+                        </button>
+                        
+                        {showAttachments && (
+                          <div className="absolute bottom-12 left-0 bg-[#1E293B] border border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-xl p-2 flex flex-col gap-1 w-48 z-50 animate-in slide-in-from-bottom-2">
+                            <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg cursor-pointer transition-colors">
+                              <ImageIcon size={16} className="text-blue-400" /> Foto / Vídeo
+                              <input type="file" className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
+                            </label>
+                            <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg cursor-pointer transition-colors">
+                              <FileText size={16} className="text-purple-400" /> Documento
+                              <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileSelect} />
+                            </label>
+                            <button className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors text-left">
+                              <Mic size={16} className="text-green-400" /> Gravar Áudio
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <textarea 
+                        ref={textareaRef}
+                        placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem ou digite / para respostas rápidas..."} 
+                        className={`flex-1 bg-transparent text-[0.95rem] resize-none outline-none py-2.5 max-h-32 
+                          ${isInternalMode ? 'text-amber-100 placeholder:text-amber-500/50' : 'text-white placeholder:text-gray-500'}
+                        `}
+                        rows={1}
+                        value={inputText}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setInputText(val);
+                          
+                          // UX de Resposta Rápida
+                          if (val.startsWith('/')) {
+                            setShowQuickReplies(true);
+                            setQuickReplyFilter(val.substring(1).toLowerCase());
+                          } else {
+                            setShowQuickReplies(false);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            // Se o popover estiver aberto, não envia ainda
+                            if (!showQuickReplies) {
+                              handleSendMessage();
+                            }
+                          }
+                        }}
+                      />
+                      
+                      {/* Popover de Respostas Rápidas */}
+                      {showQuickReplies && quickReplies.length > 0 && (
+                        <div className="absolute bottom-14 left-12 w-[300px] bg-[#1E293B] border border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
+                          <div className="px-3 py-2 bg-gray-800/50 text-xs font-bold text-gray-400 border-b border-gray-700">Respostas Rápidas</div>
+                          <div className="max-h-48 overflow-y-auto">
+                            {quickReplies.filter(qr => qr.shortcut.toLowerCase().includes(quickReplyFilter)).map(qr => (
+                              <div 
+                                key={qr.id}
+                                onClick={() => {
+                                  setInputText(qr.content);
+                                  setShowQuickReplies(false);
+                                }}
+                                className="px-3 py-2 border-b border-gray-800/50 hover:bg-gray-800 cursor-pointer transition-colors"
+                              >
+                                <div className="text-accent text-xs font-bold mb-0.5">{qr.shortcut}</div>
+                                <div className="text-gray-300 text-xs line-clamp-1">{qr.content}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <button 
+                        onClick={handleSendMessage} 
+                        className={`p-3 rounded-lg transition-colors shadow-md flex items-center justify-center
+                          ${isInternalMode 
+                            ? 'bg-amber-500 hover:bg-amber-600 text-amber-950' 
+                            : 'bg-accent text-[#0B1224] hover:bg-accent/90'
+                          }
+                        `}
+                      >
+                        <Send size={18} className={!isInternalMode ? "ml-1" : ""} />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </>
@@ -1336,6 +1446,297 @@ function InboxContent() {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CENTRAL DE ASSUNÇÃO DE FILA / IA (PADRÃO LERO) */}
+      {showTakeoverModal && selectedQueueChat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[#0F172A] border border-slate-700/80 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-slate-800 bg-[#162038]/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(0,102,255,0.2)]">
+                  <Bot size={20} />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white tracking-tight">Atendimento em Fila</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Este atendimento está na fila <strong className="text-white">{selectedQueueChat.isAi ? 'IA Vitor Online' : 'Aguardando'}</strong>.
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowTakeoverModal(false);
+                  setSelectedQueueChat(null);
+                }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Informações do Lead */}
+            <div className="p-6 space-y-4">
+              <div className="p-3.5 rounded-xl bg-[#1E293B]/70 border border-slate-700/50 flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-slate-700 to-slate-800 border border-slate-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  {selectedQueueChat.name?.charAt(0) || 'C'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <h3 className="text-sm font-bold text-white truncate">{selectedQueueChat.name}</h3>
+                    <span className="text-[10px] text-amber-400 font-medium bg-amber-950/60 border border-amber-800/40 px-2 py-0.5 rounded-full">
+                      {selectedQueueChat.isAi ? 'IA Ativa' : 'Fila de Espera'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 flex items-center gap-1.5">
+                    <Phone size={11} className="text-slate-500" />
+                    <span>{selectedQueueChat.phone || 'Sem telefone'}</span>
+                  </p>
+                  {selectedQueueChat.lastMsg && (
+                    <p className="text-xs text-slate-400 truncate mt-1 italic">
+                      "{selectedQueueChat.lastMsg}"
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-400 text-center">
+                Escolha uma ação para continuar com este atendimento:
+              </p>
+
+              {/* 3 Ações Principais */}
+              <div className="flex flex-col gap-2.5 pt-1">
+                {/* Ação 1: Atribuir atendimento para mim */}
+                <button
+                  onClick={() => handleTakeover(selectedQueueChat.id)}
+                  className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all cursor-pointer group"
+                >
+                  <UserCheck size={18} className="group-hover:scale-110 transition-transform" />
+                  <span>Atribuir atendimento para mim</span>
+                </button>
+
+                {/* Ação 2: Transferir atendimento */}
+                <button
+                  onClick={() => {
+                    setShowTakeoverModal(false);
+                    loadDepartmentsAndShowTransfer();
+                  }}
+                  className="w-full py-2.5 px-4 bg-[#1E293B] hover:bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-200 hover:text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  <ArrowRightLeft size={15} className="text-blue-400" />
+                  <span>Transferir atendimento</span>
+                </button>
+
+                {/* Ação 3: Espiar conversa */}
+                <button
+                  onClick={() => {
+                    setIsPeeking(true);
+                    setActiveChat(selectedQueueChat.id);
+                    setShowTakeoverModal(false);
+                  }}
+                  className="w-full py-2 px-4 bg-transparent hover:bg-slate-800/40 text-slate-400 hover:text-slate-200 font-medium text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Eye size={14} />
+                  <span>Espiar conversa (somente leitura)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL AGENDA DE CONTATOS */}
+      {showContactsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[#0F172A] border border-slate-700/80 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+            <div className="px-6 py-4 border-b border-slate-800 bg-[#162038]/50 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <BookUser size={18} className="text-blue-400" />
+                <h3 className="text-base font-bold text-white">Agenda de Contatos</h3>
+              </div>
+              <button onClick={() => setShowContactsModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4 border-b border-slate-800">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input 
+                  type="text" 
+                  placeholder="Pesquisar contato salvo..." 
+                  className="w-full bg-[#1E293B] border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white outline-none focus:border-blue-500"
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1 space-y-2">
+              {contacts.length === 0 ? (
+                <p className="text-xs text-slate-500 text-center py-6">Nenhum contato encontrado.</p>
+              ) : (
+                contacts.slice(0, 30).map(c => (
+                  <div 
+                    key={c.id} 
+                    onClick={() => {
+                      setIsPeeking(false);
+                      setActiveChat(c.id);
+                      setShowContactsModal(false);
+                    }}
+                    className="p-3 rounded-xl bg-[#1E293B]/60 hover:bg-[#1E293B] border border-slate-800 hover:border-blue-500/50 flex items-center justify-between transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-white">
+                        {c.name?.charAt(0) || 'C'}
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">{c.name}</h4>
+                        <p className="text-[11px] text-slate-400">{c.phone || 'Sem telefone'}</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded">
+                      Conversar
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL AGENDAMENTO DE MENSAGENS */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[#0F172A] border border-slate-700/80 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-800 bg-[#162038]/50 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <CalendarClock size={18} className="text-blue-400" />
+                <h3 className="text-base font-bold text-white">Agendamento de Mensagem</h3>
+              </div>
+              <button onClick={() => setShowScheduleModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-400 block mb-1">Destinatário</label>
+                <div className="p-2.5 rounded-lg bg-[#1E293B] border border-slate-700 text-xs text-white">
+                  {activeContactData ? `${activeContactData.name} (${activeContactData.phone || 'Sem fone'})` : 'Selecione um chat na lista'}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-400 block mb-1">Data de Envio</label>
+                  <input 
+                    type="date" 
+                    value={scheduleDate}
+                    onChange={e => setScheduleDate(e.target.value)}
+                    className="w-full bg-[#1E293B] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-400 block mb-1">Horário</label>
+                  <input 
+                    type="time" 
+                    value={scheduleTime}
+                    onChange={e => setScheduleTime(e.target.value)}
+                    className="w-full bg-[#1E293B] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-400 block mb-1">Mensagem Programada</label>
+                <textarea 
+                  rows={4}
+                  value={scheduleMessage}
+                  onChange={e => setScheduleMessage(e.target.value)}
+                  placeholder="Olá! Conforme combinamos, estou enviando este lembrete..."
+                  className="w-full bg-[#1E293B] border border-slate-700 rounded-lg p-3 text-xs text-white outline-none focus:border-blue-500 resize-none"
+                />
+              </div>
+
+              <button 
+                onClick={() => {
+                  if (!scheduleMessage.trim() || !scheduleDate) {
+                    alert("Por favor, preencha a data e o conteúdo da mensagem.");
+                    return;
+                  }
+                  alert("Mensagem agendada com sucesso!");
+                  setShowScheduleModal(false);
+                  setScheduleMessage('');
+                }}
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+              >
+                Confirmar Agendamento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DISCADOR VOIP FLUTUANTE */}
+      {showVoipDialer && (
+        <div className="fixed bottom-6 right-6 z-50 w-72 bg-[#0F172A] border border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
+          <div className="px-4 py-3 bg-[#162038] border-b border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-xs font-bold text-white">Discador VoIP WebRTC</span>
+            </div>
+            <button onClick={() => setShowVoipDialer(false)} className="text-slate-400 hover:text-white cursor-pointer">
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="p-4 space-y-3">
+            {/* Display */}
+            <div className="bg-[#0B1224] border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+              <span className="text-base font-mono font-bold text-white tracking-wider truncate">
+                {voipNumber || <span className="text-slate-600">Digitar número...</span>}
+              </span>
+              {voipNumber && (
+                <button 
+                  onClick={() => setVoipNumber(prev => prev.slice(0, -1))}
+                  className="text-slate-400 hover:text-red-400 text-xs px-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Teclado Numérico */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { n: '1', l: '' }, { n: '2', l: 'ABC' }, { n: '3', l: 'DEF' },
+                { n: '4', l: 'GHI' }, { n: '5', l: 'JKL' }, { n: '6', l: 'MNO' },
+                { n: '7', l: 'PQRS' }, { n: '8', l: 'TUV' }, { n: '9', l: 'WXYZ' },
+                { n: '*', l: '' }, { n: '0', l: '+' }, { n: '#', l: '' },
+              ].map(k => (
+                <button
+                  key={k.n}
+                  onClick={() => setVoipNumber(prev => prev + k.n)}
+                  className="h-11 rounded-xl bg-[#1E293B] hover:bg-slate-700/80 border border-slate-800 hover:border-slate-600 text-white font-bold flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer"
+                >
+                  <span className="text-sm leading-none">{k.n}</span>
+                  {k.l && <span className="text-[8px] text-slate-500 font-normal leading-none mt-0.5">{k.l}</span>}
+                </button>
+              ))}
+            </div>
+
+            {/* Ação de Ligar */}
+            <button
+              onClick={() => {
+                if (!voipNumber) return;
+                alert(`Iniciando chamada VoIP WebRTC para ${voipNumber}...`);
+              }}
+              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all cursor-pointer"
+            >
+              <PhoneCall size={15} />
+              <span>Chamar Agora</span>
+            </button>
           </div>
         </div>
       )}
