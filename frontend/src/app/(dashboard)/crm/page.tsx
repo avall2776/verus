@@ -36,6 +36,8 @@ export default function CrmPage() {
   const [lossModalState, setLossModalState] = useState<{isOpen: boolean, dealId: string | null, destColId: string | null}>({isOpen: false, dealId: null, destColId: null});
   const [lossReason, setLossReason] = useState("");
   const [lossComment, setLossComment] = useState("");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [colWidth, setColWidth] = useState(300);
 
   useEffect(() => {
     const savedCols = localStorage.getItem('crm_columns');
@@ -45,7 +47,13 @@ export default function CrmPage() {
       setColumns(DEFAULT_COLUMNS);
       localStorage.setItem('crm_columns', JSON.stringify(DEFAULT_COLUMNS));
     }
+    const savedWidth = localStorage.getItem('crm_col_width');
+    if (savedWidth) setColWidth(Number(savedWidth));
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('crm_col_width', colWidth.toString());
+  }, [colWidth]);
 
   const fetchDeals = async () => {
     try {
@@ -101,10 +109,32 @@ export default function CrmPage() {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
   };
 
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.pageX;
+    const startWidth = colWidth;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.pageX - startX;
+      let newWidth = startWidth + deltaX;
+      if (newWidth < 260) newWidth = 260;
+      if (newWidth > 480) newWidth = 480;
+      setColWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
   if (loading) return <div className="p-8 text-gray-500">Carregando CRM...</div>;
 
   return (
-    <div className="flex flex-col h-full w-full gap-4 relative">
+    <div className={`flex flex-col gap-4 relative transition-all duration-300 ${isFullscreen ? 'fixed inset-0 z-50 bg-[#0d1117] p-4 h-screen w-screen' : 'h-full w-full'}`}>
       <DealModal 
         deal={selectedDeal} 
         isOpen={!!selectedDeal} 
@@ -219,83 +249,104 @@ export default function CrmPage() {
           <button onClick={() => setShowManageStagesModal(true)} className="bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1">
             <Settings size={14}/> Gerenciar Etapas
           </button>
+
+          <button 
+            title="Expanda o CRM em tela cheia"
+            onClick={() => setIsFullscreen(!isFullscreen)} 
+            className="ml-2 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 p-2 rounded-full transition-all flex items-center justify-center"
+          >
+            {isFullscreen ? <Minimize2 size={16}/> : <Maximize2 size={16}/>}
+          </button>
         </div>
       </div>
 
       {/* Kanban Board */}
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex-1 flex gap-4 overflow-x-auto pb-4 custom-scrollbar items-start">
-          {columns.map(col => {
+        <div className="flex-1 flex gap-2 overflow-x-auto pb-4 custom-scrollbar items-start">
+          {columns.map((col, idx) => {
             const isCollapsed = collapsedCols.includes(col.id);
             const columnDeals = deals.filter(d => d.status === col.id);
-            const totalValue = columnDeals.reduce((acc, curr) => acc + Number(curr.value || 0), 0);
+            const totalValue = columnDeals.reduce((sum, d) => sum + (d.value || 0), 0);
             
             const colColorClass = neutralMode ? 'text-gray-300' : col.color;
             const borderTopClass = neutralMode ? 'border-t-gray-600' : col.borderColor;
 
-            if (isCollapsed) {
-              return (
-                <div key={col.id} className={`w-[48px] h-full flex-shrink-0 flex flex-col bg-[#1c1d22] border border-gray-800 border-t-2 ${borderTopClass} rounded-xl items-center py-4 cursor-pointer hover:bg-gray-800/50 transition-colors group`} onClick={() => toggleColumn(col.id)}>
-                   <button className="text-gray-500 group-hover:text-white mb-6">
-                     <Maximize2 size={16} />
-                   </button>
-                   <div className="flex-1 relative w-full">
-                     <div className="absolute top-0 left-1/2 -translate-x-1/2 origin-top-left -rotate-90 whitespace-nowrap font-bold text-sm text-gray-500 tracking-widest uppercase">
-                       {col.title} ({columnDeals.length})
-                     </div>
-                   </div>
-                </div>
-              )
-            }
-
             return (
-              <div key={col.id} className="w-[300px] shrink-0 flex flex-col h-full gap-3">
-                {/* Column Header */}
-                <div className={`p-4 rounded-xl border border-gray-800 bg-[#1c1d22] border-t-2 ${borderTopClass} flex flex-col shadow-sm shrink-0`}>
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className={`text-sm font-black uppercase tracking-wider ${colColorClass}`}>
-                      {col.title}
-                    </h3>
-                    <div className="flex gap-1">
-                      <button onClick={() => toggleColumn(col.id)} className="text-gray-500 hover:text-white p-1 rounded hover:bg-gray-700 transition-colors">
-                        <Minimize2 size={14} />
-                      </button>
+              <React.Fragment key={col.id}>
+                <div 
+                  className={`flex flex-col h-full shrink-0 transition-all duration-300 ease-out`}
+                  style={{ width: isCollapsed ? '60px' : `${colWidth}px` }}
+                >
+                  {isCollapsed ? (
+                    <div className={`w-full h-full flex-shrink-0 flex flex-col bg-[#1c1d22] border border-gray-800 border-t-2 ${borderTopClass} rounded-xl items-center py-4 cursor-pointer hover:bg-gray-800/50 transition-colors group`} onClick={() => toggleColumn(col.id)}>
+                       <button className="text-gray-500 group-hover:text-white mb-6">
+                         <Maximize2 size={16} />
+                       </button>
+                       <div className="flex-1 relative w-full">
+                         <div className="absolute top-0 left-1/2 -translate-x-1/2 origin-top-left -rotate-90 whitespace-nowrap font-bold text-sm text-gray-500 tracking-widest uppercase">
+                           {col.title} ({columnDeals.length})
+                         </div>
+                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-gray-400 font-semibold bg-[#0B1224] px-3 py-1.5 rounded-lg border border-gray-800/50">
-                    <span className="bg-gray-800 px-2 py-0.5 rounded-full text-white">{columnDeals.length} cards</span>
-                    <span className="text-gray-300">{formatCurrency(totalValue)}</span>
-                  </div>
-                </div>
+                  ) : (
+                    <div className="w-full shrink-0 flex flex-col h-full gap-3">
+                      {/* Column Header */}
+                      <div className={`p-4 rounded-xl border border-gray-800 bg-[#1c1d22] border-t-2 ${borderTopClass} flex flex-col shadow-sm shrink-0`}>
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className={`text-sm font-black uppercase tracking-wider ${colColorClass}`}>
+                            {col.title}
+                          </h3>
+                          <div className="flex gap-1">
+                            <button onClick={() => toggleColumn(col.id)} className="text-gray-500 hover:text-white p-1 rounded hover:bg-gray-700 transition-colors">
+                              <Minimize2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-gray-400 font-semibold bg-[#0B1224] px-3 py-1.5 rounded-lg border border-gray-800/50">
+                          <span className="bg-gray-800 px-2 py-0.5 rounded-full text-white">{columnDeals.length} cards</span>
+                          <span className="text-gray-300">{formatCurrency(totalValue)}</span>
+                        </div>
+                      </div>
 
-                {/* Droppable Area */}
-                <Droppable droppableId={col.id}>
-                  {(provided, snapshot) => (
-                    <div 
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`flex-1 flex flex-col gap-3 overflow-y-auto rounded-xl p-1 transition-all duration-200 ease-out custom-scrollbar min-h-[150px] ${snapshot.isDraggingOver ? `border-2 border-dashed ${col.borderColor.replace('border-t-', 'border-')}/40 bg-${col.color.replace('text-', '').split('-')[0]}-500/5` : 'border-2 border-transparent'}`}
-                    >
-                      {columnDeals.map((deal, index) => (
-                        <DealCard 
-                          key={deal.id} 
-                          deal={deal} 
-                          index={index} 
-                          col={col} 
-                          setSelectedDeal={setSelectedDeal} 
-                          router={router}
-                        />
-                      ))}
-                      {provided.placeholder}
-                      
-                      {/* Add Card Button (Footer da coluna) */}
-                      <button className="mt-auto shrink-0 w-full bg-[#161b22] border border-gray-800 hover:border-gray-600 text-gray-400 hover:text-white rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm">
-                        <Plus size={16} /> Adicionar novo cartão
-                      </button>
+                      {/* Droppable Area */}
+                      <Droppable droppableId={col.id}>
+                        {(provided, snapshot) => (
+                          <div 
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                            className={`flex-1 flex flex-col gap-3 overflow-y-auto rounded-xl p-1 transition-all duration-200 ease-out custom-scrollbar min-h-[150px] ${snapshot.isDraggingOver ? `border-2 border-dashed ${col.borderColor.replace('border-t-', 'border-')}/40 bg-${col.color.replace('text-', '').split('-')[0]}-500/5` : 'border-2 border-transparent'}`}
+                          >
+                            {columnDeals.map((deal, index) => (
+                              <DealCard 
+                                key={deal.id} 
+                                deal={deal} 
+                                index={index} 
+                                col={col} 
+                                setSelectedDeal={setSelectedDeal} 
+                                router={router}
+                              />
+                            ))}
+                            {provided.placeholder}
+                            
+                            {/* Add Card Button (Footer da coluna) */}
+                            <button className="mt-auto shrink-0 w-full bg-[#161b22] border border-gray-800 hover:border-gray-600 text-gray-400 hover:text-white rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm">
+                              <Plus size={16} /> Adicionar novo cartão
+                            </button>
+                          </div>
+                        )}
+                      </Droppable>
                     </div>
                   )}
-                </Droppable>
-              </div>
+                </div>
+                
+                {/* Resizer Handle */}
+                {idx < columns.length - 1 && (
+                  <div 
+                    onMouseDown={handleResizeStart}
+                    className="w-1.5 hover:w-2 shrink-0 h-full rounded-full hover:bg-slate-700/50 cursor-col-resize transition-all self-stretch"
+                  />
+                )}
+              </React.Fragment>
             );
           })}
         </div>
