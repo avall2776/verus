@@ -123,15 +123,6 @@ export default function TeamChatPage() {
     return <div className="flex-1 bg-[#050A15] p-6 text-center text-gray-500 pt-20 h-screen flex items-center justify-center">Carregando chat da equipe...</div>;
   }
 
-  if (channels.length === 0) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-[#050A15] p-6 text-gray-500 h-screen">
-        <MessageSquare size={48} className="mb-4 opacity-50" />
-        <p>Nenhum canal interno disponível.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex-1 flex h-screen overflow-hidden bg-[#050A15]">
       {/* SIDEBAR */}
@@ -191,7 +182,12 @@ export default function TeamChatPage() {
                 <Plus size={16} />
                 Criar Nova Equipe
               </button>
-              {filteredChannels.map(channel => (
+              {filteredChannels.length === 0 ? (
+                <div className="text-center p-4 text-gray-500 text-sm">
+                  Nenhum canal interno criado.
+                </div>
+              ) : (
+                filteredChannels.map(channel => (
                 <div 
                   key={channel.id} 
                   onClick={() => loadMessages(channel.id, 'channel')}
@@ -204,7 +200,7 @@ export default function TeamChatPage() {
                     <h4 className={`text-sm font-bold truncate ${activeChatId === channel.id ? 'text-blue-400' : 'text-gray-200'}`}>{channel.name}</h4>
                   </div>
                 </div>
-              ))}
+              )))}
             </>
           )}
         </div>

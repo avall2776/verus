@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api-backend',
+  baseURL: '/api-backend',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -10,7 +10,20 @@ const api = axios.create({
 // Interceptor para injetar o Token JWT
 api.interceptors.request.use((config) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('versus_auth_token') || localStorage.getItem('token') : null;
-  const tenantId = typeof window !== 'undefined' ? localStorage.getItem('tenantId') : null;
+  
+  let tenantId = null;
+  if (typeof window !== 'undefined') {
+    const userStr = localStorage.getItem('versus_user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        tenantId = user.tenantId;
+      } catch (e) {}
+    }
+    if (!tenantId) {
+      tenantId = localStorage.getItem('tenantId');
+    }
+  }
   
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -18,6 +31,12 @@ api.interceptors.request.use((config) => {
   if (tenantId) {
     config.headers['x-tenant-id'] = tenantId;
   }
+
+  console.log('[API Request]', config.method?.toUpperCase(), config.url, {
+    hasToken: !!token,
+    tenantId: config.headers['x-tenant-id'] || 'not-sent'
+  });
+
   return config;
 });
 
