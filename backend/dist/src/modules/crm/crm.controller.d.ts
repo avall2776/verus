@@ -16,15 +16,15 @@ export declare class CrmController {
     } & {
         id: string;
         tenantId: string;
-        contactId: string;
-        title: string;
-        value: import("@prisma/client/runtime/library").Decimal;
-        status: string;
-        notes: string | null;
-        metadata: import("@prisma/client/runtime/library").JsonValue | null;
-        assignedTo: string | null;
         createdAt: Date;
         updatedAt: Date;
+        contactId: string;
+        assignedTo: string | null;
+        status: string;
+        title: string;
+        value: import("@prisma/client/runtime/library").Decimal;
+        notes: string | null;
+        metadata: import("@prisma/client/runtime/library").JsonValue | null;
     })[]>;
     listUsers(tenantId: string): Promise<{
         id: string;
@@ -39,14 +39,14 @@ export declare class CrmController {
     }): Promise<{
         id: string;
         tenantId: string;
-        contactId: string;
-        title: string;
-        value: import("@prisma/client/runtime/library").Decimal;
-        status: string;
-        notes: string | null;
-        metadata: import("@prisma/client/runtime/library").JsonValue | null;
-        assignedTo: string | null;
         createdAt: Date;
         updatedAt: Date;
+        contactId: string;
+        assignedTo: string | null;
+        status: string;
+        title: string;
+        value: import("@prisma/client/runtime/library").Decimal;
+        notes: string | null;
+        metadata: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
 }

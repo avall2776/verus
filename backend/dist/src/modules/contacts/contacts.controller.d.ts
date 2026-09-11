@@ -13,13 +13,13 @@ export declare class ContactsController {
     }[]>;
     updateTags(tenantId: string, contactId: string, tags: string[]): Promise<{
         id: string;
-        tenantId: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         phone: string | null;
         email: string | null;
         source: string;
         tags: string[];
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
 }

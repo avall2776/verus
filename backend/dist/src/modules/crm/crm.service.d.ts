@@ -18,15 +18,15 @@ export declare class CrmService {
     } & {
         id: string;
         tenantId: string;
-        contactId: string;
-        title: string;
-        value: import("@prisma/client/runtime/library").Decimal;
-        status: string;
-        notes: string | null;
-        metadata: import("@prisma/client/runtime/library").JsonValue | null;
-        assignedTo: string | null;
         createdAt: Date;
         updatedAt: Date;
+        contactId: string;
+        assignedTo: string | null;
+        status: string;
+        title: string;
+        value: import("@prisma/client/runtime/library").Decimal;
+        notes: string | null;
+        metadata: import("@prisma/client/runtime/library").JsonValue | null;
     })[]>;
     findTenantUsers(tenantId: string): Promise<{
         id: string;
@@ -37,27 +37,27 @@ export declare class CrmService {
     createDeal(tenantId: string, data: any): Promise<{
         id: string;
         tenantId: string;
-        contactId: string;
-        title: string;
-        value: import("@prisma/client/runtime/library").Decimal;
-        status: string;
-        notes: string | null;
-        metadata: import("@prisma/client/runtime/library").JsonValue | null;
-        assignedTo: string | null;
         createdAt: Date;
         updatedAt: Date;
+        contactId: string;
+        assignedTo: string | null;
+        status: string;
+        title: string;
+        value: import("@prisma/client/runtime/library").Decimal;
+        notes: string | null;
+        metadata: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     updateDeal(tenantId: string, id: string, data: any): Promise<{
         id: string;
         tenantId: string;
-        contactId: string;
-        title: string;
-        value: import("@prisma/client/runtime/library").Decimal;
-        status: string;
-        notes: string | null;
-        metadata: import("@prisma/client/runtime/library").JsonValue | null;
-        assignedTo: string | null;
         createdAt: Date;
         updatedAt: Date;
+        contactId: string;
+        assignedTo: string | null;
+        status: string;
+        title: string;
+        value: import("@prisma/client/runtime/library").Decimal;
+        notes: string | null;
+        metadata: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
 }

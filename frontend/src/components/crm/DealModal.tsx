@@ -4,7 +4,6 @@ import { X, MessageSquare, ExternalLink, Calendar, CheckSquare, RefreshCw, Trash
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { useRouter } from "next/navigation";
-import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
