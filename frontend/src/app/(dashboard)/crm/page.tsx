@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Filter, MoreHorizontal, MessageCircle, Copy, FileText, Maximize2, Minimize2, Activity, Users, Building, LayoutDashboard, Plus, Settings, DollarSign, Target, ChevronDown, ChevronUp, Calendar, CheckSquare, ArrowRight, Clock } from "lucide-react";
+import { Search, Filter, MoreHorizontal, MessageCircle, Copy, FileText, Maximize2, Minimize2, Activity, Users, Building, LayoutDashboard, Plus, Settings, DollarSign, Target, ChevronDown, ChevronUp, Calendar, CheckSquare, ArrowRight, Clock, MessageSquare, ArrowUpRight } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
@@ -189,7 +189,7 @@ export default function CrmPage() {
             }
 
             return (
-              <div key={col.id} className="w-[320px] flex-shrink-0 flex flex-col h-full gap-3">
+              <div key={col.id} className="w-full min-w-[280px] max-w-[320px] flex-shrink-0 flex flex-col h-full gap-3">
                 {/* Column Header */}
                 <div className={`p-4 rounded-xl border border-gray-800 bg-[#1c1d22] border-t-2 ${borderTopClass} flex flex-col shadow-sm shrink-0`}>
                   <div className="flex justify-between items-center mb-2">
@@ -311,7 +311,6 @@ export default function CrmPage() {
 
 // Componente Isolado do Card
 function DealCard({ deal, index, col, setSelectedDeal, router }: any) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const contactTags = deal.contact?.tags || [];
   const primaryTag = contactTags.length > 0 ? contactTags[0] : null;
 
@@ -329,30 +328,35 @@ function DealCard({ deal, index, col, setSelectedDeal, router }: any) {
           }`}
         >
           
-          {/* CABEÇALHO: ID E BADGE */}
+          {/* CABEÇALHO: ID E BADGE (HERANÇA DE COR DA COLUNA) */}
           <div className="flex items-center justify-between text-xs">
-            <span className="font-mono font-medium text-slate-400">
+            <span className={`font-mono font-bold ${col.color}`}>
               #{deal.id.split('-')[0].toUpperCase()}
             </span>
             {primaryTag ? (
-              <span className="rounded bg-rose-500/10 px-2 py-0.5 text-[11px] font-semibold text-rose-400 uppercase">
+              <span className={`rounded ${col.bgLight} border ${col.borderLight} px-2 py-0.5 text-[11px] font-bold ${col.color} uppercase`}>
                 {primaryTag}
               </span>
             ) : (
-              <span className="rounded bg-slate-800/80 px-2 py-0.5 text-[11px] font-semibold text-slate-400 uppercase">
+              <span className={`rounded ${col.bgLight} border ${col.borderLight} px-2 py-0.5 text-[11px] font-bold ${col.color} uppercase`}>
                 NOVO
               </span>
             )}
           </div>
 
-          {/* NOME E TELEFONE */}
-          <div className="flex flex-col">
-            <h4 className="text-[15px] font-bold text-white leading-snug">
-              {deal.contact?.name || "Nome do Contato"}
-            </h4>
-            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
-              <span className="text-[#25D366]">🟢</span>
-              <span>{deal.contact?.phone || "+55 00 00000-0000"}</span>
+          {/* AVATAR + NOME + TELEFONE */}
+          <div className="flex items-start gap-3 mt-1">
+             <div className={`flex shrink-0 h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-sm font-bold text-white shadow-md ring-2 ${col.color.replace('text-', 'ring-')}/30`} title={deal.assignedTo?.name || "Sem Responsável"}>
+              {deal.assignedTo?.name?.[0] || "?"}
+            </div>
+            <div className="flex flex-col">
+              <h4 className="text-[15px] font-bold text-white leading-snug">
+                {deal.contact?.name || "Nome do Contato"}
+              </h4>
+              <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
+                <MessageCircle size={13} className="text-[#25D366]" />
+                <span>{deal.contact?.phone || "+55 00 00000-0000"}</span>
+              </div>
             </div>
           </div>
 
@@ -362,79 +366,38 @@ function DealCard({ deal, index, col, setSelectedDeal, router }: any) {
             <span>Lead</span>
           </div>
 
-          {/* CAIXA CINZA DE METADADOS & ACCORDION */}
-          <div className="rounded-lg bg-[#0d1117] p-3 text-xs text-slate-300 border border-slate-800/60" onClick={(e) => e.stopPropagation()}>
-            <p className="font-bold text-slate-200">ORIGEM: [{deal.contact?.source || 'ORGÂNICO'}]</p>
-            <p className="font-semibold text-slate-400">FORMULÁRIO: VERSÁTIL</p>
-            <p className="mt-1 text-slate-400 line-clamp-2">
-              Lead recebido pelo formulário nativo da Meta Ads solicitando contato comercial urgente.
-            </p>
-
-            {/* CONTEÚDO EXPANSÍVEL (CONTROLADO POR ESTADO isExpanded) */}
-            {isExpanded && (
-              <div className="mt-2.5 space-y-1.5 border-t border-slate-800/80 pt-2 text-slate-300 text-[11px] animate-in slide-in-from-top-2">
-                <p className="font-bold text-slate-200">RESPOSTAS DO FORMULÁRIO:</p>
-                <p>• <span className="text-slate-400">Qual modelo:</span> Versátil Tractor</p>
-                <p>• <span className="text-slate-400">Cidade:</span> São Paulo - SP</p>
-                <p>• <span className="text-slate-400">E-mail:</span> {deal.contact?.email || "contato@email.com"}</p>
-              </div>
-            )}
-
-            {/* BOTÕES DO ACCORDION: MAIS / MENOS & COPIAR */}
-            <div className="mt-2.5 flex items-center justify-between pt-1 border-t border-slate-800/40">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
-                className="flex items-center gap-1 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
-              >
-                <span>{isExpanded ? "⌃ Menos" : "⌵ Mais"}</span>
-              </button>
-
-              {isExpanded && (
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); toast.success("Copiado!"); }}
-                  className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-200"
-                >
-                  📋 Copiar descrição
-                </button>
-              )}
-            </div>
+          {/* CAIXA DE METADADOS (RESUMIDA) */}
+          <div className="rounded-lg bg-[#0d1117] p-2.5 text-[11px] text-slate-300 border border-slate-800/60 flex flex-col gap-1 mt-1">
+            <p><span className="font-bold text-slate-400">ORIGEM:</span> [{deal.contact?.source || 'ORGÂNICO'}]</p>
+            <p><span className="font-bold text-slate-400">FORMULÁRIO:</span> VERSÁTIL</p>
           </div>
-
-          {/* BARRA HORIZONTAL DE FERRAMENTAS / TOOLBOX RÁPIDA */}
-          <div className="flex items-center gap-2 border-y border-slate-800/60 py-2 text-slate-400">
-            <button title="Enviar Mensagem" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-800 hover:text-white transition-colors">💬</button>
-            <button title="Criar Evento" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-800 hover:text-white transition-colors">📅</button>
-            <button title="Criar Tarefa" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-800 hover:text-white transition-colors">📋</button>
-            <button
-              title="Ir para Atendimento"
-              onClick={(e) => { e.stopPropagation(); router.push(`/inbox?contactId=${deal.contactId}`); }}
-              className="ml-auto rounded p-1.5 hover:bg-slate-800 hover:text-emerald-400 transition-colors"
-            >
-              ➡️
-            </button>
-          </div>
-
-          {/* AUDITORIA DE TEMPO */}
-          <p className="text-[11px] text-slate-400">
-            Criado há cerca de 10 horas.
-          </p>
 
           {/* VALOR EM VERDE DESTAQUE */}
-          <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-400 bg-emerald-950/20 px-2.5 py-1 rounded-md border border-emerald-800/30 w-fit">
+          <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-400 bg-emerald-950/20 px-2.5 py-1 rounded-md border border-emerald-800/30 w-fit mt-0.5">
             <span>💲</span>
             <span>{deal.value ? `R$ ${Number(deal.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ 0,00"}</span>
           </div>
 
-          {/* RESPONSÁVEL / ASSIGNEE */}
-          <div className="mt-1 flex items-center gap-2 border-t border-slate-800/40 pt-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white shadow-md">
-              {deal.assignedTo?.name?.[0] || "?"}
+          {/* GAVETA INFERIOR (HOVER DRAWER) */}
+          <div className="max-h-0 opacity-0 group-hover:max-h-[100px] group-hover:opacity-100 transition-all duration-300 ease-in-out overflow-hidden flex flex-col gap-2 pt-0 group-hover:pt-2 border-t border-transparent group-hover:border-slate-800/40">
+            {/* AUDITORIA DE TEMPO */}
+            <p className="text-[10px] text-slate-500 font-medium">
+              Criado há cerca de 10 horas por {deal.assignedTo?.name || "Sistema"}.
+            </p>
+
+            {/* BARRA HORIZONTAL DE FERRAMENTAS / TOOLBOX RÁPIDA */}
+            <div className="flex items-center gap-2 text-slate-400">
+              <button title="Enviar Mensagem" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"><MessageSquare size={15} /></button>
+              <button title="Criar Evento" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"><Calendar size={15} /></button>
+              <button title="Criar Tarefa" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"><CheckSquare size={15} /></button>
+              <button
+                title="Ir para Atendimento"
+                onClick={(e) => { e.stopPropagation(); router.push(`/inbox?contactId=${deal.contactId}`); }}
+                className="ml-auto rounded p-1.5 hover:bg-slate-700 hover:text-emerald-400 transition-colors"
+              >
+                <ArrowUpRight size={15} />
+              </button>
             </div>
-            <span className="text-xs text-slate-400">
-              {deal.assignedTo?.name || "Sem Responsável"}
-            </span>
           </div>
 
         </div>
