@@ -9,21 +9,30 @@ export declare class ChatService {
     findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string): Promise<({
         contact: {
             id: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
             name: string;
             phone: string | null;
             email: string | null;
             source: string;
             tags: string[];
+        };
+        department: {
+            id: string;
             tenantId: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
+            color: string | null;
         };
         messages: {
             id: string;
             tenantId: string;
-            createdAt: Date;
             contactId: string;
             status: string;
+            createdAt: Date;
+            conversationId: string;
             providerMessageId: string | null;
             content: string;
             type: string;
@@ -33,32 +42,24 @@ export declare class ChatService {
             fromMe: boolean;
             direction: string;
             senderType: string;
-            conversationId: string;
         }[];
-        department: {
-            id: string;
-            name: string;
-            tenantId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            color: string | null;
-        };
     } & {
         id: string;
         tenantId: string;
-        createdAt: Date;
-        updatedAt: Date;
         contactId: string;
         departmentId: string | null;
         assignedTo: string | null;
         status: string;
+        createdAt: Date;
+        updatedAt: Date;
     })[]>;
     getConversationMessages(tenantId: string, conversationId: string): Promise<{
         id: string;
         tenantId: string;
-        createdAt: Date;
         contactId: string;
         status: string;
+        createdAt: Date;
+        conversationId: string;
         providerMessageId: string | null;
         content: string;
         type: string;
@@ -68,47 +69,85 @@ export declare class ChatService {
         fromMe: boolean;
         direction: string;
         senderType: string;
-        conversationId: string;
     }[]>;
-    takeoverConversation(tenantId: string, conversationId: string, userId: string): Promise<{
+    getConversationByContact(tenantId: string, contactId: string): Promise<{
+        contact: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            source: string;
+            tags: string[];
+        };
+        messages: {
+            id: string;
+            tenantId: string;
+            contactId: string;
+            status: string;
+            createdAt: Date;
+            conversationId: string;
+            providerMessageId: string | null;
+            content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            isInternal: boolean;
+            fromMe: boolean;
+            direction: string;
+            senderType: string;
+        }[];
+    } & {
         id: string;
         tenantId: string;
-        createdAt: Date;
-        updatedAt: Date;
         contactId: string;
         departmentId: string | null;
         assignedTo: string | null;
         status: string;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    takeoverConversation(tenantId: string, conversationId: string, userId: string): Promise<{
+        id: string;
+        tenantId: string;
+        contactId: string;
+        departmentId: string | null;
+        assignedTo: string | null;
+        status: string;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     releaseConversation(tenantId: string, conversationId: string): Promise<{
         id: string;
         tenantId: string;
-        createdAt: Date;
-        updatedAt: Date;
         contactId: string;
         departmentId: string | null;
         assignedTo: string | null;
         status: string;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     assignToUser(tenantId: string, conversationId: string, userId: string): Promise<{
         id: string;
         tenantId: string;
-        createdAt: Date;
-        updatedAt: Date;
         contactId: string;
         departmentId: string | null;
         assignedTo: string | null;
         status: string;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     transferToDepartment(tenantId: string, conversationId: string, departmentId: string): Promise<{
         id: string;
         tenantId: string;
-        createdAt: Date;
-        updatedAt: Date;
         contactId: string;
         departmentId: string | null;
         assignedTo: string | null;
         status: string;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     sendManualMessage(tenantId: string, conversationId: string, payload: {
         content: string;
@@ -118,9 +157,10 @@ export declare class ChatService {
     }): Promise<{
         id: string;
         tenantId: string;
-        createdAt: Date;
         contactId: string;
         status: string;
+        createdAt: Date;
+        conversationId: string;
         providerMessageId: string | null;
         content: string;
         type: string;
@@ -130,6 +170,5 @@ export declare class ChatService {
         fromMe: boolean;
         direction: string;
         senderType: string;
-        conversationId: string;
     }>;
 }

@@ -67,6 +67,25 @@ export class ChatService {
     });
   }
 
+  async getConversationByContact(tenantId: string, contactId: string) {
+    const conversation = await this.prisma.conversation.findFirst({
+      where: { tenantId, contactId },
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'asc' }
+        },
+        contact: true
+      }
+    });
+
+    if (!conversation) {
+      throw new NotFoundException('Nenhuma conversa encontrada para este contato.');
+    }
+
+    return conversation;
+  }
+
   async takeoverConversation(tenantId: string, conversationId: string, userId: string) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId }

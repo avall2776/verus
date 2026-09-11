@@ -26,6 +26,14 @@ export class ChatController {
     return this.chatService.getConversationMessages(tenantId, conversationId);
   }
 
+  @Get('contact/:contactId')
+  async getConversationByContact(
+    @CurrentTenant() tenantId: string,
+    @Param('contactId') contactId: string,
+  ) {
+    return this.chatService.getConversationByContact(tenantId, contactId);
+  }
+
   @Patch(':id/takeover')
   async takeover(
     @CurrentTenant() tenantId: string,

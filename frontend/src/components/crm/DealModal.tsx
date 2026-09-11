@@ -4,6 +4,9 @@ import { X, MessageSquare, ExternalLink, Calendar, CheckSquare, RefreshCw, Trash
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import api from "@/lib/api";
+import toast from "react-hot-toast";
 
 interface DealModalProps {
   deal: any;
@@ -15,10 +18,41 @@ interface DealModalProps {
 export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
   const router = useRouter();
 
+  const [chatMode, setChatMode] = useState<'none' | 'send' | 'view'>('none');
+  const [chatData, setChatData] = useState<any>(null);
+  const [chatInput, setChatInput] = useState("");
+  const [isInternal, setIsInternal] = useState(false);
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
+
   if (!isOpen || !deal) return null;
 
-  const handleGoToChat = () => {
-    router.push(`/inbox?contact=${deal.contactId}`);
+  const loadChat = async (mode: 'send' | 'view') => {
+    setChatMode(mode);
+    setIsLoadingChat(true);
+    try {
+      const { data } = await api.get(`/conversations/contact/${deal.contactId}`);
+      setChatData(data);
+    } catch (err) {
+      toast.error("Nenhuma conversa ativa encontrada ou sem histórico.");
+    } finally {
+      setIsLoadingChat(false);
+    }
+  };
+
+  const handleSendMsg = async () => {
+    if (!chatInput.trim() || !chatData) return;
+    try {
+      const { data } = await api.post(`/conversations/${chatData.id}/messages`, {
+        content: chatInput,
+        isInternal,
+        type: 'text'
+      });
+      setChatData((prev: any) => ({ ...prev, messages: [...(prev?.messages || []), data] }));
+      setChatInput("");
+      toast.success("Mensagem enviada com sucesso!");
+    } catch (err) {
+      toast.error("Erro ao enviar mensagem");
+    }
   };
 
   const formatCurrency = (value: number) => {
@@ -153,11 +187,11 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
             <div className="h-px bg-gray-800 w-full"></div>
 
             <div className="flex flex-col gap-2">
-              <button onClick={handleGoToChat} className="flex items-center gap-3 w-full p-3 rounded-lg text-sm font-semibold text-[#f37021] border border-[#f37021]/30 hover:bg-[#f37021]/10 transition-colors">
+              <button onClick={() => loadChat('send')} className="flex items-center gap-3 w-full p-3 rounded-lg text-sm font-semibold text-[#f37021] border border-[#f37021]/30 hover:bg-[#f37021]/10 transition-colors">
                 <MessageSquare size={16} /> Enviar Mensagem
               </button>
               
-              <button onClick={handleGoToChat} className="flex items-center gap-3 w-full p-3 rounded-lg text-sm font-semibold text-gray-300 border border-gray-700 hover:bg-gray-800 transition-colors">
+              <button onClick={() => loadChat('view')} className="flex items-center gap-3 w-full p-3 rounded-lg text-sm font-semibold text-gray-300 border border-gray-700 hover:bg-gray-800 transition-colors">
                 <ExternalLink size={16} /> Ver Conversa
               </button>
               
@@ -181,6 +215,108 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
           </div>
 
         </div>
+
+        {/* INNER CHAT MODAL / DRAWER */}
+        {chatMode !== 'none' && (
+          <div className="absolute inset-0 z-50 bg-[#1c1d22] rounded-xl flex flex-col animate-in slide-in-from-bottom-10 duration-200">
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-[#25262c] rounded-t-xl shrink-0">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  {chatMode === 'send' ? <MessageSquare size={20} className="text-[#f37021]" /> : <ExternalLink size={20} className="text-gray-400" />}
+                  {chatMode === 'send' ? 'Enviar Mensagem' : 'Espiar Conversa'}
+                </h2>
+                <span className="text-sm text-gray-400">| {deal.contact?.name}</span>
+              </div>
+              <button onClick={() => setChatMode('none')} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            {isLoadingChat ? (
+              <div className="flex-1 flex items-center justify-center text-gray-500">Carregando conversa...</div>
+            ) : !chatData ? (
+              <div className="flex-1 flex items-center justify-center text-gray-500 flex-col gap-2">
+                <MessageSquare size={40} className="opacity-50" />
+                Nenhum histórico encontrado para este contato.
+              </div>
+            ) : (
+              <div className="flex-1 flex overflow-hidden">
+                
+                {/* View Mode (or Right Panel of Send Mode) */}
+                <div className="flex-1 flex flex-col border-r border-gray-800 bg-[#0B1224] relative overflow-hidden">
+                  
+                  <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                  
+                  <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 relative z-10 custom-scrollbar">
+                    {chatData.messages?.map((msg: any, i: number) => {
+                      const isMe = msg.direction === 'OUTBOUND';
+                      return (
+                        <div key={i} className={`flex flex-col gap-1 max-w-[70%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
+                          <div className={`p-3 text-sm border shadow-sm relative ${
+                            msg.isInternal
+                              ? 'bg-amber-500/10 text-amber-100 rounded-2xl rounded-tr-sm border-amber-500/30'
+                              : isMe 
+                                ? 'bg-primary/20 text-blue-100 rounded-2xl rounded-tr-sm border-primary/30 shadow-[0_0_15px_rgba(0,85,255,0.1)]' 
+                                : 'bg-gray-800/80 text-white rounded-2xl rounded-tl-sm border-gray-700/50'
+                          }`}>
+                            {msg.content}
+                          </div>
+                          <span className="text-[0.65rem] text-gray-500 mx-1">
+                            {new Date(msg.createdAt).toLocaleTimeString()}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Left Panel (Composer) for Send Mode */}
+                {chatMode === 'send' && (
+                  <div className="w-[380px] bg-[#25262c] flex flex-col border-l border-gray-800 shrink-0">
+                    <div className="p-4 border-b border-gray-800 bg-gray-900/50">
+                      <div className="text-xs text-gray-500 font-bold mb-1 uppercase tracking-wider">Novo Envio</div>
+                      <div className="text-sm text-gray-300">Enviando como: <span className="font-bold text-white">Equipe</span></div>
+                    </div>
+                    <div className="p-4 flex flex-col gap-4 flex-1">
+                      
+                      <div className="flex gap-4">
+                        <button 
+                          onClick={() => setIsInternal(false)}
+                          className={`text-xs uppercase tracking-wider font-bold pb-1 transition-all ${!isInternal ? 'text-[#f37021] border-b-2 border-[#f37021]' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                          Externa (WhatsApp)
+                        </button>
+                        <button 
+                          onClick={() => setIsInternal(true)}
+                          className={`text-xs uppercase tracking-wider font-bold pb-1 transition-all ${isInternal ? 'text-amber-500 border-b-2 border-amber-500' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                          Nota Interna
+                        </button>
+                      </div>
+
+                      <textarea 
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder={isInternal ? "Anotação privada..." : "Sua mensagem..."}
+                        className={`w-full flex-1 min-h-[150px] resize-none rounded-lg p-3 outline-none text-sm border focus:border-primary transition-colors ${
+                          isInternal ? 'bg-amber-500/10 border-amber-500/40 text-amber-100 placeholder:text-amber-500/50' : 'bg-[#1c1d22] border-gray-700 text-white placeholder:text-gray-500'
+                        }`}
+                      />
+                      
+                      <button onClick={handleSendMsg} className={`w-full py-3 rounded-lg font-bold shadow-md transition-all flex items-center justify-center gap-2 ${
+                        isInternal ? 'bg-amber-500 hover:bg-amber-600 text-amber-950' : 'bg-[#f37021] hover:bg-[#f37021]/90 text-white'
+                      }`}>
+                        <MessageSquare size={16} /> Enviar Agora
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );

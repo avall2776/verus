@@ -28,6 +28,9 @@ let ChatController = class ChatController {
     async getMessages(tenantId, conversationId) {
         return this.chatService.getConversationMessages(tenantId, conversationId);
     }
+    async getConversationByContact(tenantId, contactId) {
+        return this.chatService.getConversationByContact(tenantId, contactId);
+    }
     async takeover(tenantId, conversationId, req) {
         return this.chatService.takeoverConversation(tenantId, conversationId, req.user.id);
     }
@@ -68,6 +71,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "getMessages", null);
+__decorate([
+    (0, common_1.Get)('contact/:contactId'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('contactId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "getConversationByContact", null);
 __decorate([
     (0, common_1.Patch)(':id/takeover'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
