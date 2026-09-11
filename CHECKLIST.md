@@ -99,8 +99,64 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Etapa 3.5: Redesign CRM Lero:** Evolução do CRM Kanban para padrão Enterprise, com modal rico, alteração de etapa, totais por coluna e atribuição de Responsável. [2026-09-10 18:00]
 - [ ] **Etapa 4: Automações (Workflow Builder):** Motor de disparos automáticos baseados em tempo e gatilhos lógicos acionados via BullMQ.
 
+## 🎯 O que foi feito hoje (11/09/2026 - Manhã)
+
+### Fase 14: Sidebar Enterprise e Edição Avançada de Negócios
+- [x] **Arquitetura da Sidebar:** Refatoração da navegação para modo expansível (240px/64px) com sub-menus e accordions agrupados por módulo. Criação estrutural (boilerplate) das rotas operacionais do sistema.
+- [x] **Modal de Deal Cirúrgico:** Substituição de redicionamento de páginas por modais de chat internos (`Drawer`).
+- [x] **Edição em Tempo Real:** Habilitar edição inline de nome, valor (com máscara BRL) e notas do Lead diretamente pelo Kanban.
+- [x] **Dropdown de Responsável:** Integração do campo AssignedTo com o tenant (Tratamento de exceções no Client-side).
+- [x] **Correção de UX/UI:** Correção de quebra de renderização com a tela de chat incorporada para envio de Notas e Mensagens via WhatsApp.
+
 ---
-*Documento autogerado e contínuo - Última atualização: 11/09/2026 às 08:15*
+
+## 🎯 O que faremos à tarde (Roadmap End-to-End)
+
+Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
+
+### 🟢 FASE 1: CONEXÕES WHATSAPP & ENGINE DE MENSAGERIA (/settings/whatsapp)
+- [ ] Criar tela de pareamento com suporte a QR Code dinâmico e Meta Cloud API oficial.
+- [ ] Implementar polling/WebSocket para detectar conexão da instância em tempo real.
+- [ ] Adicionar controles operacionais: Reconectar, Reiniciar Instância e Importar Contatos.
+- [ ] Configurar Modo Anti-bloqueio (ritmo de digitação simulada e pausas entre envios).
+- [ ] Exibir status dinâmico com indicador verde na Sidebar e contagem de mensagens trafegadas.
+
+### 🟢 FASE 2: OPERAÇÃO - MONITOR AO VIVO EM TEMPO REAL (/monitor)
+- [ ] Montar Grid de Atendimentos ativos agrupados por setor/departamento (Comercial, Suporte, etc.).
+- [ ] Implementar cronômetros de tempo de espera e SLA (ex: "Sem resposta há X min/horas").
+- [ ] Adicionar filtro por atendente/colaborador e status do chamado.
+- [ ] Implementar clique rápido no card do Monitor para abrir o atendimento na Caixa de Entrada ou assumir o ticket.
+- [ ] Sincronizar via WebSockets para atualização instantânea sem recarregar a página.
+
+### 🟢 FASE 3: CHAT INTERNO DA EQUIPE (/team-chat)
+- [ ] Criar schema no Prisma para canais internos (`TeamChannel`) e mensagens diretas (`TeamMessage`).
+- [ ] Implementar visual de duas abas: [Colaboradores] (conversa 1:1) e [Equipes] (canais por departamento).
+- [ ] Adicionar compositor de mensagens internas com upload de arquivos, áudios e emojis.
+- [ ] Notificações em tempo real com contador de mensagens não lidas no menu lateral.
+
+### 🟢 FASE 4: MOTOR DE AUTOMAÇÕES & WORKFLOWS (/settings/automations)
+- [ ] Criar tabela de regras `Automation` e logs de execução `AutomationLog` no banco.
+- [ ] Configurar worker do BullMQ (`automations-queue`) com suporte a delay para gatilhos de inatividade.
+- [ ] Desenvolver construtor visual linear (Gatilho -> Condições -> Ações):
+  - Gatilhos: Inatividade de X horas, Mudança de Etapa no Funil, Tag adicionada.
+  - Ações: Disparo de template WhatsApp, Troca de responsável/fila, Mover etapa no CRM.
+- [ ] Listagem de automações ativas com switch Ativar/Desativar e visualizador de logs.
+
+### 🟢 FASE 5: ANALYTICS, DASHBOARDS E RELATÓRIOS
+- [ ] Métricas de Atendimento (`/dashboard/atendimento`):
+  - Gráficos de TMA (Tempo Médio de Atendimento) e TMR (Tempo Médio de Resposta).
+  - Volume de chamados receptivos vs. ativos e desempenho individual por operador.
+- [ ] Métricas de Vendas (`/dashboard/crm`):
+  - Taxa de conversão por etapa do funil.
+  - Relatório de motivos de perda e valor total ganho/perdido por período.
+
+### 🟢 FASE 6: HOMOLOGAÇÃO E AUDITORIA GERAL
+- [ ] Teste de ponta a ponta: Lead entra via WhatsApp -> IA atende -> Transborda -> Cria Deal no CRM -> Notifica no Monitor -> Dispara Automação.
+- [ ] Validação do Modo Tela Cheia e redimensionamento individual das colunas do Kanban.
+- [ ] Auditoria de segurança e tratamento de exceções (sem quebras em tela preta).
+
+---
+*Documento autogerado e contínuo - Última atualização: 11/09/2026 às 11:45*
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
 - **[11/09/2026 - 08:15]** 🟢 Início da jornada de desenvolvimento (Foco: Triagem, Filas e Configuração de Macros).
