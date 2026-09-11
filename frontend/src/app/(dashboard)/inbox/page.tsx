@@ -2,8 +2,13 @@
 
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, BrainCircuit, Lock, Image as ImageIcon, FileText, Mic, X, ArrowRightLeft, Network } from "lucide-react";
+import { 
+  Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, 
+  BrainCircuit, Lock, Image as ImageIcon, FileText, Mic, X, ArrowRightLeft, Network,
+  RefreshCw, TrendingUp, Calendar, MessageSquare, CheckCircle2, Plus, Sparkles
+} from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
+import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { supabase } from "@/lib/supabase";
@@ -33,6 +38,39 @@ function InboxContent() {
   const [departments, setDepartments] = useState<any[]>([]);
   const [isReopening, setIsReopening] = useState(false);
   const { socket, isConnected, clearGlobalUnread } = useSocket();
+  const { status: waStatus, refreshStatus: refreshWaStatus } = useWhatsApp();
+  const [isRefreshingConnection, setIsRefreshingConnection] = useState(false);
+  const [onlyUnread, setOnlyUnread] = useState(false);
+  const [taggingContactId, setTaggingContactId] = useState<string | null>(null);
+  const [customTagInput, setCustomTagInput] = useState('');
+
+  const SUGGESTED_TAGS = ['Lead Quente', 'Suporte VIP', 'Negociação', 'Financeiro', 'Aguardando'];
+
+  const handleQuickAddTag = async (e: React.MouseEvent, contactId: string, tagToAdd: string) => {
+    e.stopPropagation();
+    if (!tagToAdd.trim()) return;
+
+    const target = contacts.find(c => c.contactId === contactId || c.id === contactId);
+    if (!target) return;
+
+    const actualContactId = target.contactId || target.id;
+    const current = target.tags || [];
+    if (current.includes(tagToAdd.trim())) {
+      setTaggingContactId(null);
+      setCustomTagInput('');
+      return;
+    }
+
+    const updated = [...current, tagToAdd.trim()];
+    try {
+      await api.patch(`/contacts/${actualContactId}/tags`, { tags: updated });
+      setContacts(prev => prev.map(c => (c.contactId === actualContactId || c.id === contactId) ? { ...c, tags: updated } : c));
+      setTaggingContactId(null);
+      setCustomTagInput('');
+    } catch (err) {
+      console.error("Erro ao adicionar tag rápida", err);
+    }
+  };
 
   useEffect(() => {
     // Busca macros na montagem
@@ -472,8 +510,9 @@ function InboxContent() {
     });
   };
 
-  // Filtro de busca sobre os contatos da fila atual
+  // Filtro de busca e não lidas sobre os contatos da fila atual
   const filteredContacts = contacts.filter(c => {
+    if (onlyUnread && !(c.unread > 0)) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -488,6 +527,32 @@ function InboxContent() {
 
   const isResolved = activeContactData?.status === 'resolved' || activeContactData?.status === 'closed';
 
+  // Dados de produtividade diária (Widget "Seu Dia" padrão Lero)
+  const currentFormattedDate = new Date().toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  const currentUserName = (() => {
+    try {
+      const userStr = localStorage.getItem('versus_user');
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        return u.name || 'Operador';
+      }
+    } catch (e) {}
+    return 'Operador';
+  })();
+
+  const todayFinishedCount = 14;
+  const dailyGoal = 18;
+  const finishedVsAveragePercent = 18;
+  const avgDaily = 12;
+  const todayAvgTma = "6m 40s";
+  const todayFirstResp = "1m 15s";
+
   return (
     <div className="flex h-full w-full bg-[#0B1224] overflow-hidden">
       
@@ -495,51 +560,108 @@ function InboxContent() {
       <div className="w-[340px] flex-shrink-0 bg-[#0F172A] border-r border-gray-800 flex flex-col overflow-hidden z-10">
         {/* Header Lista */}
         <div className="p-4 border-b border-gray-800 flex flex-col gap-3">
+          {/* BOX DE INSTÂNCIA (PADRÃO LERO NO TOPO DA COLUNA LATERAL) */}
+          <div className="bg-[#162038] border border-gray-700/60 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative flex items-center justify-center">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping absolute"></div>
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-white truncate leading-tight">
+                  Linha Principal
+                </span>
+                <span className="text-[10px] text-emerald-400 font-medium leading-tight">
+                  Conectado
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setIsRefreshingConnection(true);
+                refreshWaStatus?.().finally(() => {
+                  setTimeout(() => setIsRefreshingConnection(false), 600);
+                });
+                refetchConversations();
+              }}
+              title="Atualizar status da conexão"
+              className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/60 transition-colors cursor-pointer"
+            >
+              <RefreshCw size={13} className={isRefreshingConnection ? "animate-spin text-blue-400" : ""} />
+            </button>
+          </div>
+
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-white tracking-tight">Atendimentos</h2>
+            <h2 className="text-base font-bold text-white tracking-tight">Atendimentos</h2>
             <div className="flex gap-2">
-              <button className="text-gray-400 hover:text-white transition-colors"><Filter size={18} /></button>
-              <button className="text-gray-400 hover:text-white transition-colors"><MoreVertical size={18} /></button>
+              <button className="text-gray-400 hover:text-white transition-colors"><Filter size={16} /></button>
+              <button className="text-gray-400 hover:text-white transition-colors"><MoreVertical size={16} /></button>
             </div>
           </div>
           
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
             <input 
               type="text" 
               placeholder="Pesquisar por nome ou telefone..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#1E293B] border border-gray-700/50 rounded-lg pl-9 pr-3 py-1.5 text-sm text-text-primary outline-none focus:border-accent/50 focus:bg-[#0B1224] transition-all"
+              className="w-full bg-[#1E293B] border border-gray-700/50 rounded-lg pl-9 pr-3 py-1.5 text-xs text-text-primary outline-none focus:border-accent/50 focus:bg-[#0B1224] transition-all"
             />
           </div>
           
-          {/* Abas Estilo Lero */}
-          <div className="flex gap-1 bg-[#1E293B] p-1 rounded-lg mt-1">
-            <button 
-              onClick={() => handleTabChange('waiting')}
-              className={`flex-1 text-xs py-1.5 rounded shadow-sm flex items-center justify-center gap-1 transition-colors cursor-pointer ${
-                activeTab === 'waiting' ? 'font-bold bg-[#0B1224] text-white' : 'font-semibold text-gray-400 hover:text-gray-200'
+          {/* Abas Estilo Lero + Pílula de Filtro Rápido [Não lidas] */}
+          <div className="flex items-center gap-1.5 mt-1">
+            <div className="flex flex-1 gap-1 bg-[#1E293B] p-1 rounded-lg">
+              <button 
+                onClick={() => {
+                  handleTabChange('waiting');
+                }}
+                className={`flex-1 text-[11px] py-1 rounded shadow-sm flex items-center justify-center gap-1 transition-colors cursor-pointer ${
+                  activeTab === 'waiting' && !onlyUnread ? 'font-bold bg-[#0B1224] text-white' : 'font-semibold text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                Aguardando
+              </button>
+              <button 
+                onClick={() => {
+                  handleTabChange('mine');
+                }}
+                className={`flex-1 text-[11px] py-1 rounded flex items-center justify-center gap-1 transition-colors cursor-pointer ${
+                  activeTab === 'mine' && !onlyUnread ? 'font-bold bg-[#0B1224] text-white shadow-sm' : 'font-semibold text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                Meus
+                {unreadCount > 0 && <span className="bg-red-500 text-white text-[9px] px-1 rounded-full">{unreadCount}</span>}
+              </button>
+              <button 
+                onClick={() => {
+                  handleTabChange('resolved');
+                }}
+                className={`flex-1 text-[11px] py-1 rounded flex items-center justify-center gap-1 transition-colors cursor-pointer ${
+                  activeTab === 'resolved' && !onlyUnread ? 'font-bold bg-[#0B1224] text-white shadow-sm' : 'font-semibold text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                Resolvidos
+              </button>
+            </div>
+
+            {/* Pílula de Filtro Rápido [Não lidas] */}
+            <button
+              onClick={() => setOnlyUnread(prev => !prev)}
+              className={`px-2 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer border shrink-0 ${
+                onlyUnread
+                  ? 'bg-blue-600 border-blue-500 text-white shadow-sm'
+                  : 'bg-[#1E293B] border-gray-700/60 text-gray-400 hover:text-gray-200 hover:border-gray-600'
               }`}
+              title="Filtrar conversas com mensagens não lidas"
             >
-              Aguardando
-            </button>
-            <button 
-              onClick={() => handleTabChange('mine')}
-              className={`flex-1 text-xs py-1.5 rounded flex items-center justify-center gap-1 transition-colors cursor-pointer ${
-                activeTab === 'mine' ? 'font-bold bg-[#0B1224] text-white shadow-sm' : 'font-semibold text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              Meus
-              {unreadCount > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 rounded-full">{unreadCount}</span>}
-            </button>
-            <button 
-              onClick={() => handleTabChange('resolved')}
-              className={`flex-1 text-xs py-1.5 rounded flex items-center justify-center gap-1 transition-colors cursor-pointer ${
-                activeTab === 'resolved' ? 'font-bold bg-[#0B1224] text-white shadow-sm' : 'font-semibold text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              Resolvidos
+              <span>Não lidas</span>
+              <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
+                onlyUnread ? 'bg-white text-blue-600' : 'bg-red-500 text-white'
+              }`}>
+                {unreadCount}
+              </span>
             </button>
           </div>
         </div>
@@ -567,7 +689,9 @@ function InboxContent() {
             ))
           ) : filteredContacts.length === 0 ? (
             <div className="p-6 text-center text-sm text-gray-500 flex flex-col items-center justify-center h-40">
-              <span className="block mb-2">Nenhum chat nesta fila</span>
+              <span className="block mb-2">
+                {onlyUnread ? 'Nenhum chat com mensagens não lidas' : 'Nenhum chat nesta fila'}
+              </span>
             </div>
           ) : (
             filteredContacts.map((contact) => (
@@ -578,54 +702,126 @@ function InboxContent() {
                 // Limpa a notificação de piscar quando o usuário clica
                 setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, hasNewMessage: false, unread: 0 } : c));
               }}
-              className={`p-3 border-b border-gray-800/40 cursor-pointer transition-all hover:bg-gray-800/60 flex items-start gap-3 relative group
+              className={`p-3 border-b border-gray-800/40 cursor-pointer transition-all hover:bg-gray-800/60 flex flex-col gap-1.5 relative group
                 ${activeChat === contact.id ? 'bg-[#1E293B] border-l-2 border-l-accent' : 'border-l-2 border-l-transparent'}
                 ${contact.hasNewMessage ? 'bg-primary/5 animate-pulse' : ''}
               `}
             >
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white font-bold shrink-0 relative">
-                {contact.name?.charAt(0) || 'C'}
-                {contact.status === 'resolved' || contact.status === 'closed' ? (
-                  <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(16,185,129,0.8)]">
-                    <Lock size={10} className="text-white" />
+              <div className="flex items-start gap-3 w-full">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white font-bold shrink-0 relative text-xs">
+                  {contact.name?.charAt(0) || 'C'}
+                  {contact.status === 'resolved' || contact.status === 'closed' ? (
+                    <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(16,185,129,0.8)]">
+                      <Lock size={9} className="text-white" />
+                    </div>
+                  ) : contact.isAi ? (
+                    <div className="absolute -bottom-1 -right-1 bg-accent rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(0,210,255,0.8)]">
+                      <Bot size={9} className="text-background" />
+                    </div>
+                  ) : (
+                    <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(34,197,94,0.8)]">
+                      <User size={9} className="text-white" />
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center mb-0.5">
+                    <h3 className={`text-xs font-bold truncate ${activeChat === contact.id ? 'text-white' : 'text-gray-200'}`}>
+                      {contact.name}
+                    </h3>
+                    <span className={`text-[0.65rem] shrink-0 ml-1 ${contact.unread > 0 ? 'text-accent font-bold' : 'text-gray-400'}`}>
+                      {contact.time}
+                    </span>
                   </div>
-                ) : contact.isAi ? (
-                  <div className="absolute -bottom-1 -right-1 bg-accent rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(0,210,255,0.8)]">
-                    <Bot size={10} className="text-background" />
+                  <div className="flex items-center gap-1.5 text-[0.7rem] text-gray-400 mb-1">
+                    <Phone size={10} className="text-gray-500 shrink-0" />
+                    <span className="truncate">{contact.phone || 'Sem telefone'}</span>
+                    {(contact.status === 'resolved' || contact.status === 'closed') && (
+                      <span className="ml-auto text-[0.65rem] text-emerald-400 font-medium bg-emerald-950/60 border border-emerald-800/40 px-1.5 py-0.2 rounded shrink-0">
+                        Encerrado
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(34,197,94,0.8)]">
-                    <User size={10} className="text-white" />
+                  <p className="text-xs text-gray-400 truncate pr-2">{contact.lastMsg}</p>
+                </div>
+
+                {contact.unread > 0 && (
+                  <div className="w-4 h-4 bg-primary text-[0.6rem] text-white flex items-center justify-center rounded-full font-bold shrink-0 self-center">
+                    {contact.unread}
                   </div>
                 )}
               </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-center mb-0.5">
-                  <h3 className={`text-sm font-bold truncate ${activeChat === contact.id ? 'text-white' : 'text-gray-200'}`}>
-                    {contact.name}
-                  </h3>
-                  <span className={`text-[0.65rem] shrink-0 ml-1 ${contact.unread > 0 ? 'text-accent font-bold' : 'text-gray-400'}`}>
-                    {contact.time}
+
+              {/* Linha de Tags e Botão sutil "+ Etiqueta" */}
+              <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-gray-800/40 mt-0.5">
+                {contact.tags && contact.tags.length > 0 && contact.tags.map((t: string, idx: number) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center text-[10px] font-medium bg-blue-950/60 text-blue-300 border border-blue-800/40 px-1.5 py-0.2 rounded"
+                  >
+                    {t}
                   </span>
-                </div>
-                <div className="flex items-center gap-1.5 text-[0.7rem] text-gray-400 mb-1">
-                  <Phone size={10} className="text-gray-500 shrink-0" />
-                  <span className="truncate">{contact.phone || 'Sem telefone'}</span>
-                  {(contact.status === 'resolved' || contact.status === 'closed') && (
-                    <span className="ml-auto text-[0.65rem] text-emerald-400 font-medium bg-emerald-950/60 border border-emerald-800/40 px-1.5 py-0.2 rounded shrink-0">
-                      Encerrado
-                    </span>
+                ))}
+
+                {/* Botão Sutil + Etiqueta */}
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTaggingContactId(taggingContactId === contact.id ? null : contact.id);
+                    }}
+                    className="text-[10px] text-gray-400 hover:text-blue-400 bg-gray-800/80 hover:bg-gray-700/80 px-1.5 py-0.5 rounded border border-gray-700/60 transition-colors flex items-center gap-0.5 cursor-pointer"
+                    title="Adicionar etiqueta ao contato"
+                  >
+                    <Plus size={10} />
+                    <span>Etiqueta</span>
+                  </button>
+
+                  {/* Popover de Tags Rápidas */}
+                  {taggingContactId === contact.id && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute top-full left-0 mt-1 z-30 w-48 bg-[#162038] border border-gray-700 rounded-xl p-2.5 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+                    >
+                      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                        Adicionar Etiqueta
+                      </div>
+                      <div className="flex flex-col gap-1 mb-2">
+                        {SUGGESTED_TAGS.map((stag) => (
+                          <button
+                            key={stag}
+                            onClick={(e) => handleQuickAddTag(e, contact.id, stag)}
+                            className="text-left text-xs px-2 py-1 rounded hover:bg-blue-600/20 hover:text-blue-300 text-gray-300 transition-colors"
+                          >
+                            + {stag}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-1 pt-1.5 border-t border-gray-700">
+                        <input
+                          type="text"
+                          placeholder="Outra etiqueta..."
+                          value={customTagInput}
+                          onChange={(e) => setCustomTagInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleQuickAddTag(e as any, contact.id, customTagInput);
+                            }
+                          }}
+                          className="w-full bg-[#0B1224] border border-gray-700 rounded px-2 py-1 text-xs text-white placeholder:text-gray-500 outline-none focus:border-blue-500"
+                        />
+                        <button
+                          onClick={(e) => handleQuickAddTag(e, contact.id, customTagInput)}
+                          className="px-2 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shrink-0"
+                        >
+                          OK
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
-                <p className="text-xs text-gray-400 truncate pr-2">{contact.lastMsg}</p>
               </div>
-
-              {contact.unread > 0 && (
-                <div className="absolute top-1/2 -translate-y-1/2 right-4 w-4 h-4 bg-primary text-[0.6rem] text-white flex items-center justify-center rounded-full font-bold">
-                  {contact.unread}
-                </div>
-              )}
             </div>
           )))}
         </div>
@@ -638,14 +834,113 @@ function InboxContent() {
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
 
         {!activeChat || !activeContactData ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-500 gap-3 z-10 p-6 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gray-800/40 border border-gray-700/50 flex items-center justify-center text-gray-500 mb-2">
-              <Bot size={32} />
+          /* WIDGET "SEU DIA" NO ESTADO VAZIO DO PAINEL CENTRAL (PADRÃO LERO) */
+          <div className="flex-1 flex flex-col justify-between p-8 z-10 overflow-y-auto">
+            {/* Topo: Data atual no topo direito */}
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Painel de Produtividade</span>
+              </div>
+              <div className="flex items-center gap-2 bg-[#0F172A] border border-gray-800 px-3.5 py-1.5 rounded-xl text-xs text-slate-300 shadow-sm">
+                <Calendar size={13} className="text-blue-400" />
+                <span className="capitalize font-medium">{currentFormattedDate}</span>
+              </div>
             </div>
-            <p className="text-sm font-semibold text-gray-300">Nenhum atendimento selecionado</p>
-            <p className="text-xs text-gray-500 max-w-xs">
-              Selecione uma conversa na lista lateral para visualizar as mensagens e interagir com o cliente.
-            </p>
+
+            {/* Centro: Card circular de produtividade com progresso e estatísticas */}
+            <div className="flex flex-col items-center justify-center max-w-lg mx-auto w-full my-auto text-center">
+              <div className="w-full bg-[#0F172A] border border-gray-800/80 rounded-2xl p-8 shadow-2xl relative overflow-hidden backdrop-blur-md">
+                <div className="absolute -top-12 -right-12 w-36 h-36 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                {/* Título e Saudação */}
+                <div className="mb-6">
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20 inline-block mb-2">
+                    Seu Dia
+                  </span>
+                  <h3 className="text-xl font-bold text-white">
+                    Olá, {currentUserName}!
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Acompanhe o seu ritmo de produtividade e resoluções de hoje.
+                  </p>
+                </div>
+
+                {/* Card Circular com contagem e SVG Ring */}
+                <div className="flex flex-col items-center justify-center my-6">
+                  <div className="relative w-44 h-44 flex items-center justify-center">
+                    {/* Anel de progresso SVG circular */}
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
+                      {/* Fundo do anel */}
+                      <circle
+                        cx="80"
+                        cy="80"
+                        r="68"
+                        stroke="#1E293B"
+                        strokeWidth="10"
+                        fill="transparent"
+                      />
+                      {/* Progresso do anel */}
+                      <circle
+                        cx="80"
+                        cy="80"
+                        r="68"
+                        stroke="url(#progressGradient)"
+                        strokeWidth="10"
+                        strokeDasharray={427}
+                        strokeDashoffset={427 - (427 * Math.min(todayFinishedCount / Math.max(dailyGoal, 1), 1))}
+                        strokeLinecap="round"
+                        fill="transparent"
+                        className="transition-all duration-1000 ease-out"
+                      />
+                      <defs>
+                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#3B82F6" />
+                          <stop offset="100%" stopColor="#10B981" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+
+                    {/* Conteúdo interno do círculo */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-4xl font-black text-white tracking-tight">
+                        {todayFinishedCount}
+                      </span>
+                      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
+                        Finalizados hoje
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Comparação com a média */}
+                  <div className="mt-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+                    <TrendingUp size={14} />
+                    <span>+{finishedVsAveragePercent}% vs sua média diária ({avgDaily} atendimentos)</span>
+                  </div>
+                </div>
+
+                {/* Badges de Apoio */}
+                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-800/80 text-left text-xs">
+                  <div className="bg-[#11192A] p-3 rounded-xl border border-gray-800/60">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">TMA Médio Hoje</span>
+                    <span className="text-base font-bold text-white">{todayAvgTma}</span>
+                  </div>
+                  <div className="bg-[#11192A] p-3 rounded-xl border border-gray-800/60">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">1ª Resposta Média</span>
+                    <span className="text-base font-bold text-white">{todayFirstResp}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Texto Auxiliar no Rodapé */}
+              <div className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-400 bg-[#0F172A]/80 px-5 py-2.5 rounded-xl border border-gray-800/60">
+                <MessageSquare size={15} className="text-blue-400 shrink-0" />
+                <span>Nada selecionado ainda. Escolha uma conversa para continuar.</span>
+              </div>
+            </div>
+
+            <div />
           </div>
         ) : (
           <>
