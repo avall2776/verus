@@ -13,6 +13,11 @@ export class CrmController {
     return this.crmService.findAllDeals(tenantId);
   }
 
+  @Get('users')
+  async listUsers(@CurrentTenant() tenantId: string) {
+    return this.crmService.findTenantUsers(tenantId);
+  }
+
   @Patch(':id')
   async updateDeal(
     @CurrentTenant() tenantId: string,

@@ -16,8 +16,6 @@ export declare class CrmController {
     } & {
         id: string;
         tenantId: string;
-        createdAt: Date;
-        updatedAt: Date;
         contactId: string;
         title: string;
         value: import("@prisma/client/runtime/library").Decimal;
@@ -25,7 +23,15 @@ export declare class CrmController {
         notes: string | null;
         metadata: import("@prisma/client/runtime/library").JsonValue | null;
         assignedTo: string | null;
+        createdAt: Date;
+        updatedAt: Date;
     })[]>;
+    listUsers(tenantId: string): Promise<{
+        id: string;
+        name: string;
+        email: string;
+        role: string;
+    }[]>;
     updateDeal(tenantId: string, id: string, updateData: {
         status?: string;
         value?: number;
@@ -33,8 +39,6 @@ export declare class CrmController {
     }): Promise<{
         id: string;
         tenantId: string;
-        createdAt: Date;
-        updatedAt: Date;
         contactId: string;
         title: string;
         value: import("@prisma/client/runtime/library").Decimal;
@@ -42,5 +46,7 @@ export declare class CrmController {
         notes: string | null;
         metadata: import("@prisma/client/runtime/library").JsonValue | null;
         assignedTo: string | null;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
 }

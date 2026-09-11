@@ -24,6 +24,9 @@ let CrmController = class CrmController {
     async listDeals(tenantId) {
         return this.crmService.findAllDeals(tenantId);
     }
+    async listUsers(tenantId) {
+        return this.crmService.findTenantUsers(tenantId);
+    }
     async updateDeal(tenantId, id, updateData) {
         return this.crmService.updateDeal(tenantId, id, updateData);
     }
@@ -36,6 +39,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], CrmController.prototype, "listDeals", null);
+__decorate([
+    (0, common_1.Get)('users'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], CrmController.prototype, "listUsers", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

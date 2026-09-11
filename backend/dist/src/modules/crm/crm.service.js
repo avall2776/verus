@@ -40,6 +40,12 @@ let CrmService = class CrmService {
             orderBy: { updatedAt: 'desc' }
         });
     }
+    async findTenantUsers(tenantId) {
+        return this.prisma.user.findMany({
+            where: { tenantId },
+            select: { id: true, name: true, email: true, role: true }
+        });
+    }
     async createDeal(tenantId, data) {
         return this.prisma.deal.create({
             data: {

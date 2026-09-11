@@ -4,7 +4,8 @@ import { X, MessageSquare, ExternalLink, Calendar, CheckSquare, RefreshCw, Trash
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 
@@ -23,6 +24,21 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
   const [chatInput, setChatInput] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [isLoadingChat, setIsLoadingChat] = useState(false);
+
+  // States for Edits
+  const [users, setUsers] = useState<any[]>([]);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState("");
+  const [isEditingValue, setIsEditingValue] = useState(false);
+  const [tempValue, setTempValue] = useState("");
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [tempNotes, setTempNotes] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      api.get('/deals/users').then(res => setUsers(res.data)).catch(console.error);
+    }
+  }, [isOpen]);
 
   if (!isOpen || !deal) return null;
 
@@ -55,6 +71,50 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
     }
   };
 
+  const handleUpdateContact = async () => {
+    if (tempName.trim() === deal.contact.name) {
+      setIsEditingName(false);
+      return;
+    }
+    try {
+      await api.patch(`/contacts/${deal.contactId}`, { name: tempName });
+      deal.contact.name = tempName; // Optimistic
+      setIsEditingName(false);
+      toast.success("Nome atualizado");
+    } catch (err) {
+      toast.error("Erro ao atualizar nome");
+    }
+  };
+
+  const handleUpdateValue = async () => {
+    const numericValue = parseFloat(tempValue.replace(/\D/g, '')) / 100;
+    if (isNaN(numericValue) || numericValue === deal.value) {
+      setIsEditingValue(false);
+      return;
+    }
+    try {
+      await onUpdate(deal.id, { value: numericValue });
+      setIsEditingValue(false);
+      toast.success("Valor atualizado");
+    } catch (err) {
+      toast.error("Erro ao atualizar valor");
+    }
+  };
+
+  const handleUpdateNotes = async () => {
+    if (tempNotes === deal.notes) {
+      setIsEditingNotes(false);
+      return;
+    }
+    try {
+      await onUpdate(deal.id, { notes: tempNotes });
+      setIsEditingNotes(false);
+      toast.success("Anotações salvas");
+    } catch (err) {
+      toast.error("Erro ao salvar anotações");
+    }
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
   };
@@ -70,23 +130,65 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800/60 bg-[#25262c] rounded-t-xl">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full border border-[#f37021] flex items-center justify-center bg-[#f37021]/10 text-[#f37021] font-bold text-lg">
+            <div className="w-12 h-12 rounded-full border border-[#f37021] flex items-center justify-center bg-[#f37021]/10 text-[#f37021] font-bold text-lg shrink-0">
               {deal.contact?.name ? deal.contact.name.substring(0, 2).toUpperCase() : '??'}
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-0.5">
                 <span className="text-xs text-emerald-500 font-mono bg-emerald-500/10 px-1.5 rounded">ID: {deal.id.split('-')[0]}</span>
-                <h2 className="text-lg font-bold text-white">{deal.contact?.name || 'Lead Desconhecido'}</h2>
+                {isEditingName ? (
+                  <input 
+                    autoFocus
+                    value={tempName}
+                    onChange={e => setTempName(e.target.value)}
+                    onBlur={handleUpdateContact}
+                    onKeyDown={e => e.key === 'Enter' && handleUpdateContact()}
+                    className="text-lg font-bold text-white bg-gray-800 border border-primary px-2 rounded outline-none"
+                  />
+                ) : (
+                  <h2 
+                    className="text-lg font-bold text-white hover:text-primary cursor-pointer transition-colors"
+                    onClick={() => { setTempName(deal.contact?.name || ''); setIsEditingName(true); }}
+                    title="Clique para editar"
+                  >
+                    {deal.contact?.name || 'Lead Desconhecido'}
+                  </h2>
+                )}
               </div>
-              <p className="text-sm text-gray-400">{deal.contact?.phone || 'Sem telefone'}</p>
+              {deal.contact?.phone ? (
+                <a href={`tel:${deal.contact.phone}`} className="text-sm text-gray-400 hover:text-[#f37021] transition-colors">{deal.contact.phone}</a>
+              ) : (
+                <p className="text-sm text-gray-400">Sem telefone</p>
+              )}
             </div>
           </div>
 
           <div className="flex items-center gap-6">
             <div className="flex flex-col items-end">
               <span className="text-xs text-gray-400">Valor da Oportunidade</span>
-              <div className="flex items-center gap-2 bg-[#1c1d22] px-3 py-1.5 rounded-lg border border-gray-800">
-                <span className="text-emerald-400 font-bold text-lg">{formatCurrency(deal.value)}</span>
+              <div className="flex items-center gap-2 bg-[#1c1d22] px-3 py-1.5 rounded-lg border border-gray-800 min-w-[120px] justify-end">
+                {isEditingValue ? (
+                  <input 
+                    autoFocus
+                    value={tempValue}
+                    onChange={e => {
+                      let val = e.target.value.replace(/\D/g, '');
+                      val = (parseInt(val) / 100).toFixed(2);
+                      if (val === 'NaN') val = '0.00';
+                      setTempValue(val.replace('.', ','));
+                    }}
+                    onBlur={handleUpdateValue}
+                    onKeyDown={e => e.key === 'Enter' && handleUpdateValue()}
+                    className="w-24 bg-transparent text-emerald-400 font-bold text-lg text-right outline-none"
+                  />
+                ) : (
+                  <span 
+                    className="text-emerald-400 font-bold text-lg cursor-pointer hover:text-emerald-300 transition-colors"
+                    onClick={() => { setTempValue((deal.value || 0).toFixed(2).replace('.', ',')); setIsEditingValue(true); }}
+                  >
+                    {formatCurrency(deal.value)}
+                  </span>
+                )}
               </div>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors">
@@ -101,12 +203,39 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
           {/* Left Column - Details */}
           <div className="flex-1 overflow-y-auto p-6 border-r border-gray-800/60 custom-scrollbar">
             
-            <h3 className="text-sm font-bold text-[#f37021] flex items-center gap-2 mb-4">
-              <ExternalLink size={16} /> Descrição
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-[#f37021] flex items-center gap-2">
+                <ExternalLink size={16} /> Descrição
+              </h3>
+              {!isEditingNotes && (
+                <button 
+                  onClick={() => { setTempNotes(deal.notes || ''); setIsEditingNotes(true); }}
+                  className="text-xs text-gray-400 hover:text-white"
+                >
+                  ✏️ Editar
+                </button>
+              )}
+            </div>
             
-            <div className="bg-[#25262c] rounded-lg p-4 border border-gray-800 text-sm text-gray-300 mb-8 whitespace-pre-wrap">
-              {deal.notes || "Nenhum histórico capturado."}
+            <div className="bg-[#25262c] rounded-lg border border-gray-800 mb-8 overflow-hidden flex flex-col">
+              {isEditingNotes ? (
+                <div className="flex flex-col h-full">
+                  <textarea 
+                    value={tempNotes}
+                    onChange={e => setTempNotes(e.target.value)}
+                    className="w-full bg-transparent p-4 min-h-[150px] text-sm text-white resize-y outline-none"
+                    placeholder="Digite as anotações sobre o lead..."
+                  />
+                  <div className="bg-gray-800 p-2 flex justify-end gap-2">
+                    <button onClick={() => setIsEditingNotes(false)} className="px-3 py-1 text-xs text-gray-400 hover:text-white">Cancelar</button>
+                    <button onClick={handleUpdateNotes} className="px-3 py-1 text-xs bg-[#f37021] text-white font-bold rounded hover:bg-[#f37021]/80">Salvar</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 text-sm text-gray-300 whitespace-pre-wrap">
+                  {deal.notes || "Nenhum histórico capturado."}
+                </div>
+              )}
             </div>
 
             <h3 className="text-sm font-bold text-[#f37021] flex items-center gap-2 mb-4">
@@ -179,7 +308,9 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                   onChange={(e) => onUpdate(deal.id, { assignedTo: e.target.value || null })}
                 >
                   <option value="">Nenhum (Na fila)</option>
-                  <option value="me">Eu (Atendente Atual)</option>
+                  {users.map(u => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
+                  ))}
                 </select>
               </div>
             </div>

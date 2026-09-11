@@ -32,6 +32,13 @@ export class CrmService {
     });
   }
 
+  async findTenantUsers(tenantId: string) {
+    return this.prisma.user.findMany({
+      where: { tenantId },
+      select: { id: true, name: true, email: true, role: true }
+    });
+  }
+
   async createDeal(tenantId: string, data: any) {
     return this.prisma.deal.create({
       data: {
