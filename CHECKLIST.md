@@ -135,9 +135,10 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 - [x] Adicionar indicador online/offline nos avatares dos membros da equipe.ns não lidas no menu lateral.
 
 ### 🟢 FASE 4: MOTOR DE AUTOMAÇÕES & WORKFLOWS (/settings/automations)
-- [ ] Criar tabela de regras `Automation` e logs de execução `AutomationLog` no banco.
-- [ ] Configurar worker do BullMQ (`automations-queue`) com suporte a delay para gatilhos de inatividade.
-- [ ] Desenvolver construtor visual linear (Gatilho -> Condições -> Ações):
+- [x] Criar tabela de regras `Automation` e logs de execução `AutomationLog` no banco.
+- [x] Implementar tela de configuração com blocos visuais de condição (Quando -> Se -> Então).
+- [x] Configurar filas do BullMQ para gerenciar gatilhos baseados em tempo (ex: Inatividade).
+- [x] Construir aba de Logs (Histórico de Execuções) detalhando os disparos e transferências.lho -> Condições -> Ações):
   - Gatilhos: Inatividade de X horas, Mudança de Etapa no Funil, Tag adicionada.
   - Ações: Disparo de template WhatsApp, Troca de responsável/fila, Mover etapa no CRM.
 - [ ] Listagem de automações ativas com switch Ativar/Desativar e visualizador de logs.

@@ -4,6 +4,7 @@ import { AutomationsService } from './automations.service';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { MessagingModule } from '../messaging/messaging.module';
 import { BullModule } from '@nestjs/bullmq';
+import { AutomationsProcessor } from './automations.processor';
 
 @Module({
   imports: [
@@ -11,7 +12,7 @@ import { BullModule } from '@nestjs/bullmq';
     BullModule.registerQueue({ name: 'automations' })
   ],
   controllers: [AutomationsController],
-  providers: [AutomationsService, PrismaService],
+  providers: [AutomationsService, PrismaService, AutomationsProcessor],
   exports: [AutomationsService]
 })
 export class AutomationsModule {}

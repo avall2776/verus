@@ -188,6 +188,7 @@ model Deal {
   assignedTo String?
   contact    Contact  @relation(fields: [contactId], references: [id])
   assignee   User?    @relation(fields: [assignedTo], references: [id])
+  automationLogs AutomationLog[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -273,8 +274,7 @@ model Automation {
   name        String
   triggerType String   // e.g. "INACTIVITY", "TAG_ADDED", "STAGE_CHANGED", "NEW_CONVERSATION"
   conditions  Json?    
-  actionType  String   // e.g. "SEND_MESSAGE", "ADD_TAG", "TRANSFER", "MOVE_STAGE"
-  actionData  Json?    
+  actions     Json     // Ex: [{ "type": "SEND_WHATSAPP", "template": string }]
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -290,14 +290,18 @@ model AutomationLog {
   id           String   @id @default(uuid())
   tenantId     String
   automationId String
-  contactId    String
+  contactId    String?
+  dealId       String?
+  status       String   @default("SUCCESS") // SUCCESS, FAILED
+  error        String?
   executedAt   DateTime @default(now())
   
   automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
-  contact      Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contact      Contact?   @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  deal         Deal?      @relation(fields: [dealId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
-  @@index([automationId, contactId])
+  @@index([automationId])
 }
 
 // ------------------------------------------------------

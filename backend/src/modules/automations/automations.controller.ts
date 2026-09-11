@@ -13,6 +13,11 @@ export class AutomationsController {
     return this.automationsService.findAll(tenantId);
   }
 
+  @Get('logs')
+  async getLogs(@CurrentTenant() tenantId: string) {
+    return this.automationsService.getLogs(tenantId);
+  }
+
   @Post()
   async create(@CurrentTenant() tenantId: string, @Body() body: any) {
     return this.automationsService.create(tenantId, body);
@@ -21,6 +26,11 @@ export class AutomationsController {
   @Patch(':id')
   async update(@CurrentTenant() tenantId: string, @Param('id') id: string, @Body() body: any) {
     return this.automationsService.update(tenantId, id, body);
+  }
+
+  @Patch(':id/toggle')
+  async toggle(@CurrentTenant() tenantId: string, @Param('id') id: string, @Body() body: { isActive: boolean }) {
+    return this.automationsService.update(tenantId, id, { isActive: body.isActive });
   }
 
   @Delete(':id')
