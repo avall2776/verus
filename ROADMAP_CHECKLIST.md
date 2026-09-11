@@ -152,9 +152,10 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
   - Relatório de motivos de perda e valor total ganho/perdido por período.
 
 ### 🟢 FASE 6: HOMOLOGAÇÃO E AUDITORIA GERAL
-- [ ] Teste de ponta a ponta: Lead entra via WhatsApp -> IA atende -> Transborda -> Cria Deal no CRM -> Notifica no Monitor -> Dispara Automação.
-- [ ] Validação do Modo Tela Cheia e redimensionamento individual das colunas do Kanban.
-- [ ] Auditoria de segurança e tratamento de exceções (sem quebras em tela preta).
+- [x] Teste de ponta a ponta: Lead entra via WhatsApp -> IA atende -> Transborda -> Cria Deal no CRM -> Notifica no Monitor -> Dispara Automação.
+- [x] Integração do Histórico (Modal de Deal): Ver e responder chat do cliente sem sair do Kanban.
+- [x] Validação do Modo Tela Cheia e redimensionamento individual das colunas do Kanban.
+- [x] Auditoria de segurança e tratamento de exceções (sem quebras em tela preta).
 
 ---
 *Documento autogerado e contínuo - Última atualização: 11/09/2026 às 11:45*

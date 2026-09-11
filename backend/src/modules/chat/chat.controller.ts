@@ -82,4 +82,19 @@ export class ChatController {
       throw error;
     }
   }
+
+  @Post('contact/:contactId/messages')
+  async sendMessageToContact(
+    @CurrentTenant() tenantId: string,
+    @Param('contactId') contactId: string,
+    @Body() payload: SendMessageDto,
+    @Request() req: any,
+  ) {
+    try {
+      return await this.chatService.sendManualMessageToContact(tenantId, contactId, payload, req.user.id);
+    } catch (error) {
+      console.error('ERRO AO ENVIAR MENSAGEM DIRETA:', error);
+      throw error;
+    }
+  }
 }

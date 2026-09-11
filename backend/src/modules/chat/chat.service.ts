@@ -234,4 +234,24 @@ export class ChatService {
 
     return msg; // Retorna a mensagem criada
   }
+
+  async sendManualMessageToContact(tenantId: string, contactId: string, payload: any, userId: string) {
+    let conversation = await this.prisma.conversation.findFirst({
+      where: { tenantId, contactId },
+      orderBy: { updatedAt: 'desc' }
+    });
+
+    if (!conversation) {
+      conversation = await this.prisma.conversation.create({
+        data: {
+          tenantId,
+          contactId,
+          status: 'human_takeover',
+          assignedTo: userId
+        }
+      });
+    }
+
+    return this.sendManualMessage(tenantId, conversation.id, payload);
+  }
 }

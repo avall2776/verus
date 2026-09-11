@@ -35,9 +35,11 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
 
   useEffect(() => {
     if (isOpen) {
+      setChatMode('none');
+      setChatData(null);
       api.get('/deals/users').then(res => setUsers(res.data)).catch(console.error);
     }
-  }, [isOpen]);
+  }, [isOpen, deal?.id]);
 
   if (!isOpen || !deal) return null;
 
@@ -55,14 +57,23 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
   };
 
   const handleSendMsg = async () => {
-    if (!chatInput.trim() || !chatData) return;
+    if (!chatInput.trim()) return;
     try {
-      const { data } = await api.post(`/conversations/${chatData.id}/messages`, {
-        content: chatInput,
-        isInternal,
-        type: 'text'
-      });
-      setChatData((prev: any) => ({ ...prev, messages: [...(prev?.messages || []), data] }));
+      if (chatData?.id) {
+        const { data } = await api.post(`/conversations/${chatData.id}/messages`, {
+          content: chatInput,
+          isInternal,
+          type: 'text'
+        });
+        setChatData((prev: any) => ({ ...prev, messages: [...(prev?.messages || []), data] }));
+      } else {
+        await api.post(`/conversations/contact/${deal.contactId}/messages`, {
+          content: chatInput,
+          isInternal,
+          type: 'text'
+        });
+        await loadChat('send');
+      }
       setChatInput("");
       toast.success("Mensagem enviada com sucesso!");
     } catch (err) {
@@ -303,7 +314,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                 <label className="text-xs text-gray-500 mb-1.5 block">Responsável</label>
                 <select 
                   className="w-full bg-[#1c1d22] border border-gray-700 text-white rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
-                  value={deal.assignedTo || ""}
+                  value={deal.assignedTo?.id || (typeof deal.assignedTo === 'string' ? deal.assignedTo : "")}
                   onChange={(e) => onUpdate(deal.id, { assignedTo: e.target.value || null })}
                 >
                   <option value="">Nenhum (Na fila)</option>
@@ -365,10 +376,10 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
 
             {isLoadingChat ? (
               <div className="flex-1 flex items-center justify-center text-gray-500">Carregando conversa...</div>
-            ) : !chatData ? (
+            ) : (!chatData || !chatData.messages || chatData.messages.length === 0) && chatMode === 'view' ? (
               <div className="flex-1 flex items-center justify-center text-gray-500 flex-col gap-2">
                 <MessageSquare size={40} className="opacity-50" />
-                Nenhum histórico encontrado para este contato.
+                Nenhum histórico prévio. Inicie o contato abaixo.
               </div>
             ) : (
               <div className="flex-1 flex overflow-hidden">
