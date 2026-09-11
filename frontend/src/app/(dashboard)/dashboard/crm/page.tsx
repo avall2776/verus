@@ -117,7 +117,7 @@ export default function CrmDashboard() {
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '8px', color: '#fff' }}
                   cursor={{ fill: '#1f2937', opacity: 0.4 }}
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: any) => formatCurrency(value)}
                 />
                 <Legend iconType="circle" />
                 <Bar dataKey="ganho" name="Receita Ganha" fill="#10b981" radius={[4, 4, 0, 0]} />
@@ -139,7 +139,7 @@ export default function CrmDashboard() {
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', borderRadius: '8px', color: '#fff' }}
                   cursor={{ fill: '#1f2937', opacity: 0.4 }}
-                  formatter={(value: number) => [`${value} Leads`, 'Volume']}
+                  formatter={(value: any) => [`${value} Leads`, 'Volume']}
                 />
                 <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={32} />
               </BarChart>
