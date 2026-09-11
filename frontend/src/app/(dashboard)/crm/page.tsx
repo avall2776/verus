@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Filter, MoreHorizontal, MessageCircle, Copy, FileText, Maximize2, Minimize2, Activity, Users, Building, LayoutDashboard, Plus, Settings, DollarSign, Target } from "lucide-react";
+import { Search, Filter, MoreHorizontal, MessageCircle, Copy, FileText, Maximize2, Minimize2, Activity, Users, Building, LayoutDashboard, Plus, Settings, DollarSign, Target, ChevronDown, ChevronUp, Calendar, CheckSquare, ArrowRight, Clock } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
@@ -26,6 +26,7 @@ export default function CrmPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDeal, setSelectedDeal] = useState<any | null>(null);
   const [collapsedCols, setCollapsedCols] = useState<string[]>(["disqualified"]);
+  const [expandedCards, setExpandedCards] = useState<string[]>([]);
   const [neutralMode, setNeutralMode] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
@@ -83,6 +84,13 @@ export default function CrmPage() {
   const toggleColumn = (colId: string) => {
     setCollapsedCols(prev => 
       prev.includes(colId) ? prev.filter(id => id !== colId) : [...prev, colId]
+    );
+  };
+
+  const toggleCardAccordion = (e: React.MouseEvent, dealId: string) => {
+    e.stopPropagation();
+    setExpandedCards(prev => 
+      prev.includes(dealId) ? prev.filter(id => id !== dealId) : [...prev, dealId]
     );
   };
 
@@ -217,6 +225,7 @@ export default function CrmPage() {
                       {columnDeals.map((deal, index) => {
                         const contactTags = deal.contact?.tags || [];
                         const primaryTag = contactTags.length > 0 ? contactTags[0] : null;
+                        const isExpanded = expandedCards.includes(deal.id);
 
                         return (
                           <Draggable key={deal.id} draggableId={deal.id} index={index}>
@@ -227,12 +236,12 @@ export default function CrmPage() {
                                 {...provided.dragHandleProps}
                                 style={{ ...provided.draggableProps.style }}
                                 onClick={() => setSelectedDeal(deal)}
-                                className={`bg-[#25262c] border rounded-xl p-4 cursor-pointer transition-all duration-200 group relative overflow-hidden flex flex-col gap-2 ${
+                                className={`bg-[#161b22] border rounded-xl p-4.5 cursor-pointer transition-all duration-200 relative overflow-hidden flex flex-col gap-3 ${
                                   snapshot.isDragging ? `shadow-2xl shadow-black/80 rotate-3 scale-105 opacity-90 ring-1 ${col.borderLight} bg-gray-800` : 'border-gray-800 hover:border-gray-600 hover:-translate-y-0.5 shadow-sm'
                                 }`}
                               >
                                 {/* Topo: ID + Tag */}
-                                <div className="flex justify-between items-start mb-1">
+                                <div className="flex justify-between items-start">
                                   <span className="text-[11px] text-gray-400 font-bold bg-gray-800/80 px-2 py-0.5 rounded-md font-mono">
                                     #{deal.id.split('-')[0].toUpperCase()}
                                   </span>
@@ -243,90 +252,106 @@ export default function CrmPage() {
                                   )}
                                 </div>
                                 
-                                {/* Linha 1: Nome + WA */}
+                                {/* Linha 1: Nome + WA + Telefone */}
                                 <div>
-                                  <h4 className="text-sm font-bold text-white leading-tight group-hover:text-primary transition-colors">{deal.contact?.name || 'Sem Contato'}</h4>
-                                  <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium mt-1">
-                                    <MessageCircle size={12} className="text-[#25D366]" />
+                                  <h4 className="text-base font-semibold text-white leading-tight mb-1">{deal.contact?.name || 'Sem Contato'}</h4>
+                                  <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+                                    <MessageCircle size={13} className="text-[#25D366]" />
                                     {deal.contact?.phone || 'Sem número'}
                                   </div>
                                 </div>
 
                                 {/* Linha 2: Entidade */}
-                                <div className="text-[11px] font-semibold text-gray-500">
-                                  • Lead
+                                <div className="text-[11px] font-semibold text-gray-500 flex items-center gap-1.5">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> Lead
                                 </div>
 
-                                {/* Linha 3: Metadados */}
-                                <div className="bg-[#1a1f26] rounded-md p-2 mt-1 flex flex-col gap-1 border border-gray-800/80">
+                                {/* Accordion / Box de Metadados */}
+                                <div className="bg-[#0d1117] rounded-lg p-3 flex flex-col gap-2 border border-gray-800/80 mt-1">
                                   <div className="flex items-center justify-between text-[10px] font-mono text-gray-500 uppercase">
-                                    <span>Origem:</span>
-                                    <span className="text-gray-400 font-bold truncate ml-2">[{deal.contact?.source || 'ORGÂNICO'}]</span>
+                                    <span>Origem: <span className="text-gray-400 font-bold ml-1">[{deal.contact?.source || 'ORGÂNICO'}]</span></span>
                                   </div>
                                   <div className="flex items-center justify-between text-[10px] font-mono text-gray-500 uppercase">
-                                    <span>Formulário:</span>
-                                    <span className="text-gray-400 font-bold truncate ml-2">Padrão</span>
+                                    <span>Formulário: <span className="text-gray-400 font-bold ml-1">VERSÁTIL</span></span>
                                   </div>
+                                  
+                                  <p className="text-xs text-gray-400 leading-relaxed mt-1 line-clamp-2">
+                                    Lead recebido pelo formulário nativo da Meta Ads solicitando contato comercial urgente.
+                                  </p>
+
+                                  {/* expanded content */}
+                                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100 mt-2 border-t border-gray-800 pt-3' : 'max-h-0 opacity-0'}`}>
+                                    <div className="flex flex-col gap-2">
+                                      <div className="text-xs text-gray-300"><span className="text-gray-500 font-bold">Email:</span> {deal.contact?.name.toLowerCase().replace(' ', '')}@email.com</div>
+                                      <div className="text-xs text-gray-300"><span className="text-gray-500 font-bold">Equipamento:</span> Elevador Monta Carga</div>
+                                      <div className="text-xs text-gray-300"><span className="text-gray-500 font-bold">Cidade:</span> São Paulo - SP</div>
+                                    </div>
+                                    <button 
+                                      className="mt-3 w-full bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs py-1.5 rounded flex items-center justify-center gap-1.5 font-semibold transition-colors"
+                                      onClick={(e) => { e.stopPropagation(); toast.success("Descrição copiada!"); }}
+                                    >
+                                      <Copy size={12} /> Copiar descrição
+                                    </button>
+                                  </div>
+                                  
+                                  <button 
+                                    className="text-xs text-primary font-bold hover:underline flex items-center gap-1 mt-1 w-fit"
+                                    onClick={(e) => toggleCardAccordion(e, deal.id)}
+                                  >
+                                    {isExpanded ? (
+                                      <><ChevronUp size={14} /> Menos</>
+                                    ) : (
+                                      <><ChevronDown size={14} /> Mais</>
+                                    )}
+                                  </button>
                                 </div>
                                 
+                                {/* Barra de Ícones de Ação */}
+                                <div className="flex items-center gap-2 mt-1">
+                                  <button onClick={(e) => { e.stopPropagation(); /* go to chat */ }} className="p-1.5 bg-[#161b22] border border-gray-800 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Enviar mensagem">
+                                    <MessageCircle size={14} />
+                                  </button>
+                                  <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 bg-[#161b22] border border-gray-800 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Criar evento">
+                                    <Calendar size={14} />
+                                  </button>
+                                  <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 bg-[#161b22] border border-gray-800 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Criar tarefa">
+                                    <CheckSquare size={14} />
+                                  </button>
+                                  <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 bg-[#161b22] border border-gray-800 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 transition-colors ml-auto" title="Ir para o atendimento">
+                                    <ArrowRight size={14} />
+                                  </button>
+                                </div>
+
+                                {/* Auditoria de tempo */}
+                                <div className="text-[10px] text-gray-500 font-medium">
+                                  Criado há cerca de 2 horas
+                                </div>
+
                                 {/* Linha 4: Valor */}
-                                <div className="mt-2 flex items-center gap-1 text-emerald-400 bg-emerald-500/10 w-fit px-2 py-1 rounded-md border border-emerald-500/20">
+                                <div className="flex items-center gap-1 text-emerald-400 bg-emerald-500/10 w-fit px-2 py-1 rounded-md border border-emerald-500/20 my-1">
                                   <DollarSign size={14} />
                                   <span className="text-sm font-black">{formatCurrency(Number(deal.value))}</span>
                                 </div>
 
                                 {/* Rodapé: Avatar */}
-                                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-800/50">
+                                <div className="flex items-center gap-2 mt-1 pt-3 border-t border-gray-800/50">
                                   {deal.assignee ? (
                                     <>
-                                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-bold text-white shadow-sm ring-2 ring-[#25262c]" title={deal.assignee.name}>
+                                      <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-[11px] font-bold text-white shadow-sm ring-2 ring-[#161b22]" title={deal.assignee.name}>
                                         {deal.assignee.name.charAt(0)}
                                       </div>
                                       <span className="text-xs text-gray-400 font-semibold">{deal.assignee.name.split(' ')[0]}</span>
                                     </>
                                   ) : (
                                     <>
-                                      <div className="w-6 h-6 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-500" title="Não atribuído">
+                                      <div className="w-7 h-7 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-500" title="Não atribuído">
                                         ?
                                       </div>
-                                      <span className="text-xs text-gray-600 font-semibold italic">Sem dono</span>
+                                      <span className="text-xs text-gray-600 font-semibold italic">Sem responsável</span>
                                     </>
                                   )}
                                 </div>
 
-                                {/* Gaveta Expansível no Hover (Puro CSS) */}
-                                <div className="max-h-0 opacity-0 group-hover:max-h-[120px] group-hover:opacity-100 group-hover:mt-2 transition-all duration-300 ease-in-out overflow-hidden flex flex-col gap-2 pt-0 group-hover:pt-2 border-t border-transparent group-hover:border-dashed group-hover:border-gray-700">
-                                  <div className="text-[10px] text-gray-500 font-mono flex items-center gap-1">
-                                    <Activity size={10} />
-                                    <span>Criado há 2h por Sistema</span>
-                                  </div>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <button 
-                                      className="flex-1 bg-gray-800 hover:bg-primary hover:text-white text-gray-300 text-xs py-1.5 rounded-md font-bold transition-colors flex items-center justify-center gap-1"
-                                      onClick={(e) => { e.stopPropagation(); setSelectedDeal(deal); }}
-                                    >
-                                      <FileText size={12} /> Ver Mais
-                                    </button>
-                                    <button 
-                                      className="w-8 h-7 bg-gray-800 hover:bg-[#25D366] hover:text-white text-gray-400 rounded-md flex items-center justify-center transition-colors"
-                                      title="WhatsApp"
-                                      onClick={(e) => { e.stopPropagation(); }}
-                                    >
-                                      <MessageCircle size={14} />
-                                    </button>
-                                    <button 
-                                      className="w-8 h-7 bg-gray-800 hover:bg-gray-600 text-gray-400 rounded-md flex items-center justify-center transition-colors"
-                                      title="Copiar ID"
-                                      onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        navigator.clipboard.writeText(deal.id); 
-                                        toast.success("ID copiado"); 
-                                      }}
-                                    >
-                                      <Copy size={14} />
-                                    </button>
-                                  </div>
-                                </div>
                               </div>
                             )}
                           </Draggable>
@@ -334,13 +359,14 @@ export default function CrmPage() {
                       })}
                       {provided.placeholder}
                       
-                      {/* Add Card Button */}
-                      <button className="mt-2 w-full border-2 border-dashed border-gray-800 hover:border-primary/50 text-gray-500 hover:text-primary rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 bg-[#1c1d22]/50 hover:bg-primary/5">
-                        <Plus size={14} /> Adicionar Cartão
-                      </button>
                     </div>
                   )}
                 </Droppable>
+
+                {/* Add Card Button (Footer da coluna) */}
+                <button className="mt-auto shrink-0 w-full bg-[#161b22] border border-gray-800 hover:border-gray-600 text-gray-400 hover:text-white rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm">
+                  <Plus size={16} /> Adicionar novo cartão
+                </button>
               </div>
             );
           })}
@@ -414,6 +440,3 @@ export default function CrmPage() {
     </div>
   );
 }
-
-// Icone extra pro Modal de Manage
-import { Clock } from "lucide-react";
