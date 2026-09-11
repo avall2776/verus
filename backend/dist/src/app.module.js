@@ -23,6 +23,9 @@ const rag_module_1 = require("./modules/rag/rag.module");
 const departments_module_1 = require("./modules/departments/departments.module");
 const quick_replies_module_1 = require("./modules/quick-replies/quick-replies.module");
 const automations_module_1 = require("./modules/automations/automations.module");
+const whatsapp_module_1 = require("./modules/whatsapp/whatsapp.module");
+const monitor_module_1 = require("./modules/monitor/monitor.module");
+const team_chat_module_1 = require("./modules/team-chat/team-chat.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -44,6 +47,9 @@ exports.AppModule = AppModule = __decorate([
             departments_module_1.DepartmentsModule,
             quick_replies_module_1.QuickRepliesModule,
             automations_module_1.AutomationsModule,
+            whatsapp_module_1.WhatsappModule,
+            monitor_module_1.MonitorModule,
+            team_chat_module_1.TeamChatModule,
         ],
         controllers: [],
         providers: [],

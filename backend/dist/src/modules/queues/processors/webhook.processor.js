@@ -114,9 +114,10 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         if (conversation.status === 'resolved') {
             conversation = await this.prisma.conversation.update({
                 where: { id: conversation.id },
-                data: { status: 'bot_active' }
+                data: { status: 'waiting', assignedTo: null }
             });
-            this.logger.log(`Conversa [${conversation.id}] reaberta (status -> bot_active).`);
+            this.logger.log(`Conversa [${conversation.id}] reaberta (status -> waiting).`);
+            this.chatGateway.emitConversationUpdated(tenantId, conversation);
         }
         const savedMessage = await this.prisma.message.create({
             data: {

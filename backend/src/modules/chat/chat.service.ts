@@ -15,17 +15,18 @@ export class ChatService {
     const whereClause: any = { tenantId };
 
     if (tab === 'resolved') {
-      whereClause.status = 'resolved';
+      whereClause.status = { in: ['resolved', 'closed'] };
+      // Garantir que NÃO filtra por assignedTo nesta aba para possibilitar auditoria completa
     } else if (tab === 'mine') {
-      whereClause.status = { not: 'resolved' };
+      whereClause.status = { in: ['open', 'human_takeover'] };
       whereClause.assignedTo = userId;
     } else {
       // tab === 'waiting'
-      whereClause.status = { not: 'resolved' };
+      whereClause.status = { in: ['waiting', 'bot_active'] };
       whereClause.assignedTo = null; // Fila esperando
 
       if (userRole === 'AGENT') {
-        // Se for agent, só ve a fila dos departamentos que pertence
+        // Se for agent, só vê a fila dos departamentos que pertence
         const userDepts = await this.prisma.userDepartment.findMany({ where: { userId }});
         const deptIds = userDepts.map(d => d.departmentId);
         
@@ -115,9 +116,50 @@ export class ChatService {
 
     const updated = await this.prisma.conversation.update({
       where: { id: conversationId },
-      data: { status: 'resolved' }
+      data: { 
+        status: 'resolved',
+        updatedAt: new Date()
+      },
+      include: {
+        contact: true,
+        department: true,
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1
+        }
+      }
     });
     
+    this.chatGateway.emitConversationUpdated(tenantId, updated);
+    return updated;
+  }
+
+  async reopenConversation(tenantId: string, conversationId: string) {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId }
+    });
+
+    if (!conversation || conversation.tenantId !== tenantId) {
+      throw new NotFoundException('Conversa não encontrada.');
+    }
+
+    const updated = await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { 
+        status: 'waiting',
+        assignedTo: null,
+        updatedAt: new Date()
+      },
+      include: {
+        contact: true,
+        department: true,
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1
+        }
+      }
+    });
+
     this.chatGateway.emitConversationUpdated(tenantId, updated);
     return updated;
   }

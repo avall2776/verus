@@ -19,8 +19,8 @@ export declare class DepartmentsService {
                 tenantId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                password: string;
                 role: string;
+                password: string;
                 isOnline: boolean;
             };
         } & {

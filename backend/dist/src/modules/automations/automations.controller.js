@@ -24,11 +24,17 @@ let AutomationsController = class AutomationsController {
     async findAll(tenantId) {
         return this.automationsService.findAll(tenantId);
     }
+    async getLogs(tenantId) {
+        return this.automationsService.getLogs(tenantId);
+    }
     async create(tenantId, body) {
         return this.automationsService.create(tenantId, body);
     }
     async update(tenantId, id, body) {
         return this.automationsService.update(tenantId, id, body);
+    }
+    async toggle(tenantId, id, body) {
+        return this.automationsService.update(tenantId, id, { isActive: body.isActive });
     }
     async remove(tenantId, id) {
         return this.automationsService.remove(tenantId, id);
@@ -42,6 +48,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AutomationsController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('logs'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AutomationsController.prototype, "getLogs", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
@@ -59,6 +72,15 @@ __decorate([
     __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], AutomationsController.prototype, "update", null);
+__decorate([
+    (0, common_1.Patch)(':id/toggle'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], AutomationsController.prototype, "toggle", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

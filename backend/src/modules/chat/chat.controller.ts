@@ -14,8 +14,10 @@ export class ChatController {
     @CurrentTenant() tenantId: string,
     @Request() req: any,
     @Query('tab') tab?: string,
+    @Query('status') status?: string,
   ) {
-    return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, tab || 'waiting');
+    const selectedTab = tab || status || 'waiting';
+    return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, selectedTab);
   }
 
   @Get(':id/messages')
@@ -49,6 +51,22 @@ export class ChatController {
     @Param('id') conversationId: string,
   ) {
     return this.chatService.releaseConversation(tenantId, conversationId);
+  }
+
+  @Patch(':id/resolve')
+  async resolve(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+  ) {
+    return this.chatService.releaseConversation(tenantId, conversationId);
+  }
+
+  @Patch(':id/reopen')
+  async reopen(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+  ) {
+    return this.chatService.reopenConversation(tenantId, conversationId);
   }
 
   @Patch(':id/transfer')

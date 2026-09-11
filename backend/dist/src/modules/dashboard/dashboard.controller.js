@@ -22,7 +22,13 @@ let DashboardController = class DashboardController {
         this.dashboardService = dashboardService;
     }
     async getDashboardData(tenantId) {
-        return this.dashboardService.getMetrics(tenantId);
+        return this.dashboardService.getDashboardData(tenantId);
+    }
+    async getAtendimentoMetrics(tenantId) {
+        return this.dashboardService.getAtendimentoMetrics(tenantId);
+    }
+    async getCrmMetrics(tenantId) {
+        return this.dashboardService.getCrmMetrics(tenantId);
     }
 };
 exports.DashboardController = DashboardController;
@@ -33,6 +39,20 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], DashboardController.prototype, "getDashboardData", null);
+__decorate([
+    (0, common_1.Get)('atendimento'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "getAtendimentoMetrics", null);
+__decorate([
+    (0, common_1.Get)('crm'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "getCrmMetrics", null);
 exports.DashboardController = DashboardController = __decorate([
     (0, common_1.Controller)('metrics'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

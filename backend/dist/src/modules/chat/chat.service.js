@@ -23,14 +23,14 @@ let ChatService = class ChatService {
     async findAllConversations(tenantId, userId, userRole, tab = 'waiting') {
         const whereClause = { tenantId };
         if (tab === 'resolved') {
-            whereClause.status = 'resolved';
+            whereClause.status = { in: ['resolved', 'closed'] };
         }
         else if (tab === 'mine') {
-            whereClause.status = { not: 'resolved' };
+            whereClause.status = { in: ['open', 'human_takeover'] };
             whereClause.assignedTo = userId;
         }
         else {
-            whereClause.status = { not: 'resolved' };
+            whereClause.status = { in: ['waiting', 'bot_active'] };
             whereClause.assignedTo = null;
             if (userRole === 'AGENT') {
                 const userDepts = await this.prisma.userDepartment.findMany({ where: { userId } });
@@ -89,10 +89,12 @@ let ChatService = class ChatService {
         if (!conversation || conversation.tenantId !== tenantId) {
             throw new common_1.NotFoundException('Conversa não encontrada.');
         }
-        return this.prisma.conversation.update({
+        const updated = await this.prisma.conversation.update({
             where: { id: conversationId },
             data: { status: 'human_takeover', assignedTo: userId }
         });
+        this.chatGateway.emitConversationUpdated(tenantId, updated);
+        return updated;
     }
     async releaseConversation(tenantId, conversationId) {
         const conversation = await this.prisma.conversation.findUnique({
@@ -101,10 +103,49 @@ let ChatService = class ChatService {
         if (!conversation || conversation.tenantId !== tenantId) {
             throw new common_1.NotFoundException('Conversa não encontrada.');
         }
-        return this.prisma.conversation.update({
+        const updated = await this.prisma.conversation.update({
             where: { id: conversationId },
-            data: { status: 'resolved' }
+            data: {
+                status: 'resolved',
+                updatedAt: new Date()
+            },
+            include: {
+                contact: true,
+                department: true,
+                messages: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1
+                }
+            }
         });
+        this.chatGateway.emitConversationUpdated(tenantId, updated);
+        return updated;
+    }
+    async reopenConversation(tenantId, conversationId) {
+        const conversation = await this.prisma.conversation.findUnique({
+            where: { id: conversationId }
+        });
+        if (!conversation || conversation.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        const updated = await this.prisma.conversation.update({
+            where: { id: conversationId },
+            data: {
+                status: 'waiting',
+                assignedTo: null,
+                updatedAt: new Date()
+            },
+            include: {
+                contact: true,
+                department: true,
+                messages: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1
+                }
+            }
+        });
+        this.chatGateway.emitConversationUpdated(tenantId, updated);
+        return updated;
     }
     async assignToUser(tenantId, conversationId, userId) {
         const conversation = await this.prisma.conversation.findUnique({
@@ -197,6 +238,23 @@ let ChatService = class ChatService {
         }
         this.chatGateway.emitNewMessage(tenantId, msg);
         return msg;
+    }
+    async sendManualMessageToContact(tenantId, contactId, payload, userId) {
+        let conversation = await this.prisma.conversation.findFirst({
+            where: { tenantId, contactId },
+            orderBy: { updatedAt: 'desc' }
+        });
+        if (!conversation) {
+            conversation = await this.prisma.conversation.create({
+                data: {
+                    tenantId,
+                    contactId,
+                    status: 'human_takeover',
+                    assignedTo: userId
+                }
+            });
+        }
+        return this.sendManualMessage(tenantId, conversation.id, payload);
     }
 };
 exports.ChatService = ChatService;

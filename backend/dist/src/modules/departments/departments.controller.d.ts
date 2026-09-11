@@ -22,8 +22,8 @@ export declare class DepartmentsController {
                 tenantId: string;
                 createdAt: Date;
                 updatedAt: Date;
-                password: string;
                 role: string;
+                password: string;
                 isOnline: boolean;
             };
         } & {

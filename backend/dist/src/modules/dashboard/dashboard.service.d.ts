@@ -2,7 +2,7 @@ import { PrismaService } from '../../shared/database/prisma.service';
 export declare class DashboardService {
     private readonly prisma;
     constructor(prisma: PrismaService);
-    getMetrics(tenantId: string): Promise<{
+    getDashboardData(tenantId: string): Promise<{
         kpis: {
             totalLeadsToday: number;
             qualRate: number;
@@ -18,5 +18,38 @@ export declare class DashboardService {
             value: string;
         }[];
         chartData: number[];
+    }>;
+    getAtendimentoMetrics(tenantId: string): Promise<{
+        tma: string;
+        tmr: string;
+        totalConversations: number;
+        resolvedConversations: number;
+        weeklyVolume: {
+            name: string;
+            volume: number;
+        }[];
+        operators: {
+            id: string;
+            name: string;
+            resolved: number;
+        }[];
+    }>;
+    getCrmMetrics(tenantId: string): Promise<{
+        totalRevenue: number;
+        wonRevenue: number;
+        lostRevenue: number;
+        wonCount: number;
+        lostCount: number;
+        openCount: number;
+        winRate: number;
+        weeklyComparison: {
+            name: string;
+            ganho: number;
+            perdido: number;
+        }[];
+        funnelData: {
+            name: string;
+            value: number;
+        }[];
     }>;
 }

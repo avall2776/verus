@@ -22,8 +22,9 @@ let ChatController = class ChatController {
     constructor(chatService) {
         this.chatService = chatService;
     }
-    async listConversations(tenantId, req, tab) {
-        return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, tab || 'waiting');
+    async listConversations(tenantId, req, tab, status) {
+        const selectedTab = tab || status || 'waiting';
+        return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, selectedTab);
     }
     async getMessages(tenantId, conversationId) {
         return this.chatService.getConversationMessages(tenantId, conversationId);
@@ -36,6 +37,12 @@ let ChatController = class ChatController {
     }
     async release(tenantId, conversationId) {
         return this.chatService.releaseConversation(tenantId, conversationId);
+    }
+    async resolve(tenantId, conversationId) {
+        return this.chatService.releaseConversation(tenantId, conversationId);
+    }
+    async reopen(tenantId, conversationId) {
+        return this.chatService.reopenConversation(tenantId, conversationId);
     }
     async transfer(tenantId, conversationId, body) {
         return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId);
@@ -52,6 +59,15 @@ let ChatController = class ChatController {
             throw error;
         }
     }
+    async sendMessageToContact(tenantId, contactId, payload, req) {
+        try {
+            return await this.chatService.sendManualMessageToContact(tenantId, contactId, payload, req.user.id);
+        }
+        catch (error) {
+            console.error('ERRO AO ENVIAR MENSAGEM DIRETA:', error);
+            throw error;
+        }
+    }
 };
 exports.ChatController = ChatController;
 __decorate([
@@ -59,8 +75,9 @@ __decorate([
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Request)()),
     __param(2, (0, common_1.Query)('tab')),
+    __param(3, (0, common_1.Query)('status')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, String]),
+    __metadata("design:paramtypes", [String, Object, String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "listConversations", null);
 __decorate([
@@ -97,6 +114,22 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "release", null);
 __decorate([
+    (0, common_1.Patch)(':id/resolve'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "resolve", null);
+__decorate([
+    (0, common_1.Patch)(':id/reopen'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "reopen", null);
+__decorate([
     (0, common_1.Patch)(':id/transfer'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
@@ -123,6 +156,16 @@ __decorate([
     __metadata("design:paramtypes", [String, String, send_message_dto_1.SendMessageDto]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "sendMessage", null);
+__decorate([
+    (0, common_1.Post)('contact/:contactId/messages'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('contactId')),
+    __param(2, (0, common_1.Body)()),
+    __param(3, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, send_message_dto_1.SendMessageDto, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "sendMessageToContact", null);
 exports.ChatController = ChatController = __decorate([
     (0, common_1.Controller)('conversations'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

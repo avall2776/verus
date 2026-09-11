@@ -13,6 +13,7 @@ const automations_service_1 = require("./automations.service");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const messaging_module_1 = require("../messaging/messaging.module");
 const bullmq_1 = require("@nestjs/bullmq");
+const automations_processor_1 = require("./automations.processor");
 let AutomationsModule = class AutomationsModule {
 };
 exports.AutomationsModule = AutomationsModule;
@@ -23,7 +24,7 @@ exports.AutomationsModule = AutomationsModule = __decorate([
             bullmq_1.BullModule.registerQueue({ name: 'automations' })
         ],
         controllers: [automations_controller_1.AutomationsController],
-        providers: [automations_service_1.AutomationsService, prisma_service_1.PrismaService],
+        providers: [automations_service_1.AutomationsService, prisma_service_1.PrismaService, automations_processor_1.AutomationsProcessor],
         exports: [automations_service_1.AutomationsService]
     })
 ], AutomationsModule);

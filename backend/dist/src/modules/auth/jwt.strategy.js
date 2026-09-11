@@ -24,11 +24,11 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         this.prisma = prisma;
     }
     async validate(payload) {
-        const { sub: userId, tenantId } = payload;
+        const { sub: userId, tenantId, role } = payload;
         if (!userId || !tenantId) {
             throw new common_1.UnauthorizedException('Token inválido ou sem contexto de Tenant.');
         }
-        return { userId, tenantId };
+        return { id: userId, userId, tenantId, role: role || 'AGENT' };
     }
 };
 exports.JwtStrategy = JwtStrategy;
