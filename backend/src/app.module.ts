@@ -15,6 +15,7 @@ import { DepartmentsModule } from './modules/departments/departments.module';
 import { QuickRepliesModule } from './modules/quick-replies/quick-replies.module';
 import { AutomationsModule } from './modules/automations/automations.module';
 import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
+import { MonitorModule } from './modules/monitor/monitor.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
     QuickRepliesModule,
     AutomationsModule,
     WhatsappModule,
+    MonitorModule,
   ],
   controllers: [],
   providers: [],

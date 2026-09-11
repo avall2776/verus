@@ -122,11 +122,11 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 - [x] Exibir status dinâmico com indicador verde na Sidebar e contagem de mensagens trafegadas.
 
 ### 🟢 FASE 2: OPERAÇÃO - MONITOR AO VIVO EM TEMPO REAL (/monitor)
-- [ ] Montar Grid de Atendimentos ativos agrupados por setor/departamento (Comercial, Suporte, etc.).
-- [ ] Implementar cronômetros de tempo de espera e SLA (ex: "Sem resposta há X min/horas").
-- [ ] Adicionar filtro por atendente/colaborador e status do chamado.
-- [ ] Implementar clique rápido no card do Monitor para abrir o atendimento na Caixa de Entrada ou assumir o ticket.
-- [ ] Sincronizar via WebSockets para atualização instantânea sem recarregar a página.
+- [x] Montar Grid de Atendimentos ativos agrupados por setor/departamento (Comercial, Suporte, etc.).
+- [x] Implementar cronômetros de tempo de espera e SLA (ex: "Sem resposta há X min/horas").
+- [x] Adicionar filtro por atendente/colaborador e status do chamado.
+- [x] Implementar clique rápido no card do Monitor para abrir o atendimento na Caixa de Entrada ou assumir o ticket.
+- [x] Sincronizar via WebSockets para atualização instantânea sem recarregar a página.
 
 ### 🟢 FASE 3: CHAT INTERNO DA EQUIPE (/team-chat)
 - [ ] Criar schema no Prisma para canais internos (`TeamChannel`) e mensagens diretas (`TeamMessage`).
