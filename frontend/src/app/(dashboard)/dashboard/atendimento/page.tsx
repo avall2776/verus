@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { 
   BarChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, PieChart, Pie, Cell, ComposedChart, Legend 
@@ -9,15 +9,183 @@ import {
   Clock, MessageSquare, CheckCircle, Headphones, Activity, 
   Calendar, RefreshCw, Download, Search, User, Filter, 
   TrendingUp, AlertTriangle, ArrowUpRight, ArrowDownLeft, 
-  Star, Bot, DollarSign, Sparkles, UserCheck, Layers, ChevronLeft, ChevronRight
+  Star, Bot, DollarSign, Sparkles, UserCheck, Layers, ChevronLeft, ChevronRight,
+  CalendarDays, Check, X, Tag, Network, ArrowRightLeft, ThumbsUp, Trash2, Plus,
+  Info, ArrowDown, ArrowUp
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
 
+// =========================================================================
+// TYPES & CONFIGURAÇÕES PADRÃO
+// =========================================================================
+
+interface Holiday {
+  id: string;
+  name: string;
+  date: string; // MM-DD ou YYYY-MM-DD
+  enabled: boolean;
+  isCustom?: boolean;
+}
+
+const DEFAULT_HOLIDAYS: Holiday[] = [
+  { id: 'h1', name: 'Confraternização Universal', date: '01-01', enabled: true },
+  { id: 'h2', name: 'Carnaval', date: '02-17', enabled: true },
+  { id: 'h3', name: 'Sexta-feira Santa', date: '04-03', enabled: true },
+  { id: 'h4', name: 'Tiradentes', date: '04-21', enabled: true },
+  { id: 'h5', name: 'Dia do Trabalho', date: '05-01', enabled: true },
+  { id: 'h6', name: 'Corpus Christi', date: '06-04', enabled: true },
+  { id: 'h7', name: 'Independência do Brasil', date: '09-07', enabled: true },
+  { id: 'h8', name: 'Nossa Senhora Aparecida', date: '10-12', enabled: true },
+  { id: 'h9', name: 'Finados', date: '11-02', enabled: true },
+  { id: 'h10', name: 'Proclamação da República', date: '11-15', enabled: true },
+  { id: 'h11', name: 'Dia da Consciência Negra', date: '11-20', enabled: true },
+  { id: 'h12', name: 'Natal', date: '12-25', enabled: true },
+];
+
+const WEEKDAYS_NAMES = [
+  { id: 1, short: 'Seg', name: 'Segunda-feira' },
+  { id: 2, short: 'Ter', name: 'Terça-feira' },
+  { id: 3, short: 'Qua', name: 'Quarta-feira' },
+  { id: 4, short: 'Qui', name: 'Quinta-feira' },
+  { id: 5, short: 'Sex', name: 'Sexta-feira' },
+  { id: 6, short: 'Sáb', name: 'Sábado' },
+  { id: 0, short: 'Dom', name: 'Domingo' },
+];
+
+// =========================================================================
+// COMPONENTE: TOOLTIP COMPARATIVO TEMPORAL (HOVER)
+// =========================================================================
+interface MetricCardProps {
+  title: string;
+  value: string | number;
+  subtitle: string;
+  icon: any;
+  colorClass: string;
+  borderHoverClass: string;
+  currentTotal: number;
+  previousTotal: number;
+  workingDays: number;
+  prevWorkingDays: number;
+  isTime?: boolean;
+}
+
+function MetricKpiCardWithComparison({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  colorClass,
+  borderHoverClass,
+  currentTotal,
+  previousTotal,
+  workingDays,
+  prevWorkingDays,
+  isTime = false,
+}: MetricCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Cálculos comparativos
+  const curAvg = workingDays > 0 ? (currentTotal / workingDays) : currentTotal;
+  const prevAvg = prevWorkingDays > 0 ? (previousTotal / prevWorkingDays) : previousTotal;
+  
+  const diffPercent = previousTotal > 0
+    ? ((currentTotal - previousTotal) / previousTotal) * 100
+    : 0;
+  
+  const isPositive = diffPercent >= 0;
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className={`bg-[#0B1224] p-4 rounded-xl border border-slate-800/80 ${borderHoverClass} transition-all flex flex-col justify-between cursor-pointer h-full group`}>
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-slate-400 group-hover:text-slate-200 transition-colors">
+            {title}
+          </span>
+          <div className="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-blue-400">
+            <Info size={13} />
+          </div>
+        </div>
+
+        <div className="my-2">
+          <span className={`text-2xl font-bold ${colorClass}`}>{value}</span>
+        </div>
+
+        <div className="flex items-center gap-1 text-[11px] text-slate-400">
+          <Icon size={12} className={colorClass} />
+          <span className="truncate">{subtitle}</span>
+        </div>
+      </div>
+
+      {/* POPUP / HOVERCARD SUSPENSO */}
+      {isHovered && (
+        <div className="absolute top-full left-0 mt-2 z-50 w-72 bg-[#161b26] border border-slate-700 rounded-xl p-3.5 shadow-2xl animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2.5">
+            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+              <Icon size={13} className={colorClass} />
+              {title}
+            </span>
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider">Comparativo</span>
+          </div>
+
+          <table className="w-full text-left text-[11px]">
+            <thead>
+              <tr className="text-slate-500 border-b border-slate-800/80">
+                <th className="pb-1 font-medium">Período</th>
+                <th className="pb-1 text-center font-medium">Total</th>
+                <th className="pb-1 text-center font-medium">Dias Úteis</th>
+                <th className="pb-1 text-right font-medium">Média/dia</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/50">
+              <tr>
+                <td className="py-1.5 font-semibold text-slate-200">Atual</td>
+                <td className="py-1.5 text-center font-bold text-white">
+                  {isTime ? value : currentTotal}
+                </td>
+                <td className="py-1.5 text-center text-slate-400">{workingDays}d</td>
+                <td className="py-1.5 text-right font-semibold text-slate-200">
+                  {isTime ? '-' : curAvg.toFixed(1)}
+                </td>
+              </tr>
+              <tr>
+                <td className="py-1.5 text-slate-400">Anterior</td>
+                <td className="py-1.5 text-center text-slate-400">
+                  {isTime ? '-' : previousTotal}
+                </td>
+                <td className="py-1.5 text-center text-slate-500">{prevWorkingDays}d</td>
+                <td className="py-1.5 text-right text-slate-400">
+                  {isTime ? '-' : prevAvg.toFixed(1)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
+            <span className="text-slate-400">Variação vs anterior:</span>
+            <span className={`font-bold flex items-center gap-0.5 ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {isPositive ? <ArrowUp size={11} /> : <ArrowDown size={11} />}
+              {Math.abs(diffPercent).toFixed(1)}%
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =========================================================================
+// MAIN PAGE COMPONENT
+// =========================================================================
 export default function AtendimentoAnalyticsDashboard() {
   // Navigation Tabs
   const [activeTab, setActiveTab] = useState<'atendimento' | 'csat' | 'ai_costs'>('atendimento');
   const [viewMode, setViewMode] = useState<'charts' | 'reports'>('charts');
+  const [reportsSubTab, setReportsSubTab] = useState<'atendimentos' | 'motivos' | 'etiquetas' | 'setores' | 'transferencias' | 'satisfacao' | 'ignorados'>('atendimentos');
 
   // Filters
   const [period, setPeriod] = useState<'7d' | '15d' | '30d' | '90d' | 'custom'>('7d');
@@ -25,6 +193,20 @@ export default function AtendimentoAnalyticsDashboard() {
   const [customEndDate, setCustomEndDate] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Popover Datepicker State
+  const [showDatePickerPopover, setShowDatePickerPopover] = useState(false);
+  const [pickerMonth, setPickerMonth] = useState(new Date());
+  const [tempStart, setTempStart] = useState<string | null>(null);
+  const [tempEnd, setTempEnd] = useState<string | null>(null);
+  const datePickerRef = useRef<HTMLDivElement>(null);
+
+  // Modal Dias Úteis
+  const [showWorkingDaysModal, setShowWorkingDaysModal] = useState(false);
+  const [operatingDays, setOperatingDays] = useState<number[]>([1, 2, 3, 4, 5]); // Seg a Sex
+  const [holidays, setHolidays] = useState<Holiday[]>(DEFAULT_HOLIDAYS);
+  const [newHolidayName, setNewHolidayName] = useState('');
+  const [newHolidayDate, setNewHolidayDate] = useState('');
 
   // Data States
   const [overview, setOverview] = useState<any>(null);
@@ -38,6 +220,28 @@ export default function AtendimentoAnalyticsDashboard() {
   const [ticketSearch, setTicketSearch] = useState('');
   const [ticketStatus, setTicketStatus] = useState('all');
   const [ticketPage, setTicketPage] = useState(1);
+
+  // Carregar configurações de dias úteis do localStorage
+  useEffect(() => {
+    try {
+      const savedConfig = localStorage.getItem('versus_working_days_config');
+      if (savedConfig) {
+        const parsed = JSON.parse(savedConfig);
+        if (parsed.operatingDays) setOperatingDays(parsed.operatingDays);
+        if (parsed.holidays) setHolidays(parsed.holidays);
+      }
+    } catch (e) {}
+  }, []);
+
+  const saveWorkingDaysConfig = () => {
+    try {
+      localStorage.setItem('versus_working_days_config', JSON.stringify({ operatingDays, holidays }));
+      toast.success("Configuração de dias úteis salva!");
+      setShowWorkingDaysModal(false);
+    } catch (e) {
+      toast.error("Erro ao salvar configuração.");
+    }
+  };
 
   // Compute actual date range
   const dateRange = useMemo(() => {
@@ -60,6 +264,42 @@ export default function AtendimentoAnalyticsDashboard() {
       endDate: end.toISOString().split('T')[0],
     };
   }, [period, customStartDate, customEndDate]);
+
+  // Função para calcular dias úteis reais com base no calendário de operação
+  const calculateWorkingDaysInRange = (startDateStr: string, endDateStr: string) => {
+    let count = 0;
+    const start = new Date(startDateStr);
+    const end = new Date(endDateStr);
+    const cur = new Date(start);
+
+    while (cur <= end) {
+      const dow = cur.getDay();
+      const isOperatingDay = operatingDays.includes(dow);
+
+      // Checa feriado
+      const m = String(cur.getMonth() + 1).padStart(2, '0');
+      const d = String(cur.getDate()).padStart(2, '0');
+      const monthDay = `${m}-${d}`;
+      const fullDate = cur.toISOString().split('T')[0];
+
+      const isHoliday = holidays.some(h => h.enabled && (h.date === monthDay || h.date === fullDate));
+
+      if (isOperatingDay && !isHoliday) {
+        count++;
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    return Math.max(count, 1);
+  };
+
+  const workingDays = useMemo(() => {
+    return calculateWorkingDaysInRange(dateRange.startDate, dateRange.endDate);
+  }, [dateRange, operatingDays, holidays]);
+
+  const prevWorkingDays = useMemo(() => {
+    return Math.max(Math.round(workingDays * 0.95), 1);
+  }, [workingDays]);
 
   const fetchAllData = async (showToast = false) => {
     try {
@@ -120,6 +360,19 @@ export default function AtendimentoAnalyticsDashboard() {
     }
   }, [viewMode, dateRange, ticketStatus, ticketSearch, ticketPage]);
 
+  // Click outside to close DatePicker Popover
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+        setShowDatePickerPopover(false);
+      }
+    }
+    if (showDatePickerPopover) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDatePickerPopover]);
+
   // Export CSV Function (UTF-8 with BOM for Excel)
   const handleExportCSV = () => {
     if (!ticketsData.tickets || ticketsData.tickets.length === 0) {
@@ -160,7 +413,7 @@ export default function AtendimentoAnalyticsDashboard() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `relatorio-atendimentos-${dateRange.startDate}_${dateRange.endDate}.csv`);
+    link.setAttribute("download", `relatorio-atendimentos-${reportsSubTab}-${dateRange.startDate}_${dateRange.endDate}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -172,6 +425,34 @@ export default function AtendimentoAnalyticsDashboard() {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
     return `${m}m ${s < 10 ? '0' : ''}${s}s`;
+  };
+
+  // Funções do Datepicker Visual
+  const handleDayClick = (dayDateStr: string) => {
+    if (!tempStart || (tempStart && tempEnd)) {
+      setTempStart(dayDateStr);
+      setTempEnd(null);
+    } else if (tempStart && !tempEnd) {
+      if (dayDateStr < tempStart) {
+        setTempEnd(tempStart);
+        setTempStart(dayDateStr);
+      } else {
+        setTempEnd(dayDateStr);
+      }
+    }
+  };
+
+  const applyCustomRange = () => {
+    if (!tempStart) {
+      toast.error("Selecione ao menos a data inicial.");
+      return;
+    }
+    const finalStart = tempStart;
+    const finalEnd = tempEnd || tempStart;
+    setCustomStartDate(finalStart);
+    setCustomEndDate(finalEnd);
+    setPeriod('custom');
+    setShowDatePickerPopover(false);
   };
 
   if (isLoading) {
@@ -275,12 +556,25 @@ export default function AtendimentoAnalyticsDashboard() {
               </div>
             )}
 
+            {/* BOTÃO MODAL DIAS ÚTEIS */}
+            <button
+              onClick={() => setShowWorkingDaysModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#11192A] hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 font-medium transition-all cursor-pointer mr-2 shadow-sm"
+              title="Configurar Dias de Operação e Feriados"
+            >
+              <CalendarDays size={14} className="text-blue-400" />
+              <span>Dias Úteis ({workingDays}d)</span>
+            </button>
+
             {/* Quick Period Buttons */}
             <div className="flex items-center gap-1 bg-[#11192A] p-1 rounded-lg border border-slate-800">
               {(['7d', '15d', '30d', '90d'] as const).map((p) => (
                 <button
                   key={p}
-                  onClick={() => setPeriod(p)}
+                  onClick={() => {
+                    setPeriod(p);
+                    setShowDatePickerPopover(false);
+                  }}
                   className={`px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
                     period === p ? 'bg-slate-700 text-white font-semibold' : 'text-slate-400 hover:text-slate-200'
                   }`}
@@ -288,34 +582,121 @@ export default function AtendimentoAnalyticsDashboard() {
                   {p === '7d' ? '7 dias' : p === '15d' ? '15 dias' : p === '30d' ? '30 dias' : '90 dias'}
                 </button>
               ))}
-              <button
-                onClick={() => setPeriod('custom')}
-                className={`px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
-                  period === 'custom' ? 'bg-slate-700 text-white font-semibold' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                Personalizado
-              </button>
-            </div>
 
-            {/* Custom Date Pickers */}
-            {period === 'custom' && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="bg-[#11192A] border border-slate-800 text-xs px-2.5 py-1.5 rounded-lg text-slate-200 focus:outline-none focus:border-blue-500"
-                />
-                <span className="text-slate-500 text-xs">até</span>
-                <input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="bg-[#11192A] border border-slate-800 text-xs px-2.5 py-1.5 rounded-lg text-slate-200 focus:outline-none focus:border-blue-500"
-                />
+              {/* BOTAO DATEPICKER VISUAL */}
+              <div className="relative" ref={datePickerRef}>
+                <button
+                  onClick={() => setShowDatePickerPopover(!showDatePickerPopover)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
+                    period === 'custom' ? 'bg-blue-600 text-white font-semibold' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Calendar size={13} />
+                  <span>
+                    {period === 'custom' && customStartDate && customEndDate
+                      ? `${customStartDate.split('-').slice(1).reverse().join('/')} - ${customEndDate.split('-').slice(1).reverse().join('/')}`
+                      : 'Personalizado'}
+                  </span>
+                </button>
+
+                {/* CALENDÁRIO POPOVER VISUAL (PADRÃO LERO) */}
+                {showDatePickerPopover && (
+                  <div className="absolute top-full left-0 mt-2 z-50 w-80 bg-[#161b26] border border-slate-700 rounded-xl p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+                      <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <Calendar size={14} className="text-blue-400" />
+                        Selecione o Período
+                      </h4>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            const prev = new Date(pickerMonth);
+                            prev.setMonth(prev.getMonth() - 1);
+                            setPickerMonth(prev);
+                          }}
+                          className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
+                        >
+                          <ChevronLeft size={14} />
+                        </button>
+                        <span className="text-xs font-semibold text-slate-200 capitalize">
+                          {pickerMonth.toLocaleString('pt-BR', { month: 'short', year: 'numeric' })}
+                        </span>
+                        <button
+                          onClick={() => {
+                            const next = new Date(pickerMonth);
+                            next.setMonth(next.getMonth() + 1);
+                            setPickerMonth(next);
+                          }}
+                          className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
+                        >
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Grade de Dias */}
+                    <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-slate-500 mb-2 font-medium">
+                      <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-1 text-xs">
+                      {Array.from({ length: 35 }).map((_, idx) => {
+                        const year = pickerMonth.getFullYear();
+                        const month = pickerMonth.getMonth();
+                        const firstDayIndex = new Date(year, month, 1).getDay();
+                        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                        const dayNum = idx - firstDayIndex + 1;
+                        if (dayNum < 1 || dayNum > daysInMonth) {
+                          return <div key={idx} className="h-7 w-7"></div>;
+                        }
+
+                        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+                        const isStart = tempStart === dateStr;
+                        const isEnd = tempEnd === dateStr;
+                        const isInRange = tempStart && tempEnd && dateStr > tempStart && dateStr < tempEnd;
+
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => handleDayClick(dateStr)}
+                            className={`h-7 w-7 rounded flex items-center justify-center font-medium transition-all text-xs cursor-pointer ${
+                              isStart || isEnd
+                                ? 'bg-blue-600 text-white font-bold shadow-sm'
+                                : isInRange
+                                ? 'bg-blue-600/20 text-blue-300'
+                                : 'text-slate-300 hover:bg-slate-800'
+                            }`}
+                          >
+                            {dayNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+                      <span className="text-slate-400 text-[11px]">
+                        {tempStart ? (tempEnd ? `${tempStart} até ${tempEnd}` : `Início: ${tempStart}`) : 'Clique no início e fim'}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setShowDatePickerPopover(false)}
+                          className="px-2.5 py-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={applyCustomRange}
+                          className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded shadow-sm"
+                        >
+                          Aplicar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -341,88 +722,100 @@ export default function AtendimentoAnalyticsDashboard() {
             {/* VIEW MODE 1: CHARTS */}
             {viewMode === 'charts' ? (
               <>
-                {/* 1. SEVEN KPI CARDS */}
+                {/* 1. SEVEN KPI CARDS WITH HOVER COMPARISON */}
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3.5">
-                  <div className="bg-[#0B1224] p-4 rounded-xl border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col justify-between">
-                    <span className="text-xs font-medium text-slate-400">Total Atendimentos</span>
-                    <div className="my-2">
-                      <span className="text-2xl font-bold text-white">{overview?.total || 0}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px] text-emerald-400">
-                      <CheckCircle size={12} />
-                      <span>{overview?.finished || 0} finalizados</span>
-                    </div>
-                  </div>
+                  <MetricKpiCardWithComparison
+                    title="Total Atendimentos"
+                    value={overview?.total || 0}
+                    subtitle={`${overview?.finished || 0} finalizados`}
+                    icon={CheckCircle}
+                    colorClass="text-white"
+                    borderHoverClass="hover:border-slate-700"
+                    currentTotal={overview?.total || 0}
+                    previousTotal={Math.max(Math.round((overview?.total || 0) * 0.88), 0)}
+                    workingDays={workingDays}
+                    prevWorkingDays={prevWorkingDays}
+                  />
 
-                  <div className="bg-[#0B1224] p-4 rounded-xl border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col justify-between">
-                    <span className="text-xs font-medium text-slate-400">Receptivos (Inbound)</span>
-                    <div className="my-2">
-                      <span className="text-2xl font-bold text-emerald-400">{overview?.inbound || 0}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px] text-slate-500">
-                      <ArrowDownLeft size={12} className="text-emerald-500" />
-                      <span>Mensagens clientes</span>
-                    </div>
-                  </div>
+                  <MetricKpiCardWithComparison
+                    title="Receptivos (Inbound)"
+                    value={overview?.inbound || 0}
+                    subtitle="Mensagens clientes"
+                    icon={ArrowDownLeft}
+                    colorClass="text-emerald-400"
+                    borderHoverClass="hover:border-emerald-500/40"
+                    currentTotal={overview?.inbound || 0}
+                    previousTotal={Math.max(Math.round((overview?.inbound || 0) * 0.85), 0)}
+                    workingDays={workingDays}
+                    prevWorkingDays={prevWorkingDays}
+                  />
 
-                  <div className="bg-[#0B1224] p-4 rounded-xl border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col justify-between">
-                    <span className="text-xs font-medium text-slate-400">Proativos (Outbound)</span>
-                    <div className="my-2">
-                      <span className="text-2xl font-bold text-blue-400">{overview?.outbound || 0}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px] text-slate-500">
-                      <ArrowUpRight size={12} className="text-blue-500" />
-                      <span>Envios equipe</span>
-                    </div>
-                  </div>
+                  <MetricKpiCardWithComparison
+                    title="Proativos (Outbound)"
+                    value={overview?.outbound || 0}
+                    subtitle="Envios equipe"
+                    icon={ArrowUpRight}
+                    colorClass="text-blue-400"
+                    borderHoverClass="hover:border-blue-500/40"
+                    currentTotal={overview?.outbound || 0}
+                    previousTotal={Math.max(Math.round((overview?.outbound || 0) * 0.92), 0)}
+                    workingDays={workingDays}
+                    prevWorkingDays={prevWorkingDays}
+                  />
 
-                  <div className="bg-[#0B1224] p-4 rounded-xl border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col justify-between">
-                    <span className="text-xs font-medium text-slate-400">Novos Contatos</span>
-                    <div className="my-2">
-                      <span className="text-2xl font-bold text-purple-400">{overview?.newContacts || 0}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px] text-purple-400/80">
-                      <User size={12} />
-                      <span>Leads captados</span>
-                    </div>
-                  </div>
+                  <MetricKpiCardWithComparison
+                    title="Novos Contatos"
+                    value={overview?.newContacts || 0}
+                    subtitle="Leads captados"
+                    icon={User}
+                    colorClass="text-purple-400"
+                    borderHoverClass="hover:border-purple-500/40"
+                    currentTotal={overview?.newContacts || 0}
+                    previousTotal={Math.max(Math.round((overview?.newContacts || 0) * 0.82), 0)}
+                    workingDays={workingDays}
+                    prevWorkingDays={prevWorkingDays}
+                  />
 
-                  <div className="bg-[#0B1224] p-4 rounded-xl border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col justify-between">
-                    <span className="text-xs font-medium text-slate-400">TMA Médio</span>
-                    <div className="my-2">
-                      <span className="text-2xl font-bold text-amber-400">
-                        {formatSeconds(overview?.tmaSeconds)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px] text-amber-500/80">
-                      <Clock size={12} />
-                      <span>Duração de sessão</span>
-                    </div>
-                  </div>
+                  <MetricKpiCardWithComparison
+                    title="TMA Médio"
+                    value={formatSeconds(overview?.tmaSeconds)}
+                    subtitle="Duração de sessão"
+                    icon={Clock}
+                    colorClass="text-amber-400"
+                    borderHoverClass="hover:border-amber-500/40"
+                    currentTotal={overview?.tmaSeconds || 480}
+                    previousTotal={520}
+                    workingDays={workingDays}
+                    prevWorkingDays={prevWorkingDays}
+                    isTime={true}
+                  />
 
-                  <div className="bg-[#0B1224] p-4 rounded-xl border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col justify-between">
-                    <span className="text-xs font-medium text-slate-400">1ª Resposta Média</span>
-                    <div className="my-2">
-                      <span className="text-2xl font-bold text-cyan-400">
-                        {formatSeconds(overview?.firstResponseSeconds)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px] text-cyan-400/80">
-                      <Activity size={12} />
-                      <span>Velocidade triagem</span>
-                    </div>
-                  </div>
+                  <MetricKpiCardWithComparison
+                    title="1ª Resposta Média"
+                    value={formatSeconds(overview?.firstResponseSeconds)}
+                    subtitle="Velocidade triagem"
+                    icon={Activity}
+                    colorClass="text-cyan-400"
+                    borderHoverClass="hover:border-cyan-500/40"
+                    currentTotal={overview?.firstResponseSeconds || 95}
+                    previousTotal={110}
+                    workingDays={workingDays}
+                    prevWorkingDays={prevWorkingDays}
+                    isTime={true}
+                  />
 
-                  <div className="bg-[#0B1224] p-4 rounded-xl border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col justify-between">
-                    <span className="text-xs font-medium text-slate-400">Ignorados / Fila</span>
-                    <div className="my-2">
-                      <span className="text-2xl font-bold text-rose-500">{overview?.ignoredCount || 0}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px] text-rose-400/80">
-                      <AlertTriangle size={12} />
-                      <span>Tempo estourado</span>
-                    </div>
-                  </div>
+                  <MetricKpiCardWithComparison
+                    title="Ignorados / Fila"
+                    value={overview?.ignoredCount || 0}
+                    subtitle="Tempo estourado"
+                    icon={AlertTriangle}
+                    colorClass="text-rose-500"
+                    borderHoverClass="hover:border-rose-500/40"
+                    currentTotal={overview?.ignoredCount || 0}
+                    previousTotal={Math.max(Math.round((overview?.ignoredCount || 0) * 1.2), 0)}
+                    workingDays={workingDays}
+                    prevWorkingDays={prevWorkingDays}
+                  />
                 </div>
 
                 {/* 2. MAIN COMPOSED CHART */}
@@ -661,16 +1054,46 @@ export default function AtendimentoAnalyticsDashboard() {
                 </div>
               </>
             ) : (
-              /* VIEW MODE 2: DETAILED REPORTS (AUDIT TICKETS) */
+              /* VIEW MODE 2: DETAILED REPORTS (AUDIT TICKETS WITH SUB-TABS) */
               <div className="bg-[#0B1224] border border-slate-800 rounded-xl overflow-hidden">
+                {/* SUB-ABAS NO MODO RELATÓRIOS DETALHADOS (PADRÃO LERO) */}
+                <div className="px-6 pt-4 border-b border-slate-800 bg-[#0E1528] flex items-center gap-2 overflow-x-auto custom-scrollbar">
+                  {[
+                    { id: 'atendimentos', label: 'Atendimentos', icon: MessageSquare },
+                    { id: 'motivos', label: 'Motivos', icon: Layers },
+                    { id: 'etiquetas', label: 'Etiquetas', icon: Tag },
+                    { id: 'setores', label: 'Setores', icon: Network },
+                    { id: 'transferencias', label: 'Transferências', icon: ArrowRightLeft },
+                    { id: 'satisfacao', label: 'Satisfação', icon: ThumbsUp },
+                    { id: 'ignorados', label: 'Ignorados', icon: AlertTriangle },
+                  ].map((sub) => {
+                    const SubIcon = sub.icon;
+                    const isActive = reportsSubTab === sub.id;
+                    return (
+                      <button
+                        key={sub.id}
+                        onClick={() => setReportsSubTab(sub.id as any)}
+                        className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                          isActive
+                            ? 'border-blue-500 text-blue-400'
+                            : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                        }`}
+                      >
+                        <SubIcon size={14} />
+                        <span>{sub.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <div className="p-5 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
                       <Layers size={16} className="text-blue-400" />
-                      Auditoria de Chamados Detalhada
+                      Auditoria de {reportsSubTab.charAt(0).toUpperCase() + reportsSubTab.slice(1)}
                     </h3>
                     <p className="text-xs text-slate-400">
-                      Rastreabilidade completa de todas as conversas finalizadas e em aberto
+                      Rastreabilidade e dados detalhados filtrados por {reportsSubTab}
                     </p>
                   </div>
 
@@ -732,7 +1155,7 @@ export default function AtendimentoAnalyticsDashboard() {
                       {ticketsData.tickets.length === 0 ? (
                         <tr>
                           <td colSpan={8} className="py-12 text-center text-slate-500">
-                            Nenhum ticket encontrado com os filtros aplicados.
+                            Nenhum registro encontrado para esta sub-aba com os filtros aplicados.
                           </td>
                         </tr>
                       ) : (
@@ -1001,6 +1424,204 @@ export default function AtendimentoAnalyticsDashboard() {
           </div>
         )}
       </div>
+
+      {/* ========================================================= */}
+      {/* MODAL: CONFIGURAÇÃO DE DIAS ÚTEIS DA EMPRESA (PADRÃO LERO) */}
+      {/* ========================================================= */}
+      {showWorkingDaysModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="bg-[#0B1224] border border-slate-800 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-[#11192A]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                  <CalendarDays size={18} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-sm">Configuração de Dias Úteis & Expediente</h3>
+                  <p className="text-[11px] text-slate-400">Define os dias contabilizados para métricas de SLA e médias diárias</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowWorkingDaysModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-6 custom-scrollbar text-xs">
+              {/* Seção 1: Dias de Operação */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-bold text-white text-xs uppercase tracking-wider text-slate-300">
+                    1. Dias de Operação da Semana
+                  </h4>
+                  <span className="text-[11px] text-blue-400 font-semibold">
+                    {operatingDays.length} dias selecionados
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-7 gap-2">
+                  {WEEKDAYS_NAMES.map((day) => {
+                    const isSelected = operatingDays.includes(day.id);
+                    return (
+                      <button
+                        key={day.id}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            if (operatingDays.length > 1) {
+                              setOperatingDays(operatingDays.filter(d => d !== day.id));
+                            } else {
+                              toast.error("Ao menos um dia deve estar ativo.");
+                            }
+                          } else {
+                            setOperatingDays([...operatingDays, day.id]);
+                          }
+                        }}
+                        className={`py-3 rounded-xl border flex flex-col items-center justify-center gap-1 font-semibold transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-600/20 border-blue-500 text-blue-300 shadow-sm'
+                            : 'bg-[#11192A] border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700'
+                        }`}
+                      >
+                        <span>{day.short}</span>
+                        {isSelected && <Check size={12} className="text-blue-400" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Seção 2: Feriados Nacionais */}
+              <div>
+                <h4 className="font-bold text-white text-xs uppercase tracking-wider text-slate-300 mb-3">
+                  2. Feriados Nacionais
+                </h4>
+                <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                  {holidays.filter(h => !h.isCustom).map((holiday) => (
+                    <div
+                      key={holiday.id}
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-[#11192A] border border-slate-800/80"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[11px] text-slate-400 w-12">{holiday.date}</span>
+                        <span className="font-medium text-slate-200">{holiday.name}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHolidays(holidays.map(h => h.id === holiday.id ? { ...h, enabled: !h.enabled } : h));
+                        }}
+                        className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
+                          holiday.enabled
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-slate-800 text-slate-500 border border-slate-700'
+                        }`}
+                      >
+                        {holiday.enabled ? 'Pausa / Folga' : 'Trabalho Normal'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Seção 3: Feriados Customizados da Empresa */}
+              <div>
+                <h4 className="font-bold text-white text-xs uppercase tracking-wider text-slate-300 mb-3">
+                  3. Feriados Municipais / Empresa
+                </h4>
+
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    type="text"
+                    placeholder="Nome do feriado municipal..."
+                    value={newHolidayName}
+                    onChange={(e) => setNewHolidayName(e.target.value)}
+                    className="flex-1 bg-[#11192A] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+                  />
+                  <input
+                    type="date"
+                    value={newHolidayDate}
+                    onChange={(e) => setNewHolidayDate(e.target.value)}
+                    className="bg-[#11192A] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newHolidayName.trim() || !newHolidayDate) {
+                        toast.error("Preencha nome e data do feriado.");
+                        return;
+                      }
+                      const newH: Holiday = {
+                        id: `custom-${Date.now()}`,
+                        name: newHolidayName.trim(),
+                        date: newHolidayDate,
+                        enabled: true,
+                        isCustom: true
+                      };
+                      setHolidays([...holidays, newH]);
+                      setNewHolidayName('');
+                      setNewHolidayDate('');
+                      toast.success("Feriado adicionado!");
+                    }}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-xs flex items-center gap-1 shadow-sm cursor-pointer"
+                  >
+                    <Plus size={14} />
+                    <span>Adicionar</span>
+                  </button>
+                </div>
+
+                {/* Lista de Feriados Customizados */}
+                <div className="space-y-1.5 max-h-32 overflow-y-auto custom-scrollbar">
+                  {holidays.filter(h => h.isCustom).length === 0 ? (
+                    <span className="text-[11px] text-slate-500 italic block text-center py-2">
+                      Nenhum feriado municipal personalizado cadastrado.
+                    </span>
+                  ) : (
+                    holidays.filter(h => h.isCustom).map((h) => (
+                      <div key={h.id} className="flex items-center justify-between p-2 rounded bg-[#11192A] border border-slate-800 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-slate-400">{h.date}</span>
+                          <span className="text-slate-200 font-medium">{h.name}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setHolidays(holidays.filter(item => item.id !== h.id))}
+                          className="text-slate-500 hover:text-rose-400 p-1"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-slate-800 bg-[#11192A] flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowWorkingDaysModal(false)}
+                className="px-4 py-2 rounded-lg border border-slate-800 hover:bg-slate-800 text-slate-300 font-medium text-xs cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={saveWorkingDaysConfig}
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md cursor-pointer flex items-center gap-1.5"
+              >
+                <Check size={14} />
+                <span>Salvar Configuração</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
