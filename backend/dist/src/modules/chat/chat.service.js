@@ -82,6 +82,22 @@ let ChatService = class ChatService {
         }
         return conversation;
     }
+    async getConversationById(tenantId, conversationId) {
+        const conversation = await this.prisma.conversation.findFirst({
+            where: { tenantId, id: conversationId },
+            include: {
+                messages: {
+                    orderBy: { createdAt: 'asc' }
+                },
+                contact: true,
+                department: true
+            }
+        });
+        if (!conversation) {
+            throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        return conversation;
+    }
     async takeoverConversation(tenantId, conversationId, userId) {
         const conversation = await this.prisma.conversation.findUnique({
             where: { id: conversationId }
@@ -159,7 +175,7 @@ let ChatService = class ChatService {
             data: { assignedTo: userId, status: 'open' }
         });
     }
-    async transferToDepartment(tenantId, conversationId, departmentId) {
+    async transferToDepartment(tenantId, conversationId, departmentId, userId) {
         const conversation = await this.prisma.conversation.findUnique({
             where: { id: conversationId }
         });
@@ -171,31 +187,25 @@ let ChatService = class ChatService {
         });
         if (!dept || dept.tenantId !== tenantId)
             throw new common_1.NotFoundException('Departamento inválido.');
-        const onlineAgents = await this.prisma.userDepartment.findMany({
-            where: { departmentId, user: { isOnline: true } },
-            include: { user: true }
-        });
-        if (onlineAgents.length === 0) {
-            return this.prisma.conversation.update({
-                where: { id: conversationId },
-                data: { departmentId, status: 'waiting', assignedTo: null }
-            });
-        }
-        let selectedUserId = onlineAgents[0].userId;
-        let minLoad = Infinity;
-        for (const agent of onlineAgents) {
-            const activeCount = await this.prisma.conversation.count({
-                where: { assignedTo: agent.userId, status: 'human_takeover' }
-            });
-            if (activeCount < minLoad) {
-                minLoad = activeCount;
-                selectedUserId = agent.userId;
-            }
-        }
-        return this.prisma.conversation.update({
+        const updated = await this.prisma.conversation.update({
             where: { id: conversationId },
-            data: { departmentId, status: 'human_takeover', assignedTo: selectedUserId }
+            data: {
+                departmentId,
+                status: userId ? 'open' : 'waiting',
+                assignedTo: userId || null,
+                updatedAt: conversation.updatedAt
+            },
+            include: {
+                contact: true,
+                department: true,
+                messages: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1
+                }
+            }
         });
+        this.chatGateway.emitConversationUpdated(tenantId, updated);
+        return updated;
     }
     async sendManualMessage(tenantId, conversationId, payload) {
         const conversation = await this.prisma.conversation.findUnique({

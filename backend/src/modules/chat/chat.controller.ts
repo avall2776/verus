@@ -36,6 +36,14 @@ export class ChatController {
     return this.chatService.getConversationByContact(tenantId, contactId);
   }
 
+  @Get(':id')
+  async getConversation(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+  ) {
+    return this.chatService.getConversationById(tenantId, conversationId);
+  }
+
   @Patch(':id/takeover')
   async takeover(
     @CurrentTenant() tenantId: string,
@@ -73,9 +81,9 @@ export class ChatController {
   async transfer(
     @CurrentTenant() tenantId: string,
     @Param('id') conversationId: string,
-    @Body() body: { departmentId: string },
+    @Body() body: { departmentId: string; userId?: string },
   ) {
-    return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId);
+    return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId, body.userId);
   }
 
   @Patch(':id/assign')

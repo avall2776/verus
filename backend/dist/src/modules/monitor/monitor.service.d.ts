@@ -31,6 +31,7 @@ export declare class MonitorService {
             senderType: string;
             conversationId: string;
         };
+        lastMessageAt: Date;
         contact: {
             id: string;
             name: string;

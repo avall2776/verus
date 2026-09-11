@@ -160,7 +160,8 @@ export default function MonitorPage() {
     // O SLA de espera conta desde a última mensagem do contato (fromMe === false)
     const isUnanswered = conv.lastMessage ? !conv.lastMessage.fromMe : true;
     
-    const diffMs = now.getTime() - new Date(conv.updatedAt).getTime();
+    const baseDate = (conv as any).lastMessageAt || conv.lastMessage?.createdAt || conv.updatedAt;
+    const diffMs = now.getTime() - new Date(baseDate).getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
 
@@ -591,7 +592,7 @@ export default function MonitorPage() {
             <div className="pt-3 border-t border-slate-800 grid grid-cols-3 gap-2">
               <button
                 onClick={() => {
-                  router.push(`/inbox?contactId=${selectedCard.contact.id}`);
+                  router.push(`/inbox?contactId=${selectedCard.contact.id}&conversationId=${selectedCard.id}`);
                 }}
                 className="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs py-2 px-2 rounded-lg flex items-center justify-center gap-1 transition-all shadow-sm cursor-pointer"
                 title="Abrir no Inbox"

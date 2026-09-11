@@ -38,7 +38,8 @@ export class MonitorService {
     return conversations.map(c => ({
       ...c,
       assignee: c.assignedTo ? userMap.get(c.assignedTo) || null : null,
-      lastMessage: c.messages[0] || null
+      lastMessage: c.messages[0] || null,
+      lastMessageAt: c.messages[0]?.createdAt || c.updatedAt
     }));
   }
 }

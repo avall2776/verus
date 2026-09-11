@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, BrainCircuit, Lock, Image as ImageIcon, FileText, Mic, X, ArrowRightLeft, Network } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useQuery } from "@tanstack/react-query";
@@ -8,7 +9,11 @@ import api from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
 
-export default function InboxPage() {
+function InboxContent() {
+  const searchParams = useSearchParams();
+  const contactIdParam = searchParams.get('contactId');
+  const conversationIdParam = searchParams.get('conversationId') || searchParams.get('chat');
+
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [contacts, setContacts] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
@@ -32,6 +37,75 @@ export default function InboxPage() {
     // Busca macros na montagem
     api.get('/quick-replies').then(res => setQuickReplies(res.data)).catch(console.error);
   }, []);
+
+  // Listener de URL (contactId ou conversationId): auto-identifica aba e abre o chat diretamente
+  useEffect(() => {
+    if (!contactIdParam && !conversationIdParam) return;
+
+    let isMounted = true;
+    const loadConversationFromUrl = async () => {
+      try {
+        let conv: any = null;
+        if (conversationIdParam) {
+          const res = await api.get(`/conversations/${conversationIdParam}`);
+          conv = res.data;
+        } else if (contactIdParam) {
+          const res = await api.get(`/conversations/contact/${contactIdParam}`);
+          conv = res.data;
+        }
+
+        if (!conv || !isMounted) return;
+
+        let currentUserId = '';
+        try {
+          const userStr = localStorage.getItem('versus_user');
+          if (userStr) {
+            currentUserId = JSON.parse(userStr)?.id || '';
+          }
+        } catch (e) {}
+
+        let targetTab: 'waiting' | 'mine' | 'resolved' = 'waiting';
+        if (conv.status === 'resolved' || conv.status === 'closed') {
+          targetTab = 'resolved';
+        } else if (conv.assignedTo && conv.assignedTo === currentUserId) {
+          targetTab = 'mine';
+        } else {
+          targetTab = 'waiting';
+        }
+
+        setActiveTab(targetTab);
+
+        const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
+        const formattedContact = {
+          id: conv.id,
+          contactId: conv.contact?.id || '',
+          name: conv.contact?.name || 'Contato Sem Nome',
+          phone: conv.contact?.phone || '',
+          email: conv.contact?.email || '',
+          tags: conv.contact?.tags || [],
+          lastMsg: lastMsg,
+          time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          updatedAt: conv.updatedAt,
+          isAi: conv.status === 'bot_active',
+          unread: 0,
+          status: conv.status
+        };
+
+        setContacts(prev => {
+          const exists = prev.some(c => c.id === conv.id);
+          if (exists) return prev;
+          return [formattedContact, ...prev];
+        });
+
+        setActiveChat(conv.id);
+      } catch (err) {
+        console.error("Erro ao carregar conversa a partir dos parâmetros de URL:", err);
+      }
+    };
+
+    loadConversationFromUrl();
+    return () => { isMounted = false; };
+  }, [contactIdParam, conversationIdParam]);
 
   const { data: initialContacts, isLoading, error: fetchErrorQuery, refetch: refetchConversations } = useQuery({
     queryKey: ['conversations', activeTab],
@@ -63,14 +137,24 @@ export default function InboxPage() {
   useEffect(() => {
     clearGlobalUnread();
     if (initialContacts) {
-      setContacts(initialContacts);
+      setContacts(prev => {
+        if (activeChat) {
+          const currentChat = prev.find(c => c.id === activeChat);
+          if (currentChat && !initialContacts.some((c: any) => c.id === activeChat)) {
+            return [currentChat, ...initialContacts];
+          }
+        }
+        return initialContacts;
+      });
+
       setActiveChat(prev => {
         if (!prev) return null;
+        if (conversationIdParam && prev === conversationIdParam) return prev;
         const exists = initialContacts.some((c: any) => c.id === prev);
-        return exists ? prev : null;
+        return exists ? prev : (conversationIdParam ? prev : null);
       });
     }
-  }, [initialContacts, clearGlobalUnread]);
+  }, [initialContacts, clearGlobalUnread, conversationIdParam]);
 
   useEffect(() => {
     if (fetchErrorQuery) {
@@ -954,5 +1038,20 @@ export default function InboxPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function InboxPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center bg-[#0B1224] text-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-sm text-slate-400">Carregando Caixa de Atendimento...</span>
+        </div>
+      </div>
+    }>
+      <InboxContent />
+    </Suspense>
   );
 }

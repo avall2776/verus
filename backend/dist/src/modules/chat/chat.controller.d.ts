@@ -106,6 +106,53 @@ export declare class ChatController {
         assignedTo: string | null;
         status: string;
     }>;
+    getConversation(tenantId: string, conversationId: string): Promise<{
+        contact: {
+            id: string;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            source: string;
+            tags: string[];
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+        messages: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            contactId: string;
+            status: string;
+            providerMessageId: string | null;
+            content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            isInternal: boolean;
+            fromMe: boolean;
+            direction: string;
+            senderType: string;
+            conversationId: string;
+        }[];
+        department: {
+            id: string;
+            name: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            color: string | null;
+        };
+    } & {
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        contactId: string;
+        departmentId: string | null;
+        assignedTo: string | null;
+        status: string;
+    }>;
     takeover(tenantId: string, conversationId: string, req: any): Promise<{
         id: string;
         tenantId: string;
@@ -259,7 +306,45 @@ export declare class ChatController {
     }>;
     transfer(tenantId: string, conversationId: string, body: {
         departmentId: string;
+        userId?: string;
     }): Promise<{
+        contact: {
+            id: string;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            source: string;
+            tags: string[];
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+        messages: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            contactId: string;
+            status: string;
+            providerMessageId: string | null;
+            content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            isInternal: boolean;
+            fromMe: boolean;
+            direction: string;
+            senderType: string;
+            conversationId: string;
+        }[];
+        department: {
+            id: string;
+            name: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            color: string | null;
+        };
+    } & {
         id: string;
         tenantId: string;
         createdAt: Date;
