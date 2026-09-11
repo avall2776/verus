@@ -82,21 +82,25 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Otimização de Performance (Routing & Cache):** Diagnóstico e resolução de lentidão ao trocar de telas no frontend, com uso de SWR/React Query e Suspense. [2026-09-10 10:15]
 - [x] **Integração Base de Conhecimento (RAG Avançado):** Evoluir a memória da IA. Criar uma interface para o cliente fazer upload de PDFs (ex: Tabela de Preços, Catálogos) e processar esses dados em um Vector Database (Pinecone/Supabase pgvector) para a IA ler. [2026-09-10 11:35]
 - [ ] **Testes End-to-End (E2E):** Revisão completa de fluxo: Lead manda zap -> Cai no Dashboard -> Notifica Web -> IA responde -> Humano assume -> IA retoma.
-- [ ] **Configurações de Respostas Rápidas (UI):** Criar tela administrativa para que gestores possam criar, editar e excluir macros e atalhos (`/`) sem precisar usar o banco de dados.
+- [x] **Configurações de Respostas Rápidas (UI):** Criar tela administrativa para que gestores possam criar, editar e excluir macros e atalhos (`/`) sem precisar usar o banco de dados. [2026-09-11 08:20]
 
 ---
 
 ## 🎯 O que faremos agora (Roadmap Imediato)
 
 ### Fase 13: Evolução Omnichannel Enterprise
-- [ ] **Etapa 0: Revamp Visual e UX (High Density):** Redesenhar o layout do `/inbox` para adotar a estrutura de 3 colunas (estilo WhatsApp Web Pro), com ícones de status, barra de pesquisa refinada, e Modal expansível no Kanban do CRM.
+- [x] **Etapa 0: Revamp Visual e UX (High Density):** Redesenhar o layout do `/inbox` para adotar a estrutura de 3 colunas (estilo WhatsApp Web Pro), com ícones de status, barra de pesquisa refinada, e Modal expansível no Kanban do CRM. [2026-09-10 18:00]
 - [ ] **Etapa 1: Triagem e Filas:** Implementar `Departamentos` no banco de dados e UI para abas (Aguardando, Meus Atendimentos, Resolvidos).
-- [ ] **Etapa 2: Mensageria Avançada:** Suporte a arquivos (upload S3), Notas Internas (Privadas) e Respostas Rápidas (`/`).
-- [ ] **Etapa 3: CRM 360 Extensível:** Gerenciador de `Tags` coloridas dinâmicas e `Custom Fields` acoplados na barra lateral direita do Chat e no Card do Lead.
+- [x] **Etapa 2: Mensageria Avançada:** Suporte a arquivos (upload S3), Notas Internas (Privadas) e Respostas Rápidas (`/`). [2026-09-10 17:30]
+- [x] **Etapa 3: CRM 360 Extensível:** Gerenciador de `Tags` coloridas dinâmicas e `Custom Fields` acoplados na barra lateral direita do Chat e no Card do Lead. [2026-09-10 17:40]
+- [x] **Etapa 3.5: Redesign CRM Lero:** Evolução do CRM Kanban para padrão Enterprise, com modal rico, alteração de etapa, totais por coluna e atribuição de Responsável. [2026-09-10 18:00]
 - [ ] **Etapa 4: Automações (Workflow Builder):** Motor de disparos automáticos baseados em tempo e gatilhos lógicos acionados via BullMQ.
 
 ---
-*Documento autogerado e contínuo - Última atualização: 10/09/2026 às 14:05*
+*Documento autogerado e contínuo - Última atualização: 11/09/2026 às 08:15*
+
+## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
+- **[11/09/2026 - 08:15]** 🟢 Início da jornada de desenvolvimento (Foco: Triagem, Filas e Configuração de Macros).
 
 ---
 

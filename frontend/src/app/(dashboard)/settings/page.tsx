@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, Building, Users, CreditCard, Save, Upload, Plus, Shield, CheckCircle2 } from "lucide-react";
+import { User, Building, Users, CreditCard, Save, Upload, Plus, Shield, CheckCircle2, MessageSquare } from "lucide-react";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -11,6 +11,7 @@ export default function SettingsPage() {
     { id: "company", name: "Dados da Empresa", icon: Building },
     { id: "team", name: "Equipe e Usuários", icon: Users },
     { id: "billing", name: "Assinatura", icon: CreditCard },
+    { id: "quick-replies", name: "Respostas Rápidas", icon: MessageSquare, href: "/settings/quick-replies" },
   ];
 
   return (
@@ -26,20 +27,35 @@ export default function SettingsPage() {
         
         {/* Menu Lateral das Abas */}
         <div className="w-full md:w-64 flex-shrink-0 flex flex-col gap-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-3 w-full p-3 rounded-xl transition-all font-semibold text-sm
-                ${activeTab === tab.id 
-                  ? 'bg-primary/20 text-accent border border-primary/30 shadow-[0_0_15px_rgba(0,85,255,0.15)]' 
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800/50 border border-transparent'}
-              `}
-            >
-              <tab.icon size={18} />
-              {tab.name}
-            </button>
-          ))}
+          {tabs.map((tab) => {
+            if (tab.href) {
+              return (
+                <a
+                  key={tab.id}
+                  href={tab.href}
+                  className="flex items-center gap-3 w-full p-3 rounded-xl transition-all font-semibold text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 border border-transparent"
+                >
+                  <tab.icon size={18} />
+                  {tab.name}
+                </a>
+              );
+            }
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-3 w-full p-3 rounded-xl transition-all font-semibold text-sm
+                  ${activeTab === tab.id 
+                    ? 'bg-primary/20 text-accent border border-primary/30 shadow-[0_0_15px_rgba(0,85,255,0.15)]' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50 border border-transparent'}
+                `}
+              >
+                <tab.icon size={18} />
+                {tab.name}
+              </button>
+            );
+          })}
         </div>
 
         {/* Conteúdo da Aba Ativa */}
