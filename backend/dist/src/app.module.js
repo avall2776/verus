@@ -26,6 +26,7 @@ const automations_module_1 = require("./modules/automations/automations.module")
 const whatsapp_module_1 = require("./modules/whatsapp/whatsapp.module");
 const monitor_module_1 = require("./modules/monitor/monitor.module");
 const team_chat_module_1 = require("./modules/team-chat/team-chat.module");
+const analytics_module_1 = require("./modules/analytics/analytics.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -50,6 +51,7 @@ exports.AppModule = AppModule = __decorate([
             whatsapp_module_1.WhatsappModule,
             monitor_module_1.MonitorModule,
             team_chat_module_1.TeamChatModule,
+            analytics_module_1.AnalyticsModule,
         ],
         controllers: [],
         providers: [],

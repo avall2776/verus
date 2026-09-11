@@ -17,6 +17,7 @@ import { AutomationsModule } from './modules/automations/automations.module';
 import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 import { MonitorModule } from './modules/monitor/monitor.module';
 import { TeamChatModule } from './modules/team-chat/team-chat.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { TeamChatModule } from './modules/team-chat/team-chat.module';
     WhatsappModule,
     MonitorModule,
     TeamChatModule,
+    AnalyticsModule,
   ],
   controllers: [],
   providers: [],
