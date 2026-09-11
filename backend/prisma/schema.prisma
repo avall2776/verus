@@ -48,6 +48,8 @@ model Tenant {
   quickReplies QuickReply[]
   automations  Automation[]
   channels     Channel[]
+  teamChannels TeamChannel[]
+  teamMessages TeamMessage[]
   businessHours BusinessHours[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -82,6 +84,8 @@ model User {
   isOnline  Boolean  @default(false)
   departments UserDepartment[]
   deals     Deal[]
+  sentTeamMessages     TeamMessage[] @relation("SentTeamMessages")
+  receivedTeamMessages TeamMessage[] @relation("ReceivedTeamMessages")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -294,4 +298,42 @@ model AutomationLog {
 
   @@index([tenantId])
   @@index([automationId, contactId])
+}
+
+// ------------------------------------------------------
+// CHAT INTERNO DA EQUIPE
+// ------------------------------------------------------
+
+model TeamChannel {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?
+  isPrivate   Boolean  @default(false)
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  messages    TeamMessage[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model TeamMessage {
+  id         String   @id @default(uuid())
+  tenantId   String
+  senderId   String
+  channelId  String?
+  receiverId String?
+  content    String   @db.Text
+  mediaUrl   String?
+  createdAt  DateTime @default(now())
+
+  tenant     Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sender     User         @relation("SentTeamMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User?        @relation("ReceivedTeamMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  channel    TeamChannel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([channelId])
+  @@index([receiverId])
 }

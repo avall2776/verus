@@ -16,6 +16,7 @@ import { QuickRepliesModule } from './modules/quick-replies/quick-replies.module
 import { AutomationsModule } from './modules/automations/automations.module';
 import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 import { MonitorModule } from './modules/monitor/monitor.module';
+import { TeamChatModule } from './modules/team-chat/team-chat.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { MonitorModule } from './modules/monitor/monitor.module';
     AutomationsModule,
     WhatsappModule,
     MonitorModule,
+    TeamChatModule,
   ],
   controllers: [],
   providers: [],

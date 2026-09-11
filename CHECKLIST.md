@@ -129,10 +129,10 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 - [x] Sincronizar via WebSockets para atualização instantânea sem recarregar a página.
 
 ### 🟢 FASE 3: CHAT INTERNO DA EQUIPE (/team-chat)
-- [ ] Criar schema no Prisma para canais internos (`TeamChannel`) e mensagens diretas (`TeamMessage`).
-- [ ] Implementar visual de duas abas: [Colaboradores] (conversa 1:1) e [Equipes] (canais por departamento).
-- [ ] Adicionar compositor de mensagens internas com upload de arquivos, áudios e emojis.
-- [ ] Notificações em tempo real com contador de mensagens não lidas no menu lateral.
+- [x] Criar schema no Prisma para canais internos (`TeamChannel`) e mensagens diretas (`TeamMessage`).
+- [x] Implementar tela de layout dividido (Barra lateral de usuários/canais à esquerda, chat à direita).
+- [x] Implementar envio e recebimento de mensagens real-time usando o mesmo WebSocket (SocketProvider).
+- [x] Adicionar indicador online/offline nos avatares dos membros da equipe.ns não lidas no menu lateral.
 
 ### 🟢 FASE 4: MOTOR DE AUTOMAÇÕES & WORKFLOWS (/settings/automations)
 - [ ] Criar tabela de regras `Automation` e logs de execução `AutomationLog` no banco.
