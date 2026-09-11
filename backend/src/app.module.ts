@@ -13,6 +13,7 @@ import { ContactsModule } from './modules/contacts/contacts.module';
 import { RagModule } from './modules/rag/rag.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { QuickRepliesModule } from './modules/quick-replies/quick-replies.module';
+import { AutomationsModule } from './modules/automations/automations.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { QuickRepliesModule } from './modules/quick-replies/quick-replies.module
     RagModule,
     DepartmentsModule,
     QuickRepliesModule,
+    AutomationsModule,
   ],
   controllers: [],
   providers: [],

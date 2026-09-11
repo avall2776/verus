@@ -3,8 +3,8 @@ import { Job, Queue } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { ChatGateway } from '../../chat/chat.gateway';
-
 import { MessagingService } from '../../messaging/messaging.service';
+import { AutomationsService } from '../../automations/automations.service';
 
 @Processor('webhook-ingress')
 export class WebhookProcessor extends WorkerHost {
@@ -15,6 +15,7 @@ export class WebhookProcessor extends WorkerHost {
     @InjectQueue('ai-processing') private readonly aiQueue: Queue,
     private readonly chatGateway: ChatGateway,
     private readonly messagingService: MessagingService,
+    private readonly automationsService: AutomationsService,
   ) {
     super();
   }
@@ -145,6 +146,20 @@ export class WebhookProcessor extends WorkerHost {
     });
 
     this.logger.log(`Mensagem [${messageId}] salva com sucesso na conversa [${conversation.id}]`);
+
+    // Gatilhos de automação
+    if (conversation.status === 'waiting' || conversation.status === 'bot_active') {
+       // Possível nova conversa ou inatividade 
+       await this.automationsService.evaluateEvent(tenantId, 'NEW_CONVERSATION', { 
+         contactId: contact.id, 
+         conversationId: conversation.id 
+       });
+    }
+
+    await this.automationsService.evaluateEvent(tenantId, 'INACTIVITY', { 
+         contactId: contact.id, 
+         conversationId: conversation.id 
+    });
 
     // -> EMISSÃO EM TEMPO REAL PARA O FRONT-END <-
     this.chatGateway.emitNewMessage(tenantId, {

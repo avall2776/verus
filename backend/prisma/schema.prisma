@@ -46,6 +46,7 @@ model Tenant {
   contacts     Contact[]
   departments  Department[]
   quickReplies QuickReply[]
+  automations  Automation[]
   channels     Channel[]
   businessHours BusinessHours[]
   createdAt    DateTime @default(now())
@@ -121,6 +122,7 @@ model Contact {
   conversations Conversation[]
   messages  Message[]
   deals     Deal[]
+  automationLogs AutomationLog[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -254,4 +256,41 @@ model DocumentChunk {
 
   @@index([tenantId])
   @@index([documentId])
+}
+
+// ------------------------------------------------------
+// AUTOMAÇÕES (WORKFLOWS)
+// ------------------------------------------------------
+
+model Automation {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  triggerType String   // e.g. "INACTIVITY", "TAG_ADDED", "STAGE_CHANGED", "NEW_CONVERSATION"
+  conditions  Json?    
+  actionType  String   // e.g. "SEND_MESSAGE", "ADD_TAG", "TRANSFER", "MOVE_STAGE"
+  actionData  Json?    
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  logs        AutomationLog[]
+
+  @@index([tenantId])
+  @@index([tenantId, triggerType, isActive])
+}
+
+model AutomationLog {
+  id           String   @id @default(uuid())
+  tenantId     String
+  automationId String
+  contactId    String
+  executedAt   DateTime @default(now())
+  
+  automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  contact      Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([automationId, contactId])
 }

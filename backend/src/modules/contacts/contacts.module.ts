@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ContactsController } from './contacts.controller';
 import { ContactsService } from './contacts.service';
-import { AuthModule } from '../auth/auth.module';
+import { PrismaService } from '../../shared/database/prisma.service';
+import { AutomationsModule } from '../automations/automations.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AutomationsModule],
   controllers: [ContactsController],
-  providers: [ContactsService],
+  providers: [ContactsService, PrismaService],
+  exports: [ContactsService]
 })
 export class ContactsModule {}
