@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { Clock, MessageSquare, CheckCircle, Headphones, Activity } from "lucide-react";
-import axios from "axios";
+import api from "@/lib/api";
 import { toast } from "sonner";
 
 interface AtendimentoMetrics {
@@ -22,12 +22,10 @@ export default function AtendimentoDashboard() {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:3001/metrics/atendimento', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await api.get('/metrics/atendimento');
         setMetrics(res.data);
       } catch (error) {
+        console.error(error);
         toast.error("Erro ao carregar métricas de atendimento");
       } finally {
         setIsLoading(false);
@@ -40,7 +38,13 @@ export default function AtendimentoDashboard() {
     return <div className="flex-1 bg-[#050A15] p-6 text-center text-gray-500 pt-20">Carregando dashboards...</div>;
   }
 
-  if (!metrics) return null;
+  if (!metrics || !metrics.totalConversations) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-[#050A15] p-6 text-gray-500">
+        Nenhum atendimento registrado no momento.
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col h-screen overflow-y-auto bg-[#050A15] p-6">

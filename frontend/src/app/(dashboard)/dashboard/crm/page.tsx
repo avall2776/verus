@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { DollarSign, TrendingUp, Target, Briefcase } from "lucide-react";
-import axios from "axios";
+import api from "@/lib/api";
 import { toast } from "sonner";
 
 interface CrmMetrics {
@@ -25,12 +25,10 @@ export default function CrmDashboard() {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:3001/metrics/crm', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await api.get('/metrics/crm');
         setMetrics(res.data);
       } catch (error) {
+        console.error(error);
         toast.error("Erro ao carregar métricas de CRM");
       } finally {
         setIsLoading(false);
@@ -43,7 +41,13 @@ export default function CrmDashboard() {
     return <div className="flex-1 bg-[#050A15] p-6 text-center text-gray-500 pt-20">Carregando dashboards...</div>;
   }
 
-  if (!metrics) return null;
+  if (!metrics || metrics.totalRevenue === 0 && metrics.openCount === 0 && metrics.wonCount === 0 && metrics.lostCount === 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-[#050A15] p-6 text-gray-500">
+        O funil de vendas está vazio.
+      </div>
+    );
+  }
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);

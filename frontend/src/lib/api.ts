@@ -9,11 +9,14 @@ const api = axios.create({
 
 // Interceptor para injetar o Token JWT
 api.interceptors.request.use((config) => {
-  // Pega o token real gerado pelo login
-  const token = typeof window !== 'undefined' ? localStorage.getItem('versus_auth_token') : null;
+  const token = typeof window !== 'undefined' ? localStorage.getItem('versus_auth_token') || localStorage.getItem('token') : null;
+  const tenantId = typeof window !== 'undefined' ? localStorage.getItem('tenantId') : null;
   
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  if (tenantId) {
+    config.headers['x-tenant-id'] = tenantId;
   }
   return config;
 });

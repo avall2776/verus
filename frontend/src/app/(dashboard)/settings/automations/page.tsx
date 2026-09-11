@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Play, Zap, Plus, Settings2, Trash2, CheckCircle2, XCircle, Clock, ArrowRight, ShieldAlert } from "lucide-react";
+import api from "@/lib/api";
 import { toast } from "sonner";
-import axios from "axios";
 
 interface Automation {
   id: string;
@@ -44,10 +44,9 @@ export default function AutomationsPage() {
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem('token');
       const [autoRes, logsRes] = await Promise.all([
-        axios.get('http://localhost:3001/automations', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://localhost:3001/automations/logs', { headers: { Authorization: `Bearer ${token}` } })
+        api.get('/automations'),
+        api.get('/automations/logs')
       ]);
       setAutomations(autoRes.data);
       setLogs(logsRes.data);
@@ -60,10 +59,7 @@ export default function AutomationsPage() {
 
   const handleToggle = async (id: string, current: boolean) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.patch(`http://localhost:3001/automations/${id}/toggle`, { isActive: !current }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.patch(`/automations/${id}/toggle`, { isActive: !current });
       setAutomations(automations.map(a => a.id === id ? { ...a, isActive: !current } : a));
       toast.success(current ? "Automação desativada" : "Automação ativada");
     } catch (error) {
@@ -74,10 +70,7 @@ export default function AutomationsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir esta automação?")) return;
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:3001/automations/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/automations/${id}`);
       setAutomations(automations.filter(a => a.id !== id));
       toast.success("Automação excluída com sucesso");
     } catch (error) {
@@ -88,16 +81,13 @@ export default function AutomationsPage() {
   const handleSave = async () => {
     if (!newName) return toast.error("Dê um nome para a automação.");
     try {
-      const token = localStorage.getItem('token');
       const payload = {
         name: newName,
         triggerType,
         conditions,
         actions: [{ type: actionType, ...actionData }]
       };
-      const res = await axios.post('http://localhost:3001/automations', payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.post('/automations', payload);
       setAutomations([res.data, ...automations]);
       setIsCreating(false);
       resetBuilder();

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Hash, Plus, MessageSquare, Send, Paperclip, Smile, Image as ImageIcon, CheckCircle2, ChevronDown, User as UserIcon, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import axios from "axios";
+import api from "@/lib/api";
 import { useSocket } from "@/components/ui/SocketProvider";
 
 interface TeamUser {
@@ -33,6 +33,7 @@ export default function TeamChatPage() {
   const [users, setUsers] = useState<TeamUser[]>([]);
   const [channels, setChannels] = useState<TeamChannel[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   
   // Chat State
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -44,22 +45,21 @@ export default function TeamChatPage() {
 
   useEffect(() => {
     fetchUsersAndChannels();
-    // Fetch logged user ID from a mock JWT decode or endpoint. Assuming we can get it from localStorage or we just rely on visual for sender
-    // We will just use the API responses for now
   }, []);
 
   const fetchUsersAndChannels = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
+      setIsLoading(true);
       const [uRes, cRes] = await Promise.all([
-        axios.get('http://localhost:3001/team-chat/users', { headers }),
-        axios.get('http://localhost:3001/team-chat/channels', { headers })
+        api.get('/team-chat/users'),
+        api.get('/team-chat/channels')
       ]);
       setUsers(uRes.data);
       setChannels(cRes.data);
     } catch (error) {
       toast.error("Erro ao carregar dados do chat");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -67,11 +67,8 @@ export default function TeamChatPage() {
     setActiveChatId(id);
     setChatType(type);
     try {
-      const token = localStorage.getItem('token');
       const queryParam = type === 'channel' ? `channelId=${id}` : `receiverId=${id}`;
-      const res = await axios.get(`http://localhost:3001/team-chat/messages?${queryParam}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get(`/team-chat/messages?${queryParam}`);
       setMessages(res.data);
       scrollToBottom();
     } catch (error) {
@@ -82,14 +79,11 @@ export default function TeamChatPage() {
   const sendMessage = async () => {
     if (!inputValue.trim() || !activeChatId) return;
     try {
-      const token = localStorage.getItem('token');
       const payload = chatType === 'channel' 
         ? { channelId: activeChatId, content: inputValue } 
         : { receiverId: activeChatId, content: inputValue };
 
-      await axios.post('http://localhost:3001/team-chat/messages', payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.post('/team-chat/messages', payload);
       setInputValue('');
     } catch (error) {
       toast.error("Erro ao enviar mensagem");
@@ -100,7 +94,6 @@ export default function TeamChatPage() {
     if (!socket) return;
     
     const onNewMessage = (msg: TeamMessage & { receiverId?: string, channelId?: string }) => {
-      // Verifica se a mensagem pertence à conversa atual
       const isCurrentChannel = chatType === 'channel' && msg.channelId === activeChatId;
       const isCurrentUser = chatType === 'user' && (msg.senderId === activeChatId || msg.receiverId === activeChatId);
       
@@ -125,6 +118,19 @@ export default function TeamChatPage() {
 
   const activeUser = chatType === 'user' ? users.find(u => u.id === activeChatId) : null;
   const activeChannel = chatType === 'channel' ? channels.find(c => c.id === activeChatId) : null;
+
+  if (isLoading) {
+    return <div className="flex-1 bg-[#050A15] p-6 text-center text-gray-500 pt-20 h-screen flex items-center justify-center">Carregando chat da equipe...</div>;
+  }
+
+  if (channels.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-[#050A15] p-6 text-gray-500 h-screen">
+        <MessageSquare size={48} className="mb-4 opacity-50" />
+        <p>Nenhum canal interno disponível.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex h-screen overflow-hidden bg-[#050A15]">
@@ -238,8 +244,7 @@ export default function TeamChatPage() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.map((msg, idx) => {
-              // Simples heurística de fromMe pra ui mockup (na prática precisa do user.id do contexto logado)
-              const fromMe = false; // Como não temos o session.user.id injetado direto no front sem um store, vamos deixar todos à esquerda ou adaptar depois
+              const fromMe = false;
               return (
                 <div key={msg.id || idx} className={`flex gap-3 ${fromMe ? 'flex-row-reverse' : ''}`}>
                   <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center font-bold text-white text-xs uppercase shrink-0 mt-1">

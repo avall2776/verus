@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, Clock, Filter, MessageSquare, UserPlus, Users } from "lucide-react";
+import { Activity, CheckCircle, Clock, Filter, MessageSquare, UserPlus, Users } from "lucide-react";
+import api from "@/lib/api";
 import { toast } from "sonner";
-import axios from "axios";
 import { useSocket } from "@/components/ui/SocketProvider";
 
 interface MonitorConversation {
@@ -29,22 +29,21 @@ export default function MonitorPage() {
   // Filters
   const [filterStatus, setFilterStatus] = useState<'all' | 'waiting' | 'active'>('all');
   
-  const fetchActive = async () => {
+  const fetchConversations = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:3001/monitor/active', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setConversations(res.data);
+      setIsLoading(true);
+      const res = await api.get('/monitor/active');
+      setConversations(res.data || []);
     } catch (error) {
-      toast.error("Erro ao carregar monitor.");
+      console.error(error);
+      toast.error("Erro ao carregar monitoramento.");
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchActive();
+    fetchConversations();
     
     // Atualiza o relógio a cada segundo para recalcular o tempo nos cards
     const interval = setInterval(() => setNow(new Date()), 1000);
@@ -54,7 +53,7 @@ export default function MonitorPage() {
   useEffect(() => {
     if (!socket) return;
     
-    const onUpdate = () => fetchActive();
+    const onUpdate = () => fetchConversations();
     
     socket.on('newMessage', onUpdate);
     socket.on('conversationUpdated', onUpdate);
@@ -67,12 +66,9 @@ export default function MonitorPage() {
 
   const handleTakeover = async (id: string) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.patch(`http://localhost:3001/conversations/${id}/takeover`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.patch(`/conversations/${id}/takeover`);
       toast.success("Atendimento assumido!");
-      fetchActive();
+      fetchConversations();
     } catch (error) {
       toast.error("Erro ao assumir atendimento.");
     }
@@ -155,8 +151,13 @@ export default function MonitorPage() {
 
       {/* GRID */}
       <div className="flex-1 overflow-y-auto p-6">
-        {isLoading ? (
-          <div className="text-center text-gray-500 py-20">Carregando painel...</div>
+        {isLoading && conversations.length === 0 ? (
+          <div className="text-center text-gray-500 py-20">Carregando monitor...</div>
+        ) : conversations.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500">
+            <CheckCircle size={48} className="mb-4 text-emerald-500/50" />
+            <p className="text-lg">Nenhum atendimento na fila ou em andamento.</p>
+          </div>
         ) : filteredConversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500">
             <Activity size={48} className="mb-4 opacity-20" />

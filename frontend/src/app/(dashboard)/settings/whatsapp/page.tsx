@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Smartphone, QrCode, Save, RefreshCw, PowerOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import axios from "axios";
+import api from "@/lib/api";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
 
 export default function WhatsAppSettingsPage() {
@@ -24,10 +24,7 @@ export default function WhatsAppSettingsPage() {
 
   const fetchConfig = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:3001/whatsapp/config', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get('/whatsapp/config');
       setFormData({
         metaToken: res.data.metaToken || "",
         metaPhoneNumberId: res.data.metaPhoneNumberId || "",
@@ -43,8 +40,7 @@ export default function WhatsAppSettingsPage() {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      const token = localStorage.getItem('token');
-      await axios.patch('http://localhost:3001/whatsapp/config', {
+      await api.patch('/whatsapp/config', {
         metaToken: formData.metaToken,
         metaPhoneNumberId: formData.metaPhoneNumberId,
         whatsappSettings: {
@@ -52,8 +48,6 @@ export default function WhatsAppSettingsPage() {
           typingDelayMs: formData.typingDelayMs,
           messageDelayMs: formData.messageDelayMs
         }
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Configurações salvas com sucesso!");
       refreshStatus();
