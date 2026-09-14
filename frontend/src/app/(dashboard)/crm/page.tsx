@@ -7,7 +7,8 @@ import {
   Plus, Settings, DollarSign, Target, ChevronDown, ChevronUp, Calendar, 
   CheckSquare, ArrowRight, Clock, MessageSquare, ArrowUpRight, 
   Kanban as KanbanIcon, Table as TableIcon, CalendarDays, ChevronLeft, 
-  ChevronRight, X, User as UserIcon, Phone, Mail, Check
+  ChevronRight, X, User as UserIcon, Phone, Mail, Check,
+  ArrowUpDown, ArrowUp, ArrowDown, Columns, SlidersHorizontal
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import api from "@/lib/api";
@@ -57,6 +58,39 @@ export default function CrmPage() {
   // Tabela: estágios colapsados e descrições expandidas
   const [collapsedTableStages, setCollapsedTableStages] = useState<string[]>([]);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
+
+  // Tabela: Ordenação interativa (Sorting)
+  type TableSortField = 'title' | 'contact' | 'description' | 'assignee' | 'value' | 'updatedAt' | 'createdAt';
+  const [sortField, setSortField] = useState<TableSortField>('createdAt');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  // Tabela: Filtros avançados e visibilidade de colunas
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [showColumnVisibility, setShowColumnVisibility] = useState(false);
+  const [selectedStageFilter, setSelectedStageFilter] = useState("all");
+
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    title: true,
+    contact: true,
+    description: true,
+    assignee: true,
+    value: true,
+    updatedAt: true,
+    createdAt: true
+  });
+
+  const toggleColumnVisibility = (colKey: string) => {
+    setVisibleColumns(prev => ({ ...prev, [colKey]: !prev[colKey] }));
+  };
+
+  const handleSort = (field: TableSortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   const toggleDescription = (id: string) => {
     setExpandedDescriptions(prev => ({ ...prev, [id]: !prev[id] }));
@@ -246,9 +280,22 @@ export default function CrmPage() {
         return hasCompany;
       }
 
+      // 3. Filtro Avançado por Estágio (se selecionado na tabela)
+      if (selectedStageFilter !== 'all') {
+        if (deal.status !== selectedStageFilter) return false;
+      }
+
       return true;
     });
-  }, [deals, searchQuery, activeTab, currentUser]);
+  }, [deals, searchQuery, activeTab, currentUser, selectedStageFilter]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (searchQuery.trim()) count++;
+    if (activeTab !== 'all') count++;
+    if (selectedStageFilter !== 'all') count++;
+    return count;
+  }, [searchQuery, activeTab, selectedStageFilter]);
 
   const handleResizeStart = (e: React.MouseEvent, colId: string) => {
     e.preventDefault();
@@ -674,215 +721,513 @@ export default function CrmPage() {
       {/* ========================================================================= */}
       {/* 2. VISÃO EM TABELA DO CRM (Densa e alinhada ao Padrão Lero)              */}
       {/* ========================================================================= */}
-      {viewMode === 'table' && (
-        <div className="flex-1 flex flex-col bg-[#161b22] border border-gray-800 rounded-xl overflow-hidden shadow-lg animate-in fade-in-50 duration-200">
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-[#0f141c] border-b border-gray-800 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                  <th className="py-2.5 px-3.5 w-[240px]">Título</th>
-                  <th className="py-2.5 px-3.5 w-[200px]">Contato</th>
-                  <th className="py-2.5 px-3.5">Descrição</th>
-                  <th className="py-2.5 px-3.5 w-[150px]">Responsável</th>
-                  <th className="py-2.5 px-3.5 w-[130px] text-right">Valor (R$)</th>
-                  <th className="py-2.5 px-3.5 w-[160px]">Última Interação</th>
-                  <th className="py-2.5 px-3.5 w-[120px]">Criado Em</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800/50 text-xs">
-                {columns.map(col => {
-                  const stageDeals = filteredDeals.filter(d => d.status === col.id);
-                  const isCollapsed = collapsedTableStages.includes(col.id);
-                  const stageTotal = stageDeals.reduce((sum, d) => sum + (d.value ? Number(d.value) : 0), 0);
+      {viewMode === 'table' && (() => {
+        const visibleColCount = Object.values(visibleColumns).filter(Boolean).length || 1;
 
-                  return (
-                    <React.Fragment key={`table-stage-${col.id}`}>
-                      {/* Linha Cabeçalho do Estágio */}
-                      <tr 
-                        onClick={() => toggleTableStage(col.id)}
-                        className="bg-[#1c2128] hover:bg-[#222832] cursor-pointer transition-colors border-t border-b border-gray-800"
-                      >
-                        <td colSpan={7} className="py-2 px-3.5">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-400">
-                                {isCollapsed ? <ChevronRight size={15} /> : <ChevronDown size={15} />}
-                              </span>
-                              <div className={`w-2.5 h-2.5 rounded-full ${col.color.replace('text-', 'bg-')}`}></div>
-                              <span className="font-extrabold text-white uppercase tracking-wider text-xs">
-                                {col.title}
-                              </span>
-                              <span className="bg-gray-800/80 border border-gray-700 text-gray-300 font-bold px-2 py-0.5 rounded-full text-[10px]">
-                                {stageDeals.length} {stageDeals.length === 1 ? 'oportunidade' : 'oportunidades'}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <div className="text-xs font-mono font-bold text-emerald-400">
-                                Total: {formatCurrency(stageTotal)}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedDeal({
-                                    id: `new-${Date.now()}`,
-                                    title: "Nova Oportunidade",
-                                    status: col.id,
-                                    value: 0,
-                                    contact: { name: "", phone: "", email: "" },
-                                    isNew: true
-                                  });
-                                }}
-                                className="flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/20 px-2 py-0.5 rounded transition-colors"
-                              >
-                                <Plus size={12} /> Nova Oportunidade
-                              </button>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
+        return (
+          <div className="flex-1 flex flex-col bg-[#161b22] border border-gray-800 rounded-xl overflow-hidden shadow-lg animate-in fade-in-50 duration-200">
+            {/* Barra de Ferramentas da Tabela: Filtros, Visibilidade de Colunas e Adição Rápida */}
+            <div className="bg-[#1c2128] border-b border-gray-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-2">
+                {/* Botão [Filtros] com badge numérico */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                      activeFilterCount > 0 
+                        ? 'bg-primary/20 border-primary text-white shadow-sm' 
+                        : 'bg-[#0B1224] border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    <Filter size={13} className={activeFilterCount > 0 ? "text-primary" : "text-gray-400"} />
+                    <span>Filtros</span>
+                    {activeFilterCount > 0 && (
+                      <span className="bg-primary text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </button>
 
-                      {/* Linhas das Oportunidades do Estágio */}
-                      {!isCollapsed && stageDeals.length === 0 && (
-                        <tr className="bg-[#12161f]/30">
-                          <td colSpan={7} className="py-3 px-6 text-gray-500 italic text-center text-xs">
-                            Nenhuma oportunidade nesta etapa.
-                          </td>
-                        </tr>
-                      )}
-
-                      {!isCollapsed && stageDeals.map(deal => {
-                        const assigneeName = deal.assignedTo?.name || deal.assignee?.name;
-                        const isDescExpanded = !!expandedDescriptions[deal.id];
-                        const originSource = deal.contact?.source || deal.metadata?.source || "Meta Ads";
-
-                        return (
-                          <tr 
-                            key={deal.id}
-                            onClick={() => handleOpenDeal(deal)}
-                            className="hover:bg-[#1f2530] transition-colors cursor-pointer group"
+                  {/* Popover de Filtros */}
+                  {showFilterDropdown && (
+                    <div className="absolute left-0 top-full mt-2 w-64 bg-[#161b22] border border-gray-700 rounded-xl shadow-2xl p-3 z-30 flex flex-col gap-3 animate-in fade-in zoom-in-95">
+                      <div className="flex items-center justify-between border-b border-gray-800 pb-2">
+                        <span className="text-xs font-bold text-white">Filtros Avançados</span>
+                        {activeFilterCount > 0 && (
+                          <button 
+                            type="button" 
+                            onClick={() => { setSearchQuery(""); setActiveTab("all"); setSelectedStageFilter("all"); }}
+                            className="text-[10px] text-primary hover:underline font-bold"
                           >
-                            {/* 1. Título (com link interativo para abrir o DealModal) */}
-                            <td className="py-2.5 px-3.5">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleOpenDeal(deal);
-                                }}
-                                className="flex flex-col text-left group/title focus:outline-none w-full"
-                                title="Clique para abrir detalhes da oportunidade"
-                              >
-                                <span className="font-bold text-slate-100 group-hover/title:text-primary transition-colors text-xs hover:underline underline-offset-2 flex items-center gap-1">
-                                  {deal.title || "Sem título"}
-                                  <ArrowUpRight size={12} className="text-gray-500 group-hover/title:text-primary transition-colors opacity-0 group-hover/title:opacity-100 shrink-0" />
-                                </span>
-                                <span className="text-[10px] font-mono text-gray-500 group-hover/title:text-primary/70 transition-colors">
-                                  #{deal?.id?.includes('-') ? deal.id.split('-')[0].toUpperCase() : (deal.id || 'DEAL')}
-                                </span>
-                              </button>
-                            </td>
+                            Limpar todos
+                          </button>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Filtrar por Estágio</label>
+                        <select
+                          value={selectedStageFilter}
+                          onChange={(e) => setSelectedStageFilter(e.target.value)}
+                          className="w-full bg-[#0B1224] border border-gray-700 text-white rounded-lg p-1.5 text-xs outline-none focus:border-primary"
+                        >
+                          <option value="all">Todos os Estágios</option>
+                          {columns.map(c => (
+                            <option key={c.id} value={c.id}>{c.title}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                            {/* 2. Contato (Nome do lead + telefone com ícone do WhatsApp) */}
-                            <td className="py-2.5 px-3.5">
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center font-bold text-[10px] text-gray-200 shrink-0">
-                                  {deal.contact?.name?.[0]?.toUpperCase() || "?"}
-                                </div>
-                                <div className="flex flex-col min-w-0">
-                                  <span className="font-semibold text-slate-200 text-xs truncate max-w-[150px]">
-                                    {deal.contact?.name || "Contato não informado"}
-                                  </span>
-                                  {deal.contact?.phone ? (
-                                    <a 
-                                      href={`https://wa.me/${deal.contact.phone.replace(/\D/g, '')}`} 
-                                      target="_blank" 
-                                      rel="noreferrer"
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
-                                    >
-                                      <Phone size={9} className="text-[#25D366]" />
-                                      <span>{deal.contact.phone}</span>
-                                    </a>
-                                  ) : (
-                                    <span className="text-[10px] text-gray-500 italic">Sem telefone</span>
-                                  )}
-                                </div>
+                {/* Seletor / Engrenagem de Visibilidade de Colunas */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowColumnVisibility(!showColumnVisibility)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#0B1224] border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                    title="Configurar colunas visíveis"
+                  >
+                    <Columns size={13} className="text-gray-400" />
+                    <span>Colunas</span>
+                  </button>
+
+                  {/* Popover de Visibilidade de Colunas */}
+                  {showColumnVisibility && (
+                    <div className="absolute left-0 top-full mt-2 w-56 bg-[#161b22] border border-gray-700 rounded-xl shadow-2xl p-3 z-30 flex flex-col gap-2 animate-in fade-in zoom-in-95">
+                      <span className="text-xs font-bold text-white border-b border-gray-800 pb-2">Exibir Colunas</span>
+                      {[
+                        { id: 'title', label: 'Título' },
+                        { id: 'contact', label: 'Contato' },
+                        { id: 'description', label: 'Descrição' },
+                        { id: 'assignee', label: 'Responsável' },
+                        { id: 'value', label: 'Valor (R$)' },
+                        { id: 'updatedAt', label: 'Última Interação' },
+                        { id: 'createdAt', label: 'Criado Em' }
+                      ].map(colItem => (
+                        <label key={colItem.id} className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer hover:text-white">
+                          <input
+                            type="checkbox"
+                            checked={visibleColumns[colItem.id]}
+                            onChange={() => toggleColumnVisibility(colItem.id)}
+                            className="accent-primary rounded"
+                          />
+                          <span>{colItem.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Botão de Adição Rápida (+) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedDeal({
+                      id: `new-${Date.now()}`,
+                      title: "Nova Oportunidade",
+                      status: "new",
+                      value: 0,
+                      contact: { name: "", phone: "", email: "" },
+                      isNew: true
+                    });
+                  }}
+                  className="p-1.5 rounded-lg bg-primary hover:bg-primary/90 text-white transition-colors flex items-center justify-center"
+                  title="Nova oportunidade rápida"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3 text-xs text-gray-400">
+                <span>
+                  <strong className="text-white">{filteredDeals.length}</strong> {filteredDeals.length === 1 ? 'oportunidade' : 'oportunidades'} no total
+                </span>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#0f141c] border-b border-gray-800 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                    {/* 1. Título */}
+                    {visibleColumns.title && (
+                      <th 
+                        onClick={() => handleSort('title')}
+                        className="py-2.5 px-3.5 w-[240px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        title="Clique para ordenar por Título"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className={sortField === 'title' ? 'text-white' : ''}>Título</span>
+                          {sortField === 'title' ? (
+                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
+                          ) : (
+                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {/* 2. Contato */}
+                    {visibleColumns.contact && (
+                      <th 
+                        onClick={() => handleSort('contact')}
+                        className="py-2.5 px-3.5 w-[200px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        title="Clique para ordenar por Contato"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className={sortField === 'contact' ? 'text-white' : ''}>Contato</span>
+                          {sortField === 'contact' ? (
+                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
+                          ) : (
+                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {/* 3. Descrição */}
+                    {visibleColumns.description && (
+                      <th 
+                        onClick={() => handleSort('description')}
+                        className="py-2.5 px-3.5 cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        title="Clique para ordenar por Descrição"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className={sortField === 'description' ? 'text-white' : ''}>Descrição</span>
+                          {sortField === 'description' ? (
+                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
+                          ) : (
+                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {/* 4. Responsável */}
+                    {visibleColumns.assignee && (
+                      <th 
+                        onClick={() => handleSort('assignee')}
+                        className="py-2.5 px-3.5 w-[150px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        title="Clique para ordenar por Responsável"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className={sortField === 'assignee' ? 'text-white' : ''}>Responsável</span>
+                          {sortField === 'assignee' ? (
+                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
+                          ) : (
+                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {/* 5. Valor (R$) */}
+                    {visibleColumns.value && (
+                      <th 
+                        onClick={() => handleSort('value')}
+                        className="py-2.5 px-3.5 w-[130px] text-right cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        title="Clique para ordenar por Valor"
+                      >
+                        <div className="flex items-center justify-end gap-1.5">
+                          <span className={sortField === 'value' ? 'text-white' : ''}>Valor (R$)</span>
+                          {sortField === 'value' ? (
+                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
+                          ) : (
+                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {/* 6. Última Interação */}
+                    {visibleColumns.updatedAt && (
+                      <th 
+                        onClick={() => handleSort('updatedAt')}
+                        className="py-2.5 px-3.5 w-[160px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        title="Clique para ordenar por Última Interação"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className={sortField === 'updatedAt' ? 'text-white' : ''}>Última Interação</span>
+                          {sortField === 'updatedAt' ? (
+                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
+                          ) : (
+                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {/* 7. Criado Em */}
+                    {visibleColumns.createdAt && (
+                      <th 
+                        onClick={() => handleSort('createdAt')}
+                        className="py-2.5 px-3.5 w-[120px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        title="Clique para ordenar por Data de Cadastro"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className={sortField === 'createdAt' ? 'text-white' : ''}>Criado Em</span>
+                          {sortField === 'createdAt' ? (
+                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
+                          ) : (
+                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                          )}
+                        </div>
+                      </th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800/50 text-xs">
+                  {columns.map(col => {
+                    const stageDeals = filteredDeals.filter(d => d.status === col.id);
+                    const isCollapsed = collapsedTableStages.includes(col.id);
+                    const stageTotal = stageDeals.reduce((sum, d) => sum + (d.value ? Number(d.value) : 0), 0);
+
+                    // Ordenação ativa dos deals do estágio
+                    const sortedStageDeals = [...stageDeals].sort((a, b) => {
+                      let aVal: any = '';
+                      let bVal: any = '';
+
+                      switch (sortField) {
+                        case 'title':
+                          aVal = (a.title || '').toLowerCase();
+                          bVal = (b.title || '').toLowerCase();
+                          break;
+                        case 'contact':
+                          aVal = (a.contact?.name || '').toLowerCase();
+                          bVal = (b.contact?.name || '').toLowerCase();
+                          break;
+                        case 'description':
+                          aVal = (a.notes || a.description || '').toLowerCase();
+                          bVal = (b.notes || b.description || '').toLowerCase();
+                          break;
+                        case 'assignee':
+                          aVal = (a.assignedTo?.name || a.assignee?.name || '').toLowerCase();
+                          bVal = (b.assignedTo?.name || b.assignee?.name || '').toLowerCase();
+                          break;
+                        case 'value':
+                          aVal = Number(a.value || 0);
+                          bVal = Number(b.value || 0);
+                          return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                        case 'updatedAt':
+                          aVal = new Date(a.updatedAt || a.createdAt || 0).getTime();
+                          bVal = new Date(b.updatedAt || b.createdAt || 0).getTime();
+                          return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                        case 'createdAt':
+                          aVal = new Date(a.createdAt || 0).getTime();
+                          bVal = new Date(b.createdAt || 0).getTime();
+                          return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                      }
+
+                      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+                      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+                      return 0;
+                    });
+
+                    return (
+                      <React.Fragment key={`table-stage-${col.id}`}>
+                        {/* Linha Cabeçalho do Estágio com Montante Total Acumulado */}
+                        <tr 
+                          onClick={() => toggleTableStage(col.id)}
+                          className="bg-[#1c2128] hover:bg-[#222832] cursor-pointer transition-colors border-t border-b border-gray-800"
+                        >
+                          <td colSpan={visibleColCount} className="py-2.5 px-3.5">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2.5">
+                                <span className="text-gray-400">
+                                  {isCollapsed ? <ChevronRight size={15} /> : <ChevronDown size={15} />}
+                                </span>
+                                <div className={`w-2.5 h-2.5 rounded-full ${col.color.replace('text-', 'bg-')}`}></div>
+                                <span className="font-extrabold text-white uppercase tracking-wider text-xs">
+                                  {col.title}
+                                </span>
+                                <span className="bg-gray-800/80 border border-gray-700 text-gray-300 font-bold px-2 py-0.5 rounded-full text-[10px]">
+                                  {stageDeals.length} {stageDeals.length === 1 ? 'card' : 'cards'}
+                                </span>
                               </div>
-                            </td>
-
-                            {/* 3. Descrição (Origem do Lead / Meta Ads com botão "Ver mais" elegante) */}
-                            <td className="py-2.5 px-3.5 max-w-[320px]">
-                              <div className="flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="text-[9px] font-bold text-gray-400 bg-[#0B1224] border border-gray-800 px-1.5 py-0.2 rounded uppercase">
-                                    {originSource}
-                                  </span>
+                              <div className="flex items-center gap-4">
+                                <div className="text-xs font-mono font-bold text-emerald-400">
+                                  Total: {formatCurrency(stageTotal)}
                                 </div>
-                                <p className={`text-xs text-gray-300 leading-relaxed ${isDescExpanded ? 'whitespace-pre-wrap' : 'line-clamp-1'}`}>
-                                  {deal.notes || deal.description || "Lead recebido pelo formulário nativo Meta Ads solicitando contato urgente."}
-                                </p>
                                 <button
                                   type="button"
-                                  onClick={() => toggleDescription(deal.id)}
-                                  className="text-[10px] text-primary hover:text-primary/80 font-bold self-start mt-0.5 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedDeal({
+                                      id: `new-${Date.now()}`,
+                                      title: "Nova Oportunidade",
+                                      status: col.id,
+                                      value: 0,
+                                      contact: { name: "", phone: "", email: "" },
+                                      isNew: true
+                                    });
+                                  }}
+                                  className="flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/20 px-2 py-0.5 rounded transition-colors"
                                 >
-                                  {isDescExpanded ? "Ver menos ⌃" : "Ver mais ⌵"}
+                                  <Plus size={12} /> Nova Oportunidade
                                 </button>
                               </div>
-                            </td>
+                            </div>
+                          </td>
+                        </tr>
 
-                            {/* 4. Responsável (Avatar circular + nome do operador ou "Fila Geral") */}
-                            <td className="py-2.5 px-3.5">
-                              {assigneeName ? (
-                                <div className="flex items-center gap-1.5">
-                                  <div className="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[9px] flex items-center justify-center shrink-0">
-                                    {assigneeName[0].toUpperCase()}
-                                  </div>
-                                  <span className="text-slate-300 font-medium text-xs truncate max-w-[120px]">
-                                    {assigneeName}
-                                  </span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1.5">
-                                  <div className="w-5 h-5 rounded-full bg-slate-700 text-slate-300 font-bold text-[9px] flex items-center justify-center shrink-0">
-                                    F
-                                  </div>
-                                  <span className="text-gray-500 italic text-xs">Fila Geral</span>
-                                </div>
-                              )}
-                            </td>
-
-                            {/* 5. Valor (R$) (Valor formatado em BRL com destaque verde) */}
-                            <td className="py-2.5 px-3.5 text-right">
-                              <span className="font-mono font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded text-xs inline-block">
-                                {formatCurrency(Number(deal.value || 0))}
-                              </span>
-                            </td>
-
-                            {/* 6. Última Interação (Tempo relativo formatado, ex: "há cerca de 9 horas") */}
-                            <td className="py-2.5 px-3.5 text-gray-400">
-                              <span className="flex items-center gap-1 text-[11px]">
-                                <Clock size={12} className="text-gray-500 shrink-0" />
-                                <span>{formatRelativeTime(deal.updatedAt || deal.createdAt)}</span>
-                              </span>
-                            </td>
-
-                            {/* 7. Criado Em (Data de cadastro) */}
-                            <td className="py-2.5 px-3.5 text-gray-400 text-[11px]">
-                              {formatDate(deal.createdAt)}
+                        {/* Linhas das Oportunidades do Estágio */}
+                        {!isCollapsed && sortedStageDeals.length === 0 && (
+                          <tr className="bg-[#12161f]/30">
+                            <td colSpan={visibleColCount} className="py-3 px-6 text-gray-500 italic text-center text-xs">
+                              Nenhuma oportunidade nesta etapa.
                             </td>
                           </tr>
-                        );
-                      })}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
+                        )}
+
+                        {!isCollapsed && sortedStageDeals.map(deal => {
+                          const assigneeName = deal.assignedTo?.name || deal.assignee?.name;
+                          const isDescExpanded = !!expandedDescriptions[deal.id];
+                          const originSource = deal.contact?.source || deal.metadata?.source || "Meta Ads";
+
+                          return (
+                            <tr 
+                              key={deal.id}
+                              onClick={() => handleOpenDeal(deal)}
+                              className="hover:bg-[#1f2530] transition-colors cursor-pointer group"
+                            >
+                              {/* 1. Título (com link interativo para abrir o DealModal) */}
+                              {visibleColumns.title && (
+                                <td className="py-2.5 px-3.5">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenDeal(deal);
+                                    }}
+                                    className="flex flex-col text-left group/title focus:outline-none w-full"
+                                    title="Clique para abrir detalhes da oportunidade"
+                                  >
+                                    <span className="font-bold text-slate-100 group-hover/title:text-primary transition-colors text-xs hover:underline underline-offset-2 flex items-center gap-1">
+                                      {deal.title || "Sem título"}
+                                      <ArrowUpRight size={12} className="text-gray-500 group-hover/title:text-primary transition-colors opacity-0 group-hover/title:opacity-100 shrink-0" />
+                                    </span>
+                                    <span className="text-[10px] font-mono text-gray-500 group-hover/title:text-primary/70 transition-colors">
+                                      #{deal?.id?.includes('-') ? deal.id.split('-')[0].toUpperCase() : (deal.id || 'DEAL')}
+                                    </span>
+                                  </button>
+                                </td>
+                              )}
+
+                              {/* 2. Contato (Nome do lead + telefone com ícone do WhatsApp) */}
+                              {visibleColumns.contact && (
+                                <td className="py-2.5 px-3.5">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center font-bold text-[10px] text-gray-200 shrink-0">
+                                      {deal.contact?.name?.[0]?.toUpperCase() || "?"}
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="font-semibold text-slate-200 text-xs truncate max-w-[150px]">
+                                        {deal.contact?.name || "Contato não informado"}
+                                      </span>
+                                      {deal.contact?.phone ? (
+                                        <a 
+                                          href={`https://wa.me/${deal.contact.phone.replace(/\D/g, '')}`} 
+                                          target="_blank" 
+                                          rel="noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
+                                        >
+                                          <Phone size={9} className="text-[#25D366]" />
+                                          <span>{deal.contact.phone}</span>
+                                        </a>
+                                      ) : (
+                                        <span className="text-[10px] text-gray-500 italic">Sem telefone</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </td>
+                              )}
+
+                              {/* 3. Descrição (Origem do Lead / Meta Ads com botão "Ver mais" elegante) */}
+                              {visibleColumns.description && (
+                                <td className="py-2.5 px-3.5 max-w-[320px]">
+                                  <div className="flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="text-[9px] font-bold text-gray-400 bg-[#0B1224] border border-gray-800 px-1.5 py-0.2 rounded uppercase">
+                                        {originSource}
+                                      </span>
+                                    </div>
+                                    <p className={`text-xs text-gray-300 leading-relaxed ${isDescExpanded ? 'whitespace-pre-wrap' : 'line-clamp-1'}`}>
+                                      {deal.notes || deal.description || "Lead recebido pelo formulário nativo Meta Ads solicitando contato urgente."}
+                                    </p>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleDescription(deal.id)}
+                                      className="text-[10px] text-primary hover:text-primary/80 font-bold self-start mt-0.5 transition-colors"
+                                    >
+                                      {isDescExpanded ? "Ver menos ⌃" : "Ver mais ⌵"}
+                                    </button>
+                                  </div>
+                                </td>
+                              )}
+
+                              {/* 4. Responsável (Avatar circular + nome do operador ou "Fila Geral") */}
+                              {visibleColumns.assignee && (
+                                <td className="py-2.5 px-3.5">
+                                  {assigneeName ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <div className="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[9px] flex items-center justify-center shrink-0">
+                                        {assigneeName[0].toUpperCase()}
+                                      </div>
+                                      <span className="text-slate-300 font-medium text-xs truncate max-w-[120px]">
+                                        {assigneeName}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-1.5">
+                                      <div className="w-5 h-5 rounded-full bg-slate-700 text-slate-300 font-bold text-[9px] flex items-center justify-center shrink-0">
+                                        F
+                                      </div>
+                                      <span className="text-gray-500 italic text-xs">Fila Geral</span>
+                                    </div>
+                                  )}
+                                </td>
+                              )}
+
+                              {/* 5. Valor (R$) (Valor formatado em BRL com destaque verde) */}
+                              {visibleColumns.value && (
+                                <td className="py-2.5 px-3.5 text-right">
+                                  <span className="font-mono font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded text-xs inline-block">
+                                    {formatCurrency(Number(deal.value || 0))}
+                                  </span>
+                                </td>
+                              )}
+
+                              {/* 6. Última Interação (Tempo relativo formatado, ex: "há cerca de 9 horas") */}
+                              {visibleColumns.updatedAt && (
+                                <td className="py-2.5 px-3.5 text-gray-400">
+                                  <span className="flex items-center gap-1 text-[11px]">
+                                    <Clock size={12} className="text-gray-500 shrink-0" />
+                                    <span>{formatRelativeTime(deal.updatedAt || deal.createdAt)}</span>
+                                  </span>
+                                </td>
+                              )}
+
+                              {/* 7. Criado Em (Data de cadastro) */}
+                              {visibleColumns.createdAt && (
+                                <td className="py-2.5 px-3.5 text-gray-400 text-[11px]">
+                                  {formatDate(deal.createdAt)}
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ========================================================================= */}
       {/* 3. VISÃO EM LINHA DO TEMPO (TIMELINE SEMANAL)                             */}

@@ -271,6 +271,25 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas com sucesso).
 
+### Fase 22: Paridade Total da Tabela do CRM com o Lero (Sorting, Filtros Avançados, Seletor de Colunas e Totais Financeiros)
+- [x] **Ordenação Interativa nos Cabeçalhos (Sorting)**:
+  * Todos os 7 cabeçalhos da tabela (`Título`, `Contato`, `Descrição`, `Responsável`, `Valor`, `Última Interação`, `Criado Em`) clicáveis com hover (`cursor-pointer`) e transição suave.
+  * Estados reativos `sortField` e `sortDirection` ('asc' | 'desc') com ícones dinâmicos de ordenação (`ArrowUpDown`, `ArrowUp`, `ArrowDown`).
+  * Lógica de ordenação ativa no array de dados tratando com rigor strings, valores numéricos de oportunidade e timestamps de datas.
+- [x] **Filtros Avançados & Seletor de Colunas**:
+  * Barra de ferramentas superior com input de busca, botão **[Filtros]** com badge dinâmico de filtros ativos (`activeFilterCount`) e menu dropdown de filtragem por estágio ou reset.
+  * Botão de engrenagem/seletor **[Colunas]** com popover dropdown interativo de checkboxes para alternar a visibilidade de qualquer uma das 7 colunas em tempo real.
+  * Botão de ação rápida `(+)` para criação ágil de nova oportunidade.
+- [x] **Somas Financeiras e Contadores por Estágio**:
+  * Cabeçalhos expansíveis de estágio do funil com contagem exata de cards (`X cards`) e cálculo automático do montante financeiro total acumulado formatado em BRL (ex: `Total: R$ 44.204,42`) com destaque visual verde esmeralda alinhado à direita.
+  * Ajuste dinâmico do `colSpan` conforme o total de colunas visíveis selecionadas.
+- [x] **Densidade & Navegação Direta no DealModal**:
+  * Ordem estrita mantida: Título | Contato | Descrição | Responsável | Valor (R$) | Última Interação | Criado Em.
+  * Expanders inline "Ver mais ⌵ / Ver menos ⌃" para campos longos de descrição.
+  * Clique na linha inteira ou no link primário do Título abre imediatamente o `DealModal` blindado.
+- [x] **Validação & Compilação**:
+  * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas com sucesso em produção).
+
 
 
 
