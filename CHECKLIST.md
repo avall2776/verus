@@ -195,6 +195,18 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ---
 
+## 📅 SEGUNDA-FEIRA (14/09/2026) - ENTREGAS DO DIA
+
+### 🟢 Fase 17: Reconstrução do Chat Interno (/chat-interno) - Padrão Lero
+- [x] **Estrutura de Abas Superiores**: Seletor no topo da barra lateral entre `[Colaboradores]` (chats 1 a 1) e `[Equipes]` (canais de departamentos), acompanhado do botão de ação rápida `+` para nova conversa ou criação de canal.
+- [x] **Barra de Filtros e Busca**: Input reativo "Buscar conversa...", dropdown de filtro por setor/departamento (*Comercial*, *Suporte*, etc.) e pílula de filtro rápido para usuários *Online*.
+- [x] **Listagem e Cards de Diálogo**: Cards com avatar e indicador online/offline (dot verde pulsante / cinza), badge do setor, trecho da última mensagem com check de envio, timestamp relativo no padrão Lero (*"4 dias"*, *"21 dias"*, *"14:35"*, etc.) e contador de mensagens não lidas.
+- [x] **Painel Central de Mensagens**: Balões de mensagem diferenciados (enviadas pelo usuário à direita em degradê azul e recebidas à esquerda em slate enterprise), cabeçalho detalhado e composer completo (com quebra de linha Shift+Enter e emojis).
+- [x] **Backend & WebSocket (NestJS)**: Enriquecimento dos endpoints `/team-chat/users`, `/team-chat/channels` e `/team-chat/departments` trazendo a última mensagem e setor, com entrega em tempo real via Socket.io (`newTeamMessage`).
+- [x] **Rotas e Navegação**: Rota oficial `/chat-interno` vinculada na `Sidebar.tsx` e retrocompatibilidade mantida na rota `/team-chat`.
+
+---
+
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
 - **[08/09/2026 - 08:30]** 🟢 Início da Fundação do Projeto (Docker, Postgres, Supabase, Prisma ORM, BullMQ).
 - **[09/09/2026 - 08:30]** 🟢 Implementação de WebSockets, Sentry, Deploy Vercel/VPS e WhatsApp Cloud API.
@@ -202,6 +214,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[11/09/2026 - 08:15]** 🟢 Início do turno da manhã (Sidebar Enterprise, Conexões WhatsApp, Monitor, Team Chat, Automações e CRM Inline).
 - **[11/09/2026 - 13:30]** 🟢 Início do turno da tarde (Analytics Padrão Lero, Fluxo de IA, Modal de Assunção, Toolbar WhatsApp e Deploy).
 - **[11/09/2026 - 18:10]** 🏁 Finalização da jornada de sexta-feira com builds 100% aprovados, produção atualizada e checklist definitivo consolidado.
+- **[14/09/2026 - 08:15]** 🟢 Início da jornada de desenvolvimento da semana (Foco: Reconstrução do Chat Interno Padrão Lero e Bateria de Testes WhatsApp).
 
 ---
 

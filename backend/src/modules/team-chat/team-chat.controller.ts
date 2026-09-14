@@ -9,8 +9,13 @@ export class TeamChatController {
   constructor(private readonly teamChatService: TeamChatService) {}
 
   @Get('users')
-  async getUsers(@CurrentTenant() tenantId: string) {
-    return this.teamChatService.getUsers(tenantId);
+  async getUsers(@CurrentTenant() tenantId: string, @Request() req: any) {
+    return this.teamChatService.getUsers(tenantId, req?.user?.id);
+  }
+
+  @Get('departments')
+  async getDepartments(@CurrentTenant() tenantId: string) {
+    return this.teamChatService.getDepartments(tenantId);
   }
 
   @Get('channels')

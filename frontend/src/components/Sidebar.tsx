@@ -47,7 +47,7 @@ const NAV_GROUPS = [
   {
     title: "CHAT DA EQUIPE",
     items: [
-      { name: "Chat Interno", icon: MessagesSquare, href: "/team-chat" },
+      { name: "Chat Interno", icon: MessagesSquare, href: "/chat-interno" },
     ]
   },
   {

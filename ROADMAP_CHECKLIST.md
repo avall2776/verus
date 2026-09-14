@@ -167,6 +167,16 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 
 ---
 
+### 🟢 FASE 9: RECONSTRUÇÃO DO CHAT INTERNO (/chat-interno) - PADRÃO LERO (14/09/2026)
+- [x] Estrutura de abas superiores no topo da barra lateral: `[Colaboradores]` e `[Equipes]` com botão de ação rápida `+`.
+- [x] Barra de busca reativa e dropdown de filtro por setor/departamento (*Comercial*, *Suporte*, etc.) + filtro de status *Online*.
+- [x] Cards de diálogo com avatar online/offline, badge de setor, trecho da última mensagem e timestamp relativo no padrão Lero (*"4 dias"*, *"21 dias"*, etc.).
+- [x] Painel de mensagens com balões azul degradê (enviadas) e escuros (recebidas), cabeçalho detalhado e composer completo.
+- [x] Backend & WebSocket NestJS: endpoints `/team-chat/users`, `/team-chat/channels` e `/team-chat/departments` atualizados e evento real-time `newTeamMessage`.
+- [x] Rota `/chat-interno` vinculada na `Sidebar.tsx` e retrocompatibilidade mantida com `/team-chat`.
+
+---
+
 ## 🎯 Roteiro para Segunda-feira (14/09/2026 - Manhã)
 
 ### 🧪 Bateria de Testes Ponta a Ponta na Aba WhatsApp (/inbox)
@@ -178,12 +188,13 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 - [ ] **Teste 6 - Finalização e Reabertura**: Finalizar atendimento e testar reabertura automática na fila do bot com nova mensagem do lead.
 
 ---
-*Documento autogerado e contínuo - Última atualização: 11/09/2026 às 18:05*
+*Documento autogerado e contínuo - Última atualização: 14/09/2026 às 08:15*
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
 - **[11/09/2026 - 08:15]** 🟢 Início da jornada de desenvolvimento (Foco: Triagem, Filas e Configuração de Macros).
 - **[11/09/2026 - 13:30]** 🟢 Início do turno da tarde (Foco: Analytics Padrão Lero, Fluxo de IA, Modal de Assunção e Toolbar WhatsApp).
 - **[11/09/2026 - 18:05]** 🏁 Finalização da jornada de sexta-feira com builds 100% aprovados e produção atualizada.
+- **[14/09/2026 - 08:15]** 🟢 Início da jornada de desenvolvimento da semana (Foco: Reconstrução do Chat Interno Padrão Lero e Bateria de Testes WhatsApp).
 
 ---
 
