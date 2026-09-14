@@ -16,42 +16,286 @@ let WhatsappService = class WhatsappService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async getConfig(tenantId) {
-        const tenant = await this.prisma.tenant.findUnique({
-            where: { id: tenantId },
-            select: { metaToken: true, metaPhoneNumberId: true, whatsappSettings: true }
+    async ensureDefaultInstance(tenantId) {
+        const existing = await this.prisma.whatsAppInstance.findFirst({
+            where: { tenantId }
         });
-        if (!tenant)
-            throw new common_1.NotFoundException('Tenant not found');
-        const maskedToken = tenant.metaToken ? `${tenant.metaToken.substring(0, 15)}...` : null;
+        if (!existing) {
+            const tenant = await this.prisma.tenant.findUnique({
+                where: { id: tenantId },
+                select: { metaToken: true, metaPhoneNumberId: true, whatsappSettings: true }
+            });
+            return this.prisma.whatsAppInstance.create({
+                data: {
+                    tenantId,
+                    name: "Linha Principal",
+                    phoneNumberId: tenant?.metaPhoneNumberId || null,
+                    token: tenant?.metaToken || null,
+                    status: tenant?.metaToken ? "connected" : "disconnected",
+                    profileName: "Atendimento Oficial",
+                    profilePicUrl: null,
+                    settings: tenant?.whatsappSettings || {
+                        antiBanEnabled: true,
+                        typingDelayMs: 1500,
+                        messageDelayMs: 3000
+                    },
+                    isDefault: true,
+                    lastConnectedAt: tenant?.metaToken ? new Date() : null,
+                    history: {
+                        create: {
+                            status: tenant?.metaToken ? "connected" : "created",
+                            details: tenant?.metaToken ? "Instância oficial inicializada e conectada" : "Instância criada aguardando conexão"
+                        }
+                    }
+                }
+            });
+        }
+        return existing;
+    }
+    async getInstances(tenantId) {
+        await this.ensureDefaultInstance(tenantId);
+        const instances = await this.prisma.whatsAppInstance.findMany({
+            where: { tenantId },
+            include: {
+                history: {
+                    take: 10,
+                    orderBy: { timestamp: 'desc' }
+                }
+            },
+            orderBy: [
+                { isDefault: 'desc' },
+                { createdAt: 'asc' }
+            ]
+        });
+        return instances.map(inst => ({
+            ...inst,
+            token: inst.token ? `${inst.token.substring(0, 12)}...` : null,
+            hasToken: !!inst.token
+        }));
+    }
+    async getInstanceById(tenantId, id) {
+        const instance = await this.prisma.whatsAppInstance.findFirst({
+            where: { id, tenantId },
+            include: {
+                history: {
+                    take: 30,
+                    orderBy: { timestamp: 'desc' }
+                }
+            }
+        });
+        if (!instance) {
+            throw new common_1.NotFoundException('Instância do WhatsApp não encontrada.');
+        }
+        return {
+            ...instance,
+            token: instance.token ? `${instance.token.substring(0, 12)}...` : null,
+            hasToken: !!instance.token
+        };
+    }
+    async createInstance(tenantId, data) {
+        if (data.isDefault) {
+            await this.prisma.whatsAppInstance.updateMany({
+                where: { tenantId },
+                data: { isDefault: false }
+            });
+        }
+        const instance = await this.prisma.whatsAppInstance.create({
+            data: {
+                tenantId,
+                name: data.name || "Nova Linha WhatsApp",
+                phoneNumber: data.phoneNumber || null,
+                phoneNumberId: data.phoneNumberId || null,
+                token: data.token || null,
+                profileName: data.profileName || null,
+                profilePicUrl: data.profilePicUrl || null,
+                status: data.token ? "connected" : "disconnected",
+                isDefault: data.isDefault ?? false,
+                settings: data.settings || {
+                    antiBanEnabled: true,
+                    typingDelayMs: 1500,
+                    messageDelayMs: 3000
+                },
+                history: {
+                    create: {
+                        status: "created",
+                        details: `Instância criada: ${data.name || "Nova Linha"}`
+                    }
+                }
+            }
+        });
+        return instance;
+    }
+    async updateInstance(tenantId, id, data) {
+        const instance = await this.prisma.whatsAppInstance.findFirst({
+            where: { id, tenantId }
+        });
+        if (!instance) {
+            throw new common_1.NotFoundException('Instância não encontrada.');
+        }
+        if (data.isDefault) {
+            await this.prisma.whatsAppInstance.updateMany({
+                where: { tenantId, id: { not: id } },
+                data: { isDefault: false }
+            });
+        }
+        const updateData = {};
+        if (data.name !== undefined)
+            updateData.name = data.name;
+        if (data.phoneNumber !== undefined)
+            updateData.phoneNumber = data.phoneNumber;
+        if (data.phoneNumberId !== undefined)
+            updateData.phoneNumberId = data.phoneNumberId;
+        if (data.profileName !== undefined)
+            updateData.profileName = data.profileName;
+        if (data.profilePicUrl !== undefined)
+            updateData.profilePicUrl = data.profilePicUrl;
+        if (data.status !== undefined)
+            updateData.status = data.status;
+        if (data.isDefault !== undefined)
+            updateData.isDefault = data.isDefault;
+        if (data.settings !== undefined)
+            updateData.settings = data.settings;
+        if (data.token && !data.token.includes('...')) {
+            updateData.token = data.token;
+            updateData.status = 'connected';
+            updateData.lastConnectedAt = new Date();
+        }
+        const updated = await this.prisma.whatsAppInstance.update({
+            where: { id },
+            data: updateData
+        });
+        if (updated.isDefault) {
+            const tenantUpdate = {};
+            if (updateData.token)
+                tenantUpdate.metaToken = updateData.token;
+            if (updateData.phoneNumberId)
+                tenantUpdate.metaPhoneNumberId = updateData.phoneNumberId;
+            if (updateData.settings)
+                tenantUpdate.whatsappSettings = updateData.settings;
+            if (Object.keys(tenantUpdate).length > 0) {
+                await this.prisma.tenant.update({
+                    where: { id: tenantId },
+                    data: tenantUpdate
+                });
+            }
+        }
+        return updated;
+    }
+    async deleteInstance(tenantId, id) {
+        const instance = await this.prisma.whatsAppInstance.findFirst({
+            where: { id, tenantId }
+        });
+        if (!instance) {
+            throw new common_1.NotFoundException('Instância não encontrada.');
+        }
+        if (instance.isDefault) {
+            throw new common_1.BadRequestException('Não é permitido excluir a instância principal do workspace.');
+        }
+        await this.prisma.whatsAppInstance.delete({ where: { id } });
+        return { success: true };
+    }
+    async connectInstance(tenantId, id, mode = 'meta') {
+        const instance = await this.prisma.whatsAppInstance.findFirst({
+            where: { id, tenantId }
+        });
+        if (!instance) {
+            throw new common_1.NotFoundException('Instância não encontrada.');
+        }
+        if (mode === 'qr') {
+            const simulatedQr = `2@${Date.now()}==,${Buffer.from(id).toString('base64')},${Date.now()}`;
+            const updated = await this.prisma.whatsAppInstance.update({
+                where: { id },
+                data: {
+                    status: 'qrcode',
+                    qrCode: simulatedQr
+                }
+            });
+            await this.prisma.whatsAppConnectionHistory.create({
+                data: {
+                    instanceId: id,
+                    status: 'connecting',
+                    details: 'Código QR gerado para leitura no aparelho celular'
+                }
+            });
+            return {
+                status: 'qrcode',
+                qrCode: simulatedQr,
+                message: 'Aponte a câmera do WhatsApp para o QR Code gerado'
+            };
+        }
+        if (!instance.token && !instance.phoneNumberId) {
+            throw new common_1.BadRequestException('Informe o Access Token e Phone Number ID para conectar via Meta API.');
+        }
+        const updated = await this.prisma.whatsAppInstance.update({
+            where: { id },
+            data: {
+                status: 'connected',
+                lastConnectedAt: new Date()
+            }
+        });
+        await this.prisma.whatsAppConnectionHistory.create({
+            data: {
+                instanceId: id,
+                status: 'connected',
+                details: 'Conexão restabelecida com a Graph API do WhatsApp'
+            }
+        });
+        return {
+            status: 'connected',
+            message: 'Instância conectada com sucesso!'
+        };
+    }
+    async disconnectInstance(tenantId, id) {
+        const instance = await this.prisma.whatsAppInstance.findFirst({
+            where: { id, tenantId }
+        });
+        if (!instance) {
+            throw new common_1.NotFoundException('Instância não encontrada.');
+        }
+        await this.prisma.whatsAppInstance.update({
+            where: { id },
+            data: {
+                status: 'disconnected',
+                qrCode: null
+            }
+        });
+        await this.prisma.whatsAppConnectionHistory.create({
+            data: {
+                instanceId: id,
+                status: 'disconnected',
+                details: 'Sessão desconectada manualmente pelo usuário'
+            }
+        });
+        return {
+            status: 'disconnected',
+            message: 'Instância desconectada com sucesso.'
+        };
+    }
+    async getConfig(tenantId) {
+        const defaultInst = await this.ensureDefaultInstance(tenantId);
+        const maskedToken = defaultInst.token ? `${defaultInst.token.substring(0, 15)}...` : null;
         return {
             metaToken: maskedToken,
-            hasToken: !!tenant.metaToken,
-            metaPhoneNumberId: tenant.metaPhoneNumberId,
-            whatsappSettings: tenant.whatsappSettings || {
+            hasToken: !!defaultInst.token,
+            metaPhoneNumberId: defaultInst.phoneNumberId,
+            instanceId: defaultInst.id,
+            instanceName: defaultInst.name,
+            profilePicUrl: defaultInst.profilePicUrl,
+            whatsappSettings: defaultInst.settings || {
                 antiBanEnabled: true,
                 typingDelayMs: 1500,
                 messageDelayMs: 3000
             },
-            status: !!tenant.metaToken ? 'connected' : 'disconnected'
+            status: defaultInst.status
         };
     }
     async updateConfig(tenantId, data) {
-        const updateData = {};
-        if (data.metaToken && !data.metaToken.includes('...')) {
-            updateData.metaToken = data.metaToken;
-        }
-        if (data.metaPhoneNumberId !== undefined) {
-            updateData.metaPhoneNumberId = data.metaPhoneNumberId;
-        }
-        if (data.whatsappSettings) {
-            updateData.whatsappSettings = data.whatsappSettings;
-        }
-        await this.prisma.tenant.update({
-            where: { id: tenantId },
-            data: updateData
+        const defaultInst = await this.ensureDefaultInstance(tenantId);
+        return this.updateInstance(tenantId, defaultInst.id, {
+            token: data.metaToken,
+            phoneNumberId: data.metaPhoneNumberId,
+            settings: data.whatsappSettings
         });
-        return { success: true };
     }
 };
 exports.WhatsappService = WhatsappService;

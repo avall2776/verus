@@ -21,6 +21,27 @@ let WhatsappController = class WhatsappController {
     constructor(whatsappService) {
         this.whatsappService = whatsappService;
     }
+    async getInstances(tenantId) {
+        return this.whatsappService.getInstances(tenantId);
+    }
+    async createInstance(tenantId, body) {
+        return this.whatsappService.createInstance(tenantId, body);
+    }
+    async getInstanceById(tenantId, id) {
+        return this.whatsappService.getInstanceById(tenantId, id);
+    }
+    async updateInstance(tenantId, id, body) {
+        return this.whatsappService.updateInstance(tenantId, id, body);
+    }
+    async deleteInstance(tenantId, id) {
+        return this.whatsappService.deleteInstance(tenantId, id);
+    }
+    async connectInstance(tenantId, id, body) {
+        return this.whatsappService.connectInstance(tenantId, id, body?.mode || 'meta');
+    }
+    async disconnectInstance(tenantId, id) {
+        return this.whatsappService.disconnectInstance(tenantId, id);
+    }
     async getConfig(tenantId) {
         return this.whatsappService.getConfig(tenantId);
     }
@@ -29,6 +50,63 @@ let WhatsappController = class WhatsappController {
     }
 };
 exports.WhatsappController = WhatsappController;
+__decorate([
+    (0, common_1.Get)('instances'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], WhatsappController.prototype, "getInstances", null);
+__decorate([
+    (0, common_1.Post)('instances'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], WhatsappController.prototype, "createInstance", null);
+__decorate([
+    (0, common_1.Get)('instances/:id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], WhatsappController.prototype, "getInstanceById", null);
+__decorate([
+    (0, common_1.Patch)('instances/:id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], WhatsappController.prototype, "updateInstance", null);
+__decorate([
+    (0, common_1.Delete)('instances/:id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], WhatsappController.prototype, "deleteInstance", null);
+__decorate([
+    (0, common_1.Post)('instances/:id/connect'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], WhatsappController.prototype, "connectInstance", null);
+__decorate([
+    (0, common_1.Post)('instances/:id/disconnect'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], WhatsappController.prototype, "disconnectInstance", null);
 __decorate([
     (0, common_1.Get)('config'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

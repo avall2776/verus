@@ -6,7 +6,8 @@ import {
   Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, 
   BrainCircuit, Lock, Image as ImageIcon, FileText, Mic, X, ArrowRightLeft, Network,
   RefreshCw, TrendingUp, Calendar, MessageSquare, CheckCircle2, Plus, Sparkles,
-  BookUser, CalendarClock, PhoneCall, Zap, Eye, ShieldCheck, PhoneForwarded, UserCheck
+  BookUser, CalendarClock, PhoneCall, Zap, Eye, ShieldCheck, PhoneForwarded, UserCheck,
+  Smile, Bold, Italic, Strikethrough, Code, ChevronDown
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -14,6 +15,14 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
+
+const COMMON_EMOJIS = [
+  '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', 
+  '😉', '😌', '😍', '🥰', '😘', '😋', '😎', '🤝', '👍', '👎', 
+  '👌', '✌️', '🤞', '👏', '🙌', '🙏', '💪', '🔥', '✨', '⭐', 
+  '🚀', '💡', '💬', '📞', '📅', '⏰', '⏳', '🎯', '✅', '❌', 
+  '⚠️', '💰', '💵', '💳', '📊', '📈', '📌', '📎', '🎉', '🏆'
+];
 
 function InboxContent() {
   const searchParams = useSearchParams();
@@ -39,7 +48,9 @@ function InboxContent() {
   const [departments, setDepartments] = useState<any[]>([]);
   const [isReopening, setIsReopening] = useState(false);
   const { socket, isConnected, clearGlobalUnread } = useSocket();
-  const { status: waStatus, refreshStatus: refreshWaStatus } = useWhatsApp();
+  const { instances, activeInstance, setActiveInstance, refreshInstances, status: waStatus, refreshStatus: refreshWaStatus } = useWhatsApp();
+  const [showInstanceDropdown, setShowInstanceDropdown] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isRefreshingConnection, setIsRefreshingConnection] = useState(false);
   const [onlyUnread, setOnlyUnread] = useState(false);
   const [taggingContactId, setTaggingContactId] = useState<string | null>(null);
@@ -85,6 +96,46 @@ function InboxContent() {
     } catch (err) {
       console.error("Erro ao adicionar tag rápida", err);
     }
+  };
+
+  const handleInsertFormatting = (prefix: string, suffix: string = prefix) => {
+    if (!textareaRef.current) {
+      setInputText(prev => `${prev}${prefix}${suffix}`);
+      return;
+    }
+    const start = textareaRef.current.selectionStart || 0;
+    const end = textareaRef.current.selectionEnd || 0;
+    const text = inputText;
+    const selected = text.substring(start, end);
+    const replacement = `${prefix}${selected || ''}${suffix}`;
+    const newText = text.substring(0, start) + replacement + text.substring(end);
+    setInputText(newText);
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        const newCursor = selected ? start + replacement.length : start + prefix.length;
+        textareaRef.current.setSelectionRange(newCursor, newCursor);
+      }
+    }, 50);
+  };
+
+  const handleInsertEmoji = (emoji: string) => {
+    if (!textareaRef.current) {
+      setInputText(prev => prev + emoji);
+      return;
+    }
+    const start = textareaRef.current.selectionStart || 0;
+    const end = textareaRef.current.selectionEnd || 0;
+    const text = inputText;
+    const newText = text.substring(0, start) + emoji + text.substring(end);
+    setInputText(newText);
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        const newCursor = start + emoji.length;
+        textareaRef.current.setSelectionRange(newCursor, newCursor);
+      }
+    }, 50);
   };
 
   useEffect(() => {
@@ -138,6 +189,7 @@ function InboxContent() {
           name: conv.contact?.name || 'Contato Sem Nome',
           phone: conv.contact?.phone || '',
           email: conv.contact?.email || '',
+          avatarUrl: conv.contact?.avatarUrl || null,
           tags: conv.contact?.tags || [],
           lastMsg: lastMsg,
           time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -175,6 +227,7 @@ function InboxContent() {
           name: conv.contact?.name || 'Contato Sem Nome',
           phone: conv.contact?.phone || '',
           email: conv.contact?.email || '',
+          avatarUrl: conv.contact?.avatarUrl || null,
           tags: conv.contact?.tags || [],
           lastMsg: lastMsg,
           time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -269,10 +322,11 @@ function InboxContent() {
               const existing = prev.find(p => p.id === conv.id);
               return {
                 id: conv.id,
-                contactId: conv.contact.id,
-                name: conv.contact.name,
-                phone: conv.contact.phone,
-                email: conv.contact.email,
+                contactId: conv.contact?.id || '',
+                name: conv.contact?.name || 'Contato Sem Nome',
+                phone: conv.contact?.phone || '',
+                email: conv.contact?.email || '',
+                avatarUrl: conv.contact?.avatarUrl || null,
                 lastMsg: lastMsg,
                 time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 isAi: conv.status === 'bot_active',
@@ -309,11 +363,12 @@ function InboxContent() {
           const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
           return {
             id: conv.id,
-            contactId: conv.contact.id,
-            name: conv.contact.name,
-            phone: conv.contact.phone,
-            email: conv.contact.email,
-            tags: conv.contact.tags || [],
+            contactId: conv.contact?.id || '',
+            name: conv.contact?.name || 'Contato Sem Nome',
+            phone: conv.contact?.phone || '',
+            email: conv.contact?.email || '',
+            avatarUrl: conv.contact?.avatarUrl || null,
+            tags: conv.contact?.tags || [],
             lastMsg: lastMsg,
             time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             isAi: conv.status === 'bot_active',
@@ -589,34 +644,122 @@ function InboxContent() {
         {/* Header Lista */}
         <div className="p-4 border-b border-gray-800 flex flex-col gap-3">
           {/* BOX DE INSTÂNCIA (PADRÃO LERO NO TOPO DA COLUNA LATERAL) */}
-          <div className="bg-[#162038] border border-gray-700/60 rounded-xl p-2.5 flex items-center justify-between shadow-sm">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="relative flex items-center justify-center">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping absolute"></div>
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-white truncate leading-tight">
-                  Linha Principal
-                </span>
-                <span className="text-[10px] text-emerald-400 font-medium leading-tight">
-                  Conectado
-                </span>
-              </div>
+          <div className="bg-[#162038] border border-gray-700/60 rounded-xl p-2.5 flex items-center justify-between shadow-sm relative">
+            {(() => {
+              const effectiveStatus = activeInstance ? activeInstance.status : (waStatus?.status || 'disconnected');
+              const isWaConnected = effectiveStatus === 'connected';
+              const isWaConnecting = effectiveStatus === 'connecting' || effectiveStatus === 'qrcode';
+
+              return (
+                <div 
+                  onClick={() => setShowInstanceDropdown(prev => !prev)}
+                  className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer group"
+                  title="Alternar instância do WhatsApp"
+                >
+                  <div className="relative flex items-center justify-center shrink-0">
+                    {activeInstance?.profilePicUrl ? (
+                      <img 
+                        src={activeInstance.profilePicUrl} 
+                        alt={activeInstance.name} 
+                        className="w-7 h-7 rounded-full object-cover border border-gray-600"
+                      />
+                    ) : (
+                      <div className={`w-2.5 h-2.5 rounded-full ${
+                        isWaConnected ? 'bg-emerald-400' : isWaConnecting ? 'bg-amber-400' : 'bg-red-400'
+                      }`}></div>
+                    )}
+                    {isWaConnected && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping absolute"></div>
+                    )}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-bold text-white truncate leading-tight group-hover:text-accent transition-colors flex items-center gap-1">
+                      {activeInstance?.name || 'Linha Principal'}
+                      <ChevronDown size={11} className={`text-gray-400 transition-transform ${showInstanceDropdown ? 'rotate-180' : ''}`} />
+                    </span>
+                    <span className={`text-[10px] font-medium leading-tight ${
+                      isWaConnected ? 'text-emerald-400' : isWaConnecting ? 'text-amber-400' : 'text-rose-400'
+                    }`}>
+                      {isWaConnected ? 'Conectado' : isWaConnecting ? 'Conectando...' : 'Desconectado'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsRefreshingConnection(true);
+                  refreshWaStatus?.().finally(() => {
+                    setTimeout(() => setIsRefreshingConnection(false), 600);
+                  });
+                  refetchConversations();
+                }}
+                title="Atualizar status da conexão"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/60 transition-colors cursor-pointer"
+              >
+                <RefreshCw size={13} className={isRefreshingConnection ? "animate-spin text-blue-400" : ""} />
+              </button>
             </div>
-            <button
-              onClick={() => {
-                setIsRefreshingConnection(true);
-                refreshWaStatus?.().finally(() => {
-                  setTimeout(() => setIsRefreshingConnection(false), 600);
-                });
-                refetchConversations();
-              }}
-              title="Atualizar status da conexão"
-              className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/60 transition-colors cursor-pointer"
-            >
-              <RefreshCw size={13} className={isRefreshingConnection ? "animate-spin text-blue-400" : ""} />
-            </button>
+
+            {/* Dropdown de Instâncias */}
+            {showInstanceDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#0F172A] border border-gray-700/80 rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.6)] py-1.5 z-50 animate-in fade-in zoom-in-95">
+                <div className="px-3 py-1 text-[10px] uppercase font-bold text-gray-400 tracking-wider flex items-center justify-between border-b border-gray-800/80 mb-1">
+                  <span>Instâncias WhatsApp</span>
+                  <span className="text-gray-500 font-normal">{instances?.length || 0} ativa(s)</span>
+                </div>
+                
+                <div className="max-h-48 overflow-y-auto">
+                  {instances && instances.length > 0 ? (
+                    instances.map((inst) => (
+                      <div
+                        key={inst.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveInstance(inst);
+                          setShowInstanceDropdown(false);
+                        }}
+                        className={`px-3 py-2 flex items-center justify-between hover:bg-gray-800/70 cursor-pointer transition-colors ${
+                          activeInstance?.id === inst.id ? 'bg-primary/15 border-l-2 border-primary' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${
+                            inst.status === 'connected' ? 'bg-emerald-400' : (inst.status === 'connecting' || inst.status === 'qrcode') ? 'bg-amber-400' : 'bg-gray-500'
+                          }`} />
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-semibold text-white truncate">{inst.name}</span>
+                            <span className="text-[10px] text-gray-400 truncate">{inst.phoneNumber || 'Sem número'}</span>
+                          </div>
+                        </div>
+                        {inst.isDefault && (
+                          <span className="text-[9px] bg-blue-950/60 border border-blue-800/40 text-blue-300 px-1.5 py-0.2 rounded font-medium">
+                            Padrão
+                          </span>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-xs text-gray-400 text-center">
+                      Nenhuma instância cadastrada
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-1 mt-1 border-t border-gray-800/80 px-2">
+                  <a
+                    href="/settings/whatsapp"
+                    className="flex items-center gap-2 text-xs text-accent hover:text-accent/80 font-medium px-2 py-1.5 rounded-lg hover:bg-accent/10 transition-colors"
+                  >
+                    <Plus size={13} />
+                    <span>Gerenciar / Nova Instância</span>
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between">
@@ -782,18 +925,30 @@ function InboxContent() {
               `}
             >
               <div className="flex items-start gap-3 w-full">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white font-bold shrink-0 relative text-xs">
-                  {contact.name?.charAt(0) || 'C'}
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white font-bold shrink-0 relative text-xs overflow-hidden">
+                  {contact.avatarUrl ? (
+                    <img 
+                      src={contact.avatarUrl} 
+                      alt={contact.name} 
+                      className="w-full h-full object-cover rounded-full"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  ) : null}
+                  <span className={contact.avatarUrl ? "hidden" : ""}>
+                    {contact.name?.charAt(0) || 'C'}
+                  </span>
                   {contact.status === 'resolved' || contact.status === 'closed' ? (
-                    <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(16,185,129,0.8)]">
+                    <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(16,185,129,0.8)] z-10">
                       <Lock size={9} className="text-white" />
                     </div>
                   ) : contact.isAi ? (
-                    <div className="absolute -bottom-1 -right-1 bg-accent rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(0,210,255,0.8)]">
+                    <div className="absolute -bottom-1 -right-1 bg-accent rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(0,210,255,0.8)] z-10">
                       <Bot size={9} className="text-background" />
                     </div>
                   ) : (
-                    <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(34,197,94,0.8)]">
+                    <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(34,197,94,0.8)] z-10">
                       <User size={9} className="text-white" />
                     </div>
                   )}
@@ -1021,8 +1176,20 @@ function InboxContent() {
             {/* Chat Header */}
             <div className="h-16 px-4 border-b border-gray-800 flex items-center justify-between bg-[#0F172A] z-10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-700 to-gray-800 flex items-center justify-center text-white font-bold">
-                  {activeContactData.name.charAt(0)}
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-700 to-gray-800 flex items-center justify-center text-white font-bold shrink-0 relative overflow-hidden">
+                  {activeContactData.avatarUrl ? (
+                    <img 
+                      src={activeContactData.avatarUrl} 
+                      alt={activeContactData.name} 
+                      className="w-full h-full object-cover rounded-full"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  ) : null}
+                  <span className={activeContactData.avatarUrl ? "hidden" : ""}>
+                    {activeContactData.name.charAt(0)}
+                  </span>
                 </div>
                 <div>
                   <h2 className="text-sm font-bold text-white">{activeContactData.name}</h2>
@@ -1209,20 +1376,127 @@ function InboxContent() {
                   </div>
                 ) : (
                   <>
-                    {/* Abas Externa / Interna */}
-                    <div className="flex gap-4 px-1">
-                      <button 
-                        onClick={() => setIsInternalMode(false)}
-                        className={`text-[0.7rem] uppercase tracking-wider font-bold pb-1 transition-all ${!isInternalMode ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-300'}`}
-                      >
-                        Mensagem Externa
-                      </button>
-                      <button 
-                        onClick={() => setIsInternalMode(true)}
-                        className={`text-[0.7rem] uppercase tracking-wider font-bold pb-1 transition-all ${isInternalMode ? 'text-amber-500 border-b-2 border-amber-500' : 'text-gray-500 hover:text-gray-300 flex items-center gap-1'}`}
-                      >
-                        <Lock size={10} className="inline mb-0.5"/> Nota Interna (Equipe)
-                      </button>
+                    {/* Toolbar de Formatação Rica WhatsApp & Ações */}
+                    <div className="flex items-center justify-between px-1 pb-1.5 pt-0.5">
+                      <div className="flex items-center gap-1">
+                        {/* Seletor de Emojis */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setShowEmojiPicker(prev => !prev)}
+                            className={`p-1.5 rounded-lg text-gray-400 hover:text-amber-400 hover:bg-gray-800/80 transition-colors cursor-pointer ${showEmojiPicker ? 'text-amber-400 bg-gray-800/80' : ''}`}
+                            title="Inserir Emoji"
+                          >
+                            <Smile size={16} />
+                          </button>
+
+                          {showEmojiPicker && (
+                            <div className="absolute bottom-9 left-0 w-72 bg-[#1E293B] border border-gray-700/80 shadow-[0_10px_30px_rgba(0,0,0,0.7)] rounded-xl p-3 z-50 animate-in fade-in zoom-in-95">
+                              <div className="flex items-center justify-between pb-2 border-b border-gray-700/60 mb-2">
+                                <span className="text-[11px] font-bold text-gray-300 uppercase tracking-wider">Emojis Frequentes</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowEmojiPicker(false)}
+                                  className="text-gray-400 hover:text-white p-0.5"
+                                >
+                                  <X size={13} />
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-8 gap-1.5 max-h-48 overflow-y-auto">
+                                {COMMON_EMOJIS.map((emoji, idx) => (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => handleInsertEmoji(emoji)}
+                                    className="w-7 h-7 flex items-center justify-center text-base hover:bg-gray-700/80 rounded-lg transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                                  >
+                                    {emoji}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Divisor */}
+                        <div className="w-[1px] h-3.5 bg-gray-700/80 mx-1" />
+
+                        {/* Negrito *texto* */}
+                        <button
+                          type="button"
+                          onClick={() => handleInsertFormatting('*')}
+                          className="px-1.5 py-1 rounded text-xs font-bold text-gray-400 hover:text-white hover:bg-gray-800/80 transition-colors cursor-pointer"
+                          title="Negrito WhatsApp (*texto*)"
+                        >
+                          <Bold size={13} />
+                        </button>
+
+                        {/* Itálico _texto_ */}
+                        <button
+                          type="button"
+                          onClick={() => handleInsertFormatting('_')}
+                          className="px-1.5 py-1 rounded text-xs italic text-gray-400 hover:text-white hover:bg-gray-800/80 transition-colors cursor-pointer"
+                          title="Itálico WhatsApp (_texto_)"
+                        >
+                          <Italic size={13} />
+                        </button>
+
+                        {/* Tachado ~texto~ */}
+                        <button
+                          type="button"
+                          onClick={() => handleInsertFormatting('~')}
+                          className="px-1.5 py-1 rounded text-xs line-through text-gray-400 hover:text-white hover:bg-gray-800/80 transition-colors cursor-pointer"
+                          title="Tachado WhatsApp (~texto~)"
+                        >
+                          <Strikethrough size={13} />
+                        </button>
+
+                        {/* Código/Mono ```texto``` */}
+                        <button
+                          type="button"
+                          onClick={() => handleInsertFormatting('```')}
+                          className="px-1.5 py-1 rounded text-xs font-mono text-gray-400 hover:text-white hover:bg-gray-800/80 transition-colors cursor-pointer"
+                          title="Monoespaçado WhatsApp (```texto```)"
+                        >
+                          <Code size={13} />
+                        </button>
+
+                        {/* Divisor */}
+                        <div className="w-[1px] h-3.5 bg-gray-700/80 mx-1" />
+
+                        {/* Respostas Rápidas / Macros */}
+                        <button
+                          type="button"
+                          onClick={() => setShowQuickReplies(prev => !prev)}
+                          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                            showQuickReplies 
+                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
+                              : 'text-gray-400 hover:text-amber-400 hover:bg-gray-800/80'
+                          }`}
+                          title="Respostas Rápidas (ou digite /)"
+                        >
+                          <Zap size={13} />
+                          <span className="text-[10px]">Respostas</span>
+                        </button>
+                      </div>
+
+                      {/* Modo Externo vs Interno */}
+                      <div className="flex items-center gap-2">
+                        <button 
+                          type="button"
+                          onClick={() => setIsInternalMode(false)}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded transition-all cursor-pointer ${!isInternalMode ? 'bg-primary/20 text-blue-300 border border-primary/40' : 'text-gray-500 hover:text-gray-400'}`}
+                        >
+                          WhatsApp
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => setIsInternalMode(true)}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded transition-all flex items-center gap-1 cursor-pointer ${isInternalMode ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'text-gray-500 hover:text-gray-400'}`}
+                        >
+                          <Lock size={9} /> Nota Interna
+                        </button>
+                      </div>
                     </div>
 
                     <div className={`border rounded-xl p-1.5 flex items-end gap-2 transition-colors shadow-sm relative
@@ -1333,8 +1607,20 @@ function InboxContent() {
       {/* 3. PAINEL DIREITO: Contexto do Lead */}
       <div className="w-[320px] flex-shrink-0 bg-[#0F172A] flex flex-col overflow-y-auto">
         <div className="p-6 flex flex-col items-center border-b border-gray-800">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-black text-3xl shadow-[0_0_20px_rgba(0,210,255,0.2)] mb-4">
-            {activeContactData ? activeContactData.name.charAt(0) : '?'}
+          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-black text-3xl shadow-[0_0_20px_rgba(0,210,255,0.2)] mb-4 overflow-hidden relative">
+            {activeContactData?.avatarUrl ? (
+              <img 
+                src={activeContactData.avatarUrl} 
+                alt={activeContactData.name} 
+                className="w-full h-full object-cover rounded-full"
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.display = 'none';
+                }}
+              />
+            ) : null}
+            <span className={activeContactData?.avatarUrl ? "hidden" : ""}>
+              {activeContactData ? activeContactData.name.charAt(0) : '?'}
+            </span>
           </div>
           <h2 className="text-lg font-bold text-white">{activeContactData ? activeContactData.name : 'Nenhum lead'}</h2>
           {activeContactData && <p className="text-xs text-text-secondary mt-1">Lead Registrado</p>}

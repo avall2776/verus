@@ -3,6 +3,7 @@ export interface SendMessagePayload {
     tenantId: string;
     phone: string;
     content: string;
+    instanceId?: string;
 }
 export declare class MessagingService {
     private readonly prisma;

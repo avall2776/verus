@@ -12,6 +12,7 @@ export declare class ChatService {
             name: string;
             phone: string | null;
             email: string | null;
+            avatarUrl: string | null;
             source: string;
             tags: string[];
             tenantId: string;
@@ -76,6 +77,7 @@ export declare class ChatService {
             name: string;
             phone: string | null;
             email: string | null;
+            avatarUrl: string | null;
             source: string;
             tags: string[];
             tenantId: string;
@@ -115,6 +117,7 @@ export declare class ChatService {
             name: string;
             phone: string | null;
             email: string | null;
+            avatarUrl: string | null;
             source: string;
             tags: string[];
             tenantId: string;
@@ -172,6 +175,7 @@ export declare class ChatService {
             name: string;
             phone: string | null;
             email: string | null;
+            avatarUrl: string | null;
             source: string;
             tags: string[];
             tenantId: string;
@@ -219,6 +223,7 @@ export declare class ChatService {
             name: string;
             phone: string | null;
             email: string | null;
+            avatarUrl: string | null;
             source: string;
             tags: string[];
             tenantId: string;
@@ -276,6 +281,7 @@ export declare class ChatService {
             name: string;
             phone: string | null;
             email: string | null;
+            avatarUrl: string | null;
             source: string;
             tags: string[];
             tenantId: string;

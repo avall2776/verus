@@ -545,6 +545,27 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Build do Next.js 14 validado com sucesso (código 0, 29 rotas geradas).
   * Deploy enviado para produção via Git push.
 
+### Fase 39: Refatoração da Arquitetura WhatsApp & Livechat Avançado (Padrão Lero Multi-tenant)
+- [x] **Modelagem Prisma & Sincronização de Banco (Multi-tenant)**:
+  * Campo `avatarUrl String?` adicionado ao model `Contact` para suporte a fotos reais de contatos em alta resolução.
+  * Criação dos models `WhatsAppInstance` e `WhatsAppConnectionHistory` vinculados com integridade referencial ao `Tenant` (`whatsappInstances WhatsAppInstance[]`).
+  * Campos implementados: `id` (UUID), `tenantId`, `name`, `phoneNumber`, `profilePicUrl`, `profileName`, `status` (`DISCONNECTED`, `CONNECTING`, `CONNECTED`), `qrCode`, `token`, `phoneNumberId`, `isDefault`, `settings` (JSON com regras anti-ban e delays), `lastConnectedAt`, `createdAt`, `updatedAt` e histórico de eventos.
+  * Sincronização executada com sucesso via `prisma db push` no banco Supabase remoto e cliente Prisma gerado via `prisma generate`.
+- [x] **Backend NestJS (Módulos WhatsApp & Messaging)**:
+  * `WhatsAppService`: Implementado gerenciamento de instâncias completo (`getInstances`, `createInstance`, `getInstanceById`, `updateInstance`, `deleteInstance`, `connectInstance` com simulação de QR Code e geração de sessão, `disconnectInstance`), mantendo retrocompatibilidade transparente em `getConfig` e `updateConfig` via redirecionamento para instância padrão do tenant.
+  * `WhatsAppController`: Rotas REST protegidas expostas (`GET/POST /whatsapp/instances`, `GET/PATCH/DELETE /whatsapp/instances/:id`, `POST /whatsapp/instances/:id/connect`, `POST /whatsapp/instances/:id/disconnect`, `/whatsapp/config`).
+  * `MessagingService`: Atualizado `sendText` para busca dinâmica de credenciais e tokens a partir da instância ativa vinculada ao tenant/conversa, eliminando tokens estáticos injetados.
+- [x] **Frontend - Provider & Configurações (/settings/whatsapp)**:
+  * `WhatsAppProvider.tsx`: Atualizado para consumir `@/lib/api` autenticado, suportando lista de instâncias dinâmicas (`instances`), instância ativa (`activeInstance`, `setActiveInstance`) e re-sincronização de status reativo.
+  * `settings/whatsapp/page.tsx`: Tela de configurações totalmente reestruturada com seletor multi-instância, modal "+ Nova Instância", perfil da conta com avatar, status reativo com ping pulsante, aba de QR Code com temporizador e auto-refresh, regras de segurança anti-bloqueio (digitação humana e espaçamento) e histórico de conexões/auditoria.
+- [x] **Frontend - Inbox & Livechat Avançado (/inbox)**:
+  * Seletor de instâncias dinâmico integrado no topo da coluna lateral esquerda com status reativo (`connected`, `connecting`, `disconnected`), avatar da linha e dropdown para alternar sessões ou acessar "+ Gerenciar / Nova Instância".
+  * Renderização de foto de perfil real dos contatos (`contact.avatarUrl`) na lista de conversas, no cabeçalho do chat ativo e no painel de contexto do lead, com fallback automático para iniciais estilizadas em caso de ausência ou falha de imagem.
+  * Barra de ferramentas rica no rodapé do chat (composer) com seletor rápido de emojis (50 emojis frequentes em popover organizado), botões de formatação WhatsApp rápida (Negrito `*B*`, Itálico `_I_`, Tachado `~S~`, Monoespaçado `</>`), botão de Respostas Rápidas (`Zap`) e alternador de Modo Externo (WhatsApp) / Nota Interna.
+- [x] **Validação & Compilação**:
+  * Build do Backend NestJS executado e aprovado com sucesso (**código 0**).
+  * Build do Frontend Next.js 14 executado e aprovado com sucesso (**código 0**, 29 rotas de produção geradas).
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
@@ -555,8 +576,9 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[11/09/2026 - 13:30]** 🟢 Início do turno da tarde (Analytics Padrão Lero, Fluxo de IA, Modal de Assunção, Toolbar WhatsApp e Deploy).
 - **[11/09/2026 - 18:10]** 🏁 Finalização da jornada de sexta-feira com builds 100% aprovados, produção atualizada e checklist definitivo consolidado.
 - **[14/09/2026 - 08:15]** 🟢 Início da jornada de desenvolvimento da semana (Foco: Reconstrução do Chat Interno Padrão Lero e Bateria de Testes WhatsApp).
-- **[14/09/2026 - 11:54]** ⏸️ Pausa para almoço (Entregas da manhã: Fases 31 a 36 concluídas — Barra do CRM em linha única, Fullscreen API, Refinamento visual monocromático do DealModal, Modais de Editar Contato/Tarefa/Evento, Conexão de endpoints dos cards e Evolução inicial da aba Métricas e Vendas `/dashboard/cm`). Retorno à tarde para continuidade do refinamento avançado de Métricas e Vendas.
-- **[14/09/2026 - 13:38]** 🟢 Retorno do almoço / Início do turno da tarde (Foco: Continuidade e Refinamento Avançado da Aba Métricas e Vendas no padrão Lero).
+- **[14/09/2026 - 11:54]** ⏸️ Pausa para almoço (Entregas da manhã: Fases 31 a 36 concluídas — Barra do CRM em linha única, Fullscreen API, Refinamento visual monocromático do DealModal, Modais de Editar Contato/Tarefa/Evento, Conexão de endpoints dos cards e Evolução inicial da aba Métricas e Vendas `/dashboard/cm`).
+- **[14/09/2026 - 13:38]** 🟢 Retorno do almoço / Início do turno da tarde (Fases 37 e 38 concluídas: Paridade dos 6 Cards com popover analítico e tradução de etapas do CRM).
+- **[14/09/2026 - 16:35]** 🚀 Fase 39 Concluída: Refatoração completa da arquitetura do WhatsApp e Inbox (Padrão Lero Multi-tenant) — Prisma, Backend NestJS, WhatsAppProvider, /settings/whatsapp e /inbox com avatares reais, seletor de instâncias e toolbar rica no composer. Builds 100% aprovados (código 0).
 
 ---
 

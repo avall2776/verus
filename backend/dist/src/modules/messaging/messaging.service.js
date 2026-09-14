@@ -21,15 +21,40 @@ let MessagingService = MessagingService_1 = class MessagingService {
     }
     async sendText(payload) {
         try {
-            const tenant = await this.prisma.tenant.findUnique({
-                where: { id: payload.tenantId },
-                select: { metaToken: true, metaPhoneNumberId: true }
-            });
-            if (!tenant || !tenant.metaToken || !tenant.metaPhoneNumberId) {
-                this.logger.error(`Credenciais da Meta ausentes para o tenant ${payload.tenantId}`);
+            let token = null;
+            let phoneNumberId = null;
+            const instance = payload.instanceId
+                ? await this.prisma.whatsAppInstance.findFirst({
+                    where: { id: payload.instanceId, tenantId: payload.tenantId }
+                })
+                : await this.prisma.whatsAppInstance.findFirst({
+                    where: {
+                        tenantId: payload.tenantId,
+                        status: 'connected',
+                        token: { not: null },
+                        phoneNumberId: { not: null }
+                    },
+                    orderBy: { isDefault: 'desc' }
+                });
+            if (instance && instance.token && instance.phoneNumberId) {
+                token = instance.token;
+                phoneNumberId = instance.phoneNumberId;
+            }
+            else {
+                const tenant = await this.prisma.tenant.findUnique({
+                    where: { id: payload.tenantId },
+                    select: { metaToken: true, metaPhoneNumberId: true }
+                });
+                if (tenant?.metaToken && tenant?.metaPhoneNumberId) {
+                    token = tenant.metaToken;
+                    phoneNumberId = tenant.metaPhoneNumberId;
+                }
+            }
+            if (!token || !phoneNumberId) {
+                this.logger.error(`Credenciais ativas do WhatsApp ausentes para o tenant ${payload.tenantId}`);
                 return null;
             }
-            const url = `https://graph.facebook.com/v19.0/${tenant.metaPhoneNumberId}/messages`;
+            const url = `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`;
             const response = await axios_1.default.post(url, {
                 messaging_product: "whatsapp",
                 recipient_type: "individual",
@@ -41,7 +66,7 @@ let MessagingService = MessagingService_1 = class MessagingService {
                 }
             }, {
                 headers: {
-                    'Authorization': `Bearer ${tenant.metaToken}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });

@@ -57,6 +57,7 @@ export declare class AutomationsService {
             name: string;
             phone: string | null;
             email: string | null;
+            avatarUrl: string | null;
             source: string;
             tags: string[];
             tenantId: string;

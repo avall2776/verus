@@ -51,6 +51,7 @@ model Tenant {
   teamChannels TeamChannel[]
   teamMessages TeamMessage[]
   businessHours BusinessHours[]
+  whatsappInstances WhatsAppInstance[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -120,6 +121,7 @@ model Contact {
   name      String
   phone     String?
   email     String?
+  avatarUrl String?
   source    String   // WhatsApp, Instagram, Web
   tags      String[] // Quente, Frio
   tenantId  String
@@ -340,4 +342,43 @@ model TeamMessage {
   @@index([tenantId])
   @@index([channelId])
   @@index([receiverId])
+}
+
+// ------------------------------------------------------
+// INSTÂNCIAS DE WHATSAPP MULTI-TENANT & HISTÓRICO
+// ------------------------------------------------------
+
+model WhatsAppInstance {
+  id              String   @id @default(uuid())
+  tenantId        String
+  name            String   @default("Linha Principal")
+  phoneNumber     String?
+  profilePicUrl   String?
+  profileName     String?
+  status          String   @default("disconnected") // connected, disconnected, connecting, qrcode
+  qrCode          String?  @db.Text
+  token           String?
+  phoneNumberId   String?
+  isDefault       Boolean  @default(true)
+  settings        Json?    // { antiBanEnabled: boolean, typingDelayMs: number, messageDelayMs: number }
+  lastConnectedAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  history         WhatsAppConnectionHistory[]
+
+  @@index([tenantId])
+}
+
+model WhatsAppConnectionHistory {
+  id          String   @id @default(uuid())
+  instanceId  String
+  status      String   // connected, disconnected, error
+  details     String?
+  timestamp   DateTime @default(now())
+
+  instance    WhatsAppInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([instanceId])
 }

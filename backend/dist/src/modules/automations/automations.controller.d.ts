@@ -19,6 +19,7 @@ export declare class AutomationsController {
             name: string;
             phone: string | null;
             email: string | null;
+            avatarUrl: string | null;
             source: string;
             tags: string[];
             tenantId: string;
