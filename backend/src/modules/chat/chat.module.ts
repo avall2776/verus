@@ -4,13 +4,14 @@ import { MessagingModule } from '../messaging/messaging.module';
 import { AuthModule } from '../auth/auth.module';
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
+import { MediaController } from './media.controller';
 import { ChatGateway } from './chat.gateway';
 
 @Global()
 @Module({
   imports: [DatabaseModule, MessagingModule, AuthModule],
   providers: [ChatService, ChatGateway],
-  controllers: [ChatController],
+  controllers: [ChatController, MediaController],
   exports: [ChatGateway],
 })
 export class ChatModule {}

@@ -238,37 +238,23 @@ function InboxContent() {
     mediaRecorderRef.current.onstop = async () => {
       try {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const fileName = `audio_${Date.now()}_${uuidv4().substring(0, 8)}.webm`;
-        const filePath = `chat/${fileName}`;
+        const localPreviewUrl = URL.createObjectURL(audioBlob);
 
-        let mediaUrl = '';
-        try {
-          const { error: uploadError } = await supabase.storage
-            .from('versus-media')
-            .upload(filePath, audioBlob, { contentType: 'audio/webm', upsert: false });
+        const formData = new FormData();
+        const filename = `voice_${Date.now()}.webm`;
+        formData.append('file', audioBlob, filename);
+        formData.append('type', 'audio');
+        formData.append('content', '🎤 Mensagem de voz');
+        formData.append('isInternal', String(isInternalMode));
 
-          if (!uploadError) {
-            const { data: publicUrlData } = supabase.storage
-              .from('versus-media')
-              .getPublicUrl(filePath);
-            mediaUrl = publicUrlData.publicUrl;
-          } else {
-            console.warn("Upload no Supabase falhou, usando blob URL:", uploadError);
-            mediaUrl = URL.createObjectURL(audioBlob);
-          }
-        } catch (e) {
-          mediaUrl = URL.createObjectURL(audioBlob);
-        }
-
-        const payload: any = {
-          content: 'Mensagem de voz',
-          type: 'audio',
-          mediaUrl,
-          isInternal: isInternalMode,
+        // Envia via FormData para o backend processar, armazenar e disparar na ponta final do WhatsApp
+        const { data } = await api.post(`/conversations/${activeChat}/messages/audio`, formData);
+        
+        const messageToAdd = {
+          ...data,
+          mediaUrl: data.mediaUrl || localPreviewUrl,
         };
-
-        const { data } = await api.post(`/conversations/${activeChat}/messages`, payload);
-        setMessages((prev) => [...prev, data]);
+        setMessages((prev) => [...prev, messageToAdd]);
 
         if (!isInternalMode) {
           setContacts((prev) =>
@@ -280,8 +266,8 @@ function InboxContent() {
           );
         }
       } catch (error) {
-        console.error("Erro ao enviar áudio:", error);
-        alert("Erro ao enviar áudio gravado.");
+        console.error("Erro ao enviar áudio gravado:", error);
+        alert("Erro ao processar e enviar áudio gravado.");
       } finally {
         if (audioStreamRef.current) {
           audioStreamRef.current.getTracks().forEach((track) => track.stop());

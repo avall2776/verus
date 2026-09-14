@@ -5,9 +5,18 @@ export interface SendMessagePayload {
     content: string;
     instanceId?: string;
 }
+export interface SendAudioPayload {
+    tenantId: string;
+    phone: string;
+    audioBuffer?: Buffer;
+    audioUrl?: string;
+    mimeType?: string;
+    instanceId?: string;
+}
 export declare class MessagingService {
     private readonly prisma;
     private readonly logger;
     constructor(prisma: PrismaService);
     sendText(payload: SendMessagePayload): Promise<any>;
+    sendAudio(payload: SendAudioPayload): Promise<any>;
 }

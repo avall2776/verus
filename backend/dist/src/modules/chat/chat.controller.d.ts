@@ -390,6 +390,23 @@ export declare class ChatController {
         senderType: string;
         conversationId: string;
     }>;
+    sendAudioMessage(tenantId: string, conversationId: string, file: Express.Multer.File, isInternal?: string | boolean, content?: string): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        contactId: string;
+        status: string;
+        providerMessageId: string | null;
+        content: string;
+        type: string;
+        mediaUrl: string | null;
+        audioTranscription: string | null;
+        isInternal: boolean;
+        fromMe: boolean;
+        direction: string;
+        senderType: string;
+        conversationId: string;
+    }>;
     sendMessageToContact(tenantId: string, contactId: string, payload: SendMessageDto, req: any): Promise<{
         id: string;
         tenantId: string;

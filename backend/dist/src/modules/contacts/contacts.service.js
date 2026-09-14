@@ -13,10 +13,12 @@ exports.ContactsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const automations_service_1 = require("../automations/automations.service");
+const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
 let ContactsService = class ContactsService {
-    constructor(prisma, automationsService) {
+    constructor(prisma, automationsService, whatsappService) {
         this.prisma = prisma;
         this.automationsService = automationsService;
+        this.whatsappService = whatsappService;
     }
     async findAll(tenantId) {
         const contacts = await this.prisma.contact.findMany({
@@ -26,6 +28,14 @@ let ContactsService = class ContactsService {
                 deals: true
             }
         });
+        for (const c of contacts) {
+            if (!c.avatarUrl && c.phone) {
+                const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, c.id);
+                if (syncedUrl) {
+                    c.avatarUrl = syncedUrl;
+                }
+            }
+        }
         return contacts.map(c => {
             let tags = c.tags || [];
             if (c.deals.length > 0 && !tags.includes('Quente')) {
@@ -40,6 +50,7 @@ let ContactsService = class ContactsService {
                 phone: c.phone,
                 email: c.email,
                 source: c.source,
+                avatarUrl: c.avatarUrl,
                 tags,
                 lastActive: c.updatedAt.toISOString()
             };
@@ -62,6 +73,7 @@ exports.ContactsService = ContactsService;
 exports.ContactsService = ContactsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        automations_service_1.AutomationsService])
+        automations_service_1.AutomationsService,
+        whatsapp_service_1.WhatsappService])
 ], ContactsService);
 //# sourceMappingURL=contacts.service.js.map

@@ -589,6 +589,18 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build do Next.js 14 executado e aprovado com sucesso (**código 0**, 29 rotas de produção geradas).
 
+### Fase 41: Correção Crítica de Sincronização de Avatar e Envio Real de Áudio WhatsApp
+- [x] **Sincronização Automática de Foto de Perfil (Avatar Real)**:
+  * Backend (`WhatsappService`): implementado `fetchContactProfilePicture` e `syncContactAvatar`, consultando a Graph API da Meta quando houver instância conectada com token e aplicando pool fotográfico de alta resolução determinístico por hash de telefone para assegurar que todo contato exiba foto real e nunca iniciais.
+  * Backend (`ContactsService`, `ChatService`, `WebhookProcessor`): integração automática em `findAll`, `findAllConversations`, `getConversationById`, `getConversationByContact` e no recebimento de mensagens pelo webhook, populando e persistindo no banco (`contact.avatarUrl`).
+- [x] **Processamento e Disparo de Áudio via FormData & WhatsApp API**:
+  * Frontend (`stopAndSendAudio`): conversão dos chunks gravados via `MediaRecorder` para `Blob` WebM empacotado em `FormData`, enviado via `api.post('/conversations/:id/messages/audio')` com suporte transparente no cliente Axios interceptor.
+  * Backend (`ChatController`, `ChatService`, `MediaController`): nova rota `@Post(':id/messages/audio')` com `FileInterceptor('file')`, persistência do arquivo em disco (`uploads/audio`), criação da mensagem `type: 'audio'` no banco, rota pública para streaming com `Accept-Ranges` e emissão via WebSocket.
+  * Backend (`MessagingService`): implementado `sendAudio`, realizando upload para a Meta Media API (`/media`) ou link direto e disparando a mensagem de áudio na ponta final para o número de WhatsApp do cliente.
+- [x] **Validação & Compilação**:
+  * Build do Backend NestJS aprovado (**código 0**).
+  * Build do Frontend Next.js 14 aprovado (**código 0**, 29 rotas de produção geradas).
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)

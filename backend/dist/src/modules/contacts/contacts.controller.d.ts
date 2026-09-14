@@ -8,6 +8,7 @@ export declare class ContactsController {
         phone: string;
         email: string;
         source: string;
+        avatarUrl: string;
         tags: string[];
         lastActive: string;
     }[]>;

@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
@@ -107,6 +108,24 @@ export class ChatController {
       console.error('ERRO AO ENVIAR MENSAGEM MANUAL:', error);
       throw error;
     }
+  }
+
+  @Post(':id/messages/audio')
+  @UseInterceptors(FileInterceptor('file'))
+  async sendAudioMessage(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('isInternal') isInternal?: string | boolean,
+    @Body('content') content?: string,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Arquivo de áudio obrigatório.');
+    }
+    return this.chatService.sendManualAudioMessage(tenantId, conversationId, file, {
+      isInternal: isInternal === 'true' || isInternal === true,
+      content: content || '🎤 Mensagem de voz',
+    });
   }
 
   @Post('contact/:contactId/messages')

@@ -1,15 +1,18 @@
 import { PrismaService } from '../../shared/database/prisma.service';
 import { AutomationsService } from '../automations/automations.service';
+import { WhatsappService } from '../whatsapp/whatsapp.service';
 export declare class ContactsService {
     private readonly prisma;
     private readonly automationsService;
-    constructor(prisma: PrismaService, automationsService: AutomationsService);
+    private readonly whatsappService;
+    constructor(prisma: PrismaService, automationsService: AutomationsService, whatsappService: WhatsappService);
     findAll(tenantId: string): Promise<{
         id: string;
         name: string;
         phone: string;
         email: string;
         source: string;
+        avatarUrl: string;
         tags: string[];
         lastActive: string;
     }[]>;

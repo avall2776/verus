@@ -1,11 +1,13 @@
 import { PrismaService } from '../../shared/database/prisma.service';
 import { MessagingService } from '../messaging/messaging.service';
+import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { ChatGateway } from './chat.gateway';
 export declare class ChatService {
     private readonly prisma;
     private readonly messagingService;
+    private readonly whatsappService;
     private readonly chatGateway;
-    constructor(prisma: PrismaService, messagingService: MessagingService, chatGateway: ChatGateway);
+    constructor(prisma: PrismaService, messagingService: MessagingService, whatsappService: WhatsappService, chatGateway: ChatGateway);
     findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string): Promise<({
         contact: {
             id: string;
@@ -346,6 +348,26 @@ export declare class ChatService {
         conversationId: string;
     }>;
     sendManualMessageToContact(tenantId: string, contactId: string, payload: any, userId: string): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        contactId: string;
+        status: string;
+        providerMessageId: string | null;
+        content: string;
+        type: string;
+        mediaUrl: string | null;
+        audioTranscription: string | null;
+        isInternal: boolean;
+        fromMe: boolean;
+        direction: string;
+        senderType: string;
+        conversationId: string;
+    }>;
+    sendManualAudioMessage(tenantId: string, conversationId: string, file: Express.Multer.File, payload: {
+        content?: string;
+        isInternal?: boolean;
+    }): Promise<{
         id: string;
         tenantId: string;
         createdAt: Date;

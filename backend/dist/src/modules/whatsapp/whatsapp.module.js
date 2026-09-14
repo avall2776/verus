@@ -14,6 +14,7 @@ let WhatsappModule = class WhatsappModule {
 };
 exports.WhatsappModule = WhatsappModule;
 exports.WhatsappModule = WhatsappModule = __decorate([
+    (0, common_1.Global)(),
     (0, common_1.Module)({
         controllers: [whatsapp_controller_1.WhatsappController],
         providers: [whatsapp_service_1.WhatsappService],

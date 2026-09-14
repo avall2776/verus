@@ -31,6 +31,9 @@ api.interceptors.request.use((config) => {
   if (tenantId) {
     config.headers['x-tenant-id'] = tenantId;
   }
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
 
   console.log('[API Request]', config.method?.toUpperCase(), config.url, {
     hasToken: !!token,

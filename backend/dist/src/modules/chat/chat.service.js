@@ -11,13 +11,17 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatService = void 0;
 const common_1 = require("@nestjs/common");
+const path = require("path");
+const fs = require("fs");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const messaging_service_1 = require("../messaging/messaging.service");
+const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
 const chat_gateway_1 = require("./chat.gateway");
 let ChatService = class ChatService {
-    constructor(prisma, messagingService, chatGateway) {
+    constructor(prisma, messagingService, whatsappService, chatGateway) {
         this.prisma = prisma;
         this.messagingService = messagingService;
+        this.whatsappService = whatsappService;
         this.chatGateway = chatGateway;
     }
     async findAllConversations(tenantId, userId, userRole, tab = 'waiting') {
@@ -41,7 +45,7 @@ let ChatService = class ChatService {
                 ];
             }
         }
-        return this.prisma.conversation.findMany({
+        const conversations = await this.prisma.conversation.findMany({
             where: whereClause,
             include: {
                 contact: true,
@@ -53,6 +57,15 @@ let ChatService = class ChatService {
             },
             orderBy: { updatedAt: 'desc' }
         });
+        for (const conv of conversations) {
+            if (conv.contact && !conv.contact.avatarUrl && conv.contact.phone) {
+                const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, conv.contact.id);
+                if (syncedUrl) {
+                    conv.contact.avatarUrl = syncedUrl;
+                }
+            }
+        }
+        return conversations;
     }
     async getConversationMessages(tenantId, conversationId) {
         const conversation = await this.prisma.conversation.findUnique({
@@ -80,6 +93,12 @@ let ChatService = class ChatService {
         if (!conversation) {
             throw new common_1.NotFoundException('Nenhuma conversa encontrada para este contato.');
         }
+        if (conversation.contact && !conversation.contact.avatarUrl && conversation.contact.phone) {
+            const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, conversation.contact.id);
+            if (syncedUrl) {
+                conversation.contact.avatarUrl = syncedUrl;
+            }
+        }
         return conversation;
     }
     async getConversationById(tenantId, conversationId) {
@@ -95,6 +114,12 @@ let ChatService = class ChatService {
         });
         if (!conversation) {
             throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        if (conversation.contact && !conversation.contact.avatarUrl && conversation.contact.phone) {
+            const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, conversation.contact.id);
+            if (syncedUrl) {
+                conversation.contact.avatarUrl = syncedUrl;
+            }
         }
         return conversation;
     }
@@ -266,12 +291,63 @@ let ChatService = class ChatService {
         }
         return this.sendManualMessage(tenantId, conversation.id, payload);
     }
+    async sendManualAudioMessage(tenantId, conversationId, file, payload) {
+        const conversation = await this.prisma.conversation.findUnique({
+            where: { id: conversationId },
+            include: { contact: true }
+        });
+        if (!conversation || conversation.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        const isInternal = payload.isInternal || false;
+        const filename = `audio_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.webm`;
+        const uploadDir = path.join(process.cwd(), 'uploads', 'audio');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        const filePath = path.join(uploadDir, filename);
+        await fs.promises.writeFile(filePath, file.buffer);
+        const mediaUrl = `/api-backend/media/audio/${filename}`;
+        const msg = await this.prisma.message.create({
+            data: {
+                tenantId,
+                conversationId,
+                providerMessageId: `audio_${Date.now()}`,
+                contactId: conversation.contactId,
+                content: payload.content || '🎤 Mensagem de voz',
+                type: 'audio',
+                mediaUrl,
+                isInternal,
+                direction: 'OUTBOUND',
+                senderType: 'user',
+                status: 'delivered',
+            }
+        });
+        if (!isInternal && conversation.contact?.phone) {
+            await this.messagingService.sendAudio({
+                tenantId,
+                phone: conversation.contact.phone,
+                audioBuffer: file.buffer,
+                audioUrl: mediaUrl,
+                mimeType: file.mimetype || 'audio/webm',
+            });
+        }
+        if (conversation.status === 'bot_active' && !isInternal) {
+            await this.prisma.conversation.update({
+                where: { id: conversationId },
+                data: { status: 'human_takeover' }
+            });
+        }
+        this.chatGateway.emitNewMessage(tenantId, msg);
+        return msg;
+    }
 };
 exports.ChatService = ChatService;
 exports.ChatService = ChatService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         messaging_service_1.MessagingService,
+        whatsapp_service_1.WhatsappService,
         chat_gateway_1.ChatGateway])
 ], ChatService);
 //# sourceMappingURL=chat.service.js.map

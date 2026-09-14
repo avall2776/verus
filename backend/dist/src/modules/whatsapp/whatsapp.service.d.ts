@@ -130,4 +130,6 @@ export declare class WhatsappService {
         settings: import("@prisma/client/runtime/library").JsonValue | null;
         lastConnectedAt: Date | null;
     }>;
+    fetchContactProfilePicture(tenantId: string, phone: string): Promise<string>;
+    syncContactAvatar(tenantId: string, contactId: string): Promise<string | null>;
 }

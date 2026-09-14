@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { AutomationsService } from '../automations/automations.service';
+import { WhatsappService } from '../whatsapp/whatsapp.service';
 
 @Injectable()
 export class ContactsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly automationsService: AutomationsService
+    private readonly automationsService: AutomationsService,
+    private readonly whatsappService: WhatsappService,
   ) {}
 
   async findAll(tenantId: string) {
@@ -17,6 +19,16 @@ export class ContactsService {
         deals: true
       }
     });
+
+    // Sincroniza fotos de perfil pendentes automaticamente direto da instância
+    for (const c of contacts) {
+      if (!c.avatarUrl && c.phone) {
+        const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, c.id);
+        if (syncedUrl) {
+          c.avatarUrl = syncedUrl;
+        }
+      }
+    }
 
     return contacts.map(c => {
       let tags = c.tags || [];
@@ -32,6 +44,7 @@ export class ContactsService {
         phone: c.phone,
         email: c.email,
         source: c.source,
+        avatarUrl: c.avatarUrl,
         tags,
         lastActive: c.updatedAt.toISOString()
       };

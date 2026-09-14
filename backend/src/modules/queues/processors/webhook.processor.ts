@@ -5,6 +5,7 @@ import { PrismaService } from '../../../shared/database/prisma.service';
 import { ChatGateway } from '../../chat/chat.gateway';
 import { MessagingService } from '../../messaging/messaging.service';
 import { AutomationsService } from '../../automations/automations.service';
+import { WhatsappService } from '../../whatsapp/whatsapp.service';
 
 @Processor('webhook-ingress')
 export class WebhookProcessor extends WorkerHost {
@@ -16,6 +17,7 @@ export class WebhookProcessor extends WorkerHost {
     private readonly chatGateway: ChatGateway,
     private readonly messagingService: MessagingService,
     private readonly automationsService: AutomationsService,
+    private readonly whatsappService: WhatsappService,
   ) {
     super();
   }
@@ -76,6 +78,13 @@ export class WebhookProcessor extends WorkerHost {
         name: pushName
       }
     });
+
+    if (!contact.avatarUrl) {
+      const avatarUrl = await this.whatsappService.syncContactAvatar(tenantId, contact.id);
+      if (avatarUrl) {
+        contact.avatarUrl = avatarUrl;
+      }
+    }
 
     // Validar Horário de Expediente
     const currentDay = new Date().getDay(); // 0 = Domingo

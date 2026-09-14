@@ -21,14 +21,16 @@ const prisma_service_1 = require("../../../shared/database/prisma.service");
 const chat_gateway_1 = require("../../chat/chat.gateway");
 const messaging_service_1 = require("../../messaging/messaging.service");
 const automations_service_1 = require("../../automations/automations.service");
+const whatsapp_service_1 = require("../../whatsapp/whatsapp.service");
 let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullmq_1.WorkerHost {
-    constructor(prisma, aiQueue, chatGateway, messagingService, automationsService) {
+    constructor(prisma, aiQueue, chatGateway, messagingService, automationsService, whatsappService) {
         super();
         this.prisma = prisma;
         this.aiQueue = aiQueue;
         this.chatGateway = chatGateway;
         this.messagingService = messagingService;
         this.automationsService = automationsService;
+        this.whatsappService = whatsappService;
         this.logger = new common_1.Logger(WebhookProcessor_1.name);
     }
     async process(job) {
@@ -77,6 +79,12 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 name: pushName
             }
         });
+        if (!contact.avatarUrl) {
+            const avatarUrl = await this.whatsappService.syncContactAvatar(tenantId, contact.id);
+            if (avatarUrl) {
+                contact.avatarUrl = avatarUrl;
+            }
+        }
         const currentDay = new Date().getDay();
         const currentHourStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
         const bh = await this.prisma.businessHours.findFirst({
@@ -204,6 +212,7 @@ exports.WebhookProcessor = WebhookProcessor = WebhookProcessor_1 = __decorate([
         bullmq_2.Queue,
         chat_gateway_1.ChatGateway,
         messaging_service_1.MessagingService,
-        automations_service_1.AutomationsService])
+        automations_service_1.AutomationsService,
+        whatsapp_service_1.WhatsappService])
 ], WebhookProcessor);
 //# sourceMappingURL=webhook.processor.js.map

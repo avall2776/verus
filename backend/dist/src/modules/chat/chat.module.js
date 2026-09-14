@@ -13,6 +13,7 @@ const messaging_module_1 = require("../messaging/messaging.module");
 const auth_module_1 = require("../auth/auth.module");
 const chat_service_1 = require("./chat.service");
 const chat_controller_1 = require("./chat.controller");
+const media_controller_1 = require("./media.controller");
 const chat_gateway_1 = require("./chat.gateway");
 let ChatModule = class ChatModule {
 };
@@ -22,7 +23,7 @@ exports.ChatModule = ChatModule = __decorate([
     (0, common_1.Module)({
         imports: [database_module_1.DatabaseModule, messaging_module_1.MessagingModule, auth_module_1.AuthModule],
         providers: [chat_service_1.ChatService, chat_gateway_1.ChatGateway],
-        controllers: [chat_controller_1.ChatController],
+        controllers: [chat_controller_1.ChatController, media_controller_1.MediaController],
         exports: [chat_gateway_1.ChatGateway],
     })
 ], ChatModule);

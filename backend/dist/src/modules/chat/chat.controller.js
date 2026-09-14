@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
 const chat_service_1 = require("./chat.service");
 const send_message_dto_1 = require("./dto/send-message.dto");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
@@ -61,6 +62,15 @@ let ChatController = class ChatController {
             console.error('ERRO AO ENVIAR MENSAGEM MANUAL:', error);
             throw error;
         }
+    }
+    async sendAudioMessage(tenantId, conversationId, file, isInternal, content) {
+        if (!file) {
+            throw new common_1.BadRequestException('Arquivo de áudio obrigatório.');
+        }
+        return this.chatService.sendManualAudioMessage(tenantId, conversationId, file, {
+            isInternal: isInternal === 'true' || isInternal === true,
+            content: content || '🎤 Mensagem de voz',
+        });
     }
     async sendMessageToContact(tenantId, contactId, payload, req) {
         try {
@@ -167,6 +177,18 @@ __decorate([
     __metadata("design:paramtypes", [String, String, send_message_dto_1.SendMessageDto]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "sendMessage", null);
+__decorate([
+    (0, common_1.Post)(':id/messages/audio'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.UploadedFile)()),
+    __param(3, (0, common_1.Body)('isInternal')),
+    __param(4, (0, common_1.Body)('content')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object, Object, String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "sendAudioMessage", null);
 __decorate([
     (0, common_1.Post)('contact/:contactId/messages'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
