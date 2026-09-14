@@ -469,8 +469,8 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Deploy enviado com sucesso para produção na Vercel via Git push.
 
 ### Fase 36: Evolução e Refinamento da Aba Métricas e Vendas no Padrão Lero (/dashboard/cm)
-- [x] **Cards Analíticos Interativos por Hover (Padrão Lero) & Grid de 8 Métricas**:
-  * Grid fluido de 8 cards analíticos compactos (`grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2.5`):
+- [x] **Cards Analíticos Interativos por Hover (Padrão Lero) & Grid de 8 Medidores**:
+  * Grid fluido de 8 medidores analíticos compactos (`grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2.5`):
     1. *Oportunidades*: Volume total criado e variação percentual.
     2. *Em Aberto*: Quantidade ativa em negociação e valor monetário do pipeline.
     3. *Ganhas*: Quantidade e faturamento ganho em BRL com destaque esmeralda.
@@ -478,19 +478,31 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     5. *Ticket Médio*: Média ponderada por oportunidade convertida em tipografia mono.
     6. *Taxa de Ganho (Win Rate)*: Percentual de conversão sobre o total fechado com micro-barra de progresso.
     7. *Ciclo Médio de Venda*: Média em dias desde o primeiro contato até o fechamento.
-    8. *Tempo até Movimentação*: Tempo médio de permanência por etapa no funil comercial em horas.
+    8. *Movimentação*: Tempo médio de permanência por etapa no funil comercial em horas.
   * Componente flutuante corporativo `KpiPopover` acionado por hover (`onMouseEnter`/`onMouseLeave`) em `bg-[#0d1117] border border-gray-800 text-gray-200 text-xs shadow-2xl rounded-xl p-3 z-50`:
     - Comparativo de Período Atual vs. Período Anterior de mesma duração.
     - Badges de variação percentual com cores direcionais (verde para alta positiva, vermelho/vinho para quedas ou perdas).
     - Detalhes adicionais de volume, média diária e métricas de conversão.
+- [x] **Seletor de Data Personalizada com Popover Corporativo (Padrão Lero)**:
+  * Ao clicar na pílula "Personalizado", abre popover flutuante corporativo com backdrop-blur em `bg-[#0d1117] border border-gray-800 shadow-2xl rounded-2xl p-4`.
+  * Quatro seletores rápidos interativos: *Últimos 7 dias*, *Últimos 15 dias*, *Este mês*, *Mês anterior*.
+  * Dois inputs de data formatados (Data Inicial e Data Final) com botão de ação rápida "Aplicar Intervalo".
+- [x] **Tradução Completa dos Rótulos do Funil Comercial (PT-BR)**:
+  * Rótulos do gráfico traduzidos no backend e frontend:
+    - `NEW` -> `Novo Contato`
+    - `FOLLOW-UP` -> `Em Qualificação`
+    - `QUALIFIED` -> `Qualificado`
+    - `PROPOSAL` -> `Proposta`
+    - `NEGOTIATION` -> `Negociação`
+    - `WON` -> `Fechado / Ganho`
+    - `LOST` -> `Fechado / Perdido`
 - [x] **Filtros de Contexto Superior Completos & Dinâmicos**:
-  * Filtro temporal: `Hoje`, `7d`, `15d`, `30d`, `90d` e `Personalizado` (datas De/Até).
+  * Filtro temporal: `Hoje`, `7d`, `15d`, `30d`, `90d` e `Personalizado`.
   * Critério temporal: Seletor de `Última Movimentação` (via `updatedAt`) vs `Data de Criação` (via `createdAt`).
   * Filtro de Status: `Todos os Status`, `Em Aberto`, `Fechado / Ganho`, `Fechado / Perdido`.
   * Filtro de CRMs: `Todos os CRMs`, `Funil Principal`, `Vendas Inbound`, `Outbound B2B`, `Parcerias`.
   * Filtro de Responsáveis: `Todos os Responsáveis` + listagem dinâmica dos membros da equipe.
   * Botão de ação: "Gerar / Recarregar" destacado à direita com loading reativo.
-  * Todos os filtros alimentam dinamicamente os cards de KPI, o comparativo anterior, os gráficos e a tabela analítica.
 - [x] **Validação & Deploy Vercel**:
   * Build do Next.js 14 validado com sucesso (código 0, 29 rotas de produção geradas).
   * Deploy enviado para produção na Vercel via Git push.

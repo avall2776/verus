@@ -148,20 +148,44 @@ export class DashboardService {
       { name: 'Sem 4', ganho: Math.round(wonRevenue * 0.34) || 6400, perdido: Math.round(lostRevenue * 0.25) || 850 }
     ];
 
-    const funnelData = Object.entries(stageDistribution).map(([stage, count]) => ({
-      name: stage.toUpperCase(),
-      value: count
-    }));
+    const stageMap: Record<string, string> = {
+      seed: 'Leads Seed',
+      new: 'Novo Contato',
+      'novo contato': 'Novo Contato',
+      'follow-up': 'Em Qualificação',
+      followup: 'Em Qualificação',
+      'em qualificação': 'Em Qualificação',
+      qualified: 'Qualificado',
+      qualificado: 'Qualificado',
+      proposal: 'Proposta',
+      proposta: 'Proposta',
+      negotiation: 'Negociação',
+      negociação: 'Negociação',
+      won: 'Fechado / Ganho',
+      ganho: 'Fechado / Ganho',
+      lost: 'Fechado / Perdido',
+      perdido: 'Fechado / Perdido',
+      disqualified: 'Desqualificado'
+    };
+
+    const funnelData = Object.entries(stageDistribution).map(([stage, count]) => {
+      const lower = stage.toLowerCase().trim();
+      const translated = stageMap[lower] || stage;
+      return {
+        name: translated,
+        value: count
+      };
+    });
 
     if (funnelData.length === 0) {
       funnelData.push(
-        { name: 'LEADS SEED', value: 18 },
-        { name: 'NOVO CONTATO', value: 24 },
-        { name: 'EM QUALIFICAÇÃO', value: 16 },
-        { name: 'FOLLOW-UP', value: 12 },
-        { name: 'PROPOSTA', value: 9 },
-        { name: 'NEGOCIAÇÃO', value: 7 },
-        { name: 'FECHADO/GANHO', value: wonCount || 6 }
+        { name: 'Leads Seed', value: 18 },
+        { name: 'Novo Contato', value: 24 },
+        { name: 'Em Qualificação', value: 16 },
+        { name: 'Qualificado', value: 12 },
+        { name: 'Proposta', value: 9 },
+        { name: 'Negociação', value: 7 },
+        { name: 'Fechado / Ganho', value: wonCount || 6 }
       );
     }
 

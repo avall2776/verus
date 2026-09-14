@@ -10,7 +10,7 @@ import {
   RefreshCw, Download, Search, CheckCircle2, XCircle, Clock, 
   Users, ArrowUpRight, BarChart3, PieChart as PieChartIcon, 
   Table as TableIcon, Layers, ChevronDown, ChevronRight, User as UserIcon,
-  Phone, MessageSquare, ArrowUpDown, Check
+  Phone, MessageSquare, ArrowUpDown, Check, X
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
@@ -127,6 +127,7 @@ export default function CrmDashboardPage() {
   const [selectedCrmFilter, setSelectedCrmFilter] = useState("all");
   const [dateCriterion, setDateCriterion] = useState<"updatedAt" | "createdAt">("updatedAt");
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
 
   const [metrics, setMetrics] = useState<CrmMetrics | null>(null);
   const [deals, setDeals] = useState<any[]>([]);
@@ -423,6 +424,40 @@ export default function CrmDashboardPage() {
     ];
   }, [metrics]);
 
+  // Dados traduzidos para o gráfico de funil (PT-BR)
+  const translatedFunnelData = useMemo(() => {
+    const raw = metrics?.funnelData || [];
+    const translationMap: Record<string, string> = {
+      NEW: "Novo Contato",
+      "NOVO CONTATO": "Novo Contato",
+      "FOLLOW-UP": "Em Qualificação",
+      FOLLOWUP: "Em Qualificação",
+      "EM QUALIFICAÇÃO": "Em Qualificação",
+      QUALIFIED: "Qualificado",
+      QUALIFICADO: "Qualificado",
+      SEED: "Leads Seed",
+      "LEADS SEED": "Leads Seed",
+      PROPOSAL: "Proposta",
+      PROPOSTA: "Proposta",
+      NEGOTIATION: "Negociação",
+      NEGOCIAÇÃO: "Negociação",
+      WON: "Fechado / Ganho",
+      "FECHADO/GANHO": "Fechado / Ganho",
+      "FECHADO / GANHO": "Fechado / Ganho",
+      LOST: "Fechado / Perdido",
+      "FECHADO/PERDIDO": "Fechado / Perdido",
+      "FECHADO / PERDIDO": "Fechado / Perdido"
+    };
+
+    return raw.map(item => {
+      const key = item.name?.toUpperCase().trim() || "";
+      return {
+        ...item,
+        name: translationMap[key] || item.name
+      };
+    });
+  }, [metrics]);
+
   return (
     <div className="flex flex-col min-h-full w-full bg-[#0a0c10] text-white p-4 md:p-6 lg:p-8 space-y-6">
       
@@ -497,12 +532,15 @@ export default function CrmDashboardPage() {
         {/* LADO ESQUERDO: Filtros Temporais + Critério Temporal + Status + CRMs + Equipe perfeitamente alinhados */}
         <div className="flex flex-wrap items-center gap-2 md:gap-2.5">
           {/* Pílulas de Período Temporal */}
-          <div className="flex items-center gap-1 bg-[#0d1117] p-1 border border-gray-800 rounded-xl overflow-x-auto">
-            {PERIOD_OPTIONS.map(opt => (
+          <div className="flex items-center gap-1 bg-[#0d1117] p-1 border border-gray-800 rounded-xl overflow-visible relative">
+            {PERIOD_OPTIONS.filter(opt => opt.id !== 'custom').map(opt => (
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => setPeriod(opt.id)}
+                onClick={() => {
+                  setPeriod(opt.id);
+                  setIsCustomDateOpen(false);
+                }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                   period === opt.id
                     ? 'bg-[#21262d] text-white font-semibold shadow-xs border border-gray-700'
@@ -512,26 +550,139 @@ export default function CrmDashboardPage() {
                 {opt.label}
               </button>
             ))}
-          </div>
 
-          {/* Inputs de Data Customizada se 'custom' estiver ativo */}
-          {period === 'custom' && (
-            <div className="flex items-center gap-2 text-xs bg-[#0d1117] p-1 border border-gray-800 rounded-xl">
-              <input 
-                type="date" 
-                value={customStartDate} 
-                onChange={e => setCustomStartDate(e.target.value)}
-                className="bg-transparent border border-gray-800 rounded-lg px-2 py-1 text-white outline-none focus:border-blue-600/60"
-              />
-              <span className="text-gray-500">até</span>
-              <input 
-                type="date" 
-                value={customEndDate} 
-                onChange={e => setCustomEndDate(e.target.value)}
-                className="bg-transparent border border-gray-800 rounded-lg px-2 py-1 text-white outline-none focus:border-blue-600/60"
-              />
+            {/* Pílula Especial 'Personalizado' com Popover Flutuante */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setPeriod('custom');
+                  setIsCustomDateOpen(prev => !prev);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  period === 'custom'
+                    ? 'bg-[#21262d] text-white font-semibold shadow-xs border border-gray-700'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                <Calendar size={12} className={period === 'custom' ? 'text-blue-400' : 'text-gray-400'} />
+                <span>
+                  {period === 'custom' && customStartDate && customEndDate
+                    ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
+                    : 'Personalizado'}
+                </span>
+                <ChevronDown size={11} className={`transition-transform duration-200 ${isCustomDateOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isCustomDateOpen && (
+                <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-72 md:w-80 bg-[#0d1117] border border-gray-800 text-gray-200 text-xs shadow-2xl rounded-2xl p-4 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-xl">
+                  {/* Cabeçalho do Popover */}
+                  <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-gray-800">
+                    <div className="flex items-center gap-2">
+                      <Calendar size={14} className="text-blue-400" />
+                      <span className="font-bold text-white text-xs">Período Personalizado</span>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => setIsCustomDateOpen(false)}
+                      className="text-gray-400 hover:text-white p-1 rounded-md hover:bg-gray-800 transition-colors"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+
+                  {/* Seletores Rápidos Interativos */}
+                  <div className="grid grid-cols-2 gap-1.5 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const end = new Date();
+                        const start = new Date();
+                        start.setDate(end.getDate() - 7);
+                        setCustomStartDate(start.toISOString().split('T')[0]);
+                        setCustomEndDate(end.toISOString().split('T')[0]);
+                      }}
+                      className="px-2 py-1.5 bg-[#161b22] hover:bg-[#21262d] border border-gray-800 rounded-lg text-[11px] text-gray-300 text-center transition-colors hover:text-white"
+                    >
+                      Últimos 7 dias
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const end = new Date();
+                        const start = new Date();
+                        start.setDate(end.getDate() - 15);
+                        setCustomStartDate(start.toISOString().split('T')[0]);
+                        setCustomEndDate(end.toISOString().split('T')[0]);
+                      }}
+                      className="px-2 py-1.5 bg-[#161b22] hover:bg-[#21262d] border border-gray-800 rounded-lg text-[11px] text-gray-300 text-center transition-colors hover:text-white"
+                    >
+                      Últimos 15 dias
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const end = new Date();
+                        const start = new Date(end.getFullYear(), end.getMonth(), 1);
+                        setCustomStartDate(start.toISOString().split('T')[0]);
+                        setCustomEndDate(end.toISOString().split('T')[0]);
+                      }}
+                      className="px-2 py-1.5 bg-[#161b22] hover:bg-[#21262d] border border-gray-800 rounded-lg text-[11px] text-gray-300 text-center transition-colors hover:text-white"
+                    >
+                      Este mês
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        const start = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+                        const end = new Date(d.getFullYear(), d.getMonth(), 0);
+                        setCustomStartDate(start.toISOString().split('T')[0]);
+                        setCustomEndDate(end.toISOString().split('T')[0]);
+                      }}
+                      className="px-2 py-1.5 bg-[#161b22] hover:bg-[#21262d] border border-gray-800 rounded-lg text-[11px] text-gray-300 text-center transition-colors hover:text-white"
+                    >
+                      Mês anterior
+                    </button>
+                  </div>
+
+                  {/* Dois Inputs de Data Formatados */}
+                  <div className="space-y-2 mb-3.5">
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Data Inicial (De)</label>
+                      <input 
+                        type="date" 
+                        value={customStartDate} 
+                        onChange={e => setCustomStartDate(e.target.value)}
+                        className="w-full bg-[#161b22] border border-gray-800 rounded-xl px-3 py-1.5 text-white text-xs outline-none focus:border-blue-600/60 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Data Final (Até)</label>
+                      <input 
+                        type="date" 
+                        value={customEndDate} 
+                        onChange={e => setCustomEndDate(e.target.value)}
+                        className="w-full bg-[#161b22] border border-gray-800 rounded-xl px-3 py-1.5 text-white text-xs outline-none focus:border-blue-600/60 transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Botão de Ação */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCustomDateOpen(false);
+                      loadData(true);
+                    }}
+                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition-all shadow-md shadow-emerald-950/40 text-center"
+                  >
+                    Aplicar Intervalo
+                  </button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Critério Temporal (Última Movimentação vs Criação) */}
           <div className="flex items-center gap-1.5 bg-[#0d1117] border border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-gray-300">
@@ -1107,7 +1258,7 @@ export default function CrmDashboardPage() {
 
               <div className="h-[270px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={metrics?.funnelData || []} layout="vertical" margin={{ top: 5, right: 25, left: 10, bottom: 5 }}>
+                  <BarChart data={translatedFunnelData} layout="vertical" margin={{ top: 5, right: 25, left: 10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#21262d" horizontal={true} vertical={false} />
                     <XAxis type="number" stroke="#8b949e" tick={{ fill: '#8b949e', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <YAxis dataKey="name" type="category" stroke="#8b949e" tick={{ fill: '#c9d1d9', fontSize: 11 }} axisLine={false} tickLine={false} width={130} />
@@ -1128,12 +1279,26 @@ export default function CrmDashboardPage() {
                       }}
                     />
                     <Bar dataKey="value" fill="#3b82f6" radius={[0, 6, 6, 0]} barSize={20}>
-                      {(metrics?.funnelData || []).map((entry, index) => (
-                        <Cell 
-                          key={`funnel-cell-${index}`} 
-                          fill={entry.name.includes("GANHO") ? "#10b981" : entry.name.includes("PERDIDO") ? "#f43f5e" : "#3b82f6"} 
-                        />
-                      ))}
+                      {translatedFunnelData.map((entry, index) => {
+                        const lower = (entry.name || '').toLowerCase();
+                        const fillColor = lower.includes("ganho") 
+                          ? "#10b981" 
+                          : lower.includes("perdido") 
+                          ? "#f43f5e" 
+                          : lower.includes("qualifica")
+                          ? "#a855f7"
+                          : lower.includes("proposta")
+                          ? "#10b981"
+                          : lower.includes("negocia")
+                          ? "#f97316"
+                          : "#3b82f6";
+                        return (
+                          <Cell 
+                            key={`funnel-cell-${index}`} 
+                            fill={fillColor} 
+                          />
+                        );
+                      })}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
