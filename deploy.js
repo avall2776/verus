@@ -7,9 +7,10 @@ console.log('Iniciando deploy no VPS...');
 conn.on('ready', () => {
   console.log('Conexão SSH estabelecida. Executando comandos...');
   conn.exec(`
-    cd /root/verus/backend && 
+    cd /root/verus && 
     git fetch origin &&
     git reset --hard origin/main && 
+    cd /root/verus/backend && 
     npm install --legacy-peer-deps && 
     npx prisma generate &&
     npm run build && 
