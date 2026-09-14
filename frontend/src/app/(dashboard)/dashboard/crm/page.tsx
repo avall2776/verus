@@ -54,6 +54,51 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }
   disqualified: { bg: "bg-gray-800/40", text: "text-gray-400", border: "border-gray-700/40" }
 };
 
+const STAGE_TRANSLATIONS: Record<string, string> = {
+  NEW: "Novo Contato",
+  "NOVO CONTATO": "Novo Contato",
+  "FOLLOW-UP": "Em Qualificação",
+  FOLLOWUP: "Em Qualificação",
+  "FOLLOW UP": "Em Qualificação",
+  "EM QUALIFICAÇÃO": "Em Qualificação",
+  QUALIFIED: "Qualificado",
+  QUALIFICADO: "Qualificado",
+  SEED: "Leads Seed",
+  "LEADS SEED": "Leads Seed",
+  PROPOSAL: "Proposta",
+  PROPOSTA: "Proposta",
+  NEGOTIATION: "Negociação",
+  NEGOCIAÇÃO: "Negociação",
+  WON: "Fechado / Ganho",
+  GANHO: "Fechado / Ganho",
+  "FECHADO / GANHO": "Fechado / Ganho",
+  LOST: "Fechado / Perdido",
+  PERDIDO: "Fechado / Perdido",
+  "FECHADO / PERDIDO": "Fechado / Perdido",
+  DISQUALIFIED: "Desqualificado",
+  DESQUALIFICADO: "Desqualificado",
+};
+
+function translateStage(stageOrStatus?: string | null): string {
+  if (!stageOrStatus) return "Novo Contato";
+  const normalized = String(stageOrStatus).trim().toUpperCase();
+  return STAGE_TRANSLATIONS[normalized] || stageOrStatus;
+}
+
+function getStatusStyle(rawKey?: string) {
+  const key = (rawKey || 'new').toLowerCase().trim();
+  if (key.includes('won') || key.includes('ganh')) return STATUS_COLORS.won;
+  if (key.includes('lost') || key.includes('perdid')) return STATUS_COLORS.lost;
+  if (key.includes('follow') || key.includes('qualifica') || key.includes('qualificad')) {
+    if (key.includes('qualificad') && !key.includes('em qualifica')) return STATUS_COLORS.qualified;
+    return STATUS_COLORS["follow-up"];
+  }
+  if (key.includes('propos')) return STATUS_COLORS.proposal;
+  if (key.includes('negocia')) return STATUS_COLORS.negotiation;
+  if (key.includes('disqualif') || key.includes('desqualif')) return STATUS_COLORS.disqualified;
+  return STATUS_COLORS[key] || STATUS_COLORS.new;
+}
+
 interface KpiPopoverProps {
   title: string;
   currentVal: string | number;
@@ -434,7 +479,7 @@ export default function CrmDashboardPage() {
       `"${(d.contact?.name || '').replace(/"/g, '""')}"`,
       `"${d.contact?.phone || ''}"`,
       `"${d.contact?.email || ''}"`,
-      d.status || 'new',
+      `"${translateStage(d.stage?.name || d.stage || d.status)}"`,
       `"${(d.assignedTo?.name || d.assignee?.name || 'Fila Geral').replace(/"/g, '""')}"`,
       (d.value ? Number(d.value) : 0).toFixed(2),
       formatDate(d.createdAt),
@@ -1444,10 +1489,12 @@ export default function CrmDashboardPage() {
                   </tr>
                 ) : (
                   paginatedDeals.map(deal => {
-                    const statusKey = (deal.status || 'new').toLowerCase();
-                    const statusStyle = STATUS_COLORS[statusKey] || { bg: "bg-gray-800", text: "text-gray-300", border: "border-gray-700" };
-                    const isWon = statusKey === 'won' || statusKey === 'ganho';
-                    const isLost = statusKey === 'lost' || statusKey === 'perdido';
+                    const rawStage = deal.stage?.name || deal.stage || deal.status || 'NEW';
+                    const translatedStage = translateStage(rawStage);
+                    const statusStyle = getStatusStyle(rawStage);
+                    const statusKey = (deal.status || '').toLowerCase();
+                    const isWon = statusKey === 'won' || statusKey === 'ganho' || String(rawStage).toUpperCase().includes('WON') || String(rawStage).toUpperCase().includes('GANH');
+                    const isLost = statusKey === 'lost' || statusKey === 'perdido' || String(rawStage).toUpperCase().includes('LOST') || String(rawStage).toUpperCase().includes('PERDID');
 
                     return (
                       <tr
@@ -1491,8 +1538,8 @@ export default function CrmDashboardPage() {
 
                         {/* 4. Etapa Atual */}
                         <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase tracking-wider ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
-                            {deal.status || "Novo Contato"}
+                          <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wider ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
+                            {translatedStage}
                           </span>
                         </td>
 

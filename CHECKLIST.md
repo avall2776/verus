@@ -526,6 +526,25 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build do Next.js 14 testado e aprovado com sucesso (**código 0**, 29 rotas estáticas/dinâmicas geradas).
 
+### Fase 38: Tradução Consistente das Etapas do Funil na Tabela de Relatórios (/dashboard/cm & /dashboard/crm)
+- [x] **Mapeamento Canônico de Etapas em PT-BR (`translateStage`)**:
+  * Função helper de normalização com dicionário rigoroso `STAGE_TRANSLATIONS`:
+    - `NEW` / `NOVO CONTATO` -> `Novo Contato`
+    - `FOLLOW-UP` / `FOLLOWUP` / `EM QUALIFICAÇÃO` -> `Em Qualificação`
+    - `QUALIFIED` / `QUALIFICADO` -> `Qualificado`
+    - `SEED` / `LEADS SEED` -> `Leads Seed`
+    - `PROPOSAL` / `PROPOSTA` -> `Proposta`
+    - `NEGOTIATION` / `NEGOCIAÇÃO` -> `Negociação`
+    - `WON` / `GANHO` / `FECHADO / GANHO` -> `Fechado / Ganho`
+    - `LOST` / `PERDIDO` / `FECHADO / PERDIDO` -> `Fechado / Perdido`
+    - `DISQUALIFIED` / `DESQUALIFICADO` -> `Desqualificado`
+- [x] **Renderização dos Chips na Tabela e Exportação CSV**:
+  * Chips visuais com espaçamento confortável (`px-2.5 py-1 text-[10px] font-bold border uppercase`), integrando cores semânticas (`getStatusStyle`) para cada estágio.
+  * Coluna "Etapa / Status" na exportação CSV UTF-8 parametrizada com o mesmo tradutor `translateStage`.
+- [x] **Validação & Deploy Vercel**:
+  * Build do Next.js 14 validado com sucesso (código 0, 29 rotas geradas).
+  * Deploy enviado para produção via Git push.
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
