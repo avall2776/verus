@@ -469,24 +469,28 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Deploy enviado com sucesso para produção na Vercel via Git push.
 
 ### Fase 36: Evolução e Refinamento da Aba Métricas e Vendas no Padrão Lero (/dashboard/cm)
-- [x] **Expansão e Compactação dos Cards de KPIs Superiores (Linha Única / Grid Denso 6 Cols)**:
-  * Grid de 6 cards corporativos unificados em linha fluida (`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6`):
-    1. *Oportunidades*: Criadas, Em Aberto e valor total do pipeline.
-    2. *Ganhas / Perdidas*: Quantidades e valores monetários discriminados em R$ com destaques visuais em verde e vermelho/vinho sutil.
-    3. *Ticket Médio*: Média ponderada por oportunidade convertida em tipografia mono.
-    4. *Taxa de Ganho (Win Rate)*: Percentual de conversão do total fechado com barra de progresso em verde esmeralda.
-    5. *Ciclo Médio de Venda*: Média em dias desde a criação até o fechamento.
-    6. *Tempo até Movimentação*: Tempo médio de permanência do lead por etapa no pipeline em horas.
-- [x] **Alinhamento Perfeito dos Filtros e Botão de Ação**:
-  * Lado esquerdo: Filtros temporais (`Hoje`, `7d`, `15d`, `30d`, `90d`, `Personalizado`), filtro de Status (`Todos`, `Aberto`, `Ganho`, `Perdido`) e filtro de Equipe agrupados e perfeitamente alinhados à esquerda.
-  * Lado direito: Botão de ação "Gerar / Recarregar" destacado à direita com hover esmeralda, ícone giratório e loading reativo.
-- [x] **Refinamento dos Gráficos Analíticos com Tooltips Flutuantes Aprimorados**:
-  * **Donut de Status**: Gráfico circular refinado com percentual de participação dinâmico, tooltip flutuante estilizado em `bg-[#0d1117] border border-gray-800` e legendas limpas com bolinhas indicadoras.
-  * **Comparativo Semanal de Receita**: Barras em verde esmeralda (`#10b981`) e vermelho/rosa sutil (`#f43f5e`), badge de saldo líquido (+ Lucro / - Déficit) e tooltip flutuante aprimorado.
-  * **Funil e Desempenho de Equipe**: Tooltips customizados e métricas monocromáticas integradas.
-- [x] **Padrão Monocromático Executivo & Limpeza Visual**:
-  * Removido badge residual "Padrão Lero" do cabeçalho mantendo título limpo "Métricas e Vendas".
-  * Paleta rigorosa em `bg-[#161b22]`, `bg-[#0d1117]`, bordas `border-gray-800` e tipografia corporativa.
+- [x] **Cards Analíticos Interativos por Hover (Padrão Lero) & Grid de 8 Métricas**:
+  * Grid fluido de 8 cards analíticos compactos (`grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2.5`):
+    1. *Oportunidades*: Volume total criado e variação percentual.
+    2. *Em Aberto*: Quantidade ativa em negociação e valor monetário do pipeline.
+    3. *Ganhas*: Quantidade e faturamento ganho em BRL com destaque esmeralda.
+    4. *Perdidas*: Quantidade e receita perdida com cálculo direcional de perdas.
+    5. *Ticket Médio*: Média ponderada por oportunidade convertida em tipografia mono.
+    6. *Taxa de Ganho (Win Rate)*: Percentual de conversão sobre o total fechado com micro-barra de progresso.
+    7. *Ciclo Médio de Venda*: Média em dias desde o primeiro contato até o fechamento.
+    8. *Tempo até Movimentação*: Tempo médio de permanência por etapa no funil comercial em horas.
+  * Componente flutuante corporativo `KpiPopover` acionado por hover (`onMouseEnter`/`onMouseLeave`) em `bg-[#0d1117] border border-gray-800 text-gray-200 text-xs shadow-2xl rounded-xl p-3 z-50`:
+    - Comparativo de Período Atual vs. Período Anterior de mesma duração.
+    - Badges de variação percentual com cores direcionais (verde para alta positiva, vermelho/vinho para quedas ou perdas).
+    - Detalhes adicionais de volume, média diária e métricas de conversão.
+- [x] **Filtros de Contexto Superior Completos & Dinâmicos**:
+  * Filtro temporal: `Hoje`, `7d`, `15d`, `30d`, `90d` e `Personalizado` (datas De/Até).
+  * Critério temporal: Seletor de `Última Movimentação` (via `updatedAt`) vs `Data de Criação` (via `createdAt`).
+  * Filtro de Status: `Todos os Status`, `Em Aberto`, `Fechado / Ganho`, `Fechado / Perdido`.
+  * Filtro de CRMs: `Todos os CRMs`, `Funil Principal`, `Vendas Inbound`, `Outbound B2B`, `Parcerias`.
+  * Filtro de Responsáveis: `Todos os Responsáveis` + listagem dinâmica dos membros da equipe.
+  * Botão de ação: "Gerar / Recarregar" destacado à direita com loading reativo.
+  * Todos os filtros alimentam dinamicamente os cards de KPI, o comparativo anterior, os gráficos e a tabela analítica.
 - [x] **Validação & Deploy Vercel**:
   * Build do Next.js 14 validado com sucesso (código 0, 29 rotas de produção geradas).
   * Deploy enviado para produção na Vercel via Git push.

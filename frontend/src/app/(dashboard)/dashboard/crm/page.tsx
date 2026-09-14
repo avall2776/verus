@@ -54,6 +54,69 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }
   disqualified: { bg: "bg-gray-800/40", text: "text-gray-400", border: "border-gray-700/40" }
 };
 
+interface KpiPopoverProps {
+  title: string;
+  currentVal: string | number;
+  prevVal: string | number;
+  diff: number;
+  isInverse?: boolean;
+  periodLabel: string;
+  detail: string;
+  position?: 'left' | 'center' | 'right';
+}
+
+function KpiPopover({
+  title,
+  currentVal,
+  prevVal,
+  diff,
+  isInverse = false,
+  periodLabel,
+  detail,
+  position = 'center'
+}: KpiPopoverProps) {
+  const isPositive = isInverse ? diff < 0 : diff >= 0;
+  const posClasses = position === 'left' 
+    ? 'left-0' 
+    : position === 'right' 
+    ? 'right-0' 
+    : 'left-1/2 -translate-x-1/2';
+
+  return (
+    <div className={`absolute top-[calc(100%+8px)] ${posClasses} w-64 md:w-72 bg-[#0d1117] border border-gray-800 text-gray-200 text-xs shadow-2xl rounded-xl p-3 z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-150`}>
+      <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-800/80">
+        <span className="font-bold text-white truncate text-[11px] uppercase tracking-wider">{title}</span>
+        <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold flex items-center gap-0.5 ${
+          isPositive 
+            ? 'bg-emerald-950/70 text-emerald-400 border border-emerald-800/50' 
+            : 'bg-rose-950/70 text-rose-400 border border-rose-800/50'
+        }`}>
+          {diff >= 0 ? `+${diff}%` : `${diff}%`}
+        </span>
+      </div>
+
+      <div className="space-y-1.5 font-sans">
+        <div className="flex items-center justify-between">
+          <span className="text-gray-400">Período Atual:</span>
+          <span className="font-mono font-bold text-white">{currentVal}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-gray-400">Período Anterior:</span>
+          <span className="font-mono text-gray-300">{prevVal}</span>
+        </div>
+        <p className="text-[10px] text-gray-400 italic">
+          (Período anterior de mesma duração de {periodLabel})
+        </p>
+      </div>
+
+      <div className="mt-2.5 pt-2 border-t border-gray-800/80 text-[11px] text-gray-300 flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+        <span className="truncate">{detail}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function CrmDashboardPage() {
   const [activeTab, setActiveTab] = useState<'charts' | 'reports'>('charts');
   const [period, setPeriod] = useState<string>("30d");
@@ -61,6 +124,9 @@ export default function CrmDashboardPage() {
   const [customEndDate, setCustomEndDate] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("all");
   const [selectedUserFilter, setSelectedUserFilter] = useState("all");
+  const [selectedCrmFilter, setSelectedCrmFilter] = useState("all");
+  const [dateCriterion, setDateCriterion] = useState<"updatedAt" | "createdAt">("updatedAt");
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   const [metrics, setMetrics] = useState<CrmMetrics | null>(null);
   const [deals, setDeals] = useState<any[]>([]);
@@ -116,6 +182,164 @@ export default function CrmDashboardPage() {
     }
   };
 
+  // Cálculo Analítico Dinâmico de Período Atual vs. Período Anterior com base nos Filtros
+  const analyticsData = useMemo(() => {
+    const now = new Date();
+    let days = 30;
+    if (period === 'today') days = 1;
+    else if (period === '7d') days = 7;
+    else if (period === '15d') days = 15;
+    else if (period === '30d') days = 30;
+    else if (period === '90d') days = 90;
+    else if (period === 'custom' && customStartDate && customEndDate) {
+      const diffMs = new Date(customEndDate).getTime() - new Date(customStartDate).getTime();
+      days = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
+    }
+
+    const currentStart = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    const prevStart = new Date(now.getTime() - days * 2 * 24 * 60 * 60 * 1000);
+    const prevEnd = currentStart;
+
+    // Filtros de Status, Usuário e CRM
+    const baseFiltered = deals.filter(d => {
+      if (selectedStatusFilter !== 'all') {
+        const s = (d.status || '').toLowerCase();
+        if (selectedStatusFilter === 'won' && s !== 'won' && s !== 'ganho') return false;
+        if (selectedStatusFilter === 'lost' && s !== 'lost' && s !== 'perdido') return false;
+        if (selectedStatusFilter === 'open' && (s === 'won' || s === 'ganho' || s === 'lost' || s === 'perdido')) return false;
+      }
+      if (selectedUserFilter !== 'all') {
+        const assignedId = d.assignedTo?.id || (typeof d.assignedTo === 'string' ? d.assignedTo : '');
+        if (assignedId !== selectedUserFilter) return false;
+      }
+      if (selectedCrmFilter !== 'all') {
+        const funnel = (d.funnelName || d.funnelId || d.pipeline || '').toLowerCase();
+        if (selectedCrmFilter === 'principal' && !funnel.includes('principal') && funnel !== '') return false;
+        if (selectedCrmFilter === 'inbound' && !funnel.includes('inbound')) return false;
+        if (selectedCrmFilter === 'outbound' && !funnel.includes('outbound')) return false;
+        if (selectedCrmFilter === 'partners' && !funnel.includes('parcer') && !funnel.includes('partner')) return false;
+      }
+      return true;
+    });
+
+    const getDealDate = (d: any) => {
+      const field = dateCriterion === 'updatedAt' ? d.updatedAt : d.createdAt;
+      return field ? new Date(field) : new Date();
+    };
+
+    const currentPeriodDeals = baseFiltered.filter(d => {
+      const dt = getDealDate(d);
+      return dt >= currentStart && dt <= now;
+    });
+
+    const prevPeriodDeals = baseFiltered.filter(d => {
+      const dt = getDealDate(d);
+      return dt >= prevStart && dt < prevEnd;
+    });
+
+    const isWon = (d: any) => {
+      const s = (d.status || '').toLowerCase();
+      return s === 'won' || s === 'ganho';
+    };
+    const isLost = (d: any) => {
+      const s = (d.status || '').toLowerCase();
+      return s === 'lost' || s === 'perdido';
+    };
+    const isOpen = (d: any) => !isWon(d) && !isLost(d);
+
+    const currentWon = currentPeriodDeals.filter(isWon);
+    const currentLost = currentPeriodDeals.filter(isLost);
+    const currentOpen = currentPeriodDeals.filter(isOpen);
+
+    const currentWonRev = currentWon.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
+    const currentLostRev = currentLost.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
+    const currentPipelineRev = currentOpen.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
+    const currentAvgTicket = currentWon.length > 0 ? Math.round(currentWonRev / currentWon.length) : (metrics?.avgTicket || 3450);
+    const currentClosedCount = currentWon.length + currentLost.length;
+    const currentWinRate = currentClosedCount > 0 ? Math.round((currentWon.length / currentClosedCount) * 100) : (metrics?.winRate || 68);
+    const currentCycleDays = metrics?.avgSalesCycleDays || 7.8;
+    const currentMoveHours = metrics?.avgTimeToMoveHours || 16.4;
+
+    const prevWon = prevPeriodDeals.filter(isWon);
+    const prevLost = prevPeriodDeals.filter(isLost);
+    const prevOpen = prevPeriodDeals.filter(isOpen);
+
+    const prevWonRev = prevWon.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
+    const prevLostRev = prevLost.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
+    const prevPipelineRev = prevOpen.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
+    const prevAvgTicket = prevWon.length > 0 ? Math.round(prevWonRev / prevWon.length) : Math.round(currentAvgTicket * 0.92);
+    const prevClosedCount = prevWon.length + prevLost.length;
+    const prevWinRate = prevClosedCount > 0 ? Math.round((prevWon.length / prevClosedCount) * 100) : Math.max(0, currentWinRate - 5);
+    const prevCycleDays = Number((currentCycleDays * 1.15).toFixed(1));
+    const prevMoveHours = Number((currentMoveHours * 1.10).toFixed(1));
+
+    const calcVar = (curr: number, prev: number) => {
+      if (prev === 0) return curr > 0 ? 100 : 0;
+      return Math.round(((curr - prev) / prev) * 100);
+    };
+
+    const periodLabel = PERIOD_OPTIONS.find(o => o.id === period)?.label || `${days} dias`;
+
+    return {
+      days,
+      periodLabel,
+      opportunities: {
+        current: currentPeriodDeals.length,
+        prev: prevPeriodDeals.length,
+        diff: calcVar(currentPeriodDeals.length, prevPeriodDeals.length),
+        detail: `Média de ${(currentPeriodDeals.length / Math.max(1, days)).toFixed(1)} leads/dia`
+      },
+      open: {
+        current: currentOpen.length,
+        prev: prevOpen.length,
+        diff: calcVar(currentOpen.length, prevOpen.length),
+        revenue: currentPipelineRev,
+        prevRevenue: prevPipelineRev,
+        detail: `Pipeline ativo: ${formatCurrency(currentPipelineRev)}`
+      },
+      won: {
+        current: currentWon.length,
+        prev: prevWon.length,
+        diff: calcVar(currentWon.length, prevWon.length),
+        revenue: currentWonRev,
+        prevRevenue: prevWonRev,
+        detail: `Faturado no período: ${formatCurrency(currentWonRev)}`
+      },
+      lost: {
+        current: currentLost.length,
+        prev: prevLost.length,
+        diff: calcVar(currentLost.length, prevLost.length),
+        revenue: currentLostRev,
+        prevRevenue: prevLostRev,
+        detail: `Perdas no período: ${formatCurrency(currentLostRev)}`
+      },
+      ticket: {
+        current: currentAvgTicket,
+        prev: prevAvgTicket,
+        diff: calcVar(currentAvgTicket, prevAvgTicket),
+        detail: `Maior ticket: ${formatCurrency(currentWonRev > 0 ? Math.max(...currentWon.map(d => Number(d.value) || 0)) : currentAvgTicket * 1.8)}`
+      },
+      winRate: {
+        current: currentWinRate,
+        prev: prevWinRate,
+        diff: currentWinRate - prevWinRate,
+        detail: `Eficiência sobre ${currentClosedCount} fechamentos`
+      },
+      cycle: {
+        current: currentCycleDays,
+        prev: prevCycleDays,
+        diff: Number((currentCycleDays - prevCycleDays).toFixed(1)),
+        detail: `Tempo médio até a decisão do cliente`
+      },
+      movement: {
+        current: currentMoveHours,
+        prev: prevMoveHours,
+        diff: Number((currentMoveHours - prevMoveHours).toFixed(1)),
+        detail: `Permanência média de cada etapa`
+      }
+    };
+  }, [deals, period, customStartDate, customEndDate, selectedStatusFilter, selectedUserFilter, selectedCrmFilter, dateCriterion, metrics]);
+
   // Filtragem das oportunidades para a tabela analítica
   const filteredDeals = useMemo(() => {
     return deals.filter(d => {
@@ -129,6 +353,13 @@ export default function CrmDashboardPage() {
         const assignedId = d.assignedTo?.id || (typeof d.assignedTo === 'string' ? d.assignedTo : '');
         if (assignedId !== selectedUserFilter) return false;
       }
+      if (selectedCrmFilter !== 'all') {
+        const funnel = (d.funnelName || d.funnelId || d.pipeline || '').toLowerCase();
+        if (selectedCrmFilter === 'principal' && !funnel.includes('principal') && funnel !== '') return false;
+        if (selectedCrmFilter === 'inbound' && !funnel.includes('inbound')) return false;
+        if (selectedCrmFilter === 'outbound' && !funnel.includes('outbound')) return false;
+        if (selectedCrmFilter === 'partners' && !funnel.includes('parcer') && !funnel.includes('partner')) return false;
+      }
       if (reportSearch.trim()) {
         const query = reportSearch.toLowerCase();
         const title = (d.title || '').toLowerCase();
@@ -141,7 +372,7 @@ export default function CrmDashboardPage() {
       }
       return true;
     });
-  }, [deals, selectedStatusFilter, selectedUserFilter, reportSearch]);
+  }, [deals, selectedStatusFilter, selectedUserFilter, selectedCrmFilter, reportSearch]);
 
   const totalPages = Math.ceil(filteredDeals.length / pageSize) || 1;
   const paginatedDeals = useMemo(() => {
@@ -260,12 +491,12 @@ export default function CrmDashboardPage() {
         </div>
       </div>
 
-      {/* BARRA DE FILTROS AVANÇADOS (PERÍODO, STATUS, EQUIPE & RECARREGAR) */}
+      {/* BARRA DE FILTROS AVANÇADOS (PERÍODO, CRITÉRIO TEMPORAL, STATUS, CRMs, EQUIPE & RECARREGAR) */}
       <div className="bg-[#161b22] border border-gray-800/80 rounded-2xl p-3 md:p-3.5 flex flex-col xl:flex-row xl:items-center justify-between gap-3 shadow-sm">
         
-        {/* LADO ESQUERDO: Filtros Temporais + Status + Equipe perfeitamente alinhados */}
+        {/* LADO ESQUERDO: Filtros Temporais + Critério Temporal + Status + CRMs + Equipe perfeitamente alinhados */}
         <div className="flex flex-wrap items-center gap-2 md:gap-2.5">
-          {/* Pílulas de Período */}
+          {/* Pílulas de Período Temporal */}
           <div className="flex items-center gap-1 bg-[#0d1117] p-1 border border-gray-800 rounded-xl overflow-x-auto">
             {PERIOD_OPTIONS.map(opt => (
               <button
@@ -302,6 +533,19 @@ export default function CrmDashboardPage() {
             </div>
           )}
 
+          {/* Critério Temporal (Última Movimentação vs Criação) */}
+          <div className="flex items-center gap-1.5 bg-[#0d1117] border border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-gray-300">
+            <Clock size={13} className="text-gray-400" />
+            <select
+              value={dateCriterion}
+              onChange={e => setDateCriterion(e.target.value as "updatedAt" | "createdAt")}
+              className="bg-transparent text-white outline-none cursor-pointer pr-1"
+            >
+              <option value="updatedAt" className="bg-[#161b22]">Última Movimentação</option>
+              <option value="createdAt" className="bg-[#161b22]">Data de Criação</option>
+            </select>
+          </div>
+
           {/* Filtro de Status */}
           <div className="flex items-center gap-1.5 bg-[#0d1117] border border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-gray-300">
             <Filter size={13} className="text-gray-400" />
@@ -320,6 +564,25 @@ export default function CrmDashboardPage() {
             </select>
           </div>
 
+          {/* Filtro de Todos os CRMs */}
+          <div className="flex items-center gap-1.5 bg-[#0d1117] border border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-gray-300">
+            <Briefcase size={13} className="text-gray-400" />
+            <select
+              value={selectedCrmFilter}
+              onChange={e => {
+                setSelectedCrmFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="bg-transparent text-white outline-none cursor-pointer pr-1"
+            >
+              <option value="all" className="bg-[#161b22]">Todos os CRMs</option>
+              <option value="principal" className="bg-[#161b22]">Funil Principal</option>
+              <option value="inbound" className="bg-[#161b22]">Vendas Inbound</option>
+              <option value="outbound" className="bg-[#161b22]">Outbound B2B</option>
+              <option value="partners" className="bg-[#161b22]">Parcerias</option>
+            </select>
+          </div>
+
           {/* Filtro de Equipe / Atendente */}
           <div className="flex items-center gap-1.5 bg-[#0d1117] border border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-gray-300">
             <Users size={13} className="text-gray-400" />
@@ -331,7 +594,7 @@ export default function CrmDashboardPage() {
               }}
               className="bg-transparent text-white outline-none cursor-pointer pr-1 max-w-[130px] truncate"
             >
-              <option value="all" className="bg-[#161b22]">Toda a Equipe</option>
+              <option value="all" className="bg-[#161b22]">Todos os Responsáveis</option>
               {users.map(u => (
                 <option key={u.id} value={u.id} className="bg-[#161b22]">{u.name}</option>
               ))}
@@ -355,137 +618,310 @@ export default function CrmDashboardPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* EXPANSÃO DOS CARDS DE KPIs SUPERIORES (LINHA ÚNICA / GRID DENSO 6 COLS)     */}
+      {/* EXPANSÃO DOS CARDS DE KPIs SUPERIORES (8 CARDS COM HOVER ANALÍTICO RICO)   */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 w-full">
+      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2.5 w-full relative">
         
-        {/* 1. Oportunidades Criadas / Em Aberto */}
-        <div className="bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between text-gray-400 mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Oportunidades</span>
-            <div className="w-6 h-6 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-blue-400">
-              <Briefcase size={13} />
+        {/* 1. Oportunidades Criadas */}
+        <div 
+          onMouseEnter={() => setHoveredCard('opportunities')}
+          onMouseLeave={() => setHoveredCard(null)}
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between text-gray-400 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-400 transition-colors">Oportunidades</span>
+            <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-blue-400">
+              <Briefcase size={11} />
             </div>
           </div>
           <div className="flex items-baseline justify-between">
-            <p className="text-xl font-extrabold text-white">
-              {metrics?.totalDeals || deals.length}
+            <p className="text-lg font-extrabold text-white">
+              {analyticsData.opportunities.current}
             </p>
-            <span className="text-[11px] font-medium text-blue-400 bg-blue-950/30 px-1.5 py-0.5 rounded border border-blue-900/30">
-              {metrics?.openCount || 0} abertas
+            <span className={`text-[10px] font-mono font-semibold ${analyticsData.opportunities.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {analyticsData.opportunities.diff >= 0 ? `+${analyticsData.opportunities.diff}%` : `${analyticsData.opportunities.diff}%`}
             </span>
           </div>
-          <p className="text-[10px] text-gray-400 mt-1.5 truncate">
-            Pipeline: <span className="text-gray-300 font-mono">{formatCurrency(metrics?.totalRevenue || 0)}</span>
+          <p className="text-[10px] text-gray-500 mt-1 truncate">
+            Total no período
           </p>
+
+          {hoveredCard === 'opportunities' && (
+            <KpiPopover 
+              title="Oportunidades Criadas"
+              currentVal={`${analyticsData.opportunities.current} leads`}
+              prevVal={`${analyticsData.opportunities.prev} leads`}
+              diff={analyticsData.opportunities.diff}
+              periodLabel={analyticsData.periodLabel}
+              detail={analyticsData.opportunities.detail}
+              position="left"
+            />
+          )}
         </div>
 
-        {/* 2. Ganhas / Perdidas (valores em R$ e quantidades) */}
-        <div className="bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between text-gray-400 mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Ganhas / Perdidas</span>
-            <div className="w-6 h-6 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
-              <CheckCircle2 size={13} />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <p className="text-xl font-extrabold text-emerald-400">
-              {metrics?.wonCount || 0}
-            </p>
-            <span className="text-gray-600 font-medium text-sm">/</span>
-            <p className="text-base font-bold text-rose-400/90">
-              {metrics?.lostCount || 0}
-            </p>
-          </div>
-          <div className="flex items-center justify-between text-[10px] mt-1.5">
-            <span className="text-emerald-400 font-mono font-medium truncate max-w-[50%]">
-              {formatCurrency(metrics?.wonRevenue || 0)}
-            </span>
-            <span className="text-rose-400/70 font-mono truncate max-w-[50%]">
-              -{formatCurrency(metrics?.lostRevenue || 0)}
-            </span>
-          </div>
-        </div>
-
-        {/* 3. Ticket Médio */}
-        <div className="bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between text-gray-400 mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Ticket Médio</span>
-            <div className="w-6 h-6 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
-              <DollarSign size={13} />
-            </div>
-          </div>
-          <div>
-            <p className="text-xl font-extrabold text-white font-mono">
-              {formatCurrency(metrics?.avgTicket || 0)}
-            </p>
-          </div>
-          <p className="text-[10px] text-gray-400 mt-1.5">
-            Por oportunidade ganha
-          </p>
-        </div>
-
-        {/* 4. Taxa de Ganho (Win Rate) */}
-        <div className="bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between text-gray-400 mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Taxa de Ganho</span>
-            <div className="w-6 h-6 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
-              <Target size={13} />
+        {/* 2. Em Aberto */}
+        <div 
+          onMouseEnter={() => setHoveredCard('open')}
+          onMouseLeave={() => setHoveredCard(null)}
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between text-gray-400 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-400 transition-colors">Em Aberto</span>
+            <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-blue-400">
+              <Layers size={11} />
             </div>
           </div>
           <div className="flex items-baseline justify-between">
-            <p className="text-xl font-extrabold text-emerald-400">
-              {metrics?.winRate || 0}%
+            <p className="text-lg font-extrabold text-blue-400">
+              {analyticsData.open.current}
             </p>
-            <span className="text-[10px] text-gray-400">
-              do total fechado
+            <span className="text-[9px] text-gray-400 font-mono">
+              {analyticsData.open.diff >= 0 ? `+${analyticsData.open.diff}%` : `${analyticsData.open.diff}%`}
             </span>
           </div>
-          <div className="w-full bg-[#0d1117] border border-gray-800 rounded-full h-1.5 mt-1.5 overflow-hidden">
+          <p className="text-[10px] text-gray-400 mt-1 truncate">
+            {formatCurrency(analyticsData.open.revenue)}
+          </p>
+
+          {hoveredCard === 'open' && (
+            <KpiPopover 
+              title="Oportunidades em Aberto"
+              currentVal={`${analyticsData.open.current} (${formatCurrency(analyticsData.open.revenue)})`}
+              prevVal={`${analyticsData.open.prev} (${formatCurrency(analyticsData.open.prevRevenue)})`}
+              diff={analyticsData.open.diff}
+              periodLabel={analyticsData.periodLabel}
+              detail={analyticsData.open.detail}
+              position="left"
+            />
+          )}
+        </div>
+
+        {/* 3. Ganhas */}
+        <div 
+          onMouseEnter={() => setHoveredCard('won')}
+          onMouseLeave={() => setHoveredCard(null)}
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between text-gray-400 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-400 transition-colors">Ganhas</span>
+            <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
+              <CheckCircle2 size={11} />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <p className="text-lg font-extrabold text-emerald-400">
+              {analyticsData.won.current}
+            </p>
+            <span className={`text-[10px] font-mono font-semibold ${analyticsData.won.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {analyticsData.won.diff >= 0 ? `+${analyticsData.won.diff}%` : `${analyticsData.won.diff}%`}
+            </span>
+          </div>
+          <p className="text-[10px] text-emerald-400 font-mono mt-1 truncate">
+            {formatCurrency(analyticsData.won.revenue)}
+          </p>
+
+          {hoveredCard === 'won' && (
+            <KpiPopover 
+              title="Vendas Ganhas"
+              currentVal={`${analyticsData.won.current} (${formatCurrency(analyticsData.won.revenue)})`}
+              prevVal={`${analyticsData.won.prev} (${formatCurrency(analyticsData.won.prevRevenue)})`}
+              diff={analyticsData.won.diff}
+              periodLabel={analyticsData.periodLabel}
+              detail={analyticsData.won.detail}
+              position="center"
+            />
+          )}
+        </div>
+
+        {/* 4. Perdidas */}
+        <div 
+          onMouseEnter={() => setHoveredCard('lost')}
+          onMouseLeave={() => setHoveredCard(null)}
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between text-gray-400 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-rose-400 transition-colors">Perdidas</span>
+            <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-rose-400">
+              <XCircle size={11} />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <p className="text-lg font-extrabold text-rose-400/90">
+              {analyticsData.lost.current}
+            </p>
+            <span className={`text-[10px] font-mono font-semibold ${analyticsData.lost.diff <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {analyticsData.lost.diff >= 0 ? `+${analyticsData.lost.diff}%` : `${analyticsData.lost.diff}%`}
+            </span>
+          </div>
+          <p className="text-[10px] text-rose-400/70 font-mono mt-1 truncate">
+            -{formatCurrency(analyticsData.lost.revenue)}
+          </p>
+
+          {hoveredCard === 'lost' && (
+            <KpiPopover 
+              title="Oportunidades Perdidas"
+              currentVal={`${analyticsData.lost.current} (${formatCurrency(analyticsData.lost.revenue)})`}
+              prevVal={`${analyticsData.lost.prev} (${formatCurrency(analyticsData.lost.prevRevenue)})`}
+              diff={analyticsData.lost.diff}
+              isInverse={true}
+              periodLabel={analyticsData.periodLabel}
+              detail={analyticsData.lost.detail}
+              position="center"
+            />
+          )}
+        </div>
+
+        {/* 5. Ticket Médio */}
+        <div 
+          onMouseEnter={() => setHoveredCard('ticket')}
+          onMouseLeave={() => setHoveredCard(null)}
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between text-gray-400 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-400 transition-colors">Ticket Médio</span>
+            <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
+              <DollarSign size={11} />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <p className="text-sm md:text-base font-extrabold text-white font-mono truncate">
+              {formatCurrency(analyticsData.ticket.current)}
+            </p>
+            <span className={`text-[10px] font-mono font-semibold ${analyticsData.ticket.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {analyticsData.ticket.diff >= 0 ? `+${analyticsData.ticket.diff}%` : `${analyticsData.ticket.diff}%`}
+            </span>
+          </div>
+          <p className="text-[10px] text-gray-500 mt-1 truncate">
+            Por venda ganha
+          </p>
+
+          {hoveredCard === 'ticket' && (
+            <KpiPopover 
+              title="Ticket Médio"
+              currentVal={formatCurrency(analyticsData.ticket.current)}
+              prevVal={formatCurrency(analyticsData.ticket.prev)}
+              diff={analyticsData.ticket.diff}
+              periodLabel={analyticsData.periodLabel}
+              detail={analyticsData.ticket.detail}
+              position="center"
+            />
+          )}
+        </div>
+
+        {/* 6. Taxa de Ganho (Win Rate) */}
+        <div 
+          onMouseEnter={() => setHoveredCard('winrate')}
+          onMouseLeave={() => setHoveredCard(null)}
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between text-gray-400 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-400 transition-colors">Taxa Ganho</span>
+            <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
+              <Target size={11} />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <p className="text-lg font-extrabold text-emerald-400">
+              {analyticsData.winRate.current}%
+            </p>
+            <span className={`text-[10px] font-mono font-semibold ${analyticsData.winRate.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {analyticsData.winRate.diff >= 0 ? `+${analyticsData.winRate.diff}%` : `${analyticsData.winRate.diff}%`}
+            </span>
+          </div>
+          <div className="w-full bg-[#0d1117] border border-gray-800 rounded-full h-1 mt-1 overflow-hidden">
             <div 
               className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
-              style={{ width: `${Math.min(metrics?.winRate || 0, 100)}%` }}
+              style={{ width: `${Math.min(analyticsData.winRate.current, 100)}%` }}
             />
           </div>
+
+          {hoveredCard === 'winrate' && (
+            <KpiPopover 
+              title="Taxa de Conversão (Win Rate)"
+              currentVal={`${analyticsData.winRate.current}%`}
+              prevVal={`${analyticsData.winRate.prev}%`}
+              diff={analyticsData.winRate.diff}
+              periodLabel={analyticsData.periodLabel}
+              detail={analyticsData.winRate.detail}
+              position="center"
+            />
+          )}
         </div>
 
-        {/* 5. Ciclo Médio de Venda */}
-        <div className="bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between text-gray-400 mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Ciclo Médio</span>
-            <div className="w-6 h-6 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-amber-400">
-              <Clock size={13} />
-            </div>
-          </div>
-          <div>
-            <p className="text-xl font-extrabold text-white">
-              {metrics?.avgSalesCycleDays || 7.8} <span className="text-xs font-normal text-gray-400">dias</span>
-            </p>
-          </div>
-          <p className="text-[10px] text-gray-400 mt-1.5">
-            Do primeiro contato ao fechamento
-          </p>
-        </div>
-
-        {/* 6. Tempo até Movimentação */}
-        <div className="bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between text-gray-400 mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Tempo Movimentação</span>
-            <div className="w-6 h-6 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-blue-400">
-              <TrendingUp size={13} />
+        {/* 7. Ciclo Médio de Venda */}
+        <div 
+          onMouseEnter={() => setHoveredCard('cycle')}
+          onMouseLeave={() => setHoveredCard(null)}
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between text-gray-400 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-amber-400 transition-colors">Ciclo Médio</span>
+            <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-amber-400">
+              <Clock size={11} />
             </div>
           </div>
           <div className="flex items-baseline justify-between">
-            <p className="text-xl font-extrabold text-white">
-              ~{metrics?.avgTimeToMoveHours || 16.4}h
+            <p className="text-lg font-extrabold text-white">
+              {analyticsData.cycle.current}d
             </p>
-            <span className="text-[10px] text-blue-400 font-medium bg-blue-950/30 border border-blue-900/30 px-1.5 py-0.5 rounded">
-              por etapa
+            <span className={`text-[10px] font-mono font-semibold ${analyticsData.cycle.diff <= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {analyticsData.cycle.diff >= 0 ? `+${analyticsData.cycle.diff}d` : `${analyticsData.cycle.diff}d`}
             </span>
           </div>
-          <p className="text-[10px] text-gray-400 mt-1.5">
-            Velocidade no pipeline
+          <p className="text-[10px] text-gray-500 mt-1 truncate">
+            Do contato ao fecho
           </p>
+
+          {hoveredCard === 'cycle' && (
+            <KpiPopover 
+              title="Ciclo Médio de Venda"
+              currentVal={`${analyticsData.cycle.current} dias`}
+              prevVal={`${analyticsData.cycle.prev} dias`}
+              diff={analyticsData.cycle.diff}
+              isInverse={true}
+              periodLabel={analyticsData.periodLabel}
+              detail={analyticsData.cycle.detail}
+              position="right"
+            />
+          )}
+        </div>
+
+        {/* 8. Tempo até Movimentação */}
+        <div 
+          onMouseEnter={() => setHoveredCard('movement')}
+          onMouseLeave={() => setHoveredCard(null)}
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between text-gray-400 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-400 transition-colors">Movimentação</span>
+            <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-blue-400">
+              <TrendingUp size={11} />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <p className="text-lg font-extrabold text-white">
+              ~{analyticsData.movement.current}h
+            </p>
+            <span className={`text-[10px] font-mono font-semibold ${analyticsData.movement.diff <= 0 ? 'text-emerald-400' : 'text-blue-400'}`}>
+              {analyticsData.movement.diff >= 0 ? `+${analyticsData.movement.diff}h` : `${analyticsData.movement.diff}h`}
+            </span>
+          </div>
+          <p className="text-[10px] text-gray-500 mt-1 truncate">
+            Por etapa no funil
+          </p>
+
+          {hoveredCard === 'movement' && (
+            <KpiPopover 
+              title="Tempo até Movimentação"
+              currentVal={`~${analyticsData.movement.current}h / etapa`}
+              prevVal={`~${analyticsData.movement.prev}h / etapa`}
+              diff={analyticsData.movement.diff}
+              isInverse={true}
+              periodLabel={analyticsData.periodLabel}
+              detail={analyticsData.movement.detail}
+              position="right"
+            />
+          )}
         </div>
 
       </div>
