@@ -6,7 +6,7 @@ import {
   Trash2, Tag, User as UserIcon, Paperclip, Upload, FileText, Download, 
   RotateCcw, CheckCircle2, XCircle, Clock, Phone, Mail, ChevronRight, Plus, Send, 
   AlertCircle, Check, DollarSign, ArrowUpRight, PencilLine, Edit3,
-  Building2, MapPin, Briefcase, UserCog
+  Building2, MapPin, Briefcase, UserCog, Video, Users, Bell, Globe, Link2, ChevronDown
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
@@ -72,14 +72,41 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
   // Anexos
   const [attachments, setAttachments] = useState<any[]>([]);
 
-  // Submodais de Ações Rápidas
-  const [showTaskModal, setShowTaskModal] = useState(false);
-  const [taskTitle, setTaskTitle] = useState("");
-  const [taskDueDate, setTaskDueDate] = useState("");
+  // Submodal de Atividades (Tarefa / Evento) - Padrão Lero
+  const [showActivityModal, setShowActivityModal] = useState(false);
+  const [activityTab, setActivityTab] = useState<'task' | 'event'>('task');
+  const taskAttachmentInputRef = useRef<HTMLInputElement>(null);
 
-  const [showEventModal, setShowEventModal] = useState(false);
-  const [eventTitle, setEventTitle] = useState("");
-  const [eventDateTime, setEventDateTime] = useState("");
+  // Estados de Nova Tarefa
+  const [taskFormData, setTaskFormData] = useState({
+    title: "",
+    description: "",
+    date: new Date().toISOString().split('T')[0],
+    time: "09:00",
+    allDay: false,
+    category: "Ligação",
+    priority: "Média",
+    assignedTo: "",
+    attachments: [] as { id: string; name: string; size: string }[]
+  });
+
+  // Estados de Novo Evento
+  const [eventFormData, setEventFormData] = useState({
+    title: "",
+    description: "",
+    startDate: new Date().toISOString().split('T')[0],
+    startTime: "10:00",
+    endDate: new Date().toISOString().split('T')[0],
+    endTime: "11:00",
+    allDay: false,
+    differentEndDay: false,
+    calendarType: "company", // 'company' | 'private'
+    locationType: "Google Meet", // 'presential' | 'Google Meet' | 'Microsoft Teams' | 'Jitsi' | 'none'
+    locationDetails: "",
+    internalParticipants: [] as string[],
+    notifyReminder: true,
+    sendEmailInvite: true
+  });
 
   // Submodal de Perda
   const [showLossModal, setShowLossModal] = useState(false);
@@ -487,46 +514,131 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
     toast.success("Anexo removido.");
   };
 
-  // Salvar Tarefa
-  const handleSaveTask = () => {
-    if (!taskTitle.trim()) {
+  // Upload de Anexo da Tarefa
+  const handleTaskFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const sizeStr = file.size > 1024 * 1024 
+      ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
+      : `${(file.size / 1024).toFixed(0)} KB`;
+
+    const newAtt = {
+      id: `task-att-${Date.now()}`,
+      name: file.name,
+      size: sizeStr
+    };
+
+    setTaskFormData(prev => ({
+      ...prev,
+      attachments: [...prev.attachments, newAtt]
+    }));
+    toast.success(`Arquivo "${file.name}" adicionado à tarefa.`);
+  };
+
+  const handleRemoveTaskAttachment = (attId: string) => {
+    setTaskFormData(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter(a => a.id !== attId)
+    }));
+  };
+
+  // Salvar Tarefa (com suporte a "Criar e adicionar outra")
+  const handleSaveTask = (andAddAnother = false) => {
+    if (!taskFormData.title.trim()) {
       toast.error("Informe o título da tarefa");
       return;
     }
+
+    const assignedUserName = taskFormData.assignedTo 
+      ? users.find(u => u.id === taskFormData.assignedTo)?.name || "Atendente" 
+      : "Atendente";
+
+    const whenStr = taskFormData.allDay
+      ? `${taskFormData.date} (Dia inteiro)`
+      : `${taskFormData.date} às ${taskFormData.time}`;
+
     const newEvt = {
       id: `evt-${Date.now()}`,
       type: "task",
-      title: `Tarefa Agendada: ${taskTitle} (Prazo: ${taskDueDate || 'Sem data'})`,
+      title: `Tarefa: ${taskFormData.title}`,
+      description: taskFormData.description || "",
+      category: taskFormData.category,
+      priority: taskFormData.priority,
+      when: whenStr,
       stage: deal.status || "new",
-      author: "Atendente",
+      author: assignedUserName,
+      attachmentsCount: taskFormData.attachments.length,
       date: new Date().toISOString()
     };
-    setTimelineEvents(prev => [newEvt, ...prev]);
-    setShowTaskModal(false);
-    setTaskTitle("");
-    setTaskDueDate("");
+
+    const updatedTimeline = [newEvt, ...timelineEvents];
+    setTimelineEvents(updatedTimeline);
+    onUpdate(deal.id, {
+      metadata: {
+        ...(deal.metadata || {}),
+        timeline: updatedTimeline
+      }
+    });
+
     toast.success("Tarefa criada com sucesso!");
+
+    if (andAddAnother) {
+      setTaskFormData({
+        title: "",
+        description: "",
+        date: new Date().toISOString().split('T')[0],
+        time: "09:00",
+        allDay: false,
+        category: "Ligação",
+        priority: "Média",
+        assignedTo: "",
+        attachments: []
+      });
+    } else {
+      setShowActivityModal(false);
+    }
   };
 
   // Salvar Evento
   const handleSaveEvent = () => {
-    if (!eventTitle.trim()) {
+    if (!eventFormData.title.trim()) {
       toast.error("Informe o título do evento");
       return;
     }
+
+    const whenStr = eventFormData.allDay 
+      ? `${eventFormData.startDate} (Dia inteiro)`
+      : `${eventFormData.startDate} às ${eventFormData.startTime}${eventFormData.differentEndDay ? ` até ${eventFormData.endDate} às ${eventFormData.endTime}` : ` até ${eventFormData.endTime}`}`;
+
+    const locationLabel = eventFormData.locationType === 'presential'
+      ? `Presencial: ${eventFormData.locationDetails || 'A definir'}`
+      : eventFormData.locationType;
+
     const newEvt = {
       id: `evt-${Date.now()}`,
       type: "event",
-      title: `Evento Marcado: ${eventTitle} (${eventDateTime || 'A definir'})`,
+      title: `Evento: ${eventFormData.title}`,
+      description: eventFormData.description || "",
+      location: locationLabel,
+      calendar: eventFormData.calendarType === 'company' ? 'Agenda da Empresa' : 'Agenda Privada',
+      when: whenStr,
       stage: deal.status || "new",
       author: "Atendente",
       date: new Date().toISOString()
     };
-    setTimelineEvents(prev => [newEvt, ...prev]);
-    setShowEventModal(false);
-    setEventTitle("");
-    setEventDateTime("");
+
+    const updatedTimeline = [newEvt, ...timelineEvents];
+    setTimelineEvents(updatedTimeline);
+    onUpdate(deal.id, {
+      metadata: {
+        ...(deal.metadata || {}),
+        timeline: updatedTimeline
+      }
+    });
+
     toast.success("Evento agendado com sucesso!");
+    setShowActivityModal(false);
   };
 
   // Chat Rápido
@@ -1121,7 +1233,10 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
               {/* 3. Criar Tarefa */}
               <button 
                 type="button"
-                onClick={() => setShowTaskModal(true)} 
+                onClick={() => {
+                  setActivityTab('task');
+                  setShowActivityModal(true);
+                }} 
                 className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-[#161b22] border border-gray-800 hover:bg-[#21262d] hover:border-gray-700 transition-colors"
               >
                 <CheckSquare size={14} className="text-gray-400" />
@@ -1131,7 +1246,10 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
               {/* 4. Criar Evento */}
               <button 
                 type="button"
-                onClick={() => setShowEventModal(true)} 
+                onClick={() => {
+                  setActivityTab('event');
+                  setShowActivityModal(true);
+                }} 
                 className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-[#161b22] border border-gray-800 hover:bg-[#21262d] hover:border-gray-700 transition-colors"
               >
                 <Calendar size={14} className="text-gray-400" />
@@ -1470,74 +1588,513 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
         )}
 
         {/* ========================================================================= */}
-        {/* SUBMODAIS DE AÇÕES RÁPIDAS: CRIAR TAREFA & CRIAR EVENTO                    */}
+        {/* SUBMODAL UNIFICADO: NOVA TAREFA / NOVO EVENTO (PADRÃO LERO)              */}
         {/* ========================================================================= */}
-        {showTaskModal && (
-          <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-[#161b22] border border-gray-800 w-full max-w-sm rounded-xl p-5 shadow-2xl animate-in zoom-in-95">
-              <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                <CheckSquare size={16} className="text-gray-400" /> Criar Nova Tarefa
-              </h3>
-              <div className="space-y-3 mb-4">
-                <div>
-                  <label className="text-[10px] font-semibold text-gray-400 uppercase block mb-1">Título da Tarefa</label>
-                  <input 
-                    type="text" 
-                    value={taskTitle}
-                    onChange={e => setTaskTitle(e.target.value)}
-                    placeholder="Ex: Ligar para confirmar proposta"
-                    className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-700/60"
-                  />
+        {showActivityModal && (
+          <div className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-[#161b22] border border-gray-800 w-full max-w-xl rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
+              
+              {/* TOPO COM ABAS CÁPSULA (EVENTO / TAREFA) E BOTÃO FECHAR */}
+              <div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-800/80 bg-[#161b22] shrink-0">
+                <div className="flex items-center p-1 bg-[#0d1117] border border-gray-800 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setActivityTab('event')}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                      activityTab === 'event'
+                        ? 'bg-[#21262d] text-white shadow-sm border border-gray-700'
+                        : 'text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    <Calendar size={13} className={activityTab === 'event' ? 'text-blue-400' : 'text-gray-400'} />
+                    <span>Evento</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActivityTab('task')}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                      activityTab === 'task'
+                        ? 'bg-[#21262d] text-white shadow-sm border border-gray-700'
+                        : 'text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    <CheckSquare size={13} className={activityTab === 'task' ? 'text-blue-400' : 'text-gray-400'} />
+                    <span>Tarefa</span>
+                  </button>
                 </div>
-                <div>
-                  <label className="text-[10px] font-semibold text-gray-400 uppercase block mb-1">Prazo / Vencimento</label>
-                  <input 
-                    type="date" 
-                    value={taskDueDate}
-                    onChange={e => setTaskDueDate(e.target.value)}
-                    className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-700/60"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <button onClick={() => setShowTaskModal(false)} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors">Cancelar</button>
-                <button onClick={handleSaveTask} className="px-4 py-1.5 bg-[#161b22] hover:bg-[#21262d] text-gray-200 border border-gray-700 font-semibold text-xs rounded-lg transition-colors">Salvar Tarefa</button>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {showEventModal && (
-          <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-[#161b22] border border-gray-800 w-full max-w-sm rounded-xl p-5 shadow-2xl animate-in zoom-in-95">
-              <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                <Calendar size={16} className="text-gray-400" /> Agendar Evento / Reunião
-              </h3>
-              <div className="space-y-3 mb-4">
+                <button 
+                  onClick={() => setShowActivityModal(false)}
+                  className="p-1.5 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors"
+                  title="Fechar"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* FAIXA: VINCULADO A */}
+              <div className="px-6 py-2.5 bg-[#0d1117]/60 border-b border-gray-800/60 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-gray-400">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Vinculado a:</span>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#161b22] border border-gray-800 rounded-md text-gray-200 font-medium">
+                    <UserIcon size={12} className="text-gray-400" />
+                    <span className="truncate max-w-[280px]">
+                      {deal.contact?.name || deal.title || "Contato / Negócio"}
+                    </span>
+                    <span className="text-gray-400 text-[11px]">#{deal.id?.slice(0, 7) || 'lead'}</span>
+                  </div>
+                </div>
+                {deal.contact?.phone && (
+                  <span className="text-gray-400 text-[11px] hidden sm:inline-block">
+                    {deal.contact.phone}
+                  </span>
+                )}
+              </div>
+
+              {/* CORPO DO FORMULÁRIO */}
+              <div className="p-6 overflow-y-auto max-h-[68vh] custom-scrollbar space-y-5">
+                
+                {/* 1. TÍTULO */}
                 <div>
-                  <label className="text-[10px] font-semibold text-gray-400 uppercase block mb-1">Título do Evento</label>
-                  <input 
-                    type="text" 
-                    value={eventTitle}
-                    onChange={e => setEventTitle(e.target.value)}
-                    placeholder="Ex: Demonstração Técnica Online"
-                    className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-700/60"
+                  <input
+                    type="text"
+                    value={activityTab === 'task' ? taskFormData.title : eventFormData.title}
+                    onChange={e => {
+                      if (activityTab === 'task') {
+                        setTaskFormData(prev => ({ ...prev, title: e.target.value }));
+                      } else {
+                        setEventFormData(prev => ({ ...prev, title: e.target.value }));
+                      }
+                    }}
+                    placeholder={activityTab === 'task' ? "Adicione um título da tarefa..." : "Adicione um título do evento..."}
+                    className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
                   />
                 </div>
+
+                {/* 2. DESCRIÇÃO */}
                 <div>
-                  <label className="text-[10px] font-semibold text-gray-400 uppercase block mb-1">Data e Hora</label>
-                  <input 
-                    type="datetime-local" 
-                    value={eventDateTime}
-                    onChange={e => setEventDateTime(e.target.value)}
-                    className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-700/60"
+                  <textarea
+                    value={activityTab === 'task' ? taskFormData.description : eventFormData.description}
+                    onChange={e => {
+                      if (activityTab === 'task') {
+                        setTaskFormData(prev => ({ ...prev, description: e.target.value }));
+                      } else {
+                        setEventFormData(prev => ({ ...prev, description: e.target.value }));
+                      }
+                    }}
+                    placeholder="Adicione mais detalhes..."
+                    className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors resize-none h-20"
                   />
                 </div>
+
+                {/* ========================================================= */}
+                {/* ABA: TAREFA                                              */}
+                {/* ========================================================= */}
+                {activityTab === 'task' && (
+                  <>
+                    {/* SEÇÃO: QUANDO */}
+                    <div className="space-y-2.5 pt-1">
+                      <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                        QUANDO
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                        <div>
+                          <input
+                            type="date"
+                            value={taskFormData.date}
+                            onChange={e => setTaskFormData(prev => ({ ...prev, date: e.target.value }))}
+                            className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                          />
+                        </div>
+
+                        {!taskFormData.allDay ? (
+                          <div>
+                            <input
+                              type="time"
+                              value={taskFormData.time}
+                              onChange={e => setTaskFormData(prev => ({ ...prev, time: e.target.value }))}
+                              className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                            />
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-500 italic px-2">
+                            Disponível durante o dia inteiro
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-1">
+                        <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={taskFormData.allDay}
+                            onChange={e => setTaskFormData(prev => ({ ...prev, allDay: e.target.checked }))}
+                            className="w-3.5 h-3.5 rounded bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-300">Dia inteiro</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="h-px bg-gray-800/60 w-full"></div>
+
+                    {/* SEÇÃO: DETALHES DA TAREFA */}
+                    <div className="space-y-2.5">
+                      <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                        DETALHES DA TAREFA
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* Categoria */}
+                        <div>
+                          <label className="text-[10px] font-medium text-gray-400 block mb-1">Categoria</label>
+                          <select
+                            value={taskFormData.category}
+                            onChange={e => setTaskFormData(prev => ({ ...prev, category: e.target.value }))}
+                            className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
+                          >
+                            <option value="Ligação">Ligação</option>
+                            <option value="WhatsApp">WhatsApp</option>
+                            <option value="Reunião">Reunião</option>
+                            <option value="E-mail">E-mail</option>
+                            <option value="Proposta">Proposta</option>
+                            <option value="Visita Técnica">Visita Técnica</option>
+                            <option value="Outro">Outro</option>
+                          </select>
+                        </div>
+
+                        {/* Prioridade */}
+                        <div>
+                          <label className="text-[10px] font-medium text-gray-400 block mb-1">Prioridade</label>
+                          <select
+                            value={taskFormData.priority}
+                            onChange={e => setTaskFormData(prev => ({ ...prev, priority: e.target.value }))}
+                            className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
+                          >
+                            <option value="Baixa">Baixa</option>
+                            <option value="Média">Média</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Urgente">Urgente</option>
+                          </select>
+                        </div>
+
+                        {/* Responsável */}
+                        <div>
+                          <label className="text-[10px] font-medium text-gray-400 block mb-1">Responsável</label>
+                          <select
+                            value={taskFormData.assignedTo}
+                            onChange={e => setTaskFormData(prev => ({ ...prev, assignedTo: e.target.value }))}
+                            className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
+                          >
+                            <option value="">Fila Geral (Todos)</option>
+                            {users.map(u => (
+                              <option key={u.id} value={u.id}>{u.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="h-px bg-gray-800/60 w-full"></div>
+
+                    {/* SEÇÃO: ANEXOS */}
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                          ANEXOS
+                        </label>
+                        <span className="text-[11px] text-gray-500">
+                          Total: {taskFormData.attachments.length} arquivo(s) (máx 25 MB)
+                        </span>
+                      </div>
+
+                      <input
+                        type="file"
+                        ref={taskAttachmentInputRef}
+                        onChange={handleTaskFileUpload}
+                        className="hidden"
+                      />
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => taskAttachmentInputRef.current?.click()}
+                          className="px-3 py-2 bg-[#0d1117] hover:bg-[#21262d] border border-dashed border-gray-700 hover:border-gray-500 rounded-xl text-xs font-medium text-gray-300 transition-colors flex items-center gap-1.5"
+                        >
+                          <Upload size={13} className="text-gray-400" />
+                          <span>Adicionar arquivo</span>
+                        </button>
+
+                        {taskFormData.attachments.map(att => (
+                          <div
+                            key={att.id}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d1117] border border-gray-800 rounded-xl text-xs text-gray-300 group"
+                          >
+                            <Paperclip size={12} className="text-gray-400" />
+                            <span className="max-w-[140px] truncate">{att.name}</span>
+                            <span className="text-[10px] text-gray-500">({att.size})</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTaskAttachment(att.id)}
+                              className="text-gray-500 hover:text-rose-400 transition-colors ml-1"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* ========================================================= */}
+                {/* ABA: EVENTO                                              */}
+                {/* ========================================================= */}
+                {activityTab === 'event' && (
+                  <>
+                    {/* SEÇÃO: QUANDO */}
+                    <div className="space-y-2.5 pt-1">
+                      <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                        QUANDO
+                      </label>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-medium text-gray-400 block mb-1">Início</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="date"
+                              value={eventFormData.startDate}
+                              onChange={e => setEventFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                              className="flex-1 bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                            />
+                            {!eventFormData.allDay && (
+                              <input
+                                type="time"
+                                value={eventFormData.startTime}
+                                onChange={e => setEventFormData(prev => ({ ...prev, startTime: e.target.value }))}
+                                className="w-24 bg-[#0d1117] border border-gray-800 rounded-xl px-2 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                              />
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-medium text-gray-400 block mb-1">Término</label>
+                          <div className="flex gap-2">
+                            {eventFormData.differentEndDay ? (
+                              <input
+                                type="date"
+                                value={eventFormData.endDate}
+                                onChange={e => setEventFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                                className="flex-1 bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                              />
+                            ) : null}
+                            {!eventFormData.allDay && (
+                              <input
+                                type="time"
+                                value={eventFormData.endTime}
+                                onChange={e => setEventFormData(prev => ({ ...prev, endTime: e.target.value }))}
+                                className={`${eventFormData.differentEndDay ? 'w-24' : 'w-full'} bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer`}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 pt-1">
+                        <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={eventFormData.allDay}
+                            onChange={e => setEventFormData(prev => ({ ...prev, allDay: e.target.checked }))}
+                            className="w-3.5 h-3.5 rounded bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-300">Dia inteiro</span>
+                        </label>
+
+                        <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={eventFormData.differentEndDay}
+                            onChange={e => setEventFormData(prev => ({ ...prev, differentEndDay: e.target.checked }))}
+                            className="w-3.5 h-3.5 rounded bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-300">Termina em outro dia</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="h-px bg-gray-800/60 w-full"></div>
+
+                    {/* SEÇÃO: AGENDA & ONDE */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Agenda */}
+                      <div>
+                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
+                          AGENDA
+                        </label>
+                        <select
+                          value={eventFormData.calendarType}
+                          onChange={e => setEventFormData(prev => ({ ...prev, calendarType: e.target.value }))}
+                          className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
+                        >
+                          <option value="company">Agenda da Empresa (Equipe)</option>
+                          <option value="private">Agenda Privada (Apenas Eu)</option>
+                        </select>
+                      </div>
+
+                      {/* Onde */}
+                      <div>
+                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
+                          ONDE
+                        </label>
+                        <select
+                          value={eventFormData.locationType}
+                          onChange={e => setEventFormData(prev => ({ ...prev, locationType: e.target.value }))}
+                          className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
+                        >
+                          <option value="Google Meet">Google Meet</option>
+                          <option value="Microsoft Teams">Microsoft Teams</option>
+                          <option value="Jitsi">Jitsi Meet</option>
+                          <option value="presential">Presencial</option>
+                          <option value="none">Nenhum (A definir)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Se presencial, campo de endereço */}
+                    {eventFormData.locationType === 'presential' && (
+                      <div>
+                        <label className="text-[10px] font-medium text-gray-400 block mb-1">Local / Endereço Presencial</label>
+                        <div className="relative">
+                          <MapPin size={14} className="absolute left-3 top-2.5 text-gray-500" />
+                          <input
+                            type="text"
+                            value={eventFormData.locationDetails}
+                            onChange={e => setEventFormData(prev => ({ ...prev, locationDetails: e.target.value }))}
+                            placeholder="Ex: Av. Paulista, 1000 - Sala 42"
+                            className="w-full bg-[#0d1117] border border-gray-800 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="h-px bg-gray-800/60 w-full"></div>
+
+                    {/* SEÇÃO: PARTICIPANTES & NOTIFICAÇÕES */}
+                    <div className="space-y-3">
+                      <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                        PARTICIPANTES & NOTIFICAÇÕES
+                      </label>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0d1117] border border-gray-800 rounded-xl text-xs text-gray-200">
+                          <UserIcon size={13} className="text-gray-400" />
+                          <span>{deal.contact?.name || deal.title || "Contato"} (Cliente)</span>
+                        </div>
+
+                        {users.slice(0, 4).map(u => {
+                          const isSelected = eventFormData.internalParticipants.includes(u.id);
+                          return (
+                            <button
+                              key={u.id}
+                              type="button"
+                              onClick={() => {
+                                setEventFormData(prev => ({
+                                  ...prev,
+                                  internalParticipants: isSelected
+                                    ? prev.internalParticipants.filter(id => id !== u.id)
+                                    : [...prev.internalParticipants, u.id]
+                                }));
+                              }}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors border ${
+                                isSelected
+                                  ? 'bg-[#21262d] text-white border-blue-600/60'
+                                  : 'bg-[#0d1117] text-gray-400 border-gray-800 hover:text-gray-200'
+                              }`}
+                            >
+                              <Users size={12} className={isSelected ? "text-blue-400" : "text-gray-500"} />
+                              <span>{u.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="space-y-2 pt-1">
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={eventFormData.notifyReminder}
+                            onChange={e => setEventFormData(prev => ({ ...prev, notifyReminder: e.target.checked }))}
+                            className="w-3.5 h-3.5 rounded bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-300 flex items-center gap-1.5">
+                            <Bell size={12} className="text-gray-400" />
+                            Notificar lembrete no sistema 15 minutos antes
+                          </span>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={eventFormData.sendEmailInvite}
+                            onChange={e => setEventFormData(prev => ({ ...prev, sendEmailInvite: e.target.checked }))}
+                            className="w-3.5 h-3.5 rounded bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-300 flex items-center gap-1.5">
+                            <Mail size={12} className="text-gray-400" />
+                            Enviar convite por e-mail com link da reunião para participantes
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  </>
+                )}
+
               </div>
-              <div className="flex justify-end gap-2">
-                <button onClick={() => setShowEventModal(false)} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors">Cancelar</button>
-                <button onClick={handleSaveEvent} className="px-4 py-1.5 bg-[#161b22] hover:bg-[#21262d] text-gray-200 border border-gray-700 font-semibold text-xs rounded-lg transition-colors">Agendar Evento</button>
+
+              {/* RODAPÉ COM BOTÕES DE AÇÃO */}
+              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-800/80 bg-[#161b22] shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowActivityModal(false)}
+                  className="px-4 py-2 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+                >
+                  Cancelar
+                </button>
+
+                <div className="flex items-center gap-2.5">
+                  {activityTab === 'task' ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveTask(true)}
+                        className="px-4 py-2 bg-[#21262d] hover:bg-gray-700 text-gray-200 border border-gray-700 font-semibold text-xs rounded-xl transition-all shadow-sm"
+                      >
+                        Criar e adicionar outra
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveTask(false)}
+                        className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl flex items-center gap-2 transition-all shadow-md"
+                      >
+                        <Check size={14} />
+                        <span>Criar tarefa</span>
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSaveEvent}
+                      className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl flex items-center gap-2 transition-all shadow-md"
+                    >
+                      <Check size={14} />
+                      <span>Criar evento</span>
+                    </button>
+                  )}
+                </div>
               </div>
+
             </div>
           </div>
         )}

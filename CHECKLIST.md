@@ -429,6 +429,28 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Compilação Next.js 14 aprovada com código 0 gerando 28 rotas de produção.
   * Deploy efetuado no GitHub e disparado na Vercel.
 
+### Fase 34: Atualização dos Modais de Criar Tarefa e Criar Evento no Padrão Lero (/crm)
+- [x] **Modal Unificado "Nova Tarefa" e "Novo Evento" no Padrão Lero**:
+  * Topo com abas cápsula interativas ("Evento" e "Tarefa") permitindo alternar contextualmente sem sair do modal.
+  * Faixa "Vinculado a" exibindo o contato/negócio atual com chip elegante e identificador da oportunidade.
+- [x] **Aba "Nova Tarefa" Completa**:
+  * Inputs para Título e Descrição com placeholders limpos e foco estilizado.
+  * Seção "QUANDO" com seletor de Data, Hora e checkbox "Dia inteiro".
+  * Seção "DETALHES DA TAREFA" com seletores em grade para Categoria (Ligação, WhatsApp, Reunião, E-mail, Proposta, Visita Técnica, Outro), Prioridade (Baixa, Média, Alta, Urgente) e Responsável (atribuição por membro da equipe ou Fila Geral).
+  * Seção "ANEXOS" com upload dinâmico de múltiplos arquivos, chips de visualização e remoção, e indicador de limite total (máx 25 MB).
+  * Rodapé com "Cancelar", ação secundária "Criar e adicionar outra" (com reset de campos para criação ágil em lote) e botão principal "Criar tarefa" com registro na timeline comercial.
+- [x] **Aba "Novo Evento" Completa**:
+  * Título e Descrição do Evento.
+  * Seção "QUANDO" com Data/Hora de início e término, suporte ao toggle "Termina em outro dia" e checkbox "Dia inteiro".
+  * Seção "AGENDA" (Empresa / Privada) e "ONDE" (Google Meet, Microsoft Teams, Jitsi, Presencial com endereço customizável ou Nenhum).
+  * Seção "PARTICIPANTES & NOTIFICAÇÕES" com seleção de membros internos da equipe, badge do contato cliente, notificação de lembrete no sistema (15 min antes) e envio de convite por e-mail com link da reunião.
+  * Botão de ação principal "Criar evento" integrado à timeline da oportunidade.
+- [x] **Estilização Monocromática Clean**:
+  * Fundos em `bg-[#161b22]`, campos em `bg-[#0d1117] border border-gray-800`, textos em branco e cinza corporativo, integrados perfeitamente ao DealModal.
+- [x] **Validação & Deploy Vercel**:
+  * Compilação Next.js 14 aprovada com código 0 gerando 28 rotas de produção.
+  * Deploy enviado com sucesso para produção na Vercel via Git push.
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
