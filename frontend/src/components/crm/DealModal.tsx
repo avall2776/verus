@@ -5,7 +5,7 @@ import {
   X, MessageSquare, ExternalLink, Calendar, CheckSquare, RefreshCw, 
   Trash2, Tag, User as UserIcon, Paperclip, Upload, FileText, Download, 
   RotateCcw, CheckCircle2, Clock, Phone, Mail, ChevronRight, Plus, Send, 
-  AlertCircle, Check, DollarSign, ArrowUpRight
+  AlertCircle, Check, DollarSign, ArrowUpRight, PencilLine, Edit3
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
@@ -431,9 +431,9 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
       <div className="bg-[#161b22] border border-gray-800 w-full max-w-5xl max-h-[92vh] rounded-2xl flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden relative">
         
         {/* ========================================================================= */}
-        {/* 1. CABEÇALHO DO DEALMODAL (Padrão Lero Seguro)                             */}
+        {/* 1. CABEÇALHO DO DEALMODAL (Padrão Clean Executivo Lero)                    */}
         {/* ========================================================================= */}
-        <div className="flex flex-wrap items-center justify-between px-6 py-4 border-b border-gray-800 bg-[#1c2128] shrink-0 gap-4">
+        <div className="flex flex-wrap items-center justify-between px-6 lg:px-8 py-4.5 border-b border-gray-800/80 bg-[#161b22] shrink-0 gap-4">
           {/* Avatar + Lead + Telefone + Badge de Status */}
           <div className="flex items-center gap-4 min-w-0">
             <div className={`w-12 h-12 rounded-full border-2 ${currentStage.border} flex items-center justify-center ${currentStage.bg} ${currentStage.color} font-black text-lg shadow-md shrink-0`}>
@@ -453,16 +453,26 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                     onChange={e => setTempName(e.target.value)}
                     onBlur={handleUpdateContact}
                     onKeyDown={e => e.key === 'Enter' && handleUpdateContact()}
-                    className="text-lg font-bold text-white bg-gray-800 border border-primary px-2 rounded outline-none"
+                    className="text-lg font-bold text-white bg-gray-800 border border-primary px-2 py-0.5 rounded-lg outline-none"
                   />
                 ) : (
-                  <h2 
-                    className="text-lg font-bold text-white hover:text-primary cursor-pointer transition-colors truncate"
-                    onClick={() => { setTempName(deal.contact?.name || deal.title || ''); setIsEditingName(true); }}
-                    title="Clique para renomear"
-                  >
-                    {deal.contact?.name || deal.title || 'Lead Sem Nome'}
-                  </h2>
+                  <div className="flex items-center gap-1.5 group">
+                    <h2 
+                      className="text-lg font-bold text-white hover:text-primary cursor-pointer transition-colors truncate"
+                      onClick={() => { setTempName(deal.contact?.name || deal.title || ''); setIsEditingName(true); }}
+                      title="Clique para renomear"
+                    >
+                      {deal.contact?.name || deal.title || 'Lead Sem Nome'}
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => { setTempName(deal.contact?.name || deal.title || ''); setIsEditingName(true); }}
+                      className="text-gray-400 hover:text-primary transition-colors p-1 rounded hover:bg-gray-800/60 opacity-60 group-hover:opacity-100"
+                      title="Renomear oportunidade"
+                    >
+                      <PencilLine className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 )}
 
                 {/* Badge de Status da Etapa Atual */}
@@ -499,11 +509,11 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
           {/* Valor do Negócio + Botão Fechar */}
           <div className="flex items-center gap-5 ml-auto">
             <div className="flex flex-col items-end">
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Valor do Negócio</span>
-              <div className="flex items-center gap-1 bg-[#0B1224] px-3 py-1.5 rounded-lg border border-emerald-900/50 shadow-inner">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Valor do Negócio</span>
+              <div className="flex items-center gap-1.5 bg-[#0d1117] px-3.5 py-1.5 rounded-xl border border-emerald-900/50 shadow-inner group">
                 {isEditingValue ? (
                   <div className="flex items-center gap-1">
-                    <span className="text-emerald-400 font-bold">R$</span>
+                    <span className="text-emerald-400 font-bold text-sm">R$</span>
                     <input 
                       autoFocus
                       value={tempValue}
@@ -514,20 +524,31 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                     />
                   </div>
                 ) : (
-                  <span 
-                    className="text-emerald-400 font-black font-mono text-xl cursor-pointer hover:text-emerald-300 transition-colors"
-                    onClick={() => { setTempValue((deal.value ? Number(deal.value) : 0).toFixed(2).replace('.', ',')); setIsEditingValue(true); }}
-                    title="Clique para editar o valor"
-                  >
-                    {formatCurrency(Number(deal.value || 0))}
-                  </span>
+                  <>
+                    <span 
+                      className="text-emerald-400 font-black font-mono text-xl cursor-pointer hover:text-emerald-300 transition-colors"
+                      onClick={() => { setTempValue((deal.value ? Number(deal.value) : 0).toFixed(2).replace('.', ',')); setIsEditingValue(true); }}
+                      title="Clique para editar o valor"
+                    >
+                      {formatCurrency(Number(deal.value || 0))}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => { setTempValue((deal.value ? Number(deal.value) : 0).toFixed(2).replace('.', ',')); setIsEditingValue(true); }}
+                      className="text-emerald-500/70 hover:text-emerald-400 transition-colors p-0.5 rounded opacity-60 group-hover:opacity-100"
+                      title="Editar valor"
+                    >
+                      <PencilLine className="w-3.5 h-3.5" />
+                    </button>
+                  </>
                 )}
               </div>
             </div>
 
             <button 
               onClick={onClose} 
-              className="p-2 hover:bg-gray-800 rounded-xl text-gray-400 hover:text-white transition-colors border border-transparent hover:border-gray-700"
+              className="p-2 hover:bg-gray-800/80 rounded-xl text-gray-400 hover:text-white transition-colors border border-transparent hover:border-gray-700"
+              title="Fechar (Esc)"
             >
               <X size={20} />
             </button>
@@ -540,41 +561,41 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
         <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
           
           {/* COLUNA ESQUERDA: Detalhes, Formulário Meta Ads, Anexos e Timeline */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar border-r border-gray-800/60">
+          <div className="flex-1 overflow-y-auto p-6 lg:p-7 space-y-5 custom-scrollbar border-r border-gray-800/60">
             
             {/* SEÇÃO 1: DESCRIÇÃO & RESPOSTAS DE FORMULÁRIO (META ADS / CRM) */}
-            <div className="bg-[#1c2128] border border-gray-800 rounded-xl p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
+            <div className="bg-[#161b22]/70 border border-gray-800/80 rounded-xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 border-b border-gray-800/60 pb-3">
                 <h3 className="text-xs font-black uppercase tracking-wider text-primary flex items-center gap-2">
                   <ExternalLink size={14} /> Respostas de Formulário & Metadados
                 </h3>
-                <span className="text-[10px] font-bold text-gray-400 bg-[#0B1224] border border-gray-800 px-2 py-0.5 rounded uppercase">
+                <span className="text-[10px] font-bold text-gray-400 bg-[#0d1117] border border-gray-800 px-2.5 py-0.5 rounded-md uppercase">
                   Origem: {deal.contact?.source || 'Meta Ads (Facebook/Instagram)'}
                 </span>
               </div>
 
               {/* Grid Formatado de Respostas Meta Ads */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                <div className="bg-[#0f141c] border border-gray-800/80 p-2.5 rounded-lg">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase block">Formulário de Captação</span>
+                <div className="bg-[#0d1117]/80 border border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase block mb-0.5">Formulário de Captação</span>
                   <span className="text-xs font-semibold text-white">
                     {deal.metadata?.formName || "Versátil Tractor - Campanha Safra 2026"}
                   </span>
                 </div>
-                <div className="bg-[#0f141c] border border-gray-800/80 p-2.5 rounded-lg">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase block">Modelo de Interesse</span>
+                <div className="bg-[#0d1117]/80 border border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase block mb-0.5">Modelo de Interesse</span>
                   <span className="text-xs font-semibold text-emerald-400">
                     {deal.metadata?.model || "Versátil Tractor 80cv Cabinada"}
                   </span>
                 </div>
-                <div className="bg-[#0f141c] border border-gray-800/80 p-2.5 rounded-lg">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase block">Cidade / UF</span>
+                <div className="bg-[#0d1117]/80 border border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase block mb-0.5">Cidade / UF</span>
                   <span className="text-xs font-semibold text-slate-200">
                     {deal.metadata?.city || "São Paulo - SP"}
                   </span>
                 </div>
-                <div className="bg-[#0f141c] border border-gray-800/80 p-2.5 rounded-lg">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase block">E-mail Cadastrado</span>
+                <div className="bg-[#0d1117]/80 border border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase block mb-0.5">E-mail Cadastrado</span>
                   <span className="text-xs font-semibold text-slate-200 truncate block">
                     {deal.contact?.email || 'contato@cliente.com.br'}
                   </span>
@@ -583,13 +604,13 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
 
               {/* Campos Customizados (deal.customFields) */}
               {customFieldsEntries.length > 0 && (
-                <div className="mb-4 pt-3 border-t border-gray-800">
+                <div className="mb-4 pt-3 border-t border-gray-800/60">
                   <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">
                     Campos Personalizados
                   </span>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                     {customFieldsEntries.map(([key, value]) => (
-                      <div key={key} className="bg-[#0f141c] border border-gray-800 p-2 rounded text-xs flex justify-between">
+                      <div key={key} className="bg-[#0d1117]/80 border border-gray-800/60 p-2.5 rounded-xl text-xs flex justify-between items-center">
                         <span className="text-gray-400 font-medium">{key}:</span>
                         <span className="text-white font-bold">{String(value)}</span>
                       </div>
@@ -599,41 +620,44 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
               )}
 
               {/* Anotações do Atendente / Histórico */}
-              <div className="flex items-center justify-between mt-4 mb-2">
+              <div className="flex items-center justify-between mt-5 mb-2.5">
                 <span className="text-xs font-bold text-gray-300">Anotações do Negócio</span>
                 {!isEditingNotes && (
                   <button 
+                    type="button"
                     onClick={() => { setTempNotes(deal.notes || ''); setIsEditingNotes(true); }}
-                    className="text-xs text-primary hover:text-primary/80 font-semibold"
+                    className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-primary font-semibold transition-colors group"
+                    title="Editar anotações"
                   >
-                    ✏️ Editar Anotações
+                    <PencilLine className="w-3.5 h-3.5 text-gray-400 group-hover:text-primary transition-colors" />
+                    <span>Editar Anotações</span>
                   </button>
                 )}
               </div>
 
               {isEditingNotes ? (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2.5">
                   <textarea 
                     value={tempNotes}
                     onChange={e => setTempNotes(e.target.value)}
-                    className="w-full bg-[#0B1224] border border-gray-700 rounded-lg p-3 text-xs text-white resize-y min-h-[100px] outline-none focus:border-primary"
+                    className="w-full bg-[#0d1117] border border-gray-700/80 rounded-xl p-3.5 text-xs text-white resize-y min-h-[100px] outline-none focus:border-primary"
                     placeholder="Digite anotações ou observações comerciais..."
                   />
                   <div className="flex justify-end gap-2">
-                    <button onClick={() => setIsEditingNotes(false)} className="px-3 py-1 text-xs text-gray-400 hover:text-white">Cancelar</button>
-                    <button onClick={handleUpdateNotes} className="px-3 py-1 text-xs bg-primary text-white font-bold rounded hover:bg-primary/90">Salvar</button>
+                    <button onClick={() => setIsEditingNotes(false)} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors">Cancelar</button>
+                    <button onClick={handleUpdateNotes} className="px-3.5 py-1.5 text-xs bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors">Salvar</button>
                   </div>
                 </div>
               ) : (
-                <div className="bg-[#0f141c] border border-gray-800/80 rounded-lg p-3 text-xs text-gray-300 whitespace-pre-wrap">
+                <div className="bg-[#0d1117]/80 border border-gray-800/60 rounded-xl p-3.5 text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">
                   {deal.notes || "Lead recebido pelo formulário nativo da Meta Ads solicitando contato comercial urgente com equipe de vendas."}
                 </div>
               )}
             </div>
 
             {/* SEÇÃO 2: ANEXOS (ÁREA DE UPLOAD E LISTAGEM DE ARQUIVOS) */}
-            <div className="bg-[#1c2128] border border-gray-800 rounded-xl p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
+            <div className="bg-[#161b22]/70 border border-gray-800/80 rounded-xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 border-b border-gray-800/60 pb-3">
                 <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-2">
                   <Paperclip size={14} /> Anexos da Oportunidade ({attachments.length})
                 </h3>
@@ -648,26 +672,26 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                 <button 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 hover:bg-emerald-900/40 px-3 py-1 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-950/30 border border-emerald-800/50 hover:bg-emerald-900/40 px-3 py-1.5 rounded-lg transition-colors"
                 >
                   <Upload size={13} /> Anexar Arquivo
                 </button>
               </div>
 
               {/* Lista de Arquivos Anexados */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {attachments.length === 0 ? (
-                  <div className="text-center py-6 text-gray-500 text-xs italic border border-dashed border-gray-800 rounded-lg">
+                  <div className="text-center py-6 text-gray-500 text-xs italic border border-dashed border-gray-800/80 rounded-xl">
                     Nenhum arquivo anexado a esta oportunidade. Clique em "Anexar Arquivo" acima.
                   </div>
                 ) : (
                   attachments.map(att => (
                     <div 
                       key={att.id}
-                      className="flex items-center justify-between p-2.5 bg-[#0f141c] border border-gray-800 rounded-lg hover:border-gray-700 transition-colors"
+                      className="flex items-center justify-between p-3 bg-[#0d1117]/80 border border-gray-800/60 hover:border-gray-700/80 rounded-xl transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded bg-gray-800 flex items-center justify-center text-primary shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-gray-800/80 flex items-center justify-center text-primary shrink-0">
                           <FileText size={16} />
                         </div>
                         <div className="flex flex-col min-w-0">
@@ -680,7 +704,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                         <button
                           type="button"
                           onClick={() => toast.success(`Baixando ${att.name}...`)}
-                          className="p-1.5 hover:bg-gray-800 rounded text-gray-400 hover:text-white transition-colors"
+                          className="p-1.5 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors"
                           title="Baixar arquivo"
                         >
                           <Download size={14} />
@@ -688,7 +712,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                         <button
                           type="button"
                           onClick={() => handleRemoveAttachment(att.id)}
-                          className="p-1.5 hover:bg-rose-950/40 rounded text-gray-400 hover:text-rose-400 transition-colors"
+                          className="p-1.5 hover:bg-rose-950/40 rounded-lg text-gray-400 hover:text-rose-400 transition-colors"
                           title="Remover anexo"
                         >
                           <Trash2 size={14} />
@@ -701,8 +725,8 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
             </div>
 
             {/* SEÇÃO 3: TIMELINE DO CARD (HISTÓRICO CRONOLÓGICO) */}
-            <div className="bg-[#1c2128] border border-gray-800 rounded-xl p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
+            <div className="bg-[#161b22]/70 border border-gray-800/80 rounded-xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 border-b border-gray-800/60 pb-3">
                 <h3 className="text-xs font-black uppercase tracking-wider text-[#f37021] flex items-center gap-2">
                   <Clock size={14} /> Timeline do Card & Histórico
                 </h3>
@@ -716,19 +740,19 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                   onChange={e => setNewTimelineNote(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddTimelineNote()}
                   placeholder="Adicionar nota rápida à timeline do negócio..."
-                  className="flex-1 bg-[#0B1224] border border-gray-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-primary transition-colors"
+                  className="flex-1 bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-primary transition-colors"
                 />
                 <button
                   type="button"
                   onClick={handleAddTimelineNote}
-                  className="bg-primary hover:bg-primary/90 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 transition-colors shrink-0"
+                  className="bg-primary hover:bg-primary/90 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors shrink-0"
                 >
                   <Send size={13} /> Registrar
                 </button>
               </div>
 
               {/* Linha Cronológica */}
-              <div className="relative pl-6 border-l-2 border-gray-800 space-y-4">
+              <div className="relative pl-6 border-l-2 border-gray-800/80 space-y-4">
                 {timelineEvents.map((evt, idx) => (
                   <div key={evt.id || idx} className="relative">
                     <div className={`absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full border-2 border-[#161b22] ${
@@ -767,7 +791,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
           {/* ========================================================================= */}
           {/* COLUNA DIREITA: PAINEL DE AÇÕES RÁPIDAS (PADRÃO LERO)                     */}
           {/* ========================================================================= */}
-          <div className="w-full lg:w-[340px] bg-[#1c2128]/70 p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar shrink-0 border-t lg:border-t-0 border-gray-800">
+          <div className="w-full lg:w-[350px] bg-[#161b22]/40 p-6 lg:p-7 flex flex-col gap-6 overflow-y-auto custom-scrollbar shrink-0 border-t lg:border-t-0 border-gray-800/80">
             
             {/* ETAPA ATUAL & RESPONSÁVEL */}
             <div className="space-y-4">
@@ -776,7 +800,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                   Etapa do Funil
                 </label>
                 <select 
-                  className="w-full bg-[#0B1224] border border-gray-700 text-white rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-primary transition-colors cursor-pointer"
+                  className="w-full bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-primary transition-colors cursor-pointer"
                   value={deal.status || "new"}
                   onChange={(e) => handleStageChange(e.target.value)}
                 >
@@ -793,7 +817,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                   Responsável pelo Negócio
                 </label>
                 <select 
-                  className="w-full bg-[#0B1224] border border-gray-700 text-white rounded-lg px-3 py-2 text-xs outline-none focus:border-primary transition-colors cursor-pointer"
+                  className="w-full bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-primary transition-colors cursor-pointer"
                   value={deal.assignedTo?.id || (typeof deal.assignedTo === 'string' ? deal.assignedTo : "")}
                   onChange={(e) => onUpdate(deal.id, { assignedTo: e.target.value || null })}
                 >
@@ -807,7 +831,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
               </div>
             </div>
 
-            <div className="h-px bg-gray-800 w-full"></div>
+            <div className="h-px bg-gray-800/80 w-full"></div>
 
             {/* BOTÕES DE AÇÃO RÁPIDA */}
             <div className="flex flex-col gap-2.5">
@@ -832,7 +856,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                     router.push(`/inbox`);
                   }
                 }} 
-                className="flex items-center gap-2.5 w-full p-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-all shadow-sm"
+                className="flex items-center justify-center gap-2.5 w-full p-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-all shadow-sm"
               >
                 <MessageSquare size={15} /> Ver Conversa no WhatsApp
               </button>
@@ -841,7 +865,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
               <button 
                 type="button"
                 onClick={() => loadChat('send')} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-bold text-gray-300 bg-[#0B1224] border border-gray-700 hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-bold text-gray-300 bg-[#0d1117] border border-gray-800 hover:bg-gray-800/80 transition-colors"
               >
                 <Send size={14} className="text-primary" /> Enviar Mensagem Rápida
               </button>
@@ -850,7 +874,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
               <button 
                 type="button"
                 onClick={() => setShowTaskModal(true)} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-bold text-gray-300 bg-[#0B1224] border border-gray-700 hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-bold text-gray-300 bg-[#0d1117] border border-gray-800 hover:bg-gray-800/80 transition-colors"
               >
                 <CheckSquare size={14} className="text-yellow-500" /> Criar Tarefa
               </button>
@@ -859,7 +883,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
               <button 
                 type="button"
                 onClick={() => setShowEventModal(true)} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-bold text-gray-300 bg-[#0B1224] border border-gray-700 hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-bold text-gray-300 bg-[#0d1117] border border-gray-800 hover:bg-gray-800/80 transition-colors"
               >
                 <Calendar size={14} className="text-purple-500" /> Criar Evento
               </button>

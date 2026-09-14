@@ -392,6 +392,17 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build de produção Next.js 14 validado com sucesso (`exit code 0`, 28 rotas).
 
+### Fase 31: Refinamento Visual e Clean do DealModal do CRM (/crm)
+- [x] **Substituição e Refinamento de Vetores de Edição (`PencilLine`)**:
+  * Substituição de emojis anteriores (`✏️`) e adição de ícones de edição discretos com vetor minimalista `PencilLine` (`w-3.5 h-3.5`) no botão "Editar Anotações", no título da oportunidade e no valor financeiro do negócio.
+  * Transições suaves corporativas (`transition-colors hover:text-primary`) com controle de opacidade em hover (`group-hover:opacity-100`).
+- [x] **Evolução para Layout Clean Executivo (Padrão Lero)**:
+  * Padronização de fundos e bordas nos blocos de conteúdo com tom consistente e suave: `bg-[#161b22]/70 border border-gray-800/80 rounded-xl p-5 shadow-sm` (*Respostas de Formulário & Metadados*, *Anexos da Oportunidade*, *Timeline do Card*).
+  * Refinamento do respiro, paddings e margens do cabeçalho (`px-6 lg:px-8 py-4.5`), coluna de dados (`p-6 lg:p-7 space-y-5`) e painel lateral de ações (`w-full lg:w-[350px] bg-[#161b22]/40 p-6 lg:p-7`).
+  * Realce financeiro e de conversão em verde esmeralda com sombras profundas no botão de conversa do WhatsApp (`bg-emerald-600 hover:bg-emerald-500`) e valor formatado em BRL.
+- [x] **Validação & Compilação**:
+  * Build Next.js 14 aprovado com código 0 (28 rotas de produção geradas).
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
