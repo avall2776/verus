@@ -219,9 +219,6 @@ export default function CrmDashboardPage() {
             <div>
               <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
                 Métricas e Vendas
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-950/40 text-blue-400 border border-blue-800/40">
-                  Padrão Lero
-                </span>
               </h1>
               <p className="text-xs md:text-sm text-gray-400 mt-0.5">
                 Acompanhe o desempenho comercial, taxas de conversão, velocidade do time e relatórios em tempo real.
