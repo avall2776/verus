@@ -356,9 +356,19 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Builds do frontend (Next.js 14) e do backend (Nest.js) aprovados com código 0.
 
-
-
-
+### Fase 28: Edição de Nome do Funil e Reestruturação Geométrica da Barra Superior do CRM (/crm)
+- [x] **Edição Interativa do Nome do Funil**:
+  * Bloco de título "Funil Principal (Padrão)" transformado em elemento interativo com ícone discreto `Edit2`.
+  * Ao clicar no título ou no ícone, exibe input inline dinâmico com confirmação via tecla `Enter` ou botão de check verde, e cancelamento via tecla `Escape` ou botão X.
+  * Persistência em estado e no `localStorage` (`crm_funnel_name`), preservando o nome customizado do funil entre recarregamentos da página.
+- [x] **Alinhamento Geométrico e Responsivo da Barra Superior (Padrão Lero)**:
+  * Reorganização completa da barra superior em 3 blocos ordenados e espaçados com `gap-4`:
+    * **Bloco 1 (Esquerda)**: Título/Seletor de Funil com `Edit2` + Abas de Visualização (`Quadro`, `Tabela`, `Linha do Tempo`).
+    * **Bloco 2 (Centro)**: Barra de Busca de Oportunidades + Filtros Rápidos (`Tudo`, `Minhas`, `Contatos`, `Empresas`).
+    * **Bloco 3 (Direita)**: Botões de Ação (`Neutro`, `+ Nova Etapa`, `Gerenciar Etapas`, `Fullscreen`).
+  * Blindagem responsiva em `flex-col xl:flex-row`: em resoluções menores os 3 blocos se empilham ordenadamente sem sobreposição ou quebra de layout entre botões, abas e campo de busca.
+- [x] **Validação & Compilação**:
+  * Build Next.js 14 validado com sucesso (`exit code 0`, 28 rotas estáticas e dinâmicas geradas).
 
 ---
 

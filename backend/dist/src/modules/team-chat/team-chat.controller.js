@@ -21,8 +21,11 @@ let TeamChatController = class TeamChatController {
     constructor(teamChatService) {
         this.teamChatService = teamChatService;
     }
-    async getUsers(tenantId) {
-        return this.teamChatService.getUsers(tenantId);
+    async getUsers(tenantId, req) {
+        return this.teamChatService.getUsers(tenantId, req?.user?.id);
+    }
+    async getDepartments(tenantId) {
+        return this.teamChatService.getDepartments(tenantId);
     }
     async getChannels(tenantId) {
         return this.teamChatService.getChannels(tenantId);
@@ -41,10 +44,18 @@ exports.TeamChatController = TeamChatController;
 __decorate([
     (0, common_1.Get)('users'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], TeamChatController.prototype, "getUsers", null);
+__decorate([
+    (0, common_1.Get)('departments'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], TeamChatController.prototype, "getUsers", null);
+], TeamChatController.prototype, "getDepartments", null);
 __decorate([
     (0, common_1.Get)('channels'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

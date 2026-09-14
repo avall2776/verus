@@ -40,6 +40,7 @@ export declare class AnalyticsService {
             byCloseReason: {
                 name: string;
                 value: number;
+                color: string;
             }[];
         };
     }>;

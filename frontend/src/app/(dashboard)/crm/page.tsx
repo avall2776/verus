@@ -8,7 +8,7 @@ import {
   CheckSquare, ArrowRight, Clock, MessageSquare, ArrowUpRight, 
   Kanban as KanbanIcon, Table as TableIcon, CalendarDays, ChevronLeft, 
   ChevronRight, X, User as UserIcon, Phone, Mail, Check,
-  ArrowUpDown, ArrowUp, ArrowDown, Columns, SlidersHorizontal
+  ArrowUpDown, ArrowUp, ArrowDown, Columns, SlidersHorizontal, Edit2
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import api from "@/lib/api";
@@ -54,6 +54,23 @@ export default function CrmPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Edição e persistência do Nome do Funil
+  const [funnelName, setFunnelName] = useState<string>("Funil Principal (Padrão)");
+  const [isEditingFunnel, setIsEditingFunnel] = useState<boolean>(false);
+  const [tempFunnelName, setTempFunnelName] = useState<string>("Funil Principal (Padrão)");
+
+  const handleSaveFunnelName = () => {
+    if (!tempFunnelName.trim()) {
+      toast.error("O nome do funil não pode ser vazio.");
+      return;
+    }
+    const newName = tempFunnelName.trim();
+    setFunnelName(newName);
+    localStorage.setItem('crm_funnel_name', newName);
+    setIsEditingFunnel(false);
+    toast.success("Nome do funil atualizado com sucesso!");
+  };
   
   // Tabela: estágios colapsados e descrições expandidas
   const [collapsedTableStages, setCollapsedTableStages] = useState<string[]>([]);
@@ -126,6 +143,11 @@ export default function CrmPage() {
     }
     const savedWidths = localStorage.getItem('crm_columns_widths');
     if (savedWidths) setColumnWidths(JSON.parse(savedWidths));
+    const savedFunnelName = localStorage.getItem('crm_funnel_name');
+    if (savedFunnelName) {
+      setFunnelName(savedFunnelName);
+      setTempFunnelName(savedFunnelName);
+    }
   }, []);
 
   useEffect(() => {
@@ -516,16 +538,75 @@ export default function CrmPage() {
         </div>
       )}
 
-      {/* Toolbar Superior Limpa, Responsiva e sem Sobreposição (Padrão Lero) */}
-      <div className="bg-[#161b22] border border-gray-800 rounded-xl p-3 flex flex-col 2xl:flex-row items-stretch 2xl:items-center justify-between gap-3 shadow-sm shrink-0">
-        {/* LADO ESQUERDO: SELETOR DE FUNIL + MODOS DE VISÃO + FILTROS */}
-        <div className="flex items-center gap-2.5 flex-wrap min-w-0">
-          {/* Seletor de Funil Limpo (Sem ícones redundantes) */}
-          <div className="flex items-center pr-2 border-r border-gray-800 shrink-0">
-            <select className="bg-transparent text-white font-extrabold text-sm sm:text-base outline-none cursor-pointer hover:text-primary transition-colors pr-1">
-              <option value="main" className="bg-[#161b22] text-white font-bold">Funil Principal (Padrão)</option>
-              <option value="sales" className="bg-[#161b22] text-white font-bold">Vendas B2B</option>
-            </select>
+      {/* Barra Superior Reestruturada: 3 Blocos Geométricos e Responsivos (Padrão Lero) */}
+      <div className="bg-[#161b22] border border-gray-800 rounded-xl p-3 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 shadow-sm shrink-0">
+        
+        {/* BLOCO 1 (ESQUERDA): TÍTULO/SELETOR DE FUNIL COM EDIÇÃO (Edit2) + ABAS DE VISUALIZAÇÃO */}
+        <div className="flex items-center gap-3 flex-wrap shrink-0">
+          {/* Seletor / Título do Funil Interativo com Edição */}
+          <div className="flex items-center pr-3 border-r border-gray-800 shrink-0">
+            {isEditingFunnel ? (
+              <div className="flex items-center gap-1.5 bg-[#0d1117] border border-primary/60 rounded-lg px-2.5 py-1 shadow-inner">
+                <input
+                  type="text"
+                  value={tempFunnelName}
+                  onChange={(e) => setTempFunnelName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveFunnelName();
+                    if (e.key === 'Escape') {
+                      setTempFunnelName(funnelName);
+                      setIsEditingFunnel(false);
+                    }
+                  }}
+                  autoFocus
+                  className="bg-transparent text-white font-bold text-xs sm:text-sm outline-none w-44"
+                  placeholder="Nome do Funil"
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveFunnelName}
+                  className="text-emerald-400 hover:text-emerald-300 p-0.5 rounded transition-colors"
+                  title="Salvar nome"
+                >
+                  <Check size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempFunnelName(funnelName);
+                    setIsEditingFunnel(false);
+                  }}
+                  className="text-gray-400 hover:text-white p-0.5 rounded transition-colors"
+                  title="Cancelar"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group">
+                <span 
+                  onClick={() => {
+                    setTempFunnelName(funnelName);
+                    setIsEditingFunnel(true);
+                  }}
+                  className="text-white font-extrabold text-sm sm:text-base tracking-tight select-none cursor-pointer hover:text-primary transition-colors"
+                  title="Clique para editar o nome do funil"
+                >
+                  {funnelName}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempFunnelName(funnelName);
+                    setIsEditingFunnel(true);
+                  }}
+                  className="text-gray-400 hover:text-primary transition-colors p-1 rounded hover:bg-gray-800/80"
+                  title="Editar nome do funil"
+                >
+                  <Edit2 size={13} className="opacity-70 group-hover:opacity-100 transition-opacity" />
+                </button>
+              </div>
+            )}
           </div>
           
           {/* SELETORES DE VISUALIZAÇÃO: QUADRO | TABELA | LINHA DO TEMPO */}
@@ -575,8 +656,31 @@ export default function CrmPage() {
               <span>Linha do Tempo</span>
             </button>
           </div>
+        </div>
 
-          <div className="h-5 w-px bg-gray-800 hidden sm:block"></div>
+        {/* BLOCO 2 (CENTRO): BARRA DE BUSCA DE OPORTUNIDADES + FILTROS RÁPIDOS */}
+        <div className="flex items-center gap-3 flex-wrap flex-1 justify-start xl:justify-center min-w-0">
+          {/* Campo de Busca Reativo */}
+          <div className="relative flex-1 sm:flex-initial sm:w-56 min-w-[180px]">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input 
+              id="crm-search-input"
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar oportunidade..." 
+              className="bg-[#0d1117] border border-gray-800 rounded-lg pl-8 pr-7 py-1.5 text-xs text-white outline-none focus:border-primary w-full transition-colors"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
 
           {/* FILTROS POR CATEGORIA: TUDO | MINHAS | CONTATOS | EMPRESAS */}
           <div className="flex bg-[#0d1117] rounded-lg p-1 border border-gray-800 overflow-x-auto custom-scrollbar shrink-0 max-w-full">
@@ -601,31 +705,9 @@ export default function CrmPage() {
             ))}
           </div>
         </div>
-        
-        {/* LADO DIREITO: BUSCA + BOTÕES DE AÇÃO */}
-        <div className="flex items-center gap-2 flex-wrap justify-start 2xl:justify-end shrink-0 pt-1 2xl:pt-0 border-t border-gray-800/60 2xl:border-t-0">
-          {/* Campo de Busca Reativo */}
-          <div className="relative flex-1 sm:flex-initial sm:w-56 min-w-[170px]">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input 
-              id="crm-search-input"
-              type="text" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar oportunidade..." 
-              className="bg-[#0d1117] border border-gray-800 rounded-lg pl-8 pr-7 py-1.5 text-xs text-white outline-none focus:border-primary w-full transition-colors"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
-              >
-                <X size={12} />
-              </button>
-            )}
-          </div>
-          
+
+        {/* BLOCO 3 (DIREITA): BOTÕES DE AÇÃO */}
+        <div className="flex items-center gap-2 flex-wrap justify-start xl:justify-end shrink-0">
           <button 
             type="button"
             onClick={() => setNeutralMode(!neutralMode)}
@@ -635,8 +717,6 @@ export default function CrmPage() {
           >
             Neutro
           </button>
-          
-          <div className="h-5 w-px bg-gray-800 hidden sm:block"></div>
 
           <button 
             type="button"

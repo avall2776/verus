@@ -39,6 +39,7 @@ export declare class AnalyticsController {
             byCloseReason: {
                 name: string;
                 value: number;
+                color: string;
             }[];
         };
     }>;

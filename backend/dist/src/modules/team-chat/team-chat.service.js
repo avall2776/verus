@@ -18,17 +18,85 @@ let TeamChatService = class TeamChatService {
         this.prisma = prisma;
         this.chatGateway = chatGateway;
     }
-    async getUsers(tenantId) {
-        return this.prisma.user.findMany({
+    async getUsers(tenantId, currentUserId) {
+        const users = await this.prisma.user.findMany({
             where: { tenantId },
-            select: { id: true, name: true, role: true, isOnline: true },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                isOnline: true,
+                departments: {
+                    include: {
+                        department: {
+                            select: { id: true, name: true, color: true }
+                        }
+                    }
+                }
+            },
             orderBy: { name: 'asc' }
         });
+        const userIds = users.map(u => u.id);
+        const lastMessages = await Promise.all(userIds.map(async (uid) => {
+            if (!currentUserId || uid === currentUserId) {
+                return this.prisma.teamMessage.findFirst({
+                    where: {
+                        tenantId,
+                        channelId: null,
+                        OR: [{ senderId: uid }, { receiverId: uid }]
+                    },
+                    orderBy: { createdAt: 'desc' },
+                    select: { id: true, content: true, createdAt: true, senderId: true }
+                });
+            }
+            return this.prisma.teamMessage.findFirst({
+                where: {
+                    tenantId,
+                    channelId: null,
+                    OR: [
+                        { senderId: currentUserId, receiverId: uid },
+                        { senderId: uid, receiverId: currentUserId }
+                    ]
+                },
+                orderBy: { createdAt: 'desc' },
+                select: { id: true, content: true, createdAt: true, senderId: true }
+            });
+        }));
+        return users.map((user, idx) => ({
+            ...user,
+            department: user.departments?.[0]?.department?.name || null,
+            departmentColor: user.departments?.[0]?.department?.color || null,
+            lastMessage: lastMessages[idx] || null
+        }));
     }
     async getChannels(tenantId) {
-        return this.prisma.teamChannel.findMany({
+        const channels = await this.prisma.teamChannel.findMany({
             where: { tenantId },
+            include: {
+                messages: {
+                    take: 1,
+                    orderBy: { createdAt: 'desc' },
+                    select: {
+                        id: true,
+                        content: true,
+                        createdAt: true,
+                        sender: { select: { id: true, name: true } }
+                    }
+                }
+            },
             orderBy: { createdAt: 'asc' }
+        });
+        return channels.map(c => ({
+            ...c,
+            lastMessage: c.messages?.[0] || null
+        }));
+    }
+    async getDepartments(tenantId) {
+        return this.prisma.department.findMany({
+            where: { tenantId },
+            select: { id: true, name: true, color: true },
+            orderBy: { name: 'asc' }
         });
     }
     async createChannel(tenantId, data) {
@@ -47,7 +115,7 @@ let TeamChatService = class TeamChatService {
         if (channelId) {
             return this.prisma.teamMessage.findMany({
                 where: { tenantId, channelId },
-                include: { sender: { select: { id: true, name: true } } },
+                include: { sender: { select: { id: true, name: true, role: true } } },
                 orderBy: { createdAt: 'asc' }
             });
         }
@@ -55,19 +123,20 @@ let TeamChatService = class TeamChatService {
             return this.prisma.teamMessage.findMany({
                 where: {
                     tenantId,
+                    channelId: null,
                     OR: [
                         { senderId: currentUserId, receiverId: receiverId },
                         { senderId: receiverId, receiverId: currentUserId }
                     ]
                 },
-                include: { sender: { select: { id: true, name: true } } },
+                include: { sender: { select: { id: true, name: true, role: true } } },
                 orderBy: { createdAt: 'asc' }
             });
         }
         return [];
     }
     async sendMessage(tenantId, senderId, data) {
-        if (!data.content)
+        if (!data.content || !data.content.trim())
             throw new common_1.BadRequestException("Conteúdo vazio.");
         if (!data.channelId && !data.receiverId)
             throw new common_1.BadRequestException("Destino inválido.");
@@ -75,16 +144,18 @@ let TeamChatService = class TeamChatService {
             data: {
                 tenantId,
                 senderId,
-                channelId: data.channelId,
-                receiverId: data.receiverId,
-                content: data.content,
-                mediaUrl: data.mediaUrl
+                channelId: data.channelId || null,
+                receiverId: data.receiverId || null,
+                content: data.content.trim(),
+                mediaUrl: data.mediaUrl || null
             },
             include: {
-                sender: { select: { id: true, name: true } }
+                sender: { select: { id: true, name: true, role: true } },
+                receiver: { select: { id: true, name: true } },
+                channel: { select: { id: true, name: true } }
             }
         });
-        this.chatGateway.server.to(tenantId).emit('newTeamMessage', message);
+        this.chatGateway.emitNewTeamMessage(tenantId, message);
         return message;
     }
 };

@@ -9,4 +9,22 @@ export declare class UsersController {
         role: string;
         isOnline: boolean;
     }[]>;
+    updateProfile(req: any, body: {
+        name: string;
+    }): Promise<{
+        id: string;
+        name: string;
+        email: string;
+        tenantId: string;
+        role: string;
+    }>;
+    update(req: any, id: string, body: {
+        name: string;
+    }): Promise<{
+        id: string;
+        name: string;
+        email: string;
+        tenantId: string;
+        role: string;
+    }>;
 }
