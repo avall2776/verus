@@ -107,8 +107,12 @@ export default function CrmPage() {
     fetchDeals();
   }, []);
 
-  const handleOpenDeal = (dealId: string) => {
-    const target = deals.find(d => d.id === dealId) || filteredDeals.find(d => d.id === dealId);
+  const handleOpenDeal = (dealOrId: string | any) => {
+    if (typeof dealOrId === 'object' && dealOrId !== null) {
+      setSelectedDeal(dealOrId);
+      return;
+    }
+    const target = deals.find(d => d.id === dealOrId) || filteredDeals.find(d => d.id === dealOrId);
     if (target) {
       setSelectedDeal(target);
     }
@@ -745,16 +749,25 @@ export default function CrmPage() {
                             onClick={() => handleOpenDeal(deal.id)}
                             className="hover:bg-[#1f2530] transition-colors cursor-pointer group"
                           >
-                            {/* Título */}
+                            {/* Título da Oportunidade (Interativo) */}
                             <td className="py-3 px-4">
-                              <div className="flex flex-col">
-                                <span className="font-bold text-slate-100 group-hover:text-primary transition-colors text-sm">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenDeal(deal);
+                                }}
+                                className="flex flex-col text-left group/title focus:outline-none w-full"
+                                title="Clique para abrir detalhes da oportunidade"
+                              >
+                                <span className="font-bold text-slate-100 group-hover/title:text-primary transition-colors text-sm hover:underline underline-offset-2 flex items-center gap-1.5">
                                   {deal.title || "Sem título"}
+                                  <ArrowUpRight size={13} className="text-gray-500 group-hover/title:text-primary transition-colors opacity-0 group-hover/title:opacity-100 shrink-0" />
                                 </span>
-                                <span className="text-[11px] font-mono text-gray-500">
-                                  #{deal.id.split('-')[0].toUpperCase()}
+                                <span className="text-[11px] font-mono text-gray-500 group-hover/title:text-primary/70 transition-colors">
+                                  #{deal?.id ? deal.id.split('-')[0].toUpperCase() : 'DEAL'}
                                 </span>
-                              </div>
+                              </button>
                             </td>
 
                             {/* Contato */}

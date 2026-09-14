@@ -5,7 +5,7 @@ import {
   X, MessageSquare, ExternalLink, Calendar, CheckSquare, RefreshCw, 
   Trash2, Tag, User as UserIcon, Paperclip, Upload, FileText, Download, 
   RotateCcw, CheckCircle2, Clock, Phone, Mail, ChevronRight, Plus, Send, 
-  AlertCircle, Check, DollarSign
+  AlertCircle, Check, DollarSign, ArrowUpRight
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
@@ -30,6 +30,18 @@ interface DealModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: (dealId: string, data: any) => Promise<void>;
+}
+
+// Formatador de datas seguro contra exceções de 'Invalid time value'
+function safeFormatDate(dateVal?: any, formatStr = "dd/MM/yyyy HH:mm"): string {
+  if (!dateVal) return "-";
+  try {
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return "-";
+    return format(d, formatStr, { locale: ptBR });
+  } catch {
+    return "-";
+  }
 }
 
 export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
@@ -73,24 +85,30 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
       setChatMode('none');
       setChatData(null);
       setTempName(deal.contact?.name || deal.title || "");
-      setTempValue((deal.value || 0).toFixed(2).replace('.', ','));
+      setTempValue((deal.value ? Number(deal.value) : 0).toFixed(2).replace('.', ','));
       setTempNotes(deal.notes || "");
 
-      // Carregar anexos existentes
-      const existingAttachments = deal.metadata?.attachments || [
-        { id: "att-1", name: "Proposta_Comercial_Safra2026.pdf", size: "1.8 MB", date: "Ontem às 16:40" },
-        { id: "att-2", name: "Comprovante_Residencia_CNH.pdf", size: "840 KB", date: "11/09/2026" }
-      ];
+      // Carregar anexos existentes com proteção
+      const existingAttachments = Array.isArray(deal.metadata?.attachments) 
+        ? deal.metadata.attachments 
+        : [
+            { id: "att-1", name: "Proposta_Comercial_Safra2026.pdf", size: "1.8 MB", date: "Ontem às 16:40" },
+            { id: "att-2", name: "Comprovante_Residencia_CNH.pdf", size: "840 KB", date: "11/09/2026" }
+          ];
       setAttachments(existingAttachments);
 
-      // Carregar Timeline
-      const initialTimeline = deal.metadata?.timeline || [
+      // Carregar Timeline (suporta deal.timeline ou deal.metadata.timeline) com proteção
+      const existingTimeline = Array.isArray(deal.timeline) 
+        ? deal.timeline 
+        : (Array.isArray(deal.metadata?.timeline) ? deal.metadata.timeline : null);
+
+      const initialTimeline = existingTimeline || [
         {
           id: "evt-1",
           type: "created",
           title: "Oportunidade Criada",
           stage: deal.status || "new",
-          author: deal.assignedTo?.name || "Sistema (Meta Ads)",
+          author: deal.assignedTo?.name || deal.assignee?.name || "Sistema (Meta Ads)",
           date: deal.createdAt || new Date().toISOString()
         }
       ];
@@ -98,23 +116,67 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
 
       // Carregar Colaboradores
       api.get('/deals/users')
-        .then(res => setUsers(res.data))
+        .then(res => setUsers(res.data || []))
         .catch(() => {
-          api.get('/users').then(res => setUsers(res.data)).catch(console.error);
+          api.get('/users').then(res => setUsers(res.data || [])).catch(console.error);
         });
     }
   }, [isOpen, deal?.id]);
 
-  if (!isOpen || !deal) return null;
+  if (!isOpen) return null;
 
-  const currentStage = PIPELINE_STAGES.find(s => s.id === deal.status) || PIPELINE_STAGES[0];
+  // Se o modal estiver aberto mas nenhum deal for fornecido ou estiver carregando, renderiza o Skeleton de segurança
+  if (!deal) {
+    return (
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
+        onClick={onClose}
+      >
+        <div className="bg-[#161b22] border border-gray-800 w-full max-w-5xl h-[650px] rounded-2xl flex flex-col shadow-2xl p-6 animate-pulse">
+          {/* Header Skeleton */}
+          <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gray-800"></div>
+              <div className="space-y-2">
+                <div className="w-48 h-5 bg-gray-800 rounded"></div>
+                <div className="w-32 h-3 bg-gray-800 rounded"></div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="w-32 h-10 bg-gray-800 rounded-lg"></div>
+              <div className="w-8 h-8 bg-gray-800 rounded-lg"></div>
+            </div>
+          </div>
+          {/* Body Skeleton */}
+          <div className="flex-1 flex gap-6">
+            <div className="flex-1 space-y-4">
+              <div className="w-full h-36 bg-gray-800/60 rounded-xl"></div>
+              <div className="w-full h-28 bg-gray-800/60 rounded-xl"></div>
+              <div className="w-full h-36 bg-gray-800/60 rounded-xl"></div>
+            </div>
+            <div className="w-72 space-y-4">
+              <div className="w-full h-12 bg-gray-800/60 rounded-xl"></div>
+              <div className="w-full h-12 bg-gray-800/60 rounded-xl"></div>
+              <div className="w-full h-12 bg-gray-800/60 rounded-xl"></div>
+              <div className="w-full h-12 bg-gray-800/60 rounded-xl"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
+  // Obter estágio atual de forma segura
+  const currentStage = PIPELINE_STAGES.find(s => s.id === (deal.status || "new")) || PIPELINE_STAGES[0];
+
+  // Helper para moeda
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
   };
 
+  // Atualizar Contato
   const handleUpdateContact = async () => {
-    if (!tempName.trim() || tempName.trim() === deal.contact?.name) {
+    if (!tempName.trim() || tempName.trim() === (deal.contact?.name || deal.title)) {
       setIsEditingName(false);
       return;
     }
@@ -122,7 +184,10 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
       if (deal.contactId) {
         await api.patch(`/contacts/${deal.contactId}`, { name: tempName });
       }
-      deal.contact = { ...deal.contact, name: tempName };
+      if (deal.contact) {
+        deal.contact.name = tempName;
+      }
+      deal.title = tempName;
       await onUpdate(deal.id, { title: tempName });
       setIsEditingName(false);
       toast.success("Nome atualizado com sucesso!");
@@ -131,6 +196,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
     }
   };
 
+  // Atualizar Valor
   const handleUpdateValue = async () => {
     const numericValue = parseFloat(tempValue.replace(/\./g, '').replace(',', '.')) || 0;
     try {
@@ -143,6 +209,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
     }
   };
 
+  // Atualizar Anotações
   const handleUpdateNotes = async () => {
     try {
       await onUpdate(deal.id, { notes: tempNotes });
@@ -209,7 +276,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
       id: `evt-${Date.now()}`,
       type: "note",
       title: newTimelineNote,
-      stage: deal.status,
+      stage: deal.status || "new",
       author: "Você (Atendente)",
       date: new Date().toISOString()
     };
@@ -265,7 +332,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
       id: `evt-${Date.now()}`,
       type: "task",
       title: `Tarefa Agendada: ${taskTitle} (Prazo: ${taskDueDate || 'Sem data'})`,
-      stage: deal.status,
+      stage: deal.status || "new",
       author: "Atendente",
       date: new Date().toISOString()
     };
@@ -286,7 +353,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
       id: `evt-${Date.now()}`,
       type: "event",
       title: `Evento Marcado: ${eventTitle} (${eventDateTime || 'A definir'})`,
-      stage: deal.status,
+      stage: deal.status || "new",
       author: "Atendente",
       date: new Date().toISOString()
     };
@@ -302,8 +369,12 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
     setChatMode(mode);
     setIsLoadingChat(true);
     try {
-      const { data } = await api.get(`/conversations/contact/${deal.contactId}`);
-      setChatData(data);
+      if (deal.contactId) {
+        const { data } = await api.get(`/conversations/contact/${deal.contactId}`);
+        setChatData(data);
+      } else {
+        toast.error("Contato não associado.");
+      }
     } catch (err) {
       toast.error("Nenhuma conversa ativa encontrada ou sem histórico.");
     } finally {
@@ -321,7 +392,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
           type: 'text'
         });
         setChatData((prev: any) => ({ ...prev, messages: [...(prev?.messages || []), data] }));
-      } else {
+      } else if (deal.contactId) {
         await api.post(`/conversations/contact/${deal.contactId}/messages`, {
           content: chatInput,
           isInternal,
@@ -336,6 +407,22 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
     }
   };
 
+  // ID abreviado seguro
+  const safeId = typeof deal.id === 'string' && deal.id.includes('-') 
+    ? deal.id.split('-')[0].toUpperCase() 
+    : (deal.id || "DEAL");
+
+  // Iniciais seguras
+  const contactName = deal.contact?.name || deal.title || "Lead";
+  const contactInitials = contactName.length >= 2 
+    ? contactName.substring(0, 2).toUpperCase() 
+    : (contactName[0] || "L").toUpperCase();
+
+  // Custom Fields (se existirem)
+  const customFieldsEntries = deal.customFields && typeof deal.customFields === 'object' 
+    ? Object.entries(deal.customFields) 
+    : [];
+
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto"
@@ -344,19 +431,19 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
       <div className="bg-[#161b22] border border-gray-800 w-full max-w-5xl max-h-[92vh] rounded-2xl flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden relative">
         
         {/* ========================================================================= */}
-        {/* 1. CABEÇALHO DO DEALMODAL (Padrão Lero)                                    */}
+        {/* 1. CABEÇALHO DO DEALMODAL (Padrão Lero Seguro)                             */}
         {/* ========================================================================= */}
         <div className="flex flex-wrap items-center justify-between px-6 py-4 border-b border-gray-800 bg-[#1c2128] shrink-0 gap-4">
           {/* Avatar + Lead + Telefone + Badge de Status */}
           <div className="flex items-center gap-4 min-w-0">
             <div className={`w-12 h-12 rounded-full border-2 ${currentStage.border} flex items-center justify-center ${currentStage.bg} ${currentStage.color} font-black text-lg shadow-md shrink-0`}>
-              {deal.contact?.name ? deal.contact.name.substring(0, 2).toUpperCase() : 'LE'}
+              {contactInitials}
             </div>
             
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-2.5 flex-wrap">
                 <span className="text-[11px] font-mono text-gray-400 bg-gray-900 border border-gray-800 px-2 py-0.5 rounded">
-                  #{deal.id.split('-')[0].toUpperCase()}
+                  #{safeId}
                 </span>
                 
                 {isEditingName ? (
@@ -429,7 +516,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                 ) : (
                   <span 
                     className="text-emerald-400 font-black font-mono text-xl cursor-pointer hover:text-emerald-300 transition-colors"
-                    onClick={() => { setTempValue((deal.value || 0).toFixed(2).replace('.', ',')); setIsEditingValue(true); }}
+                    onClick={() => { setTempValue((deal.value ? Number(deal.value) : 0).toFixed(2).replace('.', ',')); setIsEditingValue(true); }}
                     title="Clique para editar o valor"
                   >
                     {formatCurrency(Number(deal.value || 0))}
@@ -470,21 +557,46 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                 <div className="bg-[#0f141c] border border-gray-800/80 p-2.5 rounded-lg">
                   <span className="text-[10px] font-bold text-gray-500 uppercase block">Formulário de Captação</span>
-                  <span className="text-xs font-semibold text-white">Versátil Tractor - Campanha Safra 2026</span>
+                  <span className="text-xs font-semibold text-white">
+                    {deal.metadata?.formName || "Versátil Tractor - Campanha Safra 2026"}
+                  </span>
                 </div>
                 <div className="bg-[#0f141c] border border-gray-800/80 p-2.5 rounded-lg">
                   <span className="text-[10px] font-bold text-gray-500 uppercase block">Modelo de Interesse</span>
-                  <span className="text-xs font-semibold text-emerald-400">Versátil Tractor 80cv Cabinada</span>
+                  <span className="text-xs font-semibold text-emerald-400">
+                    {deal.metadata?.model || "Versátil Tractor 80cv Cabinada"}
+                  </span>
                 </div>
                 <div className="bg-[#0f141c] border border-gray-800/80 p-2.5 rounded-lg">
                   <span className="text-[10px] font-bold text-gray-500 uppercase block">Cidade / UF</span>
-                  <span className="text-xs font-semibold text-slate-200">São Paulo - SP</span>
+                  <span className="text-xs font-semibold text-slate-200">
+                    {deal.metadata?.city || "São Paulo - SP"}
+                  </span>
                 </div>
                 <div className="bg-[#0f141c] border border-gray-800/80 p-2.5 rounded-lg">
                   <span className="text-[10px] font-bold text-gray-500 uppercase block">E-mail Cadastrado</span>
-                  <span className="text-xs font-semibold text-slate-200">{deal.contact?.email || 'contato@cliente.com.br'}</span>
+                  <span className="text-xs font-semibold text-slate-200 truncate block">
+                    {deal.contact?.email || 'contato@cliente.com.br'}
+                  </span>
                 </div>
               </div>
+
+              {/* Campos Customizados (deal.customFields) */}
+              {customFieldsEntries.length > 0 && (
+                <div className="mb-4 pt-3 border-t border-gray-800">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">
+                    Campos Personalizados
+                  </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {customFieldsEntries.map(([key, value]) => (
+                      <div key={key} className="bg-[#0f141c] border border-gray-800 p-2 rounded text-xs flex justify-between">
+                        <span className="text-gray-400 font-medium">{key}:</span>
+                        <span className="text-white font-bold">{String(value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Anotações do Atendente / Histórico */}
               <div className="flex items-center justify-between mt-4 mb-2">
@@ -630,7 +742,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                     <div className="flex items-baseline justify-between text-xs">
                       <span className="font-bold text-slate-200">{evt.title}</span>
                       <span className="text-[10px] text-gray-500">
-                        {evt.date ? format(new Date(evt.date), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "Recente"}
+                        {safeFormatDate(evt.date)}
                       </span>
                     </div>
 
@@ -641,7 +753,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                       <span>{evt.author || "Sistema"}</span>
                       {evt.stage && (
                         <span className="text-[10px] font-mono bg-gray-900 border border-gray-800 px-1.5 py-0.2 rounded text-gray-400">
-                          {evt.stage.toUpperCase()}
+                          {String(evt.stage).toUpperCase()}
                         </span>
                       )}
                     </div>
@@ -665,7 +777,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                 </label>
                 <select 
                   className="w-full bg-[#0B1224] border border-gray-700 text-white rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-primary transition-colors cursor-pointer"
-                  value={deal.status}
+                  value={deal.status || "new"}
                   onChange={(e) => handleStageChange(e.target.value)}
                 >
                   {PIPELINE_STAGES.map(s => (
@@ -714,7 +826,11 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                 type="button"
                 onClick={() => {
                   onClose();
-                  router.push(`/inbox?contactId=${deal.contactId}`);
+                  if (deal.contactId) {
+                    router.push(`/inbox?contactId=${deal.contactId}`);
+                  } else {
+                    router.push(`/inbox`);
+                  }
                 }} 
                 className="flex items-center gap-2.5 w-full p-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-all shadow-sm"
               >
@@ -752,7 +868,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
             {/* Rodapé da Coluna Direita */}
             <div className="mt-auto pt-6 border-t border-gray-800 flex flex-col gap-2">
               <span className="text-[10px] text-gray-500 text-center">
-                Criado em: {deal.createdAt ? format(new Date(deal.createdAt), "dd/MM/yyyy HH:mm") : "-"}
+                Criado em: {safeFormatDate(deal.createdAt)}
               </span>
 
               <button 

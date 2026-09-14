@@ -243,6 +243,20 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas sem erros).
 
+### 🟢 Fase 20: Blindagem Anti-Crash do DealModal e Título Interativo na Tabela do CRM
+- [x] **Blindagem Anti-Crash e Proteção Null Pointer (DealModal.tsx)**:
+  * Optional chaining (`?.`) e fallbacks seguros implementados em todas as propriedades de `deal` (`contact.name`, `contact.phone`, `contact.email`, `contact.source`, `notes`, `customFields`, `timeline`, `metadata`, `assignedTo`).
+  * Formatador de datas `safeFormatDate()` blindado com `try/catch` para prevenir exceções do date-fns do tipo `Invalid time value`.
+  * Implementação de **Skeleton de Carregamento** corporativo com animação suave de pulso caso o modal seja aberto sem deal carregado ou em transição, evitando crash ou tela branca.
+  * Suporte robusto a campos personalizados (`deal.customFields`) e fontes flexíveis de histórico (`deal.timeline` e `metadata.timeline`).
+- [x] **Título da Oportunidade Interativo na Tabela (crm/page.tsx)**:
+  * Campo "Título da Oportunidade" transformado em link/botão interativo com destaque visual, cor primária ao hover, sublinhado e ícone indicador `ArrowUpRight`.
+  * Evento `onClick` explícito disparando `handleOpenDeal(deal)` com `e.stopPropagation()`, garantindo abertura instantânea e segura do `DealModal`.
+  * Função `handleOpenDeal` parametrizada para aceitar tanto ID numérico/uuid quanto o próprio objeto `Deal`.
+- [x] **Validação & Compilação**:
+  * Build do Next.js executado com sucesso (código 0).
+
+
 
 
 ---
