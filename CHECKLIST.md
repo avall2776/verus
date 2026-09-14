@@ -665,7 +665,17 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[14/09/2026 - 13:38]** 🟢 Retorno do almoço / Início do turno da tarde (Fases 37 e 38 concluídas: Paridade dos 6 Cards com popover analítico e tradução de etapas do CRM).
 - **[14/09/2026 - 16:35]** 🚀 Fase 39 Concluída: Refatoração completa da arquitetura do WhatsApp e Inbox (Padrão Lero Multi-tenant) — Prisma, Backend NestJS, WhatsAppProvider, /settings/whatsapp e /inbox com avatares reais, seletor de instâncias e toolbar rica no composer. Builds 100% aprovados (código 0).
 - **[14/09/2026 - 17:05]** 💎 Fase 40 Concluída: Refinamento visual e funcional do Inbox e Composer — Gravação de áudio com MediaRecorder e timer em tempo real, bolhas de mensagens estilo WhatsApp Pro com mini-player e checks alinhados, 4 abas segmentadas com badges de pílula e painel do lead enriquecido com tags dinâmicas por hash e atalhos rápidos. Build Next.js 14 aprovado com código 0 (29 rotas geradas).
-- **[14/09/2026 - 18:05]** 🛡️ Fases 41 a 43 Concluídas: Pipeline de áudio bidirecional (inbound webhook + PTT nativo WhatsApp com ffmpeg) e remoção completa do pool de retratos fictícios do Unsplash, com sincronização estrita de foto oficial da Meta ou fallback nativo em iniciais compostas (FC). Deploy no VPS ativo com sucesso (código 0).
+- **[14/09/2026 - 18:05]** 🛡️ Fases 41 a 43 Concluídas: Pipeline de áudio bidirecional (inbound webhook + PTT nativo WhatsApp com ffmpeg) e remoção completa do pool de retratos fictícios do Unsplash, com sincronização estrita de foto oficial da Meta ou fallback nativo em iniciais compostas (FC).
+- **[14/09/2026 - 18:30]** 🏁 **Finalização da jornada de segunda-feira (Fases 31 a 44 concluídas)**: Listagem rápida restaurada no Inbox, rota `/conversations/counts` ativa, zero bloqueios por avatar, builds 100% aprovados e VPS PM2 online. Ponto batido com sucesso!
+
+---
+
+### Fase 45 (Próxima Sessão / Amanhã): Ajuste da Rotina de Upload de Arquivos e Armazenamento (Supabase Storage & Fallback Local)
+- [ ] **Verificação e Validação do Bucket no Supabase Storage**:
+  * Assegurar que o sistema utilize o bucket correto (validando se o nome exato é `versus-media` ou ajustando conforme variável de ambiente `SUPABASE_STORAGE_BUCKET`).
+- [ ] **Tratamento de Erros e Fallback Resiliente no Backend**:
+  * Se o bucket não existir ou houver falha na subida do arquivo binário, registrar logs claros no NestJS.
+  * Implementar fallback robusto salvando o arquivo localmente na pasta `uploads/` do servidor e gerando URL pública acessível, evitando que o envio de fotos, documentos (PDF) e áudios falhe para o usuário final.
 
 ---
 
