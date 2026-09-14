@@ -403,6 +403,20 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build Next.js 14 aprovado com código 0 (28 rotas de produção geradas).
 
+### Fase 32: Harmonização Monocromática e Clean do DealModal no Padrão Lero (/crm)
+- [x] **Paleta Monocromática e Tons de Azul Escuro**:
+  * Eliminação de cores contrastantes ou ruidosas nos blocos internos e cabeçalhos.
+  * Padronização de fundos com `bg-[#0d1117]` e `bg-[#161b22]`, e divisores sutis com bordas `border-gray-800/60`.
+  * Textos primários consolidados em branco puro (`text-white` / `text-gray-200`) e secundários em cinza claro corporativo (`text-gray-400`).
+- [x] **Simplificação e Unificação dos Botões de Ação**:
+  * Painel lateral de ações com botões padronizados no formato monocromático elegante (`bg-[#161b22] hover:bg-[#21262d] text-gray-200 border border-gray-800`): *Ver Conversa no WhatsApp*, *Enviar Mensagem Rápida*, *Criar Tarefa* e *Criar Evento*.
+  * Destaque sutil e corporativo apenas para ações de status crítico: Ganho em verde esmeralda corporativo (`bg-emerald-950/20 text-emerald-400 border-emerald-900/40`) e Perdido em vermelho/vinho discreto (`bg-rose-950/20 text-rose-400/90 border-rose-900/30`).
+  * Submodal de confirmação de perda (`showLossModal`) monocromático e polido com motivos e justificativa.
+  * Submodais de Tarefa, Evento e Chat Drawer unificados nos mesmos tons `bg-[#161b22]` e inputs `bg-[#0d1117]`.
+- [x] **Validação & Deploy Vercel**:
+  * Build Next.js 14 executado com sucesso e aprovado com código 0 (28 rotas estáticas/dinâmicas geradas).
+  * Deploy enviado para produção no repositório GitHub e Vercel.
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)

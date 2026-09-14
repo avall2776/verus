@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { 
   X, MessageSquare, ExternalLink, Calendar, CheckSquare, RefreshCw, 
   Trash2, Tag, User as UserIcon, Paperclip, Upload, FileText, Download, 
-  RotateCcw, CheckCircle2, Clock, Phone, Mail, ChevronRight, Plus, Send, 
+  RotateCcw, CheckCircle2, XCircle, Clock, Phone, Mail, ChevronRight, Plus, Send, 
   AlertCircle, Check, DollarSign, ArrowUpRight, PencilLine, Edit3
 } from "lucide-react";
 import { format } from "date-fns";
@@ -79,6 +79,11 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventTitle, setEventTitle] = useState("");
   const [eventDateTime, setEventDateTime] = useState("");
+
+  // Submodal de Perda
+  const [showLossModal, setShowLossModal] = useState(false);
+  const [lossReason, setLossReason] = useState("");
+  const [lossComment, setLossComment] = useState("");
 
   useEffect(() => {
     if (isOpen && deal) {
@@ -266,6 +271,37 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
       toast.success(`Movido para ${stageName}`);
     } catch (error) {
       toast.error("Erro ao alterar etapa");
+    }
+  };
+
+  const handleMarkWon = async () => {
+    await handleStageChange('won');
+  };
+
+  const handleConfirmLoss = async () => {
+    try {
+      const reasonText = lossReason === 'outro' ? (lossComment || 'Outro') : (lossReason || 'Perda confirmada');
+      await onUpdate(deal.id, {
+        status: 'lost',
+        lossReason: reasonText,
+        lossComment
+      });
+      deal.status = 'lost';
+      const newEvt = {
+        id: `evt-${Date.now()}`,
+        type: "stage_change",
+        title: `Marcado como Perdido (${reasonText})`,
+        stage: 'lost',
+        author: "Atendente",
+        date: new Date().toISOString()
+      };
+      setTimelineEvents(prev => [newEvt, ...prev]);
+      setShowLossModal(false);
+      setLossReason("");
+      setLossComment("");
+      toast.success("Negociação marcada como perdida");
+    } catch (err) {
+      toast.error("Erro ao marcar como perdida");
     }
   };
 
@@ -510,7 +546,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
           <div className="flex items-center gap-5 ml-auto">
             <div className="flex flex-col items-end">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Valor do Negócio</span>
-              <div className="flex items-center gap-1.5 bg-[#0d1117] px-3.5 py-1.5 rounded-xl border border-emerald-900/50 shadow-inner group">
+              <div className="flex items-center gap-1.5 bg-[#0d1117] px-3.5 py-1.5 rounded-xl border border-gray-800 shadow-inner group">
                 {isEditingValue ? (
                   <div className="flex items-center gap-1">
                     <span className="text-emerald-400 font-bold text-sm">R$</span>
@@ -535,7 +571,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                     <button
                       type="button"
                       onClick={() => { setTempValue((deal.value ? Number(deal.value) : 0).toFixed(2).replace('.', ',')); setIsEditingValue(true); }}
-                      className="text-emerald-500/70 hover:text-emerald-400 transition-colors p-0.5 rounded opacity-60 group-hover:opacity-100"
+                      className="text-gray-400 hover:text-emerald-400 transition-colors p-0.5 rounded opacity-60 group-hover:opacity-100"
                       title="Editar valor"
                     >
                       <PencilLine className="w-3.5 h-3.5" />
@@ -564,39 +600,39 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
           <div className="flex-1 overflow-y-auto p-6 lg:p-7 space-y-5 custom-scrollbar border-r border-gray-800/60">
             
             {/* SEÇÃO 1: DESCRIÇÃO & RESPOSTAS DE FORMULÁRIO (META ADS / CRM) */}
-            <div className="bg-[#161b22]/70 border border-gray-800/80 rounded-xl p-5 shadow-sm">
+            <div className="bg-[#161b22] border border-gray-800/60 rounded-xl p-5 shadow-sm">
               <div className="flex items-center justify-between mb-4 border-b border-gray-800/60 pb-3">
-                <h3 className="text-xs font-black uppercase tracking-wider text-primary flex items-center gap-2">
-                  <ExternalLink size={14} /> Respostas de Formulário & Metadados
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200 flex items-center gap-2">
+                  <ExternalLink size={14} className="text-gray-400" /> Respostas de Formulário & Metadados
                 </h3>
-                <span className="text-[10px] font-bold text-gray-400 bg-[#0d1117] border border-gray-800 px-2.5 py-0.5 rounded-md uppercase">
+                <span className="text-[10px] font-medium text-gray-400 bg-[#0d1117] border border-gray-800/80 px-2.5 py-0.5 rounded-md uppercase">
                   Origem: {deal.contact?.source || 'Meta Ads (Facebook/Instagram)'}
                 </span>
               </div>
 
               {/* Grid Formatado de Respostas Meta Ads */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                <div className="bg-[#0d1117]/80 border border-gray-800/60 p-3 rounded-xl">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase block mb-0.5">Formulário de Captação</span>
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Formulário de Captação</span>
                   <span className="text-xs font-semibold text-white">
                     {deal.metadata?.formName || "Versátil Tractor - Campanha Safra 2026"}
                   </span>
                 </div>
-                <div className="bg-[#0d1117]/80 border border-gray-800/60 p-3 rounded-xl">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase block mb-0.5">Modelo de Interesse</span>
-                  <span className="text-xs font-semibold text-emerald-400">
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Modelo de Interesse</span>
+                  <span className="text-xs font-semibold text-gray-200">
                     {deal.metadata?.model || "Versátil Tractor 80cv Cabinada"}
                   </span>
                 </div>
-                <div className="bg-[#0d1117]/80 border border-gray-800/60 p-3 rounded-xl">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase block mb-0.5">Cidade / UF</span>
-                  <span className="text-xs font-semibold text-slate-200">
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Cidade / UF</span>
+                  <span className="text-xs font-semibold text-gray-300">
                     {deal.metadata?.city || "São Paulo - SP"}
                   </span>
                 </div>
-                <div className="bg-[#0d1117]/80 border border-gray-800/60 p-3 rounded-xl">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase block mb-0.5">E-mail Cadastrado</span>
-                  <span className="text-xs font-semibold text-slate-200 truncate block">
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">E-mail Cadastrado</span>
+                  <span className="text-xs font-semibold text-gray-300 truncate block">
                     {deal.contact?.email || 'contato@cliente.com.br'}
                   </span>
                 </div>
@@ -610,7 +646,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                   </span>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                     {customFieldsEntries.map(([key, value]) => (
-                      <div key={key} className="bg-[#0d1117]/80 border border-gray-800/60 p-2.5 rounded-xl text-xs flex justify-between items-center">
+                      <div key={key} className="bg-[#0d1117] border border-gray-800/60 p-2.5 rounded-xl text-xs flex justify-between items-center">
                         <span className="text-gray-400 font-medium">{key}:</span>
                         <span className="text-white font-bold">{String(value)}</span>
                       </div>
@@ -626,10 +662,10 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                   <button 
                     type="button"
                     onClick={() => { setTempNotes(deal.notes || ''); setIsEditingNotes(true); }}
-                    className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-primary font-semibold transition-colors group"
+                    className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white font-medium transition-colors group"
                     title="Editar anotações"
                   >
-                    <PencilLine className="w-3.5 h-3.5 text-gray-400 group-hover:text-primary transition-colors" />
+                    <PencilLine className="w-3.5 h-3.5 text-gray-400 group-hover:text-white transition-colors" />
                     <span>Editar Anotações</span>
                   </button>
                 )}
@@ -640,26 +676,26 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                   <textarea 
                     value={tempNotes}
                     onChange={e => setTempNotes(e.target.value)}
-                    className="w-full bg-[#0d1117] border border-gray-700/80 rounded-xl p-3.5 text-xs text-white resize-y min-h-[100px] outline-none focus:border-primary"
+                    className="w-full bg-[#0d1117] border border-gray-700/80 rounded-xl p-3.5 text-xs text-white resize-y min-h-[100px] outline-none focus:border-blue-700/60"
                     placeholder="Digite anotações ou observações comerciais..."
                   />
                   <div className="flex justify-end gap-2">
                     <button onClick={() => setIsEditingNotes(false)} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors">Cancelar</button>
-                    <button onClick={handleUpdateNotes} className="px-3.5 py-1.5 text-xs bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors">Salvar</button>
+                    <button onClick={handleUpdateNotes} className="px-3.5 py-1.5 text-xs bg-[#161b22] hover:bg-[#21262d] text-white border border-gray-700 font-semibold rounded-lg transition-colors">Salvar</button>
                   </div>
                 </div>
               ) : (
-                <div className="bg-[#0d1117]/80 border border-gray-800/60 rounded-xl p-3.5 text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">
+                <div className="bg-[#0d1117] border border-gray-800/60 rounded-xl p-3.5 text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">
                   {deal.notes || "Lead recebido pelo formulário nativo da Meta Ads solicitando contato comercial urgente com equipe de vendas."}
                 </div>
               )}
             </div>
 
             {/* SEÇÃO 2: ANEXOS (ÁREA DE UPLOAD E LISTAGEM DE ARQUIVOS) */}
-            <div className="bg-[#161b22]/70 border border-gray-800/80 rounded-xl p-5 shadow-sm">
+            <div className="bg-[#161b22] border border-gray-800/60 rounded-xl p-5 shadow-sm">
               <div className="flex items-center justify-between mb-4 border-b border-gray-800/60 pb-3">
-                <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-2">
-                  <Paperclip size={14} /> Anexos da Oportunidade ({attachments.length})
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200 flex items-center gap-2">
+                  <Paperclip size={14} className="text-gray-400" /> Anexos da Oportunidade ({attachments.length})
                 </h3>
                 
                 {/* Botão de Upload com Input File Oculto */}
@@ -672,9 +708,9 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                 <button 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-950/30 border border-emerald-800/50 hover:bg-emerald-900/40 px-3 py-1.5 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-medium text-gray-200 bg-[#161b22] hover:bg-[#21262d] border border-gray-800 px-3 py-1.5 rounded-lg transition-colors"
                 >
-                  <Upload size={13} /> Anexar Arquivo
+                  <Upload size={13} className="text-gray-400" /> Anexar Arquivo
                 </button>
               </div>
 
@@ -688,10 +724,10 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                   attachments.map(att => (
                     <div 
                       key={att.id}
-                      className="flex items-center justify-between p-3 bg-[#0d1117]/80 border border-gray-800/60 hover:border-gray-700/80 rounded-xl transition-colors"
+                      className="flex items-center justify-between p-3 bg-[#0d1117] border border-gray-800/60 hover:border-gray-700/80 rounded-xl transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-gray-800/80 flex items-center justify-center text-primary shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 shrink-0">
                           <FileText size={16} />
                         </div>
                         <div className="flex flex-col min-w-0">
@@ -725,10 +761,10 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
             </div>
 
             {/* SEÇÃO 3: TIMELINE DO CARD (HISTÓRICO CRONOLÓGICO) */}
-            <div className="bg-[#161b22]/70 border border-gray-800/80 rounded-xl p-5 shadow-sm">
+            <div className="bg-[#161b22] border border-gray-800/60 rounded-xl p-5 shadow-sm">
               <div className="flex items-center justify-between mb-4 border-b border-gray-800/60 pb-3">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[#f37021] flex items-center gap-2">
-                  <Clock size={14} /> Timeline do Card & Histórico
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200 flex items-center gap-2">
+                  <Clock size={14} className="text-gray-400" /> Timeline do Card & Histórico
                 </h3>
               </div>
 
@@ -740,14 +776,14 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                   onChange={e => setNewTimelineNote(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddTimelineNote()}
                   placeholder="Adicionar nota rápida à timeline do negócio..."
-                  className="flex-1 bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-primary transition-colors"
+                  className="flex-1 bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-gray-500 outline-none focus:border-blue-700/60 transition-colors"
                 />
                 <button
                   type="button"
                   onClick={handleAddTimelineNote}
-                  className="bg-primary hover:bg-primary/90 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors shrink-0"
+                  className="bg-[#161b22] hover:bg-[#21262d] text-gray-200 border border-gray-800 text-xs font-medium px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors shrink-0"
                 >
-                  <Send size={13} /> Registrar
+                  <Send size={13} className="text-gray-400" /> Registrar
                 </button>
               </div>
 
@@ -756,15 +792,15 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                 {timelineEvents.map((evt, idx) => (
                   <div key={evt.id || idx} className="relative">
                     <div className={`absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full border-2 border-[#161b22] ${
-                      evt.type === 'created' ? 'bg-blue-500' :
-                      evt.type === 'reactivated' ? 'bg-orange-500' :
-                      evt.type === 'task' ? 'bg-yellow-500' :
-                      evt.type === 'event' ? 'bg-purple-500' :
-                      evt.type === 'stage_change' ? 'bg-emerald-500' : 'bg-primary'
+                      evt.type === 'created' ? 'bg-blue-500/80' :
+                      evt.type === 'reactivated' ? 'bg-blue-400/80' :
+                      evt.type === 'task' ? 'bg-amber-400/80' :
+                      evt.type === 'event' ? 'bg-purple-400/80' :
+                      evt.type === 'stage_change' ? 'bg-emerald-500/80' : 'bg-gray-500'
                     }`}></div>
 
                     <div className="flex items-baseline justify-between text-xs">
-                      <span className="font-bold text-slate-200">{evt.title}</span>
+                      <span className="font-semibold text-gray-200">{evt.title}</span>
                       <span className="text-[10px] text-gray-500">
                         {safeFormatDate(evt.date)}
                       </span>
@@ -791,16 +827,16 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
           {/* ========================================================================= */}
           {/* COLUNA DIREITA: PAINEL DE AÇÕES RÁPIDAS (PADRÃO LERO)                     */}
           {/* ========================================================================= */}
-          <div className="w-full lg:w-[350px] bg-[#161b22]/40 p-6 lg:p-7 flex flex-col gap-6 overflow-y-auto custom-scrollbar shrink-0 border-t lg:border-t-0 border-gray-800/80">
+          <div className="w-full lg:w-[350px] bg-[#13171f]/80 p-6 lg:p-7 flex flex-col gap-5 overflow-y-auto custom-scrollbar shrink-0 border-t lg:border-t-0 border-gray-800/60">
             
             {/* ETAPA ATUAL & RESPONSÁVEL */}
             <div className="space-y-4">
               <div>
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">
+                <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">
                   Etapa do Funil
                 </label>
                 <select 
-                  className="w-full bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-primary transition-colors cursor-pointer"
+                  className="w-full bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
                   value={deal.status || "new"}
                   onChange={(e) => handleStageChange(e.target.value)}
                 >
@@ -813,11 +849,11 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">
+                <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">
                   Responsável pelo Negócio
                 </label>
                 <select 
-                  className="w-full bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-primary transition-colors cursor-pointer"
+                  className="w-full bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
                   value={deal.assignedTo?.id || (typeof deal.assignedTo === 'string' ? deal.assignedTo : "")}
                   onChange={(e) => onUpdate(deal.id, { assignedTo: e.target.value || null })}
                 >
@@ -831,21 +867,54 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
               </div>
             </div>
 
-            <div className="h-px bg-gray-800/80 w-full"></div>
+            <div className="h-px bg-gray-800/60 w-full"></div>
 
-            {/* BOTÕES DE AÇÃO RÁPIDA */}
-            <div className="flex flex-col gap-2.5">
-              
-              {/* 1. Reativar Negociação */}
+            {/* AÇÕES DE STATUS CRÍTICO (GANHO / PERDIDO NO PADRÃO LERO) */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={handleMarkWon}
+                className={`flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold transition-all border ${
+                  deal.status === 'won'
+                    ? 'bg-emerald-950/40 text-emerald-300 border-emerald-700/60 shadow-sm'
+                    : 'bg-emerald-950/20 hover:bg-emerald-950/35 text-emerald-400 border-emerald-900/40'
+                }`}
+                title="Marcar como Fechado / Ganho"
+              >
+                <CheckCircle2 size={14} className="text-emerald-400" />
+                <span>{deal.status === 'won' ? 'Ganho' : 'Marcar Ganho'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowLossModal(true)}
+                className={`flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold transition-all border ${
+                  deal.status === 'lost'
+                    ? 'bg-rose-950/40 text-rose-300 border-rose-700/60 shadow-sm'
+                    : 'bg-rose-950/20 hover:bg-rose-950/35 text-rose-400/90 border-rose-900/30'
+                }`}
+                title="Marcar como Fechado / Perdido"
+              >
+                <XCircle size={14} className="text-rose-400/90" />
+                <span>{deal.status === 'lost' ? 'Perdido' : 'Marcar Perdido'}</span>
+              </button>
+            </div>
+
+            {/* REATIVAR NEGOCIAÇÃO (SE ESTIVER PERDIDO OU DESQUALIFICADO) */}
+            {(deal.status === 'lost' || deal.status === 'disqualified') && (
               <button 
                 type="button"
                 onClick={handleReactivateDeal} 
-                className="flex items-center gap-2.5 w-full p-3 rounded-xl text-xs font-bold text-orange-400 bg-orange-500/10 border border-orange-500/30 hover:bg-orange-500/20 transition-all shadow-sm"
+                className="flex items-center justify-center gap-2 w-full p-2.5 rounded-xl text-xs font-medium text-blue-300 bg-blue-950/25 border border-blue-900/40 hover:bg-blue-900/35 transition-all"
               >
-                <RotateCcw size={15} /> Reativar Negociação
+                <RotateCcw size={14} /> Reativar Negociação
               </button>
+            )}
+
+            {/* BOTÕES DE AÇÃO UNIFICADOS (MONOCROMÁTICOS COM HOVER EM AZUL ESCURO) */}
+            <div className="flex flex-col gap-2">
               
-              {/* 2. Ver Conversa no WhatsApp (Redirecionando para /inbox) */}
+              {/* 1. Ver Conversa no WhatsApp */}
               <button 
                 type="button"
                 onClick={() => {
@@ -856,41 +925,45 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                     router.push(`/inbox`);
                   }
                 }} 
-                className="flex items-center justify-center gap-2.5 w-full p-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-all shadow-sm"
+                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-[#161b22] border border-gray-800 hover:bg-[#21262d] hover:border-gray-700 transition-colors"
               >
-                <MessageSquare size={15} /> Ver Conversa no WhatsApp
+                <MessageSquare size={14} className="text-gray-400" />
+                <span>Ver Conversa no WhatsApp</span>
               </button>
 
-              {/* 3. Enviar Mensagem Rápida (Modal Interno) */}
+              {/* 2. Enviar Mensagem Rápida */}
               <button 
                 type="button"
                 onClick={() => loadChat('send')} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-bold text-gray-300 bg-[#0d1117] border border-gray-800 hover:bg-gray-800/80 transition-colors"
+                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-[#161b22] border border-gray-800 hover:bg-[#21262d] hover:border-gray-700 transition-colors"
               >
-                <Send size={14} className="text-primary" /> Enviar Mensagem Rápida
+                <Send size={14} className="text-gray-400" />
+                <span>Enviar Mensagem Rápida</span>
               </button>
 
-              {/* 4. Criar Tarefa */}
+              {/* 3. Criar Tarefa */}
               <button 
                 type="button"
                 onClick={() => setShowTaskModal(true)} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-bold text-gray-300 bg-[#0d1117] border border-gray-800 hover:bg-gray-800/80 transition-colors"
+                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-[#161b22] border border-gray-800 hover:bg-[#21262d] hover:border-gray-700 transition-colors"
               >
-                <CheckSquare size={14} className="text-yellow-500" /> Criar Tarefa
+                <CheckSquare size={14} className="text-gray-400" />
+                <span>Criar Tarefa</span>
               </button>
 
-              {/* 5. Criar Evento */}
+              {/* 4. Criar Evento */}
               <button 
                 type="button"
                 onClick={() => setShowEventModal(true)} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-bold text-gray-300 bg-[#0d1117] border border-gray-800 hover:bg-gray-800/80 transition-colors"
+                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-[#161b22] border border-gray-800 hover:bg-[#21262d] hover:border-gray-700 transition-colors"
               >
-                <Calendar size={14} className="text-purple-500" /> Criar Evento
+                <Calendar size={14} className="text-gray-400" />
+                <span>Criar Evento</span>
               </button>
             </div>
 
             {/* Rodapé da Coluna Direita */}
-            <div className="mt-auto pt-6 border-t border-gray-800 flex flex-col gap-2">
+            <div className="mt-auto pt-5 border-t border-gray-800/60 flex flex-col gap-2">
               <span className="text-[10px] text-gray-500 text-center">
                 Criado em: {safeFormatDate(deal.createdAt)}
               </span>
@@ -902,7 +975,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                     handleStageChange('disqualified');
                   }
                 }}
-                className="flex items-center justify-center gap-1.5 w-full p-2 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/30 transition-colors"
+                className="flex items-center justify-center gap-1.5 w-full p-2 rounded-lg text-xs font-medium text-gray-400 hover:text-rose-400 hover:bg-rose-950/20 border border-transparent hover:border-rose-900/30 transition-colors"
               >
                 <Trash2 size={13} /> Desqualificar / Excluir
               </button>
@@ -913,38 +986,96 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
         </div>
 
         {/* ========================================================================= */}
+        {/* SUBMODAL DE CONFIRMAÇÃO DE PERDA (PADRÃO LERO)                            */}
+        {/* ========================================================================= */}
+        {showLossModal && (
+          <div className="absolute inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-[#161b22] border border-gray-800 w-full max-w-sm rounded-xl p-5 shadow-2xl animate-in zoom-in-95">
+              <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                <XCircle size={16} className="text-rose-400" /> Marcar como Perdido
+              </h3>
+              <p className="text-xs text-gray-400 mb-4">
+                Selecione o motivo principal para a perda desta oportunidade:
+              </p>
+              <div className="space-y-3 mb-4">
+                <div>
+                  <label className="text-[10px] font-semibold text-gray-400 uppercase block mb-1">Motivo</label>
+                  <select
+                    value={lossReason}
+                    onChange={e => setLossReason(e.target.value)}
+                    className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-700/60"
+                  >
+                    <option value="">Selecione um motivo...</option>
+                    <option value="preco">Preço / Orçamento alto</option>
+                    <option value="concorrencia">Comprou do concorrente</option>
+                    <option value="sem_interesse">Sem interesse / Desistiu</option>
+                    <option value="sem_contato">Não atende / Incomunicável</option>
+                    <option value="fora_perfil">Fora do perfil / Sem crédito</option>
+                    <option value="outro">Outro motivo</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-semibold text-gray-400 uppercase block mb-1">Observação / Justificativa</label>
+                  <textarea
+                    value={lossComment}
+                    onChange={e => setLossComment(e.target.value)}
+                    placeholder="Detalhes adicionais sobre a perda..."
+                    className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-700/60 resize-none h-20"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowLossModal(false)}
+                  className="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmLoss}
+                  disabled={!lossReason}
+                  className="px-4 py-1.5 bg-rose-950/50 hover:bg-rose-900/60 border border-rose-800/60 text-rose-200 font-semibold text-xs rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Confirmar Perda
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
         {/* SUBMODAIS DE AÇÕES RÁPIDAS: CRIAR TAREFA & CRIAR EVENTO                    */}
         {/* ========================================================================= */}
         {showTaskModal && (
           <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-[#1c2128] border border-gray-800 w-full max-w-sm rounded-xl p-5 shadow-2xl animate-in zoom-in-95">
+            <div className="bg-[#161b22] border border-gray-800 w-full max-w-sm rounded-xl p-5 shadow-2xl animate-in zoom-in-95">
               <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                <CheckSquare size={16} className="text-yellow-500" /> Criar Nova Tarefa
+                <CheckSquare size={16} className="text-gray-400" /> Criar Nova Tarefa
               </h3>
               <div className="space-y-3 mb-4">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Título da Tarefa</label>
+                  <label className="text-[10px] font-semibold text-gray-400 uppercase block mb-1">Título da Tarefa</label>
                   <input 
                     type="text" 
                     value={taskTitle}
                     onChange={e => setTaskTitle(e.target.value)}
                     placeholder="Ex: Ligar para confirmar proposta"
-                    className="w-full bg-[#0B1224] border border-gray-700 rounded-lg p-2 text-xs text-white outline-none focus:border-primary"
+                    className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-700/60"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Prazo / Vencimento</label>
+                  <label className="text-[10px] font-semibold text-gray-400 uppercase block mb-1">Prazo / Vencimento</label>
                   <input 
                     type="date" 
                     value={taskDueDate}
                     onChange={e => setTaskDueDate(e.target.value)}
-                    className="w-full bg-[#0B1224] border border-gray-700 rounded-lg p-2 text-xs text-white outline-none focus:border-primary"
+                    className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-700/60"
                   />
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <button onClick={() => setShowTaskModal(false)} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white">Cancelar</button>
-                <button onClick={handleSaveTask} className="px-4 py-1.5 bg-yellow-600 hover:bg-yellow-500 text-white font-bold text-xs rounded-lg">Salvar Tarefa</button>
+                <button onClick={() => setShowTaskModal(false)} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors">Cancelar</button>
+                <button onClick={handleSaveTask} className="px-4 py-1.5 bg-[#161b22] hover:bg-[#21262d] text-gray-200 border border-gray-700 font-semibold text-xs rounded-lg transition-colors">Salvar Tarefa</button>
               </div>
             </div>
           </div>
@@ -952,34 +1083,34 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
 
         {showEventModal && (
           <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-[#1c2128] border border-gray-800 w-full max-w-sm rounded-xl p-5 shadow-2xl animate-in zoom-in-95">
+            <div className="bg-[#161b22] border border-gray-800 w-full max-w-sm rounded-xl p-5 shadow-2xl animate-in zoom-in-95">
               <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                <Calendar size={16} className="text-purple-500" /> Agendar Evento / Reunião
+                <Calendar size={16} className="text-gray-400" /> Agendar Evento / Reunião
               </h3>
               <div className="space-y-3 mb-4">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Título do Evento</label>
+                  <label className="text-[10px] font-semibold text-gray-400 uppercase block mb-1">Título do Evento</label>
                   <input 
                     type="text" 
                     value={eventTitle}
                     onChange={e => setEventTitle(e.target.value)}
                     placeholder="Ex: Demonstração Técnica Online"
-                    className="w-full bg-[#0B1224] border border-gray-700 rounded-lg p-2 text-xs text-white outline-none focus:border-primary"
+                    className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-700/60"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Data e Hora</label>
+                  <label className="text-[10px] font-semibold text-gray-400 uppercase block mb-1">Data e Hora</label>
                   <input 
                     type="datetime-local" 
                     value={eventDateTime}
                     onChange={e => setEventDateTime(e.target.value)}
-                    className="w-full bg-[#0B1224] border border-gray-700 rounded-lg p-2 text-xs text-white outline-none focus:border-primary"
+                    className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-700/60"
                   />
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <button onClick={() => setShowEventModal(false)} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white">Cancelar</button>
-                <button onClick={handleSaveEvent} className="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-lg">Agendar Evento</button>
+                <button onClick={() => setShowEventModal(false)} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors">Cancelar</button>
+                <button onClick={handleSaveEvent} className="px-4 py-1.5 bg-[#161b22] hover:bg-[#21262d] text-gray-200 border border-gray-700 font-semibold text-xs rounded-lg transition-colors">Agendar Evento</button>
               </div>
             </div>
           </div>
@@ -990,10 +1121,10 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
         {/* ========================================================================= */}
         {chatMode !== 'none' && (
           <div className="absolute inset-0 z-50 bg-[#161b22] flex flex-col animate-in slide-in-from-bottom-10 duration-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-[#1c2128] shrink-0">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-[#161b22] shrink-0">
               <div className="flex items-center gap-3">
                 <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                  <MessageSquare size={18} className="text-primary" />
+                  <MessageSquare size={16} className="text-gray-400" />
                   Mensagem Rápida | {deal.contact?.name || deal.title}
                 </h2>
               </div>
@@ -1006,7 +1137,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
               <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">Carregando histórico...</div>
             ) : (
               <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-                <div className="flex-1 flex flex-col bg-[#0B1224] p-4 overflow-y-auto custom-scrollbar gap-3">
+                <div className="flex-1 flex flex-col bg-[#0d1117] p-4 overflow-y-auto custom-scrollbar gap-3">
                   {(!chatData?.messages || chatData.messages.length === 0) ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-gray-500 text-xs italic">
                       Nenhuma mensagem prévia registrada para este contato.
@@ -1018,10 +1149,10 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                         <div key={i} className={`flex flex-col max-w-[75%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
                           <div className={`p-3 text-xs rounded-xl ${
                             msg.isInternal 
-                              ? 'bg-amber-500/20 text-amber-100 border border-amber-500/30' 
+                              ? 'bg-amber-500/10 text-amber-200 border border-amber-500/30' 
                               : isMe 
-                                ? 'bg-primary text-white rounded-br-none' 
-                                : 'bg-gray-800 text-slate-200 rounded-bl-none'
+                                ? 'bg-[#1e293b] text-white border border-gray-700 rounded-br-none' 
+                                : 'bg-gray-800/80 text-gray-200 border border-gray-700/50 rounded-bl-none'
                           }`}>
                             {msg.content}
                           </div>
@@ -1034,11 +1165,11 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                   )}
                 </div>
 
-                <div className="w-full md:w-[360px] bg-[#1c2128] border-t md:border-t-0 md:border-l border-gray-800 p-4 flex flex-col gap-3">
+                <div className="w-full md:w-[360px] bg-[#161b22] border-t md:border-t-0 md:border-l border-gray-800 p-4 flex flex-col gap-3">
                   <div className="flex gap-4 border-b border-gray-800 pb-2">
                     <button 
                       onClick={() => setIsInternal(false)}
-                      className={`text-xs font-bold transition-colors ${!isInternal ? 'text-primary border-b-2 border-primary pb-1' : 'text-gray-400'}`}
+                      className={`text-xs font-bold transition-colors ${!isInternal ? 'text-white border-b-2 border-primary pb-1' : 'text-gray-400'}`}
                     >
                       WhatsApp Externo
                     </button>
@@ -1054,14 +1185,14 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                     value={chatInput}
                     onChange={e => setChatInput(e.target.value)}
                     placeholder={isInternal ? "Escreva uma anotação privada..." : "Digite sua mensagem via WhatsApp..."}
-                    className="flex-1 bg-[#0B1224] border border-gray-700 rounded-lg p-3 text-xs text-white outline-none focus:border-primary resize-none min-h-[140px]"
+                    className="flex-1 bg-[#0d1117] border border-gray-800 rounded-lg p-3 text-xs text-white outline-none focus:border-blue-700/60 resize-none min-h-[140px]"
                   />
 
                   <button 
                     onClick={handleSendMsg}
-                    className="w-full bg-primary hover:bg-primary/90 text-white font-bold text-xs py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md"
+                    className="w-full bg-[#161b22] hover:bg-[#21262d] text-gray-200 border border-gray-700 font-semibold text-xs py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-sm"
                   >
-                    <Send size={14} /> Enviar Mensagem
+                    <Send size={14} className="text-gray-400" /> Enviar Mensagem
                   </button>
                 </div>
               </div>
