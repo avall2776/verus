@@ -224,6 +224,26 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build do Next.js aprovado com código 0 (sem erros de compilação ou TypeScript).
 
+### 🟢 Fase 19: DealModal Completo e Correção de Cliques no CRM (/crm)
+- [x] **Gatilhos de Clique Unificados**:
+  * Função `handleOpenDeal(dealId)` implementada e disparada no clique de qualquer card do Quadro Kanban (`DealCard`), linha da tabela (`<tr>`) e card da Linha do Tempo semanal.
+  * Preservação de isolamento com `e.stopPropagation()` em ações secundárias (acordeom, botões de cópia e atalhos).
+- [x] **Estrutura do DealModal (Padrão Lero)**:
+  * **Cabeçalho**: Nome do Lead (com edição inline e salvamento instantâneo), telefone com link direto para WhatsApp, badge da etapa atual com dot de cor oficial e valor do negócio em destaque verde com edição imediata.
+  * **Seção "Descrição / Metadados"**: Grid detalhado com respostas estruturadas de formulários Meta Ads (Campanha, Formulário de Captação, Modelo de Interesse, Cidade/UF, E-mail) e bloco de anotações comerciais do atendente com textarea expansível.
+  * **Seção "Anexos"**: Upload nativo de arquivos (PDFs, imagens, contratos) com seletor de arquivos, listagem com tamanho formatado, data e botões de download e exclusão.
+  * **Seção "Timeline do Card"**: Histórico cronológico de eventos e alterações de estágio (com tags de autor e estágio), acompanhado de campo rápido para registrar novas notas à timeline do negócio.
+  * **Painel de Ações Rápidas (Lateral Direita)**:
+    - Botão **Reativar Negociação**: Move para etapa ativa (*Em Qualificação*) e limpa motivo de perda com toast de confirmação.
+    - Dropdown **Etapa Atual do Funil**: Alteração imediata de estágio sincronizada via API.
+    - Dropdown **Responsável pelo Deal**: Carregamento dinâmico de colaboradores da empresa (`/deals/users` e `/users`).
+    - Botão **Ver Conversa no WhatsApp**: Redirecionamento direto para o `/inbox?contactId=...` para assumir o chat.
+    - Botão **Enviar Mensagem Rápida**: Abertura de drawer integrado para envio de mensagens externas ou anotações privadas.
+    - Botões funcionais **Criar Tarefa** e **Criar Evento** com formulários dedicados de agendamento e prazos.
+- [x] **Validação & Compilação**:
+  * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas sem erros).
+
+
 
 ---
 

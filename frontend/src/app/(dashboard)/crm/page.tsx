@@ -107,6 +107,13 @@ export default function CrmPage() {
     fetchDeals();
   }, []);
 
+  const handleOpenDeal = (dealId: string) => {
+    const target = deals.find(d => d.id === dealId) || filteredDeals.find(d => d.id === dealId);
+    if (target) {
+      setSelectedDeal(target);
+    }
+  };
+
   const handleUpdateDeal = async (dealId: string, data: any) => {
     try {
       setDeals(prev => prev.map(d => d.id === dealId ? { ...d, ...data } : d));
@@ -605,6 +612,7 @@ export default function CrmPage() {
                                   deal={deal} 
                                   index={index} 
                                   col={col} 
+                                  onOpenDeal={handleOpenDeal}
                                   setSelectedDeal={setSelectedDeal} 
                                   router={router}
                                 />
@@ -734,7 +742,7 @@ export default function CrmPage() {
                         return (
                           <tr 
                             key={deal.id}
-                            onClick={() => setSelectedDeal(deal)}
+                            onClick={() => handleOpenDeal(deal.id)}
                             className="hover:bg-[#1f2530] transition-colors cursor-pointer group"
                           >
                             {/* Título */}
@@ -826,7 +834,7 @@ export default function CrmPage() {
                                 <button
                                   type="button"
                                   title="Ver Detalhes"
-                                  onClick={() => setSelectedDeal(deal)}
+                                  onClick={() => handleOpenDeal(deal.id)}
                                   className="p-1.5 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
                                 >
                                   <ArrowUpRight size={14} />
@@ -971,7 +979,7 @@ export default function CrmPage() {
                         return (
                           <div
                             key={`timeline-card-${deal.id}`}
-                            onClick={() => setSelectedDeal(deal)}
+                            onClick={() => handleOpenDeal(deal.id)}
                             className="bg-[#0f141c] hover:bg-[#1a202c] border border-gray-800 hover:border-gray-700 p-3 rounded-lg cursor-pointer transition-all shadow-sm flex flex-col gap-2 group"
                           >
                             {/* Tag do Estágio */}
@@ -1092,7 +1100,7 @@ export default function CrmPage() {
 }
 
 // Componente Isolado do Card no Kanban
-function DealCard({ deal, index, col, setSelectedDeal, router }: any) {
+function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any) {
   const [isExpanded, setIsExpanded] = useState(false);
   const contactTags = deal.contact?.tags || [];
   const primaryTag = contactTags.length > 0 ? contactTags[0] : null;
@@ -1105,7 +1113,13 @@ function DealCard({ deal, index, col, setSelectedDeal, router }: any) {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           style={{ ...provided.draggableProps.style }}
-          onClick={() => setSelectedDeal(deal)}
+          onClick={() => {
+            if (onOpenDeal) {
+              onOpenDeal(deal.id);
+            } else {
+              setSelectedDeal(deal);
+            }
+          }}
           className={`group relative flex flex-col gap-2.5 rounded-xl border border-slate-800/80 bg-[#161b22] p-4 text-slate-200 shadow-md transition-all hover:border-slate-700 cursor-pointer ${
             snapshot.isDragging ? `rotate-2 scale-[1.02] shadow-2xl transition-transform duration-150 z-50 ring-1 ${col.borderLight} bg-gray-800` : ''
           }`}
