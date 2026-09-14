@@ -31,6 +31,7 @@ interface DealModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: (dealId: string, data: any) => Promise<void>;
+  initialAction?: 'task' | 'event' | 'chat' | null;
 }
 
 // Formatador de datas seguro contra exceções de 'Invalid time value'
@@ -45,7 +46,7 @@ function safeFormatDate(dateVal?: any, formatStr = "dd/MM/yyyy HH:mm"): string {
   }
 }
 
-export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
+export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: DealModalProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -132,7 +133,21 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
 
   useEffect(() => {
     if (isOpen && deal) {
-      setChatMode('none');
+      if (initialAction === 'task') {
+        setActivityTab('task');
+        setShowActivityModal(true);
+        setChatMode('none');
+      } else if (initialAction === 'event') {
+        setActivityTab('event');
+        setShowActivityModal(true);
+        setChatMode('none');
+      } else if (initialAction === 'chat') {
+        setShowActivityModal(false);
+        setChatMode('send');
+      } else {
+        setShowActivityModal(false);
+        setChatMode('none');
+      }
       setChatData(null);
       setTempName(deal.contact?.name || deal.title || "");
       setTempValue((deal.value ? Number(deal.value) : 0).toFixed(2).replace('.', ','));

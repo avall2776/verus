@@ -27,6 +27,12 @@ let CrmController = class CrmController {
     async listUsers(tenantId) {
         return this.crmService.findTenantUsers(tenantId);
     }
+    async createDeal(tenantId, dealData) {
+        return this.crmService.createDeal(tenantId, dealData);
+    }
+    async getDeal(tenantId, id) {
+        return this.crmService.findOneDeal(tenantId, id);
+    }
     async updateDeal(tenantId, id, updateData) {
         return this.crmService.updateDeal(tenantId, id, updateData);
     }
@@ -47,6 +53,22 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], CrmController.prototype, "listUsers", null);
 __decorate([
+    (0, common_1.Post)(),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], CrmController.prototype, "createDeal", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], CrmController.prototype, "getDeal", null);
+__decorate([
     (0, common_1.Patch)(':id'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
@@ -56,7 +78,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], CrmController.prototype, "updateDeal", null);
 exports.CrmController = CrmController = __decorate([
-    (0, common_1.Controller)('deals'),
+    (0, common_1.Controller)(['deals', 'crm/deals']),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [crm_service_1.CrmService])
 ], CrmController);

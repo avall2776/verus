@@ -451,6 +451,23 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Compilação Next.js 14 aprovada com código 0 gerando 28 rotas de produção.
   * Deploy enviado com sucesso para produção na Vercel via Git push.
 
+### Fase 35: Conexão de Rotas e Endpoints dos Cards do CRM (/crm)
+- [x] **Mapeamento de Rotas e Cliques nos Cards do Kanban**:
+  * Implementado manipulador `handleOpenDeal` integrado ao roteamento do navegador, sincronizando parâmetros de URL `?dealId=...` via `window.history.replaceState` e `useSearchParams`.
+  * Suporte a deep-link e abertura automática de oportunidades quando a URL for acessada diretamente ou via notificação.
+  * Botões e atalhos internos do card conectados:
+    - *Enviar Mensagem*: Redireciona para `/inbox?contactId=...` com verificação de fallback ou abre gaveta de chat imediata.
+    - *Criar Evento*: Aciona o `DealModal` com abertura automática da aba "Novo Evento".
+    - *Criar Tarefa*: Aciona o `DealModal` com abertura automática da aba "Nova Tarefa".
+    - *Ir para Atendimento*: Redireciona com segurança para `/inbox?contactId=...`.
+- [x] **Conexão de Endpoints de Oportunidades no Backend**:
+  * Rotas do `CrmController` atualizadas para suportar aliases `['deals', 'crm/deals']`.
+  * Implementado endpoint `GET /deals/:id` e `GET /crm/deals/:id` via método `findOneDeal` no `CrmService` com dados completos do contato e do responsável.
+  * Implementado endpoint `POST /deals` e `POST /crm/deals` via método `createDeal` para suporte à criação rápida de novas oportunidades pelo botão "Adicionar novo cartão".
+- [x] **Validação & Deploy Vercel**:
+  * Build do Backend NestJS e Frontend Next.js 14 testados e aprovados com código 0.
+  * Deploy enviado com sucesso para produção na Vercel via Git push.
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)

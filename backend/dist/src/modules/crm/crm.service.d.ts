@@ -9,11 +9,14 @@ export declare class CrmService {
             id: string;
             name: string;
             phone: string;
+            email: string;
+            source: string;
             tags: string[];
         };
         assignee: {
             id: string;
             name: string;
+            email: string;
         };
     } & {
         id: string;
@@ -28,6 +31,33 @@ export declare class CrmService {
         notes: string | null;
         metadata: import("@prisma/client/runtime/library").JsonValue | null;
     })[]>;
+    findOneDeal(tenantId: string, id: string): Promise<{
+        contact: {
+            id: string;
+            name: string;
+            phone: string;
+            email: string;
+            source: string;
+            tags: string[];
+        };
+        assignee: {
+            id: string;
+            name: string;
+            email: string;
+        };
+    } & {
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        contactId: string;
+        assignedTo: string | null;
+        status: string;
+        title: string;
+        value: import("@prisma/client/runtime/library").Decimal;
+        notes: string | null;
+        metadata: import("@prisma/client/runtime/library").JsonValue | null;
+    }>;
     findTenantUsers(tenantId: string): Promise<{
         id: string;
         name: string;
@@ -35,6 +65,20 @@ export declare class CrmService {
         role: string;
     }[]>;
     createDeal(tenantId: string, data: any): Promise<{
+        contact: {
+            id: string;
+            name: string;
+            phone: string;
+            email: string;
+            source: string;
+            tags: string[];
+        };
+        assignee: {
+            id: string;
+            name: string;
+            email: string;
+        };
+    } & {
         id: string;
         tenantId: string;
         createdAt: Date;

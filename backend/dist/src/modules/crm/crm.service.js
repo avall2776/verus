@@ -27,6 +27,8 @@ let CrmService = class CrmService {
                         id: true,
                         name: true,
                         phone: true,
+                        email: true,
+                        source: true,
                         tags: true,
                     }
                 },
@@ -34,11 +36,40 @@ let CrmService = class CrmService {
                     select: {
                         id: true,
                         name: true,
+                        email: true,
                     }
                 }
             },
             orderBy: { updatedAt: 'desc' }
         });
+    }
+    async findOneDeal(tenantId, id) {
+        const deal = await this.prisma.deal.findUnique({
+            where: { id },
+            include: {
+                contact: {
+                    select: {
+                        id: true,
+                        name: true,
+                        phone: true,
+                        email: true,
+                        source: true,
+                        tags: true,
+                    }
+                },
+                assignee: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    }
+                }
+            }
+        });
+        if (!deal || deal.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Oportunidade não encontrada');
+        }
+        return deal;
     }
     async findTenantUsers(tenantId) {
         return this.prisma.user.findMany({
@@ -47,10 +78,69 @@ let CrmService = class CrmService {
         });
     }
     async createDeal(tenantId, data) {
+        let contactId = data.contactId;
+        if (!contactId && data.contact) {
+            const phone = data.contact.phone || `manual-${Date.now()}`;
+            let contact = await this.prisma.contact.findFirst({
+                where: { tenantId, phone }
+            });
+            if (!contact) {
+                contact = await this.prisma.contact.create({
+                    data: {
+                        tenantId,
+                        name: data.contact.name || data.title || "Novo Lead",
+                        phone: data.contact.phone || null,
+                        email: data.contact.email || null,
+                        source: data.contact.source || "CRM Manual",
+                        tags: data.contact.tags || ["Lead"],
+                    }
+                });
+            }
+            contactId = contact.id;
+        }
+        if (!contactId) {
+            let defaultContact = await this.prisma.contact.findFirst({ where: { tenantId } });
+            if (!defaultContact) {
+                defaultContact = await this.prisma.contact.create({
+                    data: {
+                        tenantId,
+                        name: data.title || "Lead Comercial",
+                        source: "CRM",
+                        tags: ["Lead"]
+                    }
+                });
+            }
+            contactId = defaultContact.id;
+        }
         return this.prisma.deal.create({
             data: {
                 tenantId,
-                ...data
+                contactId,
+                title: data.title || "Nova Oportunidade",
+                value: data.value ? Number(data.value) : 0,
+                status: data.status || "new",
+                notes: data.notes || null,
+                metadata: data.metadata || {},
+                assignedTo: data.assignedTo || null,
+            },
+            include: {
+                contact: {
+                    select: {
+                        id: true,
+                        name: true,
+                        phone: true,
+                        email: true,
+                        source: true,
+                        tags: true,
+                    }
+                },
+                assignee: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    }
+                }
             }
         });
     }

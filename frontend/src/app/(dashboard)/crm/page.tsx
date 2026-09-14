@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef, Suspense } from "react";
 import { 
   Search, Filter, MoreHorizontal, MessageCircle, Copy, FileText, 
   Maximize2, Minimize2, Activity, Users, Building, LayoutDashboard, 
@@ -13,7 +13,7 @@ import {
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { DealModal } from "@/components/crm/DealModal";
 
@@ -41,8 +41,9 @@ function getSundayOfWeek(d: Date): Date {
   return sunday;
 }
 
-export default function CrmPage() {
+function CrmContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [deals, setDeals] = useState<any[]>([]);
   const [columns, setColumns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -193,19 +194,72 @@ export default function CrmPage() {
     fetchDeals();
   }, []);
 
-  const handleOpenDeal = (dealOrId: string | any) => {
-    if (typeof dealOrId === 'object' && dealOrId !== null) {
-      setSelectedDeal(dealOrId);
-      return;
+  const [dealAction, setDealAction] = useState<'task' | 'event' | 'chat' | null>(null);
+
+  const handleOpenDeal = async (dealOrId: string | any, action: 'task' | 'event' | 'chat' | null = null) => {
+    setDealAction(action);
+    let target = typeof dealOrId === 'object' && dealOrId !== null ? dealOrId : null;
+    const dealId = target ? target.id : dealOrId;
+
+    if (!target && dealId) {
+      target = deals.find(d => d.id === dealId) || filteredDeals.find(d => d.id === dealId);
+      if (!target && typeof dealId === 'string' && !dealId.startsWith('new-')) {
+        try {
+          const { data } = await api.get(`/deals/${dealId}`);
+          target = data;
+        } catch {
+          // fallback
+        }
+      }
     }
-    const target = deals.find(d => d.id === dealOrId) || filteredDeals.find(d => d.id === dealOrId);
+
     if (target) {
       setSelectedDeal(target);
+      if (typeof window !== 'undefined' && target.id && !target.id.startsWith('new-')) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('dealId', target.id);
+        window.history.replaceState(null, '', url.toString());
+      }
     }
   };
 
+  const handleCloseDealModal = () => {
+    setSelectedDeal(null);
+    setDealAction(null);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('dealId');
+      url.searchParams.delete('id');
+      window.history.replaceState(null, '', url.toString());
+    }
+  };
+
+  // Sincronização automática com dealId vindo da URL (deep-link / notificações)
+  const dealIdFromUrl = searchParams.get('dealId') || searchParams.get('id');
+  useEffect(() => {
+    if (dealIdFromUrl && (!selectedDeal || selectedDeal.id !== dealIdFromUrl)) {
+      handleOpenDeal(dealIdFromUrl);
+    }
+  }, [dealIdFromUrl, deals]);
+
   const handleUpdateDeal = async (dealId: string, data: any) => {
     try {
+      if (dealId.startsWith('new-')) {
+        const payload = {
+          title: data.title || selectedDeal?.title || "Nova Oportunidade",
+          value: data.value !== undefined ? Number(data.value) : (selectedDeal?.value ? Number(selectedDeal.value) : 0),
+          status: data.status || selectedDeal?.status || "new",
+          notes: data.notes || selectedDeal?.notes || "",
+          metadata: data.metadata || selectedDeal?.metadata || {},
+          assignedTo: data.assignedTo || selectedDeal?.assignedTo || null,
+        };
+        await api.post('/deals', payload);
+        toast.success("Oportunidade criada com sucesso!");
+        handleCloseDealModal();
+        fetchDeals();
+        return;
+      }
+
       setDeals(prev => prev.map(d => d.id === dealId ? { ...d, ...data } : d));
       if (selectedDeal && selectedDeal.id === dealId) {
         setSelectedDeal({ ...selectedDeal, ...data });
@@ -532,8 +586,9 @@ export default function CrmPage() {
       <DealModal 
         deal={selectedDeal} 
         isOpen={!!selectedDeal} 
-        onClose={() => setSelectedDeal(null)} 
+        onClose={handleCloseDealModal} 
         onUpdate={handleUpdateDeal}
+        initialAction={dealAction}
       />
 
       {/* Modal de Perda */}
@@ -1796,7 +1851,7 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
           style={{ ...provided.draggableProps.style }}
           onClick={() => {
             if (onOpenDeal) {
-              onOpenDeal(deal.id);
+              onOpenDeal(deal);
             } else {
               setSelectedDeal(deal);
             }
@@ -1808,7 +1863,7 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
           {/* CABEÇALHO: ID E BADGE */}
           <div className="flex items-center justify-between text-xs">
             <span className={`font-mono font-bold ${col.color}`}>
-              #{deal.id.split('-')[0].toUpperCase()}
+              #{deal.id?.split('-')[0]?.toUpperCase() || 'DEAL'}
             </span>
             {primaryTag ? (
               <span className={`rounded ${col.bgLight} border ${col.borderLight} px-2 py-0.5 text-[11px] font-bold ${col.color} uppercase`}>
@@ -1828,8 +1883,8 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
                 {deal.contact?.name?.[0]?.toUpperCase() || "?"}
               </div>
               <div className="flex flex-col min-w-0">
-                <h4 className={`text-[15px] font-bold leading-snug truncate ${col.color.replace('500', '400').replace('600', '400')}`}>
-                  {deal.contact?.name || "Nome do Contato"}
+                <h4 className={`text-[15px] font-bold leading-snug truncate group-hover:text-primary transition-colors ${col.color.replace('500', '400').replace('600', '400')}`}>
+                  {deal.contact?.name || deal.title || "Nome do Contato"}
                 </h4>
                 <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
                   <span className="text-[#25D366]">🟢</span>
@@ -1891,12 +1946,69 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
               Criado por {deal.assignedTo?.name || deal.assignee?.name || "Sistema"}.
             </p>
             <div className="flex items-center gap-2 text-slate-400">
-              <button title="Enviar Mensagem" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"><MessageSquare size={15} /></button>
-              <button title="Criar Evento" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"><Calendar size={15} /></button>
-              <button title="Criar Tarefa" onClick={(e) => e.stopPropagation()} className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"><CheckSquare size={15} /></button>
+              <button 
+                title="Enviar Mensagem / Ver Chat" 
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const contactId = deal.contactId || deal.contact?.id;
+                  if (contactId) {
+                    router.push(`/inbox?contactId=${contactId}`);
+                  } else if (onOpenDeal) {
+                    onOpenDeal(deal, 'chat');
+                  } else {
+                    setSelectedDeal(deal);
+                  }
+                }} 
+                className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"
+              >
+                <MessageSquare size={15} />
+              </button>
+
+              <button 
+                title="Criar Evento / Reunião" 
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onOpenDeal) {
+                    onOpenDeal(deal, 'event');
+                  } else {
+                    setSelectedDeal(deal);
+                  }
+                }} 
+                className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"
+              >
+                <Calendar size={15} />
+              </button>
+
+              <button 
+                title="Criar Nova Tarefa" 
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onOpenDeal) {
+                    onOpenDeal(deal, 'task');
+                  } else {
+                    setSelectedDeal(deal);
+                  }
+                }} 
+                className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"
+              >
+                <CheckSquare size={15} />
+              </button>
+
               <button
-                title="Ir para Atendimento"
-                onClick={(e) => { e.stopPropagation(); router.push(`/inbox?contactId=${deal.contactId}`); }}
+                title="Ir para Atendimento / Conversa"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const contactId = deal.contactId || deal.contact?.id;
+                  if (contactId) {
+                    router.push(`/inbox?contactId=${contactId}`);
+                  } else {
+                    router.push(`/inbox`);
+                  }
+                }}
                 className="ml-auto rounded p-1.5 hover:bg-slate-700 hover:text-emerald-400 transition-colors"
               >
                 <ArrowUpRight size={15} />
@@ -1938,5 +2050,13 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
         </div>
       )}
     </Draggable>
+  );
+}
+
+export default function CrmPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-gray-500 font-semibold">Carregando CRM...</div>}>
+      <CrmContent />
+    </Suspense>
   );
 }
