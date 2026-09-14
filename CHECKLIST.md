@@ -345,6 +345,17 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas com sucesso em produção).
 
+### Fase 27: Edição de Nome no Perfil do Operador e Correção de Sobreposição no CRM
+- [x] **Edição de Nome no Seletor/Menu de Perfil**:
+  * Adicionado modal interativo no rodapé da Sidebar (`Editar Perfil do Usuário`), permitindo que qualquer operador ou administrador altere seu nome com salvamento rápido via API (`PATCH /users/profile`).
+  * Persistência em banco de dados e sincronização imediata no `localStorage` (`versus_user`) e via evento customizado global (`user_updated`), refletindo o novo nome instantaneamente no Chat Interno, CRM e Inbox.
+  * Avatar com inicial dinâmica do nome e botão de logout integrado.
+- [x] **Correção Definitiva de Sobreposição de Elementos no CRM**:
+  * Reestruturação do flexbox da toolbar superior para fluxo responsivo (`flex-col 2xl:flex-row items-stretch 2xl:items-center justify-between gap-3`), eliminando qualquer colisão ou sobreposição entre os botões de ação (`+ Nova Etapa`, `Gerenciar Etapas`) e as abas (`Quadro`, `Tabela`, `Linha do Tempo`).
+  * Scroll horizontal suave para filtros de categoria em telas menores com `custom-scrollbar`.
+- [x] **Validação & Compilação**:
+  * Builds do frontend (Next.js 14) e do backend (Nest.js) aprovados com código 0.
+
 
 
 

@@ -516,12 +516,12 @@ export default function CrmPage() {
         </div>
       )}
 
-      {/* Toolbar Superior Limpa e Alinhada (Padrão Lero) */}
-      <div className="bg-[#161b22] border border-gray-800 rounded-xl p-3 flex flex-wrap lg:flex-nowrap items-center justify-between gap-3 shadow-sm shrink-0">
+      {/* Toolbar Superior Limpa, Responsiva e sem Sobreposição (Padrão Lero) */}
+      <div className="bg-[#161b22] border border-gray-800 rounded-xl p-3 flex flex-col 2xl:flex-row items-stretch 2xl:items-center justify-between gap-3 shadow-sm shrink-0">
         {/* LADO ESQUERDO: SELETOR DE FUNIL + MODOS DE VISÃO + FILTROS */}
-        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap min-w-0">
+        <div className="flex items-center gap-2.5 flex-wrap min-w-0">
           {/* Seletor de Funil Limpo (Sem ícones redundantes) */}
-          <div className="flex items-center pr-2 border-r border-gray-800">
+          <div className="flex items-center pr-2 border-r border-gray-800 shrink-0">
             <select className="bg-transparent text-white font-extrabold text-sm sm:text-base outline-none cursor-pointer hover:text-primary transition-colors pr-1">
               <option value="main" className="bg-[#161b22] text-white font-bold">Funil Principal (Padrão)</option>
               <option value="sales" className="bg-[#161b22] text-white font-bold">Vendas B2B</option>
@@ -576,10 +576,10 @@ export default function CrmPage() {
             </button>
           </div>
 
-          <div className="h-5 w-px bg-gray-800 hidden md:block"></div>
+          <div className="h-5 w-px bg-gray-800 hidden sm:block"></div>
 
           {/* FILTROS POR CATEGORIA: TUDO | MINHAS | CONTATOS | EMPRESAS */}
-          <div className="flex bg-[#0d1117] rounded-lg p-1 border border-gray-800 overflow-x-auto shrink-0">
+          <div className="flex bg-[#0d1117] rounded-lg p-1 border border-gray-800 overflow-x-auto custom-scrollbar shrink-0 max-w-full">
             {[
               { id: 'all', label: 'Tudo', icon: Activity },
               { id: 'mine', label: 'Minhas', icon: FileText },
@@ -603,9 +603,9 @@ export default function CrmPage() {
         </div>
         
         {/* LADO DIREITO: BUSCA + BOTÕES DE AÇÃO */}
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end ml-auto shrink-0">
+        <div className="flex items-center gap-2 flex-wrap justify-start 2xl:justify-end shrink-0 pt-1 2xl:pt-0 border-t border-gray-800/60 2xl:border-t-0">
           {/* Campo de Busca Reativo */}
-          <div className="relative w-44 sm:w-56">
+          <div className="relative flex-1 sm:flex-initial sm:w-56 min-w-[170px]">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
             <input 
               id="crm-search-input"
@@ -653,7 +653,7 @@ export default function CrmPage() {
             className="bg-[#0d1117] hover:bg-gray-800 text-gray-300 border border-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap hover:text-white"
           >
             <Settings size={14}/>
-            <span className="hidden xl:inline">Gerenciar Etapas</span>
+            <span className="hidden sm:inline">Gerenciar Etapas</span>
           </button>
 
           <button 

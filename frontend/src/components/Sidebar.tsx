@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, 
@@ -19,10 +19,16 @@ import {
   Zap,
   ChevronDown,
   ChevronRight,
-  Menu
+  Menu,
+  Edit2,
+  Check,
+  X,
+  User
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
+import api from "@/lib/api";
+import toast from "react-hot-toast";
 
 function WhatsAppIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
   return (
@@ -73,10 +79,75 @@ const NAV_GROUPS = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { hasGlobalUnread } = useSocket();
   const { status: waStatus } = useWhatsApp();
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+
+  // Usuário e Edição de Perfil
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
+
+  const loadUser = () => {
+    try {
+      const stored = localStorage.getItem('versus_user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        setCurrentUser(u);
+        setEditName(u.name || "");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    loadUser();
+    const handleUserUpdated = () => loadUser();
+    window.addEventListener('user_updated', handleUserUpdated);
+    return () => window.removeEventListener('user_updated', handleUserUpdated);
+  }, []);
+
+  const handleSaveProfile = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!editName.trim()) {
+      toast.error("O nome não pode ficar vazio");
+      return;
+    }
+
+    setIsSavingName(true);
+    try {
+      try {
+        await api.patch('/users/profile', { name: editName.trim() });
+      } catch {
+        if (currentUser?.id) {
+          await api.patch(`/users/${currentUser.id}`, { name: editName.trim() });
+        }
+      }
+
+      const updated = { ...currentUser, name: editName.trim() };
+      localStorage.setItem('versus_user', JSON.stringify(updated));
+      setCurrentUser(updated);
+      window.dispatchEvent(new Event('user_updated'));
+
+      toast.success("Nome de perfil atualizado!");
+      setIsEditProfileOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao atualizar o nome");
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('versus_token');
+    localStorage.removeItem('versus_user');
+    router.push('/login');
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem('sidebar_expanded');
@@ -224,24 +295,112 @@ export default function Sidebar() {
             )}
           </div>
 
-          {/* User Profile */}
-          <div className={`flex items-center gap-3 px-2 py-2 mt-1 rounded-lg hover:bg-gray-800/50 cursor-pointer transition-colors ${!isExpanded && 'justify-center'}`}>
-            <div className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-white font-bold text-sm shrink-0">
-              U
+          {/* User Profile com Edição Interativa */}
+          <div 
+            onClick={() => setIsEditProfileOpen(true)}
+            title="Clique para editar seu nome de perfil"
+            className={`flex items-center gap-2.5 px-2 py-2 mt-1 rounded-lg hover:bg-gray-800/60 cursor-pointer transition-colors group relative ${!isExpanded && 'justify-center'}`}
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-accent border border-primary/30 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+              {currentUser?.name?.[0]?.toUpperCase() || "U"}
             </div>
             {isExpanded && (
-              <div className="flex flex-col overflow-hidden flex-1">
-                <span className="text-xs font-bold text-white truncate">Usuário Atual</span>
-                <span className="text-[10px] text-gray-500 truncate">Sair da conta</span>
+              <div className="flex flex-col overflow-hidden flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-white truncate group-hover:text-primary transition-colors">
+                    {currentUser?.name || "Usuário Atual"}
+                  </span>
+                  <Edit2 size={11} className="text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                </div>
+                <span className="text-[10px] text-gray-400 truncate">
+                  {currentUser?.role === 'ADMIN' ? 'Administrador' : 'Operador'} • <span className="text-primary/90 font-medium">Editar</span>
+                </span>
               </div>
             )}
             {isExpanded && (
-              <LogOut size={14} className="text-gray-500 hover:text-red-400 shrink-0" />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLogout();
+                }}
+                className="text-gray-500 hover:text-red-400 p-1.5 rounded-md hover:bg-gray-800 transition-colors shrink-0"
+                title="Sair da conta"
+              >
+                <LogOut size={14} />
+              </button>
             )}
           </div>
         </div>
         
       </div>
+
+      {/* Modal de Edição de Perfil */}
+      {isEditProfileOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in-50">
+          <div className="bg-[#161b22] border border-gray-800 w-full max-w-sm rounded-xl shadow-2xl p-5 flex flex-col gap-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-primary/20 text-primary flex items-center justify-center font-bold">
+                  <User size={15} />
+                </div>
+                <h3 className="text-sm font-bold text-white">Editar Perfil do Usuário</h3>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsEditProfileOpen(false)}
+                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="flex flex-col gap-3">
+              <div>
+                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                  Nome do Operador / Usuário
+                </label>
+                <input 
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Seu nome completo..."
+                  autoFocus
+                  className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-primary transition-colors"
+                />
+              </div>
+
+              <div className="text-[11px] text-gray-500 bg-[#0d1117] p-2.5 rounded-lg border border-gray-800/60">
+                <p>O nome é exibido no Chat Interno, nas conversas de atendimento e nos cards do CRM atribuídos a você.</p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-800">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingName}
+                  className="px-4 py-1.5 rounded-lg text-xs font-bold bg-primary hover:bg-primary/90 text-white transition-all shadow-md flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {isSavingName ? (
+                    <span>Salvando...</span>
+                  ) : (
+                    <>
+                      <Check size={13} />
+                      <span>Salvar Alterações</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
