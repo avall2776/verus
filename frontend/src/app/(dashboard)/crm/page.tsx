@@ -1407,72 +1407,58 @@ export default function CrmPage() {
                     </div>
                   </div>
 
-                  {/* Lista de Oportunidades do Dia */}
-                  <div className="flex-1 p-2.5 flex flex-col gap-2.5 overflow-y-auto custom-scrollbar">
+                  {/* Lista Vertical de Linhas Compactas de Negócios (Padrão Lero) */}
+                  <div className="flex-1 p-2 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar">
                     {dealsForDay.length === 0 ? (
-                      <div className="flex-1 flex flex-col items-center justify-center text-center p-4 text-gray-500">
-                        <Clock size={20} className="mb-2 opacity-30" />
-                        <span className="text-xs italic text-gray-500">Sem oportunidades</span>
+                      <div className="flex-1 flex flex-col items-center justify-center text-center p-3 text-gray-500">
+                        <Clock size={16} className="mb-1.5 opacity-30" />
+                        <span className="text-[11px] italic text-gray-500">Sem eventos</span>
                       </div>
                     ) : (
                       dealsForDay.map(deal => {
                         const colInfo = columns.find(c => c.id === deal.status) || columns[0];
                         const stageAccent = getTimelineStageAccent(deal.status || 'seed');
-                        const assigneeName = deal.assignedTo?.name || deal.assignee?.name;
+                        const leadName = deal.contact?.name || deal.title || "Oportunidade";
+                        const hasPhone = !!deal.contact?.phone;
 
                         return (
                           <div
-                            key={`timeline-card-${deal.id}`}
+                            key={`timeline-row-${deal.id}`}
                             onClick={() => handleOpenDeal(deal)}
-                            className="relative overflow-hidden bg-[#0d1117] hover:bg-[#161b22] border border-gray-800/90 hover:border-gray-700 pl-4 pr-3 py-3 rounded-xl cursor-pointer transition-all duration-200 shadow-md hover:shadow-xl hover:-translate-y-0.5 flex flex-col gap-2 group"
+                            title={`${deal.title || 'Sem título'} | ${leadName} | ${colInfo.title} | ${formatCurrency(Number(deal.value || 0))}`}
+                            className="relative flex items-center justify-between gap-2 pl-3 pr-2.5 py-2 rounded-lg bg-[#0d1117] hover:bg-[#161b22] border border-gray-800/80 hover:border-gray-700 cursor-pointer transition-all duration-150 shadow-sm text-left group overflow-hidden"
                           >
-                            {/* Tag / Faixa Lateral com a Cor do Estágio */}
-                            <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${stageAccent.barBg}`} />
+                            {/* Tag de cor do estágio (pequeno indicador lateral sólido) */}
+                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${stageAccent.barBg}`} />
 
-                            {/* Topo do Card: Badge do Estágio e ID */}
-                            <div className="flex items-center justify-between gap-1 text-xs">
-                              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${stageAccent.badgeBg} ${stageAccent.badgeText} border ${stageAccent.borderLight} truncate max-w-[140px]`}>
-                                {colInfo.title}
-                              </span>
-                              <span className="font-mono text-[10px] text-gray-500 shrink-0">
-                                #{deal.id.split('-')[0].toUpperCase()}
+                            {/* Nome do Lead em Destaque com indicador visual de cor */}
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${stageAccent.barBg}`} />
+                              <span className="text-xs font-bold text-white group-hover:text-primary truncate transition-colors">
+                                {leadName}
                               </span>
                             </div>
 
-                            {/* Título da Oportunidade em Destaque */}
-                            <h4 className="font-bold text-xs text-white group-hover:text-primary transition-colors line-clamp-2 leading-snug">
-                              {deal.title || "Sem título"}
-                            </h4>
-
-                            {/* Informações de Contato & WhatsApp */}
-                            <div className="flex items-center gap-1.5 text-[11px] text-gray-300">
-                              <UserIcon size={12} className="text-gray-500 shrink-0" />
-                              <span className="truncate font-medium">{deal.contact?.name || "Sem contato"}</span>
-                              {deal.contact?.phone && (
-                                <span className="text-[#25D366] text-[10px] font-bold ml-auto shrink-0 flex items-center gap-0.5">
-                                  <span>WhatsApp</span>
+                            {/* Indicador de WhatsApp / Contato e Valor */}
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {hasPhone ? (
+                                <span 
+                                  className="text-[#25D366] flex items-center gap-0.5 text-[10px] font-bold bg-[#25D366]/10 px-1.5 py-0.5 rounded border border-[#25D366]/20"
+                                  title={`WhatsApp: ${deal.contact.phone}`}
+                                >
+                                  <MessageCircle size={11} className="text-[#25D366]" />
+                                  <span className="hidden xl:inline text-[9px]">WA</span>
+                                </span>
+                              ) : (
+                                <span className="text-gray-500" title="Contato sem telefone">
+                                  <UserIcon size={11} />
                                 </span>
                               )}
-                            </div>
 
-                            {/* Rodapé: Valor Formatado BRL e Responsável */}
-                            <div className="flex items-center justify-between pt-2 border-t border-gray-800/80 mt-1">
-                              <div className="flex items-center gap-1 text-xs font-mono font-bold text-emerald-400 bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-800/30">
-                                <span>{formatCurrency(Number(deal.value || 0))}</span>
-                              </div>
-
-                              {assigneeName ? (
-                                <div className="flex items-center gap-1.5" title={`Responsável: ${assigneeName}`}>
-                                  <div className="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[9px] flex items-center justify-center shadow-sm">
-                                    {assigneeName[0].toUpperCase()}
-                                  </div>
-                                  <span className="text-[10px] text-gray-400 font-semibold truncate max-w-[70px]">
-                                    {assigneeName.split(' ')[0]}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="text-[10px] text-gray-500 italic bg-gray-900/60 px-1.5 py-0.5 rounded border border-gray-800">
-                                  Fila Geral
+                              {/* Valor Formatado Discreto */}
+                              {deal.value && Number(deal.value) > 0 && (
+                                <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/20 px-1 py-0.5 rounded border border-emerald-800/30">
+                                  {formatCurrency(Number(deal.value))}
                                 </span>
                               )}
                             </div>

@@ -307,6 +307,19 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas com sucesso em produção).
 
+### Fase 24: Conversão da Timeline do CRM para o Padrão Linha/Barra Compacta do Lero
+- [x] **Substituição dos Cards por Linhas Compactas**:
+  * Remoção do layout de cartões verticais volumosos dentro dos dias da semana da timeline.
+  * Implementada listagem em formato de linhas limpas, horizontais e minimalistas (estilo calendário corporativo / barras discretas do Lero).
+  * Cada evento no dia correspondente exibe uma linha compacta contendo: tag lateral de cor sólida do estágio (`w-1`), dot cromático de identificação rápida, nome do lead em destaque (`text-xs font-bold text-white group-hover:text-primary`), indicador de WhatsApp/contato (`MessageCircle` com badge `WA`) e valor formatado em BRL.
+- [x] **Alinhamento à Esquerda da Grade Temporal**:
+  * Estrutura de colunas dos 7 dias da semana (Domingo a Sábado) preservada com contadores de volume diário (`X cards`/`X eventos`) e montante financeiro total do dia no topo.
+  * Corpo de cada dia preenchido com a lista vertical compacta de eventos/negócios, proporcionando alta densidade e visão panorâmica da agenda comercial.
+- [x] **Interação & Modal Blindado**:
+  * Clique em qualquer linha compacta de evento na timeline abre instantaneamente o `DealModal` blindado com as informações e metadados completos da oportunidade.
+- [x] **Validação & Compilação**:
+  * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas com sucesso em produção).
+
 
 
 
