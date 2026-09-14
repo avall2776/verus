@@ -632,6 +632,23 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Deploy e Validação**:
   * Build do Backend NestJS aprovado (**código 0**).
   * Build do Frontend Next.js 14 aprovado (**código 0**, 29 rotas de produção geradas).
+### Fase 44: Restauração da Listagem Rápida de Conversas e Contatos no Inbox
+- [x] **Eliminação de Bloqueio por Avatar no Backend (`chat.service.ts`, `contacts.service.ts`)**:
+  * Removido o loop síncrono que disparava requisições externas à Meta Graph API a cada requisição de listagem (`GET /conversations` e `GET /contacts`).
+  * As rotas de listagem agora respondem em milissegundos consultando diretamente o banco de dados.
+  * Sanitização rigorosa em memória: valores como `null`, `"null"`, `"undefined"` ou URLs legadas contendo `unsplash.com` são normalizados para `null` instantaneamente, permitindo que contatos com ou sem foto de perfil apareçam imediatamente na interface sem qualquer travamento.
+- [x] **Novo Endpoint de Contadores em Paralelo (`GET /conversations/counts`)**:
+  * Implementado endpoint otimizado no `ChatController` e `ChatService` com 3 contagens simultâneas (`waiting`, `mine`, `resolved`).
+  * Consumido pelo frontend via React Query (`tabCounts`), permitindo que os 4 badges de pílula nas abas do Inbox exibam a volumetria correta de todas as filas sem zerar as abas inativas.
+- [x] **Calibração de Acesso e Permissões Administrativas**:
+  * Na aba "Meus" (`tab === 'mine'`), usuários administradores (`ADMIN` e `SUPER_ADMIN`) agora têm visibilidade integral de todos os atendimentos em andamento na empresa, permitindo auditoria e gestão completa.
+  * Na aba "Aguardando" (`tab === 'waiting'`), listagem de conversas desatribuídas ou em triagem bot/humana.
+  * Na aba "Resolvidos" (`tab === 'resolved'`), listagem de conversas concluídas/fechadas.
+- [x] **Agenda de Contatos Conectada ao Diretório (`GET /contacts`)**:
+  * O modal de "Agenda de Contatos" agora pesquisa diretamente no catálogo geral de contatos do tenant, com campo de busca isolado da barra lateral e fallback limpo de iniciais compostas (ex: FC).
+- [x] **Deploy e Validação**:
+  * Build do Backend NestJS aprovado (**código 0**).
+  * Build do Frontend Next.js 14 aprovado (**código 0**, 29 rotas de produção geradas).
   * Deploy no VPS (`187.127.10.166`) executado e sincronizado com PM2 (`versus-engine`, **código 0**).
 
 ---
