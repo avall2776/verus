@@ -290,6 +290,23 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas com sucesso em produção).
 
+### Fase 23: Paridade Total da Linha do Tempo / Timeline do CRM (Contadores, Tag Lateral e Filtros Sincronizados)
+- [x] **Contadores nos Cabeçalhos dos Dias**:
+  * Adicionado badge indicador com a contagem exata de oportunidades no topo de cada coluna de dia (Domingo a Sábado, ex: `1 card`, `2 cards`, `0 cards`).
+  * Realce cromático dinâmico para dias com oportunidades e badge de status "Hoje" com data e montante total acumulado por dia em BRL (`R$`).
+- [x] **Refinamento Visual dos Cards na Timeline**:
+  * Tag lateral sólida vertical com a cor correspondente do estágio do funil (`border-l` / barra lateral dedicada).
+  * Badge com nome do estágio no topo com ID `#DEAL`.
+  * Título da oportunidade em destaque (`font-bold text-xs text-white group-hover:text-primary`).
+  * Informações de contato com ícone e badge de WhatsApp.
+  * Rodapé com montante financeiro em verde esmeralda (`formatCurrency`) e avatar do responsável / fila geral.
+  * Integração direta com o `DealModal` blindado disparado instantaneamente ao clicar no cartão.
+- [x] **Unificação e Sincronização da Barra de Filtros**:
+  * Filtros globais (`Tudo`, `Minhas`, `Contatos`, `Empresas`), campo de busca e filtros de estágio sincronizados com a Timeline via `filteredDeals`.
+  * Barra de controle de período da timeline com navegação ("Anterior", "Semana Atual", "Próxima"), label da semana e contadores consolidadores (`X cards nesta semana` e `Total: R$ XX.XXX,00`).
+- [x] **Validação & Compilação**:
+  * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas com sucesso em produção).
+
 
 
 

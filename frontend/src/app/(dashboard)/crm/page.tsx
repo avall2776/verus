@@ -397,6 +397,53 @@ export default function CrmPage() {
     return days;
   }, [timelineStartDate]);
 
+  // Helper para obter estilização da tag/borda lateral e badge de acordo com o estágio
+  const getTimelineStageAccent = (colId: string) => {
+    switch (colId) {
+      case 'seed':
+        return { barBg: 'bg-gray-400', badgeBg: 'bg-gray-500/10', badgeText: 'text-gray-400', borderLight: 'border-gray-500/30' };
+      case 'new':
+        return { barBg: 'bg-blue-500', badgeBg: 'bg-blue-500/10', badgeText: 'text-blue-400', borderLight: 'border-blue-500/30' };
+      case 'qualified':
+        return { barBg: 'bg-purple-500', badgeBg: 'bg-purple-500/10', badgeText: 'text-purple-400', borderLight: 'border-purple-500/30' };
+      case 'follow-up':
+        return { barBg: 'bg-yellow-500', badgeBg: 'bg-yellow-500/10', badgeText: 'text-yellow-400', borderLight: 'border-yellow-500/30' };
+      case 'proposal':
+        return { barBg: 'bg-emerald-500', badgeBg: 'bg-emerald-500/10', badgeText: 'text-emerald-400', borderLight: 'border-emerald-500/30' };
+      case 'negotiation':
+        return { barBg: 'bg-orange-500', badgeBg: 'bg-orange-500/10', badgeText: 'text-orange-400', borderLight: 'border-orange-500/30' };
+      case 'won':
+        return { barBg: 'bg-green-500', badgeBg: 'bg-green-500/10', badgeText: 'text-green-400', borderLight: 'border-green-500/30' };
+      case 'lost':
+        return { barBg: 'bg-rose-600', badgeBg: 'bg-rose-600/10', badgeText: 'text-rose-400', borderLight: 'border-rose-600/30' };
+      case 'disqualified':
+        return { barBg: 'bg-gray-600', badgeBg: 'bg-gray-600/10', badgeText: 'text-gray-400', borderLight: 'border-gray-600/30' };
+      default:
+        return { barBg: 'bg-primary', badgeBg: 'bg-primary/10', badgeText: 'text-primary', borderLight: 'border-primary/30' };
+    }
+  };
+
+  // Totais consolidados da semana selecionada na Timeline
+  const { weekTotalCards, weekTotalAmount } = useMemo(() => {
+    let cards = 0;
+    let amount = 0;
+
+    for (const day of weekDays) {
+      const dealsForDay = filteredDeals.filter(deal => {
+        const rawDate = deal.expectedCloseDate || deal.updatedAt || deal.createdAt;
+        if (!rawDate) return false;
+        const d = new Date(rawDate);
+        if (isNaN(d.getTime())) return false;
+        return d.toDateString() === day.date.toDateString();
+      });
+
+      cards += dealsForDay.length;
+      amount += dealsForDay.reduce((sum, d) => sum + (d.value ? Number(d.value) : 0), 0);
+    }
+
+    return { weekTotalCards: cards, weekTotalAmount: amount };
+  }, [weekDays, filteredDeals]);
+
   if (loading) return <div className="p-8 text-gray-500 font-semibold">Carregando CRM...</div>;
 
   return (
@@ -1234,57 +1281,66 @@ export default function CrmPage() {
       {/* ========================================================================= */}
       {viewMode === 'timeline' && (
         <div className="flex-1 flex flex-col gap-4 animate-in fade-in-50 duration-200 overflow-hidden">
-          {/* Barra de Navegação do Período Semanal */}
+          {/* Barra de Navegação do Período Semanal Sincronizada */}
           <div className="bg-[#161b22] border border-gray-800 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm shrink-0">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={handlePrevWeek}
-                className="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors border border-gray-700"
+                className="p-1.5 px-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors border border-gray-700 flex items-center gap-1 text-xs font-semibold"
                 title="Semana Anterior"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={15} />
+                <span className="hidden sm:inline">Anterior</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleTodayWeek}
-                className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold transition-colors border border-gray-700 flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold transition-colors border border-gray-700 flex items-center gap-1.5 shadow-sm"
               >
                 <Calendar size={13} className="text-primary" />
-                <span>Hoje</span>
+                <span>Semana Atual</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleNextWeek}
-                className="p-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors border border-gray-700"
+                className="p-1.5 px-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors border border-gray-700 flex items-center gap-1 text-xs font-semibold"
                 title="Próxima Semana"
               >
-                <ChevronRight size={16} />
+                <span className="hidden sm:inline">Próxima</span>
+                <ChevronRight size={15} />
               </button>
 
               <div className="h-5 w-px bg-gray-800 mx-1"></div>
 
-              <div className="flex items-center gap-2 text-white font-bold text-sm">
-                <CalendarDays size={16} className="text-primary" />
+              <div className="flex items-center gap-2 text-white font-bold text-sm bg-[#0d1117] px-3 py-1.5 rounded-lg border border-gray-800/80 shadow-inner">
+                <CalendarDays size={15} className="text-primary shrink-0" />
                 <span className="capitalize">{timelineWeekLabel}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 text-xs text-gray-400">
-              <span className="bg-[#0B1224] border border-gray-800 px-3 py-1 rounded-full font-semibold">
-                <span className="text-white font-bold">{filteredDeals.length}</span> oportunidades no pipeline
+            <div className="flex flex-wrap items-center gap-2.5 text-xs">
+              {/* Badge Contador Semanal */}
+              <span className="bg-[#0B1224] border border-gray-800 px-3 py-1.5 rounded-lg font-semibold text-gray-300 flex items-center gap-1.5 shadow-sm">
+                <span className="text-white font-bold">{weekTotalCards}</span> {weekTotalCards === 1 ? 'card nesta semana' : 'cards nesta semana'}
               </span>
+
+              {/* Montante Financeiro Semanal */}
+              {weekTotalAmount > 0 && (
+                <span className="bg-emerald-950/30 border border-emerald-800/40 px-3 py-1.5 rounded-lg font-mono font-bold text-emerald-400 shadow-sm">
+                  Total: {formatCurrency(weekTotalAmount)}
+                </span>
+              )}
             </div>
           </div>
 
           {/* Grid de 7 Colunas Semanais (Domingo a Sábado) */}
           <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 overflow-y-auto custom-scrollbar pb-4">
             {weekDays.map((day, dayIndex) => {
-              // Filtrar os deals que correspondem a este dia da semana
+              // Filtrar os deals que correspondem a este dia da semana respeitando os filtros globais
               const dealsForDay = filteredDeals.filter(deal => {
-                // Prioriza expectedCloseDate, depois updatedAt, depois createdAt
                 const rawDate = deal.expectedCloseDate || deal.updatedAt || deal.createdAt;
                 if (!rawDate) return false;
                 const d = new Date(rawDate);
@@ -1297,14 +1353,14 @@ export default function CrmPage() {
               return (
                 <div 
                   key={`day-col-${dayIndex}`}
-                  className={`flex flex-col rounded-xl border transition-all duration-200 min-h-[380px] bg-[#161b22] ${
+                  className={`flex flex-col rounded-xl border transition-all duration-200 min-h-[400px] bg-[#161b22] ${
                     day.isToday 
                       ? 'border-primary/60 shadow-lg shadow-primary/5 ring-1 ring-primary/30' 
                       : 'border-gray-800'
                   }`}
                 >
-                  {/* Cabeçalho do Dia */}
-                  <div className={`p-3 border-b flex flex-col gap-1 rounded-t-xl ${
+                  {/* Cabeçalho do Dia com Contadores */}
+                  <div className={`p-3 border-b flex flex-col gap-1.5 rounded-t-xl ${
                     day.isToday 
                       ? 'bg-primary/10 border-primary/40' 
                       : 'bg-[#1c2128] border-gray-800'
@@ -1315,84 +1371,109 @@ export default function CrmPage() {
                       }`}>
                         {day.dayName}
                       </span>
-                      {day.isToday && (
-                        <span className="bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded uppercase">
-                          Hoje
+                      
+                      <div className="flex items-center gap-1.5">
+                        {day.isToday && (
+                          <span className="bg-primary text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm">
+                            Hoje
+                          </span>
+                        )}
+                        {/* Badge Indicador de Contagem de Oportunidades do Dia */}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${
+                          dealsForDay.length > 0
+                            ? 'bg-primary/20 text-primary border-primary/40 font-extrabold shadow-sm'
+                            : 'bg-gray-800/80 text-gray-400 border-gray-700/60'
+                        }`}>
+                          {dealsForDay.length} {dealsForDay.length === 1 ? 'card' : 'cards'}
                         </span>
-                      )}
+                      </div>
                     </div>
                     
-                    <div className="flex items-baseline justify-between">
-                      <span className={`text-lg font-black ${
-                        day.isToday ? 'text-white' : 'text-slate-200'
+                    <div className="flex items-baseline justify-between pt-0.5">
+                      <span className={`text-lg font-black tracking-tight ${
+                        day.isToday ? 'text-white' : 'text-slate-100'
                       }`}>
                         {day.formattedDate}
                       </span>
-                      <span className="text-[11px] font-semibold text-gray-400">
-                        {dealsForDay.length} {dealsForDay.length === 1 ? 'card' : 'cards'}
-                      </span>
+                      {dayTotal > 0 ? (
+                        <span className="text-xs font-mono font-bold text-emerald-400">
+                          {formatCurrency(dayTotal)}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-mono text-gray-600">
+                          R$ 0,00
+                        </span>
+                      )}
                     </div>
-
-                    {dayTotal > 0 && (
-                      <span className="text-[11px] font-mono font-bold text-emerald-400 mt-0.5">
-                        {formatCurrency(dayTotal)}
-                      </span>
-                    )}
                   </div>
 
                   {/* Lista de Oportunidades do Dia */}
                   <div className="flex-1 p-2.5 flex flex-col gap-2.5 overflow-y-auto custom-scrollbar">
                     {dealsForDay.length === 0 ? (
                       <div className="flex-1 flex flex-col items-center justify-center text-center p-4 text-gray-500">
-                        <Clock size={20} className="mb-2 opacity-40" />
-                        <span className="text-xs italic">Sem atividades</span>
+                        <Clock size={20} className="mb-2 opacity-30" />
+                        <span className="text-xs italic text-gray-500">Sem oportunidades</span>
                       </div>
                     ) : (
                       dealsForDay.map(deal => {
                         const colInfo = columns.find(c => c.id === deal.status) || columns[0];
+                        const stageAccent = getTimelineStageAccent(deal.status || 'seed');
                         const assigneeName = deal.assignedTo?.name || deal.assignee?.name;
 
                         return (
                           <div
                             key={`timeline-card-${deal.id}`}
-                            onClick={() => handleOpenDeal(deal.id)}
-                            className="bg-[#0f141c] hover:bg-[#1a202c] border border-gray-800 hover:border-gray-700 p-3 rounded-lg cursor-pointer transition-all shadow-sm flex flex-col gap-2 group"
+                            onClick={() => handleOpenDeal(deal)}
+                            className="relative overflow-hidden bg-[#0d1117] hover:bg-[#161b22] border border-gray-800/90 hover:border-gray-700 pl-4 pr-3 py-3 rounded-xl cursor-pointer transition-all duration-200 shadow-md hover:shadow-xl hover:-translate-y-0.5 flex flex-col gap-2 group"
                           >
-                            {/* Tag do Estágio */}
-                            <div className="flex items-center justify-between">
-                              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${colInfo.bgLight} ${colInfo.color} border ${colInfo.borderLight}`}>
+                            {/* Tag / Faixa Lateral com a Cor do Estágio */}
+                            <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${stageAccent.barBg}`} />
+
+                            {/* Topo do Card: Badge do Estágio e ID */}
+                            <div className="flex items-center justify-between gap-1 text-xs">
+                              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${stageAccent.badgeBg} ${stageAccent.badgeText} border ${stageAccent.borderLight} truncate max-w-[140px]`}>
                                 {colInfo.title}
                               </span>
-                              <span className="text-[10px] font-mono text-gray-500">
+                              <span className="font-mono text-[10px] text-gray-500 shrink-0">
                                 #{deal.id.split('-')[0].toUpperCase()}
                               </span>
                             </div>
 
-                            {/* Título */}
-                            <h4 className="font-bold text-xs text-white group-hover:text-primary transition-colors line-clamp-2">
+                            {/* Título da Oportunidade em Destaque */}
+                            <h4 className="font-bold text-xs text-white group-hover:text-primary transition-colors line-clamp-2 leading-snug">
                               {deal.title || "Sem título"}
                             </h4>
 
-                            {/* Contato */}
+                            {/* Informações de Contato & WhatsApp */}
                             <div className="flex items-center gap-1.5 text-[11px] text-gray-300">
                               <UserIcon size={12} className="text-gray-500 shrink-0" />
-                              <span className="truncate">{deal.contact?.name || "Contato"}</span>
+                              <span className="truncate font-medium">{deal.contact?.name || "Sem contato"}</span>
+                              {deal.contact?.phone && (
+                                <span className="text-[#25D366] text-[10px] font-bold ml-auto shrink-0 flex items-center gap-0.5">
+                                  <span>WhatsApp</span>
+                                </span>
+                              )}
                             </div>
 
-                            {/* Valor e Responsável */}
-                            <div className="flex items-center justify-between pt-1 border-t border-gray-800/60 mt-1">
-                              <span className="font-mono font-bold text-emerald-400 text-xs">
-                                {formatCurrency(Number(deal.value || 0))}
-                              </span>
-                              
+                            {/* Rodapé: Valor Formatado BRL e Responsável */}
+                            <div className="flex items-center justify-between pt-2 border-t border-gray-800/80 mt-1">
+                              <div className="flex items-center gap-1 text-xs font-mono font-bold text-emerald-400 bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-800/30">
+                                <span>{formatCurrency(Number(deal.value || 0))}</span>
+                              </div>
+
                               {assigneeName ? (
-                                <div className="flex items-center gap-1" title={`Responsável: ${assigneeName}`}>
-                                  <div className="w-4 h-4 rounded-full bg-emerald-600 text-white font-bold text-[8px] flex items-center justify-center">
+                                <div className="flex items-center gap-1.5" title={`Responsável: ${assigneeName}`}>
+                                  <div className="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[9px] flex items-center justify-center shadow-sm">
                                     {assigneeName[0].toUpperCase()}
                                   </div>
+                                  <span className="text-[10px] text-gray-400 font-semibold truncate max-w-[70px]">
+                                    {assigneeName.split(' ')[0]}
+                                  </span>
                                 </div>
                               ) : (
-                                <span className="text-[10px] text-gray-500 italic">Fila</span>
+                                <span className="text-[10px] text-gray-500 italic bg-gray-900/60 px-1.5 py-0.5 rounded border border-gray-800">
+                                  Fila Geral
+                                </span>
                               )}
                             </div>
                           </div>
