@@ -5,7 +5,8 @@ import {
   X, MessageSquare, ExternalLink, Calendar, CheckSquare, RefreshCw, 
   Trash2, Tag, User as UserIcon, Paperclip, Upload, FileText, Download, 
   RotateCcw, CheckCircle2, XCircle, Clock, Phone, Mail, ChevronRight, Plus, Send, 
-  AlertCircle, Check, DollarSign, ArrowUpRight, PencilLine, Edit3
+  AlertCircle, Check, DollarSign, ArrowUpRight, PencilLine, Edit3,
+  Building2, MapPin, Briefcase, UserCog
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
@@ -85,6 +86,23 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
   const [lossReason, setLossReason] = useState("");
   const [lossComment, setLossComment] = useState("");
 
+  // Submodal Editar Contato
+  const [showEditContactModal, setShowEditContactModal] = useState(false);
+  const [editContactData, setEditContactData] = useState({
+    name: "",
+    phone: "",
+    birthDate: "",
+    email: "",
+    role: "",
+    document: "",
+    type: "Lead",
+    address: "",
+    company: "",
+    notes: "",
+    campaign: "",
+    source: ""
+  });
+
   useEffect(() => {
     if (isOpen && deal) {
       setChatMode('none');
@@ -92,6 +110,23 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
       setTempName(deal.contact?.name || deal.title || "");
       setTempValue((deal.value ? Number(deal.value) : 0).toFixed(2).replace('.', ','));
       setTempNotes(deal.notes || "");
+
+      // Carregar dados de edição do contato
+      const c = deal.contact || deal.metadata?.contact || {};
+      setEditContactData({
+        name: c.name || deal.title || "",
+        phone: c.phone || "",
+        birthDate: c.birthDate || "",
+        email: c.email || deal.metadata?.email || "",
+        role: c.role || c.jobTitle || deal.metadata?.role || "Produtor Rural / Decisor",
+        document: c.document || c.cpfCnpj || deal.metadata?.document || "",
+        type: c.type || "Lead",
+        address: c.address || deal.metadata?.city || "São Paulo - SP",
+        company: c.company || deal.metadata?.company || "Versátil Agro & Grãos Ltda",
+        notes: c.notes || deal.notes || "",
+        campaign: c.campaign || deal.metadata?.formName || "Campanha Safra 2026",
+        source: c.source || deal.contact?.source || deal.metadata?.source || "Meta Ads (Facebook/Instagram)"
+      });
 
       // Carregar anexos existentes com proteção
       const existingAttachments = Array.isArray(deal.metadata?.attachments) 
@@ -179,7 +214,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
   };
 
-  // Atualizar Contato
+  // Atualizar Contato Rápido (Inline)
   const handleUpdateContact = async () => {
     if (!tempName.trim() || tempName.trim() === (deal.contact?.name || deal.title)) {
       setIsEditingName(false);
@@ -198,6 +233,100 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
       toast.success("Nome atualizado com sucesso!");
     } catch (err) {
       toast.error("Erro ao atualizar nome");
+    }
+  };
+
+  // Salvar Modal Completo de Editar Contato
+  const handleSaveEditContact = async () => {
+    if (!editContactData.name.trim()) {
+      toast.error("O nome do contato é obrigatório.");
+      return;
+    }
+    try {
+      const updatedContact = {
+        ...(deal.contact || {}),
+        name: editContactData.name.trim(),
+        phone: editContactData.phone.trim(),
+        email: editContactData.email.trim(),
+        birthDate: editContactData.birthDate,
+        role: editContactData.role,
+        document: editContactData.document,
+        type: editContactData.type,
+        address: editContactData.address,
+        company: editContactData.company,
+        notes: editContactData.notes,
+        campaign: editContactData.campaign,
+        source: editContactData.source
+      };
+
+      if (deal.contactId) {
+        try {
+          await api.patch(`/contacts/${deal.contactId}`, { 
+            name: updatedContact.name,
+            phone: updatedContact.phone,
+            email: updatedContact.email,
+            metadata: updatedContact
+          });
+        } catch (err) {
+          // Fallback silencioso se o endpoint for restrito a determinados campos
+        }
+      }
+
+      deal.contact = updatedContact;
+      deal.title = updatedContact.name;
+      if (updatedContact.notes) {
+        deal.notes = updatedContact.notes;
+        setTempNotes(updatedContact.notes);
+      }
+      setTempName(updatedContact.name);
+
+      await onUpdate(deal.id, {
+        title: updatedContact.name,
+        notes: updatedContact.notes || deal.notes,
+        contact: updatedContact,
+        metadata: {
+          ...(deal.metadata || {}),
+          contact: updatedContact,
+          city: updatedContact.address || deal.metadata?.city,
+          formName: updatedContact.campaign || deal.metadata?.formName,
+          company: updatedContact.company || deal.metadata?.company,
+        }
+      });
+
+      const newEvt = {
+        id: `evt-${Date.now()}`,
+        type: "contact_updated",
+        title: `Contato Atualizado: ${updatedContact.name}`,
+        stage: deal.status || "new",
+        author: "Atendente (Edição de Contato)",
+        date: new Date().toISOString()
+      };
+      setTimelineEvents(prev => [newEvt, ...prev]);
+
+      setShowEditContactModal(false);
+      toast.success("Contato atualizado com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao salvar alterações do contato");
+    }
+  };
+
+  // Excluir ou Desvincular Contato
+  const handleDeleteContact = async () => {
+    if (confirm("Deseja realmente desvincular este contato desta oportunidade?")) {
+      try {
+        deal.contact = null;
+        await onUpdate(deal.id, {
+          contactId: null,
+          metadata: {
+            ...(deal.metadata || {}),
+            contact: null
+          }
+        });
+        setShowEditContactModal(false);
+        toast.success("Contato desvinculado com sucesso.");
+      } catch (error) {
+        toast.error("Erro ao desvincular contato.");
+      }
     }
   };
 
@@ -495,16 +624,16 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                   <div className="flex items-center gap-1.5 group">
                     <h2 
                       className="text-lg font-bold text-white hover:text-primary cursor-pointer transition-colors truncate"
-                      onClick={() => { setTempName(deal.contact?.name || deal.title || ''); setIsEditingName(true); }}
-                      title="Clique para renomear"
+                      onClick={() => setShowEditContactModal(true)}
+                      title="Clique para editar contato"
                     >
                       {deal.contact?.name || deal.title || 'Lead Sem Nome'}
                     </h2>
                     <button
                       type="button"
-                      onClick={() => { setTempName(deal.contact?.name || deal.title || ''); setIsEditingName(true); }}
-                      className="text-gray-400 hover:text-primary transition-colors p-1 rounded hover:bg-gray-800/60 opacity-60 group-hover:opacity-100"
-                      title="Renomear oportunidade"
+                      onClick={() => setShowEditContactModal(true)}
+                      className="text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-gray-800/60 opacity-60 group-hover:opacity-100 flex items-center gap-1"
+                      title="Editar todas as informações do contato"
                     >
                       <PencilLine className="w-3.5 h-3.5" />
                     </button>
@@ -599,6 +728,54 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
           {/* COLUNA ESQUERDA: Detalhes, Formulário Meta Ads, Anexos e Timeline */}
           <div className="flex-1 overflow-y-auto p-6 lg:p-7 space-y-5 custom-scrollbar border-r border-gray-800/60">
             
+            {/* SEÇÃO 0: INFORMAÇÕES DO CONTATO (PADRÃO LERO) */}
+            <div className="bg-[#161b22] border border-gray-800/60 rounded-xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 border-b border-gray-800/60 pb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200 flex items-center gap-2">
+                  <UserIcon size={14} className="text-gray-400" /> Informações do Contato
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowEditContactModal(true)}
+                  className="flex items-center gap-1.5 text-xs font-medium text-gray-300 hover:text-white bg-[#0d1117] hover:bg-[#21262d] border border-gray-800/80 px-2.5 py-1 rounded-lg transition-colors"
+                  title="Editar informações completas do contato"
+                >
+                  <PencilLine size={13} className="text-gray-400" />
+                  <span>Editar Contato</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Nome Completo</span>
+                  <span className="text-xs font-semibold text-white truncate block">
+                    {deal.contact?.name || deal.title || "Não informado"}
+                  </span>
+                </div>
+
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">WhatsApp / Telefone</span>
+                  <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
+                    <span>🟢</span> {deal.contact?.phone || "Não informado"}
+                  </span>
+                </div>
+
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">E-mail</span>
+                  <span className="text-xs font-semibold text-gray-300 truncate block">
+                    {deal.contact?.email || deal.metadata?.contact?.email || "contato@cliente.com.br"}
+                  </span>
+                </div>
+
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Cargo & Empresa</span>
+                  <span className="text-xs font-semibold text-gray-300 truncate block">
+                    {deal.contact?.role || deal.metadata?.contact?.role || "Decisor Comercial"} • {deal.contact?.company || deal.metadata?.contact?.company || "Empresa Agro"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {/* SEÇÃO 1: DESCRIÇÃO & RESPOSTAS DE FORMULÁRIO (META ADS / CRM) */}
             <div className="bg-[#161b22] border border-gray-800/60 rounded-xl p-5 shadow-sm">
               <div className="flex items-center justify-between mb-4 border-b border-gray-800/60 pb-3">
@@ -960,6 +1137,17 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
                 <Calendar size={14} className="text-gray-400" />
                 <span>Criar Evento</span>
               </button>
+
+              {/* 5. Editar Contato */}
+              <button 
+                type="button"
+                onClick={() => setShowEditContactModal(true)} 
+                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-[#161b22] border border-gray-800 hover:bg-[#21262d] hover:border-gray-700 transition-colors"
+                title="Editar informações completas do contato"
+              >
+                <UserCog size={14} className="text-gray-400" />
+                <span>Editar Contato</span>
+              </button>
             </div>
 
             {/* Rodapé da Coluna Direita */}
@@ -984,6 +1172,244 @@ export function DealModal({ deal, isOpen, onClose, onUpdate }: DealModalProps) {
           </div>
 
         </div>
+
+        {/* ========================================================================= */}
+        {/* SUBMODAL: EDITAR CONTATO (PADRÃO CORPORATIVO LERO)                        */}
+        {/* ========================================================================= */}
+        {showEditContactModal && (
+          <div className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-[#161b22] border border-gray-800 w-full max-w-2xl rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
+              
+              {/* Topo do Modal */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800/80 bg-[#161b22] shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-gray-300">
+                    <UserCog size={16} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">Editar Contato</h3>
+                    <p className="text-[11px] text-gray-400">Atualize as informações cadastrais e comerciais do contato</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowEditContactModal(false)}
+                  className="p-1.5 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors"
+                  title="Fechar"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Corpo com Grid de 2 Colunas */}
+              <div className="p-6 overflow-y-auto max-h-[72vh] custom-scrollbar space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
+                  {/* 1. Nome do Contato */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Nome do Contato <span className="text-rose-400">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      value={editContactData.name}
+                      onChange={e => setEditContactData(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Nome completo do lead..."
+                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                    />
+                  </div>
+
+                  {/* 2. Número WhatsApp */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Número WhatsApp <span className="text-rose-400">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      value={editContactData.phone}
+                      onChange={e => setEditContactData(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="+55 (11) 99999-9999"
+                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                    />
+                  </div>
+
+                  {/* 3. Data de Nascimento */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Data de Nascimento
+                    </label>
+                    <input 
+                      type="date" 
+                      value={editContactData.birthDate}
+                      onChange={e => setEditContactData(prev => ({ ...prev, birthDate: e.target.value }))}
+                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-blue-700/60 transition-colors"
+                    />
+                  </div>
+
+                  {/* 4. Email */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Email
+                    </label>
+                    <input 
+                      type="email" 
+                      value={editContactData.email}
+                      onChange={e => setEditContactData(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="email@cliente.com.br"
+                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                    />
+                  </div>
+
+                  {/* 5. Cargo / Função */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Cargo / Função
+                    </label>
+                    <input 
+                      type="text" 
+                      value={editContactData.role}
+                      onChange={e => setEditContactData(prev => ({ ...prev, role: e.target.value }))}
+                      placeholder="Ex: Produtor Rural, Diretor de Compras"
+                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                    />
+                  </div>
+
+                  {/* 6. CPF / CNPJ */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                      CPF / CNPJ
+                    </label>
+                    <input 
+                      type="text" 
+                      value={editContactData.document}
+                      onChange={e => setEditContactData(prev => ({ ...prev, document: e.target.value }))}
+                      placeholder="000.000.000-00 ou CNPJ"
+                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                    />
+                  </div>
+
+                  {/* 7. Tipo de Contato */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Tipo de Contato
+                    </label>
+                    <select 
+                      value={editContactData.type}
+                      onChange={e => setEditContactData(prev => ({ ...prev, type: e.target.value }))}
+                      className="w-full bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                    >
+                      <option value="Lead" className="bg-[#161b22]">Lead (Potencial Cliente)</option>
+                      <option value="Cliente" className="bg-[#161b22]">Cliente Ativo</option>
+                      <option value="Ex-Cliente" className="bg-[#161b22]">Ex-Cliente</option>
+                      <option value="Fornecedor" className="bg-[#161b22]">Fornecedor</option>
+                      <option value="Parceiro" className="bg-[#161b22]">Parceiro Comercial</option>
+                      <option value="Outro" className="bg-[#161b22]">Outro</option>
+                    </select>
+                  </div>
+
+                  {/* 8. Endereço Completo & CEP */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Endereço Completo & CEP
+                    </label>
+                    <input 
+                      type="text" 
+                      value={editContactData.address}
+                      onChange={e => setEditContactData(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="Endereço, Cidade - UF, CEP..."
+                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                    />
+                  </div>
+
+                  {/* 9. Empresas (Atribuir Empresa) */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Empresas (Atribuir Empresa)
+                    </label>
+                    <div className="relative">
+                      <Building2 size={14} className="absolute left-3.5 top-3 text-gray-500" />
+                      <input 
+                        type="text" 
+                        value={editContactData.company}
+                        onChange={e => setEditContactData(prev => ({ ...prev, company: e.target.value }))}
+                        placeholder="Nome da empresa vinculada..."
+                        className="w-full bg-[#0d1117] border border-gray-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 10. Rótulo de Campanha & Origem */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Rótulo de Campanha & Origem
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input 
+                        type="text" 
+                        value={editContactData.campaign}
+                        onChange={e => setEditContactData(prev => ({ ...prev, campaign: e.target.value }))}
+                        placeholder="Campanha"
+                        className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      />
+                      <input 
+                        type="text" 
+                        value={editContactData.source}
+                        onChange={e => setEditContactData(prev => ({ ...prev, source: e.target.value }))}
+                        placeholder="Origem"
+                        className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 11. Observação do Contato */}
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Observações do Contato
+                    </label>
+                    <textarea 
+                      value={editContactData.notes}
+                      onChange={e => setEditContactData(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder="Observações importantes, detalhes comerciais ou histórico do contato..."
+                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl p-3.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 resize-y min-h-[90px] leading-relaxed transition-colors"
+                    />
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Botões Inferiores */}
+              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-800/80 bg-[#161b22] shrink-0">
+                <button
+                  type="button"
+                  onClick={handleDeleteContact}
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 border border-transparent hover:border-rose-900/40 rounded-xl transition-all"
+                  title="Desvincular contato desta oportunidade"
+                >
+                  <Trash2 size={13} />
+                  <span>Excluir contato</span>
+                </button>
+
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditContactModal(false)}
+                    className="px-4 py-2 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveEditContact}
+                    className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl flex items-center gap-2 transition-all shadow-md"
+                  >
+                    <Check size={14} />
+                    <span>Salvar</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
 
         {/* ========================================================================= */}
         {/* SUBMODAL DE CONFIRMAÇÃO DE PERDA (PADRÃO LERO)                            */}

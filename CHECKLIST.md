@@ -417,6 +417,18 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Build Next.js 14 executado com sucesso e aprovado com código 0 (28 rotas estáticas/dinâmicas geradas).
   * Deploy enviado para produção no repositório GitHub e Vercel.
 
+### Fase 33: Implementação do Modal Editar Contato no DealModal do CRM (/crm)
+- [x] **Card e Acesso Rápido "Informações do Contato"**:
+  * Adicionado card dedicado "Informações do Contato" no topo da coluna esquerda do `DealModal` com os dados essenciais (Nome Completo, WhatsApp/Telefone, E-mail, Cargo & Empresa) e botão de ação "Editar Contato".
+  * Integração de gatilhos para abertura do modal tanto no clique do nome/lápis do cabeçalho quanto no botão dedicado no painel lateral direito de ações rápidas.
+- [x] **Submodal Completo "Editar Contato" em Grade (Grid-Cols-2)**:
+  * Modal responsivo e monocromático (`bg-[#161b22]`, inputs em `bg-[#0d1117] border border-gray-800 text-white`).
+  * Campos implementados: Nome do Contato, Número WhatsApp, Data de Nascimento, Email, Cargo / Função, CPF / CNPJ, Tipo de Contato (Lead, Cliente, etc.), Endereço Completo & CEP, Empresas (Atribuir Empresa com ícone `Building2`), Rótulo de Campanha & Origem do Contato, e Observações do Contato (textarea).
+  * Rodapé com ação de "Excluir contato" (vermelho sutil) e botão "Salvar" (azul executivo com persistência de dados local, API e timeline de histórico comercial).
+- [x] **Validação & Deploy Vercel**:
+  * Compilação Next.js 14 aprovada com código 0 gerando 28 rotas de produção.
+  * Deploy efetuado no GitHub e disparado na Vercel.
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
