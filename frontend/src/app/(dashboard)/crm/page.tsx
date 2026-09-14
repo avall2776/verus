@@ -516,20 +516,20 @@ export default function CrmPage() {
         </div>
       )}
 
-      {/* Toolbar Superior */}
-      <div className="bg-[#1c1d22] border border-gray-800 rounded-xl p-4 flex flex-col xl:flex-row items-center justify-between gap-4 shadow-sm shrink-0">
-        <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-          {/* Seletor de Funil */}
-          <div className="flex items-center gap-2.5 pr-3 border-r border-gray-800">
-            <LayoutDashboard className="text-primary" size={22} />
-            <select className="bg-transparent text-white font-bold text-base outline-none cursor-pointer appearance-none">
-              <option value="main">Funil Principal (Padrão)</option>
-              <option value="sales">Vendas B2B</option>
+      {/* Toolbar Superior Limpa e Alinhada (Padrão Lero) */}
+      <div className="bg-[#161b22] border border-gray-800 rounded-xl p-3 flex flex-wrap lg:flex-nowrap items-center justify-between gap-3 shadow-sm shrink-0">
+        {/* LADO ESQUERDO: SELETOR DE FUNIL + MODOS DE VISÃO + FILTROS */}
+        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap min-w-0">
+          {/* Seletor de Funil Limpo (Sem ícones redundantes) */}
+          <div className="flex items-center pr-2 border-r border-gray-800">
+            <select className="bg-transparent text-white font-extrabold text-sm sm:text-base outline-none cursor-pointer hover:text-primary transition-colors pr-1">
+              <option value="main" className="bg-[#161b22] text-white font-bold">Funil Principal (Padrão)</option>
+              <option value="sales" className="bg-[#161b22] text-white font-bold">Vendas B2B</option>
             </select>
           </div>
           
           {/* SELETORES DE VISUALIZAÇÃO: QUADRO | TABELA | LINHA DO TEMPO */}
-          <div className="flex bg-[#0B1224] rounded-lg p-1 border border-gray-800 shadow-inner">
+          <div className="flex bg-[#0d1117] rounded-lg p-1 border border-gray-800 shadow-inner shrink-0">
             <button
               id="view-mode-kanban-btn"
               type="button"
@@ -576,10 +576,10 @@ export default function CrmPage() {
             </button>
           </div>
 
-          <div className="h-6 w-px bg-gray-800 hidden sm:block"></div>
+          <div className="h-5 w-px bg-gray-800 hidden md:block"></div>
 
           {/* FILTROS POR CATEGORIA: TUDO | MINHAS | CONTATOS | EMPRESAS */}
-          <div className="flex bg-gray-900 rounded-lg p-1 border border-gray-800 overflow-x-auto max-w-full">
+          <div className="flex bg-[#0d1117] rounded-lg p-1 border border-gray-800 overflow-x-auto shrink-0">
             {[
               { id: 'all', label: 'Tudo', icon: Activity },
               { id: 'mine', label: 'Minhas', icon: FileText },
@@ -591,37 +591,37 @@ export default function CrmPage() {
                 id={`crm-tab-${tab.id}-btn`}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
-                  activeTab === tab.id ? 'bg-gray-700 text-white shadow font-bold' : 'text-gray-400 hover:text-white'
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
+                  activeTab === tab.id ? 'bg-gray-800 text-white shadow font-bold' : 'text-gray-400 hover:text-white'
                 }`}
               >
                 <tab.icon size={13} />
-                {tab.label}
+                <span>{tab.label}</span>
               </button>
             ))}
           </div>
         </div>
         
         {/* LADO DIREITO: BUSCA + BOTÕES DE AÇÃO */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full xl:w-auto justify-start xl:justify-end">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end ml-auto shrink-0">
           {/* Campo de Busca Reativo */}
-          <div className="relative flex-1 sm:w-56 min-w-[200px]">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <div className="relative w-44 sm:w-56">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
             <input 
               id="crm-search-input"
               type="text" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar oportunidade..." 
-              className="bg-[#0B1224] border border-gray-800 rounded-full pl-9 pr-8 py-1.5 text-xs text-text-primary outline-none focus:border-primary w-full transition-colors"
+              className="bg-[#0d1117] border border-gray-800 rounded-lg pl-8 pr-7 py-1.5 text-xs text-white outline-none focus:border-primary w-full transition-colors"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
               >
-                <X size={13} />
+                <X size={12} />
               </button>
             )}
           </div>
@@ -629,38 +629,40 @@ export default function CrmPage() {
           <button 
             type="button"
             onClick={() => setNeutralMode(!neutralMode)}
-            className={`px-3 py-1.5 rounded-full border text-xs font-bold transition-all whitespace-nowrap ${
-              neutralMode ? 'bg-gray-100 text-black border-gray-100' : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'
+            className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold transition-all whitespace-nowrap ${
+              neutralMode ? 'bg-gray-100 text-black border-gray-100' : 'bg-[#0d1117] text-gray-300 border-gray-800 hover:bg-gray-800 hover:text-white'
             }`}
           >
             Neutro
           </button>
           
-          <div className="h-6 w-px bg-gray-800 hidden sm:block"></div>
+          <div className="h-5 w-px bg-gray-800 hidden sm:block"></div>
 
           <button 
             type="button"
             onClick={() => setShowStageModal(true)} 
-            className="bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1 shadow-sm whitespace-nowrap"
+            className="bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm whitespace-nowrap"
           >
-            <Plus size={14}/> Nova Etapa
+            <Plus size={14}/>
+            <span>Nova Etapa</span>
           </button>
           
           <button 
             type="button"
             onClick={() => setShowManageStagesModal(true)} 
-            className="bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1 whitespace-nowrap"
+            className="bg-[#0d1117] hover:bg-gray-800 text-gray-300 border border-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap hover:text-white"
           >
-            <Settings size={14}/> Gerenciar Etapas
+            <Settings size={14}/>
+            <span className="hidden xl:inline">Gerenciar Etapas</span>
           </button>
 
           <button 
             type="button"
             title="Expanda o CRM em tela cheia"
             onClick={toggleFullscreen} 
-            className="bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 p-2 rounded-full transition-all flex items-center justify-center shrink-0"
+            className="bg-[#0d1117] hover:bg-gray-800 text-gray-300 border border-gray-800 p-1.5 rounded-lg transition-all flex items-center justify-center shrink-0 hover:text-white"
           >
-            {isFullscreen ? <Minimize2 size={15}/> : <Maximize2 size={15}/>}
+            {isFullscreen ? <Minimize2 size={14}/> : <Maximize2 size={14}/>}
           </button>
         </div>
       </div>

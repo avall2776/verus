@@ -334,6 +334,17 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas com sucesso em produção).
 
+### Fase 26: Remoção de Ícone Redundante e Harmonização do Cabeçalho do CRM
+- [x] **Remoção de Elementos Redundantes no Título do Funil**:
+  * Remoção do ícone/botão redundante (`LayoutDashboard`) ao lado do seletor do funil, deixando a seleção limpa e nativa no padrão Lero.
+  * Título com tipografia nítida e transição suave no hover.
+- [x] **Harmonização do Layout e Alinhamento do Topo**:
+  * Reorganização do container superior em layout flexível responsivo (`flex-wrap lg:flex-nowrap items-center justify-between gap-3`).
+  * Altura padronizada para botões e campos de busca (`py-1.5`, `rounded-lg`).
+  * Alinhamento vertical centralizado perfeito de todos os módulos (Seletor de Funil, Abas de Visualização, Filtros de Propriedade, Busca Reativa e Ações Rápidas), eliminando quebras de linha e descompassos visuais.
+- [x] **Validação & Compilação**:
+  * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas com sucesso em produção).
+
 
 
 
