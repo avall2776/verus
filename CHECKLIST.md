@@ -381,6 +381,17 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build de produção Next.js 14 aprovado com código 0 (28 rotas estáticas e dinâmicas).
 
+### Fase 30: Implementação de Modo Tela Cheia (Fullscreen API) no CRM (/crm)
+- [x] **Botão Interativo de Fullscreen**:
+  * Localizado na barra superior à direita, alternando dinamicamente os ícones entre `Maximize2` (expandir) e `Minimize2` (reduzir/sair).
+  * Estilização com highlight ativo (`bg-primary/20 text-primary border-primary/40`) e tooltip explicativo (`Sair da tela cheia (Esc)`).
+- [x] **Isolamento de Tela Cheia via Fullscreen API**:
+  * Vinculação direta ao elemento `<div id="crm-container">` com `useRef` e fallback cross-browser (`requestFullscreen`, `webkitRequestFullscreen`, `mozRequestFullScreen`, `msRequestFullscreen`).
+  * Ao entrar em tela cheia, apenas o container do CRM é exibido cobrindo 100% da viewport (`w-screen h-screen bg-[#0a0c10]`), ocultando automaticamente a Sidebar e o Header da aplicação.
+  * Listeners integrados para eventos de sistema e tecla <kbd>Esc</kbd> (`fullscreenchange`, `webkitfullscreenchange`, `mozfullscreenchange`, `MSFullscreenChange`), restaurando o layout padrão perfeitamente ao sair.
+- [x] **Validação & Compilação**:
+  * Build de produção Next.js 14 validado com sucesso (`exit code 0`, 28 rotas).
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)

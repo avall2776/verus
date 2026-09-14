@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { 
   Search, Filter, MoreHorizontal, MessageCircle, Copy, FileText, 
   Maximize2, Minimize2, Activity, Users, Building, LayoutDashboard, 
@@ -154,12 +154,28 @@ export default function CrmPage() {
     localStorage.setItem('crm_columns_widths', JSON.stringify(columnWidths));
   }, [columnWidths]);
 
+  const crmContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const isFs = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+      setIsFullscreen(isFs);
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("MSFullscreenChange", handleFullscreenChange);
+    };
   }, []);
 
   const fetchDeals = async () => {
@@ -351,14 +367,40 @@ export default function CrmPage() {
   };
 
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch((err) => console.error(err));
+    const container = document.getElementById("crm-container") || crmContainerRef.current;
+    const isCurrentlyFullscreen = !!(
+      document.fullscreenElement ||
+      (document as any).webkitFullscreenElement ||
+      (document as any).mozFullScreenElement ||
+      (document as any).msFullscreenElement
+    );
+
+    if (!isCurrentlyFullscreen) {
+      if (container) {
+        if (container.requestFullscreen) {
+          container.requestFullscreen().catch((err) => console.error("Fullscreen error:", err));
+        } else if ((container as any).webkitRequestFullscreen) {
+          (container as any).webkitRequestFullscreen();
+        } else if ((container as any).mozRequestFullScreen) {
+          (container as any).mozRequestFullScreen();
+        } else if ((container as any).msRequestFullscreen) {
+          (container as any).msRequestFullscreen();
+        }
+      } else if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch((err) => console.error(err));
+      }
       setIsFullscreen(true);
     } else {
       if (document.exitFullscreen) {
-        document.exitFullscreen();
-        setIsFullscreen(false);
+        document.exitFullscreen().catch((err) => console.error(err));
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).mozCancelFullScreen) {
+        (document as any).mozCancelFullScreen();
+      } else if ((document as any).msExitFullscreen) {
+        (document as any).msExitFullscreen();
       }
+      setIsFullscreen(false);
     }
   };
 
@@ -478,7 +520,15 @@ export default function CrmPage() {
   if (loading) return <div className="p-8 text-gray-500 font-semibold">Carregando CRM...</div>;
 
   return (
-    <div className={`flex flex-col gap-4 relative transition-all duration-300 ${isFullscreen ? 'fixed inset-0 z-50 bg-[#0d1117] p-4 h-screen w-screen overflow-hidden' : 'h-full w-full'}`}>
+    <div 
+      id="crm-container"
+      ref={crmContainerRef}
+      className={`flex flex-col gap-3.5 relative transition-all duration-200 ${
+        isFullscreen 
+          ? 'fixed inset-0 z-50 bg-[#0a0c10] p-4 h-screen w-screen overflow-y-auto text-white' 
+          : 'h-full w-full'
+      }`}
+    >
       <DealModal 
         deal={selectedDeal} 
         isOpen={!!selectedDeal} 
@@ -738,9 +788,14 @@ export default function CrmPage() {
 
           <button 
             type="button"
-            title="Expanda o CRM em tela cheia"
+            id="crm-fullscreen-btn"
+            title={isFullscreen ? "Sair da tela cheia (Esc)" : "Expandir CRM em tela cheia"}
             onClick={toggleFullscreen} 
-            className="bg-[#0d1117] hover:bg-gray-800 text-gray-300 border border-gray-800 p-1.5 rounded-lg transition-all flex items-center justify-center shrink-0 hover:text-white"
+            className={`p-1.5 rounded-lg border transition-all flex items-center justify-center shrink-0 ${
+              isFullscreen 
+                ? 'bg-primary/20 text-primary border-primary/40 hover:bg-primary/30' 
+                : 'bg-[#0d1117] hover:bg-gray-800 text-gray-300 border-gray-800 hover:text-white'
+            }`}
           >
             {isFullscreen ? <Minimize2 size={13}/> : <Maximize2 size={13}/>}
           </button>
