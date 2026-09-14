@@ -469,20 +469,26 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Deploy enviado com sucesso para produção na Vercel via Git push.
 
 ### Fase 36: Evolução e Refinamento da Aba Métricas e Vendas no Padrão Lero (/dashboard/cm)
-- [x] **Expansão dos Cards de KPIs Superiores**:
-  * Grid de KPIs corporativos completos no padrão Lero: Oportunidades Criadas, Em Aberto, Ganhas, Perdidas, Ticket Médio, Taxa de Ganho (Win Rate), Ciclo Médio de Venda e Tempo até a Movimentação.
-  * Filtros interativos de período temporal: `Hoje`, `7 dias`, `15 dias`, `30 dias`, `90 dias` e seletor `Personalizado` (datas De/Até).
-  * Filtros secundários de Status e Equipe/Responsável, além do botão de ação rápida "Gerar / Recarregar" com animação de loading e feedback instantâneo.
-- [x] **Abas de Visualização (Gráficos e Relatórios em Tabela)**:
-  * Alternância entre abas no topo:
-    - **Gráficos & KPIs**: Gráficos analíticos de distribuição de status (donut), comparativo semanal de receita ganha vs perdida (barras/linhas), distribuição de leads por etapa do funil e velocidade/desempenho da equipe.
-    - **Relatórios em Tabela**: Tabela analítica densa com 301+ registros de oportunidades, paginação, busca em tempo real, colunas completas (Contato, WhatsApp, Título, Funil/CRM, Etapa, Responsável, Valor, Status, Criação e Atualização), botão "Exportar CSV" e clique abrindo o `DealModal`.
-- [x] **Padrão Monocromático Executivo (Lero)**:
-  * Paleta rigorosa em `bg-[#161b22]`, cartões em `bg-[#0d1117]`, bordas `border-gray-800`, textos corporativos `text-gray-200` e `text-gray-400`.
-  * Destaques elegantes em verde esmeralda para conversão e receita ganha, e vermelho/vinho sutil para perdas.
-  * Suporte tanto na rota canônica `/dashboard/crm` quanto no alias `/dashboard/cm`.
+- [x] **Expansão e Compactação dos Cards de KPIs Superiores (Linha Única / Grid Denso 6 Cols)**:
+  * Grid de 6 cards corporativos unificados em linha fluida (`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6`):
+    1. *Oportunidades*: Criadas, Em Aberto e valor total do pipeline.
+    2. *Ganhas / Perdidas*: Quantidades e valores monetários discriminados em R$ com destaques visuais em verde e vermelho/vinho sutil.
+    3. *Ticket Médio*: Média ponderada por oportunidade convertida em tipografia mono.
+    4. *Taxa de Ganho (Win Rate)*: Percentual de conversão do total fechado com barra de progresso em verde esmeralda.
+    5. *Ciclo Médio de Venda*: Média em dias desde a criação até o fechamento.
+    6. *Tempo até Movimentação*: Tempo médio de permanência do lead por etapa no pipeline em horas.
+- [x] **Alinhamento Perfeito dos Filtros e Botão de Ação**:
+  * Lado esquerdo: Filtros temporais (`Hoje`, `7d`, `15d`, `30d`, `90d`, `Personalizado`), filtro de Status (`Todos`, `Aberto`, `Ganho`, `Perdido`) e filtro de Equipe agrupados e perfeitamente alinhados à esquerda.
+  * Lado direito: Botão de ação "Gerar / Recarregar" destacado à direita com hover esmeralda, ícone giratório e loading reativo.
+- [x] **Refinamento dos Gráficos Analíticos com Tooltips Flutuantes Aprimorados**:
+  * **Donut de Status**: Gráfico circular refinado com percentual de participação dinâmico, tooltip flutuante estilizado em `bg-[#0d1117] border border-gray-800` e legendas limpas com bolinhas indicadoras.
+  * **Comparativo Semanal de Receita**: Barras em verde esmeralda (`#10b981`) e vermelho/rosa sutil (`#f43f5e`), badge de saldo líquido (+ Lucro / - Déficit) e tooltip flutuante aprimorado.
+  * **Funil e Desempenho de Equipe**: Tooltips customizados e métricas monocromáticas integradas.
+- [x] **Padrão Monocromático Executivo & Limpeza Visual**:
+  * Removido badge residual "Padrão Lero" do cabeçalho mantendo título limpo "Métricas e Vendas".
+  * Paleta rigorosa em `bg-[#161b22]`, `bg-[#0d1117]`, bordas `border-gray-800` e tipografia corporativa.
 - [x] **Validação & Deploy Vercel**:
-  * Build do Next.js 14 validado com sucesso gerando 29 rotas de produção.
+  * Build do Next.js 14 validado com sucesso (código 0, 29 rotas de produção geradas).
   * Deploy enviado para produção na Vercel via Git push.
 
 ---

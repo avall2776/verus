@@ -261,48 +261,48 @@ export default function CrmDashboardPage() {
       </div>
 
       {/* BARRA DE FILTROS AVANÇADOS (PERÍODO, STATUS, EQUIPE & RECARREGAR) */}
-      <div className="bg-[#161b22] border border-gray-800/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+      <div className="bg-[#161b22] border border-gray-800/80 rounded-2xl p-3 md:p-3.5 flex flex-col xl:flex-row xl:items-center justify-between gap-3 shadow-sm">
         
-        {/* Pílulas de Período */}
-        <div className="flex flex-wrap items-center gap-1.5 bg-[#0d1117] p-1 border border-gray-800 rounded-xl">
-          {PERIOD_OPTIONS.map(opt => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => setPeriod(opt.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                period === opt.id
-                  ? 'bg-[#21262d] text-white font-semibold shadow-xs border border-gray-700'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Inputs de Data Customizada se 'custom' estiver ativo */}
-        {period === 'custom' && (
-          <div className="flex items-center gap-2 text-xs">
-            <input 
-              type="date" 
-              value={customStartDate} 
-              onChange={e => setCustomStartDate(e.target.value)}
-              className="bg-[#0d1117] border border-gray-800 rounded-lg px-2.5 py-1.5 text-white outline-none focus:border-blue-600/60"
-            />
-            <span className="text-gray-500">até</span>
-            <input 
-              type="date" 
-              value={customEndDate} 
-              onChange={e => setCustomEndDate(e.target.value)}
-              className="bg-[#0d1117] border border-gray-800 rounded-lg px-2.5 py-1.5 text-white outline-none focus:border-blue-600/60"
-            />
+        {/* LADO ESQUERDO: Filtros Temporais + Status + Equipe perfeitamente alinhados */}
+        <div className="flex flex-wrap items-center gap-2 md:gap-2.5">
+          {/* Pílulas de Período */}
+          <div className="flex items-center gap-1 bg-[#0d1117] p-1 border border-gray-800 rounded-xl overflow-x-auto">
+            {PERIOD_OPTIONS.map(opt => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setPeriod(opt.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  period === opt.id
+                    ? 'bg-[#21262d] text-white font-semibold shadow-xs border border-gray-700'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
-        )}
 
-        {/* Filtros de Status e Equipe + Botões de Ação */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Status */}
+          {/* Inputs de Data Customizada se 'custom' estiver ativo */}
+          {period === 'custom' && (
+            <div className="flex items-center gap-2 text-xs bg-[#0d1117] p-1 border border-gray-800 rounded-xl">
+              <input 
+                type="date" 
+                value={customStartDate} 
+                onChange={e => setCustomStartDate(e.target.value)}
+                className="bg-transparent border border-gray-800 rounded-lg px-2 py-1 text-white outline-none focus:border-blue-600/60"
+              />
+              <span className="text-gray-500">até</span>
+              <input 
+                type="date" 
+                value={customEndDate} 
+                onChange={e => setCustomEndDate(e.target.value)}
+                className="bg-transparent border border-gray-800 rounded-lg px-2 py-1 text-white outline-none focus:border-blue-600/60"
+              />
+            </div>
+          )}
+
+          {/* Filtro de Status */}
           <div className="flex items-center gap-1.5 bg-[#0d1117] border border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-gray-300">
             <Filter size={13} className="text-gray-400" />
             <select
@@ -311,7 +311,7 @@ export default function CrmDashboardPage() {
                 setSelectedStatusFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="bg-transparent text-white outline-none cursor-pointer pr-2"
+              className="bg-transparent text-white outline-none cursor-pointer pr-1"
             >
               <option value="all" className="bg-[#161b22]">Todos os Status</option>
               <option value="open" className="bg-[#161b22]">Em Aberto</option>
@@ -320,7 +320,7 @@ export default function CrmDashboardPage() {
             </select>
           </div>
 
-          {/* Equipe / Atendente */}
+          {/* Filtro de Equipe / Atendente */}
           <div className="flex items-center gap-1.5 bg-[#0d1117] border border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-gray-300">
             <Users size={13} className="text-gray-400" />
             <select
@@ -329,7 +329,7 @@ export default function CrmDashboardPage() {
                 setSelectedUserFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="bg-transparent text-white outline-none cursor-pointer pr-2 max-w-[140px] truncate"
+              className="bg-transparent text-white outline-none cursor-pointer pr-1 max-w-[130px] truncate"
             >
               <option value="all" className="bg-[#161b22]">Toda a Equipe</option>
               {users.map(u => (
@@ -337,134 +337,154 @@ export default function CrmDashboardPage() {
               ))}
             </select>
           </div>
+        </div>
 
-          {/* Botão Recarregar / Gerar */}
+        {/* LADO DIREITO: Botão "Gerar / Recarregar" destacado à direita */}
+        <div className="flex items-center self-end xl:self-auto">
           <button
             type="button"
             onClick={() => loadData(true)}
             disabled={isRefreshing}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#21262d] hover:bg-[#30363d] text-gray-200 border border-gray-700 text-xs font-semibold rounded-xl transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-[#21262d] hover:bg-[#30363d] text-emerald-400 hover:text-emerald-300 border border-emerald-800/40 hover:border-emerald-700/60 text-xs font-semibold rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
             title="Atualizar métricas agora"
           >
-            <RefreshCw size={13} className={isRefreshing ? "animate-spin text-blue-400" : "text-gray-400"} />
+            <RefreshCw size={13} className={isRefreshing ? "animate-spin text-emerald-400" : "text-emerald-400"} />
             <span>{isRefreshing ? "Carregando..." : "Gerar / Recarregar"}</span>
           </button>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* EXPANSÃO DOS CARDS DE KPIs SUPERIORES (PADRÃO LERO)                        */}
+      {/* EXPANSÃO DOS CARDS DE KPIs SUPERIORES (LINHA ÚNICA / GRID DENSO 6 COLS)     */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 w-full">
         
         {/* 1. Oportunidades Criadas / Em Aberto */}
-        <div className="bg-[#161b22] border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between text-gray-400 mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Criadas / Em Aberto</span>
-            <div className="w-7 h-7 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-blue-400">
-              <Briefcase size={14} />
+        <div className="bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
+          <div className="flex items-center justify-between text-gray-400 mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider">Oportunidades</span>
+            <div className="w-6 h-6 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-blue-400">
+              <Briefcase size={13} />
             </div>
           </div>
-          <div className="flex items-baseline justify-between mt-1">
-            <p className="text-2xl font-extrabold text-white">
+          <div className="flex items-baseline justify-between">
+            <p className="text-xl font-extrabold text-white">
               {metrics?.totalDeals || deals.length}
             </p>
-            <span className="text-xs font-medium text-blue-400 bg-blue-950/30 px-2 py-0.5 rounded-md border border-blue-900/30">
+            <span className="text-[11px] font-medium text-blue-400 bg-blue-950/30 px-1.5 py-0.5 rounded border border-blue-900/30">
               {metrics?.openCount || 0} abertas
             </span>
           </div>
-          <p className="text-[11px] text-gray-500 mt-2 truncate">
-            Pipeline: {formatCurrency(metrics?.totalRevenue || 0)}
+          <p className="text-[10px] text-gray-400 mt-1.5 truncate">
+            Pipeline: <span className="text-gray-300 font-mono">{formatCurrency(metrics?.totalRevenue || 0)}</span>
           </p>
         </div>
 
-        {/* 2. Ganhas / Perdidas */}
-        <div className="bg-[#161b22] border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between text-gray-400 mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Ganhas / Perdidas</span>
-            <div className="w-7 h-7 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
-              <CheckCircle2 size={14} />
+        {/* 2. Ganhas / Perdidas (valores em R$ e quantidades) */}
+        <div className="bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
+          <div className="flex items-center justify-between text-gray-400 mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider">Ganhas / Perdidas</span>
+            <div className="w-6 h-6 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
+              <CheckCircle2 size={13} />
             </div>
           </div>
-          <div className="flex items-baseline gap-2 mt-1">
-            <p className="text-2xl font-extrabold text-emerald-400">
+          <div className="flex items-baseline gap-2">
+            <p className="text-xl font-extrabold text-emerald-400">
               {metrics?.wonCount || 0}
             </p>
-            <span className="text-gray-500 font-medium text-sm">/</span>
-            <p className="text-lg font-bold text-rose-400/90">
+            <span className="text-gray-600 font-medium text-sm">/</span>
+            <p className="text-base font-bold text-rose-400/90">
               {metrics?.lostCount || 0}
             </p>
           </div>
-          <div className="flex items-center justify-between text-[11px] mt-2">
-            <span className="text-emerald-400 font-mono font-medium">
+          <div className="flex items-center justify-between text-[10px] mt-1.5">
+            <span className="text-emerald-400 font-mono font-medium truncate max-w-[50%]">
               {formatCurrency(metrics?.wonRevenue || 0)}
             </span>
-            <span className="text-rose-400/70 font-mono">
+            <span className="text-rose-400/70 font-mono truncate max-w-[50%]">
               -{formatCurrency(metrics?.lostRevenue || 0)}
             </span>
           </div>
         </div>
 
         {/* 3. Ticket Médio */}
-        <div className="bg-[#161b22] border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between text-gray-400 mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Ticket Médio</span>
-            <div className="w-7 h-7 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
-              <DollarSign size={14} />
+        <div className="bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
+          <div className="flex items-center justify-between text-gray-400 mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider">Ticket Médio</span>
+            <div className="w-6 h-6 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
+              <DollarSign size={13} />
             </div>
           </div>
-          <div className="mt-1">
-            <p className="text-2xl font-extrabold text-white font-mono">
+          <div>
+            <p className="text-xl font-extrabold text-white font-mono">
               {formatCurrency(metrics?.avgTicket || 0)}
             </p>
           </div>
-          <p className="text-[11px] text-gray-500 mt-2">
-            Por oportunidade convertida
+          <p className="text-[10px] text-gray-400 mt-1.5">
+            Por oportunidade ganha
           </p>
         </div>
 
         {/* 4. Taxa de Ganho (Win Rate) */}
-        <div className="bg-[#161b22] border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between text-gray-400 mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Taxa de Ganho</span>
-            <div className="w-7 h-7 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-purple-400">
-              <Target size={14} />
+        <div className="bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
+          <div className="flex items-center justify-between text-gray-400 mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider">Taxa de Ganho</span>
+            <div className="w-6 h-6 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
+              <Target size={13} />
             </div>
           </div>
-          <div className="flex items-baseline justify-between mt-1">
-            <p className="text-2xl font-extrabold text-purple-400">
+          <div className="flex items-baseline justify-between">
+            <p className="text-xl font-extrabold text-emerald-400">
               {metrics?.winRate || 0}%
             </p>
-            <span className="text-[11px] text-gray-400">
+            <span className="text-[10px] text-gray-400">
               do total fechado
             </span>
           </div>
-          <div className="w-full bg-[#0d1117] border border-gray-800 rounded-full h-1.5 mt-2 overflow-hidden">
+          <div className="w-full bg-[#0d1117] border border-gray-800 rounded-full h-1.5 mt-1.5 overflow-hidden">
             <div 
-              className="bg-purple-500 h-full rounded-full transition-all duration-500" 
+              className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
               style={{ width: `${Math.min(metrics?.winRate || 0, 100)}%` }}
             />
           </div>
         </div>
 
-        {/* 5. Ciclo Médio & Velocidade */}
-        <div className="bg-[#161b22] border border-gray-800/80 rounded-2xl p-4 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
-          <div className="flex items-center justify-between text-gray-400 mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Ciclo Médio de Venda</span>
-            <div className="w-7 h-7 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-yellow-400">
-              <Clock size={14} />
+        {/* 5. Ciclo Médio de Venda */}
+        <div className="bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
+          <div className="flex items-center justify-between text-gray-400 mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider">Ciclo Médio</span>
+            <div className="w-6 h-6 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-amber-400">
+              <Clock size={13} />
             </div>
           </div>
-          <div className="flex items-baseline justify-between mt-1">
-            <p className="text-2xl font-extrabold text-white">
+          <div>
+            <p className="text-xl font-extrabold text-white">
               {metrics?.avgSalesCycleDays || 7.8} <span className="text-xs font-normal text-gray-400">dias</span>
             </p>
-            <span className="text-[10px] text-yellow-400 font-semibold bg-yellow-950/30 border border-yellow-800/30 px-1.5 py-0.5 rounded">
-              ~{metrics?.avgTimeToMoveHours || 16.4}h / etapa
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1.5">
+            Do primeiro contato ao fechamento
+          </p>
+        </div>
+
+        {/* 6. Tempo até Movimentação */}
+        <div className="bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-colors">
+          <div className="flex items-center justify-between text-gray-400 mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider">Tempo Movimentação</span>
+            <div className="w-6 h-6 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-blue-400">
+              <TrendingUp size={13} />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <p className="text-xl font-extrabold text-white">
+              ~{metrics?.avgTimeToMoveHours || 16.4}h
+            </p>
+            <span className="text-[10px] text-blue-400 font-medium bg-blue-950/30 border border-blue-900/30 px-1.5 py-0.5 rounded">
+              por etapa
             </span>
           </div>
-          <p className="text-[11px] text-gray-500 mt-2">
-            Tempo médio até a decisão
+          <p className="text-[10px] text-gray-400 mt-1.5">
+            Velocidade no pipeline
           </p>
         </div>
 
@@ -489,7 +509,7 @@ export default function CrmDashboardPage() {
                   </h3>
                   <p className="text-[11px] text-gray-400">Valores faturados em contraste com oportunidades perdidas</p>
                 </div>
-                <span className="text-[10px] text-gray-500 bg-[#0d1117] px-2.5 py-1 rounded-lg border border-gray-800 font-mono">
+                <span className="text-[10px] text-gray-400 bg-[#0d1117] px-2.5 py-1 rounded-lg border border-gray-800 font-mono">
                   Valores em BRL
                 </span>
               </div>
@@ -501,10 +521,46 @@ export default function CrmDashboardPage() {
                     <XAxis dataKey="name" stroke="#8b949e" tick={{ fill: '#8b949e', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <YAxis stroke="#8b949e" tick={{ fill: '#8b949e', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={val => `R$ ${val/1000}k`} />
                     <Tooltip 
-                      contentStyle={{ backgroundColor: '#0d1117', borderColor: '#30363d', borderRadius: '10px', color: '#fff', fontSize: '12px' }}
-                      formatter={(val: any) => [formatCurrency(val), '']}
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          const ganho = payload.find(p => p.dataKey === 'ganho')?.value || 0;
+                          const perdido = payload.find(p => p.dataKey === 'perdido')?.value || 0;
+                          const liquido = Number(ganho) - Number(perdido);
+                          return (
+                            <div className="bg-[#0d1117]/95 border border-gray-800 rounded-xl p-3 shadow-2xl backdrop-blur-md text-xs min-w-[190px]">
+                              <p className="text-white font-bold mb-2 pb-1.5 border-b border-gray-800/80 flex items-center justify-between">
+                                <span>{label}</span>
+                                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${liquido >= 0 ? 'bg-emerald-950/50 text-emerald-400' : 'bg-rose-950/50 text-rose-400'}`}>
+                                  {liquido >= 0 ? '+ Lucro' : '- Déficit'}
+                                </span>
+                              </p>
+                              <div className="space-y-1.5">
+                                <div className="flex items-center justify-between text-gray-400">
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                    <span>Receita Ganha:</span>
+                                  </span>
+                                  <span className="font-mono font-bold text-emerald-400">{formatCurrency(Number(ganho))}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-gray-400">
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                                    <span>Receita Perdida:</span>
+                                  </span>
+                                  <span className="font-mono font-bold text-rose-400">{formatCurrency(Number(perdido))}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
                     />
-                    <Legend iconType="circle" wrapperStyle={{ paddingTop: 12, fontSize: 12 }} />
+                    <Legend 
+                      iconType="circle" 
+                      wrapperStyle={{ paddingTop: 12, fontSize: 12 }} 
+                      formatter={(value) => <span className="text-gray-400 text-xs">{value}</span>}
+                    />
                     <Bar dataKey="ganho" name="Receita Ganha" fill="#10b981" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="perdido" name="Receita Perdida" fill="#f43f5e" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -537,18 +593,40 @@ export default function CrmDashboardPage() {
                       ))}
                     </Pie>
                     <Tooltip 
-                      contentStyle={{ backgroundColor: '#0d1117', borderColor: '#30363d', borderRadius: '10px', color: '#fff', fontSize: '12px' }}
-                      formatter={(val: any) => [`${val} oportunidades`, '']}
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const item = payload[0];
+                          const total = statusPieData.reduce((acc, curr) => acc + curr.value, 0) || 1;
+                          const percent = Math.round((Number(item.value) / total) * 100);
+                          return (
+                            <div className="bg-[#0d1117]/95 border border-gray-800 rounded-xl p-3 shadow-2xl backdrop-blur-md text-xs min-w-[150px]">
+                              <div className="flex items-center gap-1.5 mb-1.5 font-bold text-white">
+                                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.payload?.color }} />
+                                <span>{item.name}</span>
+                              </div>
+                              <div className="flex items-center justify-between text-gray-400">
+                                <span>Volume:</span>
+                                <span className="font-mono font-bold text-white">{item.value} cards</span>
+                              </div>
+                              <div className="flex items-center justify-between text-gray-400 mt-1">
+                                <span>Participação:</span>
+                                <span className="font-mono font-semibold text-emerald-400">{percent}%</span>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-xl font-extrabold text-white">{metrics?.totalDeals || deals.length}</span>
-                  <span className="text-[10px] text-gray-400 uppercase tracking-wider">Cards</span>
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wider">Total Cards</span>
                 </div>
               </div>
 
-              {/* Legenda rica do Donut */}
+              {/* Legenda limpa do Donut */}
               <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-800/80 text-center">
                 <div>
                   <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400">
@@ -598,8 +676,20 @@ export default function CrmDashboardPage() {
                     <XAxis type="number" stroke="#8b949e" tick={{ fill: '#8b949e', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <YAxis dataKey="name" type="category" stroke="#8b949e" tick={{ fill: '#c9d1d9', fontSize: 11 }} axisLine={false} tickLine={false} width={130} />
                     <Tooltip 
-                      contentStyle={{ backgroundColor: '#0d1117', borderColor: '#30363d', borderRadius: '10px', color: '#fff', fontSize: '12px' }}
-                      formatter={(val: any) => [`${val} oportunidades`, 'Volume']}
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-[#0d1117]/95 border border-gray-800 rounded-xl p-3 shadow-2xl backdrop-blur-md text-xs min-w-[160px]">
+                              <p className="text-white font-bold mb-1 border-b border-gray-800 pb-1">{label}</p>
+                              <div className="flex items-center justify-between text-gray-400 mt-1">
+                                <span>Volume de leads:</span>
+                                <span className="font-mono font-bold text-blue-400">{payload[0].value} cards</span>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
                     />
                     <Bar dataKey="value" fill="#3b82f6" radius={[0, 6, 6, 0]} barSize={20}>
                       {(metrics?.funnelData || []).map((entry, index) => (
