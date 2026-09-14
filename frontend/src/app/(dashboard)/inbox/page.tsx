@@ -7,7 +7,8 @@ import {
   BrainCircuit, Lock, Image as ImageIcon, FileText, Mic, X, ArrowRightLeft, Network,
   RefreshCw, TrendingUp, Calendar, MessageSquare, CheckCircle2, Plus, Sparkles,
   BookUser, CalendarClock, PhoneCall, Zap, Eye, ShieldCheck, PhoneForwarded, UserCheck,
-  Smile, Bold, Italic, Strikethrough, Code, ChevronDown
+  Smile, Bold, Italic, Strikethrough, Code, ChevronDown, Trash2, Play, Pause,
+  Volume2, CheckCheck, Copy, ExternalLink, Headphones
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -23,6 +24,26 @@ const COMMON_EMOJIS = [
   '🚀', '💡', '💬', '📞', '📅', '⏰', '⏳', '🎯', '✅', '❌', 
   '⚠️', '💰', '💵', '💳', '📊', '📈', '📌', '📎', '🎉', '🏆'
 ];
+
+const TAG_COLOR_PALETTES = [
+  { bg: 'bg-emerald-950/70', text: 'text-emerald-300', border: 'border-emerald-700/60', dot: 'bg-emerald-400' },
+  { bg: 'bg-blue-950/70', text: 'text-blue-300', border: 'border-blue-700/60', dot: 'bg-blue-400' },
+  { bg: 'bg-purple-950/70', text: 'text-purple-300', border: 'border-purple-700/60', dot: 'bg-purple-400' },
+  { bg: 'bg-amber-950/70', text: 'text-amber-300', border: 'border-amber-700/60', dot: 'bg-amber-400' },
+  { bg: 'bg-cyan-950/70', text: 'text-cyan-300', border: 'border-cyan-700/60', dot: 'bg-cyan-400' },
+  { bg: 'bg-rose-950/70', text: 'text-rose-300', border: 'border-rose-700/60', dot: 'bg-rose-400' },
+  { bg: 'bg-indigo-950/70', text: 'text-indigo-300', border: 'border-indigo-700/60', dot: 'bg-indigo-400' },
+];
+
+function getTagColor(tag: string) {
+  if (!tag) return TAG_COLOR_PALETTES[0];
+  let hash = 0;
+  for (let i = 0; i < tag.length; i++) {
+    hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % TAG_COLOR_PALETTES.length;
+  return TAG_COLOR_PALETTES[index];
+}
 
 function InboxContent() {
   const searchParams = useSearchParams();
@@ -55,6 +76,22 @@ function InboxContent() {
   const [onlyUnread, setOnlyUnread] = useState(false);
   const [taggingContactId, setTaggingContactId] = useState<string | null>(null);
   const [customTagInput, setCustomTagInput] = useState('');
+
+  // Estados de Gravação de Áudio via MediaRecorder
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [isSendingAudio, setIsSendingAudio] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+
+  // Player de Áudio ativo
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  const audioElementsRef = useRef<{ [key: string]: HTMLAudioElement }>({});
+
+  // Feedback de Cópia
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Estados de Assunção de Fila & Espiar (Padrão Lero)
   const [showTakeoverModal, setShowTakeoverModal] = useState(false);
@@ -136,6 +173,161 @@ function InboxContent() {
         textareaRef.current.setSelectionRange(newCursor, newCursor);
       }
     }, 50);
+  };
+
+  const startRecording = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Gravação de áudio não suportada pelo seu navegador.");
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
+      audioChunksRef.current = [];
+
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.start(200);
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
+    } catch (err: any) {
+      console.error("Erro ao acessar microfone:", err);
+      alert("Não foi possível acessar o microfone. Verifique as permissões de mídia.");
+    }
+  };
+
+  const cancelRecording = () => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      audioStreamRef.current = null;
+    }
+    audioChunksRef.current = [];
+    setIsRecording(false);
+    setRecordingTime(0);
+  };
+
+  const stopAndSendAudio = async () => {
+    if (!mediaRecorderRef.current || !activeChat) return;
+
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+
+    setIsSendingAudio(true);
+
+    mediaRecorderRef.current.onstop = async () => {
+      try {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const fileName = `audio_${Date.now()}_${uuidv4().substring(0, 8)}.webm`;
+        const filePath = `chat/${fileName}`;
+
+        let mediaUrl = '';
+        try {
+          const { error: uploadError } = await supabase.storage
+            .from('versus-media')
+            .upload(filePath, audioBlob, { contentType: 'audio/webm', upsert: false });
+
+          if (!uploadError) {
+            const { data: publicUrlData } = supabase.storage
+              .from('versus-media')
+              .getPublicUrl(filePath);
+            mediaUrl = publicUrlData.publicUrl;
+          } else {
+            console.warn("Upload no Supabase falhou, usando blob URL:", uploadError);
+            mediaUrl = URL.createObjectURL(audioBlob);
+          }
+        } catch (e) {
+          mediaUrl = URL.createObjectURL(audioBlob);
+        }
+
+        const payload: any = {
+          content: 'Mensagem de voz',
+          type: 'audio',
+          mediaUrl,
+          isInternal: isInternalMode,
+        };
+
+        const { data } = await api.post(`/conversations/${activeChat}/messages`, payload);
+        setMessages((prev) => [...prev, data]);
+
+        if (!isInternalMode) {
+          setContacts((prev) =>
+            prev.map((c) =>
+              c.id === activeChat
+                ? { ...c, isAi: false, status: 'human_takeover', lastMsg: '🎤 Mensagem de voz' }
+                : c
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Erro ao enviar áudio:", error);
+        alert("Erro ao enviar áudio gravado.");
+      } finally {
+        if (audioStreamRef.current) {
+          audioStreamRef.current.getTracks().forEach((track) => track.stop());
+          audioStreamRef.current = null;
+        }
+        audioChunksRef.current = [];
+        setIsRecording(false);
+        setIsSendingAudio(false);
+        setRecordingTime(0);
+      }
+    };
+
+    mediaRecorderRef.current.stop();
+  };
+
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const togglePlayAudio = (id: string, url: string) => {
+    if (playingAudioId === id) {
+      if (audioElementsRef.current[id]) {
+        audioElementsRef.current[id].pause();
+      }
+      setPlayingAudioId(null);
+    } else {
+      if (playingAudioId && audioElementsRef.current[playingAudioId]) {
+        audioElementsRef.current[playingAudioId].pause();
+      }
+      if (!audioElementsRef.current[id]) {
+        const audio = new Audio(url);
+        audio.onended = () => setPlayingAudioId(null);
+        audioElementsRef.current[id] = audio;
+      }
+      audioElementsRef.current[id].play().catch(console.error);
+      setPlayingAudioId(id);
+    }
+  };
+
+  const handleCopyText = (text: string, fieldKey: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldKey);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
   useEffect(() => {
@@ -605,8 +797,11 @@ function InboxContent() {
     );
   });
 
-  // Calcular total de contatos com mensagens não lidas
-  const unreadCount = contacts.filter(c => c.unread > 0).length;
+  // Calcular total de contatos com mensagens não lidas e contadores de abas
+  const unreadCount = contacts.filter(c => (c.unread || 0) > 0).length;
+  const waitingCount = contacts.filter(c => c.status === 'waiting' || c.status === 'bot_active').length;
+  const mineCount = contacts.filter(c => c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress').length;
+  const resolvedCount = contacts.filter(c => c.status === 'resolved' || c.status === 'closed').length;
 
   const isResolved = activeContactData?.status === 'resolved' || activeContactData?.status === 'closed';
 
@@ -820,58 +1015,97 @@ function InboxContent() {
             </div>
           </div>
           
-          {/* Abas Estilo Lero + Pílula de Filtro Rápido [Não lidas] */}
-          <div className="flex items-center gap-1.5 mt-1">
-            <div className="flex flex-1 gap-1 bg-[#1E293B] p-1 rounded-lg">
-              <button 
-                onClick={() => {
-                  handleTabChange('waiting');
-                }}
-                className={`flex-1 text-[11px] py-1 rounded shadow-sm flex items-center justify-center gap-1 transition-colors cursor-pointer ${
-                  activeTab === 'waiting' && !onlyUnread ? 'font-bold bg-[#0B1224] text-white' : 'font-semibold text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Aguardando
-              </button>
-              <button 
-                onClick={() => {
-                  handleTabChange('mine');
-                }}
-                className={`flex-1 text-[11px] py-1 rounded flex items-center justify-center gap-1 transition-colors cursor-pointer ${
-                  activeTab === 'mine' && !onlyUnread ? 'font-bold bg-[#0B1224] text-white shadow-sm' : 'font-semibold text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Meus
-                {unreadCount > 0 && <span className="bg-red-500 text-white text-[9px] px-1 rounded-full">{unreadCount}</span>}
-              </button>
-              <button 
-                onClick={() => {
-                  handleTabChange('resolved');
-                }}
-                className={`flex-1 text-[11px] py-1 rounded flex items-center justify-center gap-1 transition-colors cursor-pointer ${
-                  activeTab === 'resolved' && !onlyUnread ? 'font-bold bg-[#0B1224] text-white shadow-sm' : 'font-semibold text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Resolvidos
-              </button>
-            </div>
-
-            {/* Pílula de Filtro Rápido [Não lidas] */}
-            <button
-              onClick={() => setOnlyUnread(prev => !prev)}
-              className={`px-2 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer border shrink-0 ${
-                onlyUnread
-                  ? 'bg-blue-600 border-blue-500 text-white shadow-sm'
-                  : 'bg-[#1E293B] border-gray-700/60 text-gray-400 hover:text-gray-200 hover:border-gray-600'
+          {/* 4 Abas Segmentadas com Badges de Pílula (Padrão Lero Pro) */}
+          <div className="grid grid-cols-4 gap-1 bg-[#1E293B] p-1 rounded-xl border border-gray-700/60 mt-1 shadow-inner">
+            <button 
+              onClick={() => {
+                setOnlyUnread(false);
+                handleTabChange('waiting');
+              }}
+              className={`text-[10px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
+                activeTab === 'waiting' && !onlyUnread 
+                  ? 'font-bold bg-[#0B1224] text-white shadow-[0_2px_8px_rgba(0,0,0,0.4)] border border-gray-700/60' 
+                  : 'font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800/40'
               }`}
-              title="Filtrar conversas com mensagens não lidas"
+              title="Fila de Espera / IA"
             >
-              <span>Não lidas</span>
-              <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
-                onlyUnread ? 'bg-white text-blue-600' : 'bg-red-500 text-white'
+              <span className="truncate leading-none">Aguardando</span>
+              {waitingCount > 0 ? (
+                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold leading-none ${
+                  activeTab === 'waiting' && !onlyUnread ? 'bg-amber-400 text-slate-950' : 'bg-gray-800 text-amber-400 border border-amber-500/30'
+                }`}>
+                  {waitingCount}
+                </span>
+              ) : (
+                <span className="text-[9px] text-gray-600 leading-none">0</span>
+              )}
+            </button>
+
+            <button 
+              onClick={() => {
+                setOnlyUnread(false);
+                handleTabChange('mine');
+              }}
+              className={`text-[10px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
+                activeTab === 'mine' && !onlyUnread 
+                  ? 'font-bold bg-[#0B1224] text-white shadow-[0_2px_8px_rgba(0,0,0,0.4)] border border-gray-700/60' 
+                  : 'font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800/40'
+              }`}
+              title="Atendimentos atribuídos a mim"
+            >
+              <span className="truncate leading-none">Meus</span>
+              {mineCount > 0 ? (
+                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold leading-none ${
+                  activeTab === 'mine' && !onlyUnread ? 'bg-blue-500 text-white' : 'bg-gray-800 text-blue-400 border border-blue-500/30'
+                }`}>
+                  {mineCount}
+                </span>
+              ) : (
+                <span className="text-[9px] text-gray-600 leading-none">0</span>
+              )}
+            </button>
+
+            <button 
+              onClick={() => {
+                setOnlyUnread(prev => !prev);
+              }}
+              className={`text-[10px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
+                onlyUnread 
+                  ? 'font-bold bg-rose-600 text-white shadow-[0_0_12px_rgba(225,29,72,0.4)]' 
+                  : 'font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800/40'
+              }`}
+              title="Mensagens não lidas"
+            >
+              <span className="truncate leading-none">Não lidas</span>
+              <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold leading-none ${
+                onlyUnread ? 'bg-white text-rose-600' : (unreadCount > 0 ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-800 text-gray-500 border border-gray-700/60')
               }`}>
                 {unreadCount}
               </span>
+            </button>
+
+            <button 
+              onClick={() => {
+                setOnlyUnread(false);
+                handleTabChange('resolved');
+              }}
+              className={`text-[10px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
+                activeTab === 'resolved' && !onlyUnread 
+                  ? 'font-bold bg-[#0B1224] text-white shadow-[0_2px_8px_rgba(0,0,0,0.4)] border border-gray-700/60' 
+                  : 'font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800/40'
+              }`}
+              title="Atendimentos finalizados"
+            >
+              <span className="truncate leading-none">Resolvidos</span>
+              {resolvedCount > 0 ? (
+                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold leading-none ${
+                  activeTab === 'resolved' && !onlyUnread ? 'bg-emerald-400 text-slate-950' : 'bg-gray-800 text-emerald-400 border border-emerald-500/30'
+                }`}>
+                  {resolvedCount}
+                </span>
+              ) : (
+                <span className="text-[9px] text-gray-600 leading-none">0</span>
+              )}
             </button>
           </div>
         </div>
@@ -1277,45 +1511,119 @@ function InboxContent() {
                 messages.map((msg, i) => {
                   const isAi = msg.senderType === 'system';
                   const isMe = msg.direction === 'OUTBOUND';
+                  const audioKey = msg.id || `audio-${i}`;
 
                   return (
-                    <div key={i} className={`flex flex-col gap-1 max-w-[70%] ${isMe ? 'self-end items-end' : ''}`}>
-                      <div className={`p-3 text-sm border shadow-sm relative ${
+                    <div key={i} className={`flex flex-col gap-1 max-w-[78%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
+                      <div className={`text-sm shadow-sm relative transition-all ${
                         msg.isInternal
-                          ? 'bg-amber-500/10 text-amber-100 rounded-2xl rounded-tr-sm border-amber-500/30'
+                          ? 'bg-amber-500/10 text-amber-100 rounded-2xl rounded-tr-none border border-amber-500/40 p-3.5 shadow-[0_2px_12px_rgba(245,158,11,0.08)]'
                           : isMe 
-                            ? 'bg-primary/20 text-blue-100 rounded-2xl rounded-tr-sm border-primary/30 shadow-[0_0_15px_rgba(0,85,255,0.1)]' 
-                            : 'bg-gray-800/80 text-text-primary rounded-2xl rounded-tl-sm border-gray-700/50'
+                            ? 'bg-[#005c4b]/95 text-emerald-50 rounded-2xl rounded-tr-none border border-emerald-600/30 p-3.5 shadow-md' 
+                            : 'bg-[#1E293B] text-gray-100 rounded-2xl rounded-tl-none border border-gray-700/60 p-3.5 shadow-sm'
                       }`}>
+                        {/* Identificador de Nota Interna */}
                         {msg.isInternal && (
-                          <div className="flex items-center gap-1 text-amber-500 font-bold mb-1 border-b border-amber-500/20 pb-1">
-                            <Lock size={12} /> <span className="text-[0.65rem] uppercase tracking-wider">Nota Interna (Visível apenas p/ Equipe)</span>
+                          <div className="flex items-center gap-1.5 text-amber-400 font-bold mb-2 pb-1.5 border-b border-amber-500/20 text-[10px] uppercase tracking-wider">
+                            <Lock size={11} />
+                            <span>Nota Interna (Equipe)</span>
                           </div>
                         )}
+
+                        {/* Pill de IA Vitor */}
                         {isAi && !msg.isInternal && (
-                          <div className="absolute -top-3 -right-2 bg-[#0B1224] border border-accent/50 text-accent text-[0.55rem] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Bot size={10} /> IA VITOR
+                          <div className="inline-flex items-center gap-1.5 bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1.5 shadow-sm">
+                            <Bot size={11} className="text-cyan-400 animate-pulse" />
+                            <span>IA VITOR</span>
                           </div>
                         )}
                         
                         {/* Renderização de Mídia */}
                         {msg.mediaUrl && (
                           <div className="mb-2">
-                            {msg.type === 'image' && <img src={msg.mediaUrl} alt="Anexo" className="rounded-lg max-h-48 object-cover" />}
-                            {msg.type === 'audio' && <audio src={msg.mediaUrl} controls className="h-8 max-w-[200px]" />}
+                            {msg.type === 'image' && (
+                              <img 
+                                src={msg.mediaUrl} 
+                                alt="Anexo" 
+                                className="rounded-xl max-h-56 object-cover border border-white/10 shadow-sm hover:scale-[1.01] transition-transform" 
+                              />
+                            )}
+
+                            {/* Mini-player de Áudio Customizado */}
+                            {msg.type === 'audio' && (
+                              <div className="flex items-center gap-3 bg-black/30 p-2.5 rounded-xl border border-white/10 my-1 w-64 shadow-inner">
+                                <button
+                                  type="button"
+                                  onClick={() => togglePlayAudio(audioKey, msg.mediaUrl)}
+                                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0 ${
+                                    playingAudioId === audioKey
+                                      ? 'bg-amber-400 text-black'
+                                      : isMe ? 'bg-emerald-400 text-slate-950 hover:bg-emerald-300' : 'bg-blue-500 text-white hover:bg-blue-400'
+                                  }`}
+                                >
+                                  {playingAudioId === audioKey ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+                                </button>
+                                <div className="flex-1 flex flex-col gap-1 min-w-0">
+                                  <div className="flex items-center justify-between text-[11px] font-semibold text-gray-300">
+                                    <span className="flex items-center gap-1">
+                                      <Volume2 size={12} className="text-accent" /> Mensagem de voz
+                                    </span>
+                                    <span className="text-[10px] text-gray-400 font-mono">
+                                      {playingAudioId === audioKey ? 'Tocando...' : 'Áudio'}
+                                    </span>
+                                  </div>
+                                  {/* Ondas Sonoras Visuais */}
+                                  <div className="flex items-center gap-0.5 h-3">
+                                    {[40, 70, 100, 60, 80, 45, 90, 55, 75, 95, 50, 85, 65, 40].map((height, hIdx) => (
+                                      <div
+                                        key={hIdx}
+                                        style={{ height: `${height}%` }}
+                                        className={`w-1 rounded-full transition-all ${
+                                          playingAudioId === audioKey
+                                            ? 'bg-emerald-400 animate-pulse'
+                                            : 'bg-gray-500/60'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
                             {msg.type === 'document' && (
-                              <div className="flex items-center gap-2 p-2 bg-black/20 rounded border border-white/10">
-                                <FileText size={16} /> <span className="text-xs truncate">{msg.content}</span>
+                              <div className="flex items-center gap-2.5 p-2.5 bg-black/25 rounded-xl border border-white/10 hover:bg-black/35 transition-colors">
+                                <FileText size={18} className="text-accent shrink-0" />
+                                <span className="text-xs truncate font-medium text-gray-200">{msg.content || 'Documento anexo'}</span>
+                                <a 
+                                  href={msg.mediaUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="ml-auto text-accent hover:text-white p-1"
+                                >
+                                  <ExternalLink size={13} />
+                                </a>
                               </div>
                             )}
                           </div>
                         )}
                         
-                        {msg.content}
+                        {/* Conteúdo de Texto */}
+                        {msg.content && msg.type !== 'audio' && (
+                          <div className="whitespace-pre-wrap leading-relaxed text-[0.92rem]">
+                            {msg.content}
+                          </div>
+                        )}
+
+                        {/* Horário e Checks de Leitura Alinhados no Rodapé da Bolha */}
+                        <div className={`flex items-center justify-end gap-1.5 mt-1.5 -mb-0.5 text-[10px] font-medium ${
+                          isMe ? 'text-emerald-200/80' : 'text-gray-400'
+                        }`}>
+                          <span>{new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          {isMe && !msg.isInternal && (
+                            <CheckCheck size={13} className="text-emerald-300 ml-0.5" />
+                          )}
+                        </div>
                       </div>
-                      <span className="text-[0.65rem] text-gray-500 mx-1">
-                        {new Date(msg.createdAt || Date.now()).toLocaleTimeString()}
-                      </span>
                     </div>
                   );
                 })
@@ -1499,102 +1807,176 @@ function InboxContent() {
                       </div>
                     </div>
 
-                    <div className={`border rounded-xl p-1.5 flex items-end gap-2 transition-colors shadow-sm relative
+                    <div className={`border rounded-xl p-1.5 flex items-end gap-2 transition-colors shadow-sm relative min-h-[52px]
                       ${isInternalMode 
                         ? 'bg-amber-500/10 border-amber-500/40 focus-within:border-amber-500' 
-                        : 'bg-[#1E293B] border-gray-700 focus-within:border-gray-500'
+                        : isRecording
+                          ? 'bg-rose-950/20 border-rose-500/40'
+                          : 'bg-[#1E293B] border-gray-700 focus-within:border-gray-500'
                       }
                     `}>
-                      
-                      {/* Popover de Anexos */}
-                      <div className="relative">
-                        <button 
-                          onClick={() => setShowAttachments(!showAttachments)}
-                          className={`p-2 transition-colors rounded-lg ${isInternalMode ? 'text-amber-400 hover:bg-amber-500/20' : 'text-gray-400 hover:text-accent hover:bg-gray-800/80'}`}
-                        >
-                          <Paperclip size={22} />
-                        </button>
-                        
-                        {showAttachments && (
-                          <div className="absolute bottom-12 left-0 bg-[#1E293B] border border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-xl p-2 flex flex-col gap-1 w-48 z-50 animate-in slide-in-from-bottom-2">
-                            <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg cursor-pointer transition-colors">
-                              <ImageIcon size={16} className="text-blue-400" /> Foto / Vídeo
-                              <input type="file" className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
-                            </label>
-                            <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg cursor-pointer transition-colors">
-                              <FileText size={16} className="text-purple-400" /> Documento
-                              <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileSelect} />
-                            </label>
-                            <button className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors text-left">
-                              <Mic size={16} className="text-green-400" /> Gravar Áudio
+                      {isRecording ? (
+                        /* Painel de Gravação de Áudio Ativo */
+                        <div className="flex-1 flex items-center justify-between px-3 py-2 animate-in fade-in duration-200">
+                          <div className="flex items-center gap-3">
+                            <div className="relative flex items-center justify-center">
+                              <div className="w-3.5 h-3.5 rounded-full bg-rose-500"></div>
+                              <div className="w-3.5 h-3.5 rounded-full bg-rose-500 animate-ping absolute"></div>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-rose-300">Gravando áudio de voz...</span>
+                              <span className="text-[12px] font-mono text-white font-bold">{formatTimer(recordingTime)}</span>
+                            </div>
+                            {/* Ondas Sonoras Dinâmicas */}
+                            <div className="flex items-center gap-1 h-5 ml-4">
+                              {[45, 80, 50, 100, 65, 90, 70, 95, 45, 85, 60, 95].map((h, idx) => (
+                                <div
+                                  key={idx}
+                                  style={{ height: `${h}%` }}
+                                  className="w-1 bg-rose-400 rounded-full animate-pulse"
+                                />
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={cancelRecording}
+                              disabled={isSendingAudio}
+                              className="p-2 rounded-lg bg-gray-800/80 hover:bg-rose-900/60 text-gray-400 hover:text-rose-300 transition-colors cursor-pointer"
+                              title="Descartar gravação"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={stopAndSendAudio}
+                              disabled={isSendingAudio}
+                              className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-[0_0_12px_rgba(16,185,129,0.4)] flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              title="Enviar áudio gravado"
+                            >
+                              <Send size={14} />
+                              <span>{isSendingAudio ? "Enviando..." : "Enviar Áudio"}</span>
                             </button>
                           </div>
-                        )}
-                      </div>
-
-                      <textarea 
-                        ref={textareaRef}
-                        placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem ou digite / para respostas rápidas..."} 
-                        className={`flex-1 bg-transparent text-[0.95rem] resize-none outline-none py-2.5 max-h-32 
-                          ${isInternalMode ? 'text-amber-100 placeholder:text-amber-500/50' : 'text-white placeholder:text-gray-500'}
-                        `}
-                        rows={1}
-                        value={inputText}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setInputText(val);
-                          
-                          // UX de Resposta Rápida
-                          if (val.startsWith('/')) {
-                            setShowQuickReplies(true);
-                            setQuickReplyFilter(val.substring(1).toLowerCase());
-                          } else {
-                            setShowQuickReplies(false);
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            // Se o popover estiver aberto, não envia ainda
-                            if (!showQuickReplies) {
-                              handleSendMessage();
-                            }
-                          }
-                        }}
-                      />
-                      
-                      {/* Popover de Respostas Rápidas */}
-                      {showQuickReplies && quickReplies.length > 0 && (
-                        <div className="absolute bottom-14 left-12 w-[300px] bg-[#1E293B] border border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
-                          <div className="px-3 py-2 bg-gray-800/50 text-xs font-bold text-gray-400 border-b border-gray-700">Respostas Rápidas</div>
-                          <div className="max-h-48 overflow-y-auto">
-                            {quickReplies.filter(qr => qr.shortcut.toLowerCase().includes(quickReplyFilter)).map(qr => (
-                              <div 
-                                key={qr.id}
-                                onClick={() => {
-                                  setInputText(qr.content);
-                                  setShowQuickReplies(false);
-                                }}
-                                className="px-3 py-2 border-b border-gray-800/50 hover:bg-gray-800 cursor-pointer transition-colors"
-                              >
-                                <div className="text-accent text-xs font-bold mb-0.5">{qr.shortcut}</div>
-                                <div className="text-gray-300 text-xs line-clamp-1">{qr.content}</div>
-                              </div>
-                            ))}
-                          </div>
                         </div>
+                      ) : (
+                        <>
+                          {/* Popover de Anexos */}
+                          <div className="relative">
+                            <button 
+                              type="button"
+                              onClick={() => setShowAttachments(!showAttachments)}
+                              className={`p-2 transition-colors rounded-lg ${isInternalMode ? 'text-amber-400 hover:bg-amber-500/20' : 'text-gray-400 hover:text-accent hover:bg-gray-800/80'}`}
+                            >
+                              <Paperclip size={22} />
+                            </button>
+                            
+                            {showAttachments && (
+                              <div className="absolute bottom-12 left-0 bg-[#1E293B] border border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-xl p-2 flex flex-col gap-1 w-48 z-50 animate-in slide-in-from-bottom-2">
+                                <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg cursor-pointer transition-colors">
+                                  <ImageIcon size={16} className="text-blue-400" /> Foto / Vídeo
+                                  <input type="file" className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
+                                </label>
+                                <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg cursor-pointer transition-colors">
+                                  <FileText size={16} className="text-purple-400" /> Documento
+                                  <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileSelect} />
+                                </label>
+                                <button 
+                                  type="button"
+                                  onClick={() => {
+                                    setShowAttachments(false);
+                                    startRecording();
+                                  }}
+                                  className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors text-left w-full cursor-pointer"
+                                >
+                                  <Mic size={16} className="text-green-400" /> Gravar Áudio
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          <textarea 
+                            ref={textareaRef}
+                            placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem ou digite / para respostas rápidas..."} 
+                            className={`flex-1 bg-transparent text-[0.95rem] resize-none outline-none py-2.5 max-h-32 
+                              ${isInternalMode ? 'text-amber-100 placeholder:text-amber-500/50' : 'text-white placeholder:text-gray-500'}
+                            `}
+                            rows={1}
+                            value={inputText}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setInputText(val);
+                              
+                              // UX de Resposta Rápida
+                              if (val.startsWith('/')) {
+                                setShowQuickReplies(true);
+                                setQuickReplyFilter(val.substring(1).toLowerCase());
+                              } else {
+                                setShowQuickReplies(false);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                // Se o popover estiver aberto, não envia ainda
+                                if (!showQuickReplies) {
+                                  handleSendMessage();
+                                }
+                              }
+                            }}
+                          />
+                          
+                          {/* Popover de Respostas Rápidas */}
+                          {showQuickReplies && quickReplies.length > 0 && (
+                            <div className="absolute bottom-14 left-12 w-[300px] bg-[#1E293B] border border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
+                              <div className="px-3 py-2 bg-gray-800/50 text-xs font-bold text-gray-400 border-b border-gray-700">Respostas Rápidas</div>
+                              <div className="max-h-48 overflow-y-auto">
+                                {quickReplies.filter(qr => qr.shortcut.toLowerCase().includes(quickReplyFilter)).map(qr => (
+                                  <div 
+                                    key={qr.id}
+                                    onClick={() => {
+                                      setInputText(qr.content);
+                                      setShowQuickReplies(false);
+                                    }}
+                                    className="px-3 py-2 border-b border-gray-800/50 hover:bg-gray-800 cursor-pointer transition-colors"
+                                  >
+                                    <div className="text-accent text-xs font-bold mb-0.5">{qr.shortcut}</div>
+                                    <div className="text-gray-300 text-xs line-clamp-1">{qr.content}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Botão Dinâmico: Microfone (se vazio) ou Enviar (se preenchido) */}
+                          {(!inputText.trim() && !selectedFile) ? (
+                            <button 
+                              type="button"
+                              onClick={startRecording}
+                              title="Gravar mensagem de voz"
+                              className="p-2.5 rounded-lg text-gray-400 hover:text-emerald-400 hover:bg-emerald-950/40 border border-transparent hover:border-emerald-500/40 transition-all cursor-pointer flex items-center justify-center shrink-0 mb-0.5"
+                            >
+                              <Mic size={20} />
+                            </button>
+                          ) : (
+                            <button 
+                              type="button"
+                              onClick={handleSendMessage} 
+                              className={`p-3 rounded-lg transition-colors shadow-md flex items-center justify-center shrink-0
+                                ${isInternalMode 
+                                  ? 'bg-amber-500 hover:bg-amber-600 text-amber-950' 
+                                  : 'bg-accent text-[#0B1224] hover:bg-accent/90'
+                                }
+                              `}
+                            >
+                              <Send size={18} className={!isInternalMode ? "ml-1" : ""} />
+                            </button>
+                          )}
+                        </>
                       )}
-                      <button 
-                        onClick={handleSendMessage} 
-                        className={`p-3 rounded-lg transition-colors shadow-md flex items-center justify-center
-                          ${isInternalMode 
-                            ? 'bg-amber-500 hover:bg-amber-600 text-amber-950' 
-                            : 'bg-accent text-[#0B1224] hover:bg-accent/90'
-                          }
-                        `}
-                      >
-                        <Send size={18} className={!isInternalMode ? "ml-1" : ""} />
-                      </button>
                     </div>
                   </>
                 )}
@@ -1605,9 +1987,9 @@ function InboxContent() {
       </div>
 
       {/* 3. PAINEL DIREITO: Contexto do Lead */}
-      <div className="w-[320px] flex-shrink-0 bg-[#0F172A] flex flex-col overflow-y-auto">
-        <div className="p-6 flex flex-col items-center border-b border-gray-800">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-black text-3xl shadow-[0_0_20px_rgba(0,210,255,0.2)] mb-4 overflow-hidden relative">
+      <div className="w-[320px] flex-shrink-0 bg-[#0F172A] flex flex-col overflow-y-auto border-l border-gray-800/80">
+        <div className="p-5 flex flex-col items-center border-b border-gray-800 relative bg-gradient-to-b from-[#162038]/50 to-transparent">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-black text-3xl shadow-[0_0_25px_rgba(0,210,255,0.25)] mb-3 overflow-hidden relative border-2 border-accent/40">
             {activeContactData?.avatarUrl ? (
               <img 
                 src={activeContactData.avatarUrl} 
@@ -1621,44 +2003,149 @@ function InboxContent() {
             <span className={activeContactData?.avatarUrl ? "hidden" : ""}>
               {activeContactData ? activeContactData.name.charAt(0) : '?'}
             </span>
+            <div className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#0F172A] shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
           </div>
-          <h2 className="text-lg font-bold text-white">{activeContactData ? activeContactData.name : 'Nenhum lead'}</h2>
-          {activeContactData && <p className="text-xs text-text-secondary mt-1">Lead Registrado</p>}
+
+          <h2 className="text-base font-bold text-white text-center leading-snug">
+            {activeContactData ? activeContactData.name : 'Nenhum lead selecionado'}
+          </h2>
+          {activeContactData && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <p className="text-[11px] text-gray-400 font-medium">WhatsApp Cloud API</p>
+            </div>
+          )}
+
+          {/* Atalhos Rápidos: Ligar VoIP, Ver no CRM, Copiar */}
+          {activeContactData && (
+            <div className="flex items-center gap-2 mt-4 w-full justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  if (activeContactData.phone) {
+                    setVoipNumber(activeContactData.phone);
+                    setShowVoipDialer(true);
+                  }
+                }}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-emerald-600/30 border border-gray-700/60 hover:border-emerald-500/50 text-gray-300 hover:text-emerald-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                title="Iniciar chamada VoIP"
+              >
+                <PhoneCall size={13} className="text-emerald-400" />
+                <span>Ligar</span>
+              </button>
+
+              <a
+                href="/crm"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-blue-600/30 border border-gray-700/60 hover:border-blue-500/50 text-gray-300 hover:text-blue-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                title="Visualizar no CRM"
+              >
+                <TrendingUp size={13} className="text-blue-400" />
+                <span>CRM</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => handleCopyText(activeContactData.phone || activeContactData.name, 'lead-all')}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-purple-600/30 border border-gray-700/60 hover:border-purple-500/50 text-gray-300 hover:text-purple-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                title="Copiar dados do contato"
+              >
+                {copiedField === 'lead-all' ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} className="text-purple-400" />}
+                <span>{copiedField === 'lead-all' ? 'Copiado' : 'Copiar'}</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {activeContactData && (
-          <div className="p-6 flex flex-col gap-6">
+          <div className="p-5 flex flex-col gap-5">
             {/* Informações de Contato */}
-            <div className="flex flex-col gap-3">
-              <h3 className="text-[0.7rem] uppercase tracking-widest font-bold text-gray-500">Contato</h3>
-              <div className="flex items-center gap-3 text-sm text-gray-300">
-                <Phone size={14} className="text-accent" />
-                <span>{activeContactData.phone || 'Sem telefone'}</span>
+            <div className="flex flex-col gap-2.5">
+              <h3 className="text-[10px] uppercase tracking-widest font-bold text-gray-500 flex items-center justify-between">
+                <span>Informações de Contato</span>
+                <span className="text-[9px] text-accent font-normal lowercase">id: {activeContactData.contactId?.substring(0, 8) || '---'}</span>
+              </h3>
+
+              {/* Telefone */}
+              <div className="flex items-center justify-between p-2.5 bg-[#162038]/60 border border-gray-800/80 rounded-xl group hover:border-gray-700 transition-colors">
+                <div className="flex items-center gap-2.5 text-xs text-gray-300 min-w-0">
+                  <div className="p-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800/40 text-emerald-400">
+                    <Phone size={13} />
+                  </div>
+                  <span className="truncate font-mono">{activeContactData.phone || 'Sem telefone'}</span>
+                </div>
+                {activeContactData.phone && (
+                  <button
+                    type="button"
+                    onClick={() => handleCopyText(activeContactData.phone, 'phone')}
+                    className="text-gray-500 hover:text-white p-1 transition-colors"
+                    title="Copiar telefone"
+                  >
+                    {copiedField === 'phone' ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                  </button>
+                )}
               </div>
-              <div className="flex items-center gap-3 text-sm text-gray-300">
-                <Mail size={14} className="text-accent" />
-                <span>{activeContactData.email || 'Sem e-mail'}</span>
+
+              {/* E-mail */}
+              <div className="flex items-center justify-between p-2.5 bg-[#162038]/60 border border-gray-800/80 rounded-xl group hover:border-gray-700 transition-colors">
+                <div className="flex items-center gap-2.5 text-xs text-gray-300 min-w-0">
+                  <div className="p-1.5 rounded-lg bg-blue-950/60 border border-blue-800/40 text-blue-400">
+                    <Mail size={13} />
+                  </div>
+                  <span className="truncate font-sans">{activeContactData.email || 'Sem e-mail'}</span>
+                </div>
+                {activeContactData.email && (
+                  <button
+                    type="button"
+                    onClick={() => handleCopyText(activeContactData.email, 'email')}
+                    className="text-gray-500 hover:text-white p-1 transition-colors"
+                    title="Copiar e-mail"
+                  >
+                    {copiedField === 'email' ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Tags */}
-            <div className="flex flex-col gap-3">
-              <h3 className="text-[0.7rem] uppercase tracking-widest font-bold text-gray-500">Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {activeContactData.tags?.length > 0 ? (
-                  activeContactData.tags.map((tag: string) => (
-                    <span key={tag} className="bg-gray-800 border border-gray-700 text-xs px-2 py-1 rounded-md text-gray-300 flex items-center gap-1 group">
-                      <Tag size={10} /> {tag}
-                      <button onClick={() => handleRemoveTag(activeContactData.contactId, tag)} className="ml-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X size={10} />
-                      </button>
-                    </span>
-                  ))
+            {/* Tags com Cores Dinâmicas */}
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[10px] uppercase tracking-widest font-bold text-gray-500 flex items-center gap-1.5">
+                  <Tag size={11} className="text-accent" />
+                  <span>Etiquetas & Segmentos</span>
+                </h3>
+                <span className="text-[10px] text-gray-400 font-bold">{activeContactData.tags?.length || 0}</span>
+              </div>
+
+              {/* Tags Atuais */}
+              <div className="flex flex-wrap gap-1.5">
+                {activeContactData.tags && activeContactData.tags.length > 0 ? (
+                  activeContactData.tags.map((tag: string) => {
+                    const color = getTagColor(tag);
+                    return (
+                      <span 
+                        key={tag} 
+                        className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border font-semibold ${color.bg} ${color.text} ${color.border} shadow-sm group`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${color.dot}`} />
+                        <span>{tag}</span>
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveTag(activeContactData.contactId, tag)} 
+                          className="ml-1 text-gray-400 hover:text-rose-400 transition-colors cursor-pointer"
+                          title="Remover etiqueta"
+                        >
+                          <X size={11} />
+                        </button>
+                      </span>
+                    );
+                  })
                 ) : (
-                  <span className="text-xs text-gray-500">Nenhuma tag.</span>
+                  <span className="text-xs text-gray-500 italic">Nenhuma etiqueta atribuída</span>
                 )}
               </div>
-              <div className="flex gap-2 mt-1">
+
+              {/* Campo para Nova Tag */}
+              <div className="flex gap-1.5 mt-1">
                 <input 
                   type="text" 
                   value={newTagInput}
@@ -1666,26 +2153,73 @@ function InboxContent() {
                   onKeyDown={e => {
                     if (e.key === 'Enter') handleAddTag(activeContactData.contactId);
                   }}
-                  placeholder="Nova tag..." 
-                  className="flex-1 bg-[#1E293B] border border-gray-700 rounded p-1.5 text-xs text-white outline-none focus:border-accent"
+                  placeholder="Criar nova etiqueta..." 
+                  className="flex-1 bg-[#1E293B] border border-gray-700/80 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-accent/60 transition-all placeholder:text-gray-500"
                 />
-                <button onClick={() => handleAddTag(activeContactData.contactId)} className="bg-gray-800 hover:bg-gray-700 text-white text-xs px-2 rounded font-bold">
-                  +
+                <button 
+                  type="button"
+                  onClick={() => handleAddTag(activeContactData.contactId)} 
+                  className="bg-accent/20 hover:bg-accent/30 text-accent border border-accent/40 text-xs px-3 rounded-lg font-bold transition-colors cursor-pointer"
+                >
+                  <Plus size={14} />
                 </button>
+              </div>
+
+              {/* Sugestões Rápidas de Etiquetas */}
+              <div className="flex items-center gap-1 flex-wrap pt-1">
+                <span className="text-[9px] uppercase font-bold text-gray-500 mr-1">Rápidas:</span>
+                {SUGGESTED_TAGS.map((stag) => (
+                  <button
+                    key={stag}
+                    type="button"
+                    onClick={(e) => handleQuickAddTag(e, activeContactData.contactId, stag)}
+                    className="text-[10px] text-gray-400 hover:text-white bg-gray-800/60 hover:bg-gray-700/60 px-2 py-0.5 rounded-md border border-gray-700/50 transition-colors cursor-pointer"
+                  >
+                    +{stag}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* CRM Status */}
-            <div className="bg-[#0B1224]/80 border border-gray-800/60 rounded-xl p-4 mt-2">
-              <h3 className="text-[0.7rem] uppercase tracking-widest font-bold text-gray-500 mb-2">Status da Conversa</h3>
-              <div className={`w-full text-center py-2 rounded-lg text-sm font-bold shadow-[0_0_10px_rgba(0,0,0,0.15)] cursor-pointer transition-colors ${
+            {/* Atendimento & Status Operacional */}
+            <div className="bg-[#11192A] border border-gray-800/80 rounded-2xl p-4 flex flex-col gap-3 shadow-inner">
+              <h3 className="text-[10px] uppercase tracking-widest font-bold text-gray-500">Status Operacional</h3>
+              
+              <div className={`w-full text-center py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 border ${
                 activeContactData.status === 'bot_active' 
-                  ? 'bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30' 
-                  : activeContactData.status === 'resolved'
-                  ? 'bg-gray-800 text-gray-400 border border-gray-700'
-                  : 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30'
+                  ? 'bg-cyan-950/40 text-cyan-300 border-cyan-700/50 shadow-[0_0_15px_rgba(6,182,212,0.15)]' 
+                  : activeContactData.status === 'resolved' || activeContactData.status === 'closed'
+                  ? 'bg-gray-800/80 text-gray-400 border-gray-700/60'
+                  : 'bg-emerald-950/40 text-emerald-300 border-emerald-700/50 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
               }`}>
-                {activeContactData.status === 'bot_active' ? 'IA Atendendo' : activeContactData.status === 'resolved' ? 'Resolvido' : 'Atendimento Humano'}
+                {activeContactData.status === 'bot_active' ? (
+                  <>
+                    <Bot size={14} className="text-cyan-400 animate-pulse" />
+                    <span>IA Vitor em Atendimento</span>
+                  </>
+                ) : activeContactData.status === 'resolved' || activeContactData.status === 'closed' ? (
+                  <>
+                    <Lock size={14} className="text-gray-400" />
+                    <span>Ticket Finalizado</span>
+                  </>
+                ) : (
+                  <>
+                    <UserCheck size={14} className="text-emerald-400" />
+                    <span>Atendente Humano</span>
+                  </>
+                )}
+              </div>
+
+              {/* Informações Complementares */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800/80 text-[11px]">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-gray-500">Última Interação</span>
+                  <span className="text-gray-300 font-semibold">{activeContactData.time || 'Hoje'}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-gray-500">Atribuído a</span>
+                  <span className="text-gray-300 font-semibold">{currentUserName}</span>
+                </div>
               </div>
             </div>
           </div>

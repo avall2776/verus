@@ -566,6 +566,29 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Build do Backend NestJS executado e aprovado com sucesso (**código 0**).
   * Build do Frontend Next.js 14 executado e aprovado com sucesso (**código 0**, 29 rotas de produção geradas).
 
+### Fase 40: Refinamento Visual e Funcional do Inbox e Composer (Padrão Mensageria Profissional)
+- [x] **Gravação de Áudio via `MediaRecorder` no Composer**:
+  * Botão de microfone (`Mic`) dinâmico integrado ao rodapé do chat, ativado quando o input de texto e arquivos estiver vazio.
+  * Painel de gravação ativo com indicador visual pulsante em vermelho, cronômetro em tempo real (`mm:ss`) e ondas sonoras animadas.
+  * Botão de descarte (`Trash2`) com liberação segura dos canais do microfone e cancelamento imediato.
+  * Botão de envio de áudio gravado (`Send`) que converte os chunks gravados em Blob / WebM, realiza upload seguro para o Supabase Storage (`versus-media/chat/...`) e envia mensagem com `type: 'audio'`.
+- [x] **Hierarquia Visual Avançada das Bolhas de Mensagens**:
+  * Mensagens Outbound estilizadas no tom verde WhatsApp corporativo (`bg-[#005c4b]/95 border border-emerald-600/30 text-emerald-50 rounded-2xl rounded-tr-none px-4 py-2.5 shadow-md`), com horário e checks duplos de leitura (`CheckCheck` em esmeralda) alinhados no rodapé inferior direito.
+  * Mensagens Inbound com fundo contrastante refinado (`bg-[#1E293B] border border-gray-700/60 rounded-2xl rounded-tl-none px-4 py-2.5 shadow-sm`).
+  * Notas Internas destacadas com fundo âmbar sofisticado (`bg-amber-500/10 border border-amber-500/40 text-amber-100 rounded-2xl rounded-tr-none`) e badge com cadeado no cabeçalho.
+  * Mini-player customizado para mensagens de áudio (`type: 'audio'`) com botão de play/pause circular, indicador de status sonoro e ondas sonoras visuais animadas durante reprodução.
+  * Pill moderna translúcida com ícone `Bot` em ciano para identificação de mensagens automatizadas da IA Vitor.
+- [x] **Abas de Filtro de Conversas Segmentadas (Grid Pro)**:
+  * Reestruturação do seletor superior da barra lateral em 4 abas modernas (`grid grid-cols-4 gap-1 bg-[#1E293B] p-1 rounded-xl border border-gray-700/60 shadow-inner`): **Aguardando**, **Meus**, **Não lidas** e **Resolvidos**.
+  * Badges numéricos em formato de pílula (`px-1.5 py-0.2 rounded-full text-[9px] font-bold`) com cores semânticas de alto contraste para cada fila (âmbar para fila de espera, azul para atribuídos, vermelho pulsante para mensagens não lidas e esmeralda para resolvidos).
+- [x] **Painel Lateral Direito de Detalhes do Contato**:
+  * Card do lead enriquecido com avatar em anel iluminado de status, identificador de canal WhatsApp e atalhos rápidos de ação com um clique: Chamar via VoIP (`PhoneCall`), Ver no CRM (`TrendingUp`) e Copiar dados com feedback visual (`CheckCheck`).
+  * Tags com cores dinâmicas atribuídas deterministicamente por hash do nome em paletas premium (esmeralda, azul, roxo, âmbar, ciano, rosa e índigo) com dot colorido e botão de remoção suave.
+  * Sugestões rápidas de etiquetas (`+Lead Quente`, `+VIP`, `+Negociação`, `+Financeiro`, `+Aguardando`) e campo inline para criação de novas tags.
+  * Seção operacional detalhada com telefone, e-mail, tempo de atendimento e card de status com indicadores visuais dedicados para IA, atendente humano e ticket finalizado.
+- [x] **Validação & Compilação**:
+  * Build do Next.js 14 executado e aprovado com sucesso (**código 0**, 29 rotas de produção geradas).
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
@@ -579,6 +602,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[14/09/2026 - 11:54]** ⏸️ Pausa para almoço (Entregas da manhã: Fases 31 a 36 concluídas — Barra do CRM em linha única, Fullscreen API, Refinamento visual monocromático do DealModal, Modais de Editar Contato/Tarefa/Evento, Conexão de endpoints dos cards e Evolução inicial da aba Métricas e Vendas `/dashboard/cm`).
 - **[14/09/2026 - 13:38]** 🟢 Retorno do almoço / Início do turno da tarde (Fases 37 e 38 concluídas: Paridade dos 6 Cards com popover analítico e tradução de etapas do CRM).
 - **[14/09/2026 - 16:35]** 🚀 Fase 39 Concluída: Refatoração completa da arquitetura do WhatsApp e Inbox (Padrão Lero Multi-tenant) — Prisma, Backend NestJS, WhatsAppProvider, /settings/whatsapp e /inbox com avatares reais, seletor de instâncias e toolbar rica no composer. Builds 100% aprovados (código 0).
+- **[14/09/2026 - 17:05]** 💎 Fase 40 Concluída: Refinamento visual e funcional do Inbox e Composer — Gravação de áudio com MediaRecorder e timer em tempo real, bolhas de mensagens estilo WhatsApp Pro com mini-player e checks alinhados, 4 abas segmentadas com badges de pílula e painel do lead enriquecido com tags dinâmicas por hash e atalhos rápidos. Build Next.js 14 aprovado com código 0 (29 rotas geradas).
 
 ---
 
