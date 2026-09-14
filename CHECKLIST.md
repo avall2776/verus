@@ -616,6 +616,24 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Build do Backend NestJS aprovado (**código 0**).
   * Build do Frontend Next.js 14 aprovado (**código 0**, 29 rotas de produção geradas).
 
+### Fase 43: Remoção Definitiva do Pool Unsplash e Fallback Elegante para Iniciais Compostas (FC)
+- [x] **Remoção Completa de Fotos Fictícias (Unsplash)**:
+  * Backend (`WhatsappService`): pool `REAL_AVATARS_POOL` e hashing eliminados por completo. `fetchContactProfilePicture` agora consulta exclusivamente a Meta Graph API oficial do WhatsApp (`GET /{phone}?fields=profile_picture_url`).
+  * Se a API da Meta retornar a foto de perfil real do contato, esta é salva em `contact.avatarUrl`. Caso contrário, a propriedade retorna explicitamente `null`.
+  * Sanitização retroativa: execução de rotina de limpeza no banco de dados e filtros preventivos em `syncContactAvatar`, `ContactsService` e `ChatService` que resetam qualquer URL remanescente contendo `unsplash.com` para `null`.
+- [x] **Fallback Nativo no Frontend com Iniciais Reais Compostas (ex: FC)**:
+  * Implementação da função utilitária `getContactInitials(name)` no Inbox, que processa o nome do contato e gera as iniciais da primeira e última palavra (ex: "Felipe Costa" -> "FC", "Vitor" -> "VI", etc.).
+  * Aplicação consistente em todos os 4 pontos de exibição de avatar da aplicação:
+    1. Lista lateral de conversas ativas/aguardando;
+    2. Cabeçalho da conversa aberta;
+    3. Painel lateral direito de contexto do lead;
+    4. Modais de assunção de fila e busca de contatos.
+  * Tratamento de `onError` na tag de imagem garantindo exibição instantânea das iniciais nativas caso a imagem real falhe no carregamento.
+- [x] **Deploy e Validação**:
+  * Build do Backend NestJS aprovado (**código 0**).
+  * Build do Frontend Next.js 14 aprovado (**código 0**, 29 rotas de produção geradas).
+  * Deploy no VPS (`187.127.10.166`) executado e sincronizado com PM2 (`versus-engine`, **código 0**).
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
@@ -630,6 +648,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[14/09/2026 - 13:38]** 🟢 Retorno do almoço / Início do turno da tarde (Fases 37 e 38 concluídas: Paridade dos 6 Cards com popover analítico e tradução de etapas do CRM).
 - **[14/09/2026 - 16:35]** 🚀 Fase 39 Concluída: Refatoração completa da arquitetura do WhatsApp e Inbox (Padrão Lero Multi-tenant) — Prisma, Backend NestJS, WhatsAppProvider, /settings/whatsapp e /inbox com avatares reais, seletor de instâncias e toolbar rica no composer. Builds 100% aprovados (código 0).
 - **[14/09/2026 - 17:05]** 💎 Fase 40 Concluída: Refinamento visual e funcional do Inbox e Composer — Gravação de áudio com MediaRecorder e timer em tempo real, bolhas de mensagens estilo WhatsApp Pro com mini-player e checks alinhados, 4 abas segmentadas com badges de pílula e painel do lead enriquecido com tags dinâmicas por hash e atalhos rápidos. Build Next.js 14 aprovado com código 0 (29 rotas geradas).
+- **[14/09/2026 - 18:05]** 🛡️ Fases 41 a 43 Concluídas: Pipeline de áudio bidirecional (inbound webhook + PTT nativo WhatsApp com ffmpeg) e remoção completa do pool de retratos fictícios do Unsplash, com sincronização estrita de foto oficial da Meta ou fallback nativo em iniciais compostas (FC). Deploy no VPS ativo com sucesso (código 0).
 
 ---
 
