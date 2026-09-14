@@ -59,6 +59,15 @@ export default function CrmPage() {
   const [collapsedTableStages, setCollapsedTableStages] = useState<string[]>([]);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
 
+  // Linha do tempo: estágios colapsados
+  const [collapsedTimelineStages, setCollapsedTimelineStages] = useState<string[]>([]);
+
+  const toggleTimelineStage = (stageId: string) => {
+    setCollapsedTimelineStages(prev =>
+      prev.includes(stageId) ? prev.filter(id => id !== stageId) : [...prev, stageId]
+    );
+  };
+
   // Tabela: Ordenação interativa (Sorting)
   type TableSortField = 'title' | 'contact' | 'description' | 'assignee' | 'value' | 'updatedAt' | 'createdAt';
   const [sortField, setSortField] = useState<TableSortField>('createdAt');
@@ -1336,140 +1345,232 @@ export default function CrmPage() {
             </div>
           </div>
 
-          {/* Grid de 7 Colunas Semanais (Domingo a Sábado) */}
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 overflow-y-auto custom-scrollbar pb-4">
-            {weekDays.map((day, dayIndex) => {
-              // Filtrar os deals que correspondem a este dia da semana respeitando os filtros globais
-              const dealsForDay = filteredDeals.filter(deal => {
-                const rawDate = deal.expectedCloseDate || deal.updatedAt || deal.createdAt;
-                if (!rawDate) return false;
-                const d = new Date(rawDate);
-                if (isNaN(d.getTime())) return false;
-                return d.toDateString() === day.date.toDateString();
-              });
-
-              const dayTotal = dealsForDay.reduce((sum, d) => sum + (d.value ? Number(d.value) : 0), 0);
-
-              return (
-                <div 
-                  key={`day-col-${dayIndex}`}
-                  className={`flex flex-col rounded-xl border transition-all duration-200 min-h-[400px] bg-[#161b22] ${
-                    day.isToday 
-                      ? 'border-primary/60 shadow-lg shadow-primary/5 ring-1 ring-primary/30' 
-                      : 'border-gray-800'
-                  }`}
-                >
-                  {/* Cabeçalho do Dia com Contadores */}
-                  <div className={`p-3 border-b flex flex-col gap-1.5 rounded-t-xl ${
-                    day.isToday 
-                      ? 'bg-primary/10 border-primary/40' 
-                      : 'bg-[#1c2128] border-gray-800'
-                  }`}>
-                    <div className="flex items-center justify-between">
-                      <span className={`text-xs font-extrabold uppercase tracking-wider ${
-                        day.isToday ? 'text-primary' : 'text-gray-400'
-                      }`}>
-                        {day.dayName}
-                      </span>
-                      
-                      <div className="flex items-center gap-1.5">
-                        {day.isToday && (
-                          <span className="bg-primary text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm">
-                            Hoje
-                          </span>
-                        )}
-                        {/* Badge Indicador de Contagem de Oportunidades do Dia */}
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${
-                          dealsForDay.length > 0
-                            ? 'bg-primary/20 text-primary border-primary/40 font-extrabold shadow-sm'
-                            : 'bg-gray-800/80 text-gray-400 border-gray-700/60'
-                        }`}>
-                          {dealsForDay.length} {dealsForDay.length === 1 ? 'card' : 'cards'}
-                        </span>
+          {/* Grade da Timeline: Estágios na Lateral Esquerda + 7 Colunas dos Dias da Semana */}
+          <div className="flex-1 bg-[#161b22] border border-gray-800 rounded-xl overflow-hidden shadow-lg flex flex-col min-h-0">
+            <div className="flex-1 overflow-auto custom-scrollbar">
+              <table className="w-full text-left border-collapse min-w-[1100px]">
+                {/* Cabeçalho da Grade */}
+                <thead className="sticky top-0 z-30 bg-[#1c2128] border-b border-gray-800 text-xs font-bold text-gray-300 shadow-sm">
+                  <tr>
+                    {/* Coluna Fixa à Esquerda: Estágios do Funil */}
+                    <th className="p-3 w-64 min-w-[240px] max-w-[260px] sticky left-0 z-40 bg-[#1c2128] border-r border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
+                      <div className="flex items-center justify-between text-xs font-extrabold uppercase tracking-wider text-gray-300">
+                        <div className="flex items-center gap-2">
+                          <LayoutDashboard size={14} className="text-primary" />
+                          <span>Estágios do Funil</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (collapsedTimelineStages.length === columns.length) {
+                              setCollapsedTimelineStages([]);
+                            } else {
+                              setCollapsedTimelineStages(columns.map(c => c.id));
+                            }
+                          }}
+                          className="text-[10px] text-gray-400 hover:text-white transition-colors uppercase font-bold tracking-wider"
+                          title="Alternar expansão de todos os estágios"
+                        >
+                          {collapsedTimelineStages.length === columns.length ? 'Expandir' : 'Colapsar'}
+                        </button>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-baseline justify-between pt-0.5">
-                      <span className={`text-lg font-black tracking-tight ${
-                        day.isToday ? 'text-white' : 'text-slate-100'
-                      }`}>
-                        {day.formattedDate}
-                      </span>
-                      {dayTotal > 0 ? (
-                        <span className="text-xs font-mono font-bold text-emerald-400">
-                          {formatCurrency(dayTotal)}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-mono text-gray-600">
-                          R$ 0,00
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                    </th>
 
-                  {/* Lista Vertical de Linhas Compactas de Negócios (Padrão Lero) */}
-                  <div className="flex-1 p-2 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar">
-                    {dealsForDay.length === 0 ? (
-                      <div className="flex-1 flex flex-col items-center justify-center text-center p-3 text-gray-500">
-                        <Clock size={16} className="mb-1.5 opacity-30" />
-                        <span className="text-[11px] italic text-gray-500">Sem eventos</span>
-                      </div>
-                    ) : (
-                      dealsForDay.map(deal => {
-                        const colInfo = columns.find(c => c.id === deal.status) || columns[0];
-                        const stageAccent = getTimelineStageAccent(deal.status || 'seed');
-                        const leadName = deal.contact?.name || deal.title || "Oportunidade";
-                        const hasPhone = !!deal.contact?.phone;
+                    {/* 7 Colunas dos Dias da Semana (Domingo a Sábado) */}
+                    {weekDays.map((day, dayIndex) => {
+                      const dayDeals = filteredDeals.filter(deal => {
+                        const rawDate = deal.expectedCloseDate || deal.updatedAt || deal.createdAt;
+                        if (!rawDate) return false;
+                        const d = new Date(rawDate);
+                        return !isNaN(d.getTime()) && d.toDateString() === day.date.toDateString();
+                      });
+                      const dayAmount = dayDeals.reduce((sum, d) => sum + (d.value ? Number(d.value) : 0), 0);
 
-                        return (
-                          <div
-                            key={`timeline-row-${deal.id}`}
-                            onClick={() => handleOpenDeal(deal)}
-                            title={`${deal.title || 'Sem título'} | ${leadName} | ${colInfo.title} | ${formatCurrency(Number(deal.value || 0))}`}
-                            className="relative flex items-center justify-between gap-2 pl-3 pr-2.5 py-2 rounded-lg bg-[#0d1117] hover:bg-[#161b22] border border-gray-800/80 hover:border-gray-700 cursor-pointer transition-all duration-150 shadow-sm text-left group overflow-hidden"
-                          >
-                            {/* Tag de cor do estágio (pequeno indicador lateral sólido) */}
-                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${stageAccent.barBg}`} />
-
-                            {/* Nome do Lead em Destaque com indicador visual de cor */}
-                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${stageAccent.barBg}`} />
-                              <span className="text-xs font-bold text-white group-hover:text-primary truncate transition-colors">
-                                {leadName}
+                      return (
+                        <th 
+                          key={`timeline-th-${dayIndex}`}
+                          className={`p-3 min-w-[145px] border-r border-gray-800/80 last:border-r-0 ${
+                            day.isToday ? 'bg-primary/10' : ''
+                          }`}
+                        >
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center justify-between">
+                              <span className={`text-xs font-extrabold uppercase tracking-wider ${
+                                day.isToday ? 'text-primary' : 'text-gray-400'
+                              }`}>
+                                {day.dayName}
                               </span>
+                              <div className="flex items-center gap-1">
+                                {day.isToday && (
+                                  <span className="bg-primary text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm">
+                                    Hoje
+                                  </span>
+                                )}
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border transition-all ${
+                                  dayDeals.length > 0 
+                                    ? 'bg-primary/20 text-primary border-primary/40 font-extrabold'
+                                    : 'bg-gray-800 text-gray-400 border-gray-700/60'
+                                }`}>
+                                  {dayDeals.length}
+                                </span>
+                              </div>
                             </div>
-
-                            {/* Indicador de WhatsApp / Contato e Valor */}
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {hasPhone ? (
-                                <span 
-                                  className="text-[#25D366] flex items-center gap-0.5 text-[10px] font-bold bg-[#25D366]/10 px-1.5 py-0.5 rounded border border-[#25D366]/20"
-                                  title={`WhatsApp: ${deal.contact.phone}`}
-                                >
-                                  <MessageCircle size={11} className="text-[#25D366]" />
-                                  <span className="hidden xl:inline text-[9px]">WA</span>
+                            <div className="flex items-baseline justify-between text-[11px]">
+                              <span className={`font-black ${day.isToday ? 'text-white' : 'text-slate-200'}`}>
+                                {day.formattedDate}
+                              </span>
+                              {dayAmount > 0 ? (
+                                <span className="text-[10px] font-mono font-bold text-emerald-400">
+                                  {formatCurrency(dayAmount)}
                                 </span>
                               ) : (
-                                <span className="text-gray-500" title="Contato sem telefone">
-                                  <UserIcon size={11} />
-                                </span>
+                                <span className="text-[9px] font-mono text-gray-600">R$ 0</span>
                               )}
+                            </div>
+                          </div>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
 
-                              {/* Valor Formatado Discreto */}
-                              {deal.value && Number(deal.value) > 0 && (
-                                <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/20 px-1 py-0.5 rounded border border-emerald-800/30">
-                                  {formatCurrency(Number(deal.value))}
+                {/* Corpo da Grade: Agrupado por Estágios do Funil */}
+                <tbody className="divide-y divide-gray-800/80 text-xs">
+                  {columns.map(col => {
+                    const stageAccent = getTimelineStageAccent(col.id);
+                    const isCollapsed = collapsedTimelineStages.includes(col.id);
+                    
+                    // Deals deste estágio
+                    const stageDeals = filteredDeals.filter(d => d.status === col.id);
+                    const stageTotal = stageDeals.reduce((sum, d) => sum + (d.value ? Number(d.value) : 0), 0);
+
+                    return (
+                      <tr 
+                        key={`timeline-stage-row-${col.id}`}
+                        className={`transition-colors ${isCollapsed ? 'bg-[#12161f]/80' : 'hover:bg-gray-900/30'}`}
+                      >
+                        {/* Célula Lateral Esquerda: Cabeçalho Colapsável do Estágio */}
+                        <td className="p-3 align-top sticky left-0 z-20 bg-[#161b22] border-r border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
+                          <div className="flex flex-col gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => toggleTimelineStage(col.id)}
+                              className="flex items-center justify-between text-left group/btn w-full select-none"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-gray-400 group-hover/btn:text-white transition-colors">
+                                  {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                                </span>
+                                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${stageAccent.barBg} ring-2 ring-transparent group-hover/btn:ring-white/20 transition-all`} />
+                                <span className="font-bold text-xs text-white uppercase tracking-wider truncate group-hover/btn:text-primary transition-colors">
+                                  {col.title}
+                                </span>
+                              </div>
+                            </button>
+
+                            <div className="flex items-center justify-between pl-5 text-[11px] text-gray-400">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${stageAccent.badgeBg} ${stageAccent.badgeText} ${stageAccent.borderLight}`}>
+                                {stageDeals.length} {stageDeals.length === 1 ? 'card' : 'cards'}
+                              </span>
+                              {stageTotal > 0 && (
+                                <span className="font-mono font-bold text-emerald-400 text-[10px]">
+                                  {formatCurrency(stageTotal)}
                                 </span>
                               )}
                             </div>
                           </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                        </td>
+
+                        {/* 7 Células dos Dias da Semana para este Estágio */}
+                        {weekDays.map((day, dayIndex) => {
+                          if (isCollapsed) {
+                            return (
+                              <td 
+                                key={`stage-${col.id}-day-${dayIndex}`}
+                                className={`p-2 border-r border-gray-800/40 last:border-r-0 ${
+                                  day.isToday ? 'bg-primary/5' : ''
+                                }`}
+                              >
+                                <div className="h-6 flex items-center justify-center">
+                                  <span className="text-gray-700 text-xs">-</span>
+                                </div>
+                              </td>
+                            );
+                          }
+
+                          // Deals deste estágio neste dia da semana
+                          const dealsForCell = stageDeals.filter(deal => {
+                            const rawDate = deal.expectedCloseDate || deal.updatedAt || deal.createdAt;
+                            if (!rawDate) return false;
+                            const d = new Date(rawDate);
+                            return !isNaN(d.getTime()) && d.toDateString() === day.date.toDateString();
+                          });
+
+                          return (
+                            <td
+                              key={`stage-${col.id}-day-${dayIndex}`}
+                              className={`p-2 align-top border-r border-gray-800/60 last:border-r-0 min-w-[145px] transition-colors ${
+                                day.isToday ? 'bg-primary/5' : ''
+                              }`}
+                            >
+                              <div className="flex flex-col gap-1.5 min-h-[50px]">
+                                {dealsForCell.length === 0 ? (
+                                  <div className="flex-1 flex items-center justify-center py-2 text-gray-700">
+                                    <span className="text-[11px] opacity-40 select-none">-</span>
+                                  </div>
+                                ) : (
+                                  dealsForCell.map(deal => {
+                                    const leadName = deal.contact?.name || deal.title || "Oportunidade";
+                                    const hasPhone = !!deal.contact?.phone;
+
+                                    return (
+                                      <div
+                                        key={`timeline-bar-${deal.id}`}
+                                        onClick={() => handleOpenDeal(deal)}
+                                        title={`${deal.title || 'Sem título'} | ${leadName} | ${col.title} | ${formatCurrency(Number(deal.value || 0))}`}
+                                        className="relative flex items-center justify-between gap-1.5 pl-2.5 pr-2 py-1.5 rounded-lg bg-[#0d1117] hover:bg-[#1f2633] border border-gray-800 hover:border-gray-700 cursor-pointer transition-all duration-150 shadow-sm text-left group overflow-hidden"
+                                      >
+                                        {/* Barra lateral colorida do estágio */}
+                                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${stageAccent.barBg}`} />
+
+                                        {/* Nome do Lead / Título em destaque */}
+                                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                          <span className="text-xs font-bold text-white group-hover:text-primary truncate transition-colors">
+                                            {leadName}
+                                          </span>
+                                        </div>
+
+                                        {/* Indicador de WhatsApp / Contato e Valor */}
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          {hasPhone && (
+                                            <span 
+                                              className="text-[#25D366] flex items-center text-[10px] font-bold bg-[#25D366]/10 p-0.5 rounded"
+                                              title={`WhatsApp: ${deal.contact.phone}`}
+                                            >
+                                              <MessageCircle size={10} className="text-[#25D366]" />
+                                            </span>
+                                          )}
+
+                                          {deal.value && Number(deal.value) > 0 && (
+                                            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/20 px-1 py-0.5 rounded border border-emerald-800/30">
+                                              {formatCurrency(Number(deal.value))}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

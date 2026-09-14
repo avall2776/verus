@@ -320,6 +320,20 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas com sucesso em produção).
 
+### Fase 25: Agrupamento por Estágios na Linha do Tempo / Timeline do CRM (Padrão Lero)
+- [x] **Agrupamento por Estágios do Funil na Lateral Esquerda**:
+  * Estruturada listagem vertical da lateral esquerda baseada nos **Estágios do Funil** (`LEADS SEED`, `Novo Contato`, `Em Qualificação`, etc.), com coluna fixa (`sticky left-0`).
+  * Cada estágio funciona como um cabeçalho colapsável individual com ícone de expansão `▾/▸`, dot colorido da etapa, contagem de cards (`X cards`) e montante financeiro total acumulado.
+  * Botão de expansão/colapso global de todos os estágios simultaneamente no cabeçalho.
+- [x] **Distribuição das Barras nas Colunas dos Dias da Semana**:
+  * Matriz alinhada com as 7 colunas da semana (Domingo a Sábado), com contadores de cards e totais no cabeçalho superior (`sticky top-0`).
+  * Para cada estágio expandido, renderizam-se horizontalmente nas células dos dias da semana as barras compactas de negócios pertencentes àquele estágio e data específica.
+  * Cada barra compacta contém: tag lateral de cor sólida do estágio, nome do lead em destaque, indicador de WhatsApp oficial e valor formatado em BRL.
+- [x] **Interação Instantânea com o DealModal Blindado**:
+  * O clique em qualquer barra compacta de negócio dispara `handleOpenDeal(deal)` abrindo imediatamente o `DealModal` blindado com as informações e metadados completos da oportunidade.
+- [x] **Validação & Compilação**:
+  * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas com sucesso em produção).
+
 
 
 
