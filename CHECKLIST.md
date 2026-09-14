@@ -468,6 +468,23 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Build do Backend NestJS e Frontend Next.js 14 testados e aprovados com código 0.
   * Deploy enviado com sucesso para produção na Vercel via Git push.
 
+### Fase 36: Evolução e Refinamento da Aba Métricas e Vendas no Padrão Lero (/dashboard/cm)
+- [x] **Expansão dos Cards de KPIs Superiores**:
+  * Grid de KPIs corporativos completos no padrão Lero: Oportunidades Criadas, Em Aberto, Ganhas, Perdidas, Ticket Médio, Taxa de Ganho (Win Rate), Ciclo Médio de Venda e Tempo até a Movimentação.
+  * Filtros interativos de período temporal: `Hoje`, `7 dias`, `15 dias`, `30 dias`, `90 dias` e seletor `Personalizado` (datas De/Até).
+  * Filtros secundários de Status e Equipe/Responsável, além do botão de ação rápida "Gerar / Recarregar" com animação de loading e feedback instantâneo.
+- [x] **Abas de Visualização (Gráficos e Relatórios em Tabela)**:
+  * Alternância entre abas no topo:
+    - **Gráficos & KPIs**: Gráficos analíticos de distribuição de status (donut), comparativo semanal de receita ganha vs perdida (barras/linhas), distribuição de leads por etapa do funil e velocidade/desempenho da equipe.
+    - **Relatórios em Tabela**: Tabela analítica densa com 301+ registros de oportunidades, paginação, busca em tempo real, colunas completas (Contato, WhatsApp, Título, Funil/CRM, Etapa, Responsável, Valor, Status, Criação e Atualização), botão "Exportar CSV" e clique abrindo o `DealModal`.
+- [x] **Padrão Monocromático Executivo (Lero)**:
+  * Paleta rigorosa em `bg-[#161b22]`, cartões em `bg-[#0d1117]`, bordas `border-gray-800`, textos corporativos `text-gray-200` e `text-gray-400`.
+  * Destaques elegantes em verde esmeralda para conversão e receita ganha, e vermelho/vinho sutil para perdas.
+  * Suporte tanto na rota canônica `/dashboard/crm` quanto no alias `/dashboard/cm`.
+- [x] **Validação & Deploy Vercel**:
+  * Build do Next.js 14 validado com sucesso gerando 29 rotas de produção.
+  * Deploy enviado para produção na Vercel via Git push.
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
