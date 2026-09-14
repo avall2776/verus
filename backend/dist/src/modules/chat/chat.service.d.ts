@@ -8,6 +8,12 @@ export declare class ChatService {
     private readonly whatsappService;
     private readonly chatGateway;
     constructor(prisma: PrismaService, messagingService: MessagingService, whatsappService: WhatsappService, chatGateway: ChatGateway);
+    getConversationCounts(tenantId: string, userId: string, userRole: string): Promise<{
+        waiting: number;
+        mine: number;
+        resolved: number;
+        total: number;
+    }>;
     findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string): Promise<({
         contact: {
             id: string;

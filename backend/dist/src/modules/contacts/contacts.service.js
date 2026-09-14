@@ -28,17 +28,6 @@ let ContactsService = class ContactsService {
                 deals: true
             }
         });
-        for (const c of contacts) {
-            if (c.avatarUrl && c.avatarUrl.includes('unsplash.com')) {
-                c.avatarUrl = null;
-            }
-            if (!c.avatarUrl && c.phone) {
-                const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, c.id);
-                if (syncedUrl) {
-                    c.avatarUrl = syncedUrl;
-                }
-            }
-        }
         return contacts.map(c => {
             let tags = c.tags || [];
             if (c.deals.length > 0 && !tags.includes('Quente')) {
@@ -47,13 +36,17 @@ let ContactsService = class ContactsService {
             else if (c.deals.length === 0 && !tags.includes('Frio')) {
                 tags.push('Frio');
             }
+            let avatarUrl = c.avatarUrl;
+            if (!avatarUrl || avatarUrl === 'null' || avatarUrl === 'undefined' || avatarUrl.includes('unsplash.com')) {
+                avatarUrl = null;
+            }
             return {
                 id: c.id,
                 name: c.name,
                 phone: c.phone,
                 email: c.email,
                 source: c.source,
-                avatarUrl: c.avatarUrl,
+                avatarUrl,
                 tags,
                 lastActive: c.updatedAt.toISOString()
             };

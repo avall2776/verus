@@ -27,6 +27,9 @@ let ChatController = class ChatController {
         const selectedTab = tab || status || 'waiting';
         return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, selectedTab);
     }
+    async getConversationCounts(tenantId, req) {
+        return this.chatService.getConversationCounts(tenantId, req.user.id, req.user.role);
+    }
     async getMessages(tenantId, conversationId) {
         return this.chatService.getConversationMessages(tenantId, conversationId);
     }
@@ -93,6 +96,14 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "listConversations", null);
+__decorate([
+    (0, common_1.Get)('counts'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "getConversationCounts", null);
 __decorate([
     (0, common_1.Get)(':id/messages'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

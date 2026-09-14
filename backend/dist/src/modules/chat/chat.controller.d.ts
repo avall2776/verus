@@ -51,6 +51,12 @@ export declare class ChatController {
         assignedTo: string | null;
         status: string;
     })[]>;
+    getConversationCounts(tenantId: string, req: any): Promise<{
+        waiting: number;
+        mine: number;
+        resolved: number;
+        total: number;
+    }>;
     getMessages(tenantId: string, conversationId: string): Promise<{
         id: string;
         tenantId: string;

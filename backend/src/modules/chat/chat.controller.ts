@@ -21,6 +21,14 @@ export class ChatController {
     return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, selectedTab);
   }
 
+  @Get('counts')
+  async getConversationCounts(
+    @CurrentTenant() tenantId: string,
+    @Request() req: any,
+  ) {
+    return this.chatService.getConversationCounts(tenantId, req.user.id, req.user.role);
+  }
+
   @Get(':id/messages')
   async getMessages(
     @CurrentTenant() tenantId: string,

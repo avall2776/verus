@@ -98,8 +98,8 @@ function InboxContent() {
   const [selectedQueueChat, setSelectedQueueChat] = useState<any | null>(null);
   const [isPeeking, setIsPeeking] = useState(false);
 
-  // Estados dos 4 Atalhos da Toolbar Superior
   const [showContactsModal, setShowContactsModal] = useState(false);
+  const [contactModalSearch, setContactModalSearch] = useState('');
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showVoipDialer, setShowVoipDialer] = useState(false);
   const [voipNumber, setVoipNumber] = useState('');
@@ -377,13 +377,15 @@ function InboxContent() {
         setActiveTab(targetTab);
 
         const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
+        const rawAvatar = conv.contact?.avatarUrl;
+        const cleanAvatar = (rawAvatar && rawAvatar !== 'null' && rawAvatar !== 'undefined' && !rawAvatar.includes('unsplash.com')) ? rawAvatar : null;
         const formattedContact = {
           id: conv.id,
           contactId: conv.contact?.id || '',
           name: conv.contact?.name || 'Contato Sem Nome',
           phone: conv.contact?.phone || '',
           email: conv.contact?.email || '',
-          avatarUrl: conv.contact?.avatarUrl || null,
+          avatarUrl: cleanAvatar,
           tags: conv.contact?.tags || [],
           lastMsg: lastMsg,
           time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -409,19 +411,57 @@ function InboxContent() {
     return () => { isMounted = false; };
   }, [contactIdParam, conversationIdParam]);
 
+  const { data: tabCounts, refetch: refetchCounts } = useQuery({
+    queryKey: ['conversationCounts'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/conversations/counts');
+        return data;
+      } catch (e) {
+        return null;
+      }
+    },
+    refetchInterval: 8000,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: directoryContacts = [] } = useQuery({
+    queryKey: ['directoryContacts'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/contacts');
+        return data.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          phone: c.phone,
+          email: c.email,
+          avatarUrl: (c.avatarUrl && c.avatarUrl !== 'null' && c.avatarUrl !== 'undefined' && !c.avatarUrl.includes('unsplash.com')) ? c.avatarUrl : null,
+          tags: c.tags || []
+        }));
+      } catch (e) {
+        return [];
+      }
+    },
+    enabled: showContactsModal,
+    staleTime: 30000,
+  });
+
   const { data: initialContacts, isLoading, error: fetchErrorQuery, refetch: refetchConversations } = useQuery({
     queryKey: ['conversations', activeTab],
     queryFn: async () => {
       const { data } = await api.get(`/conversations?tab=${activeTab}`);
       return data.map((conv: any) => {
         const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
+        const rawAvatar = conv.contact?.avatarUrl;
+        const cleanAvatar = (rawAvatar && rawAvatar !== 'null' && rawAvatar !== 'undefined' && !rawAvatar.includes('unsplash.com')) ? rawAvatar : null;
         return {
           id: conv.id,
           contactId: conv.contact?.id || '',
           name: conv.contact?.name || 'Contato Sem Nome',
           phone: conv.contact?.phone || '',
           email: conv.contact?.email || '',
-          avatarUrl: conv.contact?.avatarUrl || null,
+          avatarUrl: cleanAvatar,
           tags: conv.contact?.tags || [],
           lastMsg: lastMsg,
           time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -512,15 +552,16 @@ function InboxContent() {
           api.get('/conversations').then((res) => {
             const mapped = res.data.map((conv: any) => {
               const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
-              // Mantém o estado de unread/hasNewMessage dos contatos anteriores
-              const existing = prev.find(p => p.id === conv.id);
+              const existing = prev.find((p: any) => p.id === conv.id);
+              const rawAvatar = conv.contact?.avatarUrl;
+              const cleanAvatar = (rawAvatar && rawAvatar !== 'null' && rawAvatar !== 'undefined' && !rawAvatar.includes('unsplash.com')) ? rawAvatar : null;
               return {
                 id: conv.id,
                 contactId: conv.contact?.id || '',
                 name: conv.contact?.name || 'Contato Sem Nome',
                 phone: conv.contact?.phone || '',
                 email: conv.contact?.email || '',
-                avatarUrl: conv.contact?.avatarUrl || null,
+                avatarUrl: cleanAvatar,
                 lastMsg: lastMsg,
                 time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 isAi: conv.status === 'bot_active',
@@ -801,9 +842,9 @@ function InboxContent() {
 
   // Calcular total de contatos com mensagens não lidas e contadores de abas
   const unreadCount = contacts.filter(c => (c.unread || 0) > 0).length;
-  const waitingCount = contacts.filter(c => c.status === 'waiting' || c.status === 'bot_active').length;
-  const mineCount = contacts.filter(c => c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress').length;
-  const resolvedCount = contacts.filter(c => c.status === 'resolved' || c.status === 'closed').length;
+  const waitingCount = tabCounts?.waiting ?? contacts.filter(c => c.status === 'waiting' || c.status === 'bot_active').length;
+  const mineCount = tabCounts?.mine ?? contacts.filter(c => c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress').length;
+  const resolvedCount = tabCounts?.resolved ?? contacts.filter(c => c.status === 'resolved' || c.status === 'closed').length;
 
   const isResolved = activeContactData?.status === 'resolved' || activeContactData?.status === 'closed';
 
@@ -2396,27 +2437,62 @@ function InboxContent() {
                   type="text" 
                   placeholder="Pesquisar contato salvo..." 
                   className="w-full bg-[#1E293B] border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white outline-none focus:border-blue-500"
-                  onChange={e => setSearchQuery(e.target.value)}
+                  value={contactModalSearch}
+                  onChange={e => setContactModalSearch(e.target.value)}
                 />
               </div>
             </div>
             <div className="p-4 overflow-y-auto flex-1 space-y-2">
-              {contacts.length === 0 ? (
-                <p className="text-xs text-slate-500 text-center py-6">Nenhum contato encontrado.</p>
-              ) : (
-                contacts.slice(0, 30).map(c => (
+              {(() => {
+                const list = (directoryContacts && directoryContacts.length > 0 ? directoryContacts : contacts).filter((c: any) => {
+                  if (!contactModalSearch.trim()) return true;
+                  const q = contactModalSearch.toLowerCase();
+                  return (
+                    (c.name && c.name.toLowerCase().includes(q)) ||
+                    (c.phone && c.phone.toLowerCase().includes(q)) ||
+                    (c.email && c.email.toLowerCase().includes(q))
+                  );
+                });
+
+                if (list.length === 0) {
+                  return <p className="text-xs text-slate-500 text-center py-6">Nenhum contato encontrado.</p>;
+                }
+
+                return list.map((c: any) => (
                   <div 
                     key={c.id} 
-                    onClick={() => {
+                    onClick={async () => {
                       setIsPeeking(false);
-                      setActiveChat(c.id);
                       setShowContactsModal(false);
+                      try {
+                        const { data: conv } = await api.get(`/conversations/contact/${c.id}`);
+                        if (conv?.id) {
+                          setActiveChat(conv.id);
+                          refetchConversations();
+                        }
+                      } catch (err) {
+                        setActiveChat(c.id);
+                      }
                     }}
                     className="p-3 rounded-xl bg-[#1E293B]/60 hover:bg-[#1E293B] border border-slate-800 hover:border-blue-500/50 flex items-center justify-between transition-all cursor-pointer group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-white">
-                        {getContactInitials(c.name)}
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-slate-700 to-slate-800 flex items-center justify-center text-xs font-bold text-white relative overflow-hidden shrink-0">
+                        {c.avatarUrl ? (
+                          <img 
+                            src={c.avatarUrl} 
+                            alt={c.name} 
+                            className="w-full h-full object-cover rounded-full"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = 'none';
+                              const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                              if (fallback) fallback.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <span className={`avatar-initials ${c.avatarUrl ? "hidden" : ""}`}>
+                          {getContactInitials(c.name)}
+                        </span>
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">{c.name}</h4>
@@ -2427,8 +2503,8 @@ function InboxContent() {
                       Conversar
                     </span>
                   </div>
-                ))
-              )}
+                ));
+              })()}
             </div>
           </div>
         </div>

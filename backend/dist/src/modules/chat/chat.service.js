@@ -28,14 +28,43 @@ let ChatService = class ChatService {
         this.whatsappService = whatsappService;
         this.chatGateway = chatGateway;
     }
+    async getConversationCounts(tenantId, userId, userRole) {
+        const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+        const [waiting, mine, resolved] = await Promise.all([
+            this.prisma.conversation.count({
+                where: {
+                    tenantId,
+                    status: { in: ['waiting', 'bot_active'] },
+                    assignedTo: null,
+                }
+            }),
+            this.prisma.conversation.count({
+                where: {
+                    tenantId,
+                    status: { in: ['open', 'human_takeover', 'in_progress'] },
+                    ...(isMaster ? {} : { assignedTo: userId }),
+                }
+            }),
+            this.prisma.conversation.count({
+                where: {
+                    tenantId,
+                    status: { in: ['resolved', 'closed'] },
+                }
+            }),
+        ]);
+        return { waiting, mine, resolved, total: waiting + mine + resolved };
+    }
     async findAllConversations(tenantId, userId, userRole, tab = 'waiting') {
         const whereClause = { tenantId };
+        const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
         if (tab === 'resolved') {
             whereClause.status = { in: ['resolved', 'closed'] };
         }
         else if (tab === 'mine') {
-            whereClause.status = { in: ['open', 'human_takeover'] };
-            whereClause.assignedTo = userId;
+            whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
+            if (!isMaster) {
+                whereClause.assignedTo = userId;
+            }
         }
         else {
             whereClause.status = { in: ['waiting', 'bot_active'] };
@@ -62,13 +91,10 @@ let ChatService = class ChatService {
             orderBy: { updatedAt: 'desc' }
         });
         for (const conv of conversations) {
-            if (conv.contact?.avatarUrl?.includes('unsplash.com')) {
-                conv.contact.avatarUrl = null;
-            }
-            if (conv.contact && !conv.contact.avatarUrl && conv.contact.phone) {
-                const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, conv.contact.id);
-                if (syncedUrl) {
-                    conv.contact.avatarUrl = syncedUrl;
+            if (conv.contact) {
+                const av = conv.contact.avatarUrl;
+                if (!av || av === 'null' || av === 'undefined' || av.includes('unsplash.com')) {
+                    conv.contact.avatarUrl = null;
                 }
             }
         }
@@ -100,13 +126,10 @@ let ChatService = class ChatService {
         if (!conversation) {
             throw new common_1.NotFoundException('Nenhuma conversa encontrada para este contato.');
         }
-        if (conversation.contact?.avatarUrl?.includes('unsplash.com')) {
-            conversation.contact.avatarUrl = null;
-        }
-        if (conversation.contact && !conversation.contact.avatarUrl && conversation.contact.phone) {
-            const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, conversation.contact.id);
-            if (syncedUrl) {
-                conversation.contact.avatarUrl = syncedUrl;
+        if (conversation.contact) {
+            const av = conversation.contact.avatarUrl;
+            if (!av || av === 'null' || av === 'undefined' || av.includes('unsplash.com')) {
+                conversation.contact.avatarUrl = null;
             }
         }
         return conversation;
@@ -125,13 +148,10 @@ let ChatService = class ChatService {
         if (!conversation) {
             throw new common_1.NotFoundException('Conversa não encontrada.');
         }
-        if (conversation.contact?.avatarUrl?.includes('unsplash.com')) {
-            conversation.contact.avatarUrl = null;
-        }
-        if (conversation.contact && !conversation.contact.avatarUrl && conversation.contact.phone) {
-            const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, conversation.contact.id);
-            if (syncedUrl) {
-                conversation.contact.avatarUrl = syncedUrl;
+        if (conversation.contact) {
+            const av = conversation.contact.avatarUrl;
+            if (!av || av === 'null' || av === 'undefined' || av.includes('unsplash.com')) {
+                conversation.contact.avatarUrl = null;
             }
         }
         return conversation;

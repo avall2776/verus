@@ -20,26 +20,54 @@ export class ChatService {
     private readonly chatGateway: ChatGateway,
   ) {}
 
+  async getConversationCounts(tenantId: string, userId: string, userRole: string) {
+    const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+
+    const [waiting, mine, resolved] = await Promise.all([
+      this.prisma.conversation.count({
+        where: {
+          tenantId,
+          status: { in: ['waiting', 'bot_active'] },
+          assignedTo: null,
+        }
+      }),
+      this.prisma.conversation.count({
+        where: {
+          tenantId,
+          status: { in: ['open', 'human_takeover', 'in_progress'] },
+          ...(isMaster ? {} : { assignedTo: userId }),
+        }
+      }),
+      this.prisma.conversation.count({
+        where: {
+          tenantId,
+          status: { in: ['resolved', 'closed'] },
+        }
+      }),
+    ]);
+
+    return { waiting, mine, resolved, total: waiting + mine + resolved };
+  }
+
   async findAllConversations(tenantId: string, userId: string, userRole: string, tab: string = 'waiting') {
     const whereClause: any = { tenantId };
+    const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
 
     if (tab === 'resolved') {
       whereClause.status = { in: ['resolved', 'closed'] };
-      // Garantir que NÃO filtra por assignedTo nesta aba para possibilitar auditoria completa
     } else if (tab === 'mine') {
-      whereClause.status = { in: ['open', 'human_takeover'] };
-      whereClause.assignedTo = userId;
+      whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
+      if (!isMaster) {
+        whereClause.assignedTo = userId;
+      }
     } else {
       // tab === 'waiting'
       whereClause.status = { in: ['waiting', 'bot_active'] };
-      whereClause.assignedTo = null; // Fila esperando
+      whereClause.assignedTo = null;
 
       if (userRole === 'AGENT') {
-        // Se for agent, só vê a fila dos departamentos que pertence
         const userDepts = await this.prisma.userDepartment.findMany({ where: { userId }});
         const deptIds = userDepts.map(d => d.departmentId);
-        
-        // Pode ver a fila do seu departamento ou fila sem departamento (triagem inicial)
         whereClause.OR = [
           { departmentId: { in: deptIds } },
           { departmentId: null }
@@ -60,15 +88,12 @@ export class ChatService {
       orderBy: { updatedAt: 'desc' }
     });
 
-    // Sincroniza fotos de perfil pendentes direto na instância WhatsApp do contato
+    // Sanitiza e formata avatarUrl de forma ultra rápida em memória sem travar requisições
     for (const conv of conversations) {
-      if (conv.contact?.avatarUrl?.includes('unsplash.com')) {
-        conv.contact.avatarUrl = null;
-      }
-      if (conv.contact && !conv.contact.avatarUrl && conv.contact.phone) {
-        const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, conv.contact.id);
-        if (syncedUrl) {
-          conv.contact.avatarUrl = syncedUrl;
+      if (conv.contact) {
+        const av = conv.contact.avatarUrl;
+        if (!av || av === 'null' || av === 'undefined' || av.includes('unsplash.com')) {
+          conv.contact.avatarUrl = null;
         }
       }
     }
@@ -108,13 +133,10 @@ export class ChatService {
       throw new NotFoundException('Nenhuma conversa encontrada para este contato.');
     }
 
-    if (conversation.contact?.avatarUrl?.includes('unsplash.com')) {
-      conversation.contact.avatarUrl = null;
-    }
-    if (conversation.contact && !conversation.contact.avatarUrl && conversation.contact.phone) {
-      const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, conversation.contact.id);
-      if (syncedUrl) {
-        conversation.contact.avatarUrl = syncedUrl;
+    if (conversation.contact) {
+      const av = conversation.contact.avatarUrl;
+      if (!av || av === 'null' || av === 'undefined' || av.includes('unsplash.com')) {
+        conversation.contact.avatarUrl = null;
       }
     }
 
@@ -137,13 +159,10 @@ export class ChatService {
       throw new NotFoundException('Conversa não encontrada.');
     }
 
-    if (conversation.contact?.avatarUrl?.includes('unsplash.com')) {
-      conversation.contact.avatarUrl = null;
-    }
-    if (conversation.contact && !conversation.contact.avatarUrl && conversation.contact.phone) {
-      const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, conversation.contact.id);
-      if (syncedUrl) {
-        conversation.contact.avatarUrl = syncedUrl;
+    if (conversation.contact) {
+      const av = conversation.contact.avatarUrl;
+      if (!av || av === 'null' || av === 'undefined' || av.includes('unsplash.com')) {
+        conversation.contact.avatarUrl = null;
       }
     }
 
