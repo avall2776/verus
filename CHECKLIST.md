@@ -370,6 +370,17 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build Next.js 14 validado com sucesso (`exit code 0`, 28 rotas estáticas e dinâmicas geradas).
 
+### Fase 29: Alinhamento Único e Fluido da Barra Superior do CRM (/crm)
+- [x] **Barra Superior em Linha Única (Single-Row Flexbox)**:
+  * Remoção do layout em múltiplos blocos empilhados (`flex-col`). Implementação de barra horizontal única fluida: `flex items-center justify-between gap-3 w-full bg-[#161b22] p-2.5 sm:p-3 rounded-xl border border-gray-800/60 overflow-x-auto custom-scrollbar`.
+  * **Lado Esquerdo**: Título do Funil com edição inline (`Edit2`) integrado diretamente às abas de visualização (`Quadro`, `Tabela`, `Linha do Tempo`).
+  * **Lado Centro/Direita**: Campo de busca compactado com ícone e limpeza rápida + Filtros de categoria (`Tudo`, `Minhas`, `Contatos`, `Empresas`) + Botões de Ação (`Neutro`, `+ Nova Etapa`, `Gerenciar Etapas`, `Fullscreen`).
+- [x] **Compactação Executiva de Elementos (Padrão Lero)**:
+  * Ajuste micrométrico de paddings internos (`py-1`, `px-2.5`) e gaps compactados para alinhamento geométrico perfeito sem quebras de linha indesejadas.
+  * Suporte a scroll horizontal suave em telas menores através de `overflow-x-auto custom-scrollbar`.
+- [x] **Validação & Compilação**:
+  * Build de produção Next.js 14 aprovado com código 0 (28 rotas estáticas e dinâmicas).
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)

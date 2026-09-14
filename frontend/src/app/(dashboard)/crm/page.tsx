@@ -538,15 +538,15 @@ export default function CrmPage() {
         </div>
       )}
 
-      {/* Barra Superior Reestruturada: 3 Blocos Geométricos e Responsivos (Padrão Lero) */}
-      <div className="bg-[#161b22] border border-gray-800 rounded-xl p-3 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 shadow-sm shrink-0">
+      {/* Barra Superior em Linha Única (Single-Row Flexbox - Padrão Executivo Lero) */}
+      <div className="flex items-center justify-between gap-3 w-full bg-[#161b22] p-2.5 sm:p-3 rounded-xl border border-gray-800/60 overflow-x-auto custom-scrollbar shadow-sm shrink-0">
         
-        {/* BLOCO 1 (ESQUERDA): TÍTULO/SELETOR DE FUNIL COM EDIÇÃO (Edit2) + ABAS DE VISUALIZAÇÃO */}
-        <div className="flex items-center gap-3 flex-wrap shrink-0">
-          {/* Seletor / Título do Funil Interativo com Edição */}
-          <div className="flex items-center pr-3 border-r border-gray-800 shrink-0">
+        {/* LADO ESQUERDO: FUNIL PRINCIPAL COM EDIÇÃO (Edit2) + ABAS DE VISUALIZAÇÃO */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* Funil Principal Interativo com Edição */}
+          <div className="flex items-center pr-2.5 border-r border-gray-800 shrink-0">
             {isEditingFunnel ? (
-              <div className="flex items-center gap-1.5 bg-[#0d1117] border border-primary/60 rounded-lg px-2.5 py-1 shadow-inner">
+              <div className="flex items-center gap-1 bg-[#0d1117] border border-primary/60 rounded-lg px-2 py-0.5 shadow-inner">
                 <input
                   type="text"
                   value={tempFunnelName}
@@ -559,7 +559,7 @@ export default function CrmPage() {
                     }
                   }}
                   autoFocus
-                  className="bg-transparent text-white font-bold text-xs sm:text-sm outline-none w-44"
+                  className="bg-transparent text-white font-bold text-xs sm:text-sm outline-none w-40"
                   placeholder="Nome do Funil"
                 />
                 <button
@@ -568,7 +568,7 @@ export default function CrmPage() {
                   className="text-emerald-400 hover:text-emerald-300 p-0.5 rounded transition-colors"
                   title="Salvar nome"
                 >
-                  <Check size={14} />
+                  <Check size={13} />
                 </button>
                 <button
                   type="button"
@@ -579,17 +579,17 @@ export default function CrmPage() {
                   className="text-gray-400 hover:text-white p-0.5 rounded transition-colors"
                   title="Cancelar"
                 >
-                  <X size={14} />
+                  <X size={13} />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 group">
+              <div className="flex items-center gap-1.5 group">
                 <span 
                   onClick={() => {
                     setTempFunnelName(funnelName);
                     setIsEditingFunnel(true);
                   }}
-                  className="text-white font-extrabold text-sm sm:text-base tracking-tight select-none cursor-pointer hover:text-primary transition-colors"
+                  className="text-white font-extrabold text-xs sm:text-sm tracking-tight select-none cursor-pointer hover:text-primary transition-colors whitespace-nowrap"
                   title="Clique para editar o nome do funil"
                 >
                   {funnelName}
@@ -603,26 +603,26 @@ export default function CrmPage() {
                   className="text-gray-400 hover:text-primary transition-colors p-1 rounded hover:bg-gray-800/80"
                   title="Editar nome do funil"
                 >
-                  <Edit2 size={13} className="opacity-70 group-hover:opacity-100 transition-opacity" />
+                  <Edit2 size={12} className="opacity-70 group-hover:opacity-100 transition-opacity" />
                 </button>
               </div>
             )}
           </div>
           
-          {/* SELETORES DE VISUALIZAÇÃO: QUADRO | TABELA | LINHA DO TEMPO */}
-          <div className="flex bg-[#0d1117] rounded-lg p-1 border border-gray-800 shadow-inner shrink-0">
+          {/* ABAS DE VISUALIZAÇÃO: QUADRO | TABELA | LINHA DO TEMPO */}
+          <div className="flex bg-[#0d1117] rounded-lg p-0.5 border border-gray-800 shadow-inner shrink-0">
             <button
               id="view-mode-kanban-btn"
               type="button"
               onClick={() => setViewMode('kanban')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
                 viewMode === 'kanban' 
-                  ? 'bg-primary text-white shadow-md' 
+                  ? 'bg-primary text-white shadow-sm' 
                   : 'text-gray-400 hover:text-white hover:bg-gray-800/60'
               }`}
               title="Visualização em Quadro Kanban"
             >
-              <KanbanIcon size={14} />
+              <KanbanIcon size={13} />
               <span>Quadro</span>
             </button>
 
@@ -630,14 +630,14 @@ export default function CrmPage() {
               id="view-mode-table-btn"
               type="button"
               onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
                 viewMode === 'table' 
-                  ? 'bg-primary text-white shadow-md' 
+                  ? 'bg-primary text-white shadow-sm' 
                   : 'text-gray-400 hover:text-white hover:bg-gray-800/60'
               }`}
               title="Visualização em Tabela Densa"
             >
-              <TableIcon size={14} />
+              <TableIcon size={13} />
               <span>Tabela</span>
             </button>
 
@@ -645,31 +645,31 @@ export default function CrmPage() {
               id="view-mode-timeline-btn"
               type="button"
               onClick={() => setViewMode('timeline')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
                 viewMode === 'timeline' 
-                  ? 'bg-primary text-white shadow-md' 
+                  ? 'bg-primary text-white shadow-sm' 
                   : 'text-gray-400 hover:text-white hover:bg-gray-800/60'
               }`}
               title="Visualização em Linha do Tempo Semanal"
             >
-              <CalendarDays size={14} />
+              <CalendarDays size={13} />
               <span>Linha do Tempo</span>
             </button>
           </div>
         </div>
 
-        {/* BLOCO 2 (CENTRO): BARRA DE BUSCA DE OPORTUNIDADES + FILTROS RÁPIDOS */}
-        <div className="flex items-center gap-3 flex-wrap flex-1 justify-start xl:justify-center min-w-0">
-          {/* Campo de Busca Reativo */}
-          <div className="relative flex-1 sm:flex-initial sm:w-56 min-w-[180px]">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+        {/* LADO CENTRO/DIREITA: BUSCA + FILTROS RÁPIDOS + BOTÕES DE AÇÃO */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* Input de Busca Compactado */}
+          <div className="relative w-36 sm:w-44 lg:w-52 shrink-0">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
             <input 
               id="crm-search-input"
               type="text" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar oportunidade..." 
-              className="bg-[#0d1117] border border-gray-800 rounded-lg pl-8 pr-7 py-1.5 text-xs text-white outline-none focus:border-primary w-full transition-colors"
+              className="bg-[#0d1117] border border-gray-800 rounded-lg pl-7 pr-6 py-1 text-xs text-white outline-none focus:border-primary w-full transition-colors"
             />
             {searchQuery && (
               <button
@@ -677,13 +677,13 @@ export default function CrmPage() {
                 onClick={() => setSearchQuery("")}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
               >
-                <X size={12} />
+                <X size={11} />
               </button>
             )}
           </div>
 
-          {/* FILTROS POR CATEGORIA: TUDO | MINHAS | CONTATOS | EMPRESAS */}
-          <div className="flex bg-[#0d1117] rounded-lg p-1 border border-gray-800 overflow-x-auto custom-scrollbar shrink-0 max-w-full">
+          {/* Filtros Rápidos (Tudo, Minhas, Contatos, Empresas) */}
+          <div className="flex bg-[#0d1117] rounded-lg p-0.5 border border-gray-800 shrink-0">
             {[
               { id: 'all', label: 'Tudo', icon: Activity },
               { id: 'mine', label: 'Minhas', icon: FileText },
@@ -695,23 +695,23 @@ export default function CrmPage() {
                 id={`crm-tab-${tab.id}-btn`}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
+                className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id ? 'bg-gray-800 text-white shadow font-bold' : 'text-gray-400 hover:text-white'
                 }`}
               >
-                <tab.icon size={13} />
+                <tab.icon size={12} />
                 <span>{tab.label}</span>
               </button>
             ))}
           </div>
-        </div>
 
-        {/* BLOCO 3 (DIREITA): BOTÕES DE AÇÃO */}
-        <div className="flex items-center gap-2 flex-wrap justify-start xl:justify-end shrink-0">
+          <div className="h-4 w-px bg-gray-800 shrink-0 hidden sm:block"></div>
+
+          {/* Botões de Ação */}
           <button 
             type="button"
             onClick={() => setNeutralMode(!neutralMode)}
-            className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold transition-all whitespace-nowrap ${
+            className={`px-2 py-1 rounded-lg border text-xs font-bold transition-all whitespace-nowrap ${
               neutralMode ? 'bg-gray-100 text-black border-gray-100' : 'bg-[#0d1117] text-gray-300 border-gray-800 hover:bg-gray-800 hover:text-white'
             }`}
           >
@@ -721,18 +721,18 @@ export default function CrmPage() {
           <button 
             type="button"
             onClick={() => setShowStageModal(true)} 
-            className="bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm whitespace-nowrap"
+            className="bg-primary hover:bg-primary/90 text-white px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm whitespace-nowrap"
           >
-            <Plus size={14}/>
+            <Plus size={13}/>
             <span>Nova Etapa</span>
           </button>
           
           <button 
             type="button"
             onClick={() => setShowManageStagesModal(true)} 
-            className="bg-[#0d1117] hover:bg-gray-800 text-gray-300 border border-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap hover:text-white"
+            className="bg-[#0d1117] hover:bg-gray-800 text-gray-300 border border-gray-800 px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 whitespace-nowrap hover:text-white"
           >
-            <Settings size={14}/>
+            <Settings size={13}/>
             <span className="hidden sm:inline">Gerenciar Etapas</span>
           </button>
 
@@ -742,7 +742,7 @@ export default function CrmPage() {
             onClick={toggleFullscreen} 
             className="bg-[#0d1117] hover:bg-gray-800 text-gray-300 border border-gray-800 p-1.5 rounded-lg transition-all flex items-center justify-center shrink-0 hover:text-white"
           >
-            {isFullscreen ? <Minimize2 size={14}/> : <Maximize2 size={14}/>}
+            {isFullscreen ? <Minimize2 size={13}/> : <Maximize2 size={13}/>}
           </button>
         </div>
       </div>
