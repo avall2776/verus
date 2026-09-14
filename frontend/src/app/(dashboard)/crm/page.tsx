@@ -54,8 +54,13 @@ export default function CrmPage() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   
-  // Tabela: estágios colapsados
+  // Tabela: estágios colapsados e descrições expandidas
   const [collapsedTableStages, setCollapsedTableStages] = useState<string[]>([]);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
+
+  const toggleDescription = (id: string) => {
+    setExpandedDescriptions(prev => ({ ...prev, [id]: !prev[id] }));
+  };
   
   // Linha do tempo: data de início da semana (Domingo)
   const [timelineStartDate, setTimelineStartDate] = useState<Date>(() => getSundayOfWeek(new Date()));
@@ -174,12 +179,18 @@ export default function CrmPage() {
     if (!dateStr) return "-";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return "-";
-    const now = new Date();
-    const isToday = d.toDateString() === now.toDateString();
-    if (isToday) {
-      return `Hoje às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
-    }
-    return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    const diffMs = Date.now() - d.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins <= 1) return "há poucos instantes";
+    if (diffMins < 60) return `há ${diffMins} minutos`;
+    if (diffHours === 1) return `há cerca de 1 hora`;
+    if (diffHours < 24) return `há cerca de ${diffHours} horas`;
+    if (diffDays === 1) return `há cerca de 1 dia`;
+    if (diffDays < 30) return `há cerca de ${diffDays} dias`;
+    return d.toLocaleDateString('pt-BR');
   };
 
   // Usuário atual para filtro "Minhas"
@@ -661,7 +672,7 @@ export default function CrmPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* 2. VISÃO EM TABELA DO CRM (Densa e agrupada por estágios)                 */}
+      {/* 2. VISÃO EM TABELA DO CRM (Densa e alinhada ao Padrão Lero)              */}
       {/* ========================================================================= */}
       {viewMode === 'table' && (
         <div className="flex-1 flex flex-col bg-[#161b22] border border-gray-800 rounded-xl overflow-hidden shadow-lg animate-in fade-in-50 duration-200">
@@ -669,17 +680,16 @@ export default function CrmPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#0f141c] border-b border-gray-800 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                  <th className="py-3 px-4 w-[280px]">Título da Oportunidade</th>
-                  <th className="py-3 px-4 w-[220px]">Contato</th>
-                  <th className="py-3 px-4">Descrição / Detalhes</th>
-                  <th className="py-3 px-4 w-[160px]">Responsável</th>
-                  <th className="py-3 px-4 w-[140px] text-right">Valor (R$)</th>
-                  <th className="py-3 px-4 w-[160px]">Última Interação</th>
-                  <th className="py-3 px-4 w-[130px]">Criação</th>
-                  <th className="py-3 px-4 w-[80px] text-center">Ações</th>
+                  <th className="py-2.5 px-3.5 w-[240px]">Título</th>
+                  <th className="py-2.5 px-3.5 w-[200px]">Contato</th>
+                  <th className="py-2.5 px-3.5">Descrição</th>
+                  <th className="py-2.5 px-3.5 w-[150px]">Responsável</th>
+                  <th className="py-2.5 px-3.5 w-[130px] text-right">Valor (R$)</th>
+                  <th className="py-2.5 px-3.5 w-[160px]">Última Interação</th>
+                  <th className="py-2.5 px-3.5 w-[120px]">Criado Em</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800/60 text-xs">
+              <tbody className="divide-y divide-gray-800/50 text-xs">
                 {columns.map(col => {
                   const stageDeals = filteredDeals.filter(d => d.status === col.id);
                   const isCollapsed = collapsedTableStages.includes(col.id);
@@ -692,11 +702,11 @@ export default function CrmPage() {
                         onClick={() => toggleTableStage(col.id)}
                         className="bg-[#1c2128] hover:bg-[#222832] cursor-pointer transition-colors border-t border-b border-gray-800"
                       >
-                        <td colSpan={8} className="py-2.5 px-4">
+                        <td colSpan={7} className="py-2 px-3.5">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2.5">
+                            <div className="flex items-center gap-2">
                               <span className="text-gray-400">
-                                {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                                {isCollapsed ? <ChevronRight size={15} /> : <ChevronDown size={15} />}
                               </span>
                               <div className={`w-2.5 h-2.5 rounded-full ${col.color.replace('text-', 'bg-')}`}></div>
                               <span className="font-extrabold text-white uppercase tracking-wider text-xs">
@@ -706,7 +716,7 @@ export default function CrmPage() {
                                 {stageDeals.length} {stageDeals.length === 1 ? 'oportunidade' : 'oportunidades'}
                               </span>
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-3">
                               <div className="text-xs font-mono font-bold text-emerald-400">
                                 Total: {formatCurrency(stageTotal)}
                               </div>
@@ -723,9 +733,9 @@ export default function CrmPage() {
                                     isNew: true
                                   });
                                 }}
-                                className="flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded transition-colors"
+                                className="flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/20 px-2 py-0.5 rounded transition-colors"
                               >
-                                <Plus size={13} /> Nova Oportunidade
+                                <Plus size={12} /> Nova Oportunidade
                               </button>
                             </div>
                           </div>
@@ -734,8 +744,8 @@ export default function CrmPage() {
 
                       {/* Linhas das Oportunidades do Estágio */}
                       {!isCollapsed && stageDeals.length === 0 && (
-                        <tr className="bg-[#12161f]/40">
-                          <td colSpan={8} className="py-4 px-8 text-gray-500 italic text-center">
+                        <tr className="bg-[#12161f]/30">
+                          <td colSpan={7} className="py-3 px-6 text-gray-500 italic text-center text-xs">
                             Nenhuma oportunidade nesta etapa.
                           </td>
                         </tr>
@@ -743,14 +753,17 @@ export default function CrmPage() {
 
                       {!isCollapsed && stageDeals.map(deal => {
                         const assigneeName = deal.assignedTo?.name || deal.assignee?.name;
+                        const isDescExpanded = !!expandedDescriptions[deal.id];
+                        const originSource = deal.contact?.source || deal.metadata?.source || "Meta Ads";
+
                         return (
                           <tr 
                             key={deal.id}
-                            onClick={() => handleOpenDeal(deal.id)}
+                            onClick={() => handleOpenDeal(deal)}
                             className="hover:bg-[#1f2530] transition-colors cursor-pointer group"
                           >
-                            {/* Título da Oportunidade (Interativo) */}
-                            <td className="py-3 px-4">
+                            {/* 1. Título (com link interativo para abrir o DealModal) */}
+                            <td className="py-2.5 px-3.5">
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -760,99 +773,104 @@ export default function CrmPage() {
                                 className="flex flex-col text-left group/title focus:outline-none w-full"
                                 title="Clique para abrir detalhes da oportunidade"
                               >
-                                <span className="font-bold text-slate-100 group-hover/title:text-primary transition-colors text-sm hover:underline underline-offset-2 flex items-center gap-1.5">
+                                <span className="font-bold text-slate-100 group-hover/title:text-primary transition-colors text-xs hover:underline underline-offset-2 flex items-center gap-1">
                                   {deal.title || "Sem título"}
-                                  <ArrowUpRight size={13} className="text-gray-500 group-hover/title:text-primary transition-colors opacity-0 group-hover/title:opacity-100 shrink-0" />
+                                  <ArrowUpRight size={12} className="text-gray-500 group-hover/title:text-primary transition-colors opacity-0 group-hover/title:opacity-100 shrink-0" />
                                 </span>
-                                <span className="text-[11px] font-mono text-gray-500 group-hover/title:text-primary/70 transition-colors">
-                                  #{deal?.id ? deal.id.split('-')[0].toUpperCase() : 'DEAL'}
+                                <span className="text-[10px] font-mono text-gray-500 group-hover/title:text-primary/70 transition-colors">
+                                  #{deal?.id?.includes('-') ? deal.id.split('-')[0].toUpperCase() : (deal.id || 'DEAL')}
                                 </span>
                               </button>
                             </td>
 
-                            {/* Contato */}
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center font-bold text-xs text-gray-200 shrink-0">
+                            {/* 2. Contato (Nome do lead + telefone com ícone do WhatsApp) */}
+                            <td className="py-2.5 px-3.5">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center font-bold text-[10px] text-gray-200 shrink-0">
                                   {deal.contact?.name?.[0]?.toUpperCase() || "?"}
                                 </div>
                                 <div className="flex flex-col min-w-0">
-                                  <span className="font-semibold text-slate-200 truncate">
+                                  <span className="font-semibold text-slate-200 text-xs truncate max-w-[150px]">
                                     {deal.contact?.name || "Contato não informado"}
                                   </span>
-                                  {deal.contact?.phone && (
-                                    <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                                      <Phone size={10} className="text-emerald-500" />
-                                      {deal.contact.phone}
-                                    </span>
+                                  {deal.contact?.phone ? (
+                                    <a 
+                                      href={`https://wa.me/${deal.contact.phone.replace(/\D/g, '')}`} 
+                                      target="_blank" 
+                                      rel="noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
+                                    >
+                                      <Phone size={9} className="text-[#25D366]" />
+                                      <span>{deal.contact.phone}</span>
+                                    </a>
+                                  ) : (
+                                    <span className="text-[10px] text-gray-500 italic">Sem telefone</span>
                                   )}
                                 </div>
                               </div>
                             </td>
 
-                            {/* Descrição */}
-                            <td className="py-3 px-4 max-w-[320px]">
-                              <span className="text-gray-400 line-clamp-1">
-                                {deal.notes || deal.description || "Lead recebido pelo formulário nativo Meta Ads"}
-                              </span>
+                            {/* 3. Descrição (Origem do Lead / Meta Ads com botão "Ver mais" elegante) */}
+                            <td className="py-2.5 px-3.5 max-w-[320px]">
+                              <div className="flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-[9px] font-bold text-gray-400 bg-[#0B1224] border border-gray-800 px-1.5 py-0.2 rounded uppercase">
+                                    {originSource}
+                                  </span>
+                                </div>
+                                <p className={`text-xs text-gray-300 leading-relaxed ${isDescExpanded ? 'whitespace-pre-wrap' : 'line-clamp-1'}`}>
+                                  {deal.notes || deal.description || "Lead recebido pelo formulário nativo Meta Ads solicitando contato urgente."}
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleDescription(deal.id)}
+                                  className="text-[10px] text-primary hover:text-primary/80 font-bold self-start mt-0.5 transition-colors"
+                                >
+                                  {isDescExpanded ? "Ver menos ⌃" : "Ver mais ⌵"}
+                                </button>
+                              </div>
                             </td>
 
-                            {/* Responsável */}
-                            <td className="py-3 px-4">
+                            {/* 4. Responsável (Avatar circular + nome do operador ou "Fila Geral") */}
+                            <td className="py-2.5 px-3.5">
                               {assigneeName ? (
-                                <div className="flex items-center gap-2">
-                                  <div className="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[9px] flex items-center justify-center">
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[9px] flex items-center justify-center shrink-0">
                                     {assigneeName[0].toUpperCase()}
                                   </div>
-                                  <span className="text-slate-300 font-medium truncate">
+                                  <span className="text-slate-300 font-medium text-xs truncate max-w-[120px]">
                                     {assigneeName}
                                   </span>
                                 </div>
                               ) : (
-                                <span className="text-gray-500 italic text-[11px]">Fila Geral</span>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-5 h-5 rounded-full bg-slate-700 text-slate-300 font-bold text-[9px] flex items-center justify-center shrink-0">
+                                    F
+                                  </div>
+                                  <span className="text-gray-500 italic text-xs">Fila Geral</span>
+                                </div>
                               )}
                             </td>
 
-                            {/* Valor (R$) */}
-                            <td className="py-3 px-4 text-right">
-                              <span className="font-mono font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded text-xs">
+                            {/* 5. Valor (R$) (Valor formatado em BRL com destaque verde) */}
+                            <td className="py-2.5 px-3.5 text-right">
+                              <span className="font-mono font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded text-xs inline-block">
                                 {formatCurrency(Number(deal.value || 0))}
                               </span>
                             </td>
 
-                            {/* Última Interação */}
-                            <td className="py-3 px-4 text-gray-400">
+                            {/* 6. Última Interação (Tempo relativo formatado, ex: "há cerca de 9 horas") */}
+                            <td className="py-2.5 px-3.5 text-gray-400">
                               <span className="flex items-center gap-1 text-[11px]">
-                                <Clock size={12} className="text-gray-500" />
-                                {formatRelativeTime(deal.updatedAt || deal.createdAt)}
+                                <Clock size={12} className="text-gray-500 shrink-0" />
+                                <span>{formatRelativeTime(deal.updatedAt || deal.createdAt)}</span>
                               </span>
                             </td>
 
-                            {/* Criação */}
-                            <td className="py-3 px-4 text-gray-400 text-[11px]">
+                            {/* 7. Criado Em (Data de cadastro) */}
+                            <td className="py-2.5 px-3.5 text-gray-400 text-[11px]">
                               {formatDate(deal.createdAt)}
-                            </td>
-
-                            {/* Ações Rápidas */}
-                            <td className="py-3 px-4 text-center">
-                              <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                <button
-                                  type="button"
-                                  title="Abrir no WhatsApp"
-                                  onClick={() => router.push(`/inbox?contactId=${deal.contactId}`)}
-                                  className="p-1.5 rounded-lg hover:bg-emerald-950/40 text-gray-400 hover:text-emerald-400 transition-colors"
-                                >
-                                  <MessageSquare size={14} />
-                                </button>
-                                <button
-                                  type="button"
-                                  title="Ver Detalhes"
-                                  onClick={() => handleOpenDeal(deal.id)}
-                                  className="p-1.5 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
-                                >
-                                  <ArrowUpRight size={14} />
-                                </button>
-                              </div>
                             </td>
                           </tr>
                         );

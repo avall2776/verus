@@ -256,6 +256,22 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build do Next.js executado com sucesso (código 0).
 
+### 🟢 Fase 21: Paridade Final da Tabela do CRM com o Lero (/crm)
+- [x] **Ordem Exata das 7 Colunas (Lero Strict Alignment)**:
+  * 1. **Título**: Link interativo com destaque primário ao hover, sublinhado e ícone `ArrowUpRight` abrindo o `DealModal`.
+  * 2. **Contato**: Avatar compacto com inicial, nome do lead e telefone WhatsApp direto (`https://wa.me/...`).
+  * 3. **Descrição**: Tag de origem do lead (Meta Ads / Instagram / Site) + notas ou formulário com botão elegante **"Ver mais ⌵ / Ver menos ⌃"** inline.
+  * 4. **Responsável**: Avatar circular com inicial + nome do atendente ou badge "Fila Geral".
+  * 5. **Valor (R$)**: Formatado rigorosamente em BRL (`R$ XX.XXX,00`) com badge de destaque verde esmeralda.
+  * 6. **Última Interação**: Horário relativo formatado no padrão Lero (*"há cerca de 9 horas"*, *"há cerca de 1 hora"*, *"há 45 minutos"*).
+  * 7. **Criado Em**: Data de criação formatada (`DD/MM/AAAA`).
+- [x] **Compactação e Densidade Corporativa**:
+  * Espaçamento vertical de linhas reduzido para `py-2.5 px-3.5`, bordas sutis `divide-gray-800/50` e tipografia `text-xs` de alta densidade para máxima legibilidade.
+  * Clique em qualquer ponto da linha (`<tr>`) ou no botão de título acionando imediatamente o `DealModal` blindado.
+- [x] **Validação & Compilação**:
+  * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas com sucesso).
+
+
 
 
 
