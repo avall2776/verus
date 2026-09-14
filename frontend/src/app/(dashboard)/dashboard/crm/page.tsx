@@ -63,6 +63,13 @@ interface KpiPopoverProps {
   periodLabel: string;
   detail: string;
   position?: 'left' | 'center' | 'right';
+  extraMetrics?: {
+    label: string;
+    current: string;
+    prev: string;
+    diff?: number;
+    isInverse?: boolean;
+  }[];
 }
 
 function KpiPopover({
@@ -73,7 +80,8 @@ function KpiPopover({
   isInverse = false,
   periodLabel,
   detail,
-  position = 'center'
+  position = 'center',
+  extraMetrics
 }: KpiPopoverProps) {
   const isPositive = isInverse ? diff < 0 : diff >= 0;
   const posClasses = position === 'left' 
@@ -83,7 +91,7 @@ function KpiPopover({
     : 'left-1/2 -translate-x-1/2';
 
   return (
-    <div className={`absolute top-[calc(100%+8px)] ${posClasses} w-64 md:w-72 bg-[#0d1117] border border-gray-800 text-gray-200 text-xs shadow-2xl rounded-xl p-3 z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-150`}>
+    <div className={`absolute top-[calc(100%+8px)] ${posClasses} w-72 md:w-80 bg-[#0d1117] border border-gray-800 text-gray-200 text-xs shadow-2xl rounded-xl p-3 z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-150`}>
       <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-800/80">
         <span className="font-bold text-white truncate text-[11px] uppercase tracking-wider">{title}</span>
         <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold flex items-center gap-0.5 ${
@@ -107,6 +115,32 @@ function KpiPopover({
         <p className="text-[10px] text-gray-400 italic">
           (Período anterior de mesma duração de {periodLabel})
         </p>
+
+        {extraMetrics && extraMetrics.length > 0 && (
+          <div className="pt-2 mt-2 border-t border-gray-800/60 space-y-2">
+            {extraMetrics.map((em, idx) => {
+              const emPos = em.diff !== undefined 
+                ? (em.isInverse ? em.diff < 0 : em.diff >= 0) 
+                : true;
+              return (
+                <div key={idx} className="space-y-0.5">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-gray-300 font-semibold">{em.label}:</span>
+                    {em.diff !== undefined && (
+                      <span className={`font-mono text-[10px] ${emPos ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {em.diff >= 0 ? `+${em.diff}` : em.diff}{typeof em.diff === 'number' && em.label.includes('Taxa') ? '%' : ''}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-gray-400">
+                    <span>Atual: <strong className="text-white font-mono">{em.current}</strong></span>
+                    <span>Anterior: <span className="text-gray-400 font-mono">{em.prev}</span></span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="mt-2.5 pt-2 border-t border-gray-800/80 text-[11px] text-gray-300 flex items-center gap-1.5">
@@ -255,6 +289,7 @@ export default function CrmDashboardPage() {
     const currentWonRev = currentWon.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
     const currentLostRev = currentLost.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
     const currentPipelineRev = currentOpen.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
+    const currentTotalRev = currentPeriodDeals.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
     const currentAvgTicket = currentWon.length > 0 ? Math.round(currentWonRev / currentWon.length) : (metrics?.avgTicket || 3450);
     const currentClosedCount = currentWon.length + currentLost.length;
     const currentWinRate = currentClosedCount > 0 ? Math.round((currentWon.length / currentClosedCount) * 100) : (metrics?.winRate || 68);
@@ -268,6 +303,7 @@ export default function CrmDashboardPage() {
     const prevWonRev = prevWon.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
     const prevLostRev = prevLost.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
     const prevPipelineRev = prevOpen.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
+    const prevTotalRev = prevPeriodDeals.reduce((acc, d) => acc + (Number(d.value) || 0), 0);
     const prevAvgTicket = prevWon.length > 0 ? Math.round(prevWonRev / prevWon.length) : Math.round(currentAvgTicket * 0.92);
     const prevClosedCount = prevWon.length + prevLost.length;
     const prevWinRate = prevClosedCount > 0 ? Math.round((prevWon.length / prevClosedCount) * 100) : Math.max(0, currentWinRate - 5);
@@ -288,7 +324,10 @@ export default function CrmDashboardPage() {
         current: currentPeriodDeals.length,
         prev: prevPeriodDeals.length,
         diff: calcVar(currentPeriodDeals.length, prevPeriodDeals.length),
-        detail: `Média de ${(currentPeriodDeals.length / Math.max(1, days)).toFixed(1)} leads/dia`
+        revenue: currentTotalRev,
+        prevRevenue: prevTotalRev,
+        diffRevenue: calcVar(currentTotalRev, prevTotalRev),
+        detail: `Pipeline total criado: ${formatCurrency(currentTotalRev)}`
       },
       open: {
         current: currentOpen.length,
@@ -769,39 +808,44 @@ export default function CrmDashboardPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* EXPANSÃO DOS CARDS DE KPIs SUPERIORES (8 CARDS COM HOVER ANALÍTICO RICO)   */}
+      {/* 6 CARDS SUPERIORES PRINCIPAIS COM SUBDIVISÕES E PARIDADE EXATA COM O LERO */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2.5 w-full relative">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 w-full relative">
         
-        {/* 1. Oportunidades Criadas */}
+        {/* Card 1: Oportunidades Criadas */}
         <div 
           onMouseEnter={() => setHoveredCard('opportunities')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-gray-400 mb-1">
+          <div className="flex items-center justify-between text-gray-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-400 transition-colors">Oportunidades</span>
             <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-blue-400">
               <Briefcase size={11} />
             </div>
           </div>
-          <div className="flex items-baseline justify-between">
-            <p className="text-lg font-extrabold text-white">
+          <div className="flex items-baseline justify-between mb-1">
+            <p className="text-2xl font-extrabold text-white font-mono">
               {analyticsData.opportunities.current}
             </p>
-            <span className={`text-[10px] font-mono font-semibold ${analyticsData.opportunities.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
+              analyticsData.opportunities.diff >= 0 
+                ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' 
+                : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
+            }`}>
               {analyticsData.opportunities.diff >= 0 ? `+${analyticsData.opportunities.diff}%` : `${analyticsData.opportunities.diff}%`}
             </span>
           </div>
-          <p className="text-[10px] text-gray-500 mt-1 truncate">
-            Total no período
-          </p>
+          <div className="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px]">
+            <span className="text-gray-400">Total:</span>
+            <span className="font-mono font-semibold text-gray-200">{formatCurrency(analyticsData.opportunities.revenue)}</span>
+          </div>
 
           {hoveredCard === 'opportunities' && (
             <KpiPopover 
               title="Oportunidades Criadas"
-              currentVal={`${analyticsData.opportunities.current} leads`}
-              prevVal={`${analyticsData.opportunities.prev} leads`}
+              currentVal={`${analyticsData.opportunities.current} (${formatCurrency(analyticsData.opportunities.revenue)})`}
+              prevVal={`${analyticsData.opportunities.prev} (${formatCurrency(analyticsData.opportunities.prevRevenue)})`}
               diff={analyticsData.opportunities.diff}
               periodLabel={analyticsData.periodLabel}
               detail={analyticsData.opportunities.detail}
@@ -810,29 +854,34 @@ export default function CrmDashboardPage() {
           )}
         </div>
 
-        {/* 2. Em Aberto */}
+        {/* Card 2: Em Aberto */}
         <div 
           onMouseEnter={() => setHoveredCard('open')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-gray-400 mb-1">
+          <div className="flex items-center justify-between text-gray-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-400 transition-colors">Em Aberto</span>
             <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-blue-400">
               <Layers size={11} />
             </div>
           </div>
-          <div className="flex items-baseline justify-between">
-            <p className="text-lg font-extrabold text-blue-400">
+          <div className="flex items-baseline justify-between mb-1">
+            <p className="text-2xl font-extrabold text-blue-400 font-mono">
               {analyticsData.open.current}
             </p>
-            <span className="text-[9px] text-gray-400 font-mono">
+            <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
+              analyticsData.open.diff >= 0 
+                ? 'bg-blue-950/60 text-blue-400 border border-blue-800/40' 
+                : 'bg-gray-800/60 text-gray-400 border border-gray-700/40'
+            }`}>
               {analyticsData.open.diff >= 0 ? `+${analyticsData.open.diff}%` : `${analyticsData.open.diff}%`}
             </span>
           </div>
-          <p className="text-[10px] text-gray-400 mt-1 truncate">
-            {formatCurrency(analyticsData.open.revenue)}
-          </p>
+          <div className="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px]">
+            <span className="text-gray-400">Pipeline:</span>
+            <span className="font-mono font-semibold text-blue-300">{formatCurrency(analyticsData.open.revenue)}</span>
+          </div>
 
           {hoveredCard === 'open' && (
             <KpiPopover 
@@ -847,29 +896,34 @@ export default function CrmDashboardPage() {
           )}
         </div>
 
-        {/* 3. Ganhas */}
+        {/* Card 3: Ganhas */}
         <div 
           onMouseEnter={() => setHoveredCard('won')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-gray-400 mb-1">
+          <div className="flex items-center justify-between text-gray-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-400 transition-colors">Ganhas</span>
             <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
               <CheckCircle2 size={11} />
             </div>
           </div>
-          <div className="flex items-baseline justify-between">
-            <p className="text-lg font-extrabold text-emerald-400">
+          <div className="flex items-baseline justify-between mb-1">
+            <p className="text-2xl font-extrabold text-emerald-400 font-mono">
               {analyticsData.won.current}
             </p>
-            <span className={`text-[10px] font-mono font-semibold ${analyticsData.won.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
+              analyticsData.won.diff >= 0 
+                ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' 
+                : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
+            }`}>
               {analyticsData.won.diff >= 0 ? `+${analyticsData.won.diff}%` : `${analyticsData.won.diff}%`}
             </span>
           </div>
-          <p className="text-[10px] text-emerald-400 font-mono mt-1 truncate">
-            {formatCurrency(analyticsData.won.revenue)}
-          </p>
+          <div className="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px]">
+            <span className="text-gray-400">Receita:</span>
+            <span className="font-mono font-bold text-emerald-400">{formatCurrency(analyticsData.won.revenue)}</span>
+          </div>
 
           {hoveredCard === 'won' && (
             <KpiPopover 
@@ -884,35 +938,40 @@ export default function CrmDashboardPage() {
           )}
         </div>
 
-        {/* 4. Perdidas */}
+        {/* Card 4: Perdidas */}
         <div 
           onMouseEnter={() => setHoveredCard('lost')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-gray-400 mb-1">
+          <div className="flex items-center justify-between text-gray-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-rose-400 transition-colors">Perdidas</span>
             <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-rose-400">
               <XCircle size={11} />
             </div>
           </div>
-          <div className="flex items-baseline justify-between">
-            <p className="text-lg font-extrabold text-rose-400/90">
+          <div className="flex items-baseline justify-between mb-1">
+            <p className="text-2xl font-extrabold text-rose-400 font-mono">
               {analyticsData.lost.current}
             </p>
-            <span className={`text-[10px] font-mono font-semibold ${analyticsData.lost.diff <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
+              analyticsData.lost.diff <= 0 
+                ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' 
+                : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
+            }`}>
               {analyticsData.lost.diff >= 0 ? `+${analyticsData.lost.diff}%` : `${analyticsData.lost.diff}%`}
             </span>
           </div>
-          <p className="text-[10px] text-rose-400/70 font-mono mt-1 truncate">
-            -{formatCurrency(analyticsData.lost.revenue)}
-          </p>
+          <div className="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px]">
+            <span className="text-gray-400">Perda:</span>
+            <span className="font-mono font-bold text-rose-400">-{formatCurrency(analyticsData.lost.revenue)}</span>
+          </div>
 
           {hoveredCard === 'lost' && (
             <KpiPopover 
               title="Oportunidades Perdidas"
-              currentVal={`${analyticsData.lost.current} (${formatCurrency(analyticsData.lost.revenue)})`}
-              prevVal={`${analyticsData.lost.prev} (${formatCurrency(analyticsData.lost.prevRevenue)})`}
+              currentVal={`${analyticsData.lost.current} (-${formatCurrency(analyticsData.lost.revenue)})`}
+              prevVal={`${analyticsData.lost.prev} (-${formatCurrency(analyticsData.lost.prevRevenue)})`}
               diff={analyticsData.lost.diff}
               isInverse={true}
               periodLabel={analyticsData.periodLabel}
@@ -922,29 +981,34 @@ export default function CrmDashboardPage() {
           )}
         </div>
 
-        {/* 5. Ticket Médio */}
+        {/* Card 5: Ticket Médio */}
         <div 
           onMouseEnter={() => setHoveredCard('ticket')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-gray-400 mb-1">
+          <div className="flex items-center justify-between text-gray-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-400 transition-colors">Ticket Médio</span>
             <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
               <DollarSign size={11} />
             </div>
           </div>
-          <div className="flex items-baseline justify-between">
-            <p className="text-sm md:text-base font-extrabold text-white font-mono truncate">
+          <div className="flex items-baseline justify-between mb-1">
+            <p className="text-xl md:text-2xl font-extrabold text-white font-mono truncate">
               {formatCurrency(analyticsData.ticket.current)}
             </p>
-            <span className={`text-[10px] font-mono font-semibold ${analyticsData.ticket.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
+              analyticsData.ticket.diff >= 0 
+                ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' 
+                : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
+            }`}>
               {analyticsData.ticket.diff >= 0 ? `+${analyticsData.ticket.diff}%` : `${analyticsData.ticket.diff}%`}
             </span>
           </div>
-          <p className="text-[10px] text-gray-500 mt-1 truncate">
-            Por venda ganha
-          </p>
+          <div className="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px] text-gray-400">
+            <span className="truncate">Por venda fechada</span>
+            <span className="text-[10px] text-emerald-400/80 font-mono font-semibold">Ganhas</span>
+          </div>
 
           {hoveredCard === 'ticket' && (
             <KpiPopover 
@@ -954,123 +1018,72 @@ export default function CrmDashboardPage() {
               diff={analyticsData.ticket.diff}
               periodLabel={analyticsData.periodLabel}
               detail={analyticsData.ticket.detail}
-              position="center"
+              position="right"
             />
           )}
         </div>
 
-        {/* 6. Taxa de Ganho (Win Rate) */}
+        {/* Card 6: Taxa de Ganho & Ciclo/Movimentação (Composto Padrão Lero) */}
         <div 
-          onMouseEnter={() => setHoveredCard('winrate')}
+          onMouseEnter={() => setHoveredCard('winrate_cycle')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-gray-400 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-400 transition-colors">Taxa Ganho</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-400 transition-colors">Taxa & Ciclo</span>
             <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
               <Target size={11} />
             </div>
           </div>
-          <div className="flex items-baseline justify-between">
-            <p className="text-lg font-extrabold text-emerald-400">
-              {analyticsData.winRate.current}%
-            </p>
-            <span className={`text-[10px] font-mono font-semibold ${analyticsData.winRate.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {analyticsData.winRate.diff >= 0 ? `+${analyticsData.winRate.diff}%` : `${analyticsData.winRate.diff}%`}
-            </span>
-          </div>
-          <div className="w-full bg-[#0d1117] border border-gray-800 rounded-full h-1 mt-1 overflow-hidden">
-            <div 
-              className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
-              style={{ width: `${Math.min(analyticsData.winRate.current, 100)}%` }}
-            />
+          
+          {/* Subdivisão interna de 3 colunas: Win Rate, Ciclo Médio e Movimentação */}
+          <div className="grid grid-cols-3 gap-1 py-1.5 my-0.5 bg-[#0d1117]/80 rounded-lg border border-gray-800/80 text-center">
+            <div className="flex flex-col items-center">
+              <span className="text-[9px] uppercase tracking-wider text-gray-400 font-semibold">Ganho</span>
+              <span className="text-sm font-extrabold text-emerald-400 font-mono">{analyticsData.winRate.current}%</span>
+            </div>
+            <div className="flex flex-col items-center border-x border-gray-800/80 px-1">
+              <span className="text-[9px] uppercase tracking-wider text-gray-400 font-semibold">Ciclo</span>
+              <span className="text-sm font-extrabold text-white font-mono">{analyticsData.cycle.current}d</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-[9px] uppercase tracking-wider text-gray-400 font-semibold">Movim.</span>
+              <span className="text-sm font-extrabold text-blue-400 font-mono">~{analyticsData.movement.current}h</span>
+            </div>
           </div>
 
-          {hoveredCard === 'winrate' && (
+          <div className="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px]">
+            <span className="text-gray-400">Conversão:</span>
+            <span className={`font-mono font-semibold text-[10px] ${analyticsData.winRate.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {analyticsData.winRate.diff >= 0 ? `+${analyticsData.winRate.diff}%` : `${analyticsData.winRate.diff}%`} vs ant.
+            </span>
+          </div>
+
+          {hoveredCard === 'winrate_cycle' && (
             <KpiPopover 
-              title="Taxa de Conversão (Win Rate)"
-              currentVal={`${analyticsData.winRate.current}%`}
-              prevVal={`${analyticsData.winRate.prev}%`}
+              title="Taxa de Ganho & Ciclos"
+              currentVal={`${analyticsData.winRate.current}% Win Rate`}
+              prevVal={`${analyticsData.winRate.prev}% Win Rate`}
               diff={analyticsData.winRate.diff}
               periodLabel={analyticsData.periodLabel}
-              detail={analyticsData.winRate.detail}
-              position="center"
-            />
-          )}
-        </div>
-
-        {/* 7. Ciclo Médio de Venda */}
-        <div 
-          onMouseEnter={() => setHoveredCard('cycle')}
-          onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
-        >
-          <div className="flex items-center justify-between text-gray-400 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-amber-400 transition-colors">Ciclo Médio</span>
-            <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-amber-400">
-              <Clock size={11} />
-            </div>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <p className="text-lg font-extrabold text-white">
-              {analyticsData.cycle.current}d
-            </p>
-            <span className={`text-[10px] font-mono font-semibold ${analyticsData.cycle.diff <= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
-              {analyticsData.cycle.diff >= 0 ? `+${analyticsData.cycle.diff}d` : `${analyticsData.cycle.diff}d`}
-            </span>
-          </div>
-          <p className="text-[10px] text-gray-500 mt-1 truncate">
-            Do contato ao fecho
-          </p>
-
-          {hoveredCard === 'cycle' && (
-            <KpiPopover 
-              title="Ciclo Médio de Venda"
-              currentVal={`${analyticsData.cycle.current} dias`}
-              prevVal={`${analyticsData.cycle.prev} dias`}
-              diff={analyticsData.cycle.diff}
-              isInverse={true}
-              periodLabel={analyticsData.periodLabel}
-              detail={analyticsData.cycle.detail}
+              detail="Eficiência comercial e velocidade de fechamento"
               position="right"
-            />
-          )}
-        </div>
-
-        {/* 8. Tempo até Movimentação */}
-        <div 
-          onMouseEnter={() => setHoveredCard('movement')}
-          onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-[#161b22] border border-gray-800/80 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
-        >
-          <div className="flex items-center justify-between text-gray-400 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-400 transition-colors">Movimentação</span>
-            <div className="w-5 h-5 rounded-md bg-[#0d1117] border border-gray-800 flex items-center justify-center text-blue-400">
-              <TrendingUp size={11} />
-            </div>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <p className="text-lg font-extrabold text-white">
-              ~{analyticsData.movement.current}h
-            </p>
-            <span className={`text-[10px] font-mono font-semibold ${analyticsData.movement.diff <= 0 ? 'text-emerald-400' : 'text-blue-400'}`}>
-              {analyticsData.movement.diff >= 0 ? `+${analyticsData.movement.diff}h` : `${analyticsData.movement.diff}h`}
-            </span>
-          </div>
-          <p className="text-[10px] text-gray-500 mt-1 truncate">
-            Por etapa no funil
-          </p>
-
-          {hoveredCard === 'movement' && (
-            <KpiPopover 
-              title="Tempo até Movimentação"
-              currentVal={`~${analyticsData.movement.current}h / etapa`}
-              prevVal={`~${analyticsData.movement.prev}h / etapa`}
-              diff={analyticsData.movement.diff}
-              isInverse={true}
-              periodLabel={analyticsData.periodLabel}
-              detail={analyticsData.movement.detail}
-              position="right"
+              extraMetrics={[
+                {
+                  label: "Ciclo Médio de Venda",
+                  current: `${analyticsData.cycle.current} dias`,
+                  prev: `${analyticsData.cycle.prev} dias`,
+                  diff: analyticsData.cycle.diff,
+                  isInverse: true
+                },
+                {
+                  label: "Tempo até Movimentação",
+                  current: `~${analyticsData.movement.current}h / etapa`,
+                  prev: `~${analyticsData.movement.prev}h / etapa`,
+                  diff: analyticsData.movement.diff,
+                  isInverse: true
+                }
+              ]}
             />
           )}
         </div>

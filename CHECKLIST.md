@@ -507,6 +507,25 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Build do Next.js 14 validado com sucesso (código 0, 29 rotas de produção geradas).
   * Deploy enviado para produção na Vercel via Git push.
 
+### Fase 37: Paridade Exata dos 6 Cards Superiores de Métricas e Vendas no Padrão Lero (/dashboard/cm & /dashboard/crm)
+- [x] **Reestruturação Arquitetural dos 6 Cards Principais no Padrão Lero**:
+  * Substituição do grid de 8 medidores simples por uma grade executiva de 6 cards principais (`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3`), com subdivisões funcionais e dados consolidados:
+    1. **Card 1: Oportunidades Criadas**: Contagem total de leads/deals gerados em destaque mono + variação percentual vs. período anterior + subdivisão inferior com montante financeiro total do pipeline em BRL (`Total: R$ ...`).
+    2. **Card 2: Em Aberto**: Contagem ativa em negociação em azul + variação percentual + subdivisão inferior com receita ativa do pipeline (`Pipeline: R$ ...`).
+    3. **Card 3: Ganhas**: Contagem de vendas ganhas em verde esmeralda + variação percentual + subdivisão inferior com receita faturada ganha (`Receita: R$ ...`).
+    4. **Card 4: Perdidas**: Quantidade de oportunidades perdidas em rose/vinho + variação percentual + subdivisão inferior com montante financeiro de perda (`Perda: -R$ ...`).
+    5. **Card 5: Ticket Médio**: Valor monetário ponderado por oportunidade ganha em BRL + variação percentual + subdivisão com subtítulo "Por venda fechada" e chip "Ganhas".
+    6. **Card 6: Taxa de Ganho & Ciclo/Movimentação (Composto Padrão Lero)**: Bloco multi-indicador integrado com grade interna de 3 colunas:
+       - *Ganho*: Win Rate % em destaque verde esmeralda;
+       - *Ciclo*: Ciclo médio de vendas em dias (`Xd`);
+       - *Movim.*: Tempo médio de permanência por etapa no funil (`~Xh`).
+       - Rodapé informativo com a variação percentual de conversão comercial vs. período anterior.
+- [x] **Popovers Analíticos Interativos (`KpiPopover`) em 100% dos Cards**:
+  * Cada um dos 6 cards possui popover flutuante ativado por hover (`onMouseEnter`/`onMouseLeave`) com backdrop escuro (`#0d1117`), comparando o valor do Período Atual vs. Período Anterior de mesma duração.
+  * Suporte estendido a métricas extras (`extraMetrics`) no Card Composto 6, detalhando no hover o comparativo isolado de Win Rate, Ciclo Médio em dias e Tempo de Movimentação em horas com tags direcionais de cor.
+- [x] **Validação & Compilação**:
+  * Build do Next.js 14 testado e aprovado com sucesso (**código 0**, 29 rotas estáticas/dinâmicas geradas).
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
