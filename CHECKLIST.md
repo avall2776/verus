@@ -205,6 +205,26 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Backend & WebSocket (NestJS)**: Enriquecimento dos endpoints `/team-chat/users`, `/team-chat/channels` e `/team-chat/departments` trazendo a última mensagem e setor, com entrega em tempo real via Socket.io (`newTeamMessage`).
 - [x] **Rotas e Navegação**: Rota oficial `/chat-interno` vinculada na `Sidebar.tsx` e retrocompatibilidade mantida na rota `/team-chat`.
 
+### 🟢 Fase 18: Correção de Cliques e Visões Tabela e Linha do Tempo no CRM (/crm)
+- [x] **Correção dos Cliques e Filtros Reativos**:
+  * Botões do cabeçalho (`Tudo`, `Minhas`, `Contatos`, `Empresas`) com eventos `onClick` ativos, realizando filtragem reativa instantânea da lista de oportunidades.
+  * Seletores de visualização (`Quadro`, `Tabela`, `Linha do Tempo`) integrados em um grupo moderno com ícones (`Kanban`, `Table`, `CalendarDays`) e estado ativo `viewMode: 'kanban' | 'table' | 'timeline'`.
+  * Campo de busca reativo conectado com limpeza rápida (`X`), pesquisando por título, contato, telefone, e-mail, notas e responsável.
+- [x] **Visão em Tabela Densa**:
+  * Tabela moderna agrupando as oportunidades pelos estágios do funil.
+  * Cabeçalho colapsável/expansível para cada estágio com indicador de cor, contagem de oportunidades, soma financeira acumulada (`R$`) e atalho para criação de oportunidade.
+  * Linhas com dados densos: Título, Contato (avatar e telefone), Descrição/Notas, Responsável (com avatar e nome), Valor formatado em destaque verde (`R$`), Última Interação com horário relativo, Data de Criação e ações rápidas (abertura de conversa WhatsApp e detalhes).
+  * Clique na linha abre o `DealModal` para edição completa.
+- [x] **Visão em Linha do Tempo (Timeline Semanal)**:
+  * Cronograma semanal com seletor e controles de navegação (`<`, `Hoje`, `>`) e formatação dinâmica de intervalo (ex: *13 a 19 de setembro de 2026*).
+  * 7 colunas (Domingo a Sábado) com destaque visual e badge "HOJE" no dia atual.
+  * Agrupamento automático de cards de oportunidade por data de previsão ou interação (`expectedCloseDate || updatedAt || createdAt`).
+  * Cards compactos e elegantes com estágio colorido, título, contato, valor e responsável.
+  * Clique no card abre o `DealModal`.
+- [x] **Validação & Compilação**:
+  * Build do Next.js aprovado com código 0 (sem erros de compilação ou TypeScript).
+
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
