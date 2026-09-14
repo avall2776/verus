@@ -143,15 +143,17 @@ export class MessagingService {
         return { success: true, simulated: true };
       }
 
-      // Se houver buffer, tenta upload para a Meta Media API
+      // Se houver buffer, realiza upload para a Meta Media API com o formato correto
       let mediaId: string | null = null;
       if (payload.audioBuffer) {
         try {
           const form = new FormData();
           form.append('messaging_product', 'whatsapp');
-          form.append('type', payload.mimeType || 'audio/webm');
-          const blob = new Blob([new Uint8Array(payload.audioBuffer)], { type: payload.mimeType || 'audio/webm' });
-          form.append('file', blob, 'voice_message.webm');
+          const mimeType = payload.mimeType || 'audio/ogg';
+          form.append('type', mimeType);
+          const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'm4a' : 'ogg';
+          const blob = new Blob([new Uint8Array(payload.audioBuffer)], { type: mimeType });
+          form.append('file', blob, `voice_message.${ext}`);
 
           const uploadRes = await axios.post(
             `https://graph.facebook.com/v19.0/${phoneNumberId}/media`,
@@ -164,9 +166,10 @@ export class MessagingService {
           );
           if (uploadRes.data?.id) {
             mediaId = uploadRes.data.id;
+            this.logger.log(`Áudio carregado na Meta Media API com sucesso. Media ID: ${mediaId}`);
           }
         } catch (mediaErr: any) {
-          this.logger.warn(`Upload direto para Meta Media API falhou, tentando envio por URL pública: ${mediaErr.message}`);
+          this.logger.warn(`Upload direto para Meta Media API falhou: ${mediaErr.response?.data?.error?.message || mediaErr.message}`);
         }
       }
 

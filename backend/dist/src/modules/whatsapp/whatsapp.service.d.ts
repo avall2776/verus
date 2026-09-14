@@ -1,6 +1,7 @@
 import { PrismaService } from '../../shared/database/prisma.service';
 export declare class WhatsappService {
     private readonly prisma;
+    private readonly logger;
     constructor(prisma: PrismaService);
     private ensureDefaultInstance;
     getInstances(tenantId: string): Promise<{
@@ -132,4 +133,5 @@ export declare class WhatsappService {
     }>;
     fetchContactProfilePicture(tenantId: string, phone: string): Promise<string>;
     syncContactAvatar(tenantId: string, contactId: string): Promise<string | null>;
+    downloadAndSaveMedia(tenantId: string, mediaId: string, mimeType?: string): Promise<string | null>;
 }

@@ -8,14 +8,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var WhatsappService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WhatsappService = void 0;
 const common_1 = require("@nestjs/common");
 const axios_1 = require("axios");
+const fs = require("fs");
+const path = require("path");
 const prisma_service_1 = require("../../shared/database/prisma.service");
-let WhatsappService = class WhatsappService {
+let WhatsappService = WhatsappService_1 = class WhatsappService {
     constructor(prisma) {
         this.prisma = prisma;
+        this.logger = new common_1.Logger(WhatsappService_1.name);
     }
     async ensureDefaultInstance(tenantId) {
         const existing = await this.prisma.whatsAppInstance.findFirst({
@@ -367,9 +371,67 @@ let WhatsappService = class WhatsappService {
         }
         return null;
     }
+    async downloadAndSaveMedia(tenantId, mediaId, mimeType = 'audio/ogg') {
+        try {
+            let token = null;
+            const instance = await this.prisma.whatsAppInstance.findFirst({
+                where: {
+                    tenantId,
+                    status: 'connected',
+                    token: { not: null }
+                },
+                orderBy: { isDefault: 'desc' }
+            });
+            if (instance?.token) {
+                token = instance.token;
+            }
+            else {
+                const tenant = await this.prisma.tenant.findUnique({
+                    where: { id: tenantId },
+                    select: { metaToken: true }
+                });
+                token = tenant?.metaToken || null;
+            }
+            if (!token) {
+                this.logger.warn(`Token ausente para download da mídia ${mediaId} no tenant ${tenantId}`);
+                return null;
+            }
+            const metaRes = await axios_1.default.get(`https://graph.facebook.com/v19.0/${mediaId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+                timeout: 10000
+            });
+            const downloadUrl = metaRes.data?.url;
+            if (!downloadUrl) {
+                this.logger.warn(`URL não retornada na consulta de mídia ${mediaId}`);
+                return null;
+            }
+            const mediaRes = await axios_1.default.get(downloadUrl, {
+                headers: { Authorization: `Bearer ${token}` },
+                responseType: 'arraybuffer',
+                timeout: 15000
+            });
+            const isOgg = mimeType.includes('ogg') || mimeType.includes('opus');
+            const isMp4 = mimeType.includes('mp4') || mimeType.includes('m4a');
+            const isMp3 = mimeType.includes('mpeg') || mimeType.includes('mp3');
+            const ext = isOgg ? 'ogg' : isMp4 ? 'm4a' : isMp3 ? 'mp3' : 'ogg';
+            const filename = `inbound_${Date.now()}_${mediaId.substring(0, 8)}.${ext}`;
+            const uploadDir = path.join(process.cwd(), 'uploads', 'audio');
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+            const filePath = path.join(uploadDir, filename);
+            await fs.promises.writeFile(filePath, Buffer.from(mediaRes.data));
+            this.logger.log(`Mídia [${mediaId}] baixada e armazenada com sucesso: ${filePath}`);
+            return `/api-backend/media/audio/${filename}`;
+        }
+        catch (err) {
+            this.logger.error(`Falha ao baixar mídia Meta ${mediaId}: ${err.message}`);
+            return null;
+        }
+    }
 };
 exports.WhatsappService = WhatsappService;
-exports.WhatsappService = WhatsappService = __decorate([
+exports.WhatsappService = WhatsappService = WhatsappService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], WhatsappService);

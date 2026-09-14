@@ -601,6 +601,21 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Build do Backend NestJS aprovado (**código 0**).
   * Build do Frontend Next.js 14 aprovado (**código 0**, 29 rotas de produção geradas).
 
+### Fase 42: Pipeline Completo de Áudio Bidirecional (Inbound Webhook e PTT WhatsApp Oficial)
+- [x] **Processamento de Áudio Inbound no Webhook (`webhook.processor.ts`)**:
+  * Suporte nativo para mídias do tipo `audio`, `voice` e `ptt`.
+  * Extração do Media ID e download automático do arquivo binário da Meta Graph API via `WhatsappService.downloadAndSaveMedia`, salvando em disco (`uploads/audio/inbound_...`) e gerando link `/api-backend/media/audio/...`.
+  * Persistência no banco (`Message.type = 'audio'`, `Message.mediaUrl = ...`, `content = '🎤 Mensagem de voz'`).
+  * Emissão em tempo real via WebSocket (`ChatGateway.emitNewMessage`), renderizando o mini-player sonoro na conversa sem cair em fallback estático.
+- [x] **Transcodificação e Disparo de Áudio Outbound PTT no WhatsApp**:
+  * Instalação e verificação do `ffmpeg` no servidor VPS Ubuntu 24.04 (`ffmpeg version 6.1.1`).
+  * Transcodificação no backend (`ChatService.sendManualAudioMessage`) de áudios WebM gravados pelo navegador para o formato nativo oficial WhatsApp Voice Note / PTT (`audio/ogg; codecs=opus`, mono 24kHz).
+  * Upload binário para a Meta Media API (`/media`) com `type: 'audio/ogg'` e disparo via `MessagingService.sendAudio` com `type: 'audio'`, garantindo reconhecimento pelo WhatsApp como mensagem de voz autêntica com controle de velocidade e onda sonora.
+  * Suporte a MIME types dinâmicos (`.ogg`, `.opus`, `.webm`, `.mp3`, `.m4a`) no controlador de streaming (`MediaController`).
+- [x] **Validação & Compilação**:
+  * Build do Backend NestJS aprovado (**código 0**).
+  * Build do Frontend Next.js 14 aprovado (**código 0**, 29 rotas de produção geradas).
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)

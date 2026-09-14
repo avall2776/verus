@@ -186,7 +186,13 @@ function InboxContent() {
       audioStreamRef.current = stream;
       audioChunksRef.current = [];
 
-      const mediaRecorder = new MediaRecorder(stream);
+      const options = typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported('audio/ogg; codecs=opus')
+        ? { mimeType: 'audio/ogg; codecs=opus' }
+        : typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported('audio/webm; codecs=opus')
+          ? { mimeType: 'audio/webm; codecs=opus' }
+          : undefined;
+
+      const mediaRecorder = options ? new MediaRecorder(stream, options) : new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
@@ -237,17 +243,19 @@ function InboxContent() {
 
     mediaRecorderRef.current.onstop = async () => {
       try {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const recordedMimeType = mediaRecorderRef.current?.mimeType || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: recordedMimeType });
         const localPreviewUrl = URL.createObjectURL(audioBlob);
 
         const formData = new FormData();
-        const filename = `voice_${Date.now()}.webm`;
+        const ext = recordedMimeType.includes('ogg') ? 'ogg' : 'webm';
+        const filename = `voice_${Date.now()}.${ext}`;
         formData.append('file', audioBlob, filename);
         formData.append('type', 'audio');
         formData.append('content', '🎤 Mensagem de voz');
         formData.append('isInternal', String(isInternalMode));
 
-        // Envia via FormData para o backend processar, armazenar e disparar na ponta final do WhatsApp
+        // Envia via FormData para o backend processar, converter se necessário e disparar na ponta final do WhatsApp
         const { data } = await api.post(`/conversations/${activeChat}/messages/audio`, formData);
         
         const messageToAdd = {

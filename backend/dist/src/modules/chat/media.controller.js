@@ -23,7 +23,17 @@ let MediaController = class MediaController {
         if (!fs.existsSync(filePath)) {
             throw new common_1.NotFoundException('Arquivo de áudio não encontrado.');
         }
-        res.setHeader('Content-Type', 'audio/webm');
+        const ext = path.extname(safeFilename).toLowerCase();
+        const mimeTypes = {
+            '.ogg': 'audio/ogg',
+            '.opus': 'audio/ogg',
+            '.webm': 'audio/webm',
+            '.mp3': 'audio/mpeg',
+            '.m4a': 'audio/mp4',
+            '.wav': 'audio/wav',
+        };
+        const contentType = mimeTypes[ext] || 'audio/ogg';
+        res.setHeader('Content-Type', contentType);
         res.setHeader('Accept-Ranges', 'bytes');
         return res.sendFile(filePath);
     }

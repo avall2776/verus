@@ -1,7 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { PrismaService } from '../../shared/database/prisma.service';
+
+const execAsync = promisify(exec);
 import { MessagingService } from '../messaging/messaging.service';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { ChatGateway } from './chat.gateway';
@@ -360,7 +365,31 @@ export class ChatService {
     }
 
     const isInternal = payload.isInternal || false;
-    const filename = `audio_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.webm`;
+    
+    // Transcodifica para Ogg Opus (mono 24kHz) padrão WhatsApp PTT nativo se ffmpeg disponível
+    let finalBuffer: Buffer = file.buffer;
+    let finalMimeType = 'audio/ogg';
+    let ext = 'ogg';
+
+    const tempInput = path.join(os.tmpdir(), `input_${Date.now()}_${Math.random().toString(36).substring(2, 6)}.webm`);
+    const tempOutput = path.join(os.tmpdir(), `output_${Date.now()}_${Math.random().toString(36).substring(2, 6)}.ogg`);
+
+    try {
+      await fs.promises.writeFile(tempInput, file.buffer);
+      await execAsync(`ffmpeg -y -i "${tempInput}" -c:a libopus -b:a 32k -ac 1 -ar 24000 -vn "${tempOutput}"`);
+      finalBuffer = await fs.promises.readFile(tempOutput);
+      finalMimeType = 'audio/ogg';
+      ext = 'ogg';
+    } catch (ffmpegErr: any) {
+      finalBuffer = file.buffer;
+      finalMimeType = file.mimetype || 'audio/webm';
+      ext = file.mimetype?.includes('ogg') ? 'ogg' : 'webm';
+    } finally {
+      try { if (fs.existsSync(tempInput)) await fs.promises.unlink(tempInput); } catch (e) {}
+      try { if (fs.existsSync(tempOutput)) await fs.promises.unlink(tempOutput); } catch (e) {}
+    }
+
+    const filename = `audio_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
     const uploadDir = path.join(process.cwd(), 'uploads', 'audio');
 
     if (!fs.existsSync(uploadDir)) {
@@ -368,7 +397,7 @@ export class ChatService {
     }
 
     const filePath = path.join(uploadDir, filename);
-    await fs.promises.writeFile(filePath, file.buffer);
+    await fs.promises.writeFile(filePath, finalBuffer);
 
     const mediaUrl = `/api-backend/media/audio/${filename}`;
 
@@ -392,9 +421,9 @@ export class ChatService {
       await this.messagingService.sendAudio({
         tenantId,
         phone: conversation.contact.phone,
-        audioBuffer: file.buffer,
+        audioBuffer: finalBuffer,
         audioUrl: mediaUrl,
-        mimeType: file.mimetype || 'audio/webm',
+        mimeType: finalMimeType,
       });
     }
 

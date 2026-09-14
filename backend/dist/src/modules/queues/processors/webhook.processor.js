@@ -59,8 +59,41 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             this.logger.warn(`Mensagem [${messageId}] já processada. Ignorando.`);
             return { status: 'ignored_duplicate' };
         }
-        let content = message.text?.body || '[Mídia Não Suportada na Simulação]';
-        let mediaType = message.type;
+        const isAudio = message.type === 'audio' || message.type === 'voice' || message.type === 'ptt' || !!message.audio || !!message.voice;
+        let content = message.text?.body || '';
+        let msgType = message.type || 'text';
+        let mediaUrl = null;
+        if (isAudio) {
+            msgType = 'audio';
+            content = '🎤 Mensagem de voz';
+            const audioObj = message.audio || message.voice;
+            const mediaId = audioObj?.id;
+            const directUrl = audioObj?.link || audioObj?.url;
+            const mimeType = audioObj?.mime_type || 'audio/ogg';
+            if (mediaId) {
+                mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
+            }
+            else if (directUrl) {
+                mediaUrl = directUrl;
+            }
+        }
+        else if (message.image) {
+            msgType = 'image';
+            content = message.image.caption || '📷 Foto';
+            if (message.image.id) {
+                mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, message.image.id, message.image.mime_type || 'image/jpeg');
+            }
+        }
+        else if (message.document) {
+            msgType = 'document';
+            content = message.document.filename || message.document.caption || '📄 Documento';
+            if (message.document.id) {
+                mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, message.document.id, message.document.mime_type || 'application/pdf');
+            }
+        }
+        else if (!content) {
+            content = '[Mídia Recebida]';
+        }
         const phone = remoteJid;
         const contact = await this.prisma.contact.upsert({
             where: {
@@ -136,6 +169,8 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 providerMessageId: messageId,
                 direction: 'INBOUND',
                 content,
+                type: msgType,
+                mediaUrl,
                 senderType: 'contact',
                 status: 'delivered',
             }
