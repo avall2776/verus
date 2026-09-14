@@ -358,15 +358,13 @@ export class WhatsappService {
   }
 
   /**
-   * Busca a foto de perfil do contato direto na instância conectada do WhatsApp.
-   * Se a Graph API retornar a foto, utiliza o link oficial retornado.
-   * Caso o WhatsApp não tenha foto pública ou em sandbox, utiliza foto em alta resolução
-   * garantindo que o avatar do contato seja sempre exibido como foto real e nunca iniciais.
+   * Busca a foto de perfil real do contato direto na API oficial do WhatsApp (Meta Graph API).
+   * Se a API do WhatsApp retornar a foto real, salva e retorna a URL.
+   * Caso contrário, retorna null para que o frontend caia no componente de iniciais nativo (ex: FC).
    */
-  async fetchContactProfilePicture(tenantId: string, phone: string): Promise<string> {
+  async fetchContactProfilePicture(tenantId: string, phone: string): Promise<string | null> {
     const cleanPhone = phone.replace(/\D/g, '');
 
-    // 1. Tenta buscar da instância conectada via Meta Graph API
     try {
       const instance = await this.prisma.whatsAppInstance.findFirst({
         where: {
@@ -378,55 +376,43 @@ export class WhatsappService {
         orderBy: { isDefault: 'desc' }
       });
 
-      if (instance && instance.token) {
+      let token = instance?.token;
+      if (!token) {
+        const tenant = await this.prisma.tenant.findUnique({
+          where: { id: tenantId },
+          select: { metaToken: true }
+        });
+        token = tenant?.metaToken || null;
+      }
+
+      if (token) {
         try {
           const res = await axios.get(
             `https://graph.facebook.com/v19.0/${cleanPhone}`,
             {
-              headers: { Authorization: `Bearer ${instance.token}` },
+              headers: { Authorization: `Bearer ${token}` },
               params: { fields: 'profile_picture_url' },
-              timeout: 3000
+              timeout: 4000
             }
           );
           if (res.data?.profile_picture_url) {
             return res.data.profile_picture_url;
           }
         } catch (metaErr) {
-          // Meta Graph API restringe consulta de perfis pessoais sem permissões avançadas
+          // Sem foto pública ou permissão restrita da Meta para este número
         }
       }
     } catch (e) {
-      // Ignora erro e aplica fallback fotográfico de alta resolução
+      // Ignora erro
     }
 
-    // 2. Pool de fotos de pessoas reais de alta resolução (Unsplash Portraits)
-    // Seleção determinística baseada no número de telefone para manter consistência por contato
-    const REAL_AVATARS_POOL = [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=300&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=300&auto=format&fit=crop&q=80'
-    ];
-
-    let hash = 0;
-    for (let i = 0; i < cleanPhone.length; i++) {
-      hash = (hash << 5) - hash + cleanPhone.charCodeAt(i);
-      hash |= 0;
-    }
-    const index = Math.abs(hash) % REAL_AVATARS_POOL.length;
-    return REAL_AVATARS_POOL[index];
+    // Retorna explicitamente null para exibir as iniciais reais
+    return null;
   }
 
   /**
-   * Sincroniza e atualiza o avatar do contato no banco de dados se ainda não tiver avatarUrl
+   * Sincroniza e atualiza o avatar do contato no banco de dados se a API do WhatsApp retornar foto real.
+   * Remove fotos fictícias e mantém null caso o contato não tenha foto real no WhatsApp.
    */
   async syncContactAvatar(tenantId: string, contactId: string): Promise<string | null> {
     const contact = await this.prisma.contact.findFirst({
@@ -434,6 +420,16 @@ export class WhatsappService {
     });
 
     if (!contact || !contact.phone) return null;
+
+    // Se já tinha URL do Unsplash ou foto fictícia antiga, limpa para null
+    if (contact.avatarUrl && contact.avatarUrl.includes('unsplash.com')) {
+      await this.prisma.contact.update({
+        where: { id: contactId },
+        data: { avatarUrl: null }
+      });
+      contact.avatarUrl = null;
+    }
+
     if (contact.avatarUrl) return contact.avatarUrl;
 
     const avatarUrl = await this.fetchContactProfilePicture(tenantId, contact.phone);

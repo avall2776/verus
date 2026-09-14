@@ -22,6 +22,9 @@ export class ContactsService {
 
     // Sincroniza fotos de perfil pendentes automaticamente direto da instância
     for (const c of contacts) {
+      if (c.avatarUrl && c.avatarUrl.includes('unsplash.com')) {
+        c.avatarUrl = null;
+      }
       if (!c.avatarUrl && c.phone) {
         const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, c.id);
         if (syncedUrl) {

@@ -62,6 +62,9 @@ let ChatService = class ChatService {
             orderBy: { updatedAt: 'desc' }
         });
         for (const conv of conversations) {
+            if (conv.contact?.avatarUrl?.includes('unsplash.com')) {
+                conv.contact.avatarUrl = null;
+            }
             if (conv.contact && !conv.contact.avatarUrl && conv.contact.phone) {
                 const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, conv.contact.id);
                 if (syncedUrl) {
@@ -97,6 +100,9 @@ let ChatService = class ChatService {
         if (!conversation) {
             throw new common_1.NotFoundException('Nenhuma conversa encontrada para este contato.');
         }
+        if (conversation.contact?.avatarUrl?.includes('unsplash.com')) {
+            conversation.contact.avatarUrl = null;
+        }
         if (conversation.contact && !conversation.contact.avatarUrl && conversation.contact.phone) {
             const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, conversation.contact.id);
             if (syncedUrl) {
@@ -118,6 +124,9 @@ let ChatService = class ChatService {
         });
         if (!conversation) {
             throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        if (conversation.contact?.avatarUrl?.includes('unsplash.com')) {
+            conversation.contact.avatarUrl = null;
         }
         if (conversation.contact && !conversation.contact.avatarUrl && conversation.contact.phone) {
             const syncedUrl = await this.whatsappService.syncContactAvatar(tenantId, conversation.contact.id);

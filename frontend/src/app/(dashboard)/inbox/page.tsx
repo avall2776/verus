@@ -107,6 +107,14 @@ function InboxContent() {
   const [scheduleTime, setScheduleTime] = useState('');
   const [scheduleMessage, setScheduleMessage] = useState('');
 
+  const getContactInitials = (name?: string) => {
+    if (!name) return 'C';
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'C';
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
   const SUGGESTED_TAGS = ['Lead Quente', 'Suporte VIP', 'Negociação', 'Financeiro', 'Aguardando'];
 
   const handleQuickAddTag = async (e: React.MouseEvent, contactId: string, tagToAdd: string) => {
@@ -1161,11 +1169,13 @@ function InboxContent() {
                       className="w-full h-full object-cover rounded-full"
                       onError={(e) => {
                         (e.currentTarget as HTMLElement).style.display = 'none';
+                        const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                        if (fallback) fallback.classList.remove('hidden');
                       }}
                     />
                   ) : null}
-                  <span className={contact.avatarUrl ? "hidden" : ""}>
-                    {contact.name?.charAt(0) || 'C'}
+                  <span className={`avatar-initials ${contact.avatarUrl ? "hidden" : ""}`}>
+                    {getContactInitials(contact.name)}
                   </span>
                   {contact.status === 'resolved' || contact.status === 'closed' ? (
                     <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(16,185,129,0.8)] z-10">
@@ -1412,11 +1422,13 @@ function InboxContent() {
                       className="w-full h-full object-cover rounded-full"
                       onError={(e) => {
                         (e.currentTarget as HTMLElement).style.display = 'none';
+                        const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                        if (fallback) fallback.classList.remove('hidden');
                       }}
                     />
                   ) : null}
-                  <span className={activeContactData.avatarUrl ? "hidden" : ""}>
-                    {activeContactData.name.charAt(0)}
+                  <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
+                    {getContactInitials(activeContactData.name)}
                   </span>
                 </div>
                 <div>
@@ -1983,7 +1995,7 @@ function InboxContent() {
       {/* 3. PAINEL DIREITO: Contexto do Lead */}
       <div className="w-[320px] flex-shrink-0 bg-[#0F172A] flex flex-col overflow-y-auto border-l border-gray-800/80">
         <div className="p-5 flex flex-col items-center border-b border-gray-800 relative bg-gradient-to-b from-[#162038]/50 to-transparent">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-black text-3xl shadow-[0_0_25px_rgba(0,210,255,0.25)] mb-3 overflow-hidden relative border-2 border-accent/40">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-black text-2xl shadow-[0_0_25px_rgba(0,210,255,0.25)] mb-3 overflow-hidden relative border-2 border-accent/40">
             {activeContactData?.avatarUrl ? (
               <img 
                 src={activeContactData.avatarUrl} 
@@ -1991,11 +2003,13 @@ function InboxContent() {
                 className="w-full h-full object-cover rounded-full"
                 onError={(e) => {
                   (e.currentTarget as HTMLElement).style.display = 'none';
+                  const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                  if (fallback) fallback.classList.remove('hidden');
                 }}
               />
             ) : null}
-            <span className={activeContactData?.avatarUrl ? "hidden" : ""}>
-              {activeContactData ? activeContactData.name.charAt(0) : '?'}
+            <span className={`avatar-initials ${activeContactData?.avatarUrl ? "hidden" : ""}`}>
+              {getContactInitials(activeContactData?.name)}
             </span>
             <div className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#0F172A] shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
           </div>
@@ -2296,7 +2310,7 @@ function InboxContent() {
             <div className="p-6 space-y-4">
               <div className="p-3.5 rounded-xl bg-[#1E293B]/70 border border-slate-700/50 flex items-center gap-3.5">
                 <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-slate-700 to-slate-800 border border-slate-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                  {selectedQueueChat.name?.charAt(0) || 'C'}
+                  {getContactInitials(selectedQueueChat.name)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
@@ -2402,7 +2416,7 @@ function InboxContent() {
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-white">
-                        {c.name?.charAt(0) || 'C'}
+                        {getContactInitials(c.name)}
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">{c.name}</h4>
