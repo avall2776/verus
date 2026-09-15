@@ -14,13 +14,71 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MediaController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
 const path = require("path");
 const fs = require("fs");
+const storage_service_1 = require("../../shared/storage/storage.service");
 let MediaController = class MediaController {
+    constructor(storageService) {
+        this.storageService = storageService;
+    }
+    async uploadMedia(file, folder) {
+        if (!file) {
+            throw new common_1.BadRequestException('Arquivo obrigatório para upload.');
+        }
+        const result = await this.storageService.uploadFile({
+            buffer: file.buffer,
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+        }, folder || 'chat');
+        return {
+            success: true,
+            ...result,
+        };
+    }
+    getFile(filename, res) {
+        const filePath = this.storageService.getLocalFilePath(filename);
+        if (!filePath || !fs.existsSync(filePath)) {
+            throw new common_1.NotFoundException('Arquivo não encontrado no servidor.');
+        }
+        const ext = path.extname(filename).toLowerCase();
+        const mimeTypes = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.webp': 'image/webp',
+            '.gif': 'image/gif',
+            '.svg': 'image/svg+xml',
+            '.pdf': 'application/pdf',
+            '.doc': 'application/msword',
+            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            '.xls': 'application/vnd.ms-excel',
+            '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            '.txt': 'text/plain',
+            '.csv': 'text/csv',
+            '.zip': 'application/zip',
+            '.ogg': 'audio/ogg',
+            '.opus': 'audio/ogg',
+            '.webm': 'audio/webm',
+            '.mp3': 'audio/mpeg',
+            '.m4a': 'audio/mp4',
+            '.wav': 'audio/wav',
+            '.mp4': 'video/mp4',
+        };
+        const contentType = mimeTypes[ext] || 'application/octet-stream';
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Content-Disposition', `inline; filename="${path.basename(filename)}"`);
+        return res.sendFile(filePath);
+    }
     getAudioFile(filename, res) {
         const safeFilename = path.basename(filename);
         const filePath = path.join(process.cwd(), 'uploads', 'audio', safeFilename);
         if (!fs.existsSync(filePath)) {
+            const alternativePath = this.storageService.getLocalFilePath(filename);
+            if (alternativePath && fs.existsSync(alternativePath)) {
+                return res.sendFile(alternativePath);
+            }
             throw new common_1.NotFoundException('Arquivo de áudio não encontrado.');
         }
         const ext = path.extname(safeFilename).toLowerCase();
@@ -40,6 +98,23 @@ let MediaController = class MediaController {
 };
 exports.MediaController = MediaController;
 __decorate([
+    (0, common_1.Post)('upload'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    __param(0, (0, common_1.UploadedFile)()),
+    __param(1, (0, common_1.Body)('folder')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], MediaController.prototype, "uploadMedia", null);
+__decorate([
+    (0, common_1.Get)('file/:filename'),
+    __param(0, (0, common_1.Param)('filename')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], MediaController.prototype, "getFile", null);
+__decorate([
     (0, common_1.Get)('audio/:filename'),
     __param(0, (0, common_1.Param)('filename')),
     __param(1, (0, common_1.Res)()),
@@ -48,6 +123,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], MediaController.prototype, "getAudioFile", null);
 exports.MediaController = MediaController = __decorate([
-    (0, common_1.Controller)('media')
+    (0, common_1.Controller)('media'),
+    __metadata("design:paramtypes", [storage_service_1.StorageService])
 ], MediaController);
 //# sourceMappingURL=media.controller.js.map

@@ -13,10 +13,20 @@ export interface SendAudioPayload {
     mimeType?: string;
     instanceId?: string;
 }
+export interface SendMediaPayload {
+    tenantId: string;
+    phone: string;
+    type: 'image' | 'document';
+    mediaUrl: string;
+    content?: string;
+    filename?: string;
+    instanceId?: string;
+}
 export declare class MessagingService {
     private readonly prisma;
     private readonly logger;
     constructor(prisma: PrismaService);
     sendText(payload: SendMessagePayload): Promise<any>;
     sendAudio(payload: SendAudioPayload): Promise<any>;
+    sendMedia(payload: SendMediaPayload): Promise<any>;
 }

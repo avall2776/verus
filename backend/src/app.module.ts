@@ -18,10 +18,12 @@ import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 import { MonitorModule } from './modules/monitor/monitor.module';
 import { TeamChatModule } from './modules/team-chat/team-chat.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { StorageModule } from './shared/storage/storage.module';
 
 @Module({
   imports: [
     DatabaseModule,
+    StorageModule,
     AuthModule,
     QueueModule,
     WebhooksModule,

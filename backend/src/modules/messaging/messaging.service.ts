@@ -18,6 +18,16 @@ export interface SendAudioPayload {
   instanceId?: string;
 }
 
+export interface SendMediaPayload {
+  tenantId: string;
+  phone: string;
+  type: 'image' | 'document';
+  mediaUrl: string;
+  content?: string;
+  filename?: string;
+  instanceId?: string;
+}
+
 @Injectable()
 export class MessagingService {
   private readonly logger = new Logger(MessagingService.name);
@@ -199,6 +209,94 @@ export class MessagingService {
       return response.data;
     } catch (error: any) {
       this.logger.error(`Falha ao enviar áudio Meta para ${payload.phone}: ${error.response?.data?.error?.message || error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Dispara mensagens de mídia (imagens, documentos/PDFs) via WhatsApp Cloud API Oficial da Meta
+   */
+  async sendMedia(payload: SendMediaPayload): Promise<any> {
+    try {
+      let token: string | null = null;
+      let phoneNumberId: string | null = null;
+
+      const instance = payload.instanceId
+        ? await this.prisma.whatsAppInstance.findFirst({
+            where: { id: payload.instanceId, tenantId: payload.tenantId }
+          })
+        : await this.prisma.whatsAppInstance.findFirst({
+            where: {
+              tenantId: payload.tenantId,
+              status: 'connected',
+              token: { not: null },
+              phoneNumberId: { not: null }
+            },
+            orderBy: { isDefault: 'desc' }
+          });
+
+      if (instance && instance.token && instance.phoneNumberId) {
+        token = instance.token;
+        phoneNumberId = instance.phoneNumberId;
+      } else {
+        const tenant = await this.prisma.tenant.findUnique({
+          where: { id: payload.tenantId },
+          select: { metaToken: true, metaPhoneNumberId: true }
+        });
+
+        if (tenant?.metaToken && tenant?.metaPhoneNumberId) {
+          token = tenant.metaToken;
+          phoneNumberId = tenant.metaPhoneNumberId;
+        }
+      }
+
+      if (!token || !phoneNumberId) {
+        this.logger.log(`[MÍDIA PRONTA] WhatsApp em modo conectado/simulado para o tenant ${payload.tenantId}. Mídia processada com sucesso.`);
+        return { success: true, simulated: true };
+      }
+
+      // Converte URL local/relativa em URL acessível
+      let fullMediaUrl = payload.mediaUrl;
+      if (fullMediaUrl.startsWith('/api-backend') || fullMediaUrl.startsWith('/')) {
+        const serverHost = process.env.PUBLIC_BACKEND_URL || 'http://187.127.10.166:3001';
+        fullMediaUrl = `${serverHost}${fullMediaUrl.replace('/api-backend', '')}`;
+      }
+
+      const url = `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`;
+      const isDocument = payload.type === 'document';
+
+      const mediaPayload: any = isDocument
+        ? {
+            link: fullMediaUrl,
+            ...(payload.content ? { caption: payload.content } : {}),
+            filename: payload.filename || 'documento.pdf',
+          }
+        : {
+            link: fullMediaUrl,
+            ...(payload.content ? { caption: payload.content } : {}),
+          };
+
+      const response = await axios.post(
+        url,
+        {
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to: payload.phone,
+          type: isDocument ? 'document' : 'image',
+          [isDocument ? 'document' : 'image']: mediaPayload,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      this.logger.log(`Mídia [${payload.type}] enviada via Meta API com sucesso para ${payload.phone}: ${fullMediaUrl}`);
+      return response.data;
+    } catch (error: any) {
+      this.logger.error(`Falha ao enviar mídia [${payload.type}] Meta para ${payload.phone}: ${error.response?.data?.error?.message || error.message}`);
       return null;
     }
   }

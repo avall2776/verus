@@ -27,6 +27,7 @@ const whatsapp_module_1 = require("./modules/whatsapp/whatsapp.module");
 const monitor_module_1 = require("./modules/monitor/monitor.module");
 const team_chat_module_1 = require("./modules/team-chat/team-chat.module");
 const analytics_module_1 = require("./modules/analytics/analytics.module");
+const storage_module_1 = require("./shared/storage/storage.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -34,6 +35,7 @@ exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
             database_module_1.DatabaseModule,
+            storage_module_1.StorageModule,
             auth_module_1.AuthModule,
             queue_module_1.QueueModule,
             webhooks_module_1.WebhooksModule,

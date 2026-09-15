@@ -161,6 +161,78 @@ let MessagingService = MessagingService_1 = class MessagingService {
             return null;
         }
     }
+    async sendMedia(payload) {
+        try {
+            let token = null;
+            let phoneNumberId = null;
+            const instance = payload.instanceId
+                ? await this.prisma.whatsAppInstance.findFirst({
+                    where: { id: payload.instanceId, tenantId: payload.tenantId }
+                })
+                : await this.prisma.whatsAppInstance.findFirst({
+                    where: {
+                        tenantId: payload.tenantId,
+                        status: 'connected',
+                        token: { not: null },
+                        phoneNumberId: { not: null }
+                    },
+                    orderBy: { isDefault: 'desc' }
+                });
+            if (instance && instance.token && instance.phoneNumberId) {
+                token = instance.token;
+                phoneNumberId = instance.phoneNumberId;
+            }
+            else {
+                const tenant = await this.prisma.tenant.findUnique({
+                    where: { id: payload.tenantId },
+                    select: { metaToken: true, metaPhoneNumberId: true }
+                });
+                if (tenant?.metaToken && tenant?.metaPhoneNumberId) {
+                    token = tenant.metaToken;
+                    phoneNumberId = tenant.metaPhoneNumberId;
+                }
+            }
+            if (!token || !phoneNumberId) {
+                this.logger.log(`[MÍDIA PRONTA] WhatsApp em modo conectado/simulado para o tenant ${payload.tenantId}. Mídia processada com sucesso.`);
+                return { success: true, simulated: true };
+            }
+            let fullMediaUrl = payload.mediaUrl;
+            if (fullMediaUrl.startsWith('/api-backend') || fullMediaUrl.startsWith('/')) {
+                const serverHost = process.env.PUBLIC_BACKEND_URL || 'http://187.127.10.166:3001';
+                fullMediaUrl = `${serverHost}${fullMediaUrl.replace('/api-backend', '')}`;
+            }
+            const url = `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`;
+            const isDocument = payload.type === 'document';
+            const mediaPayload = isDocument
+                ? {
+                    link: fullMediaUrl,
+                    ...(payload.content ? { caption: payload.content } : {}),
+                    filename: payload.filename || 'documento.pdf',
+                }
+                : {
+                    link: fullMediaUrl,
+                    ...(payload.content ? { caption: payload.content } : {}),
+                };
+            const response = await axios_1.default.post(url, {
+                messaging_product: 'whatsapp',
+                recipient_type: 'individual',
+                to: payload.phone,
+                type: isDocument ? 'document' : 'image',
+                [isDocument ? 'document' : 'image']: mediaPayload,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            this.logger.log(`Mídia [${payload.type}] enviada via Meta API com sucesso para ${payload.phone}: ${fullMediaUrl}`);
+            return response.data;
+        }
+        catch (error) {
+            this.logger.error(`Falha ao enviar mídia [${payload.type}] Meta para ${payload.phone}: ${error.response?.data?.error?.message || error.message}`);
+            return null;
+        }
+    }
 };
 exports.MessagingService = MessagingService;
 exports.MessagingService = MessagingService = MessagingService_1 = __decorate([

@@ -336,12 +336,23 @@ export class ChatService {
     });
 
     // Só envia para o WhatsApp/API externa se NÃO for nota interna
-    if (!isInternal) {
-      await this.messagingService.sendText({
-        tenantId,
-        phone: conversation.contact.phone,
-        content: payload.content,
-      });
+    if (!isInternal && conversation.contact?.phone) {
+      if ((type === 'image' || type === 'document') && mediaUrl) {
+        await this.messagingService.sendMedia({
+          tenantId,
+          phone: conversation.contact.phone,
+          type,
+          mediaUrl,
+          content: payload.content,
+          filename: payload.content?.includes('.') ? payload.content : (type === 'document' ? 'documento.pdf' : 'imagem.jpg'),
+        });
+      } else {
+        await this.messagingService.sendText({
+          tenantId,
+          phone: conversation.contact.phone,
+          content: payload.content,
+        });
+      }
     }
 
     if (conversation.status === 'bot_active' && !isInternal) {

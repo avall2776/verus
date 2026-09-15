@@ -14,7 +14,6 @@ import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
-import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
 
 const COMMON_EMOJIS = [
@@ -61,6 +60,7 @@ function InboxContent() {
   const [isInternalMode, setIsInternalMode] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [quickReplies, setQuickReplies] = useState<any[]>([]);
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [quickReplyFilter, setQuickReplyFilter] = useState('');
@@ -707,45 +707,41 @@ function InboxContent() {
     if (!activeChat || (!inputText.trim() && !selectedFile)) return;
     
     const content = inputText;
+    const fileToUpload = selectedFile;
+
     setInputText(""); // limpa o input
     setShowAttachments(false);
     setSelectedFile(null);
     
-    // Upload real p/ Supabase
     let mediaUrl = null;
     let type = 'text';
-    if (selectedFile) {
-      type = selectedFile.type.startsWith('image/') ? 'image' : selectedFile.type.startsWith('audio/') ? 'audio' : 'document';
-      
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${uuidv4()}.${fileExt}`;
-      const filePath = `chat/${fileName}`;
 
-      const { data: uploadData, error: uploadError } = await supabase
-        .storage
-        .from('versus-media')
-        .upload(filePath, selectedFile, {
-          cacheControl: '3600',
-          upsert: false
+    if (fileToUpload) {
+      type = fileToUpload.type.startsWith('image/') ? 'image' : fileToUpload.type.startsWith('audio/') ? 'audio' : 'document';
+      
+      try {
+        setIsUploadingMedia(true);
+        const formData = new FormData();
+        formData.append('file', fileToUpload);
+        formData.append('folder', 'chat');
+
+        const { data: uploadRes } = await api.post('/media/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
         });
 
-      if (uploadError) {
-        console.error("Erro no upload do Supabase:", uploadError);
-        alert("Falha ao enviar arquivo. Verifique se o bucket 'versus-media' existe e é público.");
-        return;
+        if (uploadRes?.url) {
+          mediaUrl = uploadRes.url;
+        }
+      } catch (uploadErr: any) {
+        console.error("Erro no upload de arquivo pelo backend:", uploadErr);
+      } finally {
+        setIsUploadingMedia(false);
       }
-
-      const { data: publicUrlData } = supabase
-        .storage
-        .from('versus-media')
-        .getPublicUrl(filePath);
-        
-      mediaUrl = publicUrlData.publicUrl;
     }
 
     try {
       const payload: any = { 
-        content: content || (selectedFile ? selectedFile.name : ''),
+        content: content || (fileToUpload ? fileToUpload.name : ''),
         isInternal: isInternalMode,
         type
       };
@@ -763,7 +759,7 @@ function InboxContent() {
       }
     } catch (error: any) {
       console.error("Erro ao enviar mensagem", error);
-      alert(`ERRO CRÍTICO AO ENVIAR: ${error.response?.data?.message || error.message || 'Erro Desconhecido'}`);
+      alert(`ERRO AO ENVIAR: ${error.response?.data?.message || error.message || 'Erro Desconhecido'}`);
     }
   };
 
@@ -1655,7 +1651,7 @@ function InboxContent() {
                         )}
                         
                         {/* Conteúdo de Texto */}
-                        {msg.content && msg.type !== 'audio' && (
+                        {msg.content && msg.type !== 'audio' && msg.type !== 'document' && (
                           <div className="whitespace-pre-wrap leading-relaxed text-[0.92rem]">
                             {msg.content}
                           </div>
@@ -1854,6 +1850,34 @@ function InboxContent() {
                       </div>
                     </div>
 
+                    {/* Pré-visualização do Anexo Selecionado */}
+                    {selectedFile && (
+                      <div className="mb-2 p-2.5 px-3 rounded-xl bg-[#1E293B] border border-accent/40 flex items-center justify-between animate-in slide-in-from-bottom-1 shadow-lg">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <div className="w-9 h-9 rounded-lg bg-accent/20 text-accent flex items-center justify-center shrink-0">
+                            {selectedFile.type.startsWith('image/') ? <ImageIcon size={18} /> : <FileText size={18} />}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs font-semibold text-white truncate max-w-[280px] sm:max-w-md">{selectedFile.name}</span>
+                            <span className="text-[11px] text-gray-400 flex items-center gap-1.5">
+                              <span>{(selectedFile.size / 1024).toFixed(1)} KB</span>
+                              <span>•</span>
+                              <span className="text-accent/90">{selectedFile.type.startsWith('image/') ? 'Foto / Imagem' : 'Documento'}</span>
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedFile(null)}
+                          disabled={isUploadingMedia}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                          title="Descartar anexo"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    )}
+
                     <div className={`border rounded-xl p-1.5 flex items-end gap-2 transition-colors shadow-sm relative min-h-[52px]
                       ${isInternalMode 
                         ? 'bg-amber-500/10 border-amber-500/40 focus-within:border-amber-500' 
@@ -2012,14 +2036,20 @@ function InboxContent() {
                             <button 
                               type="button"
                               onClick={handleSendMessage} 
-                              className={`p-3 rounded-lg transition-colors shadow-md flex items-center justify-center shrink-0
+                              disabled={isUploadingMedia}
+                              title={isUploadingMedia ? "Enviando arquivo..." : "Enviar mensagem"}
+                              className={`p-3 rounded-lg transition-colors shadow-md flex items-center justify-center shrink-0 disabled:opacity-50 cursor-pointer
                                 ${isInternalMode 
                                   ? 'bg-amber-500 hover:bg-amber-600 text-amber-950' 
                                   : 'bg-accent text-[#0B1224] hover:bg-accent/90'
                                 }
                               `}
                             >
-                              <Send size={18} className={!isInternalMode ? "ml-1" : ""} />
+                              {isUploadingMedia ? (
+                                <RefreshCw size={18} className="animate-spin text-current" />
+                              ) : (
+                                <Send size={18} className={!isInternalMode ? "ml-1" : ""} />
+                              )}
                             </button>
                           )}
                         </>
