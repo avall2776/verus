@@ -228,11 +228,14 @@ export class ContractsService {
       status: upperStatus,
     };
 
+    const rawBaseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://verus-alpha.vercel.app';
+    const baseUrl = rawBaseUrl.replace(/\/+$/, '');
+
     if (upperStatus === 'SIGNED') {
       data.signedAt = new Date();
       data.signIp = dto.signIp || clientIp || '187.127.10.166';
       data.signUserAgent = dto.signUserAgent || userAgent || 'Navegador Web / Assinatura Digital Segura';
-      data.auditLogUrl = dto.auditLogUrl || `https://app.versus.com.br/audit/contracts/${contract.id}`;
+      data.auditLogUrl = dto.auditLogUrl || `${baseUrl}/c/${contract.code.toLowerCase()}`;
     }
 
     if (dto.documentUrl) {
@@ -270,7 +273,67 @@ export class ContractsService {
     return { success: true, message: 'Contrato digital excluído com sucesso.' };
   }
 
-  async getWhatsAppShare(tenantId: string, id: string) {
+  async findPublicByCodeOrId(codeOrId: string) {
+    const clean = codeOrId.trim();
+    const contract = await this.prisma.contract.findFirst({
+      where: {
+        OR: [
+          { code: { equals: clean, mode: 'insensitive' } },
+          { id: clean },
+        ],
+      },
+      include: {
+        proposal: {
+          include: {
+            lead: true,
+            deal: true,
+            items: true,
+          },
+        },
+        tenant: true,
+      },
+    });
+
+    if (!contract) {
+      throw new NotFoundException('Contrato digital não encontrado ou código inválido.');
+    }
+
+    return this.formatContract(contract);
+  }
+
+  async signPublic(
+    codeOrId: string,
+    signerData: { signerName?: string; signerDocument?: string },
+    clientIp?: string,
+    userAgent?: string,
+  ) {
+    const contract = await this.findPublicByCodeOrId(codeOrId);
+    if (contract.status === 'signed') {
+      return contract;
+    }
+
+    const rawBaseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://verus-alpha.vercel.app';
+    const baseUrl = rawBaseUrl.replace(/\/+$/, '');
+
+    const updated = await this.prisma.contract.update({
+      where: { id: contract.id },
+      data: {
+        status: 'SIGNED',
+        signedAt: new Date(),
+        signIp: clientIp || '187.127.10.166',
+        signUserAgent: userAgent || 'Navegador Web / Assinatura Digital do Cliente',
+        auditLogUrl: `${baseUrl}/c/${contract.code.toLowerCase()}`,
+      },
+      include: {
+        proposal: true,
+        tenant: true,
+      },
+    });
+
+    return this.formatContract(updated);
+  }
+
+  async getWhatsAppShare(tenantId: string, id: string, origin?: string) {
     const contract = await this.findOne(tenantId, id);
     let phone = contract.clientPhone ? contract.clientPhone.replace(/\D/g, '') : '';
     if (phone && (phone.length === 10 || phone.length === 11) && !phone.startsWith('55')) {
@@ -278,7 +341,11 @@ export class ContractsService {
     }
     const formattedVal = Number(contract.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-    const message = `Olá, *${contract.clientName}*! Tudo bem?\n\nSegue o link oficial para assinatura digital do seu contrato: *${contract.title}* (${contract.code}).\n💰 Valor: *${formattedVal}*\n\nVocê pode revisar os termos e efetuar a assinatura eletrônica com validade jurídica pelo link: https://app.versus.com.br/c/${contract.code.toLowerCase()}`;
+    const rawBaseUrl = origin || process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://verus-alpha.vercel.app';
+    const baseUrl = rawBaseUrl.replace(/\/+$/, '');
+    const signUrl = `${baseUrl}/c/${contract.code.toLowerCase()}`;
+
+    const message = `Olá, *${contract.clientName}*! Tudo bem?\n\nSegue o link oficial para assinatura digital do seu contrato: *${contract.title}* (${contract.code}).\n💰 Valor: *${formattedVal}*\n\nVocê pode revisar os termos e efetuar a assinatura eletrônica com validade jurídica pelo link: ${signUrl}`;
 
     const encoded = encodeURIComponent(message);
     const whatsappUrl = phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
@@ -288,6 +355,7 @@ export class ContractsService {
       code: contract.code,
       clientName: contract.clientName,
       clientPhone: contract.clientPhone,
+      signUrl,
       message,
       whatsappUrl,
     };

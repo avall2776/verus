@@ -17,6 +17,8 @@ const common_1 = require("@nestjs/common");
 const automations_service_1 = require("./automations.service");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
+const create_automation_dto_1 = require("./dto/create-automation.dto");
+const update_automation_dto_1 = require("./dto/update-automation.dto");
 let AutomationsController = class AutomationsController {
     constructor(automationsService) {
         this.automationsService = automationsService;
@@ -27,8 +29,14 @@ let AutomationsController = class AutomationsController {
     async getLogs(tenantId) {
         return this.automationsService.getLogs(tenantId);
     }
+    async findOne(tenantId, id) {
+        return this.automationsService.findOne(tenantId, id);
+    }
     async create(tenantId, body) {
         return this.automationsService.create(tenantId, body);
+    }
+    async test(tenantId, id) {
+        return this.automationsService.testAutomation(tenantId, id);
     }
     async update(tenantId, id, body) {
         return this.automationsService.update(tenantId, id, body);
@@ -56,20 +64,36 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AutomationsController.prototype, "getLogs", null);
 __decorate([
+    (0, common_1.Get)(':id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AutomationsController.prototype, "findOne", null);
+__decorate([
     (0, common_1.Post)(),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, create_automation_dto_1.CreateAutomationDto]),
     __metadata("design:returntype", Promise)
 ], AutomationsController.prototype, "create", null);
+__decorate([
+    (0, common_1.Post)(':id/test'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AutomationsController.prototype, "test", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:paramtypes", [String, String, update_automation_dto_1.UpdateAutomationDto]),
     __metadata("design:returntype", Promise)
 ], AutomationsController.prototype, "update", null);
 __decorate([

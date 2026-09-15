@@ -181,11 +181,101 @@ export declare class ContractsService {
         success: boolean;
         message: string;
     }>;
-    getWhatsAppShare(tenantId: string, id: string): Promise<{
+    findPublicByCodeOrId(codeOrId: string): Promise<{
+        id: any;
+        code: any;
+        title: any;
+        document: any;
+        client: any;
+        clientName: any;
+        clientEmail: any;
+        clientPhone: any;
+        clientDocument: any;
+        clientAddress: any;
+        value: number;
+        status: any;
+        rawStatus: any;
+        startDate: string;
+        endDate: string;
+        validUntil: string;
+        signedAt: string;
+        signIp: any;
+        signUserAgent: any;
+        documentUrl: any;
+        auditLogUrl: any;
+        terms: any;
+        notes: any;
+        proposalId: any;
+        proposal: {
+            id: any;
+            code: any;
+            title: any;
+            totalValue: number;
+            status: any;
+        };
+        issuer: {
+            name: any;
+            document: any;
+            phone: any;
+            email: any;
+            address: any;
+            logoUrl: any;
+        };
+        createdAt: string;
+        updatedAt: string;
+    }>;
+    signPublic(codeOrId: string, signerData: {
+        signerName?: string;
+        signerDocument?: string;
+    }, clientIp?: string, userAgent?: string): Promise<{
+        id: any;
+        code: any;
+        title: any;
+        document: any;
+        client: any;
+        clientName: any;
+        clientEmail: any;
+        clientPhone: any;
+        clientDocument: any;
+        clientAddress: any;
+        value: number;
+        status: any;
+        rawStatus: any;
+        startDate: string;
+        endDate: string;
+        validUntil: string;
+        signedAt: string;
+        signIp: any;
+        signUserAgent: any;
+        documentUrl: any;
+        auditLogUrl: any;
+        terms: any;
+        notes: any;
+        proposalId: any;
+        proposal: {
+            id: any;
+            code: any;
+            title: any;
+            totalValue: number;
+            status: any;
+        };
+        issuer: {
+            name: any;
+            document: any;
+            phone: any;
+            email: any;
+            address: any;
+            logoUrl: any;
+        };
+        createdAt: string;
+        updatedAt: string;
+    }>;
+    getWhatsAppShare(tenantId: string, id: string, origin?: string): Promise<{
         contractId: any;
         code: any;
         clientName: any;
         clientPhone: any;
+        signUrl: string;
         message: string;
         whatsappUrl: string;
     }>;

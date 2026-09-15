@@ -29,13 +29,22 @@ let ContractsController = class ContractsController {
     async create(tenantId, dto) {
         return this.contractsService.create(tenantId, dto);
     }
+    async getPublic(codeOrId) {
+        return this.contractsService.findPublicByCodeOrId(codeOrId);
+    }
+    async signPublic(codeOrId, body, req) {
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers['user-agent'] || 'Web Browser';
+        return this.contractsService.signPublic(codeOrId, body || {}, clientIp, userAgent);
+    }
     async getPdf(id, res, queryTenantId) {
         const html = await this.contractsService.generatePdfHtml(id, queryTenantId);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(html);
     }
-    async getWhatsAppShare(tenantId, id) {
-        return this.contractsService.getWhatsAppShare(tenantId, id);
+    async getWhatsAppShare(tenantId, id, queryOrigin, req) {
+        const origin = queryOrigin || req?.headers?.origin || (req?.headers?.referer ? new URL(req.headers.referer).origin : undefined);
+        return this.contractsService.getWhatsAppShare(tenantId, id, origin);
     }
     async findOne(tenantId, id) {
         return this.contractsService.findOne(tenantId, id);
@@ -70,6 +79,22 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ContractsController.prototype, "create", null);
 __decorate([
+    (0, common_1.Get)('public/:codeOrId'),
+    __param(0, (0, common_1.Param)('codeOrId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ContractsController.prototype, "getPublic", null);
+__decorate([
+    (0, common_1.Post)('public/:codeOrId/sign'),
+    __param(0, (0, common_1.Param)('codeOrId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], ContractsController.prototype, "signPublic", null);
+__decorate([
     (0, common_1.Get)(':id/pdf'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Res)()),
@@ -83,8 +108,10 @@ __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Query)('origin')),
+    __param(3, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String, Object]),
     __metadata("design:returntype", Promise)
 ], ContractsController.prototype, "getWhatsAppShare", null);
 __decorate([

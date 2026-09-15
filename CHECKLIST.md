@@ -848,6 +848,23 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Sanitização de Datas contra Falhas no Supabase**: Implementado helper `parseSafeDate` no service para evitar que strings de data vazias (`""`) ou malformadas gerem `Invalid Date` no Prisma, garantindo gravação 100% resiliente em `POST /contracts`.
   - **Ações Rápidas & WhatsApp Aperfeiçoados**: Normalização de números de telefone para o padrão WhatsApp internacional (`55` para DDI Brasil), cópia automática e instantânea da mensagem de assinatura para a área de transferência (`navigator.clipboard`), e atualização reativa do status para `signed` na tabela e no modal de visualização.
   - **Validação**: `npx tsc --noEmit` e `npm run build` aprovados com **código 0** em ambos os ambientes. Deploy atualizado na VPS via `node deploy.js` e disparado na Vercel.
+- **[15/09/2026 - 17:40]** ⚡ **Fase 49 Concluída com Sucesso: Motor de Automações Enterprise (/settings/automations)**:
+  - **Banco de Dados & Prisma (Supabase)**:
+    - Modelos `Automation` e `AutomationLog` expandidos no `schema.prisma` com `triggerType`, `triggerConditions` (JSON), `actionType`, `actionPayload` (JSON), `description`, `payloadDetails` e `errorReason`.
+    - Sincronização executada com sucesso via `npx prisma db push` e `npx prisma generate` (código 0).
+  - **Backend NestJS**:
+    - DTOs `CreateAutomationDto` e `UpdateAutomationDto` implementados e validados para o `ValidationPipe`.
+    - `AutomationsService` enriquecido com suporte a multi-gatilhos (`PROPOSAL_ACCEPTED`, `CONTRACT_SIGNED`, `DEAL_CREATED`, `DEAL_STAGE_CHANGED`, `MESSAGE_RECEIVED`, `TAG_ADDED`, `INACTIVITY_TIMEOUT`).
+    - Interpolação de variáveis dinâmicas em tempo real (`{{clientName}}`, `{{proposalCode}}`, `{{dealTitle}}`, `{{value}}`, `{{userEmail}}`, `{{phone}}`, `{{companyName}}`).
+    - Endpoint de teste manual imediato (`POST /automations/:id/test`) para simulação de disparo e auditoria com badge 'Teste Simulado'.
+    - Rotas completas no `AutomationsController`: `GET /automations`, `POST /automations`, `POST /automations/:id/test`, `PATCH /automations/:id/toggle`, `GET /automations/logs`, `DELETE /automations/:id`.
+  - **Frontend Next.js 14 em Dark Glassmorphism**:
+    - Tipagem TypeScript estrita em `src/types/automation.ts`.
+    - Construtor visual passo a passo (`AutomationModal.tsx`): 1. Identificação, 2. Gatilho (QUANDO) com cards e refinamentos condicionais, 3. Ação (ENTÃO) com pílulas clicáveis de variáveis dinâmicas, cursor positioning no textarea e preview ao vivo.
+    - Nova página `/settings/automations/page.tsx` com KPIs superiores (Regras Ativas, Total Disparos, Taxa de Sucesso), abas 'Minhas Regras' (cards com switch, atalho de teste e exclusão) e 'Histórico (Logs)' com modal de inspeção de payload, além de empty state com presets rápidos.
+  - **Validação Rigorosa**:
+    - Backend: `npm run build` aprovado com **código 0**.
+    - Frontend: `npx tsc --noEmit` e `npm run build` aprovados com **código 0** (todas as 36 rotas compiladas com sucesso).
 
 ---
 

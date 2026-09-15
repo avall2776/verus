@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Patch, Put, Delete, Param, Body, Query, UseGuards, Res } from '@nestjs/common';
-import { Response } from 'express';
+import { Controller, Get, Post, Patch, Put, Delete, Param, Body, Query, UseGuards, Res, Req } from '@nestjs/common';
+import { Response, Request } from 'express';
 import { ProposalsService } from './proposals.service';
 import { CreateProposalDto } from './dto/create-proposal.dto';
 import { UpdateProposalDto } from './dto/update-proposal.dto';
@@ -83,13 +83,26 @@ export class ProposalsController {
     return this.proposalsService.updateStatus(tenantId, id, dto);
   }
 
+  @Get('public/:codeOrId')
+  async getPublic(@Param('codeOrId') codeOrId: string) {
+    return this.proposalsService.findPublicByCodeOrId(codeOrId);
+  }
+
+  @Post('public/:codeOrId/accept')
+  async acceptPublic(@Param('codeOrId') codeOrId: string) {
+    return this.proposalsService.acceptPublic(codeOrId);
+  }
+
   @Get(':id/whatsapp-share')
   @UseGuards(JwtAuthGuard)
   async getWhatsAppShare(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
+    @Query('origin') queryOrigin?: string,
+    @Req() req?: Request,
   ) {
-    return this.proposalsService.getWhatsAppShare(tenantId, id);
+    const origin = queryOrigin || (req?.headers?.origin as string) || (req?.headers?.referer ? new URL(req.headers.referer as string).origin : undefined);
+    return this.proposalsService.getWhatsAppShare(tenantId, id, origin);
   }
 
   @Get(':id/pdf')

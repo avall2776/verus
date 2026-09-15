@@ -41,6 +41,22 @@ export class ContractsController {
     return this.contractsService.create(tenantId, dto);
   }
 
+  @Get('public/:codeOrId')
+  async getPublic(@Param('codeOrId') codeOrId: string) {
+    return this.contractsService.findPublicByCodeOrId(codeOrId);
+  }
+
+  @Post('public/:codeOrId/sign')
+  async signPublic(
+    @Param('codeOrId') codeOrId: string,
+    @Body() body: any,
+    @Req() req: Request,
+  ) {
+    const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers['user-agent'] || 'Web Browser';
+    return this.contractsService.signPublic(codeOrId, body || {}, clientIp, userAgent);
+  }
+
   @Get(':id/pdf')
   async getPdf(
     @Param('id') id: string,
@@ -57,8 +73,11 @@ export class ContractsController {
   async getWhatsAppShare(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
+    @Query('origin') queryOrigin?: string,
+    @Req() req?: Request,
   ) {
-    return this.contractsService.getWhatsAppShare(tenantId, id);
+    const origin = queryOrigin || (req?.headers?.origin as string) || (req?.headers?.referer ? new URL(req.headers.referer as string).origin : undefined);
+    return this.contractsService.getWhatsAppShare(tenantId, id, origin);
   }
 
   @Get(':id')

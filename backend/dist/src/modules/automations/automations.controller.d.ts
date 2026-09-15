@@ -1,41 +1,40 @@
 import { AutomationsService } from './automations.service';
+import { CreateAutomationDto } from './dto/create-automation.dto';
+import { UpdateAutomationDto } from './dto/update-automation.dto';
 export declare class AutomationsController {
     private readonly automationsService;
     constructor(automationsService: AutomationsService);
-    findAll(tenantId: string): Promise<{
+    findAll(tenantId: string): Promise<({
+        _count: {
+            logs: number;
+        };
+    } & {
         id: string;
         name: string;
         tenantId: string;
         createdAt: Date;
         updatedAt: Date;
         isActive: boolean;
+        description: string | null;
         triggerType: string;
+        triggerConditions: import("@prisma/client/runtime/library").JsonValue | null;
         conditions: import("@prisma/client/runtime/library").JsonValue | null;
+        actionType: string | null;
+        actionPayload: import("@prisma/client/runtime/library").JsonValue | null;
         actions: import("@prisma/client/runtime/library").JsonValue;
-    }[]>;
+    })[]>;
     getLogs(tenantId: string): Promise<({
         contact: {
             id: string;
             name: string;
-            phone: string | null;
-            email: string | null;
-            avatarUrl: string | null;
-            source: string;
-            tags: string[];
-            tenantId: string;
-            createdAt: Date;
-            updatedAt: Date;
+            phone: string;
+            email: string;
         };
         automation: {
             id: string;
             name: string;
-            tenantId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            isActive: boolean;
             triggerType: string;
-            conditions: import("@prisma/client/runtime/library").JsonValue | null;
-            actions: import("@prisma/client/runtime/library").JsonValue;
+            actionType: string;
         };
     } & {
         error: string | null;
@@ -43,30 +42,76 @@ export declare class AutomationsController {
         tenantId: string;
         contactId: string | null;
         status: string;
+        executedAt: Date;
         automationId: string;
         dealId: string | null;
-        executedAt: Date;
+        errorReason: string | null;
+        payloadDetails: import("@prisma/client/runtime/library").JsonValue | null;
     })[]>;
-    create(tenantId: string, body: any): Promise<{
+    findOne(tenantId: string, id: string): Promise<{
+        logs: {
+            error: string | null;
+            id: string;
+            tenantId: string;
+            contactId: string | null;
+            status: string;
+            executedAt: Date;
+            automationId: string;
+            dealId: string | null;
+            errorReason: string | null;
+            payloadDetails: import("@prisma/client/runtime/library").JsonValue | null;
+        }[];
+    } & {
         id: string;
         name: string;
         tenantId: string;
         createdAt: Date;
         updatedAt: Date;
         isActive: boolean;
+        description: string | null;
         triggerType: string;
+        triggerConditions: import("@prisma/client/runtime/library").JsonValue | null;
         conditions: import("@prisma/client/runtime/library").JsonValue | null;
+        actionType: string | null;
+        actionPayload: import("@prisma/client/runtime/library").JsonValue | null;
         actions: import("@prisma/client/runtime/library").JsonValue;
     }>;
-    update(tenantId: string, id: string, body: any): Promise<{
+    create(tenantId: string, body: CreateAutomationDto): Promise<{
         id: string;
         name: string;
         tenantId: string;
         createdAt: Date;
         updatedAt: Date;
         isActive: boolean;
+        description: string | null;
         triggerType: string;
+        triggerConditions: import("@prisma/client/runtime/library").JsonValue | null;
         conditions: import("@prisma/client/runtime/library").JsonValue | null;
+        actionType: string | null;
+        actionPayload: import("@prisma/client/runtime/library").JsonValue | null;
+        actions: import("@prisma/client/runtime/library").JsonValue;
+    }>;
+    test(tenantId: string, id: string): Promise<{
+        success: boolean;
+        message: string;
+        logId: string;
+        actionType: any;
+        resolvedMessage: string;
+        executedAt: Date;
+    }>;
+    update(tenantId: string, id: string, body: UpdateAutomationDto): Promise<{
+        id: string;
+        name: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        description: string | null;
+        triggerType: string;
+        triggerConditions: import("@prisma/client/runtime/library").JsonValue | null;
+        conditions: import("@prisma/client/runtime/library").JsonValue | null;
+        actionType: string | null;
+        actionPayload: import("@prisma/client/runtime/library").JsonValue | null;
         actions: import("@prisma/client/runtime/library").JsonValue;
     }>;
     toggle(tenantId: string, id: string, body: {
@@ -78,8 +123,12 @@ export declare class AutomationsController {
         createdAt: Date;
         updatedAt: Date;
         isActive: boolean;
+        description: string | null;
         triggerType: string;
+        triggerConditions: import("@prisma/client/runtime/library").JsonValue | null;
         conditions: import("@prisma/client/runtime/library").JsonValue | null;
+        actionType: string | null;
+        actionPayload: import("@prisma/client/runtime/library").JsonValue | null;
         actions: import("@prisma/client/runtime/library").JsonValue;
     }>;
     remove(tenantId: string, id: string): Promise<{
@@ -89,8 +138,12 @@ export declare class AutomationsController {
         createdAt: Date;
         updatedAt: Date;
         isActive: boolean;
+        description: string | null;
         triggerType: string;
+        triggerConditions: import("@prisma/client/runtime/library").JsonValue | null;
         conditions: import("@prisma/client/runtime/library").JsonValue | null;
+        actionType: string | null;
+        actionPayload: import("@prisma/client/runtime/library").JsonValue | null;
         actions: import("@prisma/client/runtime/library").JsonValue;
     }>;
 }
