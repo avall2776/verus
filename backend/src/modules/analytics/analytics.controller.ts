@@ -76,4 +76,23 @@ export class AnalyticsController {
   ) {
     return this.analyticsService.getCsat(tenantId, startDate, endDate);
   }
+
+  @Get('funnel')
+  async getFunnel(
+    @CurrentTenant() tenantId: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string
+  ) {
+    return this.analyticsService.getFunnel(tenantId, startDate, endDate);
+  }
+
+  @Get('bottlenecks')
+  async getBottlenecks(
+    @CurrentTenant() tenantId: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string
+  ) {
+    return this.analyticsService.getBottlenecks(tenantId, startDate, endDate);
+  }
 }
+

@@ -19,6 +19,9 @@ import { MonitorModule } from './modules/monitor/monitor.module';
 import { TeamChatModule } from './modules/team-chat/team-chat.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { StorageModule } from './shared/storage/storage.module';
+import { ProposalsModule } from './modules/proposals/proposals.module';
+import { GoalsModule } from './modules/goals/goals.module';
+import { ContractsModule } from './modules/contracts/contracts.module';
 
 @Module({
   imports: [
@@ -42,8 +45,12 @@ import { StorageModule } from './shared/storage/storage.module';
     MonitorModule,
     TeamChatModule,
     AnalyticsModule,
+    ProposalsModule,
+    GoalsModule,
+    ContractsModule,
   ],
   controllers: [],
   providers: [],
 })
 export class AppModule {}
+

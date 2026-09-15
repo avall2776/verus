@@ -745,6 +745,29 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ---
 
+### 💼 FASE 48: MÓDULOS DE EXPANSÃO COMERCIAL (PROPOSTAS, METAS, CONTRATOS & ANALYTICS) [CONCLUÍDO]
+- [x] **Modelagem de Dados no Supabase & Prisma ORM (Autoridade Exclusiva IDE 1)**:
+  * Modelos `Proposal` e `ProposalItem`: Orçamentos comerciais multi-itens vinculados ao tenant, lead e negócio (Deal), cálculo de subtotal, status (`DRAFT`, `SENT`, `ACCEPTED`, `REJECTED`), termos de pagamento e validade.
+  * Modelo `Goal`: Metas corporativas e individuais (`REVENUE`, `DEALS`, `LEADS`), valores alvo, períodos e agregação dinâmica com base em fechamentos reais.
+  * Modelo `Contract`: Gestão de contratos digitais vinculados a propostas, status (`PENDING_SIGNATURE`, `SIGNED`, `CANCELED`), URLs de documentos e logs de auditoria.
+  * Sincronização e geração de cliente Prisma executadas com sucesso (`npx prisma db push` e `npx prisma generate` aprovados com **código 0**).
+- [x] **Construção dos Módulos & Endpoints NestJS (IDE 1)**:
+  * `ProposalsModule` (`/proposals`): `GET /proposals`, `POST /proposals`, `GET /proposals/:id`, `PATCH /proposals/:id/status` e geração dinâmica de espelho para visualização e impressão em `GET /proposals/:id/pdf`.
+  * `GoalsModule` (`/goals`): `GET /goals`, `POST /goals` e `GET /goals/leaderboard` com ranking de performance, taxa de conversão e receita fechada.
+  * `ContractsModule` (`/contracts`): `GET /contracts`, `POST /contracts`, `GET /contracts/:id` e `PATCH /contracts/:id/status`.
+  * `AnalyticsModule` (`/analytics`): Novos endpoints analíticos corporativos: `GET /analytics/funnel` (funil comercial por estágios com drop-off e taxa de conversão) e `GET /analytics/bottlenecks` (gargalos operacionais de atendimento, SLA, TMA e FRT).
+  * Módulos registrados no `AppModule` e tipados com DTOs validados via `class-validator`.
+- [x] **Interface & Experiência do Usuário (IDE 2 Frontend)**:
+  * Sidebar retrátil com menu expansível 'Mais Recursos' para navegação rápida entre Propostas, Contratos, Metas e Analytics.
+  * Tela de Propostas (`/proposals`): KPIs de conversão, orçamentador com cálculo automático de margem e modal de espelho/aceite de propostas.
+  * Tela de Metas & Leaderboard (`/dashboard/goals`): Pódio gamificado de vendas (Ouro, Prata, Bronze) e projeção de Run Rate.
+  * Tela de Analytics Avançado (`/dashboard/analytics`): Gráficos Recharts de Funil de Conversão e gargalos de TMA/FRT por setor.
+- [x] **Validação de Compilação & Integridade**:
+  * Build do Backend NestJS (`npm run build`) aprovado com **código 0**.
+  * Build do Frontend Next.js 14 (`npm run build`) aprovado com **código 0** (36 rotas de produção geradas).
+
+---
+
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
 - **[08/09/2026 - 08:30]** 🟢 Início da Fundação do Projeto (Docker, Postgres, Supabase, Prisma ORM, BullMQ).
 - **[09/09/2026 - 08:30]** 🟢 Implementação de WebSockets, Sentry, Deploy Vercel/VPS e WhatsApp Cloud API.
@@ -769,6 +792,9 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[15/09/2026 - 13:52]** 👑 **Central Global de Agendamentos Concluída (IDE 2)**: A **IDE 2** finalizou o componente unificado `GlobalScheduledCenterModal.tsx` com filtros de período (Hoje, Amanhã, Esta Semana), busca em tempo real por lead/texto, cancelamento em lote com checkbox e navegação direta para o chat. Conexão integrada aos atalhos de agenda do Inbox. Builds TypeScript e Next.js 14 validados com código 0!
 - **[15/09/2026 - 14:04]** 💎 **Central Global de Agendamentos & Cancelamento em Lote Concluídos**: Implementação dos endpoints `GET /conversations/scheduled/all` e `POST /conversations/scheduled/batch-cancel` no backend NestJS, integrando perfeitamente a visão corporativa unificada do `GlobalScheduledCenterModal.tsx` com o Supabase e fila Redis do BullMQ. Builds backend e frontend 100% íntegros (código 0) e deploy sincronizado na VPS e Vercel.
 - **[15/09/2026 - 14:12]** 🎯 **Refinamento Crítico de UX no Chat Header (IDE 2)**: Reformulação completa do menu flutuante de 3 pontos do chat ativo (`inbox/page.tsx`). Textos e subtítulos com contraste e legibilidade máxima (`text-white` e `text-slate-300` sobre `#0B1224`), todas as opções convertidas em elementos `<button>` interativos com handlers reais (Agendar Nova Mensagem abrindo `ScheduleModal`, atalho de Nota Interna ativando o modo e focando automaticamente no composer, e Copiar ID com toast visual instantâneo). Validação TypeScript e Next.js 14 aprovadas com código 0.
+- **[15/09/2026 - 14:38]** 🚀 **Novos Módulos de Expansão Comercial Concluídos (IDE 2)**: Entrega de ponta a ponta do escopo de expansão comercial no Frontend (Sidebar retrátil, `/proposals`, `/dashboard/goals`, `/dashboard/analytics`, `/contracts`, `/email-inbox`). Build Next.js 14 aprovado com código 0 (36 rotas).
+- **[15/09/2026 - 14:58]** 👑 **Fase 48 Concluída com Sucesso (Expansão Comercial Completa)**: Backend NestJS e banco Supabase 100% integrados aos novos módulos comerciais. Modelos Prisma sincronizados (`Proposal`, `ProposalItem`, `Goal`, `Contract`), novos endpoints ativos (`/proposals`, `/goals`, `/goals/leaderboard`, `/contracts`, `/analytics/funnel`, `/analytics/bottlenecks`). Builds de Frontend e Backend aprovados com código 0 e deploy oficial na VPS e Vercel!
+
 
 ---
 

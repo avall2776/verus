@@ -48,6 +48,12 @@ let AnalyticsController = class AnalyticsController {
     async getCsat(tenantId, startDate, endDate) {
         return this.analyticsService.getCsat(tenantId, startDate, endDate);
     }
+    async getFunnel(tenantId, startDate, endDate) {
+        return this.analyticsService.getFunnel(tenantId, startDate, endDate);
+    }
+    async getBottlenecks(tenantId, startDate, endDate) {
+        return this.analyticsService.getBottlenecks(tenantId, startDate, endDate);
+    }
 };
 exports.AnalyticsController = AnalyticsController;
 __decorate([
@@ -110,6 +116,24 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getCsat", null);
+__decorate([
+    (0, common_1.Get)('funnel'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('startDate')),
+    __param(2, (0, common_1.Query)('endDate')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getFunnel", null);
+__decorate([
+    (0, common_1.Get)('bottlenecks'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('startDate')),
+    __param(2, (0, common_1.Query)('endDate')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getBottlenecks", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, common_1.Controller)('analytics'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

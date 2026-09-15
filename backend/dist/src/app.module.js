@@ -28,6 +28,9 @@ const monitor_module_1 = require("./modules/monitor/monitor.module");
 const team_chat_module_1 = require("./modules/team-chat/team-chat.module");
 const analytics_module_1 = require("./modules/analytics/analytics.module");
 const storage_module_1 = require("./shared/storage/storage.module");
+const proposals_module_1 = require("./modules/proposals/proposals.module");
+const goals_module_1 = require("./modules/goals/goals.module");
+const contracts_module_1 = require("./modules/contracts/contracts.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -54,6 +57,9 @@ exports.AppModule = AppModule = __decorate([
             monitor_module_1.MonitorModule,
             team_chat_module_1.TeamChatModule,
             analytics_module_1.AnalyticsModule,
+            proposals_module_1.ProposalsModule,
+            goals_module_1.GoalsModule,
+            contracts_module_1.ContractsModule,
         ],
         controllers: [],
         providers: [],

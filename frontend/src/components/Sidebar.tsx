@@ -23,7 +23,13 @@ import {
   Edit2,
   Check,
   X,
-  User
+  User,
+  FileText,
+  ScrollText,
+  TrendingUp,
+  Target,
+  Mail,
+  Sparkles
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -61,6 +67,18 @@ const NAV_GROUPS = [
     items: [
       { name: "Oportunidades", icon: Kanban, href: "/crm" },
       { name: "Métricas de Vendas", icon: PieChart, href: "/dashboard/crm" },
+    ]
+  },
+  {
+    title: "MAIS RECURSOS / EXPANSÃO",
+    isNew: true,
+    items: [
+      { name: "Propostas Comerciais", icon: FileText, href: "/proposals", badge: "NOVO" },
+      { name: "Contratos", icon: ScrollText, href: "/contracts" },
+      { name: "Automações de Vendas", icon: Zap, href: "/settings/automations" },
+      { name: "Analytics Avançado", icon: TrendingUp, href: "/dashboard/analytics", badge: "PRO" },
+      { name: "Metas Comerciais", icon: Target, href: "/dashboard/goals", badge: "NOVO" },
+      { name: "Inbox de E-mail", icon: Mail, href: "/email-inbox" },
     ]
   },
   {
@@ -218,13 +236,20 @@ export default function Sidebar() {
                 className={`flex items-center justify-between px-2 py-1 mb-1 cursor-pointer group ${!isExpanded && 'hidden'}`}
                 onClick={() => toggleGroup(group.title)}
               >
-                <span className="text-[10px] font-bold text-gray-500 tracking-wider uppercase group-hover:text-gray-300 transition-colors">
-                  {group.title}
-                </span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[10px] font-bold text-gray-500 tracking-wider uppercase group-hover:text-gray-300 transition-colors truncate">
+                    {group.title}
+                  </span>
+                  {(group as any).isNew && (
+                    <span className="px-1.5 py-0.2 rounded-full text-[8px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0 animate-pulse">
+                      NOVO
+                    </span>
+                  )}
+                </div>
                 {expandedGroups[group.title] ? (
-                  <ChevronDown size={12} className="text-gray-600 group-hover:text-gray-400" />
+                  <ChevronDown size={12} className="text-gray-600 group-hover:text-gray-400 shrink-0 ml-1" />
                 ) : (
-                  <ChevronRight size={12} className="text-gray-600 group-hover:text-gray-400" />
+                  <ChevronRight size={12} className="text-gray-600 group-hover:text-gray-400 shrink-0 ml-1" />
                 )}
               </div>
 
@@ -253,7 +278,17 @@ export default function Sidebar() {
                       <item.icon size={isExpanded ? 18 : 20} className={isActive ? 'text-blue-400' : 'text-gray-400'} />
                       
                       {isExpanded && (
-                        <span className="text-sm truncate">{item.name}</span>
+                        <span className="text-sm truncate flex-1">{item.name}</span>
+                      )}
+
+                      {isExpanded && (item as any).badge && (
+                        <span className={`ml-auto text-[9px] font-black px-1.5 py-0.5 rounded border shrink-0 ${
+                          (item as any).badge === 'NOVO' 
+                            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' 
+                            : 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                        }`}>
+                          {(item as any).badge}
+                        </span>
                       )}
 
                       {!isExpanded && (

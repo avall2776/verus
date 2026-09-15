@@ -109,4 +109,35 @@ export declare class AnalyticsController {
             createdAt: string;
         }[];
     }>;
+    getFunnel(tenantId: string, startDate?: string, endDate?: string): Promise<{
+        totalLeads: number;
+        contractsSigned: number;
+        overallConversion: number;
+        stages: {
+            name: string;
+            count: number;
+            percent: number;
+            dropoff: number;
+            color: string;
+        }[];
+    }>;
+    getBottlenecks(tenantId: string, startDate?: string, endDate?: string): Promise<{
+        tmaMinutes: number;
+        frtMinutes: number;
+        slaCompliancePercent: number;
+        criticalBottleneck: string;
+        hourlyBottlenecks: {
+            hour: string;
+            frtMin: number;
+            tmaMin: number;
+            volume: number;
+            bottleneckLevel: string;
+        }[];
+        departmentBottlenecks: {
+            department: string;
+            avgFrt: number;
+            avgTma: number;
+            health: string;
+        }[];
+    }>;
 }

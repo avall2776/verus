@@ -52,6 +52,9 @@ model Tenant {
   teamMessages TeamMessage[]
   businessHours BusinessHours[]
   whatsappInstances WhatsAppInstance[]
+  proposals    Proposal[]
+  goals        Goal[]
+  contracts    Contract[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -85,6 +88,7 @@ model User {
   isOnline  Boolean  @default(false)
   departments UserDepartment[]
   deals     Deal[]
+  goals     Goal[]
   sentTeamMessages     TeamMessage[] @relation("SentTeamMessages")
   receivedTeamMessages TeamMessage[] @relation("ReceivedTeamMessages")
   createdAt DateTime @default(now())
@@ -129,6 +133,7 @@ model Contact {
   conversations Conversation[]
   messages  Message[]
   deals     Deal[]
+  proposals Proposal[]
   automationLogs AutomationLog[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -192,6 +197,7 @@ model Deal {
   assignedTo String?
   contact    Contact  @relation(fields: [contactId], references: [id])
   assignee   User?    @relation(fields: [assignedTo], references: [id])
+  proposals  Proposal[]
   automationLogs AutomationLog[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -383,4 +389,87 @@ model WhatsAppConnectionHistory {
   instance    WhatsAppInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@index([instanceId])
+}
+
+// ------------------------------------------------------
+// MÓDULOS DE EXPANSÃO COMERCIAL (PROPOSTAS, METAS, CONTRATOS)
+// ------------------------------------------------------
+
+model Proposal {
+  id           String         @id @default(uuid())
+  tenantId     String
+  leadId       String?
+  dealId       String?
+  title        String
+  status       String         @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED
+  totalValue   Decimal        @default(0)
+  validUntil   DateTime?
+  paymentTerms String?
+  notes        String?
+  items        ProposalItem[]
+  contracts    Contract[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead         Contact?       @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  deal         Deal?          @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([leadId])
+  @@index([dealId])
+}
+
+model ProposalItem {
+  id          String   @id @default(uuid())
+  proposalId  String
+  description String
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @default(0)
+  totalPrice  Decimal  @default(0)
+  createdAt   DateTime @default(now())
+
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  @@index([proposalId])
+}
+
+model Goal {
+  id           String    @id @default(uuid())
+  tenantId     String
+  userId       String?
+  title        String?
+  targetType   String    // REVENUE, DEALS, LEADS
+  targetValue  Decimal   @default(0)
+  currentValue Decimal   @default(0)
+  periodStart  DateTime
+  periodEnd    DateTime
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([tenantId, targetType])
+  @@index([userId])
+}
+
+model Contract {
+  id          String    @id @default(uuid())
+  tenantId    String
+  proposalId  String
+  status      String    @default("PENDING_SIGNATURE") // PENDING_SIGNATURE, SIGNED, CANCELED
+  documentUrl String?
+  auditLogUrl String?
+  signedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  proposal    Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([proposalId])
 }
