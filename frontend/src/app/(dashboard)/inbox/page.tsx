@@ -15,6 +15,7 @@ import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
+import toast from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 import ScheduleModal from "@/components/inbox/ScheduleModal";
 import ScheduledMessagesDrawer, { ScheduledMessage } from "@/components/inbox/ScheduledMessagesDrawer";
@@ -1966,82 +1967,131 @@ function InboxContent() {
                   {showChatOptionsMenu && (
                     <div 
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute top-full right-0 mt-2 w-64 bg-[#0F172A] border border-gray-700/90 rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.6)] py-2 z-50 animate-in fade-in zoom-in-95 text-xs text-gray-200"
+                      className="absolute top-full right-0 mt-2 w-72 bg-[#0B1224] border border-slate-700/90 rounded-2xl shadow-[0_20px_45px_rgba(0,0,0,0.8)] py-2 z-50 animate-in fade-in zoom-in-95 text-xs divide-y divide-slate-800/80"
                     >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowChatOptionsMenu(false);
-                          setShowHistoryModal(true);
-                        }}
-                        className="w-full px-4 py-2.5 text-left hover:bg-gray-800/80 flex items-center gap-3 transition-colors cursor-pointer"
-                      >
-                        <History size={16} className="text-blue-400 shrink-0" />
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-bold text-white leading-tight">Histórico de Atendimento</span>
-                          <span className="text-[10px] text-gray-400 leading-tight">Ver eventos, status e métricas do ticket</span>
-                        </div>
-                      </button>
+                      <div className="py-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowChatOptionsMenu(false);
+                            setShowHistoryModal(true);
+                          }}
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 group-hover:bg-blue-500/25 transition-colors">
+                            <History size={16} />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-semibold text-white group-hover:text-blue-300 transition-colors">Histórico de Atendimento</span>
+                            <span className="text-[11px] text-slate-300 leading-tight">Ver eventos e métricas do ticket</span>
+                          </div>
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowChatOptionsMenu(false);
-                          handleExportConversation();
-                        }}
-                        className="w-full px-4 py-2.5 text-left hover:bg-gray-800/80 flex items-center gap-3 transition-colors cursor-pointer"
-                      >
-                        <FileDown size={16} className="text-emerald-400 shrink-0" />
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-bold text-white leading-tight">Exportar Conversa</span>
-                          <span className="text-[10px] text-gray-400 leading-tight">Baixar transcrição completa (.txt)</span>
-                        </div>
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowChatOptionsMenu(false);
+                            handleExportConversation();
+                          }}
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 group-hover:bg-emerald-500/25 transition-colors">
+                            <FileDown size={16} />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-semibold text-white group-hover:text-emerald-300 transition-colors">Exportar Conversa</span>
+                            <span className="text-[11px] text-slate-300 leading-tight">Baixar transcrição completa (.txt)</span>
+                          </div>
+                        </button>
+                      </div>
 
-                      <div className="h-px bg-gray-800 my-1.5" />
+                      <div className="py-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowChatOptionsMenu(false);
+                            setShowScheduledDrawer(true);
+                          }}
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center justify-between transition-colors cursor-pointer group"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0 group-hover:bg-cyan-500/25 transition-colors">
+                              <CalendarClock size={16} />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-semibold text-white group-hover:text-cyan-300 transition-colors">Ver Mensagens Agendadas</span>
+                              <span className="text-[11px] text-slate-300 leading-tight">Fila de disparos deste contato</span>
+                            </div>
+                          </div>
+                          {activeChat && (scheduledMessagesByChat[activeChat]?.length || 0) > 0 && (
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 shrink-0">
+                              {scheduledMessagesByChat[activeChat].length}
+                            </span>
+                          )}
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowChatOptionsMenu(false);
-                          setShowScheduledDrawer(true);
-                        }}
-                        className="w-full px-4 py-2 text-left hover:bg-gray-800/80 flex items-center justify-between transition-colors cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <CalendarClock size={15} className="text-cyan-400 shrink-0" />
-                          <span className="truncate">Ver Mensagens Agendadas</span>
-                        </div>
-                        {activeChat && (scheduledMessagesByChat[activeChat]?.length || 0) > 0 && (
-                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                            {scheduledMessagesByChat[activeChat].length}
-                          </span>
-                        )}
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowChatOptionsMenu(false);
+                            setShowScheduleModal(true);
+                          }}
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 group-hover:bg-amber-500/25 transition-colors">
+                            <Calendar size={16} />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-semibold text-white group-hover:text-amber-300 transition-colors">Agendar Nova Mensagem</span>
+                            <span className="text-[11px] text-slate-300 leading-tight">Programar envio de data e hora</span>
+                          </div>
+                        </button>
+                      </div>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowChatOptionsMenu(false);
-                          setShowScheduleModal(true);
-                        }}
-                        className="w-full px-4 py-2 text-left hover:bg-gray-800/80 flex items-center gap-3 transition-colors cursor-pointer"
-                      >
-                        <CalendarClock size={15} className="text-amber-400 shrink-0" />
-                        <span>Agendar Nova Mensagem</span>
-                      </button>
+                      <div className="py-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowChatOptionsMenu(false);
+                            setIsInternalMode(true);
+                            setTimeout(() => {
+                              textareaRef.current?.focus();
+                            }, 100);
+                            toast.success("Modo de Nota Interna ativado!");
+                          }}
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-yellow-500/15 border border-yellow-500/30 flex items-center justify-center text-yellow-400 shrink-0 group-hover:bg-yellow-500/25 transition-colors">
+                            <Lock size={16} />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-semibold text-white group-hover:text-yellow-300 transition-colors">Nota Interna (Equipe)</span>
+                            <span className="text-[11px] text-slate-300 leading-tight">Anotação privada invisível ao cliente</span>
+                          </div>
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowChatOptionsMenu(false);
-                          handleCopyText(activeChat || '', 'chatId');
-                        }}
-                        className="w-full px-4 py-2 text-left hover:bg-gray-800/80 flex items-center gap-3 transition-colors cursor-pointer"
-                      >
-                        <Copy size={15} className="text-purple-400 shrink-0" />
-                        <span>{copiedField === 'chatId' ? 'ID Copiado!' : 'Copiar ID do Atendimento'}</span>
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowChatOptionsMenu(false);
+                            handleCopyText(activeChat || '', 'chatId');
+                            toast.success("ID do atendimento copiado!");
+                          }}
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0 group-hover:bg-purple-500/25 transition-colors">
+                            <Copy size={16} />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-semibold text-white group-hover:text-purple-300 transition-colors">
+                              {copiedField === 'chatId' ? 'ID Copiado!' : 'Copiar ID do Atendimento'}
+                            </span>
+                            <span className="text-[11px] font-mono text-slate-400 truncate max-w-[190px]">
+                              {activeChat || '---'}
+                            </span>
+                          </div>
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
