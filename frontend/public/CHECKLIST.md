@@ -667,16 +667,51 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[14/09/2026 - 17:05]** 💎 Fase 40 Concluída: Refinamento visual e funcional do Inbox e Composer — Gravação de áudio com MediaRecorder e timer em tempo real, bolhas de mensagens estilo WhatsApp Pro com mini-player e checks alinhados, 4 abas segmentadas com badges de pílula e painel do lead enriquecido com tags dinâmicas por hash e atalhos rápidos. Build Next.js 14 aprovado com código 0 (29 rotas geradas).
 - **[14/09/2026 - 18:05]** 🛡️ Fases 41 a 43 Concluídas: Pipeline de áudio bidirecional (inbound webhook + PTT nativo WhatsApp com ffmpeg) e remoção completa do pool de retratos fictícios do Unsplash, com sincronização estrita de foto oficial da Meta ou fallback nativo em iniciais compostas (FC).
 - **[14/09/2026 - 18:30]** 🏁 **Finalização da jornada de segunda-feira (Fases 31 a 44 concluídas)**: Listagem rápida restaurada no Inbox, rota `/conversations/counts` ativa, zero bloqueios por avatar, builds 100% aprovados e VPS PM2 online. Ponto batido com sucesso!
-- **[15/09/2026 - 08:01]** 🟢 Início da jornada de desenvolvimento de terça-feira (Foco: Fase 45 — Ajuste da rotina de upload de arquivos, Supabase Storage e Fallback Local).
+### Fase 45: Upload de Arquivos e Armazenamento Resiliente (Supabase Storage & Fallback Local)
+- [x] **Serviço de Armazenamento Centralizado (`StorageService` e `StorageModule`)**:
+  * Implementada a classe `StorageService` injetável e registrada no `StorageModule` global.
+  * Validação dinâmica de bucket via variável de ambiente `SUPABASE_STORAGE_BUCKET` com padrão para `versus-media`.
+  * Tentativa prioritária de upload para o Supabase Storage (`supabaseClient.storage.from(bucket).upload(...)`) gerando URLs públicas (`getPublicUrl`).
+- [x] **Fallback Local Automático e Resiliente (`uploads/media/`)**:
+  * Em caso de ausência de bucket, chaves do Supabase não configuradas, erro de autenticação ou falha no upload de binários, o NestJS registra logs detalhados via `Logger.warn` e ativa o fallback imediatamente.
+  * Criação automática do diretório em disco `uploads/media/` com geração de nomes seguros e únicos (`timestamp_random_name.ext`).
+  * Geração de URL pública acessível `/api-backend/media/file/<filename>`, servida diretamente pelo NestJS.
+- [x] **Rotas de Mídia no Backend (`MediaController`)**:
+  * Endpoint `POST /media/upload` com interceptor Multipart (`FileInterceptor('file')`), processando qualquer arquivo de mídia (fotos, documentos PDF, áudios e vídeos).
+  * Endpoint `GET /media/file/:filename` com resolução de MIME Types (PDF, imagens, documentos office e áudio) e headers adequados (`Content-Type`, `Accept-Ranges`, `Content-Disposition`).
+  * Endpoint `GET /media/audio/:filename` mantido para total compatibilidade com gravações do PTT.
+- [x] **Envio Oficial de Imagens e Documentos no WhatsApp (`MessagingService`, `ChatService`)**:
+  * Adicionado método `sendMedia` no `MessagingService` para disparar imagens e documentos (PDFs) para a WhatsApp Cloud API da Meta com o payload oficial (`image: { link, caption }` e `document: { link, caption, filename }`).
+  * O método `sendManualMessage` do `ChatService` agora identifica quando a mensagem possui `mediaUrl` e tipo `image` ou `document`, acionando o envio correto para o WhatsApp do contato.
+- [x] **Experiência do Usuário no Frontend (`inbox/page.tsx`)**:
+  * Substituição do upload frágil do cliente Supabase no browser pela chamada direta e segura para `POST /media/upload` no backend.
+  * Adição de pré-visualização elegante do anexo selecionado acima do textarea no Composer (com ícone da categoria, nome, tamanho em KB e botão de descarte).
+  * Botão de envio adaptativo com estado de loading animado (`RefreshCw` com rotação) durante o upload de mídia.
+  * Renderização aprimorada de cards de documentos na timeline do chat sem duplicar o nome como texto avulso.
+- [x] **Validação e Deploy**:
+  * Build do Backend NestJS aprovado (**código 0**).
+  * Build do Frontend Next.js 14 aprovado (**código 0**, 31 rotas de produção geradas).
+  * Teste real de ponta a ponta executado na VPS (`187.127.10.166`): upload HTTP Multipart respondeu **HTTP 201 Created**, gravou em `uploads/media/` e o download GET retornou **HTTP 200 OK** com `Content-Type: application/pdf`.
+  * Deploy na VPS sincronizado com sucesso e PM2 `versus-engine` online (**código 0**).
 
 ---
 
-### Fase 45 (Próxima Sessão / Amanhã): Ajuste da Rotina de Upload de Arquivos e Armazenamento (Supabase Storage & Fallback Local)
-- [ ] **Verificação e Validação do Bucket no Supabase Storage**:
-  * Assegurar que o sistema utilize o bucket correto (validando se o nome exato é `versus-media` ou ajustando conforme variável de ambiente `SUPABASE_STORAGE_BUCKET`).
-- [ ] **Tratamento de Erros e Fallback Resiliente no Backend**:
-  * Se o bucket não existir ou houver falha na subida do arquivo binário, registrar logs claros no NestJS.
-  * Implementar fallback robusto salvando o arquivo localmente na pasta `uploads/` do servidor e gerando URL pública acessível, evitando que o envio de fotos, documentos (PDF) e áudios falhe para o usuário final.
+## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
+- **[08/09/2026 - 08:30]** 🟢 Início da Fundação do Projeto (Docker, Postgres, Supabase, Prisma ORM, BullMQ).
+- **[09/09/2026 - 08:30]** 🟢 Implementação de WebSockets, Sentry, Deploy Vercel/VPS e WhatsApp Cloud API.
+- **[10/09/2026 - 08:30]** 🟢 Omnichannel Revamp, RAG Avançado, Respostas Rápidas e CRM Lero.
+- **[11/09/2026 - 08:15]** 🟢 Início do turno da manhã (Sidebar Enterprise, Conexões WhatsApp, Monitor, Team Chat, Automações e CRM Inline).
+- **[11/09/2026 - 13:30]** 🟢 Início do turno da tarde (Analytics Padrão Lero, Fluxo de IA, Modal de Assunção, Toolbar WhatsApp e Deploy).
+- **[11/09/2026 - 18:10]** 🏁 Finalização da jornada de sexta-feira com builds 100% aprovados, produção atualizada e checklist definitivo consolidado.
+- **[14/09/2026 - 08:15]** 🟢 Início da jornada de desenvolvimento da semana (Foco: Reconstrução do Chat Interno Padrão Lero e Bateria de Testes WhatsApp).
+- **[14/09/2026 - 11:54]** ⏸️ Pausa para almoço (Entregas da manhã: Fases 31 a 36 concluídas — Barra do CRM em linha única, Fullscreen API, Refinamento visual monocromático do DealModal, Modais de Editar Contato/Tarefa/Evento, Conexão de endpoints dos cards e Evolução inicial da aba Métricas e Vendas `/dashboard/cm`).
+- **[14/09/2026 - 13:38]** 🟢 Retorno do almoço / Início do turno da tarde (Fases 37 e 38 concluídas: Paridade dos 6 Cards com popover analítico e tradução de etapas do CRM).
+- **[14/09/2026 - 16:35]** 🚀 Fase 39 Concluída: Refatoração completa da arquitetura do WhatsApp e Inbox (Padrão Lero Multi-tenant) — Prisma, Backend NestJS, WhatsAppProvider, /settings/whatsapp e /inbox com avatares reais, seletor de instâncias e toolbar rica no composer. Builds 100% aprovados (código 0).
+- **[14/09/2026 - 17:05]** 💎 Fase 40 Concluída: Refinamento visual e funcional do Inbox e Composer — Gravação de áudio com MediaRecorder e timer em tempo real, bolhas de mensagens estilo WhatsApp Pro com mini-player e checks alinhados, 4 abas segmentadas com badges de pílula e painel do lead enriquecido com tags dinâmicas por hash e atalhos rápidos. Build Next.js 14 aprovado com código 0 (29 rotas geradas).
+- **[14/09/2026 - 18:05]** 🛡️ Fases 41 a 43 Concluídas: Pipeline de áudio bidirecional (inbound webhook + PTT nativo WhatsApp com ffmpeg) e remoção completa do pool de retratos fictícios do Unsplash, com sincronização estrita de foto oficial da Meta ou fallback nativo em iniciais compostas (FC).
+- **[14/09/2026 - 18:30]** 🏁 Finalização da jornada de segunda-feira (Fases 31 a 44 concluídas): Listagem rápida restaurada no Inbox, rota `/conversations/counts` ativa, zero bloqueios por avatar, builds 100% aprovados e VPS PM2 online.
+- **[15/09/2026 - 08:01]** 🟢 Início da jornada de desenvolvimento de terça-feira (Foco: Fase 45 — Ajuste da rotina de upload de arquivos, Supabase Storage e Fallback Local).
+- **[15/09/2026 - 09:25]** 🚀 **Fase 45 Concluída com Sucesso**: `StorageService` implementado com Supabase Storage e fallback automático em disco local (`uploads/media/`), endpoints `/media/upload` e `/media/file/:filename`, envio oficial de fotos e PDFs para a Meta Graph API, prévia no composer do Inbox e testes de ponta a ponta 100% aprovados na VPS.
 
 ---
 
