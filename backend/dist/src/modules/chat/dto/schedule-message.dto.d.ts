@@ -1,8 +1,8 @@
-export declare class SendMessageDto {
+export declare class ScheduleMessageDto {
     content: string;
+    scheduledAt: string;
+    timezone?: string;
     isInternal?: boolean;
     type?: string;
     mediaUrl?: string;
-    scheduledAt?: string;
-    timezone?: string;
 }

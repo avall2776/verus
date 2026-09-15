@@ -29,6 +29,7 @@ export declare class MonitorService {
             fromMe: boolean;
             direction: string;
             senderType: string;
+            scheduledAt: Date | null;
             conversationId: string;
         };
         lastMessageAt: Date;
@@ -59,6 +60,7 @@ export declare class MonitorService {
             fromMe: boolean;
             direction: string;
             senderType: string;
+            scheduledAt: Date | null;
             conversationId: string;
         }[];
         department: {

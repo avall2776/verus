@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatModule = void 0;
 const common_1 = require("@nestjs/common");
+const bullmq_1 = require("@nestjs/bullmq");
 const database_module_1 = require("../../shared/database/database.module");
 const messaging_module_1 = require("../messaging/messaging.module");
 const auth_module_1 = require("../auth/auth.module");
@@ -21,10 +22,15 @@ exports.ChatModule = ChatModule;
 exports.ChatModule = ChatModule = __decorate([
     (0, common_1.Global)(),
     (0, common_1.Module)({
-        imports: [database_module_1.DatabaseModule, messaging_module_1.MessagingModule, auth_module_1.AuthModule],
+        imports: [
+            database_module_1.DatabaseModule,
+            messaging_module_1.MessagingModule,
+            auth_module_1.AuthModule,
+            bullmq_1.BullModule.registerQueue({ name: 'scheduled-messages' }),
+        ],
         providers: [chat_service_1.ChatService, chat_gateway_1.ChatGateway],
         controllers: [chat_controller_1.ChatController, media_controller_1.MediaController],
-        exports: [chat_gateway_1.ChatGateway],
+        exports: [chat_gateway_1.ChatGateway, chat_service_1.ChatService],
     })
 ], ChatModule);
 //# sourceMappingURL=chat.module.js.map

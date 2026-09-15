@@ -1,5 +1,6 @@
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
+import { ScheduleMessageDto } from './dto/schedule-message.dto';
 export declare class ChatController {
     private readonly chatService;
     constructor(chatService: ChatService);
@@ -31,6 +32,7 @@ export declare class ChatController {
             fromMe: boolean;
             direction: string;
             senderType: string;
+            scheduledAt: Date | null;
             conversationId: string;
         }[];
         department: {
@@ -72,6 +74,7 @@ export declare class ChatController {
         fromMe: boolean;
         direction: string;
         senderType: string;
+        scheduledAt: Date | null;
         conversationId: string;
     }[]>;
     getConversationByContact(tenantId: string, contactId: string): Promise<{
@@ -102,6 +105,7 @@ export declare class ChatController {
             fromMe: boolean;
             direction: string;
             senderType: string;
+            scheduledAt: Date | null;
             conversationId: string;
         }[];
     } & {
@@ -142,6 +146,7 @@ export declare class ChatController {
             fromMe: boolean;
             direction: string;
             senderType: string;
+            scheduledAt: Date | null;
             conversationId: string;
         }[];
         department: {
@@ -200,6 +205,7 @@ export declare class ChatController {
             fromMe: boolean;
             direction: string;
             senderType: string;
+            scheduledAt: Date | null;
             conversationId: string;
         }[];
         department: {
@@ -248,6 +254,7 @@ export declare class ChatController {
             fromMe: boolean;
             direction: string;
             senderType: string;
+            scheduledAt: Date | null;
             conversationId: string;
         }[];
         department: {
@@ -296,6 +303,66 @@ export declare class ChatController {
             fromMe: boolean;
             direction: string;
             senderType: string;
+            scheduledAt: Date | null;
+            conversationId: string;
+        }[];
+        department: {
+            id: string;
+            name: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            color: string | null;
+        };
+    } & {
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        contactId: string;
+        departmentId: string | null;
+        assignedTo: string | null;
+        status: string;
+    }>;
+    markAsRead(tenantId: string, conversationId: string): Promise<{
+        success: boolean;
+        conversationId: string;
+        unreadCount: number;
+    }>;
+    markAsUnread(tenantId: string, conversationId: string): Promise<{
+        success: boolean;
+        conversationId: string;
+        unreadCount: number;
+    }>;
+    ignore(tenantId: string, conversationId: string): Promise<{
+        contact: {
+            id: string;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            avatarUrl: string | null;
+            source: string;
+            tags: string[];
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+        messages: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            contactId: string;
+            status: string;
+            providerMessageId: string | null;
+            content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            isInternal: boolean;
+            fromMe: boolean;
+            direction: string;
+            senderType: string;
+            scheduledAt: Date | null;
             conversationId: string;
         }[];
         department: {
@@ -347,6 +414,7 @@ export declare class ChatController {
             fromMe: boolean;
             direction: string;
             senderType: string;
+            scheduledAt: Date | null;
             conversationId: string;
         }[];
         department: {
@@ -394,6 +462,7 @@ export declare class ChatController {
         fromMe: boolean;
         direction: string;
         senderType: string;
+        scheduledAt: Date | null;
         conversationId: string;
     }>;
     sendAudioMessage(tenantId: string, conversationId: string, file: Express.Multer.File, isInternal?: string | boolean, content?: string): Promise<{
@@ -411,7 +480,48 @@ export declare class ChatController {
         fromMe: boolean;
         direction: string;
         senderType: string;
+        scheduledAt: Date | null;
         conversationId: string;
+    }>;
+    scheduleMessage(tenantId: string, conversationId: string, payload: ScheduleMessageDto): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        contactId: string;
+        status: string;
+        providerMessageId: string | null;
+        content: string;
+        type: string;
+        mediaUrl: string | null;
+        audioTranscription: string | null;
+        isInternal: boolean;
+        fromMe: boolean;
+        direction: string;
+        senderType: string;
+        scheduledAt: Date | null;
+        conversationId: string;
+    }>;
+    getScheduledMessages(tenantId: string, conversationId: string): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        contactId: string;
+        status: string;
+        providerMessageId: string | null;
+        content: string;
+        type: string;
+        mediaUrl: string | null;
+        audioTranscription: string | null;
+        isInternal: boolean;
+        fromMe: boolean;
+        direction: string;
+        senderType: string;
+        scheduledAt: Date | null;
+        conversationId: string;
+    }[]>;
+    cancelScheduledMessage(tenantId: string, messageId: string): Promise<{
+        success: boolean;
+        messageId: string;
     }>;
     sendMessageToContact(tenantId: string, contactId: string, payload: SendMessageDto, req: any): Promise<{
         id: string;
@@ -428,6 +538,7 @@ export declare class ChatController {
         fromMe: boolean;
         direction: string;
         senderType: string;
+        scheduledAt: Date | null;
         conversationId: string;
     }>;
 }

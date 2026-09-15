@@ -9,6 +9,7 @@ import { MessagingModule } from '../messaging/messaging.module';
 import { ChatModule } from '../chat/chat.module'; // Importa o ChatModule para usar o Gateway
 import { AutomationsProcessor } from './processors/automations.processor';
 import { AutomationsModule } from '../automations/automations.module';
+import { ScheduledMessagesProcessor } from './processors/scheduled-messages.processor';
 
 @Module({
   imports: [
@@ -35,9 +36,10 @@ import { AutomationsModule } from '../automations/automations.module';
     BullModule.registerQueue({ name: 'webhook-ingress' }),
     BullModule.registerQueue({ name: 'ai-processing' }),
     BullModule.registerQueue({ name: 'automations' }),
+    BullModule.registerQueue({ name: 'scheduled-messages' }),
     AutomationsModule,
   ],
-  providers: [WebhookProcessor, AiProcessor, AutomationsProcessor],
+  providers: [WebhookProcessor, AiProcessor, AutomationsProcessor, ScheduledMessagesProcessor],
   exports: [BullModule],
 })
 export class QueueModule {}

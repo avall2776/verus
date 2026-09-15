@@ -9,39 +9,39 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SendMessageDto = void 0;
+exports.ScheduleMessageDto = void 0;
 const class_validator_1 = require("class-validator");
-class SendMessageDto {
+class ScheduleMessageDto {
 }
-exports.SendMessageDto = SendMessageDto;
+exports.ScheduleMessageDto = ScheduleMessageDto;
+__decorate([
+    (0, class_validator_1.IsString)({ message: 'O conteúdo da mensagem deve ser um texto.' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'O conteúdo da mensagem é obrigatório.' }),
+    __metadata("design:type", String)
+], ScheduleMessageDto.prototype, "content", void 0);
+__decorate([
+    (0, class_validator_1.IsString)({ message: 'A data de agendamento deve ser informada.' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'A data e horário de agendamento são obrigatórios.' }),
+    __metadata("design:type", String)
+], ScheduleMessageDto.prototype, "scheduledAt", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
-], SendMessageDto.prototype, "content", void 0);
+], ScheduleMessageDto.prototype, "timezone", void 0);
 __decorate([
     (0, class_validator_1.IsBoolean)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Boolean)
-], SendMessageDto.prototype, "isInternal", void 0);
+], ScheduleMessageDto.prototype, "isInternal", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
-], SendMessageDto.prototype, "type", void 0);
+], ScheduleMessageDto.prototype, "type", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
-], SendMessageDto.prototype, "mediaUrl", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], SendMessageDto.prototype, "scheduledAt", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], SendMessageDto.prototype, "timezone", void 0);
-//# sourceMappingURL=send-message.dto.js.map
+], ScheduleMessageDto.prototype, "mediaUrl", void 0);
+//# sourceMappingURL=schedule-message.dto.js.map

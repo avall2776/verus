@@ -169,13 +169,15 @@ model Message {
   fromMe            Boolean  @default(false)
   direction         String   @default("INBOUND") // INBOUND, OUTBOUND
   senderType        String   @default("contact") // contact, system, agent
-  status            String   @default("delivered")
+  status            String   @default("delivered") // delivered, scheduled, failed, read
+  scheduledAt       DateTime?
   contactId         String
   contact           Contact  @relation(fields: [contactId], references: [id])
   conversation      Conversation @relation(fields: [conversationId], references: [id])
   createdAt         DateTime @default(now())
 
   @@unique([tenantId, providerMessageId])
+  @@index([tenantId, status, scheduledAt])
 }
 
 model Deal {

@@ -16,6 +16,9 @@ import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { v4 as uuidv4 } from "uuid";
+import ScheduleModal from "@/components/inbox/ScheduleModal";
+import ScheduledMessagesDrawer, { ScheduledMessage } from "@/components/inbox/ScheduledMessagesDrawer";
+import GlobalScheduledCenterModal from "@/components/inbox/GlobalScheduledCenterModal";
 
 const COMMON_EMOJIS = [
   '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', 
@@ -102,11 +105,11 @@ function InboxContent() {
   const [showContactsModal, setShowContactsModal] = useState(false);
   const [contactModalSearch, setContactModalSearch] = useState('');
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showScheduledDrawer, setShowScheduledDrawer] = useState(false);
+  const [showGlobalScheduleCenter, setShowGlobalScheduleCenter] = useState(false);
+  const [scheduledMessagesByChat, setScheduledMessagesByChat] = useState<{ [chatId: string]: ScheduledMessage[] }>({});
   const [showVoipDialer, setShowVoipDialer] = useState(false);
   const [voipNumber, setVoipNumber] = useState('');
-  const [scheduleDate, setScheduleDate] = useState('');
-  const [scheduleTime, setScheduleTime] = useState('');
-  const [scheduleMessage, setScheduleMessage] = useState('');
 
   // Modal Lightbox / Expansão de Imagem
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string } | null>(null);
@@ -118,13 +121,63 @@ function InboxContent() {
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
-  // Carrega contatos silenciados salvos no localStorage
+  // Carrega contatos silenciados e mensagens agendadas salvos no localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem('versus_muted_chats');
       if (saved) setMutedContactIds(JSON.parse(saved));
+      const savedSched = localStorage.getItem('versus_scheduled_messages');
+      if (savedSched) setScheduledMessagesByChat(JSON.parse(savedSched));
     } catch (e) {}
   }, []);
+
+  // Sincroniza mensagens agendadas do backend para o chat ativo
+  useEffect(() => {
+    if (!activeChat) return;
+    api.get(`/conversations/${activeChat}/scheduled`)
+      .then(res => {
+        if (Array.isArray(res.data)) {
+          setScheduledMessagesByChat(prev => {
+            const updated = { ...prev, [activeChat]: res.data };
+            try {
+              localStorage.setItem('versus_scheduled_messages', JSON.stringify(updated));
+            } catch (e) {}
+            return updated;
+          });
+        }
+      })
+      .catch(() => {});
+  }, [activeChat]);
+
+  const saveScheduledMessages = (updated: { [chatId: string]: ScheduledMessage[] }) => {
+    setScheduledMessagesByChat(updated);
+    try {
+      localStorage.setItem('versus_scheduled_messages', JSON.stringify(updated));
+    } catch (e) {}
+  };
+
+  const handleScheduleSuccess = (newScheduled: any) => {
+    if (!activeChat) return;
+    const currentList = scheduledMessagesByChat[activeChat] || [];
+    const updated = {
+      ...scheduledMessagesByChat,
+      [activeChat]: [...currentList, newScheduled]
+    };
+    saveScheduledMessages(updated);
+  };
+
+  const handleCancelScheduled = async (id: string) => {
+    if (!activeChat) return;
+    try {
+      await api.delete(`/conversations/messages/${id}/schedule`).catch(() => {});
+    } catch (e) {}
+    const currentList = scheduledMessagesByChat[activeChat] || [];
+    const updated = {
+      ...scheduledMessagesByChat,
+      [activeChat]: currentList.filter(item => item.id !== id)
+    };
+    saveScheduledMessages(updated);
+  };
 
   // Fecha menus contextuais e popovers ao clicar fora
   useEffect(() => {
@@ -682,7 +735,22 @@ function InboxContent() {
         console.error("Erro ao buscar mensagens:", error);
       }
     };
+
+    const fetchScheduled = async () => {
+      try {
+        const { data } = await api.get(`/conversations/${activeChat}/scheduled`);
+        if (Array.isArray(data)) {
+          setScheduledMessagesByChat(prev => {
+            const updated = { ...prev, [activeChat]: data };
+            try { localStorage.setItem('versus_scheduled_messages', JSON.stringify(updated)); } catch (e) {}
+            return updated;
+          });
+        }
+      } catch (e) {}
+    };
+
     fetchMessages();
+    fetchScheduled();
   }, [activeChat]);
 
   // 3. Ouvir WebSocket para mensagens em tempo real
@@ -1180,9 +1248,13 @@ function InboxContent() {
               
               <button 
                 type="button"
-                onClick={() => setShowScheduleModal(true)}
-                title="Agendamento de Mensagens"
-                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/60 text-gray-400 hover:text-blue-400 hover:border-blue-500/50 hover:bg-[#0B1224] transition-all cursor-pointer"
+                onClick={() => setShowGlobalScheduleCenter(true)}
+                title="Central Global de Agendamentos"
+                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                  Object.values(scheduledMessagesByChat).flat().length > 0
+                    ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/25 shadow-[0_0_8px_rgba(6,182,212,0.25)]'
+                    : 'bg-[#1E293B] border-gray-700/60 text-gray-400 hover:text-blue-400 hover:border-blue-500/50 hover:bg-[#0B1224]'
+                }`}
               >
                 <CalendarClock size={15} />
               </button>
@@ -1227,8 +1299,8 @@ function InboxContent() {
               </button>
               <button 
                 type="button"
-                onClick={() => setShowScheduleModal(true)}
-                title="Agendamento de Mensagens"
+                onClick={() => setShowGlobalScheduleCenter(true)}
+                title="Central Global de Agendamentos"
                 className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/50 text-gray-400 hover:text-blue-400 hover:border-blue-500/50 hover:bg-[#0B1224] transition-all cursor-pointer group"
               >
                 <CalendarClock size={14} className="group-hover:text-blue-400" />
@@ -1531,12 +1603,21 @@ function InboxContent() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 text-[0.7rem] text-gray-400 mb-1">
+                  <div className="flex items-center gap-1.5 text-[0.7rem] text-gray-400 mb-1 flex-wrap">
                     <Phone size={10} className="text-gray-500 shrink-0" />
                     <span className="truncate">{contact.phone || 'Sem telefone'}</span>
                     {mutedContactIds.includes(contact.id) && (
                       <span title="Notificações silenciadas">
                         <BellOff size={11} className="text-amber-400/80 shrink-0 ml-0.5" />
+                      </span>
+                    )}
+                    {(scheduledMessagesByChat[contact.id]?.length || 0) > 0 && (
+                      <span 
+                        className="inline-flex items-center gap-1 text-[9px] font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-700/60 px-1.5 py-0.5 rounded-md shadow-sm shrink-0"
+                        title={`${scheduledMessagesByChat[contact.id].length} mensagem(ns) programada(s)`}
+                      >
+                        <CalendarClock size={10} className="text-cyan-400" />
+                        <span>Agendada ({scheduledMessagesByChat[contact.id].length})</span>
                       </span>
                     )}
                     {(contact.status === 'resolved' || contact.status === 'closed') && (
@@ -1810,6 +1891,29 @@ function InboxContent() {
                     <ArrowRightLeft size={16} />
                   </button>
                 )}
+
+                {/* Botão de Acesso Rápido a Mensagens Agendadas com Badge Dinâmico */}
+                <button
+                  type="button"
+                  onClick={() => setShowScheduledDrawer(true)}
+                  className={`relative p-2 rounded-xl transition-all cursor-pointer ${
+                    (activeChat && (scheduledMessagesByChat[activeChat]?.length || 0) > 0)
+                      ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/25 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`}
+                  title={
+                    activeChat && (scheduledMessagesByChat[activeChat]?.length || 0) > 0
+                      ? `${scheduledMessagesByChat[activeChat].length} mensagem(ns) agendada(s) para este contato`
+                      : "Ver mensagens agendadas"
+                  }
+                >
+                  <CalendarClock size={18} />
+                  {activeChat && (scheduledMessagesByChat[activeChat]?.length || 0) > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-1 bg-cyan-500 text-slate-950 font-black text-[9px] rounded-full flex items-center justify-center shadow-[0_0_8px_rgba(6,182,212,0.8)] animate-pulse">
+                      {scheduledMessagesByChat[activeChat].length}
+                    </span>
+                  )}
+                </button>
                 
                 <div className="relative">
                   <button 
@@ -1868,12 +1972,31 @@ function InboxContent() {
                         type="button"
                         onClick={() => {
                           setShowChatOptionsMenu(false);
+                          setShowScheduledDrawer(true);
+                        }}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-800/80 flex items-center justify-between transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <CalendarClock size={15} className="text-cyan-400 shrink-0" />
+                          <span className="truncate">Ver Mensagens Agendadas</span>
+                        </div>
+                        {activeChat && (scheduledMessagesByChat[activeChat]?.length || 0) > 0 && (
+                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                            {scheduledMessagesByChat[activeChat].length}
+                          </span>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowChatOptionsMenu(false);
                           setShowScheduleModal(true);
                         }}
                         className="w-full px-4 py-2 text-left hover:bg-gray-800/80 flex items-center gap-3 transition-colors cursor-pointer"
                       >
                         <CalendarClock size={15} className="text-amber-400 shrink-0" />
-                        <span>Agendar Mensagem para Este Chat</span>
+                        <span>Agendar Nova Mensagem</span>
                       </button>
 
                       <button
@@ -2962,76 +3085,50 @@ function InboxContent() {
       )}
 
       {/* MODAL AGENDAMENTO DE MENSAGENS */}
-      {showScheduleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-[#0F172A] border border-slate-700/80 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-slate-800 bg-[#162038]/50 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <CalendarClock size={18} className="text-blue-400" />
-                <h3 className="text-base font-bold text-white">Agendamento de Mensagem</h3>
-              </div>
-              <button onClick={() => setShowScheduleModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
-                <X size={18} />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1">Destinatário</label>
-                <div className="p-2.5 rounded-lg bg-[#1E293B] border border-slate-700 text-xs text-white">
-                  {activeContactData ? `${activeContactData.name} (${activeContactData.phone || 'Sem fone'})` : 'Selecione um chat na lista'}
-                </div>
-              </div>
+      <ScheduleModal
+        isOpen={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        activeContact={activeContactData}
+        activeChatId={activeChat}
+        onSuccess={(scheduledItem) => {
+          handleScheduleSuccess(scheduledItem);
+        }}
+      />
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-400 block mb-1">Data de Envio</label>
-                  <input 
-                    type="date" 
-                    value={scheduleDate}
-                    onChange={e => setScheduleDate(e.target.value)}
-                    className="w-full bg-[#1E293B] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-400 block mb-1">Horário</label>
-                  <input 
-                    type="time" 
-                    value={scheduleTime}
-                    onChange={e => setScheduleTime(e.target.value)}
-                    className="w-full bg-[#1E293B] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-blue-500"
-                  />
-                </div>
-              </div>
+      {/* DRAWER / PAINEL DE MENSAGENS AGENDADAS */}
+      <ScheduledMessagesDrawer
+        isOpen={showScheduledDrawer}
+        onClose={() => setShowScheduledDrawer(false)}
+        activeContact={activeContactData}
+        scheduledMessages={activeChat ? scheduledMessagesByChat[activeChat] || [] : []}
+        onCancelSchedule={handleCancelScheduled}
+        onOpenNewSchedule={() => setShowScheduleModal(true)}
+      />
 
-              <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1">Mensagem Programada</label>
-                <textarea 
-                  rows={4}
-                  value={scheduleMessage}
-                  onChange={e => setScheduleMessage(e.target.value)}
-                  placeholder="Olá! Conforme combinamos, estou enviando este lembrete..."
-                  className="w-full bg-[#1E293B] border border-slate-700 rounded-lg p-3 text-xs text-white outline-none focus:border-blue-500 resize-none"
-                />
-              </div>
-
-              <button 
-                onClick={() => {
-                  if (!scheduleMessage.trim() || !scheduleDate) {
-                    alert("Por favor, preencha a data e o conteúdo da mensagem.");
-                    return;
-                  }
-                  alert("Mensagem agendada com sucesso!");
-                  setShowScheduleModal(false);
-                  setScheduleMessage('');
-                }}
-                className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
-              >
-                Confirmar Agendamento
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* MODAL DA CENTRAL GLOBAL DE AGENDAMENTOS */}
+      <GlobalScheduledCenterModal
+        isOpen={showGlobalScheduleCenter}
+        onClose={() => setShowGlobalScheduleCenter(false)}
+        scheduledMessagesByChat={scheduledMessagesByChat}
+        contacts={contacts}
+        onSelectChat={(chatId) => {
+          setActiveChat(chatId);
+        }}
+        onCancelSchedule={async (msgId, chatId) => {
+          try {
+            await api.delete(`/conversations/messages/${msgId}/schedule`).catch(() => {});
+          } catch (e) {}
+          const currentList = scheduledMessagesByChat[chatId] || [];
+          const updated = {
+            ...scheduledMessagesByChat,
+            [chatId]: currentList.filter((item) => item.id !== msgId),
+          };
+          saveScheduledMessages(updated);
+        }}
+        onOpenNewSchedule={() => {
+          setShowScheduleModal(true);
+        }}
+      />
 
       {/* DISCADOR VOIP FLUTUANTE */}
       {showVoipDialer && (

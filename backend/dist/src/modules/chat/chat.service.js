@@ -8,6 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatService = void 0;
 const common_1 = require("@nestjs/common");
@@ -21,12 +24,15 @@ const execAsync = (0, util_1.promisify)(child_process_1.exec);
 const messaging_service_1 = require("../messaging/messaging.service");
 const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
 const chat_gateway_1 = require("./chat.gateway");
+const bullmq_1 = require("@nestjs/bullmq");
+const bullmq_2 = require("bullmq");
 let ChatService = class ChatService {
-    constructor(prisma, messagingService, whatsappService, chatGateway) {
+    constructor(prisma, messagingService, whatsappService, chatGateway, scheduledQueue) {
         this.prisma = prisma;
         this.messagingService = messagingService;
         this.whatsappService = whatsappService;
         this.chatGateway = chatGateway;
+        this.scheduledQueue = scheduledQueue;
     }
     async getConversationCounts(tenantId, userId, userRole) {
         const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
@@ -221,6 +227,35 @@ let ChatService = class ChatService {
         this.chatGateway.emitConversationUpdated(tenantId, updated);
         return updated;
     }
+    async markAsRead(tenantId, conversationId) {
+        const conversation = await this.prisma.conversation.findUnique({
+            where: { id: conversationId }
+        });
+        if (!conversation || conversation.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        await this.prisma.message.updateMany({
+            where: {
+                tenantId,
+                conversationId,
+                direction: 'INBOUND',
+                status: { not: 'read' }
+            },
+            data: { status: 'read' }
+        });
+        this.chatGateway.emitConversationUpdated(tenantId, { ...conversation, unreadCount: 0 });
+        return { success: true, conversationId, unreadCount: 0 };
+    }
+    async markAsUnread(tenantId, conversationId) {
+        const conversation = await this.prisma.conversation.findUnique({
+            where: { id: conversationId }
+        });
+        if (!conversation || conversation.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        this.chatGateway.emitConversationUpdated(tenantId, { ...conversation, unreadCount: 1 });
+        return { success: true, conversationId, unreadCount: 1 };
+    }
     async assignToUser(tenantId, conversationId, userId) {
         const conversation = await this.prisma.conversation.findUnique({
             where: { id: conversationId }
@@ -265,7 +300,116 @@ let ChatService = class ChatService {
         this.chatGateway.emitConversationUpdated(tenantId, updated);
         return updated;
     }
+    parseScheduledDate(scheduledAt, timezone) {
+        if (!scheduledAt) {
+            throw new common_1.BadRequestException('A data e o horário de agendamento são obrigatórios.');
+        }
+        const dateStr = scheduledAt.trim();
+        const hasTimezone = /Z|[+-]\d{2}(:?\d{2})?$/.test(dateStr);
+        let parsedDate;
+        if (hasTimezone) {
+            parsedDate = new Date(dateStr);
+        }
+        else {
+            const offset = timezone === 'UTC' ? 'Z' : '-03:00';
+            parsedDate = new Date(`${dateStr}${offset}`);
+        }
+        if (isNaN(parsedDate.getTime())) {
+            throw new common_1.BadRequestException('Formato de data ou horário inválido para agendamento.');
+        }
+        const now = Date.now();
+        if (parsedDate.getTime() <= now + 10000) {
+            throw new common_1.BadRequestException('O horário de agendamento deve ser definido para um momento futuro.');
+        }
+        return parsedDate;
+    }
+    async scheduleMessage(tenantId, conversationId, payload) {
+        const conversation = await this.prisma.conversation.findUnique({
+            where: { id: conversationId },
+            include: { contact: true }
+        });
+        if (!conversation || conversation.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        if (!payload.content || !payload.content.trim()) {
+            throw new common_1.BadRequestException('O conteúdo da mensagem é obrigatório.');
+        }
+        const scheduledDate = this.parseScheduledDate(payload.scheduledAt, payload.timezone);
+        const delayMs = Math.max(0, scheduledDate.getTime() - Date.now());
+        const isInternal = payload.isInternal || false;
+        const type = payload.type || 'text';
+        const mediaUrl = payload.mediaUrl || null;
+        const msg = await this.prisma.message.create({
+            data: {
+                tenantId,
+                conversationId,
+                providerMessageId: `scheduled_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+                contactId: conversation.contactId,
+                content: payload.content.trim(),
+                type,
+                mediaUrl,
+                isInternal,
+                direction: 'OUTBOUND',
+                senderType: 'user',
+                status: 'scheduled',
+                scheduledAt: scheduledDate,
+            }
+        });
+        await this.scheduledQueue.add('sendScheduledMessage', {
+            messageId: msg.id,
+            tenantId,
+            conversationId,
+        }, {
+            delay: delayMs,
+            jobId: `msg_scheduled_${msg.id}`,
+            removeOnComplete: true,
+        });
+        this.chatGateway.emitNewMessage(tenantId, msg);
+        return msg;
+    }
+    async getScheduledMessages(tenantId, conversationId) {
+        return this.prisma.message.findMany({
+            where: {
+                tenantId,
+                conversationId,
+                status: 'scheduled',
+            },
+            orderBy: { scheduledAt: 'asc' }
+        });
+    }
+    async cancelScheduledMessage(tenantId, messageId) {
+        const msg = await this.prisma.message.findUnique({
+            where: { id: messageId }
+        });
+        if (!msg || msg.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Mensagem agendada não encontrada.');
+        }
+        if (msg.status !== 'scheduled') {
+            throw new common_1.BadRequestException('Esta mensagem não possui agendamento pendente.');
+        }
+        try {
+            const job = await this.scheduledQueue.getJob(`msg_scheduled_${msg.id}`);
+            if (job)
+                await job.remove();
+        }
+        catch {
+        }
+        await this.prisma.message.delete({
+            where: { id: messageId }
+        });
+        return { success: true, messageId };
+    }
     async sendManualMessage(tenantId, conversationId, payload) {
+        if (payload.scheduledAt) {
+            return this.scheduleMessage(tenantId, conversationId, {
+                content: payload.content,
+                scheduledAt: payload.scheduledAt,
+                timezone: payload.timezone,
+                isInternal: payload.isInternal,
+                type: payload.type,
+                mediaUrl: payload.mediaUrl,
+            });
+        }
         const conversation = await this.prisma.conversation.findUnique({
             where: { id: conversationId },
             include: { contact: true }
@@ -419,9 +563,11 @@ let ChatService = class ChatService {
 exports.ChatService = ChatService;
 exports.ChatService = ChatService = __decorate([
     (0, common_1.Injectable)(),
+    __param(4, (0, bullmq_1.InjectQueue)('scheduled-messages')),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         messaging_service_1.MessagingService,
         whatsapp_service_1.WhatsappService,
-        chat_gateway_1.ChatGateway])
+        chat_gateway_1.ChatGateway,
+        bullmq_2.Queue])
 ], ChatService);
 //# sourceMappingURL=chat.service.js.map

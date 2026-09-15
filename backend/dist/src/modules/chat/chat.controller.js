@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const platform_express_1 = require("@nestjs/platform-express");
 const chat_service_1 = require("./chat.service");
 const send_message_dto_1 = require("./dto/send-message.dto");
+const schedule_message_dto_1 = require("./dto/schedule-message.dto");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 let ChatController = class ChatController {
@@ -51,6 +52,15 @@ let ChatController = class ChatController {
     async reopen(tenantId, conversationId) {
         return this.chatService.reopenConversation(tenantId, conversationId);
     }
+    async markAsRead(tenantId, conversationId) {
+        return this.chatService.markAsRead(tenantId, conversationId);
+    }
+    async markAsUnread(tenantId, conversationId) {
+        return this.chatService.markAsUnread(tenantId, conversationId);
+    }
+    async ignore(tenantId, conversationId) {
+        return this.chatService.releaseConversation(tenantId, conversationId);
+    }
     async transfer(tenantId, conversationId, body) {
         return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId, body.userId);
     }
@@ -74,6 +84,21 @@ let ChatController = class ChatController {
             isInternal: isInternal === 'true' || isInternal === true,
             content: content || '🎤 Mensagem de voz',
         });
+    }
+    async scheduleMessage(tenantId, conversationId, payload) {
+        try {
+            return await this.chatService.scheduleMessage(tenantId, conversationId, payload);
+        }
+        catch (error) {
+            console.error('ERRO AO AGENDAR MENSAGEM:', error);
+            throw error;
+        }
+    }
+    async getScheduledMessages(tenantId, conversationId) {
+        return this.chatService.getScheduledMessages(tenantId, conversationId);
+    }
+    async cancelScheduledMessage(tenantId, messageId) {
+        return this.chatService.cancelScheduledMessage(tenantId, messageId);
     }
     async sendMessageToContact(tenantId, contactId, payload, req) {
         try {
@@ -162,6 +187,30 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "reopen", null);
 __decorate([
+    (0, common_1.Patch)(':id/read'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "markAsRead", null);
+__decorate([
+    (0, common_1.Patch)(':id/unread'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "markAsUnread", null);
+__decorate([
+    (0, common_1.Patch)(':id/ignore'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "ignore", null);
+__decorate([
     (0, common_1.Patch)(':id/transfer'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
@@ -200,6 +249,31 @@ __decorate([
     __metadata("design:paramtypes", [String, String, Object, Object, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "sendAudioMessage", null);
+__decorate([
+    (0, common_1.Post)(':id/schedule'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, schedule_message_dto_1.ScheduleMessageDto]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "scheduleMessage", null);
+__decorate([
+    (0, common_1.Get)(':id/scheduled'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "getScheduledMessages", null);
+__decorate([
+    (0, common_1.Delete)('messages/:messageId/schedule'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('messageId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "cancelScheduledMessage", null);
 __decorate([
     (0, common_1.Post)('contact/:contactId/messages'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

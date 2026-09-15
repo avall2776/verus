@@ -702,6 +702,41 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Build do Frontend Next.js 14 aprovado (**código 0**, 31 rotas de produção geradas).
   * Deploy sincronizado com a VPS de produção (`187.127.10.166`) e PM2 online.
 
+### Fase 47: Agendamento de Mensagens (Alinhamento de Contrato, DTOs, Prisma, BullMQ e UI/UX) [EM ANDAMENTO]
+- [x] **Alinhamento de Contrato e DTOs (`/backend`)**:
+  * Especificação do `ScheduleMessageDto` com validação estrita via class-validator (`@IsISO8601()`, `@IsNotEmpty()`, `@IsString()`, `@IsOptional()`).
+  * Retrocompatibilidade garantida com suporte a `scheduledAt` e `timezone` opcionais no `SendMessageDto`.
+- [x] **Tratamento de Fuso Horário e Regras de Negócio**:
+  * Normalização e conversão precisa para UTC (com suporte explícito a strings ISO com offset ou ingênuas aplicando fuso padrão `America/Sao_Paulo` / UTC-3).
+  * Validação ativa de regras de negócio: bloqueio estrito com `BadRequestException` para agendamentos no passado ou com menos de 10s de antecedência.
+- [x] **Refatoração Visual e UX do Modal de Agendamento (`/frontend`) - [IDE 2 Frontend]**:
+  * Criação do componente modular `ScheduleModal.tsx` em `/frontend/src/components/inbox/ScheduleModal.tsx` com design system Dark Enterprise (`#0B1224`, bordas `slate-700/90`, acentos em degradê azul/ciano).
+  * **Correção do Alinhamento dos Inputs**: Os campos de "Data de Envio" e "Horário" foram refatorados em grid responsivo (`grid grid-cols-1 sm:grid-cols-2 gap-3.5`), com alturas perfeitamente pareadas (`h-11`), ícones dedicados (`Calendar` e `Clock`), estilo nativo `[color-scheme:dark]` para padronizar os seletores do navegador e foco estilizado.
+  * **Atalhos Rápidos de Agendamento**: Implementação de botões rápidos ("Em 1 hora", "Hoje 18:00", "Amanhã 09:00", "Segunda 09:00") que preenchem data e horário com um clique.
+  * **Badge de Pré-visualização da Programação**: Exibição em tempo real da data e hora formatadas em português (pt-BR) com fuso local antes do disparo.
+  * **Conexão de Estados e Validação Pré-Payload**: Unificação precisa dos estados `scheduleDate` e `scheduleTime` no formato ISO 8601 (`scheduledAt`), validação de campos obrigatórios, bloqueio de datas no passado e tratamento do payload para envio via API (`api.post`).
+  * **Integração no Inbox**: Substituição do modal inline em `/frontend/src/app/(dashboard)/inbox/page.tsx` pelo novo `<ScheduleModal />` e limpeza de estados legados. Verificação TypeScript aprovada com código 0 (`npx tsc --noEmit`).
+- [x] **Painel de Mensagens Agendadas e Badges Visuais (`/frontend`) - [IDE 2 Frontend]**:
+  * Criação do componente `ScheduledMessagesDrawer.tsx` em `/frontend/src/components/inbox/ScheduledMessagesDrawer.tsx` com gaveta lateral animada, listagem de agendamentos pendentes por contato, tempo relativo ("Em 2h", "Amanhã"), status com relógio e botão de cancelamento com confirmação rápida e empty state estilizado.
+  * Atualização do `ScheduleModal.tsx` com callback `onSuccess` retornando o objeto completo programado (`ScheduledMessage`) para injeção e reatividade otimista instantânea na interface.
+  * **Botão com Badge no Topo do Chat**: Inserido botão com ícone `CalendarClock` no cabeçalho da conversa ativa, com badge dinâmico em ciano pulsante indicando a quantidade de disparos programados para o lead.
+  * **Badge na Lista Lateral de Conversas**: Exibição de badge estilizado em ciano (`CalendarClock`) diretamente no card de cada contato que possuir agendamentos ativos na barra lateral do Inbox.
+  * Adicionado atalho "Ver Mensagens Agendadas" com contador dinâmico no menu contextual de 3 pontos do cabeçalho do chat.
+  * **Validação de Build**: `npx tsc --noEmit` aprovado (**código 0**) e `npm run build` do Next.js 14 aprovado com sucesso (**código 0**, 31 rotas compiladas).
+- [x] **Persistência no Supabase & Prisma (Autoridade Exclusiva IDE 1)**:
+  * Adicionado campo `scheduledAt DateTime?` e índice composto `@@index([tenantId, status, scheduledAt])` no modelo `Message` em `schema.prisma`.
+  * Sincronização executada com o Supabase (`npx prisma db push` e `npx prisma generate` aprovados com **código 0**).
+- [x] **Orquestração de Disparo Assíncrono com BullMQ**:
+  * Registrada fila `scheduled-messages` no `queue.module.ts` e exportada para injeção no `ChatModule`.
+  * Criado processor `scheduled-messages.processor.ts` para disparo pontual de alta precisão via delay BullMQ, integração à Meta Cloud API (`MessagingService`) e broadcast WebSocket (`ChatGateway`).
+- [x] **Endpoints no ChatController**:
+  * Mapeamento completo e testado dos endpoints: `POST /conversations/:id/schedule` (agendamento com `ScheduleMessageDto`), suporte retrocompatível transparente em `POST /conversations/:id/messages`, listagem com `GET /conversations/:id/scheduled` e cancelamento seguro com `DELETE /conversations/messages/:messageId/schedule`.
+- [x] **Validação Integrada & Deploy Final**:
+  * Integração perfeita de ponta a ponta entre IDE 1 (Backend/BullMQ/Prisma) e IDE 2 (Frontend/ScheduleModal/ScheduledMessagesDrawer).
+  * Build do Backend NestJS aprovado (**código 0**).
+  * Build do Frontend Next.js 14 aprovado (**código 0**, 31 rotas de produção).
+  * Deploy sincronizado com a VPS de produção (`187.127.10.166`) e Vercel via GitHub `main`.
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
@@ -721,6 +756,10 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[15/09/2026 - 08:01]** 🟢 Início da jornada de desenvolvimento de terça-feira (Foco: Fase 45 — Ajuste da rotina de upload de arquivos, Supabase Storage e Fallback Local).
 - **[15/09/2026 - 09:42]** 🚀 **Fase 45 Concluída com Sucesso**: `StorageService` implementado com Supabase Storage e fallback automático em disco local (`uploads/media/`), endpoints `/media/upload` e `/media/file/:filename`, envio oficial de fotos e PDFs para a Meta Graph API, prévia no composer do Inbox e Lightbox estilo WhatsApp com download direto.
 - **[15/09/2026 - 10:35]** 🚀 **Fase 46 Concluída com Sucesso**: Refinamento visual e técnico do Inbox (Paridade Lero) — Badge esmeralda de não lidas e textos em negrito, menu contextual de 3 pontos no hover dos cards com ações rápidas, toolbar superior enriquecida com Novo Chat e Agendamento, transcrição expansível de áudio em tempo real nas bolhas e menu superior do chat com histórico e exportação TXT. Builds código 0 e deploy VPS online!
+- **[15/09/2026 - 11:58]** ⏸️ **Pausa para almoço**: Entregas da manhã concluídas com deploy na VPS (Fases 45 e 46). No backend, a Fase 47 (Agendamento de Mensagens) teve contratos de DTOs, fuso UTC/BRT e regras de validação especificadas pela IDE 1. No frontend, a **IDE 2** completou com sucesso a refatoração visual e modular do `ScheduleModal.tsx`, alinhamento perfeito em grid dos inputs de data e hora, atalhos de preenchimento rápido e conexão de estados para o payload (`scheduledAt`). Builds TypeScript 100% íntegros (código 0). Tudo pronto para retomada conjunta na sessão da tarde!
+- **[15/09/2026 - 13:22]** 🟢 **Retorno do almoço / Início do turno da tarde**: Retomada dos trabalhos na Fase 47 (Agendamento de Mensagens). Foco da IDE 1: Backend NestJS, Prisma (`Message.scheduledAt`), DTOs com validação de fuso horário, regras de negócio e orquestração de disparo com BullMQ integrado ao novo modal da IDE 2.
+- **[15/09/2026 - 13:38]** 💎 **Fase 47 (Frontend) 100% Concluída**: A **IDE 2** concluiu a implementação do `ScheduledMessagesDrawer.tsx`, botões de cabeçalho com badges dinâmicos de contagem e badges de relógio (`CalendarClock`) em ciano nos cards de contato do Inbox. Atualização otimista em tempo real, cancelamento com confirmação rápida e persistência reativa local. Verificação TypeScript (`npx tsc --noEmit`) e Build de produção do Next.js 14 aprovados com **código 0** (31 rotas geradas).
+- **[15/09/2026 - 13:48]** 🚀 **Fase 47 Concluída com Sucesso**: Agendamento de Mensagens 100% implementado e integrado de ponta a ponta (Backend NestJS + Frontend Next.js 14). Suporte completo a timezone (UTC/BRT), regras de negócio no futuro, persistência no Supabase via Prisma com `scheduledAt`, fila e worker no BullMQ com disparo assíncrono para a Meta Cloud API, sincronização e cancelamento via endpoints `/conversations/:id/scheduled` e `/conversations/messages/:id/schedule`. Builds código 0, deploy sincronizado na Vercel e VPS PM2 online!
 
 ---
 

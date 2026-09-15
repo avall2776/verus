@@ -16,4 +16,12 @@ export class SendMessageDto {
   @IsString()
   @IsOptional()
   mediaUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  scheduledAt?: string;
+
+  @IsString()
+  @IsOptional()
+  timezone?: string;
 }

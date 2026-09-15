@@ -18,6 +18,7 @@ const messaging_module_1 = require("../messaging/messaging.module");
 const chat_module_1 = require("../chat/chat.module");
 const automations_processor_1 = require("./processors/automations.processor");
 const automations_module_1 = require("../automations/automations.module");
+const scheduled_messages_processor_1 = require("./processors/scheduled-messages.processor");
 let QueueModule = class QueueModule {
 };
 exports.QueueModule = QueueModule;
@@ -47,9 +48,10 @@ exports.QueueModule = QueueModule = __decorate([
             bullmq_1.BullModule.registerQueue({ name: 'webhook-ingress' }),
             bullmq_1.BullModule.registerQueue({ name: 'ai-processing' }),
             bullmq_1.BullModule.registerQueue({ name: 'automations' }),
+            bullmq_1.BullModule.registerQueue({ name: 'scheduled-messages' }),
             automations_module_1.AutomationsModule,
         ],
-        providers: [webhook_processor_1.WebhookProcessor, ai_processor_1.AiProcessor, automations_processor_1.AutomationsProcessor],
+        providers: [webhook_processor_1.WebhookProcessor, ai_processor_1.AiProcessor, automations_processor_1.AutomationsProcessor, scheduled_messages_processor_1.ScheduledMessagesProcessor],
         exports: [bullmq_1.BullModule],
     })
 ], QueueModule);

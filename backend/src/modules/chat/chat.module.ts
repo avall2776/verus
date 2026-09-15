@@ -1,4 +1,5 @@
 import { Module, Global } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { DatabaseModule } from '../../shared/database/database.module';
 import { MessagingModule } from '../messaging/messaging.module';
 import { AuthModule } from '../auth/auth.module';
@@ -9,9 +10,14 @@ import { ChatGateway } from './chat.gateway';
 
 @Global()
 @Module({
-  imports: [DatabaseModule, MessagingModule, AuthModule],
+  imports: [
+    DatabaseModule,
+    MessagingModule,
+    AuthModule,
+    BullModule.registerQueue({ name: 'scheduled-messages' }),
+  ],
   providers: [ChatService, ChatGateway],
   controllers: [ChatController, MediaController],
-  exports: [ChatGateway],
+  exports: [ChatGateway, ChatService],
 })
 export class ChatModule {}

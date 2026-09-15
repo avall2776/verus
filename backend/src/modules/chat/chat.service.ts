@@ -10,6 +10,8 @@ const execAsync = promisify(exec);
 import { MessagingService } from '../messaging/messaging.service';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { ChatGateway } from './chat.gateway';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class ChatService {
@@ -18,6 +20,7 @@ export class ChatService {
     private readonly messagingService: MessagingService,
     private readonly whatsappService: WhatsappService,
     private readonly chatGateway: ChatGateway,
+    @InjectQueue('scheduled-messages') private readonly scheduledQueue: Queue,
   ) {}
 
   async getConversationCounts(tenantId: string, userId: string, userRole: string) {
@@ -340,7 +343,184 @@ export class ChatService {
 
 
 
-  async sendManualMessage(tenantId: string, conversationId: string, payload: { content: string, isInternal?: boolean, type?: string, mediaUrl?: string }) {
+  /**
+   * Normaliza e valida data e horário de agendamento com suporte estrito a fuso horário.
+   * Se a data informada não contiver offset (ex: YYYY-MM-DDTHH:mm:ss), aplica por padrão
+   * o fuso horário de Brasília (-03:00) para evitar desvios inadvertidos de UTC.
+   */
+  private parseScheduledDate(scheduledAt: string, timezone?: string): Date {
+    if (!scheduledAt) {
+      throw new BadRequestException('A data e o horário de agendamento são obrigatórios.');
+    }
+
+    const dateStr = scheduledAt.trim();
+    const hasTimezone = /Z|[+-]\d{2}(:?\d{2})?$/.test(dateStr);
+
+    let parsedDate: Date;
+    if (hasTimezone) {
+      parsedDate = new Date(dateStr);
+    } else {
+      const offset = timezone === 'UTC' ? 'Z' : '-03:00';
+      parsedDate = new Date(`${dateStr}${offset}`);
+    }
+
+    if (isNaN(parsedDate.getTime())) {
+      throw new BadRequestException('Formato de data ou horário inválido para agendamento.');
+    }
+
+    // Regra de negócio estrita: o agendamento deve ser definido para um momento futuro (mínimo 10 segundos)
+    const now = Date.now();
+    if (parsedDate.getTime() <= now + 10000) {
+      throw new BadRequestException('O horário de agendamento deve ser definido para um momento futuro.');
+    }
+
+    return parsedDate;
+  }
+
+  /**
+   * Agenda uma mensagem para disparo futuro na conversa, persistindo no Supabase via Prisma
+   * e programando o delay com precisão no BullMQ.
+   */
+  async scheduleMessage(
+    tenantId: string,
+    conversationId: string,
+    payload: {
+      content: string;
+      scheduledAt: string;
+      timezone?: string;
+      isInternal?: boolean;
+      type?: string;
+      mediaUrl?: string;
+    }
+  ) {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      include: { contact: true }
+    });
+
+    if (!conversation || conversation.tenantId !== tenantId) {
+      throw new NotFoundException('Conversa não encontrada.');
+    }
+
+    if (!payload.content || !payload.content.trim()) {
+      throw new BadRequestException('O conteúdo da mensagem é obrigatório.');
+    }
+
+    // Validação de fuso horário e regras de negócio
+    const scheduledDate = this.parseScheduledDate(payload.scheduledAt, payload.timezone);
+    const delayMs = Math.max(0, scheduledDate.getTime() - Date.now());
+
+    const isInternal = payload.isInternal || false;
+    const type = payload.type || 'text';
+    const mediaUrl = payload.mediaUrl || null;
+
+    // Registra no banco de dados com status 'scheduled'
+    const msg = await this.prisma.message.create({
+      data: {
+        tenantId,
+        conversationId,
+        providerMessageId: `scheduled_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        contactId: conversation.contactId,
+        content: payload.content.trim(),
+        type,
+        mediaUrl,
+        isInternal,
+        direction: 'OUTBOUND',
+        senderType: 'user',
+        status: 'scheduled',
+        scheduledAt: scheduledDate,
+      }
+    });
+
+    // Enfileira o job no BullMQ com delay milissegundo correspondente
+    await this.scheduledQueue.add(
+      'sendScheduledMessage',
+      {
+        messageId: msg.id,
+        tenantId,
+        conversationId,
+      },
+      {
+        delay: delayMs,
+        jobId: `msg_scheduled_${msg.id}`,
+        removeOnComplete: true,
+      }
+    );
+
+    // Emite evento via WebSocket para notificar os atendentes conectados
+    this.chatGateway.emitNewMessage(tenantId, msg);
+
+    return msg;
+  }
+
+  /**
+   * Retorna todas as mensagens atualmente agendadas e pendentes de envio de uma conversa
+   */
+  async getScheduledMessages(tenantId: string, conversationId: string) {
+    return this.prisma.message.findMany({
+      where: {
+        tenantId,
+        conversationId,
+        status: 'scheduled',
+      },
+      orderBy: { scheduledAt: 'asc' }
+    });
+  }
+
+  /**
+   * Cancela uma mensagem agendada antes do disparo, removendo-a da fila BullMQ
+   */
+  async cancelScheduledMessage(tenantId: string, messageId: string) {
+    const msg = await this.prisma.message.findUnique({
+      where: { id: messageId }
+    });
+
+    if (!msg || msg.tenantId !== tenantId) {
+      throw new NotFoundException('Mensagem agendada não encontrada.');
+    }
+
+    if (msg.status !== 'scheduled') {
+      throw new BadRequestException('Esta mensagem não possui agendamento pendente.');
+    }
+
+    try {
+      const job = await this.scheduledQueue.getJob(`msg_scheduled_${msg.id}`);
+      if (job) await job.remove();
+    } catch {
+      // Ignora se o job já foi limpo do Redis
+    }
+
+    await this.prisma.message.delete({
+      where: { id: messageId }
+    });
+
+    return { success: true, messageId };
+  }
+
+  async sendManualMessage(
+    tenantId: string,
+    conversationId: string,
+    payload: {
+      content: string;
+      isInternal?: boolean;
+      type?: string;
+      mediaUrl?: string;
+      scheduledAt?: string;
+      timezone?: string;
+    }
+  ) {
+    // Se o payload contiver data/hora de agendamento, encaminha para o fluxo de schedule
+    if (payload.scheduledAt) {
+      return this.scheduleMessage(tenantId, conversationId, {
+        content: payload.content,
+        scheduledAt: payload.scheduledAt,
+        timezone: payload.timezone,
+        isInternal: payload.isInternal,
+        type: payload.type,
+        mediaUrl: payload.mediaUrl,
+      });
+    }
+
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
       include: { contact: true }

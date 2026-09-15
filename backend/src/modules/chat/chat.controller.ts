@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
+import { ScheduleMessageDto } from './dto/schedule-message.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 
@@ -160,6 +161,36 @@ export class ChatController {
     });
   }
 
+  @Post(':id/schedule')
+  async scheduleMessage(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+    @Body() payload: ScheduleMessageDto,
+  ) {
+    try {
+      return await this.chatService.scheduleMessage(tenantId, conversationId, payload);
+    } catch (error) {
+      console.error('ERRO AO AGENDAR MENSAGEM:', error);
+      throw error;
+    }
+  }
+
+  @Get(':id/scheduled')
+  async getScheduledMessages(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+  ) {
+    return this.chatService.getScheduledMessages(tenantId, conversationId);
+  }
+
+  @Delete('messages/:messageId/schedule')
+  async cancelScheduledMessage(
+    @CurrentTenant() tenantId: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.chatService.cancelScheduledMessage(tenantId, messageId);
+  }
+
   @Post('contact/:contactId/messages')
   async sendMessageToContact(
     @CurrentTenant() tenantId: string,
@@ -175,3 +206,4 @@ export class ChatController {
     }
   }
 }
+
