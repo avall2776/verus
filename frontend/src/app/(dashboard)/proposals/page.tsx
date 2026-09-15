@@ -5,7 +5,7 @@ import {
   FileText, Plus, Search, Filter, ArrowUpDown, Download, 
   Send, Eye, CheckCircle2, XCircle, Clock, Copy, MoreHorizontal, 
   TrendingUp, DollarSign, Award, Percent, ChevronRight, ExternalLink,
-  Trash2, RefreshCw, Info, Edit3
+  Trash2, RefreshCw, Info, Edit3, Sparkles
 } from "lucide-react";
 import { Proposal, ProposalStatus } from "@/types/commercial";
 import { ProposalModal } from "@/components/proposals/ProposalModal";
@@ -230,37 +230,37 @@ export default function ProposalsPage() {
     switch (status) {
       case "accepted":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
             <CheckCircle2 className="w-3 h-3" /> Aceita
           </span>
         );
       case "viewed":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30">
             <Eye className="w-3 h-3" /> Visualizada
           </span>
         );
       case "sent":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
             <Send className="w-3 h-3" /> Enviada
           </span>
         );
       case "declined":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30">
             <XCircle className="w-3 h-3" /> Recusada
           </span>
         );
       case "expired":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
             <Clock className="w-3 h-3" /> Expirada
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/30">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700/30 text-slate-300 border border-slate-700/60">
             <FileText className="w-3 h-3" /> Rascunho
           </span>
         );
@@ -273,7 +273,7 @@ export default function ProposalsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shadow-sm">
               <FileText className="w-5 h-5" />
             </div>
             <div>
@@ -303,133 +303,221 @@ export default function ProposalsPage() {
         </button>
       </div>
 
-      {/* Cards de Métricas e KPIs Comerciais com Tooltips Explicativos */}
+      {/* Cards de Métricas e KPIs Comerciais com Tooltips Robustos & Zero Corte */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Pipeline em Propostas */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md relative overflow-hidden group hover:border-blue-500/40 transition-all">
+        <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/90 backdrop-blur-md relative group hover:border-cyan-500/50 hover:shadow-xl hover:shadow-cyan-950/20 hover:-translate-y-0.5 transition-all duration-300">
           <div className="flex justify-between items-start">
             <div className="relative group/tip flex items-center gap-1.5">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Total em Propostas
               </span>
-              <Info 
-                className="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 transition-colors cursor-help" 
-              />
-              {/* Tooltip Hover Explicativo */}
-              <div className="absolute left-0 -top-14 z-30 hidden group-hover/tip:flex flex-col w-64 p-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-[11px] text-slate-300 shadow-2xl backdrop-blur-md pointer-events-none transition-all">
-                <span className="font-bold text-white mb-0.5">Critério do Indicador:</span>
-                Soma do volume financeiro bruto de todas as propostas ativas no pipeline comercial.
+              <button
+                type="button"
+                className="text-slate-500 hover:text-cyan-400 transition-colors focus:outline-none cursor-help p-0.5 rounded"
+                aria-label="Informações sobre o indicador"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Tooltip Hover Explicativo de Alta Densidade (Nunca Cortado) */}
+              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
+                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-[#070D1B] border-t border-l border-slate-700/90 rotate-45" />
+                <div className="flex items-center gap-1.5 font-bold text-white text-xs border-b border-slate-800 pb-1.5">
+                  <DollarSign className="w-3.5 h-3.5 text-cyan-400" />
+                  Total em Propostas (Pipeline)
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Soma consolidada do valor bruto de todas as propostas comerciais abertas e emitidas no sistema.
+                </p>
+                <div className="p-1.5 rounded-lg bg-cyan-950/40 border border-cyan-800/40 font-mono text-[10px] text-cyan-300">
+                  Fórmula: ∑ (Itens - Descontos) de todas as propostas ativas
+                </div>
               </div>
             </div>
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 group-hover:scale-105 transition-transform">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
+
           <div className="mt-3">
-            <div className="text-2xl font-extrabold text-white">
+            <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
               R$ {kpis.totalPipeline.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
-            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-emerald-400 font-medium">
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span>+18.4% vs. mês anterior</span>
+            <div className="mt-2">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                <TrendingUp className="w-3 h-3" />
+                +18.4% vs. mês anterior
+              </span>
             </div>
           </div>
-          <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-blue-500/5 rounded-full blur-xl group-hover:bg-blue-500/10 transition-all pointer-events-none" />
+
+          {/* Glow de fundo contido */}
+          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+            <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-blue-500/5 rounded-full blur-xl group-hover:bg-cyan-500/15 transition-all duration-500" />
+          </div>
         </div>
 
         {/* Card 2: Propostas Aceitas */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+        <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/90 backdrop-blur-md relative group hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-950/20 hover:-translate-y-0.5 transition-all duration-300">
           <div className="flex justify-between items-start">
             <div className="relative group/tip flex items-center gap-1.5">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Propostas Aceitas
               </span>
-              <Info 
-                className="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 transition-colors cursor-help" 
-              />
+              <button
+                type="button"
+                className="text-slate-500 hover:text-emerald-400 transition-colors focus:outline-none cursor-help p-0.5 rounded"
+                aria-label="Informações sobre o indicador"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+
               {/* Tooltip Hover Explicativo */}
-              <div className="absolute left-0 -top-14 z-30 hidden group-hover/tip:flex flex-col w-64 p-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-[11px] text-slate-300 shadow-2xl backdrop-blur-md pointer-events-none transition-all">
-                <span className="font-bold text-white mb-0.5">Critério do Indicador:</span>
-                Volume financeiro e contagem de propostas aprovadas e assinadas pelos clientes neste ciclo.
+              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
+                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-[#070D1B] border-t border-l border-slate-700/90 rotate-45" />
+                <div className="flex items-center gap-1.5 font-bold text-white text-xs border-b border-slate-800 pb-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  Receita Convertida & Fechamento
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Volume financeiro e contagem de propostas que foram aprovadas e assinadas digitalmente pelos clientes.
+                </p>
+                <div className="p-1.5 rounded-lg bg-emerald-950/40 border border-emerald-800/40 font-mono text-[10px] text-emerald-300">
+                  Critério: Status = "accepted" no período vigente
+                </div>
               </div>
             </div>
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:scale-105 transition-transform">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
+
           <div className="mt-3">
-            <div className="text-2xl font-extrabold text-white">
+            <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
               R$ {kpis.acceptedVal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
-            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-400">
-              <span className="text-emerald-400 font-bold">{kpis.acceptedCount} contratos</span>
-              <span>fechados neste ciclo</span>
+            <div className="mt-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                <CheckCircle2 className="w-3 h-3" />
+                {kpis.acceptedCount} contratos fechados
+              </span>
             </div>
           </div>
-          <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition-all pointer-events-none" />
+
+          {/* Glow de fundo contido */}
+          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+            <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/15 transition-all duration-500" />
+          </div>
         </div>
 
         {/* Card 3: Ticket Médio Comercial */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md relative overflow-hidden group hover:border-blue-500/40 transition-all">
+        <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/90 backdrop-blur-md relative group hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-950/20 hover:-translate-y-0.5 transition-all duration-300">
           <div className="flex justify-between items-start">
             <div className="relative group/tip flex items-center gap-1.5">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Ticket Médio
               </span>
-              <Info 
-                className="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 transition-colors cursor-help" 
-              />
+              <button
+                type="button"
+                className="text-slate-500 hover:text-blue-400 transition-colors focus:outline-none cursor-help p-0.5 rounded"
+                aria-label="Informações sobre o indicador"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+
               {/* Tooltip Hover Explicativo */}
-              <div className="absolute left-0 -top-14 z-30 hidden group-hover/tip:flex flex-col w-64 p-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-[11px] text-slate-300 shadow-2xl backdrop-blur-md pointer-events-none transition-all">
-                <span className="font-bold text-white mb-0.5">Critério do Indicador:</span>
-                Valor médio por proposta gerada (Total em Propostas dividido pelo número total de propostas).
+              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
+                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-[#070D1B] border-t border-l border-slate-700/90 rotate-45" />
+                <div className="flex items-center gap-1.5 font-bold text-white text-xs border-b border-slate-800 pb-1.5">
+                  <Award className="w-3.5 h-3.5 text-blue-400" />
+                  Média por Cliente Negociado
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Valor médio de cada proposta comercial emitida pela equipe comercial no ciclo.
+                </p>
+                <div className="p-1.5 rounded-lg bg-blue-950/40 border border-blue-800/40 font-mono text-[10px] text-blue-300">
+                  Fórmula: Total do Pipeline ÷ Quantidade de Propostas
+                </div>
               </div>
             </div>
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 group-hover:scale-105 transition-transform">
               <Award className="w-4 h-4" />
             </div>
           </div>
+
           <div className="mt-3">
-            <div className="text-2xl font-extrabold text-white">
+            <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
               R$ {kpis.avgTicket.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
-            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-400">
-              <span>Média por cliente negociado</span>
+            <div className="mt-2">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
+                Valor médio por orçamento
+              </span>
             </div>
           </div>
-          <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-blue-500/5 rounded-full blur-xl group-hover:bg-blue-500/10 transition-all pointer-events-none" />
+
+          {/* Glow de fundo contido */}
+          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+            <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-blue-500/5 rounded-full blur-xl group-hover:bg-blue-500/15 transition-all duration-500" />
+          </div>
         </div>
 
         {/* Card 4: Taxa de Conversão */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md relative overflow-hidden group hover:border-purple-500/40 transition-all">
+        <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/90 backdrop-blur-md relative group hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-950/20 hover:-translate-y-0.5 transition-all duration-300">
           <div className="flex justify-between items-start">
             <div className="relative group/tip flex items-center gap-1.5">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Taxa de Conversão
               </span>
-              <Info 
-                className="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 transition-colors cursor-help" 
-              />
-              {/* Tooltip Hover Explicativo */}
-              <div className="absolute left-0 -top-14 z-30 hidden group-hover/tip:flex flex-col w-64 p-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-[11px] text-slate-300 shadow-2xl backdrop-blur-md pointer-events-none transition-all">
-                <span className="font-bold text-white mb-0.5">Critério do Indicador:</span>
-                Percentual de conversão de propostas aceitas sobre o total de propostas emitidas.
+              <button
+                type="button"
+                className="text-slate-500 hover:text-purple-400 transition-colors focus:outline-none cursor-help p-0.5 rounded"
+                aria-label="Informações sobre o indicador"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Tooltip Hover Explicativo posicionado à direita para evitar transbordar a tela */}
+              <div className="absolute top-full right-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
+                <div className="absolute -top-1.5 right-4 w-3 h-3 bg-[#070D1B] border-t border-r border-slate-700/90 rotate-45" />
+                <div className="flex items-center gap-1.5 font-bold text-white text-xs border-b border-slate-800 pb-1.5">
+                  <Percent className="w-3.5 h-3.5 text-purple-400" />
+                  Taxa de Conversão de Propostas
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Percentual de propostas que foram aceitas pelo cliente em relação ao total de propostas geradas.
+                </p>
+                <div className="p-1.5 rounded-lg bg-purple-950/40 border border-purple-800/40 font-mono text-[10px] text-purple-300">
+                  Fórmula: (Propostas Aceitas ÷ Total de Propostas) × 100
+                </div>
               </div>
             </div>
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+
+            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 group-hover:scale-105 transition-transform">
               <Percent className="w-4 h-4" />
             </div>
           </div>
+
           <div className="mt-3">
-            <div className="text-2xl font-extrabold text-white">
+            <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
               {kpis.convRate.toFixed(1)}%
             </div>
-            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-emerald-400 font-medium">
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span>Alta performance de fechamento</span>
+            <div className="mt-2">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                <Sparkles className="w-3 h-3 text-purple-400" />
+                Alta performance de fechamento
+              </span>
             </div>
           </div>
-          <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-purple-500/5 rounded-full blur-xl group-hover:bg-purple-500/10 transition-all pointer-events-none" />
+
+          {/* Glow de fundo contido */}
+          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+            <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-purple-500/5 rounded-full blur-xl group-hover:bg-purple-500/15 transition-all duration-500" />
+          </div>
         </div>
       </div>
 
@@ -458,13 +546,13 @@ export default function ProposalsPage() {
                   onClick={() => setStatusFilter(tab.id)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                     isActive
-                      ? "bg-blue-600/25 text-blue-300 border border-blue-500/40 shadow-sm"
+                      ? "bg-blue-600/25 text-blue-300 border border-blue-500/40 shadow-sm shadow-blue-950/30"
                       : "bg-slate-800/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800"
                   }`}
                 >
                   {tab.label}
                   <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                    isActive ? "bg-blue-500/30 text-white" : "bg-slate-700/60 text-slate-400"
+                    isActive ? "bg-blue-500/30 text-white font-bold" : "bg-slate-700/60 text-slate-400"
                   }`}>
                     {count}
                   </span>
@@ -486,7 +574,7 @@ export default function ProposalsPage() {
           </div>
         </div>
 
-        {/* Tabela de Propostas */}
+        {/* Tabela de Propostas com Hover Suave & Microinterações */}
         <div className="overflow-x-auto rounded-xl border border-slate-800/80">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-900/90 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
@@ -512,7 +600,7 @@ export default function ProposalsPage() {
                   <tr
                     key={proposal.id}
                     onClick={() => openPreview(proposal)}
-                    className="hover:bg-slate-800/30 cursor-pointer transition-colors group"
+                    className="hover:bg-slate-800/40 cursor-pointer transition-all duration-150 group"
                   >
                     <td className="p-3.5">
                       <div className="font-mono font-bold text-white group-hover:text-blue-400 transition-colors">
@@ -540,7 +628,7 @@ export default function ProposalsPage() {
                       {new Date(proposal.validUntil).toLocaleDateString("pt-BR")}
                     </td>
 
-                    <td className="p-3.5 text-right font-bold text-white font-mono">
+                    <td className="p-3.5 text-right font-bold text-white font-mono text-sm">
                       R$ {proposal.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </td>
 
@@ -552,7 +640,7 @@ export default function ProposalsPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => handleEditProposal(proposal)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/15 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                           title="Editar proposta"
                         >
                           <Edit3 className="w-4 h-4" />
@@ -560,7 +648,7 @@ export default function ProposalsPage() {
 
                         <button
                           onClick={() => copyQuickLink(proposal)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/15 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                           title="Copiar link de aceite"
                         >
                           <Copy className="w-4 h-4" />
@@ -568,7 +656,7 @@ export default function ProposalsPage() {
 
                         <button
                           onClick={() => openPreview(proposal)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                           title="Visualizar proposta completa"
                         >
                           <Eye className="w-4 h-4" />
@@ -576,7 +664,7 @@ export default function ProposalsPage() {
 
                         <button
                           onClick={() => handleDeleteProposal(proposal.id)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/15 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                           title="Excluir proposta"
                         >
                           <Trash2 className="w-4 h-4" />
