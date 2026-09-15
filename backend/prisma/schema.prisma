@@ -471,19 +471,35 @@ model Goal {
 }
 
 model Contract {
-  id          String    @id @default(uuid())
-  tenantId    String
-  proposalId  String
-  status      String    @default("PENDING_SIGNATURE") // PENDING_SIGNATURE, SIGNED, CANCELED
-  documentUrl String?
-  auditLogUrl String?
-  signedAt    DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id             String    @id @default(uuid())
+  tenantId       String
+  proposalId     String?
+  code           String?
+  title          String    @default("Contrato de Prestação de Serviços")
+  clientName     String
+  clientEmail    String?
+  clientPhone    String?
+  clientDocument String?
+  clientAddress  String?
+  value          Decimal   @default(0)
+  status         String    @default("PENDING_SIGNATURE") // PENDING_SIGNATURE, SIGNED, CANCELED
+  startDate      DateTime?
+  endDate        DateTime?
+  validUntil     DateTime?
+  documentUrl    String?
+  auditLogUrl    String?
+  signedAt       DateTime?
+  signIp         String?
+  signUserAgent  String?
+  terms          String?   @db.Text
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  proposal    Proposal  @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  proposal       Proposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
+  @@index([tenantId, status])
   @@index([proposalId])
 }

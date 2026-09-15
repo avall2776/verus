@@ -17,9 +17,19 @@ exports.UpdateContractStatusDto = UpdateContractStatusDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsIn)(['PENDING_SIGNATURE', 'SIGNED', 'CANCELED']),
+    (0, class_validator_1.IsIn)(['PENDING_SIGNATURE', 'SIGNED', 'CANCELED', 'pending_signature', 'signed', 'canceled']),
     __metadata("design:type", String)
 ], UpdateContractStatusDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateContractStatusDto.prototype, "signIp", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateContractStatusDto.prototype, "signUserAgent", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),

@@ -1,5 +1,7 @@
 export declare class UpdateContractStatusDto {
-    status: 'PENDING_SIGNATURE' | 'SIGNED' | 'CANCELED';
+    status: string;
+    signIp?: string;
+    signUserAgent?: string;
     documentUrl?: string;
     auditLogUrl?: string;
 }

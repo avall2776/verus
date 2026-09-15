@@ -120,33 +120,131 @@ export default function ProposalsPage() {
     });
   }, [proposals, statusFilter, searchQuery]);
 
-  // Salvar ou atualizar proposta no backend
+  // Salvar ou atualizar proposta no backend com validação de payload estrita e tratamento de erros
   const handleSaveProposal = async (proposalData: Proposal) => {
+    // Sanitização rigorosa dos itens para o CreateProposalItemDto do NestJS
+    const sanitizedItems = (proposalData.items || []).map((item) => {
+      const qty = Math.max(1, Number(item.quantity) || 1);
+      const unitPrice = Math.max(0, Number(item.unitPrice) || 0);
+      const disc = Math.max(0, Math.min(100, Number(item.discountPercent) || 0));
+      const total = item.total !== undefined ? Number(item.total) : qty * unitPrice * (1 - disc / 100);
+
+      return {
+        // Omitir id se for gerado localmente pelo frontend (evitar quebrar UUID no banco)
+        id: item.id && !item.id.startsWith("item-") ? item.id : undefined,
+        name: (item.name || item.description || "Item").trim(),
+        description: (item.description || item.name || "Item de Proposta").trim(),
+        quantity: qty,
+        unitPrice: unitPrice,
+        discountPercent: disc,
+        total: total,
+      };
+    });
+
+    // Título obrigatório no backend (@IsNotEmpty)
+    const safeTitle = (
+      proposalData.title?.trim() ||
+      (proposalData.clientName ? `Proposta Comercial - ${proposalData.clientName.trim()}` : "Proposta Comercial")
+    );
+
+    // Montagem do payload contendo APENAS propriedades aceitas pelo CreateProposalDto / UpdateProposalDto
+    // Isso é crítico pois o NestJS usa forbidNonWhitelisted: true e rejeita qualquer campo excedente (ex: createdAt, updatedAt)
+    const payload: Record<string, any> = {
+      title: safeTitle,
+      code: proposalData.code?.trim() || undefined,
+      clientName: proposalData.clientName?.trim() || undefined,
+      clientCompany: proposalData.clientCompany?.trim() || undefined,
+      clientEmail: proposalData.clientEmail?.trim() || undefined,
+      clientPhone: proposalData.clientPhone?.trim() || undefined,
+      sellerName: proposalData.sellerName?.trim() || "Equipe Comercial",
+      status: (proposalData.status || "DRAFT").toUpperCase(),
+      validUntil: proposalData.validUntil ? new Date(proposalData.validUntil).toISOString() : undefined,
+      paymentMethod: proposalData.paymentMethod?.trim() || undefined,
+      paymentTerms: proposalData.paymentMethod?.trim() || undefined,
+      notes: proposalData.notes?.trim() || undefined,
+      subtotal: Number(proposalData.subtotal || 0),
+      discountTotal: Number(proposalData.discountTotal || 0),
+      total: Number(proposalData.total || 0),
+      publicLink: proposalData.publicLink || undefined,
+      issuer: proposalData.issuer || undefined,
+      items: sanitizedItems,
+    };
+
+    const isEditing = Boolean(editingProposal && editingProposal.id);
+    const targetUrl = isEditing ? `/proposals/${editingProposal!.id}` : "/proposals";
+    const method = isEditing ? "PUT" : "POST";
+
+    if (isEditing) {
+      payload.id = editingProposal!.id;
+    }
+
+    // Log claro e explícito para auditar a requisição no console
+    console.log("[PROPOSALS_PAYLOAD_SEND] Disparando requisição para API:", {
+      url: targetUrl,
+      method,
+      timestamp: new Date().toISOString(),
+      payload,
+    });
+
     try {
-      if (editingProposal) {
-        const res = await api.put(`/proposals/${proposalData.id}`, proposalData);
-        const saved = res.data || proposalData;
-        setProposals((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
-        if (selectedProposal && selectedProposal.id === saved.id) {
-          setSelectedProposal(saved);
+      let res;
+      if (isEditing) {
+        res = await api.put(targetUrl, payload);
+      } else {
+        res = await api.post(targetUrl, payload);
+      }
+
+      console.log("[PROPOSALS_API_SUCCESS] Proposta salva com sucesso no Supabase:", res.data);
+
+      const savedData = res.data;
+      const savedProposal: Proposal = {
+        id: savedData.id || proposalData.id,
+        code: savedData.code || proposalData.code,
+        title: savedData.title || safeTitle,
+        clientName: savedData.clientName || proposalData.clientName || "Cliente",
+        clientCompany: savedData.clientCompany || proposalData.clientCompany,
+        clientEmail: savedData.clientEmail || proposalData.clientEmail || "",
+        clientPhone: savedData.clientPhone || proposalData.clientPhone || "",
+        sellerName: savedData.sellerName || proposalData.sellerName || "Equipe Comercial",
+        status: (savedData.status || proposalData.status || "draft").toLowerCase() as ProposalStatus,
+        items: savedData.items && savedData.items.length > 0 ? savedData.items : proposalData.items,
+        subtotal: Number(savedData.subtotal ?? proposalData.subtotal ?? 0),
+        discountTotal: Number(savedData.discountTotal ?? proposalData.discountTotal ?? 0),
+        total: Number(savedData.total ?? savedData.totalValue ?? proposalData.total ?? 0),
+        paymentMethod: savedData.paymentMethod || proposalData.paymentMethod || "50% Entrada + 50% na Entrega",
+        validUntil: savedData.validUntil ? savedData.validUntil.split("T")[0] : proposalData.validUntil,
+        createdAt: savedData.createdAt || new Date().toISOString(),
+        notes: savedData.notes || proposalData.notes,
+        publicLink: savedData.publicLink || proposalData.publicLink,
+        issuer: savedData.issuer || proposalData.issuer,
+      };
+
+      if (isEditing) {
+        setProposals((prev) => prev.map((p) => (p.id === savedProposal.id ? savedProposal : p)));
+        if (selectedProposal && selectedProposal.id === savedProposal.id) {
+          setSelectedProposal(savedProposal);
         }
       } else {
-        const res = await api.post("/proposals", proposalData);
-        const saved = res.data || proposalData;
-        setProposals((prev) => [saved, ...prev.filter((p) => p.id !== saved.id)]);
+        setProposals((prev) => [savedProposal, ...prev.filter((p) => p.id !== savedProposal.id)]);
       }
-    } catch (err) {
-      console.error("Erro ao salvar proposta na API:", err);
-      // Fallback otimista
-      setProposals((prev) => {
-        const exists = prev.some((p) => p.id === proposalData.id);
-        if (exists) {
-          return prev.map((p) => (p.id === proposalData.id ? proposalData : p));
-        }
-        return [proposalData, ...prev];
-      });
-    } finally {
+
       setEditingProposal(null);
+    } catch (err: any) {
+      const apiErrors = err.response?.data?.message || err.response?.data?.error || err.message;
+      const formattedError = Array.isArray(apiErrors) ? apiErrors.join(", ") : String(apiErrors || "Falha na comunicação com a API");
+
+      console.error("[PROPOSALS_API_ERROR] Falha ao persistir proposta no Supabase:", {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        error: err,
+      });
+
+      // Exibe erro nítido retornado pelo axios
+      toast.error(`Erro ao salvar no banco: ${formattedError}`);
+
+      // Relança o erro para que o ProposalModal NÃO feche nem exiba mensagem de sucesso falsa!
+      throw err;
     }
   };
 

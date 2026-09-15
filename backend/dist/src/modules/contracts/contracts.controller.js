@@ -23,25 +23,40 @@ let ContractsController = class ContractsController {
     constructor(contractsService) {
         this.contractsService = contractsService;
     }
-    async findAll(tenantId) {
-        return this.contractsService.findAll(tenantId);
+    async findAll(tenantId, search, status) {
+        return this.contractsService.findAll(tenantId, search, status);
     }
     async create(tenantId, dto) {
         return this.contractsService.create(tenantId, dto);
     }
+    async getPdf(tenantId, id, res) {
+        const html = await this.contractsService.generatePdfHtml(tenantId, id);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.send(html);
+    }
+    async getWhatsAppShare(tenantId, id) {
+        return this.contractsService.getWhatsAppShare(tenantId, id);
+    }
     async findOne(tenantId, id) {
         return this.contractsService.findOne(tenantId, id);
     }
-    async updateStatus(tenantId, id, dto) {
-        return this.contractsService.updateStatus(tenantId, id, dto);
+    async updateStatus(tenantId, id, dto, req) {
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+        const userAgent = req.headers['user-agent'] || 'Web Browser';
+        return this.contractsService.updateStatus(tenantId, id, dto, clientIp, userAgent);
+    }
+    async delete(tenantId, id) {
+        return this.contractsService.delete(tenantId, id);
     }
 };
 exports.ContractsController = ContractsController;
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('search')),
+    __param(2, (0, common_1.Query)('status')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], ContractsController.prototype, "findAll", null);
 __decorate([
@@ -52,6 +67,23 @@ __decorate([
     __metadata("design:paramtypes", [String, create_contract_dto_1.CreateContractDto]),
     __metadata("design:returntype", Promise)
 ], ContractsController.prototype, "create", null);
+__decorate([
+    (0, common_1.Get)(':id/pdf'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], ContractsController.prototype, "getPdf", null);
+__decorate([
+    (0, common_1.Get)(':id/whatsapp-share'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ContractsController.prototype, "getWhatsAppShare", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
@@ -65,10 +97,19 @@ __decorate([
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
+    __param(3, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, update_contract_status_dto_1.UpdateContractStatusDto]),
+    __metadata("design:paramtypes", [String, String, update_contract_status_dto_1.UpdateContractStatusDto, Object]),
     __metadata("design:returntype", Promise)
 ], ContractsController.prototype, "updateStatus", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ContractsController.prototype, "delete", null);
 exports.ContractsController = ContractsController = __decorate([
     (0, common_1.Controller)('contracts'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

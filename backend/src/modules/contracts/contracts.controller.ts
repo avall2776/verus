@@ -1,4 +1,17 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  Req,
+  Res,
+} from '@nestjs/common';
+import { Response, Request } from 'express';
 import { ContractsService } from './contracts.service';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { UpdateContractStatusDto } from './dto/update-contract-status.dto';
@@ -11,8 +24,12 @@ export class ContractsController {
   constructor(private readonly contractsService: ContractsService) {}
 
   @Get()
-  async findAll(@CurrentTenant() tenantId: string) {
-    return this.contractsService.findAll(tenantId);
+  async findAll(
+    @CurrentTenant() tenantId: string,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.contractsService.findAll(tenantId, search, status);
   }
 
   @Post()
@@ -21,6 +38,25 @@ export class ContractsController {
     @Body() dto: CreateContractDto,
   ) {
     return this.contractsService.create(tenantId, dto);
+  }
+
+  @Get(':id/pdf')
+  async getPdf(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    const html = await this.contractsService.generatePdfHtml(tenantId, id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(html);
+  }
+
+  @Get(':id/whatsapp-share')
+  async getWhatsAppShare(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.contractsService.getWhatsAppShare(tenantId, id);
   }
 
   @Get(':id')
@@ -36,7 +72,19 @@ export class ContractsController {
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
     @Body() dto: UpdateContractStatusDto,
+    @Req() req: Request,
   ) {
-    return this.contractsService.updateStatus(tenantId, id, dto);
+    const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers['user-agent'] || 'Web Browser';
+    return this.contractsService.updateStatus(tenantId, id, dto, clientIp, userAgent);
+  }
+
+  @Delete(':id')
+  async delete(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.contractsService.delete(tenantId, id);
   }
 }
+

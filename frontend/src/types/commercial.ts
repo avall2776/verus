@@ -118,3 +118,44 @@ export interface LeadSourceDistribution {
   revenue: number;
   color: string;
 }
+
+// === CONTRATOS DIGITAIS ===
+export type ContractStatus = 'pending_signature' | 'signed' | 'canceled';
+
+export interface Contract {
+  id: string;
+  code: string;
+  title: string;
+  document?: string;
+  client: string;
+  clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientDocument?: string;
+  clientAddress?: string;
+  value: number;
+  status: ContractStatus;
+  rawStatus?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  validUntil?: string | null;
+  signedAt?: string | null;
+  signIp?: string | null;
+  signUserAgent?: string | null;
+  documentUrl?: string | null;
+  auditLogUrl?: string | null;
+  terms?: string | null;
+  notes?: string | null;
+  proposalId?: string | null;
+  proposal?: {
+    id: string;
+    code: string;
+    title: string;
+    totalValue: number;
+    status: string;
+  } | null;
+  issuer?: CompanyIssuer | null;
+  createdAt: string;
+  updatedAt?: string;
+}
+

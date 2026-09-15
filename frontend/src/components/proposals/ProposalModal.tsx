@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 interface ProposalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (proposal: Proposal) => void | Promise<void>;
+  onSave: (proposal: Proposal) => any | Promise<any>;
   proposalToEdit?: Proposal | null;
 }
 
@@ -208,16 +208,25 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
   const finalTotal = Math.max(0, subtotal - Number(globalDiscount || 0));
 
   const handleSaveProposal = async (status: ProposalStatus) => {
+    // 1. Validação do Cliente
     if (!clientName.trim()) {
-      toast.error("Preencha o nome do cliente.");
+      toast.error("Por favor, preencha o nome do cliente / decisor.");
       return;
     }
     if (!clientEmail.trim() && !clientPhone.trim()) {
-      toast.error("Informe pelo menos um contato (e-mail ou telefone).");
+      toast.error("Informe pelo menos um meio de contato (e-mail ou telefone).");
       return;
     }
-    if (items.length === 0 || subtotal <= 0) {
-      toast.error("Adicione itens válidos com valor no orçamento.");
+
+    // 2. Validação dos Itens
+    if (items.length === 0) {
+      toast.error("Adicione pelo menos um item ao orçamento.");
+      return;
+    }
+
+    const invalidItem = items.find((item) => !item.name.trim() && !item.description?.trim());
+    if (invalidItem) {
+      toast.error("Preencha o nome ou descrição de todos os itens do orçamento.");
       return;
     }
 
@@ -232,22 +241,25 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
       logoUrl: issuerLogoUrl
     };
 
-    // Cache local para próximas propostas
+    // Cache local dos dados do emitente para conveniência
     try {
       localStorage.setItem("versus_proposal_issuer_cache", JSON.stringify(issuerData));
     } catch (e) {
       // Silencioso
     }
 
+    // Garantir título preenchido para satisfazer a API NestJS (@IsNotEmpty)
+    const safeTitle = title.trim() || `Proposta Comercial - ${clientName.trim()}`;
+
     const updatedOrNewProposal: Proposal = {
       id: proposalToEdit ? proposalToEdit.id : `prop-${Date.now()}`,
       code: proposalToEdit ? proposalToEdit.code : code,
-      title: title.trim() || "Proposta Comercial",
+      title: safeTitle,
       clientName: clientName.trim(),
       clientCompany: clientCompany.trim() || undefined,
       clientEmail: clientEmail.trim(),
       clientPhone: clientPhone.trim(),
-      sellerName: sellerName.trim(),
+      sellerName: sellerName.trim() || "Equipe Comercial",
       status: proposalToEdit ? proposalToEdit.status : status,
       items,
       subtotal,
@@ -263,17 +275,28 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
     };
 
     try {
+      console.log("[PROPOSALS_MODAL] Submetendo proposta para salvamento:", {
+        status,
+        code: updatedOrNewProposal.code,
+        title: safeTitle,
+        clientName: updatedOrNewProposal.clientName,
+        total: finalTotal,
+        itemsCount: items.length
+      });
+
       await Promise.resolve(onSave(updatedOrNewProposal));
+
       toast.success(
         proposalToEdit 
-          ? "Proposta comercial atualizada com sucesso!"
+          ? "Proposta comercial atualizada com sucesso no banco!"
           : status === "sent" 
-          ? "Proposta gerada e pronta para envio!" 
-          : "Proposta salva como rascunho!"
+          ? "Proposta gerada e salva com sucesso no banco!" 
+          : "Proposta salva como rascunho com sucesso no banco!"
       );
       onClose();
-    } catch (err) {
-      toast.error("Erro ao salvar proposta. Tente novamente.");
+    } catch (err: any) {
+      console.error("[PROPOSALS_MODAL] Falha capturada na requisição de salvamento:", err);
+      // Não fecha o modal, permitindo que o usuário ajuste e tente novamente sem perder nada
     } finally {
       setIsSubmitting(false);
     }

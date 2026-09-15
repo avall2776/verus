@@ -813,7 +813,12 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[15/09/2026 - 16:20]** 🧼 **Fim dos Dados Mockados & Formulário 100% Limpo (IDE 2)**:
   - **Listagem 100% Real**: `INITIAL_PROPOSALS` fictícias removidas de `proposals/page.tsx`. A listagem agora consome exclusivamente dados reais do backend via `api.get('/proposals')`. Se não houver propostas cadastradas (ou após exclusões), a tela permanece estritamente limpa exibindo o Empty State oficial (*"Nenhuma proposta comercial cadastrada"*), sem reinjetar dados fictícios após F5/refresh.
   - **Formulário de Nova Proposta Limpo**: `ProposalModal.tsx` ajustado para nascer com todos os campos zerados e em branco (dados do emitente, dados do cliente, título, valores, observações e 1 item limpo para digitação do zero), sem nenhum dado pré-populado de demonstração.
-  - **Validação**: `npx tsc --noEmit` aprovado com código 0 e `npm run build` concluído com **código 0** (36 rotas de produção geradas com sucesso).
+- **[15/09/2026 - 17:05]** 🛡️ **Persistência Real no Supabase & Auditoria de Payload (IDE 2)**:
+  - **Inspeção & Sanitização Estrita de Payload**: Identificada a causa raiz do descarte de requisições: o backend NestJS utiliza `ValidationPipe` com `forbidNonWhitelisted: true`. O envio de campos excedentes do frontend (como `createdAt`, `updatedAt` ou IDs locais nos itens) resultava em rejeição HTTP 400. Foi implementada sanitização cirúrgica em `proposals/page.tsx` filtrando rigorosamente apenas os campos declarados no `CreateProposalDto` e `CreateProposalItemDto`.
+  - **Garantia de Campos Obrigatórios**: Implementado fallback seguro para o campo obrigatório `title` (`safeTitle`), garantindo que `@IsNotEmpty()` da API nunca seja violado mesmo que o usuário não preencha o título. Validação prévia de cliente, contatos e itens no `ProposalModal.tsx`.
+  - **Tratamento Transparente de Erros**: Removido o fallback otimista que mascarava falhas e fechava o modal silenciosamente. Agora, erros retornados pelo Axios (`error.response?.data?.message`) são capturados, formatados e exibidos em `toast.error`, mantendo o modal aberto e impedindo perda de dados pelo usuário.
+  - **Auditoria por Logs de Console**: Inseridos logs explícitos (`[PROPOSALS_PAYLOAD_SEND]`, `[PROPOSALS_API_SUCCESS]`, `[PROPOSALS_API_ERROR]`, `[PROPOSALS_MODAL]`) para auditoria em tempo real no DevTools de cada disparo, payload e resposta do backend.
+  - **Validação**: `npx tsc --noEmit` código 0 e `npm run build` aprovado com **código 0** (36 rotas de produção geradas com sucesso).
 
 ---
 
