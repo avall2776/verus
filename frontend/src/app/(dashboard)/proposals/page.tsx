@@ -33,7 +33,8 @@ export default function ProposalsPage() {
       try {
         const response = await api.get("/proposals");
         if (isMounted && Array.isArray(response.data)) {
-            const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
+          const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
+          const mapped: Proposal[] = response.data.map((p: any) => {
             return {
               id: p.id,
               code: p.code || `PROP-${p.id.slice(0, 8).toUpperCase()}`,

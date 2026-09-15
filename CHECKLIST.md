@@ -865,6 +865,15 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Validação Rigorosa**:
     - Backend: `npm run build` aprovado com **código 0**.
     - Frontend: `npx tsc --noEmit` e `npm run build` aprovados com **código 0** (todas as 36 rotas compiladas com sucesso).
+- **[15/09/2026 - 17:45]** 🌐 **Eliminação de Domínio Fictício & Portal de Assinatura Online (/c/[code] e /p/[code])**:
+  - **Remoção de URLs Fictícias**: Substituídas todas as ocorrências estáticas de `app.versus.com.br` por resolução dinâmica de URL (`window.location.origin` no frontend, `origin` do cliente ou `NEXT_PUBLIC_APP_URL` / `APP_URL` com fallback oficial para `https://verus-alpha.vercel.app`).
+  - **Portal Público de Assinatura de Contratos (`/c/[code]`)**: Criada a página pública oficial para que clientes assinem contratos diretamente pelo link recebido no WhatsApp/E-mail. Apresenta cabeçalho oficial da empresa, minutas, resumo financeiro, formulário de assinatura com carimbo de tempo, IP do cliente e validação conforme a MP 2.200-2/2001 e Lei 14.063/2020.
+  - **Portal Público de Aceite de Propostas (`/p/[code]`)**: Criada a página pública oficial para análise e aprovação instantânea de propostas comerciais pelos clientes (`POST /proposals/public/:code/accept`).
+  - **Endpoints Públicos no Backend (NestJS)**:
+    - `GET /contracts/public/:codeOrId` & `POST /contracts/public/:codeOrId/sign`: Acesso e assinatura pública segura sem bloqueio por JWT de backoffice.
+    - `GET /proposals/public/:codeOrId` & `POST /proposals/public/:codeOrId/accept`: Acesso e aprovação pública de propostas.
+  - **Compartilhamento WhatsApp 100% Funcional**: Mensagens agora incluem links reais e clicáveis direcionando imediatamente para `/c/[code]`.
+  - **Validação Rigorosa**: `npx tsc --noEmit` e `npm run build` aprovados com **código 0** em backend e frontend.
 
 ---
 
