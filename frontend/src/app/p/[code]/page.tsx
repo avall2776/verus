@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { 
@@ -7,7 +9,7 @@ import {
   Building2, User, Calendar, DollarSign, Check, AlertCircle, Loader2
 } from "lucide-react";
 import api from "@/lib/api";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 export default function PublicProposalViewPage() {
   const params = useParams();

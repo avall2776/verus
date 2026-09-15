@@ -22,8 +22,9 @@ export default withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG || "avall",
   project: process.env.SENTRY_PROJECT || "javascript-nextjs",
 
-  // Only print logs for uploading source maps in CI
-  silent: !process.env.CI,
+  // Não quebrar o build do Vercel caso o token de autenticação não esteja configurado
+  dryRun: !process.env.SENTRY_AUTH_TOKEN,
+  silent: true,
 
   // For all available options, see:
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
