@@ -377,6 +377,63 @@ let ChatService = class ChatService {
             orderBy: { scheduledAt: 'asc' }
         });
     }
+    async getAllScheduledMessages(tenantId) {
+        return this.prisma.message.findMany({
+            where: {
+                tenantId,
+                status: 'scheduled',
+            },
+            include: {
+                contact: {
+                    select: {
+                        id: true,
+                        name: true,
+                        phone: true,
+                        avatarUrl: true,
+                    }
+                },
+                conversation: {
+                    select: {
+                        id: true,
+                        status: true,
+                    }
+                }
+            },
+            orderBy: { scheduledAt: 'asc' }
+        });
+    }
+    async batchCancelScheduledMessages(tenantId, messageIds) {
+        if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
+            throw new common_1.BadRequestException('Nenhum identificador de mensagem informado.');
+        }
+        const messages = await this.prisma.message.findMany({
+            where: {
+                id: { in: messageIds },
+                tenantId,
+                status: 'scheduled',
+            }
+        });
+        const validIds = messages.map(m => m.id);
+        await Promise.all(validIds.map(async (id) => {
+            try {
+                const job = await this.scheduledQueue.getJob(`msg_scheduled_${id}`);
+                if (job)
+                    await job.remove();
+            }
+            catch { }
+        }));
+        const result = await this.prisma.message.deleteMany({
+            where: {
+                id: { in: validIds },
+                tenantId,
+            }
+        });
+        return {
+            success: true,
+            canceledCount: result.count,
+            canceledIds: validIds,
+        };
+    }
     async cancelScheduledMessage(tenantId, messageId) {
         const msg = await this.prisma.message.findUnique({
             where: { id: messageId }

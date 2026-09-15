@@ -59,6 +59,42 @@ export declare class ChatController {
         resolved: number;
         total: number;
     }>;
+    getAllScheduledMessages(tenantId: string): Promise<({
+        contact: {
+            id: string;
+            name: string;
+            phone: string;
+            avatarUrl: string;
+        };
+        conversation: {
+            id: string;
+            status: string;
+        };
+    } & {
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        contactId: string;
+        status: string;
+        providerMessageId: string | null;
+        content: string;
+        type: string;
+        mediaUrl: string | null;
+        audioTranscription: string | null;
+        isInternal: boolean;
+        fromMe: boolean;
+        direction: string;
+        senderType: string;
+        scheduledAt: Date | null;
+        conversationId: string;
+    })[]>;
+    batchCancelScheduledMessages(tenantId: string, body: {
+        messageIds: string[];
+    }): Promise<{
+        success: boolean;
+        canceledCount: number;
+        canceledIds: string[];
+    }>;
     getMessages(tenantId: string, conversationId: string): Promise<{
         id: string;
         tenantId: string;

@@ -31,6 +31,12 @@ let ChatController = class ChatController {
     async getConversationCounts(tenantId, req) {
         return this.chatService.getConversationCounts(tenantId, req.user.id, req.user.role);
     }
+    async getAllScheduledMessages(tenantId) {
+        return this.chatService.getAllScheduledMessages(tenantId);
+    }
+    async batchCancelScheduledMessages(tenantId, body) {
+        return this.chatService.batchCancelScheduledMessages(tenantId, body.messageIds);
+    }
     async getMessages(tenantId, conversationId) {
         return this.chatService.getConversationMessages(tenantId, conversationId);
     }
@@ -129,6 +135,21 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "getConversationCounts", null);
+__decorate([
+    (0, common_1.Get)('scheduled/all'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "getAllScheduledMessages", null);
+__decorate([
+    (0, common_1.Post)('scheduled/batch-cancel'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "batchCancelScheduledMessages", null);
 __decorate([
     (0, common_1.Get)(':id/messages'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

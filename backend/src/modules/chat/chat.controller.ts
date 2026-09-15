@@ -30,6 +30,21 @@ export class ChatController {
     return this.chatService.getConversationCounts(tenantId, req.user.id, req.user.role);
   }
 
+  @Get('scheduled/all')
+  async getAllScheduledMessages(
+    @CurrentTenant() tenantId: string,
+  ) {
+    return this.chatService.getAllScheduledMessages(tenantId);
+  }
+
+  @Post('scheduled/batch-cancel')
+  async batchCancelScheduledMessages(
+    @CurrentTenant() tenantId: string,
+    @Body() body: { messageIds: string[] },
+  ) {
+    return this.chatService.batchCancelScheduledMessages(tenantId, body.messageIds);
+  }
+
   @Get(':id/messages')
   async getMessages(
     @CurrentTenant() tenantId: string,

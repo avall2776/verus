@@ -149,6 +149,38 @@ function InboxContent() {
       .catch(() => {});
   }, [activeChat]);
 
+  // Sincroniza todos os agendamentos da empresa ao abrir a Central Global
+  useEffect(() => {
+    if (!showGlobalScheduleCenter) return;
+    api.get('/conversations/scheduled/all')
+      .then(res => {
+        if (Array.isArray(res.data)) {
+          const mapped: { [chatId: string]: ScheduledMessage[] } = {};
+          res.data.forEach((item: any) => {
+            const cId = item.conversationId;
+            if (!mapped[cId]) mapped[cId] = [];
+            mapped[cId].push({
+              id: item.id,
+              conversationId: item.conversationId,
+              content: item.content,
+              scheduledAt: item.scheduledAt,
+              status: item.status,
+              createdAt: item.createdAt,
+            });
+          });
+          setScheduledMessagesByChat(prev => {
+            const merged = { ...prev, ...mapped };
+            try {
+              localStorage.setItem('versus_scheduled_messages', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
+        }
+      })
+      .catch(() => {});
+  }, [showGlobalScheduleCenter]);
+
+
   const saveScheduledMessages = (updated: { [chatId: string]: ScheduledMessage[] }) => {
     setScheduledMessagesByChat(updated);
     try {

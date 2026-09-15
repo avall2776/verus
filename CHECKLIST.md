@@ -723,6 +723,12 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * **Badge na Lista Lateral de Conversas**: Exibição de badge estilizado em ciano (`CalendarClock`) diretamente no card de cada contato que possuir agendamentos ativos na barra lateral do Inbox.
   * Adicionado atalho "Ver Mensagens Agendadas" com contador dinâmico no menu contextual de 3 pontos do cabeçalho do chat.
   * **Validação de Build**: `npx tsc --noEmit` aprovado (**código 0**) e `npm run build` do Next.js 14 aprovado com sucesso (**código 0**, 31 rotas compiladas).
+- [x] **Central Global de Agendamentos (`/frontend`) - [IDE 2 Frontend]**:
+  * Criação do componente `GlobalScheduledCenterModal.tsx` em `/frontend/src/components/inbox/GlobalScheduledCenterModal.tsx` com visão unificada e cronológica de todos os disparos programados da empresa.
+  * Filtros dinâmicos por período (*Todos*, *Hoje*, *Amanhã*, *Esta Semana*) com contadores instantâneos e barra de pesquisa textual (filtra por nome, telefone do contato ou conteúdo).
+  * Ações rápidas: link direto para abrir a conversa do cliente (`onSelectChat`), cancelamento individual e cancelamento em lote com seleção múltipla por checkbox.
+  * Conexão direta aos botões de atalho de agenda na barra lateral do Inbox (`inbox/page.tsx`).
+  * Validação com `npx tsc --noEmit` (**código 0**) e build Next.js 14 aprovado (**código 0**, 31 rotas).
 - [x] **Persistência no Supabase & Prisma (Autoridade Exclusiva IDE 1)**:
   * Adicionado campo `scheduledAt DateTime?` e índice composto `@@index([tenantId, status, scheduledAt])` no modelo `Message` em `schema.prisma`.
   * Sincronização executada com o Supabase (`npx prisma db push` e `npx prisma generate` aprovados com **código 0**).
@@ -760,6 +766,8 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[15/09/2026 - 13:22]** 🟢 **Retorno do almoço / Início do turno da tarde**: Retomada dos trabalhos na Fase 47 (Agendamento de Mensagens). Foco da IDE 1: Backend NestJS, Prisma (`Message.scheduledAt`), DTOs com validação de fuso horário, regras de negócio e orquestração de disparo com BullMQ integrado ao novo modal da IDE 2.
 - **[15/09/2026 - 13:38]** 💎 **Fase 47 (Frontend) 100% Concluída**: A **IDE 2** concluiu a implementação do `ScheduledMessagesDrawer.tsx`, botões de cabeçalho com badges dinâmicos de contagem e badges de relógio (`CalendarClock`) em ciano nos cards de contato do Inbox. Atualização otimista em tempo real, cancelamento com confirmação rápida e persistência reativa local. Verificação TypeScript (`npx tsc --noEmit`) e Build de produção do Next.js 14 aprovados com **código 0** (31 rotas geradas).
 - **[15/09/2026 - 13:48]** 🚀 **Fase 47 Concluída com Sucesso**: Agendamento de Mensagens 100% implementado e integrado de ponta a ponta (Backend NestJS + Frontend Next.js 14). Suporte completo a timezone (UTC/BRT), regras de negócio no futuro, persistência no Supabase via Prisma com `scheduledAt`, fila e worker no BullMQ com disparo assíncrono para a Meta Cloud API, sincronização e cancelamento via endpoints `/conversations/:id/scheduled` e `/conversations/messages/:id/schedule`. Builds código 0, deploy sincronizado na Vercel e VPS PM2 online!
+- **[15/09/2026 - 13:52]** 👑 **Central Global de Agendamentos Concluída (IDE 2)**: A **IDE 2** finalizou o componente unificado `GlobalScheduledCenterModal.tsx` com filtros de período (Hoje, Amanhã, Esta Semana), busca em tempo real por lead/texto, cancelamento em lote com checkbox e navegação direta para o chat. Conexão integrada aos atalhos de agenda do Inbox. Builds TypeScript e Next.js 14 validados com código 0!
+- **[15/09/2026 - 14:04]** 💎 **Central Global de Agendamentos & Cancelamento em Lote Concluídos**: Implementação dos endpoints `GET /conversations/scheduled/all` e `POST /conversations/scheduled/batch-cancel` no backend NestJS, integrando perfeitamente a visão corporativa unificada do `GlobalScheduledCenterModal.tsx` com o Supabase e fila Redis do BullMQ. Builds backend e frontend 100% íntegros (código 0) e deploy sincronizado na VPS e Vercel.
 
 ---
 
