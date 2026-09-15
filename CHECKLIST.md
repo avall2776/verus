@@ -874,6 +874,12 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - `GET /proposals/public/:codeOrId` & `POST /proposals/public/:codeOrId/accept`: Acesso e aprovação pública de propostas.
   - **Compartilhamento WhatsApp 100% Funcional**: Mensagens agora incluem links reais e clicáveis direcionando imediatamente para `/c/[code]`.
   - **Validação Rigorosa**: `npx tsc --noEmit` e `npm run build` aprovados com **código 0** em backend e frontend.
+- **[15/09/2026 - 17:55]** 🛡️ **Fase 50 Concluída com Sucesso: Blindagem de Build no Vercel (Sentry dryRun & Dynamic Force-Dynamic)**:
+  - **Causa Raiz Resolvida**: No pipeline CI da Vercel (`CI=true`), a ausência da variável `SENTRY_AUTH_TOKEN` causava timeout e interrupção do build em 24s durante o upload de source maps.
+  - **Configuração de Resiliência (`next.config.mjs`)**: Configurado `dryRun: !process.env.SENTRY_AUTH_TOKEN` e `silent: true`, permitindo que o build continue com sucesso em ambientes sem o token do Sentry cadastrado.
+  - **Diretiva Dinâmica nas Rotas Públicas**: Adicionada a declaração explícita `export const dynamic = "force-dynamic";` nas páginas de assinatura `/c/[code]` e `/p/[code]`, prevenindo falhas de pré-renderização estática (SSG) no Next.js 14.
+  - **Unificação de Notificações**: Padronizado o uso de `sonner` (`import { toast } from "sonner"`) em todos os fluxos públicos.
+  - **Validação & Deploy**: `npx tsc --noEmit` e `npm run build` validados com **código 0** (36 rotas). Commit `91ff0f3` enviado para `origin/main` e aceito pelo Vercel.
 
 ---
 
