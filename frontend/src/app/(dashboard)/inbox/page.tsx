@@ -8,7 +8,7 @@ import {
   RefreshCw, TrendingUp, Calendar, MessageSquare, CheckCircle2, Plus, Sparkles,
   BookUser, CalendarClock, PhoneCall, Zap, Eye, ShieldCheck, PhoneForwarded, UserCheck,
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, Trash2, Play, Pause,
-  Volume2, CheckCheck, Copy, ExternalLink, Headphones
+  Volume2, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -106,6 +106,52 @@ function InboxContent() {
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
   const [scheduleMessage, setScheduleMessage] = useState('');
+
+  // Modal Lightbox / Expansão de Imagem
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string } | null>(null);
+
+  // Fecha o Lightbox ao pressionar ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setLightboxImage(null);
+      }
+    };
+    if (lightboxImage) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxImage]);
+
+  // Download direto de imagem com nome formatado
+  const handleDownloadImage = async (url: string, title?: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      const cleanExt = url.split('.').pop()?.split('?')[0]?.toLowerCase() || 'jpg';
+      const ext = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(cleanExt) ? cleanExt : 'jpg';
+      const cleanTitle = (title && title !== 'Imagem' && title !== 'Anexo') 
+        ? title.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 30)
+        : `versus_midia_${Date.now()}`;
+      link.download = cleanTitle.endsWith(`.${ext}`) ? cleanTitle : `${cleanTitle}.${ext}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      // Fallback padrão
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `versus_midia_${Date.now()}.jpg`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   const getContactInitials = (name?: string) => {
     if (!name) return 'C';
@@ -1585,11 +1631,23 @@ function InboxContent() {
                         {msg.mediaUrl && (
                           <div className="mb-2">
                             {msg.type === 'image' && (
-                              <img 
-                                src={msg.mediaUrl} 
-                                alt="Anexo" 
-                                className="rounded-xl max-h-56 object-cover border border-white/10 shadow-sm hover:scale-[1.01] transition-transform" 
-                              />
+                              <div 
+                                onClick={() => setLightboxImage({ url: msg.mediaUrl!, title: msg.content || 'Imagem' })}
+                                className="relative group cursor-pointer overflow-hidden rounded-xl border border-white/10 shadow-md inline-block max-w-full"
+                                title="Clique para expandir em tela cheia"
+                              >
+                                <img 
+                                  src={msg.mediaUrl} 
+                                  alt={msg.content || "Anexo"} 
+                                  className="rounded-xl max-h-64 sm:max-h-72 object-cover transition-transform duration-300 group-hover:scale-[1.02]" 
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                  <div className="p-2.5 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-xl flex items-center gap-1.5 text-xs font-semibold transform translate-y-1 group-hover:translate-y-0 transition-transform duration-200">
+                                    <ZoomIn size={16} className="text-accent" />
+                                    <span>Expandir</span>
+                                  </div>
+                                </div>
+                              </div>
                             )}
 
                             {/* Mini-player de Áudio Customizado */}
@@ -2671,6 +2729,58 @@ function InboxContent() {
               <PhoneCall size={15} />
               <span>Chamar Agora</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL LIGHTBOX / EXPANSÃO DE IMAGEM ESTILO WHATSAPP */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-200 select-none"
+          onClick={() => setLightboxImage(null)}
+        >
+          {/* Barra Superior de Controles Flutuantes */}
+          <div 
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center gap-3 z-50"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Botão de Download Direto */}
+            <button
+              type="button"
+              onClick={() => handleDownloadImage(lightboxImage.url, lightboxImage.title)}
+              className="px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-white text-xs font-semibold backdrop-blur-md border border-white/10 shadow-xl flex items-center gap-2 transition-all cursor-pointer hover:scale-105 active:scale-95"
+              title="Baixar imagem original"
+            >
+              <Download size={16} className="text-accent" />
+              <span>Baixar Imagem</span>
+            </button>
+
+            {/* Botão de Fechar */}
+            <button
+              type="button"
+              onClick={() => setLightboxImage(null)}
+              className="w-10 h-10 rounded-xl bg-slate-800/80 hover:bg-rose-900/60 text-slate-300 hover:text-white backdrop-blur-md border border-white/10 shadow-xl flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
+              title="Fechar visualização (ESC)"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Conteúdo Central da Imagem */}
+          <div 
+            className="relative max-w-5xl max-h-[88vh] flex flex-col items-center justify-center animate-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            <img 
+              src={lightboxImage.url} 
+              alt={lightboxImage.title || "Imagem Expandida"} 
+              className="max-h-[82vh] max-w-full object-contain rounded-2xl shadow-[0_15px_50px_rgba(0,0,0,0.8)] border border-white/10" 
+            />
+            {lightboxImage.title && lightboxImage.title !== 'Imagem' && lightboxImage.title !== 'Anexo' && (
+              <div className="mt-3 px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-xs text-slate-200 font-medium max-w-md truncate text-center">
+                {lightboxImage.title}
+              </div>
+            )}
           </div>
         </div>
       )}
