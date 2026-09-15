@@ -880,6 +880,27 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Diretiva Dinâmica nas Rotas Públicas**: Adicionada a declaração explícita `export const dynamic = "force-dynamic";` nas páginas de assinatura `/c/[code]` e `/p/[code]`, prevenindo falhas de pré-renderização estática (SSG) no Next.js 14.
   - **Unificação de Notificações**: Padronizado o uso de `sonner` (`import { toast } from "sonner"`) em todos os fluxos públicos.
   - **Validação & Deploy**: `npx tsc --noEmit` e `npm run build` validados com **código 0** (36 rotas). Commit `91ff0f3` enviado para `origin/main` e aceito pelo Vercel.
+- **[15/09/2026 - 18:10]** 🏁 **Fechamento do Expediente & Ponto Diário Batido (15/09/2026)**:
+  - **Status Geral do Projeto**: O ecossistema comercial do VERSUS encerra o dia com **100% de estabilidade**, builds rigorosamente validados com **código 0** no Backend (`nest build`) e no Frontend Next.js (`npx tsc --noEmit` e `npm run build` com todas as 36 rotas de produção geradas).
+  - **Resumo Consolidado das Entregas de Hoje**:
+    1. **Módulo de Propostas Comerciais**: Listagem sem mocks, KPIs dinâmicos, construtor de orçamentos, espelho visual, geração de link e portal público de aceite (`/p/[code]`).
+    2. **Módulo de Contratos Digitais End-to-End**: Modelagem Prisma/Supabase (`Contract`), tabela de contratos, importação automática de propostas aceitas, eliminação definitiva do erro 401 no PDF, trilha de auditoria com IP/data/hora e portal oficial de assinatura online (`/c/[code]`) em conformidade com a MP 2.200-2/2001 e Lei 14.063/2020.
+    3. **Motor de Automações Enterprise (`/settings/automations`)**: Suporte a multi-gatilhos, interpolação de variáveis dinâmicas, modal visual, teste simulado e histórico completo de logs de execução.
+    4. **Blindagem de Deploy & Resolução de URLs**: Eliminação de links estáticos fictícios, URL dinâmica para links de WhatsApp/E-mail, contingência para build sem `SENTRY_AUTH_TOKEN` na Vercel e deploy ativo no PM2 da VPS (`versus-engine`).
+  - **📋 Pauta & Próximos Passos Prioritários para Amanhã**:
+    1. **Analytics Avançado (PRO)**:
+       - Implementar `getChannels` no backend para mapear origens de leads e volume financeiro faturado por canal.
+       - Refinar `getFunnel` e `getBottlenecks` para fornecer métricas completas de Drop-off e SLAs (FRT e TMA por setor).
+       - Conectar os componentes do frontend (`/dashboard/analytics`) aos dados reais da API com filtros de período (`7d`, `30d`, `90d`).
+    2. **Metas Comerciais (NOVO)**:
+       - Implementar cálculo automatizado de ritmo de meta (Run Rate) e projeções financeiras de fechamento de período.
+       - Aprimorar e conectar o Leaderboard gamificado de consultores comerciais (ranking por pódio e medalhas).
+       - Conectar a criação e exclusão de metas (`POST /goals` e `DELETE /goals/:id`) à interface do frontend (`/dashboard/goals`).
+    3. **Inbox de E-mail Unificado**:
+       - Adicionar modelo `EmailMessage` no Prisma/Supabase (`npx prisma db push`).
+       - Criar módulo NestJS de E-mail (`GET /emails`, `POST /emails/send`, favoritos e exclusão).
+       - Conectar a caixa de entrada (`/email-inbox`) com modal de composição rápida e integração nativa para anexar links de propostas e contratos.
+  - **Validação de Código**: Backend e Frontend checados e prontos para reinício imediato amanhã com código 0.
 
 ---
 
