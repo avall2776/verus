@@ -16,6 +16,7 @@ exports.ProposalsController = void 0;
 const common_1 = require("@nestjs/common");
 const proposals_service_1 = require("./proposals.service");
 const create_proposal_dto_1 = require("./dto/create-proposal.dto");
+const update_proposal_dto_1 = require("./dto/update-proposal.dto");
 const update_proposal_status_dto_1 = require("./dto/update-proposal-status.dto");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
@@ -29,11 +30,26 @@ let ProposalsController = class ProposalsController {
     async create(tenantId, dto) {
         return this.proposalsService.create(tenantId, dto);
     }
+    async getCompanyProfile(tenantId) {
+        return this.proposalsService.getCompanyProfile(tenantId);
+    }
+    async updateCompanyProfile(tenantId, body) {
+        return this.proposalsService.updateCompanyProfile(tenantId, body);
+    }
     async findOne(tenantId, id) {
         return this.proposalsService.findOne(tenantId, id);
     }
+    async update(tenantId, id, dto) {
+        return this.proposalsService.update(tenantId, id, dto);
+    }
+    async patch(tenantId, id, dto) {
+        return this.proposalsService.update(tenantId, id, dto);
+    }
     async updateStatus(tenantId, id, dto) {
         return this.proposalsService.updateStatus(tenantId, id, dto);
+    }
+    async getWhatsAppShare(tenantId, id) {
+        return this.proposalsService.getWhatsAppShare(tenantId, id);
     }
     async getPdf(tenantId, id, res) {
         const html = await this.proposalsService.generatePdfHtml(tenantId, id);
@@ -59,6 +75,21 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ProposalsController.prototype, "create", null);
 __decorate([
+    (0, common_1.Get)('company-profile'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "getCompanyProfile", null);
+__decorate([
+    (0, common_1.Patch)('company-profile'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "updateCompanyProfile", null);
+__decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
@@ -66,6 +97,24 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], ProposalsController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Put)(':id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, update_proposal_dto_1.UpdateProposalDto]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "update", null);
+__decorate([
+    (0, common_1.Patch)(':id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, update_proposal_dto_1.UpdateProposalDto]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "patch", null);
 __decorate([
     (0, common_1.Patch)(':id/status'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
@@ -75,6 +124,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String, update_proposal_status_dto_1.UpdateProposalStatusDto]),
     __metadata("design:returntype", Promise)
 ], ProposalsController.prototype, "updateStatus", null);
+__decorate([
+    (0, common_1.Get)(':id/whatsapp-share'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "getWhatsAppShare", null);
 __decorate([
     (0, common_1.Get)(':id/pdf'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

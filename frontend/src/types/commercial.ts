@@ -16,6 +16,15 @@ export interface ProposalItem {
   total: number;
 }
 
+export interface CompanyIssuer {
+  name: string; // Razão Social / Nome Fantasia
+  document?: string; // CNPJ ou CPF
+  email?: string;
+  phone?: string;
+  address?: string;
+  logoUrl?: string; // Data URL base64 ou URL
+}
+
 export interface Proposal {
   id: string;
   code: string; // Ex: PROP-2026-089
@@ -39,6 +48,7 @@ export interface Proposal {
   acceptedAt?: string;
   notes?: string;
   publicLink?: string;
+  issuer?: CompanyIssuer;
 }
 
 export interface ProposalKPIs {

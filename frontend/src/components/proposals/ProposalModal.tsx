@@ -1,30 +1,42 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   X, Plus, Trash2, FileText, DollarSign, Calendar, User, 
-  Building2, Mail, Phone, ShieldCheck, Sparkles, CheckCircle2 
+  Building2, Mail, Phone, ShieldCheck, Sparkles, CheckCircle2, 
+  Edit3, Upload, Image as ImageIcon, MapPin
 } from "lucide-react";
-import { Proposal, ProposalItem } from "@/types/commercial";
+import { Proposal, ProposalItem, CompanyIssuer, ProposalStatus } from "@/types/commercial";
 import toast from "react-hot-toast";
 
 interface ProposalModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (proposal: Proposal) => void;
+  proposalToEdit?: Proposal | null;
 }
 
-export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
-  // Gerar código inicial da proposta
-  const [code] = useState(() => `PROP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
+export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: ProposalModalProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Código da proposta
+  const [code, setCode] = useState(() => `PROP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
   
+  // Dados do emitente (Sua Empresa / Tenant)
+  const [issuerName, setIssuerName] = useState("Nexus Soluções & Tecnologia");
+  const [issuerDocument, setIssuerDocument] = useState("45.123.890/0001-22");
+  const [issuerPhone, setIssuerPhone] = useState("(11) 3090-5000");
+  const [issuerEmail, setIssuerEmail] = useState("contato@nexustec.com.br");
+  const [issuerAddress, setIssuerAddress] = useState("Av. Paulista, 1842, Cj. 72 - Bela Vista, São Paulo - SP");
+  const [issuerLogoUrl, setIssuerLogoUrl] = useState<string>("");
+
   // Dados do cliente
   const [title, setTitle] = useState("Proposta de Prestação de Serviços Digitais");
   const [clientName, setClientName] = useState("");
   const [clientCompany, setClientCompany] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
-  const [sellerName, setSellerName] = useState("Equipe Comercial VERSUS");
+  const [sellerName, setSellerName] = useState("Equipe Comercial");
   const [validUntil, setValidUntil] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 15);
@@ -37,7 +49,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
   const [items, setItems] = useState<ProposalItem[]>([
     {
       id: "item-1",
-      name: "Implantação Plataforma VERSUS Pro",
+      name: "Implantação Plataforma & Setup",
       description: "Setup completo de canais WhatsApp, agentes de IA e treinamento de equipe",
       quantity: 1,
       unitPrice: 4500,
@@ -58,7 +70,126 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Sincronizar estado caso haja proposta em edição ou carregar cache do emitente
+  useEffect(() => {
+    if (proposalToEdit && isOpen) {
+      setCode(proposalToEdit.code);
+      setTitle(proposalToEdit.title);
+      setClientName(proposalToEdit.clientName);
+      setClientCompany(proposalToEdit.clientCompany || "");
+      setClientEmail(proposalToEdit.clientEmail);
+      setClientPhone(proposalToEdit.clientPhone);
+      setSellerName(proposalToEdit.sellerName);
+      setValidUntil(proposalToEdit.validUntil);
+      setPaymentMethod(proposalToEdit.paymentMethod);
+      setNotes(proposalToEdit.notes || "");
+      setItems(proposalToEdit.items && proposalToEdit.items.length > 0 ? proposalToEdit.items : [
+        {
+          id: `item-${Date.now()}`,
+          name: "Serviço Comercial",
+          quantity: 1,
+          unitPrice: proposalToEdit.total || 1000,
+          discountPercent: 0,
+          total: proposalToEdit.total || 1000
+        }
+      ]);
+      setGlobalDiscount(proposalToEdit.discountTotal || 0);
+
+      // Carregar emitente da proposta se houver
+      if (proposalToEdit.issuer) {
+        setIssuerName(proposalToEdit.issuer.name || "Nexus Soluções & Tecnologia");
+        setIssuerDocument(proposalToEdit.issuer.document || "");
+        setIssuerPhone(proposalToEdit.issuer.phone || "");
+        setIssuerEmail(proposalToEdit.issuer.email || "");
+        setIssuerAddress(proposalToEdit.issuer.address || "");
+        setIssuerLogoUrl(proposalToEdit.issuer.logoUrl || "");
+      }
+    } else if (!proposalToEdit && isOpen) {
+      // Carregar cache local de emitente anterior se existir
+      try {
+        const cached = localStorage.getItem("versus_proposal_issuer_cache");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.name) setIssuerName(parsed.name);
+          if (parsed.document) setIssuerDocument(parsed.document);
+          if (parsed.phone) setIssuerPhone(parsed.phone);
+          if (parsed.email) setIssuerEmail(parsed.email);
+          if (parsed.address) setIssuerAddress(parsed.address);
+          if (parsed.logoUrl) setIssuerLogoUrl(parsed.logoUrl);
+        }
+      } catch (err) {
+        // Silencioso
+      }
+
+      setCode(`PROP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
+      setTitle("Proposta de Prestação de Serviços Digitais");
+      setClientName("");
+      setClientCompany("");
+      setClientEmail("");
+      setClientPhone("");
+      setSellerName("Equipe Comercial");
+      const d = new Date();
+      d.setDate(d.getDate() + 15);
+      setValidUntil(d.toISOString().split("T")[0]);
+      setPaymentMethod("50% Entrada + 50% na Entrega");
+      setNotes("A proposta inclui implementação assistida, suporte prioritário e garantia técnica de 90 dias após entrega final.");
+      setItems([
+        {
+          id: "item-1",
+          name: "Implantação Plataforma & Setup",
+          description: "Setup completo de canais WhatsApp, agentes de IA e treinamento de equipe",
+          quantity: 1,
+          unitPrice: 4500,
+          discountPercent: 0,
+          total: 4500
+        },
+        {
+          id: "item-2",
+          name: "Licenciamento Anual (10 Usuários)",
+          description: "Acesso contínuo com SLA de 99.9% e automações ilimitadas",
+          quantity: 1,
+          unitPrice: 7200,
+          discountPercent: 10,
+          total: 6480
+        }
+      ]);
+      setGlobalDiscount(0);
+    }
+  }, [proposalToEdit, isOpen]);
+
   if (!isOpen) return null;
+
+  // Upload do Logotipo da Empresa Emitente
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione um arquivo de imagem válido (PNG, JPG, SVG).");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 2MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      setIssuerLogoUrl(result);
+      toast.success("Logotipo da empresa carregado com sucesso!");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveLogo = () => {
+    setIssuerLogoUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    toast("Logotipo removido.");
+  };
 
   // Atualizar campo de um item dinâmico
   const updateItem = (id: string, field: keyof ProposalItem, value: any) => {
@@ -103,7 +234,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
   const subtotal = items.reduce((acc, curr) => acc + curr.total, 0);
   const finalTotal = Math.max(0, subtotal - Number(globalDiscount || 0));
 
-  const handleSaveProposal = (status: "draft" | "sent") => {
+  const handleSaveProposal = (status: ProposalStatus) => {
     if (!clientName.trim()) {
       toast.error("Preencha o nome do cliente.");
       return;
@@ -119,37 +250,57 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
 
     setIsSubmitting(true);
 
-    const newProposal: Proposal = {
-      id: `prop-${Date.now()}`,
-      code,
+    const issuerData: CompanyIssuer = {
+      name: issuerName.trim() || "Empresa Emitente",
+      document: issuerDocument.trim(),
+      phone: issuerPhone.trim(),
+      email: issuerEmail.trim(),
+      address: issuerAddress.trim(),
+      logoUrl: issuerLogoUrl
+    };
+
+    // Cache local para próximas propostas
+    try {
+      localStorage.setItem("versus_proposal_issuer_cache", JSON.stringify(issuerData));
+    } catch (e) {
+      // Silencioso
+    }
+
+    const updatedOrNewProposal: Proposal = {
+      id: proposalToEdit ? proposalToEdit.id : `prop-${Date.now()}`,
+      code: proposalToEdit ? proposalToEdit.code : code,
       title: title.trim() || "Proposta Comercial",
       clientName: clientName.trim(),
       clientCompany: clientCompany.trim() || undefined,
       clientEmail: clientEmail.trim(),
       clientPhone: clientPhone.trim(),
       sellerName: sellerName.trim(),
-      status,
+      status: proposalToEdit ? proposalToEdit.status : status,
       items,
       subtotal,
       discountTotal: Number(globalDiscount || 0),
       total: finalTotal,
       paymentMethod,
       validUntil,
-      createdAt: new Date().toISOString(),
+      createdAt: proposalToEdit ? proposalToEdit.createdAt : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       notes: notes.trim(),
-      publicLink: `https://app.versus.com.br/p/${code.toLowerCase()}`
+      publicLink: proposalToEdit?.publicLink || `https://app.versus.com.br/p/${(proposalToEdit?.code || code).toLowerCase()}`,
+      issuer: issuerData
     };
 
     setTimeout(() => {
-      onSave(newProposal);
+      onSave(updatedOrNewProposal);
       setIsSubmitting(false);
       toast.success(
-        status === "sent" 
+        proposalToEdit 
+          ? "Proposta comercial atualizada com sucesso!"
+          : status === "sent" 
           ? "Proposta gerada e pronta para envio!" 
           : "Proposta salva como rascunho!"
       );
       onClose();
-    }, 400);
+    }, 350);
   };
 
   return (
@@ -161,26 +312,28 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
         {/* Cabeçalho do Modal */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 bg-slate-900/60">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-              <FileText className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              {proposalToEdit ? <Edit3 className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-white tracking-wide">
-                  Novo Orçamento / Proposta Comercial
+                  {proposalToEdit ? "Editar Proposta Comercial" : "Novo Orçamento / Proposta Comercial"}
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30">
                   {code}
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Construa propostas inteligentes com cálculo de margens e link de aceite
+                {proposalToEdit 
+                  ? "Modifique itens, valores e dados da sua empresa nesta proposta"
+                  : "Construa orçamentos profissionais com o logotipo e dados da sua empresa"}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -188,10 +341,151 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
 
         {/* Corpo rolável */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Seção 1: Informações Gerais */}
+          {/* Seção 0: Dados da Empresa Emitente & Logotipo (Sua Marca) */}
+          <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/80 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-blue-400" />
+                Dados da Empresa Emitente & Logotipo (Sua Marca no PDF)
+              </h3>
+              <span className="text-[11px] text-blue-400/80 font-medium">
+                Estampado no cabeçalho do documento
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+              {/* Box de Upload do Logotipo */}
+              <div className="md:col-span-4 p-3.5 rounded-xl bg-[#070D1B] border border-slate-700/80 flex flex-col items-center justify-center text-center">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                />
+
+                {issuerLogoUrl ? (
+                  <div className="space-y-3 w-full flex flex-col items-center">
+                    <div className="h-20 max-w-full flex items-center justify-center p-2 rounded-lg bg-slate-900 border border-slate-800">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={issuerLogoUrl}
+                        alt="Logotipo da empresa"
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-2.5 py-1 text-[11px] rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+                      >
+                        Trocar Logo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemoveLogo}
+                        className="px-2.5 py-1 text-[11px] rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-colors cursor-pointer"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-3 px-2 flex flex-col items-center space-y-2 w-full">
+                    <div className="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                      <ImageIcon className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-white">Logotipo da Empresa</p>
+                      <p className="text-[10px] text-slate-400">PNG, JPG ou SVG (máx. 2MB)</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="mt-1 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-colors cursor-pointer"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      Fazer Upload
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Campos Textuais do Emitente */}
+              <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    Nome Fantasia / Razão Social
+                  </label>
+                  <input
+                    type="text"
+                    value={issuerName}
+                    onChange={(e) => setIssuerName(e.target.value)}
+                    placeholder="Ex: Clínica Sorriso & Estética"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    CNPJ ou CPF
+                  </label>
+                  <input
+                    type="text"
+                    value={issuerDocument}
+                    onChange={(e) => setIssuerDocument(e.target.value)}
+                    placeholder="00.000.000/0001-00"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    Telefone Comercial / WhatsApp
+                  </label>
+                  <input
+                    type="text"
+                    value={issuerPhone}
+                    onChange={(e) => setIssuerPhone(e.target.value)}
+                    placeholder="(11) 99999-9999"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    E-mail Comercial
+                  </label>
+                  <input
+                    type="email"
+                    value={issuerEmail}
+                    onChange={(e) => setIssuerEmail(e.target.value)}
+                    placeholder="comercial@suaempresa.com.br"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    Endereço Completo
+                  </label>
+                  <input
+                    type="text"
+                    value={issuerAddress}
+                    onChange={(e) => setIssuerAddress(e.target.value)}
+                    placeholder="Rua, Número, Sala/Andar, Bairro, Cidade - UF"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Seção 1: Dados do Cliente & Proposta */}
           <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/80 space-y-4">
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <User className="w-4 h-4 text-cyan-400" />
+              <User className="w-4 h-4 text-blue-400" />
               Dados do Cliente & Proposta
             </h3>
 
@@ -205,7 +499,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ex: Proposta de Consultoria e Automação"
-                  className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -218,14 +512,14 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   placeholder="Ex: Carlos Eduardo Silveira"
-                  className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Empresa / Razão Social
+                  Empresa / Razão Social do Cliente
                 </label>
                 <div className="relative">
                   <Building2 className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
@@ -234,7 +528,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                     value={clientCompany}
                     onChange={(e) => setClientCompany(e.target.value)}
                     placeholder="Ex: Nexus Logística & Distribuição"
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -250,7 +544,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                     value={clientPhone}
                     onChange={(e) => setClientPhone(e.target.value)}
                     placeholder="(11) 98765-4321"
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -266,7 +560,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                     value={clientEmail}
                     onChange={(e) => setClientEmail(e.target.value)}
                     placeholder="carlos@nexuslog.com.br"
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -281,7 +575,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                     type="date"
                     value={validUntil}
                     onChange={(e) => setValidUntil(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white [color-scheme:dark] focus:outline-none focus:border-cyan-500"
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white [color-scheme:dark] focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -292,13 +586,13 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
           <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/80 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-cyan-400" />
+                <DollarSign className="w-4 h-4 text-blue-400" />
                 Itens & Serviços Orçados
               </h3>
               <button
                 type="button"
                 onClick={addItem}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/20 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-500/10 text-blue-300 border border-blue-500/30 hover:bg-blue-500/20 transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Adicionar Item
@@ -320,7 +614,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                       value={item.name}
                       onChange={(e) => updateItem(item.id, "name", e.target.value)}
                       placeholder="Nome do produto ou serviço"
-                      className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
@@ -333,7 +627,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                       min={1}
                       value={item.quantity}
                       onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
@@ -346,7 +640,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                       min={0}
                       value={item.unitPrice}
                       onChange={(e) => updateItem(item.id, "unitPrice", e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
@@ -360,14 +654,14 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                       max={100}
                       value={item.discountPercent || 0}
                       onChange={(e) => updateItem(item.id, "discountPercent", e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="md:col-span-2 flex items-center justify-between gap-2 pt-4 md:pt-0">
                     <div>
                       <span className="block text-[10px] text-slate-400 uppercase">Subtotal</span>
-                      <span className="text-sm font-bold text-cyan-400">
+                      <span className="text-sm font-bold text-blue-400">
                         R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </span>
                     </div>
@@ -375,7 +669,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                       title="Remover item"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -396,7 +690,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                   min={0}
                   value={globalDiscount}
                   onChange={(e) => setGlobalDiscount(Math.max(0, Number(e.target.value)))}
-                  className="w-28 px-2 py-1 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-cyan-500"
+                  className="w-28 px-2 py-1 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -407,8 +701,8 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                     R$ {subtotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </p>
                 </div>
-                <div className="text-right px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30">
-                  <span className="text-[11px] uppercase tracking-wider text-cyan-400 font-semibold">
+                <div className="text-right px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/30">
+                  <span className="text-[11px] uppercase tracking-wider text-blue-400 font-semibold">
                     Valor Total da Proposta
                   </span>
                   <p className="text-xl font-extrabold text-white">
@@ -428,7 +722,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-cyan-500"
+                className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500"
               >
                 <option value="50% Entrada + 50% na Entrega">50% Entrada + 50% na Entrega</option>
                 <option value="À Vista com 5% de Desconto">À Vista com 5% de Desconto</option>
@@ -440,13 +734,13 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
 
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
-                Vendedor Responsável
+                Vendedor / Consultor Responsável
               </label>
               <input
                 type="text"
                 value={sellerName}
                 onChange={(e) => setSellerName(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-cyan-500"
+                className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500"
               />
             </div>
 
@@ -459,7 +753,7 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Detalhes adicionais de SLA, garantia ou escopo do projeto..."
-                className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 resize-none"
+                className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
               />
             </div>
           </div>
@@ -470,29 +764,40 @@ export function ProposalModal({ isOpen, onClose, onSave }: ProposalModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="px-4 py-2 text-xs font-medium rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
           >
             Descartar
           </button>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleSaveProposal("draft")}
-              className="px-4 py-2 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
-            >
-              Salvar como Rascunho
-            </button>
+            {!proposalToEdit && (
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => handleSaveProposal("draft")}
+                className="px-4 py-2 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+              >
+                Salvar como Rascunho
+              </button>
+            )}
 
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={() => handleSaveProposal("sent")}
-              className="flex items-center gap-2 px-5 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25 transition-all disabled:opacity-50"
+              onClick={() => handleSaveProposal(proposalToEdit?.status || "sent")}
+              className="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-950/40 transition-all disabled:opacity-50 cursor-pointer"
             >
-              <Sparkles className="w-4 h-4" />
-              {isSubmitting ? "Gerando Proposta..." : "Gerar Proposta & Link de Aceite"}
+              {proposalToEdit ? (
+                <>
+                  <Edit3 className="w-4 h-4" />
+                  {isSubmitting ? "Salvando Alterações..." : "Salvar Alterações"}
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  {isSubmitting ? "Gerando Proposta..." : "Gerar Proposta & Link de Aceite"}
+                </>
+              )}
             </button>
           </div>
         </div>

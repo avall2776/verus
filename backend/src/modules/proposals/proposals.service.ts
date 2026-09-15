@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../shared/database/prisma.service';
 import { CreateProposalDto } from './dto/create-proposal.dto';
 import { UpdateProposalStatusDto } from './dto/update-proposal-status.dto';
+import { UpdateProposalDto } from './dto/update-proposal.dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -17,6 +18,17 @@ export class ProposalsService {
     return this.prisma.proposal.findMany({
       where,
       include: {
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            cnpj: true,
+            logoUrl: true,
+            phone: true,
+            address: true,
+            email: true,
+          },
+        },
         lead: {
           select: {
             id: true,
@@ -44,6 +56,17 @@ export class ProposalsService {
     const proposal = await this.prisma.proposal.findFirst({
       where: { id, tenantId },
       include: {
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            cnpj: true,
+            logoUrl: true,
+            phone: true,
+            address: true,
+            email: true,
+          },
+        },
         lead: true,
         deal: true,
         items: true,
@@ -113,6 +136,128 @@ export class ProposalsService {
     });
   }
 
+  async update(tenantId: string, id: string, dto: UpdateProposalDto) {
+    const existing = await this.findOne(tenantId, id);
+
+    return this.prisma.$transaction(async (tx) => {
+      let totalValue = existing.totalValue;
+
+      if (dto.items) {
+        // Delete previous items
+        await tx.proposalItem.deleteMany({
+          where: { proposalId: existing.id },
+        });
+
+        let calculatedTotal = 0;
+        const itemsData = dto.items.map((item) => {
+          const q = item.quantity || 1;
+          const u = Number(item.unitPrice) || 0;
+          const t = q * u;
+          calculatedTotal += t;
+          return {
+            proposalId: existing.id,
+            description: item.description,
+            quantity: q,
+            unitPrice: new Prisma.Decimal(u),
+            totalPrice: new Prisma.Decimal(t),
+          };
+        });
+
+        if (itemsData.length > 0) {
+          await tx.proposalItem.createMany({
+            data: itemsData,
+          });
+        }
+        totalValue = new Prisma.Decimal(calculatedTotal);
+      }
+
+      const updateData: Prisma.ProposalUpdateInput = {};
+      if (dto.title !== undefined) updateData.title = dto.title;
+      if (dto.leadId !== undefined) {
+        updateData.lead = dto.leadId ? { connect: { id: dto.leadId } } : { disconnect: true };
+      }
+      if (dto.dealId !== undefined) {
+        updateData.deal = dto.dealId ? { connect: { id: dto.dealId } } : { disconnect: true };
+      }
+      if (dto.validUntil !== undefined) {
+        updateData.validUntil = dto.validUntil ? new Date(dto.validUntil) : null;
+      }
+      if (dto.paymentTerms !== undefined) updateData.paymentTerms = dto.paymentTerms;
+      if (dto.notes !== undefined) updateData.notes = dto.notes;
+      if (dto.status !== undefined) updateData.status = dto.status;
+      if (dto.items !== undefined) updateData.totalValue = totalValue;
+
+      return tx.proposal.update({
+        where: { id: existing.id },
+        data: updateData,
+        include: {
+          lead: true,
+          deal: true,
+          items: true,
+          contracts: true,
+        },
+      });
+    });
+  }
+
+  async getWhatsAppShare(tenantId: string, id: string) {
+    const proposal = await this.findOne(tenantId, id);
+    const clientName = proposal.lead?.name || 'Cliente';
+    const clientPhone = proposal.lead?.phone?.replace(/\D/g, '') || '';
+    const total = Number(proposal.totalValue).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    const message = `Olá, *${clientName}*! Tudo bem?\n\nSegue a sua *Proposta Comercial*: *${proposal.title}*\n💰 Valor Total: *${total}*\n📅 Validade: *${proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : 'A combinar'}*\n\nVocê pode revisar e aprovar todos os itens pelo link oficial da nossa plataforma. Qualquer dúvida estamos à disposição!`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = clientPhone ? `https://wa.me/${clientPhone}?text=${encodedMessage}` : `https://wa.me/?text=${encodedMessage}`;
+
+    return {
+      proposalId: proposal.id,
+      title: proposal.title,
+      clientName,
+      clientPhone,
+      totalValue: Number(proposal.totalValue),
+      message,
+      whatsappUrl,
+    };
+  }
+
+  async getCompanyProfile(tenantId: string) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        id: true,
+        name: true,
+        cnpj: true,
+        logoUrl: true,
+        phone: true,
+        address: true,
+        email: true,
+      },
+    });
+    if (!tenant) throw new NotFoundException('Empresa/Tenant não encontrado');
+    return tenant;
+  }
+
+  async updateCompanyProfile(
+    tenantId: string,
+    data: { name?: string; cnpj?: string; logoUrl?: string; phone?: string; address?: string; email?: string },
+  ) {
+    return this.prisma.tenant.update({
+      where: { id: tenantId },
+      data,
+      select: {
+        id: true,
+        name: true,
+        cnpj: true,
+        logoUrl: true,
+        phone: true,
+        address: true,
+        email: true,
+      },
+    });
+  }
+
   async generatePdfHtml(tenantId: string, id: string): Promise<string> {
     const proposal = await this.findOne(tenantId, id);
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
@@ -149,14 +294,21 @@ export class ProposalsService {
       </head>
       <body>
         <div class="header">
-          <div>
-            <div class="title">${tenant?.name || 'VERSUS Commercial'}</div>
-            <div style="color: #718096; font-size: 14px;">Proposta Comercial Oficial</div>
+          <div style="display: flex; align-items: center; gap: 16px;">
+            ${tenant?.logoUrl ? `<img src="${tenant.logoUrl}" alt="${tenant.name}" style="max-height: 55px; max-width: 160px; object-fit: contain;" />` : ''}
+            <div>
+              <div class="title">${tenant?.name || 'VERSUS Commercial'}</div>
+              <div style="color: #718096; font-size: 13px;">
+                ${tenant?.cnpj ? `<span>CNPJ: ${tenant.cnpj}</span> • ` : ''}
+                ${tenant?.email || tenant?.phone ? `<span>${tenant.email || tenant.phone}</span>` : ''}
+              </div>
+              ${tenant?.address ? `<div style="color: #a0aec0; font-size: 11px;">${tenant.address}</div>` : ''}
+            </div>
           </div>
           <div style="text-align: right; font-size: 14px; color: #718096;">
             <div><strong>Data:</strong> ${new Date(proposal.createdAt).toLocaleDateString('pt-BR')}</div>
             <div><strong>Validade:</strong> ${proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : 'Não especificada'}</div>
-            <div><strong>Status:</strong> ${proposal.status}</div>
+            <div><strong>Status:</strong> <span style="font-weight: bold; color: #2b6cb0;">${proposal.status}</span></div>
           </div>
         </div>
 

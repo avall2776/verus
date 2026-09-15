@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards, Res } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Put, Param, Body, Query, UseGuards, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { ProposalsService } from './proposals.service';
 import { CreateProposalDto } from './dto/create-proposal.dto';
+import { UpdateProposalDto } from './dto/update-proposal.dto';
 import { UpdateProposalStatusDto } from './dto/update-proposal-status.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
@@ -27,12 +28,43 @@ export class ProposalsController {
     return this.proposalsService.create(tenantId, dto);
   }
 
+  @Get('company-profile')
+  async getCompanyProfile(@CurrentTenant() tenantId: string) {
+    return this.proposalsService.getCompanyProfile(tenantId);
+  }
+
+  @Patch('company-profile')
+  async updateCompanyProfile(
+    @CurrentTenant() tenantId: string,
+    @Body() body: { name?: string; cnpj?: string; logoUrl?: string; phone?: string; address?: string; email?: string },
+  ) {
+    return this.proposalsService.updateCompanyProfile(tenantId, body);
+  }
+
   @Get(':id')
   async findOne(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
   ) {
     return this.proposalsService.findOne(tenantId, id);
+  }
+
+  @Put(':id')
+  async update(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateProposalDto,
+  ) {
+    return this.proposalsService.update(tenantId, id, dto);
+  }
+
+  @Patch(':id')
+  async patch(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateProposalDto,
+  ) {
+    return this.proposalsService.update(tenantId, id, dto);
   }
 
   @Patch(':id/status')
@@ -42,6 +74,14 @@ export class ProposalsController {
     @Body() dto: UpdateProposalStatusDto,
   ) {
     return this.proposalsService.updateStatus(tenantId, id, dto);
+  }
+
+  @Get(':id/whatsapp-share')
+  async getWhatsAppShare(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.proposalsService.getWhatsAppShare(tenantId, id);
   }
 
   @Get(':id/pdf')

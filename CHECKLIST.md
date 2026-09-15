@@ -752,14 +752,15 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Modelo `Contract`: Gestão de contratos digitais vinculados a propostas, status (`PENDING_SIGNATURE`, `SIGNED`, `CANCELED`), URLs de documentos e logs de auditoria.
   * Sincronização e geração de cliente Prisma executadas com sucesso (`npx prisma db push` e `npx prisma generate` aprovados com **código 0**).
 - [x] **Construção dos Módulos & Endpoints NestJS (IDE 1)**:
-  * `ProposalsModule` (`/proposals`): `GET /proposals`, `POST /proposals`, `GET /proposals/:id`, `PATCH /proposals/:id/status` e geração dinâmica de espelho para visualização e impressão em `GET /proposals/:id/pdf`.
+  * `ProposalsModule` (`/proposals`): `GET /proposals`, `POST /proposals`, `GET /proposals/:id`, `PUT /proposals/:id` / `PATCH /proposals/:id` (atualização completa de itens, recálculo de subtotal/margem, validade e condições de pagamento), `PATCH /proposals/:id/status`, `GET /proposals/:id/whatsapp-share` (geração de mensagem e link direto de compartilhamento WhatsApp) e geração dinâmica de espelho para visualização e impressão em `GET /proposals/:id/pdf` com logo e dados fiscais do emitente.
+  * Suporte a Perfil e Logotipo da Empresa (`Tenant`): Campos `logoUrl`, `phone`, `address`, `email` adicionados ao modelo `Tenant` no Prisma e sincronizados no Supabase, com endpoints `GET /proposals/company-profile` e `PATCH /proposals/company-profile`.
   * `GoalsModule` (`/goals`): `GET /goals`, `POST /goals` e `GET /goals/leaderboard` com ranking de performance, taxa de conversão e receita fechada.
   * `ContractsModule` (`/contracts`): `GET /contracts`, `POST /contracts`, `GET /contracts/:id` e `PATCH /contracts/:id/status`.
   * `AnalyticsModule` (`/analytics`): Novos endpoints analíticos corporativos: `GET /analytics/funnel` (funil comercial por estágios com drop-off e taxa de conversão) e `GET /analytics/bottlenecks` (gargalos operacionais de atendimento, SLA, TMA e FRT).
   * Módulos registrados no `AppModule` e tipados com DTOs validados via `class-validator`.
 - [x] **Interface & Experiência do Usuário (IDE 2 Frontend)**:
   * Sidebar retrátil com menu expansível 'Mais Recursos' para navegação rápida entre Propostas, Contratos, Metas e Analytics.
-  * Tela de Propostas (`/proposals`): KPIs de conversão, orçamentador com cálculo automático de margem e modal de espelho/aceite de propostas.
+  * Tela de Propostas (`/proposals`): KPIs de conversão, orçamentador com cálculo automático de margem, edição de propostas existentes e modal de espelho/aceite de propostas com suporte a upload/troca de Logotipo oficial da empresa emitente e persistência.
   * Tela de Metas & Leaderboard (`/dashboard/goals`): Pódio gamificado de vendas (Ouro, Prata, Bronze) e projeção de Run Rate.
   * Tela de Analytics Avançado (`/dashboard/analytics`): Gráficos Recharts de Funil de Conversão e gargalos de TMA/FRT por setor.
 - [x] **Validação de Compilação & Integridade**:
@@ -794,7 +795,12 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[15/09/2026 - 14:12]** 🎯 **Refinamento Crítico de UX no Chat Header (IDE 2)**: Reformulação completa do menu flutuante de 3 pontos do chat ativo (`inbox/page.tsx`). Textos e subtítulos com contraste e legibilidade máxima (`text-white` e `text-slate-300` sobre `#0B1224`), todas as opções convertidas em elementos `<button>` interativos com handlers reais (Agendar Nova Mensagem abrindo `ScheduleModal`, atalho de Nota Interna ativando o modo e focando automaticamente no composer, e Copiar ID com toast visual instantâneo). Validação TypeScript e Next.js 14 aprovadas com código 0.
 - **[15/09/2026 - 14:38]** 🚀 **Novos Módulos de Expansão Comercial Concluídos (IDE 2)**: Entrega de ponta a ponta do escopo de expansão comercial no Frontend (Sidebar retrátil, `/proposals`, `/dashboard/goals`, `/dashboard/analytics`, `/contracts`, `/email-inbox`). Build Next.js 14 aprovado com código 0 (36 rotas).
 - **[15/09/2026 - 14:58]** 👑 **Fase 48 Concluída com Sucesso (Expansão Comercial Completa)**: Backend NestJS e banco Supabase 100% integrados aos novos módulos comerciais. Modelos Prisma sincronizados (`Proposal`, `ProposalItem`, `Goal`, `Contract`), novos endpoints ativos (`/proposals`, `/goals`, `/goals/leaderboard`, `/contracts`, `/analytics/funnel`, `/analytics/bottlenecks`). Builds de Frontend e Backend aprovados com código 0 e deploy oficial na VPS e Vercel!
-
+- **[15/09/2026 - 15:32]** 💎 **Refinamentos Comerciais & White-Label de Propostas Concluídos (IDE 2)**:
+  - **Identidade Visual Sólida**: Botão 'Nova Proposta Comercial' padronizado com o azul sólido oficial do VERSUS (`bg-blue-600 hover:bg-blue-500`), eliminando qualquer degradê.
+  - **Tooltips Informativos nos KPIs**: Balões dark glassmorphism e `title` acessível explicando os critérios de cálculo de Total em Propostas, Propostas Aceitas, Ticket Médio e Taxa de Conversão.
+  - **Botão 'Editar Proposta'**: Integrado diretamente na barra de ações de `ProposalPreviewModal.tsx`, abrindo o `ProposalModal.tsx` com dados pré-carregados para ajustes ágeis.
+  - **White-Label Completo (Marca Própria do Emitente)**: Retirada da marca fixa do sistema no topo do documento/PDF. Adicionado upload de imagem de logotipo da empresa vendedora com preview/remoção e campos cadastrais completos (Razão Social/Nome Fantasia, CNPJ/CPF, Telefone, E-mail e Endereço), salvos no contrato e cacheados localmente.
+  - **Validação**: `npx tsc --noEmit` código 0 e `npm run build` aprovado com **código 0** (36 rotas de produção geradas).
 
 ---
 

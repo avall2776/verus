@@ -3,7 +3,8 @@
 import React from "react";
 import { 
   X, Copy, Check, Printer, Send, ExternalLink, Calendar, 
-  User, CheckCircle2, XCircle, Clock, ShieldCheck, FileText, ArrowUpRight
+  User, CheckCircle2, XCircle, Clock, ShieldCheck, FileText, ArrowUpRight,
+  Edit3, Building2, MapPin, Phone, Mail
 } from "lucide-react";
 import { Proposal } from "@/types/commercial";
 import toast from "react-hot-toast";
@@ -13,13 +14,15 @@ interface ProposalPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   onStatusChange: (id: string, newStatus: Proposal["status"]) => void;
+  onEdit?: (proposal: Proposal) => void;
 }
 
 export function ProposalPreviewModal({
   proposal,
   isOpen,
   onClose,
-  onStatusChange
+  onStatusChange,
+  onEdit
 }: ProposalPreviewModalProps) {
   const [copied, setCopied] = React.useState(false);
 
@@ -90,6 +93,16 @@ export function ProposalPreviewModal({
     }
   };
 
+  // Dados do emitente
+  const issuer = proposal.issuer || {
+    name: "Nexus Soluções & Tecnologia",
+    document: "45.123.890/0001-22",
+    phone: "(11) 3090-5000",
+    email: "contato@nexustec.com.br",
+    address: "Av. Paulista, 1842, Cj. 72 - Bela Vista, São Paulo - SP",
+    logoUrl: ""
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto print:p-0 print:bg-white">
       <div 
@@ -106,9 +119,21 @@ export function ProposalPreviewModal({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Botão de Edição Rápida */}
+            {onEdit && (
+              <button
+                onClick={() => onEdit(proposal)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-950/40 transition-colors cursor-pointer"
+                title="Editar itens, dados da empresa ou condições desta proposta"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                Editar Proposta
+              </button>
+            )}
+
             <button
               onClick={copyLink}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
               title="Copiar link público de aceite"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -117,7 +142,7 @@ export function ProposalPreviewModal({
 
             <button
               onClick={shareViaWhatsApp}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition-colors cursor-pointer"
               title="Enviar mensagem no WhatsApp"
             >
               <Send className="w-3.5 h-3.5" />
@@ -126,7 +151,7 @@ export function ProposalPreviewModal({
 
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors cursor-pointer"
               title="Imprimir ou Salvar como PDF"
             >
               <Printer className="w-3.5 h-3.5" />
@@ -135,7 +160,7 @@ export function ProposalPreviewModal({
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ml-1"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ml-1 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -144,42 +169,73 @@ export function ProposalPreviewModal({
 
         {/* Espelho do Documento de Proposta */}
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 print:p-8 print:space-y-4">
-          {/* Header da Proposta Comercial */}
-          <div className="flex justify-between items-start border-b border-slate-800 pb-6 print:border-gray-200">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xl font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 print:text-black">
-                  VERSUS
-                </span>
-                <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 uppercase font-mono tracking-wider print:border-gray-300 print:text-black">
-                  COMMERCIAL SUITE
-                </span>
+          {/* Header da Proposta Comercial com Logotipo e Dados do Emitente (Sua Marca) */}
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-slate-800 pb-6 print:border-gray-200">
+            {/* Bloco do Emitente (Logotipo + Informações da Empresa Vendedora) */}
+            <div className="space-y-2 max-w-md">
+              {issuer.logoUrl ? (
+                <div className="h-14 flex items-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={issuer.logoUrl}
+                    alt={issuer.name}
+                    className="max-h-full max-w-[200px] object-contain rounded"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-base print:border-gray-400 print:text-black">
+                    {issuer.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <h3 className="text-xl font-bold tracking-tight text-white print:text-black">
+                    {issuer.name}
+                  </h3>
+                </div>
+              )}
+
+              {issuer.logoUrl && (
+                <h3 className="text-base font-bold text-white print:text-black">
+                  {issuer.name}
+                </h3>
+              )}
+
+              <div className="text-xs text-slate-400 print:text-gray-600 space-y-0.5">
+                {issuer.document && (
+                  <p>CNPJ/CPF: <strong className="text-slate-300 print:text-black">{issuer.document}</strong></p>
+                )}
+                {(issuer.phone || issuer.email) && (
+                  <p>
+                    {issuer.phone && <span>{issuer.phone}</span>}
+                    {issuer.phone && issuer.email && <span> • </span>}
+                    {issuer.email && <span>{issuer.email}</span>}
+                  </p>
+                )}
+                {issuer.address && (
+                  <p className="text-[11px] text-slate-500 print:text-gray-500">
+                    {issuer.address}
+                  </p>
+                )}
               </div>
-              <p className="text-xs text-slate-400 print:text-gray-600">
-                Plataforma de Comunicação Omnichannel & Inteligência Comercial
-              </p>
-              <p className="text-xs text-slate-500 print:text-gray-500">
-                CNPJ: 45.123.890/0001-22 • contato@versus.com.br
-              </p>
             </div>
 
-            <div className="text-right">
+            {/* Identificação e Validade da Proposta */}
+            <div className="sm:text-right">
               <span className="text-xs text-slate-400 uppercase tracking-wider print:text-gray-600">
-                Identificador da Proposta
+                Proposta Comercial Oficial
               </span>
-              <p className="text-lg font-mono font-bold text-white print:text-black">
+              <p className="text-xl font-mono font-extrabold text-white print:text-black">
                 {proposal.code}
               </p>
-              <p className="text-xs text-slate-400 print:text-gray-600">
-                Data: {new Date(proposal.createdAt).toLocaleDateString("pt-BR")}
+              <p className="text-xs text-slate-400 print:text-gray-600 mt-1">
+                Data de Emissão: {new Date(proposal.createdAt).toLocaleDateString("pt-BR")}
               </p>
-              <p className="text-xs text-amber-400 font-medium print:text-gray-800">
-                Validade até: {new Date(proposal.validUntil).toLocaleDateString("pt-BR")}
+              <p className="text-xs text-amber-400 font-semibold print:text-gray-800">
+                Válida até: {new Date(proposal.validUntil).toLocaleDateString("pt-BR")}
               </p>
             </div>
           </div>
 
-          {/* Dados do Cliente e Responsável */}
+          {/* Dados do Cliente / Contratante */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-900/50 border border-slate-800 print:bg-transparent print:border-gray-300">
             <div>
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 print:text-gray-600">
@@ -189,7 +245,7 @@ export function ProposalPreviewModal({
                 {proposal.clientName}
               </h4>
               {proposal.clientCompany && (
-                <p className="text-xs text-cyan-400 font-medium print:text-gray-700">
+                <p className="text-xs text-blue-400 font-medium print:text-gray-700">
                   {proposal.clientCompany}
                 </p>
               )}
@@ -200,7 +256,7 @@ export function ProposalPreviewModal({
 
             <div className="sm:text-right">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 print:text-gray-600">
-                Responsável Comercial
+                Consultor Responsável
               </span>
               <h4 className="text-base font-bold text-white print:text-black">
                 {proposal.sellerName}
@@ -214,7 +270,7 @@ export function ProposalPreviewModal({
           {/* Tabela de Itens e Serviços */}
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 print:text-gray-700">
-              Detalhamento de Itens & Escopo
+              Detalhamento de Itens & Escopo Fornecido
             </h4>
             <div className="rounded-xl border border-slate-800 overflow-hidden print:border-gray-300">
               <table className="w-full text-left text-xs">
@@ -247,7 +303,7 @@ export function ProposalPreviewModal({
                       <td className="p-3 text-right text-slate-400 print:text-gray-600">
                         {item.discountPercent ? `${item.discountPercent}%` : "-"}
                       </td>
-                      <td className="p-3 text-right font-semibold text-cyan-400 print:text-black">
+                      <td className="p-3 text-right font-semibold text-blue-400 print:text-black">
                         R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
@@ -261,9 +317,9 @@ export function ProposalPreviewModal({
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pt-2">
             <div className="flex-1 text-xs text-slate-400 space-y-1 print:text-gray-600">
               <span className="font-semibold uppercase tracking-wider text-slate-300 block mb-1 print:text-black">
-                Observações e Garantias
+                Observações, Termos & Garantia
               </span>
-              <p>{proposal.notes || "Proposta válida sob condições gerais de fornecimento VERSUS."}</p>
+              <p>{proposal.notes || "Proposta válida sob condições gerais acordadas entre as partes."}</p>
             </div>
 
             <div className="w-full sm:w-64 p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2 text-right print:border-gray-300 print:bg-transparent">
@@ -273,29 +329,29 @@ export function ProposalPreviewModal({
               </div>
               {proposal.discountTotal > 0 && (
                 <div className="flex justify-between text-xs text-rose-400 print:text-gray-800">
-                  <span>Desconto Global:</span>
+                  <span>Desconto Aplicado:</span>
                   <span>- R$ {proposal.discountTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
                 </div>
               )}
               <div className="border-t border-slate-800 pt-2 flex justify-between items-center text-sm font-bold text-white print:text-black">
                 <span>Total Final:</span>
-                <span className="text-cyan-400 text-base font-extrabold print:text-black">
+                <span className="text-blue-400 text-base font-extrabold print:text-black">
                   R$ {proposal.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Rodapé de Aceite Simulado */}
-          <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 flex items-center justify-between gap-4 print:border-gray-400">
+          {/* Rodapé de Aceite e Autenticação Eletrônica */}
+          <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 flex items-center justify-between gap-4 print:border-gray-400">
             <div className="flex items-center gap-3">
-              <ShieldCheck className="w-6 h-6 text-cyan-400 print:text-black" />
+              <ShieldCheck className="w-6 h-6 text-blue-400 print:text-black shrink-0" />
               <div>
                 <span className="text-xs font-semibold text-slate-200 block print:text-black">
-                  Assinatura Digital & Aceite Eletrônico
+                  Assinatura Eletrônica & Aceite Digital
                 </span>
                 <span className="text-[11px] text-slate-400 print:text-gray-600">
-                  Documento com autenticação e trilha de auditoria digital conforme ICP-Brasil e MP 2.200-2/2001.
+                  Documento emitido com autenticação e assinatura digital ICP-Brasil e MP 2.200-2/2001.
                 </span>
               </div>
             </div>
@@ -306,7 +362,7 @@ export function ProposalPreviewModal({
                 href={proposal.publicLink || `https://app.versus.com.br/p/${proposal.code.toLowerCase()}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs font-medium text-cyan-400 hover:underline flex items-center gap-1 justify-end"
+                className="text-xs font-medium text-blue-400 hover:underline flex items-center gap-1 justify-end"
               >
                 Abrir Portal do Cliente <ArrowUpRight className="w-3.5 h-3.5" />
               </a>
@@ -325,7 +381,7 @@ export function ProposalPreviewModal({
                 onStatusChange(proposal.id, "sent");
                 toast.success("Status atualizado para 'Enviada'!");
               }}
-              className="px-2.5 py-1 text-xs rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition-colors"
+              className="px-2.5 py-1 text-xs rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition-colors cursor-pointer"
             >
               Marcar Enviada
             </button>
@@ -334,7 +390,7 @@ export function ProposalPreviewModal({
                 onStatusChange(proposal.id, "accepted");
                 toast.success("Parabéns! Proposta marcada como 'Aceita'!");
               }}
-              className="px-2.5 py-1 text-xs rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-colors font-semibold"
+              className="px-2.5 py-1 text-xs rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-colors font-semibold cursor-pointer"
             >
               Marcar Aceita
             </button>
@@ -343,7 +399,7 @@ export function ProposalPreviewModal({
                 onStatusChange(proposal.id, "declined");
                 toast("Proposta marcada como recusada.");
               }}
-              className="px-2.5 py-1 text-xs rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-colors"
+              className="px-2.5 py-1 text-xs rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-colors cursor-pointer"
             >
               Marcar Recusada
             </button>
