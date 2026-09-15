@@ -818,8 +818,24 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Garantia de Campos Obrigatórios**: Implementado fallback seguro para o campo obrigatório `title` (`safeTitle`), garantindo que `@IsNotEmpty()` da API nunca seja violado mesmo que o usuário não preencha o título. Validação prévia de cliente, contatos e itens no `ProposalModal.tsx`.
   - **Tratamento Transparente de Erros**: Removido o fallback otimista que mascarava falhas e fechava o modal silenciosamente. Agora, erros retornados pelo Axios (`error.response?.data?.message`) são capturados, formatados e exibidos em `toast.error`, mantendo o modal aberto e impedindo perda de dados pelo usuário.
   - **Auditoria por Logs de Console**: Inseridos logs explícitos (`[PROPOSALS_PAYLOAD_SEND]`, `[PROPOSALS_API_SUCCESS]`, `[PROPOSALS_API_ERROR]`, `[PROPOSALS_MODAL]`) para auditoria em tempo real no DevTools de cada disparo, payload e resposta do backend.
-  - **Deploy Vercel Disparado**: Alterações comitadas e enviadas para `origin/main` (`commit e0cc6f2`), acionando o build e publicação contínua automática no ambiente oficial da Vercel.
-  - **Validação**: `npx tsc --noEmit` código 0 e `npm run build` aprovado com **código 0** (36 rotas de produção geradas com sucesso).
+- **[15/09/2026 - 17:15]** 📜 **Módulo de Contratos Digitais 100% Implementado & Integrado (IDE 1 & IDE 2)**:
+  - **Modelagem & Banco de Dados (Prisma / Supabase)**: Modelo `Contract` no `schema.prisma` expandido com suporte total a código de contrato (`code`), vínculo opcional com proposta (`proposalId`), dados completos do contratante (`clientName`, `clientEmail`, `clientPhone`, `clientDocument`, `clientAddress`), valor (`value`), status (`PENDING_SIGNATURE`, `SIGNED`, `CANCELED`), vigência (`startDate`, `endDate`, `validUntil`), URLs de documento e auditoria (`documentUrl`, `auditLogUrl`), carimbo de assinatura (`signedAt`), metadados de IP e User-Agent (`signIp`, `signUserAgent`), termos e notas internas. Sincronização executada com sucesso via `npx prisma db push` e `npx prisma generate`.
+  - **API & Endpoints (NestJS)**:
+    - `GET /contracts`: Listagem de contratos reais do tenant com suporte a busca (`search`) e filtro por status (`status`).
+    - `POST /contracts`: Criação atômica de contrato, suportando tanto emissão avulsa quanto importação automática de propostas comerciais aceitas.
+    - `GET /contracts/:id`: Consulta detalhada com dados do contrato, emitente e proposta vinculada.
+    - `PATCH /contracts/:id/status`: Transição de status (ex: assinatura ou cancelamento) com registro automático de carimbo de tempo, IP e User-Agent do signatário.
+    - `GET /contracts/:id/pdf`: Geração e entrega do espelho oficial do contrato com layout profissional de impressão e logotipo/dados fiscais da empresa contratada.
+    - `GET /contracts/:id/whatsapp-share`: Geração de link direto do WhatsApp (`wa.me`) com mensagem amigável pré-formatada para coleta de assinatura eletrônica.
+    - `DELETE /contracts/:id`: Exclusão segura de contratos do banco de dados.
+  - **Interface & Experiência (Next.js 14 em Dark Glassmorphism)**:
+    - `frontend/src/app/(dashboard)/contracts/page.tsx`: Tabela conectada 100% à API real (`/contracts`), KPIs calculados em tempo real (Contratos Vigentes, Assinaturas Pendentes e Conformidade Jurídica) e estado vazio elegante (Empty State) para novos tenants.
+    - `frontend/src/components/contracts/ContractModal.tsx`: Modal completo para emissão de novos contratos com seletor reativo de propostas comerciais, preenchimento automático de cliente/valor e validações.
+    - `frontend/src/components/contracts/ContractPreviewModal.tsx`: Modal de visualização completa da minuta, trilha de auditoria (IP, carimbo de tempo), impressão de PDF e compartilhamento.
+    - Ações rápidas na tabela: Botão de Visualização, Download/Impressão de PDF, Envio de Link para WhatsApp, Homologação/Assinatura imediata e Exclusão.
+  - **Validação Rigorosa**:
+    - Backend: `npm run build` concluído com sucesso (**código 0**).
+    - Frontend: `npx tsc --noEmit` e `npm run build` validados com **código 0** (36 rotas de produção geradas com sucesso).
 
 ---
 
