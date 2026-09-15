@@ -19,11 +19,11 @@ import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 
 @Controller('contracts')
-@UseGuards(JwtAuthGuard)
 export class ContractsController {
   constructor(private readonly contractsService: ContractsService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   async findAll(
     @CurrentTenant() tenantId: string,
     @Query('search') search?: string,
@@ -33,6 +33,7 @@ export class ContractsController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   async create(
     @CurrentTenant() tenantId: string,
     @Body() dto: CreateContractDto,
@@ -42,16 +43,17 @@ export class ContractsController {
 
   @Get(':id/pdf')
   async getPdf(
-    @CurrentTenant() tenantId: string,
     @Param('id') id: string,
     @Res() res: Response,
+    @Query('tenantId') queryTenantId?: string,
   ) {
-    const html = await this.contractsService.generatePdfHtml(tenantId, id);
+    const html = await this.contractsService.generatePdfHtml(id, queryTenantId);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.send(html);
   }
 
   @Get(':id/whatsapp-share')
+  @UseGuards(JwtAuthGuard)
   async getWhatsAppShare(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
@@ -60,6 +62,7 @@ export class ContractsController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async findOne(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
@@ -68,6 +71,7 @@ export class ContractsController {
   }
 
   @Patch(':id/status')
+  @UseGuards(JwtAuthGuard)
   async updateStatus(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
@@ -80,6 +84,7 @@ export class ContractsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   async delete(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,

@@ -745,7 +745,42 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ---
 
-## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
+### 💼 FASE 48: MÓDULOS DE EXPANSÃO COMERCIAL (PROPOSTAS, METAS, CONTRATOS & ANALYTICS) [CONCLUÍDO]
+- [x] **Modelagem de Dados no Supabase & Prisma ORM (Autoridade Exclusiva IDE 1)**:
+  * Modelos `Proposal` e `ProposalItem`: Orçamentos comerciais multi-itens vinculados ao tenant, lead e negócio (Deal), cálculo de subtotal, status (`DRAFT`, `SENT`, `ACCEPTED`, `REJECTED`), termos de pagamento e validade.
+  * Modelo `Goal`: Metas corporativas e individuais (`REVENUE`, `DEALS`, `LEADS`), valores alvo, períodos e agregação dinâmica com base em fechamentos reais.
+  * Modelo `Contract`: Gestão de contratos digitais vinculados a propostas, status (`PENDING_SIGNATURE`, `SIGNED`, `CANCELED`), URLs de documentos e logs de auditoria.
+  * Sincronização e geração de cliente Prisma executadas com sucesso (`npx prisma db push` e `npx prisma generate` aprovados com **código 0**).
+- [x] **Construção dos Módulos & Endpoints NestJS (IDE 1)**:
+  * `ProposalsModule` (`/proposals`): `GET /proposals`, `POST /proposals`, `GET /proposals/:id`, `PUT /proposals/:id` / `PATCH /proposals/:id` (atualização completa de itens, recálculo de subtotal/margem, validade e condições de pagamento), `PATCH /proposals/:id/status`, `GET /proposals/:id/whatsapp-share` (geração de mensagem e link direto de compartilhamento WhatsApp) e geração dinâmica de espelho para visualização e impressão em `GET /proposals/:id/pdf` com logo e dados fiscais do emitente.
+  * Suporte a Perfil e Logotipo da Empresa (`Tenant`): Campos `logoUrl`, `phone`, `address`, `email` adicionados ao modelo `Tenant` no Prisma e sincronizados no Supabase, com endpoints `GET /proposals/company-profile` e `PATCH /proposals/company-profile`.
+  * `GoalsModule` (`/goals`): `GET /goals`, `POST /goals` e `GET /goals/leaderboard` com ranking de performance, taxa de conversão e receita fechada.
+  * `ContractsModule` (`/contracts`): `GET /contracts`, `POST /contracts`, `GET /contracts/:id` e `PATCH /contracts/:id/status`.
+  * `AnalyticsModule` (`/analytics`): Novos endpoints analíticos corporativos: `GET /analytics/funnel` (funil comercial por estágios com drop-off e taxa de conversão) e `GET /analytics/bottlenecks` (gargalos operacionais de atendimento, SLA, TMA e FRT).
+  * Módulos registrados no `AppModule` e tipados com DTOs validados via `class-validator`.
+- [x] **Interface & Experiência do Usuário (IDE 2 Frontend)**:
+  * Sidebar retrátil com menu expansível 'Mais Recursos' para navegação rápida entre Propostas, Contratos, Metas e Analytics.
+  * Tela de Propostas (`/proposals`): KPIs de conversão, orçamentador com cálculo automático de margem, edição de propostas existentes e modal de espelho/aceite de propostas com suporte a upload/troca de Logotipo oficial da empresa emitente e persistência.
+  * Tela de Metas & Leaderboard (`/dashboard/goals`): Pódio gamificado de vendas (Ouro, Prata, Bronze) e projeção de Run Rate.
+  * Tela de Analytics Avançado (`/dashboard/analytics`): Gráficos Recharts de Funil de Conversão e gargalos de TMA/FRT por setor.
+- [x] **Persistência Real de Propostas & Resolução de 404/400 (IDE 1)**:
+  * **Modelagem Prisma Expandida**: Adicionados campos `code`, `clientName`, `clientEmail`, `clientPhone`, `clientCompany`, `sellerName`, `discountTotal`, `paymentMethod` no modelo `Proposal` e `name`, `discountPercent` no `ProposalItem`, sincronizados no Supabase via `npx prisma db push`.
+  * **DTOs Robustos**: Inclusão de todos os campos nos DTOs de `CreateProposalDto` e `UpdateProposalDto` com transformação de tipos e validação limpa, prevenindo rejeição do `ValidationPipe` (`forbidNonWhitelisted`).
+  * **Criação Automática de Lead/Contato**: Se a proposta for enviada sem `leadId`, o backend localiza ou cadastra automaticamente o contato no CRM com tag `Proposta`.
+  * **Endpoint DELETE /proposals/:id**: Implementado e exposto para exclusão definitiva sem erro 404.
+  * **Conexão Frontend Total**: `handleSaveProposal` em `proposals/page.tsx` conectado a `api.post('/proposals')` e `api.put('/proposals/:id')`, `handleDeleteProposal` conectado a `api.delete('/proposals/:id')`, e `ProposalModal.tsx` aguardando a persistência com async/await.
+  * **Validação**: Builds de Frontend e Backend aprovados com código 0.
+
+---
+
+## 🕒 Registro de Ponto (Timesheet do Projeto)
+- **[15/09/2026 - 17:18]** 🟢 **Sincronização de Relatório & Deploy em Produção (IDE 2)**:
+  - Registro automático de ponto e horas reativado com ordenação cronológica e leitura local resiliente.
+- **[15/09/2026 - 16:45]** 🛡️ **Correção Crítica: Persistência de Propostas de Ponta a Ponta Concluída (IDE 1)**:
+  - Resolvida a ausência de chamadas à API no frontend e a rejeição por DTO estrito no backend.
+  - Tabelas Prisma `Proposal` e `ProposalItem` sincronizadas com suporte total a clientes e descontos.
+  - Endpoint `DELETE /proposals/:id` adicionado, eliminando erro de rota 404.
+  - Builds Next.js 14 e NestJS compilados com **código 0** e deploy sincronizado na VPS e Vercel.
 - **[08/09/2026 - 08:30]** 🟢 Início da Fundação do Projeto (Docker, Postgres, Supabase, Prisma ORM, BullMQ).
 - **[09/09/2026 - 08:30]** 🟢 Implementação de WebSockets, Sentry, Deploy Vercel/VPS e WhatsApp Cloud API.
 - **[10/09/2026 - 08:30]** 🟢 Omnichannel Revamp, RAG Avançado, Respostas Rápidas e CRM Lero.
@@ -769,6 +804,44 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[15/09/2026 - 13:52]** 👑 **Central Global de Agendamentos Concluída (IDE 2)**: A **IDE 2** finalizou o componente unificado `GlobalScheduledCenterModal.tsx` com filtros de período (Hoje, Amanhã, Esta Semana), busca em tempo real por lead/texto, cancelamento em lote com checkbox e navegação direta para o chat. Conexão integrada aos atalhos de agenda do Inbox. Builds TypeScript e Next.js 14 validados com código 0!
 - **[15/09/2026 - 14:04]** 💎 **Central Global de Agendamentos & Cancelamento em Lote Concluídos**: Implementação dos endpoints `GET /conversations/scheduled/all` e `POST /conversations/scheduled/batch-cancel` no backend NestJS, integrando perfeitamente a visão corporativa unificada do `GlobalScheduledCenterModal.tsx` com o Supabase e fila Redis do BullMQ. Builds backend e frontend 100% íntegros (código 0) e deploy sincronizado na VPS e Vercel.
 - **[15/09/2026 - 14:12]** 🎯 **Refinamento Crítico de UX no Chat Header (IDE 2)**: Reformulação completa do menu flutuante de 3 pontos do chat ativo (`inbox/page.tsx`). Textos e subtítulos com contraste e legibilidade máxima (`text-white` e `text-slate-300` sobre `#0B1224`), todas as opções convertidas em elementos `<button>` interativos com handlers reais (Agendar Nova Mensagem abrindo `ScheduleModal`, atalho de Nota Interna ativando o modo e focando automaticamente no composer, e Copiar ID com toast visual instantâneo). Validação TypeScript e Next.js 14 aprovadas com código 0.
+- **[15/09/2026 - 14:38]** 🚀 **Novos Módulos de Expansão Comercial Concluídos (IDE 2)**: Entrega de ponta a ponta do escopo de expansão comercial no Frontend (Sidebar retrátil, `/proposals`, `/dashboard/goals`, `/dashboard/analytics`, `/contracts`, `/email-inbox`). Build Next.js 14 aprovado com código 0 (36 rotas).
+- **[15/09/2026 - 14:58]** 👑 **Fase 48 Concluída com Sucesso (Expansão Comercial Completa)**: Backend NestJS e banco Supabase 100% integrados aos novos módulos comerciais. Modelos Prisma sincronizados (`Proposal`, `ProposalItem`, `Goal`, `Contract`), novos endpoints ativos (`/proposals`, `/goals`, `/goals/leaderboard`, `/contracts`, `/analytics/funnel`, `/analytics/bottlenecks`). Builds de Frontend e Backend aprovados com código 0 e deploy oficial na VPS e Vercel!
+- **[15/09/2026 - 15:32]** 💎 **Refinamentos Comerciais & White-Label de Propostas Concluídos (IDE 2)**:
+  - **Identidade Visual Sólida**: Botão 'Nova Proposta Comercial' padronizado com o azul sólido oficial do VERSUS (`bg-blue-600 hover:bg-blue-500`), eliminando qualquer degradê.
+  - **Tooltips Informativos nos KPIs**: Balões dark glassmorphism e `title` acessível explicando os critérios de cálculo de Total em Propostas, Propostas Aceitas, Ticket Médio e Taxa de Conversão.
+  - **Botão 'Editar Proposta'**: Integrado diretamente na barra de ações de `ProposalPreviewModal.tsx`, abrindo o `ProposalModal.tsx` com dados pré-carregados para ajustes ágeis.
+  - **White-Label Completo (Marca Própria do Emitente)**: Retirada da marca fixa do sistema no topo do documento/PDF. Adicionado upload de imagem de logotipo da empresa vendedora com preview/remoção e campos cadastrais completos (Razão Social/Nome Fantasia, CNPJ/CPF, Telefone, E-mail e Endereço), salvos no contrato e cacheados localmente.
+  - **Validação**: `npx tsc --noEmit` código 0 e `npm run build` aprovado com **código 0** (36 rotas de produção geradas).
+- **[15/09/2026 - 15:50]** 🎯 **Correção Cirúrgica de Tooltips & Salto Visual Top SaaS (IDE 2)**:
+  - **Eliminação Total de Corte em Tooltips**: Removido o `overflow-hidden` do container dos cards de KPI (que causava o corte forçado pelo navegador) e isolado o efeito luminoso de blur de fundo em sub-camada contida. Tooltips reposicionados de forma inteligente (`top-full left-0` e `top-full right-0`), com camada `z-50`, largura ideal (`w-72 sm:w-80`), setinha indicadora chanfrada, fundo sólido `#070D1B/95` com blur e borda de alta definição.
+  - **Padrão Visual Top SaaS**: Tipografia de métricas com números ampliados e font mono (`text-2xl sm:text-3xl font-black font-mono`), badges de comparação coloridos de alto contraste (esmeralda translúcido `bg-emerald-500/15 text-emerald-400 border border-emerald-500/30` para métricas positivas, slate para métricas base e purple para taxa de conversão) e micro-interações de hover suaves com elevação (`hover:-translate-y-0.5 hover:border-cyan-500/50`) nos cards e na tabela.
+  - **Validação**: `npx tsc --noEmit` aprovado e `npm run build` concluído com **código 0** (36 rotas de produção geradas com sucesso).
+- **[15/09/2026 - 16:20]** 🧼 **Fim dos Dados Mockados & Formulário 100% Limpo (IDE 2)**:
+  - **Listagem 100% Real**: `INITIAL_PROPOSALS` fictícias removidas de `proposals/page.tsx`. A listagem agora consome exclusivamente dados reais do backend via `api.get('/proposals')`. Se não houver propostas cadastradas (ou após exclusões), a tela permanece estritamente limpa exibindo o Empty State oficial (*"Nenhuma proposta comercial cadastrada"*), sem reinjetar dados fictícios após F5/refresh.
+  - **Formulário de Nova Proposta Limpo**: `ProposalModal.tsx` ajustado para nascer com todos os campos zerados e em branco (dados do emitente, dados do cliente, título, valores, observações e 1 item limpo para digitação do zero), sem nenhum dado pré-populado de demonstração.
+- **[15/09/2026 - 17:05]** 🛡️ **Persistência Real no Supabase & Auditoria de Payload (IDE 2)**:
+  - **Inspeção & Sanitização Estrita de Payload**: Identificada a causa raiz do descarte de requisições: o backend NestJS utiliza `ValidationPipe` com `forbidNonWhitelisted: true`. O envio de campos excedentes do frontend (como `createdAt`, `updatedAt` ou IDs locais nos itens) resultava em rejeição HTTP 400. Foi implementada sanitização cirúrgica em `proposals/page.tsx` filtrando rigorosamente apenas os campos declarados no `CreateProposalDto` e `CreateProposalItemDto`.
+  - **Garantia de Campos Obrigatórios**: Implementado fallback seguro para o campo obrigatório `title` (`safeTitle`), garantindo que `@IsNotEmpty()` da API nunca seja violado mesmo que o usuário não preencha o título. Validação prévia de cliente, contatos e itens no `ProposalModal.tsx`.
+  - **Tratamento Transparente de Erros**: Removido o fallback otimista que mascarava falhas e fechava o modal silenciosamente. Agora, erros retornados pelo Axios (`error.response?.data?.message`) são capturados, formatados e exibidos em `toast.error`, mantendo o modal aberto e impedindo perda de dados pelo usuário.
+  - **Auditoria por Logs de Console**: Inseridos logs explícitos (`[PROPOSALS_PAYLOAD_SEND]`, `[PROPOSALS_API_SUCCESS]`, `[PROPOSALS_API_ERROR]`, `[PROPOSALS_MODAL]`) para auditoria em tempo real no DevTools de cada disparo, payload e resposta do backend.
+- **[15/09/2026 - 17:15]** 📜 **Módulo de Contratos Digitais 100% Implementado & Integrado (IDE 1 & IDE 2)**:
+  - **Modelagem & Banco de Dados (Prisma / Supabase)**: Modelo `Contract` no `schema.prisma` expandido com suporte total a código de contrato (`code`), vínculo opcional com proposta (`proposalId`), dados completos do contratante (`clientName`, `clientEmail`, `clientPhone`, `clientDocument`, `clientAddress`), valor (`value`), status (`PENDING_SIGNATURE`, `SIGNED`, `CANCELED`), vigência (`startDate`, `endDate`, `validUntil`), URLs de documento e auditoria (`documentUrl`, `auditLogUrl`), carimbo de assinatura (`signedAt`), metadados de IP e User-Agent (`signIp`, `signUserAgent`), termos e notas internas. Sincronização executada com sucesso via `npx prisma db push` e `npx prisma generate`.
+  - **API & Endpoints (NestJS)**:
+    - `GET /contracts`: Listagem de contratos reais do tenant com suporte a busca (`search`) e filtro por status (`status`).
+    - `POST /contracts`: Criação atômica de contrato, suportando tanto emissão avulsa quanto importação automática de propostas comerciais aceitas.
+    - `GET /contracts/:id`: Consulta detalhada com dados do contrato, emitente e proposta vinculada.
+    - `PATCH /contracts/:id/status`: Transição de status (ex: assinatura ou cancelamento) com registro automático de carimbo de tempo, IP e User-Agent do signatário.
+    - `GET /contracts/:id/pdf`: Geração e entrega do espelho oficial do contrato com layout profissional de impressão e logotipo/dados fiscais da empresa contratada.
+    - `GET /contracts/:id/whatsapp-share`: Geração de link direto do WhatsApp (`wa.me`) com mensagem amigável pré-formatada para coleta de assinatura eletrônica.
+    - `DELETE /contracts/:id`: Exclusão segura de contratos do banco de dados.
+  - **Interface & Experiência (Next.js 14 em Dark Glassmorphism)**:
+    - `frontend/src/app/(dashboard)/contracts/page.tsx`: Tabela conectada 100% à API real (`/contracts`), KPIs calculados em tempo real (Contratos Vigentes, Assinaturas Pendentes e Conformidade Jurídica) e estado vazio elegante (Empty State) para novos tenants.
+    - `frontend/src/components/contracts/ContractModal.tsx`: Modal completo para emissão de novos contratos com seletor reativo de propostas comerciais, preenchimento automático de cliente/valor e validações.
+    - `frontend/src/components/contracts/ContractPreviewModal.tsx`: Modal de visualização completa da minuta, trilha de auditoria (IP, carimbo de tempo), impressão de PDF e compartilhamento.
+    - Ações rápidas na tabela: Botão de Visualização, Download/Impressão de PDF, Envio de Link para WhatsApp, Homologação/Assinatura imediata e Exclusão.
+  - **Validação Rigorosa**:
+    - Backend: `npm run build` concluído com sucesso (**código 0**).
+    - Frontend: `npx tsc --noEmit` e `npm run build` validados com **código 0** (36 rotas de produção geradas com sucesso).
 
 ---
 

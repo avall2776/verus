@@ -48,8 +48,9 @@ function parseChecklistMarkdown(markdown: string) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
 
-    // Detecta seções principais
-    if (line.startsWith('## 🕒 Registro de Ponto')) {
+    // Detecta cabeçalhos de seções principais
+    const isPontoSectionHeader = /^##\s+.*(?:Registro\s+de\s+Ponto|Timesheet|Histórico)/i.test(line);
+    if (isPontoSectionHeader) {
       if (currentPhase) {
         if (currentItem) currentPhase.items.push(currentItem);
         phases.push(currentPhase);
@@ -60,7 +61,7 @@ function parseChecklistMarkdown(markdown: string) {
       continue;
     }
 
-    if (line.startsWith('## 🚀 Roadmap Futuro')) {
+    if (line.startsWith('## 🚀 Roadmap Futuro') || /^##\s+.*Roadmap/i.test(line)) {
       if (currentPhase) {
         if (currentItem) currentPhase.items.push(currentItem);
         phases.push(currentPhase);
@@ -71,39 +72,50 @@ function parseChecklistMarkdown(markdown: string) {
       continue;
     }
 
-    // Processa Seção de Ponto
-    if (currentSection === 'ponto') {
-      const matchPonto = line.match(/^-\s+\*\*\[(\d{2}\/\d{2}\/\d{4})\s+-\s+(\d{2}:\d{2})\]\*\*\s+(.+)$/);
-      if (matchPonto) {
-        const [, date, time, rest] = matchPonto;
-        let type: PunchIn['type'] = 'info';
-        let icon = 'ℹ️';
-
-        if (rest.includes('🟢')) {
-          type = 'start';
-          icon = '🟢';
-        } else if (rest.includes('⏸️')) {
-          type = 'pause';
-          icon = '⏸️';
-        } else if (rest.includes('🏁')) {
-          type = 'end';
-          icon = '🏁';
-        } else if (rest.includes('🚀') || rest.includes('💎') || rest.includes('🛡️')) {
-          type = 'resume';
-          icon = rest.match(/^[^\w\s]+/)?.[0] || '🚀';
-        }
-
-        const cleanDesc = rest.replace(/^[^\w\s]+\s*/, '').trim();
-
-        punchIns.push({
-          timestamp: `${date} ${time}`,
-          date,
-          time,
-          type,
-          icon,
-          description: cleanDesc
-        });
+    // Processa Ponto de Forma Universal (captura qualquer linha de timestamp mesmo fora da seção explícita)
+    const matchPonto = line.match(/^-\s+\*\*\[(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})\]\*\*\s*(.*)$/);
+    if (matchPonto) {
+      if (currentPhase) {
+        if (currentItem) currentPhase.items.push(currentItem);
+        phases.push(currentPhase);
+        currentPhase = null;
+        currentItem = null;
       }
+      currentSection = 'ponto';
+
+      const [, date, time, rest] = matchPonto;
+      let type: PunchIn['type'] = 'info';
+      let icon = 'ℹ️';
+
+      if (rest.includes('🟢')) {
+        type = 'start';
+        icon = '🟢';
+      } else if (rest.includes('⏸️')) {
+        type = 'pause';
+        icon = '⏸️';
+      } else if (rest.includes('🏁')) {
+        type = 'end';
+        icon = '🏁';
+      } else if (rest.includes('🚀') || rest.includes('💎') || rest.includes('🛡️') || rest.includes('🎯') || rest.includes('🧼') || rest.includes('📜') || rest.includes('👑')) {
+        type = 'resume';
+        icon = rest.match(/^[^\w\s]+/)?.[0] || '🚀';
+      }
+
+      const cleanDesc = rest.replace(/^[^\w\s]+\s*/, '').replace(/^\*\*|\*\*$/g, '').trim();
+
+      punchIns.push({
+        timestamp: `${date} ${time}`,
+        date,
+        time,
+        type,
+        icon,
+        description: cleanDesc
+      });
+      continue;
+    }
+
+    // Sub-itens detalhados da seção de ponto (ignora para a contagem de pontos principais)
+    if (currentSection === 'ponto' && (line.startsWith('-') || line.startsWith('*') || line.startsWith('  '))) {
       continue;
     }
 
@@ -201,7 +213,24 @@ function parseChecklistMarkdown(markdown: string) {
     : `Todas as ${phases.length} Fases Concluídas (100%)`;
 
   const completionPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 100;
-  const lastPunch = punchIns[punchIns.length - 1] || null;
+
+  // Função auxiliar para converter "DD/MM/YYYY" e "HH:MM" em timestamp numérico
+  const parseDateTime = (d: string, t: string) => {
+    try {
+      const partsDate = d.split('/').map(Number);
+      const partsTime = t.split(':').map(Number);
+      if (partsDate.length === 3 && partsTime.length >= 2) {
+        return new Date(partsDate[2], partsDate[1] - 1, partsDate[0], partsTime[0], partsTime[1]).getTime();
+      }
+    } catch (e) {}
+    return 0;
+  };
+
+  // Ordena os pontos rigorosamente do mais recente para o mais antigo
+  punchIns.sort((a, b) => parseDateTime(b.date, b.time) - parseDateTime(a.date, a.time));
+
+  // O último ponto batido é sempre o elemento mais recente
+  const lastPunch = punchIns[0] || null;
 
   return {
     stats: {
@@ -216,7 +245,7 @@ function parseChecklistMarkdown(markdown: string) {
       updatedAt: new Date().toISOString()
     },
     phases,
-    punchIns: punchIns.reverse(),
+    punchIns,
     roadmapItems,
     rawMarkdown: markdown
   };
@@ -225,12 +254,14 @@ function parseChecklistMarkdown(markdown: string) {
 export async function GET() {
   let markdown = '';
 
-  // 1. Tenta carregar do disco local (Workspace / Servidor VPS)
+  // 1. Tenta carregar do disco local (Workspace / Servidor VPS / Vercel Serverless)
   try {
     const localPaths = [
       path.join(process.cwd(), '..', 'CHECKLIST.md'),
       path.join(process.cwd(), 'CHECKLIST.md'),
       path.join(process.cwd(), 'public', 'CHECKLIST.md'),
+      path.join(process.cwd(), 'src', 'CHECKLIST.md'),
+      path.resolve(process.cwd(), '..', 'CHECKLIST.md'),
       '/root/verus/CHECKLIST.md'
     ];
 

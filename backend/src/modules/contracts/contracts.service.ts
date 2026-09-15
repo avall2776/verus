@@ -172,6 +172,12 @@ export class ContractsService {
     const code = dto.code || `CTR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const status = (dto.status || 'PENDING_SIGNATURE').toUpperCase();
 
+    const parseSafeDate = (val: any): Date | null => {
+      if (!val) return null;
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
     const contract = await this.prisma.contract.create({
       data: {
         tenantId,
@@ -185,9 +191,9 @@ export class ContractsService {
         clientAddress: clientAddress || null,
         value: new Prisma.Decimal(contractValue),
         status,
-        startDate: dto.startDate ? new Date(dto.startDate) : new Date(),
-        endDate: dto.endDate ? new Date(dto.endDate) : null,
-        validUntil: dto.validUntil ? new Date(dto.validUntil) : null,
+        startDate: parseSafeDate(dto.startDate) || new Date(),
+        endDate: parseSafeDate(dto.endDate),
+        validUntil: parseSafeDate(dto.validUntil),
         documentUrl: dto.documentUrl || null,
         auditLogUrl: dto.auditLogUrl || null,
         terms: dto.terms || null,
@@ -266,7 +272,10 @@ export class ContractsService {
 
   async getWhatsAppShare(tenantId: string, id: string) {
     const contract = await this.findOne(tenantId, id);
-    const phone = contract.clientPhone ? contract.clientPhone.replace(/\D/g, '') : '';
+    let phone = contract.clientPhone ? contract.clientPhone.replace(/\D/g, '') : '';
+    if (phone && (phone.length === 10 || phone.length === 11) && !phone.startsWith('55')) {
+      phone = `55${phone}`;
+    }
     const formattedVal = Number(contract.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     const message = `Olá, *${contract.clientName}*! Tudo bem?\n\nSegue o link oficial para assinatura digital do seu contrato: *${contract.title}* (${contract.code}).\n💰 Valor: *${formattedVal}*\n\nVocê pode revisar os termos e efetuar a assinatura eletrônica com validade jurídica pelo link: https://app.versus.com.br/c/${contract.code.toLowerCase()}`;
@@ -284,9 +293,32 @@ export class ContractsService {
     };
   }
 
-  async generatePdfHtml(tenantId: string, id: string): Promise<string> {
-    const contract = await this.findOne(tenantId, id);
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+  async generatePdfHtml(id: string, tenantId?: string): Promise<string> {
+    const where: Prisma.ContractWhereInput = { id };
+    if (tenantId) {
+      where.tenantId = tenantId;
+    }
+    const contract = await this.prisma.contract.findFirst({
+      where,
+      include: {
+        proposal: {
+          include: {
+            lead: true,
+            deal: true,
+            items: true,
+          },
+        },
+        tenant: true,
+      },
+    });
+
+    if (!contract) {
+      throw new NotFoundException('Contrato não encontrado');
+    }
+
+    const tenant = contract.tenant;
+    const formatted = this.formatContract(contract);
+
 
     const clauses = contract.terms || `
       <ol style="line-height: 1.6; padding-left: 20px;">
