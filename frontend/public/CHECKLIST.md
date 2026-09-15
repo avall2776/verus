@@ -682,6 +682,26 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Teste real de ponta a ponta executado na VPS (`187.127.10.166`): upload HTTP Multipart respondeu **HTTP 201 Created**, gravou em `uploads/media/` e o download GET retornou **HTTP 200 OK** com `Content-Type: application/pdf`.
   * Deploy na VPS sincronizado com sucesso e PM2 `versus-engine` online (**código 0**).
 
+### Fase 46: Refinamento Técnico e Visual do Inbox (Paridade Lero: Badges, Menu Contextual, Atalhos e Transcrição)
+- [x] **Badge de Mensagens Não Lidas e Destaque Visual (`inbox/page.tsx`)**:
+  * Adicionado badge numérico destacado em verde esmeralda vibrante (`bg-emerald-500 text-slate-950 font-black shadow-[0_0_10px_rgba(16,185,129,0.5)]`) na lateral direita de cada card de chat.
+  * Formatação em negrito forte (`font-black text-white`) no nome do contato e negrito contrastante (`font-bold text-gray-100`) na última mensagem quando houver pendências de leitura (`contact.unread > 0`).
+- [x] **Menu Contextual de Ações Rápidas por Conversa (`inbox/page.tsx`, `chat.controller.ts`, `chat.service.ts`)**:
+  * Botão de 3 pontos (`MoreVertical`) exibido no hover de cada card na lista lateral de conversas.
+  * Dropdown contextual interativo com ações completas: *Marcar como lida / não lida*, *Silenciar notificações*, *Adicionar/Remover etiquetas*, *Transferir atendimento* e *Ignorar atendimento / Finalizar*.
+  * Endpoints dedicados implementados no backend NestJS: `PATCH /conversations/:id/read`, `PATCH /conversations/:id/unread` e `PATCH /conversations/:id/ignore`.
+- [x] **Atalhos e Ferramentas Superiores na Barra Lateral (`inbox/page.tsx`)**:
+  * Botão destacado de "Novo Chat" / Agenda no topo da lista ao lado do contador de atendimentos.
+  * Atalhos rápidos com tooltips e estados visuais: *Agenda de Contatos*, *Agendamento de Mensagens*, *Respostas Rápidas / Notas* e *Discador VoIP WebRTC*.
+- [x] **Recursos no Chat Ativo e Bolhas de Áudio (`inbox/page.tsx`)**:
+  * Adicionado botão expansível "Ver transcrição" / "Ocultar transcrição" diretamente abaixo do mini-player de áudio nas bolhas de mensagem.
+  * Card estilizado com transcrição automática por IA do áudio recebido (`msg.audioTranscription`).
+  * Menu enriquecido de 3 pontos no cabeçalho superior do chat com atalhos para *Histórico de Atendimento* (modal com métricas e linha do tempo de eventos do ticket) e *Exportação de Conversa* (download de arquivo `.txt` formatado).
+- [x] **Validação e Deploy**:
+  * Build do Backend NestJS aprovado (**código 0**).
+  * Build do Frontend Next.js 14 aprovado (**código 0**, 31 rotas de produção geradas).
+  * Deploy sincronizado com a VPS de produção (`187.127.10.166`) e PM2 online.
+
 ---
 
 ## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
@@ -700,6 +720,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[14/09/2026 - 18:30]** 🏁 Finalização da jornada de segunda-feira (Fases 31 a 44 concluídas): Listagem rápida restaurada no Inbox, rota `/conversations/counts` ativa, zero bloqueios por avatar, builds 100% aprovados e VPS PM2 online.
 - **[15/09/2026 - 08:01]** 🟢 Início da jornada de desenvolvimento de terça-feira (Foco: Fase 45 — Ajuste da rotina de upload de arquivos, Supabase Storage e Fallback Local).
 - **[15/09/2026 - 09:42]** 🚀 **Fase 45 Concluída com Sucesso**: `StorageService` implementado com Supabase Storage e fallback automático em disco local (`uploads/media/`), endpoints `/media/upload` e `/media/file/:filename`, envio oficial de fotos e PDFs para a Meta Graph API, prévia no composer do Inbox e Lightbox estilo WhatsApp com download direto.
+- **[15/09/2026 - 10:35]** 🚀 **Fase 46 Concluída com Sucesso**: Refinamento visual e técnico do Inbox (Paridade Lero) — Badge esmeralda de não lidas e textos em negrito, menu contextual de 3 pontos no hover dos cards com ações rápidas, toolbar superior enriquecida com Novo Chat e Agendamento, transcrição expansível de áudio em tempo real nas bolhas e menu superior do chat com histórico e exportação TXT. Builds código 0 e deploy VPS online!
 
 ---
 

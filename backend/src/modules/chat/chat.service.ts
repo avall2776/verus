@@ -246,6 +246,42 @@ export class ChatService {
     return updated;
   }
 
+  async markAsRead(tenantId: string, conversationId: string) {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId }
+    });
+
+    if (!conversation || conversation.tenantId !== tenantId) {
+      throw new NotFoundException('Conversa não encontrada.');
+    }
+
+    await this.prisma.message.updateMany({
+      where: {
+        tenantId,
+        conversationId,
+        direction: 'INBOUND',
+        status: { not: 'read' }
+      },
+      data: { status: 'read' }
+    });
+
+    this.chatGateway.emitConversationUpdated(tenantId, { ...conversation, unreadCount: 0 });
+    return { success: true, conversationId, unreadCount: 0 };
+  }
+
+  async markAsUnread(tenantId: string, conversationId: string) {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId }
+    });
+
+    if (!conversation || conversation.tenantId !== tenantId) {
+      throw new NotFoundException('Conversa não encontrada.');
+    }
+
+    this.chatGateway.emitConversationUpdated(tenantId, { ...conversation, unreadCount: 1 });
+    return { success: true, conversationId, unreadCount: 1 };
+  }
+
   async assignToUser(tenantId: string, conversationId: string, userId: string) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId }

@@ -86,6 +86,30 @@ export class ChatController {
     return this.chatService.reopenConversation(tenantId, conversationId);
   }
 
+  @Patch(':id/read')
+  async markAsRead(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+  ) {
+    return this.chatService.markAsRead(tenantId, conversationId);
+  }
+
+  @Patch(':id/unread')
+  async markAsUnread(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+  ) {
+    return this.chatService.markAsUnread(tenantId, conversationId);
+  }
+
+  @Patch(':id/ignore')
+  async ignore(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+  ) {
+    return this.chatService.releaseConversation(tenantId, conversationId);
+  }
+
   @Patch(':id/transfer')
   async transfer(
     @CurrentTenant() tenantId: string,

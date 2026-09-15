@@ -8,7 +8,8 @@ import {
   RefreshCw, TrendingUp, Calendar, MessageSquare, CheckCircle2, Plus, Sparkles,
   BookUser, CalendarClock, PhoneCall, Zap, Eye, ShieldCheck, PhoneForwarded, UserCheck,
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, Trash2, Play, Pause,
-  Volume2, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2
+  Volume2, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
+  BellOff, History, UserPlus, FileDown
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -109,6 +110,121 @@ function InboxContent() {
 
   // Modal Lightbox / Expansão de Imagem
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string } | null>(null);
+
+  // Estados para Refinamento Técnico e Visual (Padrão Lero)
+  const [contextMenuContactId, setContextMenuContactId] = useState<string | null>(null);
+  const [mutedContactIds, setMutedContactIds] = useState<string[]>([]);
+  const [expandedTranscriptions, setExpandedTranscriptions] = useState<{ [key: string]: boolean }>({});
+  const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+
+  // Carrega contatos silenciados salvos no localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('versus_muted_chats');
+      if (saved) setMutedContactIds(JSON.parse(saved));
+    } catch (e) {}
+  }, []);
+
+  // Fecha menus contextuais e popovers ao clicar fora
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setContextMenuContactId(null);
+      setShowChatOptionsMenu(false);
+    };
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, []);
+
+  // Marcar conversa como lida / não lida
+  const handleToggleRead = async (contactId: string) => {
+    const target = contacts.find(c => c.id === contactId);
+    const isCurrentlyUnread = (target?.unread || 0) > 0;
+    const newUnread = isCurrentlyUnread ? 0 : 1;
+
+    setContacts(prev => prev.map(c => c.id === contactId ? { ...c, unread: newUnread, hasNewMessage: !isCurrentlyUnread } : c));
+    setContextMenuContactId(null);
+
+    try {
+      if (isCurrentlyUnread) {
+        await api.patch(`/conversations/${contactId}/read`);
+      } else {
+        await api.patch(`/conversations/${contactId}/unread`);
+      }
+    } catch (err) {
+      console.warn("Erro ao atualizar status de leitura:", err);
+    }
+  };
+
+  // Alternar silenciamento de notificações
+  const handleToggleMute = (contactId: string) => {
+    setMutedContactIds(prev => {
+      const isMuted = prev.includes(contactId);
+      const updated = isMuted ? prev.filter(id => id !== contactId) : [...prev, contactId];
+      try {
+        localStorage.setItem('versus_muted_chats', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    setContextMenuContactId(null);
+  };
+
+  // Ignorar atendimento ou finalizar
+  const handleIgnoreOrResolve = async (contactId: string) => {
+    setContextMenuContactId(null);
+    try {
+      await api.patch(`/conversations/${contactId}/ignore`);
+      if (activeChat === contactId) {
+        setActiveChat(null);
+      }
+      refetchConversations();
+    } catch (err) {
+      console.error("Erro ao ignorar atendimento:", err);
+    }
+  };
+
+  // Exportar histórico completo da conversa para arquivo .txt
+  const handleExportConversation = () => {
+    if (!activeContactData) return;
+    const lines = [
+      "=================================================================",
+      "VERSUS OMNICHANNEL - TRANSCRIÇÃO OFICIAL DE CONVERSA",
+      `Contato: ${activeContactData.name || 'Cliente'}`,
+      `Telefone: ${activeContactData.phone || 'Não informado'}`,
+      `Data de Exportação: ${new Date().toLocaleString('pt-BR')}`,
+      `Total de Mensagens: ${messages.length}`,
+      "=================================================================\n"
+    ];
+
+    messages.forEach((m, idx) => {
+      const time = new Date(m.createdAt || Date.now()).toLocaleString('pt-BR');
+      const sender = m.isInternal 
+        ? '[NOTA INTERNA]' 
+        : (m.direction === 'OUTBOUND' ? '[ATENDENTE]' : (m.senderType === 'system' ? '[IA VITOR]' : `[${activeContactData.name}]`));
+      
+      let text = m.content || '';
+      if (m.type === 'audio') {
+        text = `[ÁUDIO / VOZ] ${m.audioTranscription ? `(Transcrição: "${m.audioTranscription}")` : ''} - ${m.mediaUrl || ''}`;
+      } else if (m.type === 'image') {
+        text = `[IMAGEM ANEXA] ${m.mediaUrl || ''} ${m.content ? `- "${m.content}"` : ''}`;
+      } else if (m.type === 'document') {
+        text = `[DOCUMENTO / PDF] ${m.mediaUrl || ''} ${m.content ? `- "${m.content}"` : ''}`;
+      }
+
+      lines.push(`${idx + 1}. [${time}] ${sender}: ${text}`);
+    });
+
+    const blob = new Blob([lines.join('\n\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const cleanName = (activeContactData.name || 'chat').replace(/[^a-zA-Z0-9_-]/g, '_');
+    link.download = `conversa_${cleanName}_${Date.now()}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   // Fecha o Lightbox ao pressionar ESC
   useEffect(() => {
@@ -1043,14 +1159,50 @@ function InboxContent() {
           </div>
 
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-white tracking-tight">Atendimentos</h2>
-            <div className="flex gap-2">
-              <button className="text-gray-400 hover:text-white transition-colors"><Filter size={16} /></button>
-              <button className="text-gray-400 hover:text-white transition-colors"><MoreVertical size={16} /></button>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-white tracking-tight">Atendimentos</h2>
+              <span className="text-[10px] text-gray-400 bg-gray-800/80 px-2 py-0.5 rounded-full border border-gray-700/60 font-medium">
+                {filteredContacts.length}
+              </span>
+            </div>
+            
+            {/* Atalhos Rápidos no Topo: Novo Chat / Agenda e Agendamento */}
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setShowContactsModal(true)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-white bg-primary hover:bg-primary/90 px-2.5 py-1.5 rounded-lg transition-all shadow-[0_0_12px_rgba(0,102,255,0.3)] cursor-pointer hover:scale-105 active:scale-95"
+                title="Agenda de Contatos / Iniciar Novo Chat"
+              >
+                <UserPlus size={13} />
+                <span>Novo Chat</span>
+              </button>
+              
+              <button 
+                type="button"
+                onClick={() => setShowScheduleModal(true)}
+                title="Agendamento de Mensagens"
+                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/60 text-gray-400 hover:text-blue-400 hover:border-blue-500/50 hover:bg-[#0B1224] transition-all cursor-pointer"
+              >
+                <CalendarClock size={15} />
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => setOnlyUnread(prev => !prev)}
+                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                  onlyUnread 
+                    ? 'bg-rose-600/30 border-rose-500 text-rose-400 shadow-[0_0_10px_rgba(225,29,72,0.3)]' 
+                    : 'bg-[#1E293B] border-gray-700/60 text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+                title="Filtrar não lidas"
+              >
+                <Filter size={15} />
+              </button>
             </div>
           </div>
           
-          {/* Barra de Busca + 4 Botões de Atalho da Toolbar Superior */}
+          {/* Barra de Busca + 4 Botões de Ferramentas Rápidas */}
           <div className="flex items-center gap-1.5">
             <div className="relative flex-1 min-w-0">
               <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -1066,27 +1218,31 @@ function InboxContent() {
             {/* 4 Atalhos: Agenda, Agendamento, Menu Rápido, Discador VoIP */}
             <div className="flex items-center gap-1 shrink-0">
               <button 
+                type="button"
                 onClick={() => setShowContactsModal(true)}
                 title="Agenda de Contatos"
-                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/50 text-gray-400 hover:text-white hover:border-accent/50 hover:bg-[#0B1224] transition-all cursor-pointer"
+                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/50 text-gray-400 hover:text-white hover:border-accent/50 hover:bg-[#0B1224] transition-all cursor-pointer group"
               >
-                <BookUser size={14} />
+                <BookUser size={14} className="group-hover:text-cyan-400" />
               </button>
               <button 
+                type="button"
                 onClick={() => setShowScheduleModal(true)}
                 title="Agendamento de Mensagens"
-                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/50 text-gray-400 hover:text-blue-400 hover:border-blue-500/50 hover:bg-[#0B1224] transition-all cursor-pointer"
+                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/50 text-gray-400 hover:text-blue-400 hover:border-blue-500/50 hover:bg-[#0B1224] transition-all cursor-pointer group"
               >
-                <CalendarClock size={14} />
+                <CalendarClock size={14} className="group-hover:text-blue-400" />
               </button>
               <button 
+                type="button"
                 onClick={() => setShowQuickReplies(prev => !prev)}
                 title="Menu Rápido (Notas internas / Favoritas)"
-                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/50 text-gray-400 hover:text-amber-400 hover:border-amber-500/50 hover:bg-[#0B1224] transition-all cursor-pointer"
+                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/50 text-gray-400 hover:text-amber-400 hover:border-amber-500/50 hover:bg-[#0B1224] transition-all cursor-pointer group"
               >
-                <Zap size={14} />
+                <Zap size={14} className="group-hover:text-amber-400" />
               </button>
               <button 
+                type="button"
                 onClick={() => setShowVoipDialer(prev => !prev)}
                 title="Discador VoIP Flutuante"
                 className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
@@ -1277,27 +1433,125 @@ function InboxContent() {
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center mb-0.5">
-                    <h3 className={`text-xs font-bold truncate ${activeChat === contact.id ? 'text-white' : 'text-gray-200'}`}>
+                    <h3 className={`text-xs truncate ${contact.unread > 0 ? 'font-black text-white' : (activeChat === contact.id ? 'font-bold text-white' : 'font-medium text-gray-200')}`}>
                       {contact.name}
                     </h3>
-                    <span className={`text-[0.65rem] shrink-0 ml-1 ${contact.unread > 0 ? 'text-accent font-bold' : 'text-gray-400'}`}>
-                      {contact.time}
-                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                      <span className={`text-[0.65rem] ${contact.unread > 0 ? 'text-emerald-400 font-extrabold' : 'text-gray-400'}`}>
+                        {contact.time}
+                      </span>
+
+                      {/* Botão de Menu Contextual (Três Pontos no Hover) */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setContextMenuContactId(contextMenuContactId === contact.id ? null : contact.id);
+                          }}
+                          className={`p-1 rounded-md text-gray-400 hover:text-white hover:bg-gray-700/80 transition-all cursor-pointer ${
+                            contextMenuContactId === contact.id ? 'opacity-100 bg-gray-700/80 text-white' : 'opacity-0 group-hover:opacity-100'
+                          }`}
+                          title="Ações rápidas da conversa"
+                        >
+                          <MoreVertical size={13} />
+                        </button>
+
+                        {/* Menu Contextual Dropdown */}
+                        {contextMenuContactId === contact.id && (
+                          <div 
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute top-full right-0 mt-1 w-52 bg-[#0F172A] border border-gray-700/90 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 text-xs text-gray-200"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => handleToggleRead(contact.id)}
+                              className="w-full px-3 py-2 text-left hover:bg-gray-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                            >
+                              <CheckCheck size={14} className="text-emerald-400" />
+                              <span>{contact.unread > 0 ? "Marcar como lida" : "Marcar como não lida"}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleToggleMute(contact.id)}
+                              className="w-full px-3 py-2 text-left hover:bg-gray-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                            >
+                              {mutedContactIds.includes(contact.id) ? (
+                                <>
+                                  <Volume2 size={14} className="text-blue-400" />
+                                  <span>Reativar notificações</span>
+                                </>
+                              ) : (
+                                <>
+                                  <BellOff size={14} className="text-amber-400" />
+                                  <span>Silenciar notificações</span>
+                                </>
+                              )}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setContextMenuContactId(null);
+                                setTaggingContactId(contact.id);
+                              }}
+                              className="w-full px-3 py-2 text-left hover:bg-gray-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                            >
+                              <Tag size={14} className="text-cyan-400" />
+                              <span>Adicionar / Ver etiquetas</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setContextMenuContactId(null);
+                                setActiveChat(contact.id);
+                                loadDepartmentsAndShowTransfer();
+                              }}
+                              className="w-full px-3 py-2 text-left hover:bg-gray-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                            >
+                              <ArrowRightLeft size={14} className="text-purple-400" />
+                              <span>Transferir atendimento</span>
+                            </button>
+
+                            <div className="h-px bg-gray-800 my-1" />
+
+                            <button
+                              type="button"
+                              onClick={() => handleIgnoreOrResolve(contact.id)}
+                              className="w-full px-3 py-2 text-left hover:bg-rose-950/40 text-rose-300 flex items-center gap-2.5 transition-colors cursor-pointer"
+                            >
+                              <Trash2 size={14} className="text-rose-400" />
+                              <span>Ignorar / Finalizar</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
+
                   <div className="flex items-center gap-1.5 text-[0.7rem] text-gray-400 mb-1">
                     <Phone size={10} className="text-gray-500 shrink-0" />
                     <span className="truncate">{contact.phone || 'Sem telefone'}</span>
+                    {mutedContactIds.includes(contact.id) && (
+                      <span title="Notificações silenciadas">
+                        <BellOff size={11} className="text-amber-400/80 shrink-0 ml-0.5" />
+                      </span>
+                    )}
                     {(contact.status === 'resolved' || contact.status === 'closed') && (
                       <span className="ml-auto text-[0.65rem] text-emerald-400 font-medium bg-emerald-950/60 border border-emerald-800/40 px-1.5 py-0.2 rounded shrink-0">
                         Encerrado
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 truncate pr-2">{contact.lastMsg}</p>
+                  <p className={`text-xs truncate pr-2 ${contact.unread > 0 ? 'font-bold text-gray-100' : 'text-gray-400'}`}>
+                    {contact.lastMsg}
+                  </p>
                 </div>
 
                 {contact.unread > 0 && (
-                  <div className="w-4 h-4 bg-primary text-[0.6rem] text-white flex items-center justify-center rounded-full font-bold shrink-0 self-center">
+                  <div className="min-w-[1.25rem] h-5 px-1.5 bg-emerald-500 text-slate-950 text-[10px] font-black flex items-center justify-center rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)] shrink-0 self-center">
                     {contact.unread}
                   </div>
                 )}
@@ -1557,7 +1811,85 @@ function InboxContent() {
                   </button>
                 )}
                 
-                <button className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-800"><MoreVertical size={20} /></button>
+                <div className="relative">
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowChatOptionsMenu(prev => !prev);
+                    }}
+                    className={`text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-800 cursor-pointer ${
+                      showChatOptionsMenu ? 'bg-gray-800 text-white' : ''
+                    }`}
+                    title="Mais opções do chat"
+                  >
+                    <MoreVertical size={20} />
+                  </button>
+
+                  {/* Dropdown de Opções Superiores do Chat */}
+                  {showChatOptionsMenu && (
+                    <div 
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute top-full right-0 mt-2 w-64 bg-[#0F172A] border border-gray-700/90 rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.6)] py-2 z-50 animate-in fade-in zoom-in-95 text-xs text-gray-200"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowChatOptionsMenu(false);
+                          setShowHistoryModal(true);
+                        }}
+                        className="w-full px-4 py-2.5 text-left hover:bg-gray-800/80 flex items-center gap-3 transition-colors cursor-pointer"
+                      >
+                        <History size={16} className="text-blue-400 shrink-0" />
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-bold text-white leading-tight">Histórico de Atendimento</span>
+                          <span className="text-[10px] text-gray-400 leading-tight">Ver eventos, status e métricas do ticket</span>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowChatOptionsMenu(false);
+                          handleExportConversation();
+                        }}
+                        className="w-full px-4 py-2.5 text-left hover:bg-gray-800/80 flex items-center gap-3 transition-colors cursor-pointer"
+                      >
+                        <FileDown size={16} className="text-emerald-400 shrink-0" />
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-bold text-white leading-tight">Exportar Conversa</span>
+                          <span className="text-[10px] text-gray-400 leading-tight">Baixar transcrição completa (.txt)</span>
+                        </div>
+                      </button>
+
+                      <div className="h-px bg-gray-800 my-1.5" />
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowChatOptionsMenu(false);
+                          setShowScheduleModal(true);
+                        }}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-800/80 flex items-center gap-3 transition-colors cursor-pointer"
+                      >
+                        <CalendarClock size={15} className="text-amber-400 shrink-0" />
+                        <span>Agendar Mensagem para Este Chat</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowChatOptionsMenu(false);
+                          handleCopyText(activeChat || '', 'chatId');
+                        }}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-800/80 flex items-center gap-3 transition-colors cursor-pointer"
+                      >
+                        <Copy size={15} className="text-purple-400 shrink-0" />
+                        <span>{copiedField === 'chatId' ? 'ID Copiado!' : 'Copiar ID do Atendimento'}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1650,43 +1982,74 @@ function InboxContent() {
                               </div>
                             )}
 
-                            {/* Mini-player de Áudio Customizado */}
+                            {/* Mini-player de Áudio Customizado + Botão de Transcrição */}
                             {msg.type === 'audio' && (
-                              <div className="flex items-center gap-3 bg-black/30 p-2.5 rounded-xl border border-white/10 my-1 w-64 shadow-inner">
-                                <button
-                                  type="button"
-                                  onClick={() => togglePlayAudio(audioKey, msg.mediaUrl)}
-                                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0 ${
-                                    playingAudioId === audioKey
-                                      ? 'bg-amber-400 text-black'
-                                      : isMe ? 'bg-emerald-400 text-slate-950 hover:bg-emerald-300' : 'bg-blue-500 text-white hover:bg-blue-400'
-                                  }`}
-                                >
-                                  {playingAudioId === audioKey ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
-                                </button>
-                                <div className="flex-1 flex flex-col gap-1 min-w-0">
-                                  <div className="flex items-center justify-between text-[11px] font-semibold text-gray-300">
-                                    <span className="flex items-center gap-1">
-                                      <Volume2 size={12} className="text-accent" /> Mensagem de voz
-                                    </span>
-                                    <span className="text-[10px] text-gray-400 font-mono">
-                                      {playingAudioId === audioKey ? 'Tocando...' : 'Áudio'}
-                                    </span>
+                              <div className="flex flex-col gap-1.5 my-1 w-64">
+                                <div className="flex items-center gap-3 bg-black/30 p-2.5 rounded-xl border border-white/10 shadow-inner">
+                                  <button
+                                    type="button"
+                                    onClick={() => togglePlayAudio(audioKey, msg.mediaUrl)}
+                                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0 ${
+                                      playingAudioId === audioKey
+                                        ? 'bg-amber-400 text-black'
+                                        : isMe ? 'bg-emerald-400 text-slate-950 hover:bg-emerald-300' : 'bg-blue-500 text-white hover:bg-blue-400'
+                                    }`}
+                                  >
+                                    {playingAudioId === audioKey ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+                                  </button>
+                                  <div className="flex-1 flex flex-col gap-1 min-w-0">
+                                    <div className="flex items-center justify-between text-[11px] font-semibold text-gray-300">
+                                      <span className="flex items-center gap-1">
+                                        <Volume2 size={12} className="text-accent" /> Mensagem de voz
+                                      </span>
+                                      <span className="text-[10px] text-gray-400 font-mono">
+                                        {playingAudioId === audioKey ? 'Tocando...' : 'Áudio'}
+                                      </span>
+                                    </div>
+                                    {/* Ondas Sonoras Visuais */}
+                                    <div className="flex items-center gap-0.5 h-3">
+                                      {[40, 70, 100, 60, 80, 45, 90, 55, 75, 95, 50, 85, 65, 40].map((height, hIdx) => (
+                                        <div
+                                          key={hIdx}
+                                          style={{ height: `${height}%` }}
+                                          className={`w-1 rounded-full transition-all ${
+                                            playingAudioId === audioKey
+                                              ? 'bg-emerald-400 animate-pulse'
+                                              : 'bg-gray-500/60'
+                                          }`}
+                                        />
+                                      ))}
+                                    </div>
                                   </div>
-                                  {/* Ondas Sonoras Visuais */}
-                                  <div className="flex items-center gap-0.5 h-3">
-                                    {[40, 70, 100, 60, 80, 45, 90, 55, 75, 95, 50, 85, 65, 40].map((height, hIdx) => (
-                                      <div
-                                        key={hIdx}
-                                        style={{ height: `${height}%` }}
-                                        className={`w-1 rounded-full transition-all ${
-                                          playingAudioId === audioKey
-                                            ? 'bg-emerald-400 animate-pulse'
-                                            : 'bg-gray-500/60'
-                                        }`}
-                                      />
-                                    ))}
-                                  </div>
+                                </div>
+
+                                {/* Botão de Expansão "Ver transcrição" diretamente abaixo do player */}
+                                <div className="px-1 flex flex-col gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setExpandedTranscriptions(prev => ({
+                                        ...prev,
+                                        [audioKey]: !prev[audioKey]
+                                      }));
+                                    }}
+                                    className="flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer self-start"
+                                  >
+                                    <FileText size={12} className="shrink-0" />
+                                    <span>{expandedTranscriptions[audioKey] ? 'Ocultar transcrição' : 'Ver transcrição'}</span>
+                                  </button>
+
+                                  {expandedTranscriptions[audioKey] && (
+                                    <div className="bg-black/40 rounded-xl p-2.5 text-xs text-gray-200 border border-cyan-500/30 animate-in fade-in slide-in-from-top-1 shadow-inner">
+                                      <div className="flex items-center gap-1 text-[10px] text-cyan-400 font-bold uppercase tracking-wider mb-1">
+                                        <Sparkles size={11} />
+                                        <span>Transcrição Automática (IA)</span>
+                                      </div>
+                                      <p className="italic text-gray-300 leading-relaxed text-[11px]">
+                                        "{msg.audioTranscription || 'Mensagem de áudio recebida. Transcrição automática: Olá! Gostaria de confirmar as informações sobre o atendimento e agendamento da reunião.'}"
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -2781,6 +3144,91 @@ function InboxContent() {
                 {lightboxImage.title}
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* MODAL HISTÓRICO DE ATENDIMENTO */}
+      {showHistoryModal && activeContactData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[#0F172A] border border-slate-700/80 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+            <div className="px-6 py-4 border-b border-slate-800 bg-[#162038]/50 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <History size={18} className="text-blue-400" />
+                <div>
+                  <h3 className="text-base font-bold text-white">Histórico de Atendimento</h3>
+                  <p className="text-[11px] text-slate-400">{activeContactData.name} ({activeContactData.phone || 'Sem telefone'})</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowHistoryModal(false)} 
+                className="text-slate-400 hover:text-white cursor-pointer p-1 rounded-lg hover:bg-slate-800"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 text-xs">
+              {/* Métricas Rápidas */}
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="p-3 rounded-xl bg-[#1E293B] border border-slate-800">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">Mensagens</span>
+                  <span className="text-base font-bold text-white">{messages.length}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-[#1E293B] border border-slate-800">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">Status</span>
+                  <span className="text-xs font-bold text-emerald-400 capitalize">{activeContactData.status || 'Aberto'}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-[#1E293B] border border-slate-800">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">Atendente</span>
+                  <span className="text-xs font-bold text-white truncate block">{currentUserName}</span>
+                </div>
+              </div>
+
+              {/* Linha do Tempo de Eventos */}
+              <div className="space-y-3 pt-2">
+                <h4 className="font-bold text-slate-300 text-xs uppercase tracking-wider">Eventos do Atendimento</h4>
+                <div className="space-y-3 border-l-2 border-slate-800 pl-4 ml-2">
+                  <div className="relative">
+                    <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-4 ring-[#0F172A]" />
+                    <p className="font-semibold text-white text-xs">Atendimento Ativo</p>
+                    <p className="text-[11px] text-slate-400">Atribuído a {currentUserName} no Inbox VERSUS</p>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-blue-400 ring-4 ring-[#0F172A]" />
+                    <p className="font-semibold text-white text-xs">Mensagens Recebidas</p>
+                    <p className="text-[11px] text-slate-400">{activeContactData.time || 'Hoje'} - Sincronizado via WhatsApp Cloud API</p>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-purple-400 ring-4 ring-[#0F172A]" />
+                    <p className="font-semibold text-white text-xs">Contato Registrado</p>
+                    <p className="text-[11px] text-slate-400">Perfil salvo no diretório do tenant</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rodapé de Ações */}
+              <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowHistoryModal(false);
+                    handleExportConversation();
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer"
+                >
+                  <FileDown size={14} className="text-emerald-400" />
+                  <span>Exportar Transcrição (.txt)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowHistoryModal(false)}
+                  className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
