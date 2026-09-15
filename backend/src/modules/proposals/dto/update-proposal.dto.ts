@@ -1,11 +1,43 @@
-import { IsString, IsOptional, IsArray, ValidateNested, IsDateString, IsIn } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateProposalItemDto } from './create-proposal.dto';
 
 export class UpdateProposalDto {
   @IsString()
   @IsOptional()
+  id?: string;
+
+  @IsString()
+  @IsOptional()
+  code?: string;
+
+  @IsString()
+  @IsOptional()
   title?: string;
+
+  @IsString()
+  @IsOptional()
+  clientName?: string;
+
+  @IsString()
+  @IsOptional()
+  clientCompany?: string;
+
+  @IsString()
+  @IsOptional()
+  clientEmail?: string;
+
+  @IsString()
+  @IsOptional()
+  clientPhone?: string;
+
+  @IsString()
+  @IsOptional()
+  sellerName?: string;
+
+  @IsString()
+  @IsOptional()
+  status?: string;
 
   @IsString()
   @IsOptional()
@@ -16,7 +48,6 @@ export class UpdateProposalDto {
   dealId?: string;
 
   @IsOptional()
-  @IsDateString()
   validUntil?: string;
 
   @IsString()
@@ -25,12 +56,33 @@ export class UpdateProposalDto {
 
   @IsString()
   @IsOptional()
+  paymentMethod?: string;
+
+  @IsNumber()
+  @Type(() => Number)
+  @IsOptional()
+  subtotal?: number;
+
+  @IsNumber()
+  @Type(() => Number)
+  @IsOptional()
+  discountTotal?: number;
+
+  @IsNumber()
+  @Type(() => Number)
+  @IsOptional()
+  total?: number;
+
+  @IsString()
+  @IsOptional()
   notes?: string;
 
   @IsString()
   @IsOptional()
-  @IsIn(['DRAFT', 'SENT', 'ACCEPTED', 'REJECTED'])
-  status?: 'DRAFT' | 'SENT' | 'ACCEPTED' | 'REJECTED';
+  publicLink?: string;
+
+  @IsOptional()
+  issuer?: any;
 
   @IsArray()
   @ValidateNested({ each: true })

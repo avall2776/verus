@@ -400,24 +400,32 @@ model WhatsAppConnectionHistory {
 // ------------------------------------------------------
 
 model Proposal {
-  id           String         @id @default(uuid())
-  tenantId     String
-  leadId       String?
-  dealId       String?
-  title        String
-  status       String         @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED
-  totalValue   Decimal        @default(0)
-  validUntil   DateTime?
-  paymentTerms String?
-  notes        String?
-  items        ProposalItem[]
-  contracts    Contract[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id            String         @id @default(uuid())
+  tenantId      String
+  leadId        String?
+  dealId        String?
+  code          String?
+  title         String
+  clientName    String?
+  clientEmail   String?
+  clientPhone   String?
+  clientCompany String?
+  sellerName    String?
+  status        String         @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED, etc.
+  totalValue    Decimal        @default(0)
+  discountTotal Decimal        @default(0)
+  paymentTerms  String?
+  paymentMethod String?
+  validUntil    DateTime?
+  notes         String?
+  items         ProposalItem[]
+  contracts     Contract[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  lead         Contact?       @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  deal         Deal?          @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead          Contact?       @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  deal          Deal?          @relation(fields: [dealId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
   @@index([tenantId, status])
@@ -426,13 +434,15 @@ model Proposal {
 }
 
 model ProposalItem {
-  id          String   @id @default(uuid())
-  proposalId  String
-  description String
-  quantity    Int      @default(1)
-  unitPrice   Decimal  @default(0)
-  totalPrice  Decimal  @default(0)
-  createdAt   DateTime @default(now())
+  id              String   @id @default(uuid())
+  proposalId      String
+  name            String?
+  description     String
+  quantity        Int      @default(1)
+  unitPrice       Decimal  @default(0)
+  discountPercent Decimal? @default(0)
+  totalPrice      Decimal  @default(0)
+  createdAt       DateTime @default(now())
 
   proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 

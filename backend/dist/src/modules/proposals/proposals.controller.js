@@ -56,6 +56,9 @@ let ProposalsController = class ProposalsController {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(html);
     }
+    async delete(tenantId, id) {
+        return this.proposalsService.delete(tenantId, id);
+    }
 };
 exports.ProposalsController = ProposalsController;
 __decorate([
@@ -141,6 +144,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], ProposalsController.prototype, "getPdf", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "delete", null);
 exports.ProposalsController = ProposalsController = __decorate([
     (0, common_1.Controller)('proposals'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Put, Param, Body, Query, UseGuards, Res } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Put, Delete, Param, Body, Query, UseGuards, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { ProposalsService } from './proposals.service';
 import { CreateProposalDto } from './dto/create-proposal.dto';
@@ -94,4 +94,13 @@ export class ProposalsController {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.send(html);
   }
+
+  @Delete(':id')
+  async delete(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.proposalsService.delete(tenantId, id);
+  }
 }
+

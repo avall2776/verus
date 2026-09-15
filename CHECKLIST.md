@@ -763,13 +763,18 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Tela de Propostas (`/proposals`): KPIs de conversão, orçamentador com cálculo automático de margem, edição de propostas existentes e modal de espelho/aceite de propostas com suporte a upload/troca de Logotipo oficial da empresa emitente e persistência.
   * Tela de Metas & Leaderboard (`/dashboard/goals`): Pódio gamificado de vendas (Ouro, Prata, Bronze) e projeção de Run Rate.
   * Tela de Analytics Avançado (`/dashboard/analytics`): Gráficos Recharts de Funil de Conversão e gargalos de TMA/FRT por setor.
-- [x] **Validação de Compilação & Integridade**:
-  * Build do Backend NestJS (`npm run build`) aprovado com **código 0**.
-  * Build do Frontend Next.js 14 (`npm run build`) aprovado com **código 0** (36 rotas de produção geradas).
-
----
-
-## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
+- [x] **Persistência Real de Propostas & Resolução de 404/400 (IDE 1)**:
+  * **Modelagem Prisma Expandida**: Adicionados campos `code`, `clientName`, `clientEmail`, `clientPhone`, `clientCompany`, `sellerName`, `discountTotal`, `paymentMethod` no modelo `Proposal` e `name`, `discountPercent` no `ProposalItem`, sincronizados no Supabase via `npx prisma db push`.
+  * **DTOs Robustos**: Inclusão de todos os campos nos DTOs de `CreateProposalDto` e `UpdateProposalDto` com transformação de tipos e validação limpa, prevenindo rejeição do `ValidationPipe` (`forbidNonWhitelisted`).
+  * **Criação Automática de Lead/Contato**: Se a proposta for enviada sem `leadId`, o backend localiza ou cadastra automaticamente o contato no CRM com tag `Proposta`.
+  * **Endpoint DELETE /proposals/:id**: Implementado e exposto para exclusão definitiva sem erro 404.
+  * **Conexão Frontend Total**: `handleSaveProposal` em `proposals/page.tsx` conectado a `api.post('/proposals')` e `api.put('/proposals/:id')`, `handleDeleteProposal` conectado a `api.delete('/proposals/:id')`, e `ProposalModal.tsx` aguardando a persistência com async/await.
+  * **Validação**: Builds de Frontend e Backend aprovados com código 0.
+- **[15/09/2026 - 16:45]** 🛡️ **Correção Crítica: Persistência de Propostas de Ponta a Ponta Concluída (IDE 1)**:
+  - Resolvida a ausência de chamadas à API no frontend e a rejeição por DTO estrito no backend.
+  - Tabelas Prisma `Proposal` e `ProposalItem` sincronizadas com suporte total a clientes e descontos.
+  - Endpoint `DELETE /proposals/:id` adicionado, eliminando erro de rota 404.
+  - Builds Next.js 14 e NestJS compilados com **código 0** e deploy sincronizado na VPS e Vercel.
 - **[08/09/2026 - 08:30]** 🟢 Início da Fundação do Projeto (Docker, Postgres, Supabase, Prisma ORM, BullMQ).
 - **[09/09/2026 - 08:30]** 🟢 Implementação de WebSockets, Sentry, Deploy Vercel/VPS e WhatsApp Cloud API.
 - **[10/09/2026 - 08:30]** 🟢 Omnichannel Revamp, RAG Avançado, Respostas Rápidas e CRM Lero.

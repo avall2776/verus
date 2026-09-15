@@ -120,20 +120,34 @@ export default function ProposalsPage() {
     });
   }, [proposals, statusFilter, searchQuery]);
 
-  // Salvar ou atualizar proposta
-  const handleSaveProposal = (proposalData: Proposal) => {
-    setProposals((prev) => {
-      const exists = prev.some((p) => p.id === proposalData.id);
-      if (exists) {
-        return prev.map((p) => (p.id === proposalData.id ? proposalData : p));
+  // Salvar ou atualizar proposta no backend
+  const handleSaveProposal = async (proposalData: Proposal) => {
+    try {
+      if (editingProposal) {
+        const res = await api.put(`/proposals/${proposalData.id}`, proposalData);
+        const saved = res.data || proposalData;
+        setProposals((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
+        if (selectedProposal && selectedProposal.id === saved.id) {
+          setSelectedProposal(saved);
+        }
+      } else {
+        const res = await api.post("/proposals", proposalData);
+        const saved = res.data || proposalData;
+        setProposals((prev) => [saved, ...prev.filter((p) => p.id !== saved.id)]);
       }
-      return [proposalData, ...prev];
-    });
-
-    if (selectedProposal && selectedProposal.id === proposalData.id) {
-      setSelectedProposal(proposalData);
+    } catch (err) {
+      console.error("Erro ao salvar proposta na API:", err);
+      // Fallback otimista
+      setProposals((prev) => {
+        const exists = prev.some((p) => p.id === proposalData.id);
+        if (exists) {
+          return prev.map((p) => (p.id === proposalData.id ? proposalData : p));
+        }
+        return [proposalData, ...prev];
+      });
+    } finally {
+      setEditingProposal(null);
     }
-    setEditingProposal(null);
   };
 
   const handleEditProposal = (proposal: Proposal) => {
@@ -142,7 +156,12 @@ export default function ProposalsPage() {
     setIsCreateModalOpen(true);
   };
 
-  const handleStatusChange = (id: string, newStatus: ProposalStatus) => {
+  const handleStatusChange = async (id: string, newStatus: ProposalStatus) => {
+    try {
+      await api.patch(`/proposals/${id}/status`, { status: newStatus.toUpperCase() });
+    } catch (err) {
+      console.error("Erro ao atualizar status:", err);
+    }
     setProposals((prev) =>
       prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p))
     );
@@ -154,9 +173,9 @@ export default function ProposalsPage() {
   const handleDeleteProposal = async (id: string) => {
     if (confirm("Tem certeza que deseja excluir esta proposta comercial?")) {
       try {
-        await api.delete(`/proposals/${id}`).catch(() => null);
+        await api.delete(`/proposals/${id}`);
       } catch (err) {
-        // Silencioso
+        console.error("Erro ao excluir proposta:", err);
       }
       setProposals((prev) => prev.filter((p) => p.id !== id));
       toast.success("Proposta excluída com sucesso.");

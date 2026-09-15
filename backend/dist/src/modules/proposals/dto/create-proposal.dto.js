@@ -17,27 +17,91 @@ class CreateProposalItemDto {
 exports.CreateProposalItemDto = CreateProposalItemDto;
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProposalItemDto.prototype, "id", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProposalItemDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateProposalItemDto.prototype, "description", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
     (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateProposalItemDto.prototype, "quantity", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
     (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateProposalItemDto.prototype, "unitPrice", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateProposalItemDto.prototype, "discountPercent", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateProposalItemDto.prototype, "total", void 0);
 class CreateProposalDto {
 }
 exports.CreateProposalDto = CreateProposalDto;
 __decorate([
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProposalDto.prototype, "id", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProposalDto.prototype, "code", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateProposalDto.prototype, "title", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProposalDto.prototype, "clientName", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProposalDto.prototype, "clientCompany", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProposalDto.prototype, "clientEmail", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProposalDto.prototype, "clientPhone", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProposalDto.prototype, "sellerName", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProposalDto.prototype, "status", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
@@ -50,7 +114,6 @@ __decorate([
 ], CreateProposalDto.prototype, "dealId", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreateProposalDto.prototype, "validUntil", void 0);
 __decorate([
@@ -62,7 +125,39 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
+], CreateProposalDto.prototype, "paymentMethod", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateProposalDto.prototype, "subtotal", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateProposalDto.prototype, "discountTotal", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateProposalDto.prototype, "total", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
 ], CreateProposalDto.prototype, "notes", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProposalDto.prototype, "publicLink", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], CreateProposalDto.prototype, "issuer", void 0);
 __decorate([
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.ValidateNested)({ each: true }),

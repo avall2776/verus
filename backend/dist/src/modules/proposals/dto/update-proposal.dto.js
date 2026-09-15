@@ -20,7 +20,47 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
+], UpdateProposalDto.prototype, "id", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateProposalDto.prototype, "code", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
 ], UpdateProposalDto.prototype, "title", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateProposalDto.prototype, "clientName", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateProposalDto.prototype, "clientCompany", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateProposalDto.prototype, "clientEmail", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateProposalDto.prototype, "clientPhone", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateProposalDto.prototype, "sellerName", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateProposalDto.prototype, "status", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
@@ -33,7 +73,6 @@ __decorate([
 ], UpdateProposalDto.prototype, "dealId", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], UpdateProposalDto.prototype, "validUntil", void 0);
 __decorate([
@@ -45,13 +84,39 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
+], UpdateProposalDto.prototype, "paymentMethod", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], UpdateProposalDto.prototype, "subtotal", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], UpdateProposalDto.prototype, "discountTotal", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], UpdateProposalDto.prototype, "total", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
 ], UpdateProposalDto.prototype, "notes", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsIn)(['DRAFT', 'SENT', 'ACCEPTED', 'REJECTED']),
     __metadata("design:type", String)
-], UpdateProposalDto.prototype, "status", void 0);
+], UpdateProposalDto.prototype, "publicLink", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], UpdateProposalDto.prototype, "issuer", void 0);
 __decorate([
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.ValidateNested)({ each: true }),

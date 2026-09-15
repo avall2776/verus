@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 interface ProposalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (proposal: Proposal) => void;
+  onSave: (proposal: Proposal) => void | Promise<void>;
   proposalToEdit?: Proposal | null;
 }
 
@@ -207,7 +207,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
   const subtotal = items.reduce((acc, curr) => acc + curr.total, 0);
   const finalTotal = Math.max(0, subtotal - Number(globalDiscount || 0));
 
-  const handleSaveProposal = (status: ProposalStatus) => {
+  const handleSaveProposal = async (status: ProposalStatus) => {
     if (!clientName.trim()) {
       toast.error("Preencha o nome do cliente.");
       return;
@@ -262,9 +262,8 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
       issuer: issuerData
     };
 
-    setTimeout(() => {
-      onSave(updatedOrNewProposal);
-      setIsSubmitting(false);
+    try {
+      await Promise.resolve(onSave(updatedOrNewProposal));
       toast.success(
         proposalToEdit 
           ? "Proposta comercial atualizada com sucesso!"
@@ -273,7 +272,11 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
           : "Proposta salva como rascunho!"
       );
       onClose();
-    }, 350);
+    } catch (err) {
+      toast.error("Erro ao salvar proposta. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

@@ -1,24 +1,76 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, IsArray, ValidateNested, IsDateString } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateProposalItemDto {
   @IsString()
-  @IsNotEmpty()
-  description: string;
+  @IsOptional()
+  id?: string;
+
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
 
   @IsNumber()
   @Type(() => Number)
-  quantity: number;
+  @IsOptional()
+  quantity?: number;
 
   @IsNumber()
   @Type(() => Number)
-  unitPrice: number;
+  @IsOptional()
+  unitPrice?: number;
+
+  @IsNumber()
+  @Type(() => Number)
+  @IsOptional()
+  discountPercent?: number;
+
+  @IsNumber()
+  @Type(() => Number)
+  @IsOptional()
+  total?: number;
 }
 
 export class CreateProposalDto {
   @IsString()
+  @IsOptional()
+  id?: string;
+
+  @IsString()
+  @IsOptional()
+  code?: string;
+
+  @IsString()
   @IsNotEmpty()
   title: string;
+
+  @IsString()
+  @IsOptional()
+  clientName?: string;
+
+  @IsString()
+  @IsOptional()
+  clientCompany?: string;
+
+  @IsString()
+  @IsOptional()
+  clientEmail?: string;
+
+  @IsString()
+  @IsOptional()
+  clientPhone?: string;
+
+  @IsString()
+  @IsOptional()
+  sellerName?: string;
+
+  @IsString()
+  @IsOptional()
+  status?: string;
 
   @IsString()
   @IsOptional()
@@ -29,7 +81,6 @@ export class CreateProposalDto {
   dealId?: string;
 
   @IsOptional()
-  @IsDateString()
   validUntil?: string;
 
   @IsString()
@@ -38,7 +89,33 @@ export class CreateProposalDto {
 
   @IsString()
   @IsOptional()
+  paymentMethod?: string;
+
+  @IsNumber()
+  @Type(() => Number)
+  @IsOptional()
+  subtotal?: number;
+
+  @IsNumber()
+  @Type(() => Number)
+  @IsOptional()
+  discountTotal?: number;
+
+  @IsNumber()
+  @Type(() => Number)
+  @IsOptional()
+  total?: number;
+
+  @IsString()
+  @IsOptional()
   notes?: string;
+
+  @IsString()
+  @IsOptional()
+  publicLink?: string;
+
+  @IsOptional()
+  issuer?: any;
 
   @IsArray()
   @ValidateNested({ each: true })

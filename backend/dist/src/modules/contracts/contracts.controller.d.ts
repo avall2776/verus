@@ -8,12 +8,14 @@ export declare class ContractsController {
         proposal: {
             items: {
                 id: string;
+                name: string | null;
                 createdAt: Date;
                 description: string;
                 quantity: number;
                 unitPrice: import("@prisma/client/runtime/library").Decimal;
-                totalPrice: import("@prisma/client/runtime/library").Decimal;
+                discountPercent: import("@prisma/client/runtime/library").Decimal | null;
                 proposalId: string;
+                totalPrice: import("@prisma/client/runtime/library").Decimal;
             }[];
             lead: {
                 id: string;
@@ -30,9 +32,17 @@ export declare class ContractsController {
             title: string;
             notes: string | null;
             dealId: string | null;
+            code: string | null;
+            clientName: string | null;
+            clientCompany: string | null;
+            clientEmail: string | null;
+            clientPhone: string | null;
+            sellerName: string | null;
             leadId: string | null;
             validUntil: Date | null;
             paymentTerms: string | null;
+            paymentMethod: string | null;
+            discountTotal: import("@prisma/client/runtime/library").Decimal;
             totalValue: import("@prisma/client/runtime/library").Decimal;
         };
     } & {
@@ -50,12 +60,14 @@ export declare class ContractsController {
         proposal: {
             items: {
                 id: string;
+                name: string | null;
                 createdAt: Date;
                 description: string;
                 quantity: number;
                 unitPrice: import("@prisma/client/runtime/library").Decimal;
-                totalPrice: import("@prisma/client/runtime/library").Decimal;
+                discountPercent: import("@prisma/client/runtime/library").Decimal | null;
                 proposalId: string;
+                totalPrice: import("@prisma/client/runtime/library").Decimal;
             }[];
             lead: {
                 id: string;
@@ -78,9 +90,17 @@ export declare class ContractsController {
             title: string;
             notes: string | null;
             dealId: string | null;
+            code: string | null;
+            clientName: string | null;
+            clientCompany: string | null;
+            clientEmail: string | null;
+            clientPhone: string | null;
+            sellerName: string | null;
             leadId: string | null;
             validUntil: Date | null;
             paymentTerms: string | null;
+            paymentMethod: string | null;
+            discountTotal: import("@prisma/client/runtime/library").Decimal;
             totalValue: import("@prisma/client/runtime/library").Decimal;
         };
     } & {
@@ -111,12 +131,14 @@ export declare class ContractsController {
             };
             items: {
                 id: string;
+                name: string | null;
                 createdAt: Date;
                 description: string;
                 quantity: number;
                 unitPrice: import("@prisma/client/runtime/library").Decimal;
-                totalPrice: import("@prisma/client/runtime/library").Decimal;
+                discountPercent: import("@prisma/client/runtime/library").Decimal | null;
                 proposalId: string;
+                totalPrice: import("@prisma/client/runtime/library").Decimal;
             }[];
             lead: {
                 id: string;
@@ -139,9 +161,17 @@ export declare class ContractsController {
             title: string;
             notes: string | null;
             dealId: string | null;
+            code: string | null;
+            clientName: string | null;
+            clientCompany: string | null;
+            clientEmail: string | null;
+            clientPhone: string | null;
+            sellerName: string | null;
             leadId: string | null;
             validUntil: Date | null;
             paymentTerms: string | null;
+            paymentMethod: string | null;
+            discountTotal: import("@prisma/client/runtime/library").Decimal;
             totalValue: import("@prisma/client/runtime/library").Decimal;
         };
     } & {
@@ -159,12 +189,14 @@ export declare class ContractsController {
         proposal: {
             items: {
                 id: string;
+                name: string | null;
                 createdAt: Date;
                 description: string;
                 quantity: number;
                 unitPrice: import("@prisma/client/runtime/library").Decimal;
-                totalPrice: import("@prisma/client/runtime/library").Decimal;
+                discountPercent: import("@prisma/client/runtime/library").Decimal | null;
                 proposalId: string;
+                totalPrice: import("@prisma/client/runtime/library").Decimal;
             }[];
             lead: {
                 id: string;
@@ -187,9 +219,17 @@ export declare class ContractsController {
             title: string;
             notes: string | null;
             dealId: string | null;
+            code: string | null;
+            clientName: string | null;
+            clientCompany: string | null;
+            clientEmail: string | null;
+            clientPhone: string | null;
+            sellerName: string | null;
             leadId: string | null;
             validUntil: Date | null;
             paymentTerms: string | null;
+            paymentMethod: string | null;
+            discountTotal: import("@prisma/client/runtime/library").Decimal;
             totalValue: import("@prisma/client/runtime/library").Decimal;
         };
     } & {
