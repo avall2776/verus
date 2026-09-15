@@ -51,8 +51,8 @@ let ProposalsController = class ProposalsController {
     async getWhatsAppShare(tenantId, id) {
         return this.proposalsService.getWhatsAppShare(tenantId, id);
     }
-    async getPdf(tenantId, id, res) {
-        const html = await this.proposalsService.generatePdfHtml(tenantId, id);
+    async getPdf(id, res, queryTenantId) {
+        const html = await this.proposalsService.generatePdfHtml(id, queryTenantId);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(html);
     }
@@ -63,6 +63,7 @@ let ProposalsController = class ProposalsController {
 exports.ProposalsController = ProposalsController;
 __decorate([
     (0, common_1.Get)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('status')),
     __metadata("design:type", Function),
@@ -71,6 +72,7 @@ __decorate([
 ], ProposalsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Post)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -79,6 +81,7 @@ __decorate([
 ], ProposalsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)('company-profile'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -86,6 +89,7 @@ __decorate([
 ], ProposalsController.prototype, "getCompanyProfile", null);
 __decorate([
     (0, common_1.Patch)('company-profile'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -94,6 +98,7 @@ __decorate([
 ], ProposalsController.prototype, "updateCompanyProfile", null);
 __decorate([
     (0, common_1.Get)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -102,6 +107,7 @@ __decorate([
 ], ProposalsController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Put)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -111,6 +117,7 @@ __decorate([
 ], ProposalsController.prototype, "update", null);
 __decorate([
     (0, common_1.Patch)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -120,6 +127,7 @@ __decorate([
 ], ProposalsController.prototype, "patch", null);
 __decorate([
     (0, common_1.Patch)(':id/status'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -129,6 +137,7 @@ __decorate([
 ], ProposalsController.prototype, "updateStatus", null);
 __decorate([
     (0, common_1.Get)(':id/whatsapp-share'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -137,15 +146,16 @@ __decorate([
 ], ProposalsController.prototype, "getWhatsAppShare", null);
 __decorate([
     (0, common_1.Get)(':id/pdf'),
-    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
-    __param(1, (0, common_1.Param)('id')),
-    __param(2, (0, common_1.Res)()),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Res)()),
+    __param(2, (0, common_1.Query)('tenantId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:paramtypes", [String, Object, String]),
     __metadata("design:returntype", Promise)
 ], ProposalsController.prototype, "getPdf", null);
 __decorate([
     (0, common_1.Delete)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -154,7 +164,6 @@ __decorate([
 ], ProposalsController.prototype, "delete", null);
 exports.ProposalsController = ProposalsController = __decorate([
     (0, common_1.Controller)('proposals'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [proposals_service_1.ProposalsService])
 ], ProposalsController);
 //# sourceMappingURL=proposals.controller.js.map

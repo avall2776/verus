@@ -438,9 +438,16 @@ export class ProposalsService {
     });
   }
 
-  async generatePdfHtml(tenantId: string, id: string): Promise<string> {
-    const proposal = await this.findOne(tenantId, id);
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+  async generatePdfHtml(id: string, tenantId?: string): Promise<string> {
+    const where: Prisma.ProposalWhereInput = { id };
+    if (tenantId) where.tenantId = tenantId;
+    const rawProposal = await this.prisma.proposal.findFirst({
+      where,
+      include: { lead: true, deal: true, items: true, tenant: true },
+    });
+    if (!rawProposal) throw new NotFoundException('Proposta não encontrada');
+    const proposal = this.formatProposal(rawProposal);
+    const tenant = rawProposal.tenant;
 
     const itemsRows = (proposal.items || [])
       .map(

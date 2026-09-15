@@ -46,7 +46,7 @@ export declare class ProposalsController {
         message: string;
         whatsappUrl: string;
     }>;
-    getPdf(tenantId: string, id: string, res: Response): Promise<Response<any, Record<string, any>>>;
+    getPdf(id: string, res: Response, queryTenantId?: string): Promise<Response<any, Record<string, any>>>;
     delete(tenantId: string, id: string): Promise<{
         success: boolean;
         message: string;

@@ -29,8 +29,8 @@ let ContractsController = class ContractsController {
     async create(tenantId, dto) {
         return this.contractsService.create(tenantId, dto);
     }
-    async getPdf(tenantId, id, res) {
-        const html = await this.contractsService.generatePdfHtml(tenantId, id);
+    async getPdf(id, res, queryTenantId) {
+        const html = await this.contractsService.generatePdfHtml(id, queryTenantId);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(html);
     }
@@ -52,6 +52,7 @@ let ContractsController = class ContractsController {
 exports.ContractsController = ContractsController;
 __decorate([
     (0, common_1.Get)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('search')),
     __param(2, (0, common_1.Query)('status')),
@@ -61,6 +62,7 @@ __decorate([
 ], ContractsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Post)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -69,15 +71,16 @@ __decorate([
 ], ContractsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(':id/pdf'),
-    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
-    __param(1, (0, common_1.Param)('id')),
-    __param(2, (0, common_1.Res)()),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Res)()),
+    __param(2, (0, common_1.Query)('tenantId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:paramtypes", [String, Object, String]),
     __metadata("design:returntype", Promise)
 ], ContractsController.prototype, "getPdf", null);
 __decorate([
     (0, common_1.Get)(':id/whatsapp-share'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -86,6 +89,7 @@ __decorate([
 ], ContractsController.prototype, "getWhatsAppShare", null);
 __decorate([
     (0, common_1.Get)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -94,6 +98,7 @@ __decorate([
 ], ContractsController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Patch)(':id/status'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -104,6 +109,7 @@ __decorate([
 ], ContractsController.prototype, "updateStatus", null);
 __decorate([
     (0, common_1.Delete)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -112,7 +118,6 @@ __decorate([
 ], ContractsController.prototype, "delete", null);
 exports.ContractsController = ContractsController = __decorate([
     (0, common_1.Controller)('contracts'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [contracts_service_1.ContractsService])
 ], ContractsController);
 //# sourceMappingURL=contracts.controller.js.map

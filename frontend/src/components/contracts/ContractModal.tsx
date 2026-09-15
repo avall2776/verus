@@ -22,6 +22,9 @@ interface ProposalOption {
   clientName: string;
   clientEmail?: string;
   clientPhone?: string;
+  clientDocument?: string;
+  clientAddress?: string;
+  validUntil?: string;
   total: number;
   status: string;
 }
@@ -63,9 +66,20 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
             clientName: p.clientName || p.lead?.name || "Cliente",
             clientEmail: p.clientEmail || p.lead?.email || "",
             clientPhone: p.clientPhone || p.lead?.phone || "",
+            clientDocument: p.clientDocument || p.lead?.document || p.clientCpfCnpj || "",
+            clientAddress: p.clientAddress || p.lead?.address || "",
+            validUntil: p.validUntil ? p.validUntil.split("T")[0] : "",
             total: Number(p.total || p.totalValue || 0),
-            status: p.status,
+            status: (p.status || "draft").toLowerCase(),
           }));
+
+          // Ordena propostas aceitas primeiro
+          mapped.sort((a, b) => {
+            if (a.status === "accepted" && b.status !== "accepted") return -1;
+            if (b.status === "accepted" && a.status !== "accepted") return 1;
+            return 0;
+          });
+
           setProposals(mapped);
         }
       } catch (err) {
@@ -85,12 +99,18 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
 
     const prop = proposals.find((p) => p.id === proposalId);
     if (prop) {
-      setTitle(`Contrato de Serviços - ${prop.title}`);
+      setTitle(`Contrato de Prestação de Serviços - ${prop.title}`);
       setClientName(prop.clientName || "");
       setClientEmail(prop.clientEmail || "");
       setClientPhone(prop.clientPhone || "");
+      if (prop.clientDocument) setClientDocument(prop.clientDocument);
+      if (prop.clientAddress) setClientAddress(prop.clientAddress);
       setValue(prop.total || 0);
-      toast.success(`Dados preenchidos a partir da proposta ${prop.code}`);
+      if (prop.validUntil) {
+        setValidUntil(prop.validUntil);
+        setEndDate(prop.validUntil);
+      }
+      toast.success(`Dados da proposta ${prop.code} preenchidos com sucesso!`);
     }
   };
 
@@ -183,11 +203,14 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#060913] border border-slate-700 text-slate-200 focus:outline-none focus:border-cyan-500 transition-colors"
               >
                 <option value="">-- Contrato avulso (Preenchimento manual) --</option>
-                {proposals.map((prop) => (
-                  <option key={prop.id} value={prop.id}>
-                    {prop.code} - {prop.title} | {prop.clientName} (R$ {prop.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })})
-                  </option>
-                ))}
+                {proposals.map((prop) => {
+                  const isAccepted = prop.status === "accepted";
+                  return (
+                    <option key={prop.id} value={prop.id}>
+                      {isAccepted ? "★ [ACEITA] " : ""}{prop.code} - {prop.title} | {prop.clientName} (R$ {prop.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })})
+                    </option>
+                  );
+                })}
               </select>
             </div>
             <p className="text-[11px] text-slate-500">

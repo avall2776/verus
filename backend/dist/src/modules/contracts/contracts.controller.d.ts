@@ -91,7 +91,7 @@ export declare class ContractsController {
         createdAt: string;
         updatedAt: string;
     }>;
-    getPdf(tenantId: string, id: string, res: Response): Promise<Response<any, Record<string, any>>>;
+    getPdf(id: string, res: Response, queryTenantId?: string): Promise<Response<any, Record<string, any>>>;
     getWhatsAppShare(tenantId: string, id: string): Promise<{
         contractId: any;
         code: any;

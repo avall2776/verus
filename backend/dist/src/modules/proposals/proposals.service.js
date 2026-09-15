@@ -418,9 +418,18 @@ let ProposalsService = class ProposalsService {
             },
         });
     }
-    async generatePdfHtml(tenantId, id) {
-        const proposal = await this.findOne(tenantId, id);
-        const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    async generatePdfHtml(id, tenantId) {
+        const where = { id };
+        if (tenantId)
+            where.tenantId = tenantId;
+        const rawProposal = await this.prisma.proposal.findFirst({
+            where,
+            include: { lead: true, deal: true, items: true, tenant: true },
+        });
+        if (!rawProposal)
+            throw new common_1.NotFoundException('Proposta não encontrada');
+        const proposal = this.formatProposal(rawProposal);
+        const tenant = rawProposal.tenant;
         const itemsRows = (proposal.items || [])
             .map((item) => `
         <tr>

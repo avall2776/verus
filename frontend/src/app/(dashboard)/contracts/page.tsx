@@ -84,27 +84,41 @@ export default function ContractsPage() {
   };
 
   const handleDownloadPdf = (contract: Contract) => {
-    window.open(`/api-backend/contracts/${contract.id}/pdf`, "_blank");
-    toast.success(`Abrindo PDF oficial do contrato ${contract.code}`);
+    const token = typeof window !== "undefined" ? localStorage.getItem("versus_auth_token") || localStorage.getItem("token") : "";
+    const url = `/api-backend/contracts/${contract.id}/pdf${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+    window.open(url, "_blank");
+    toast.success(`Abrindo minuta oficial do contrato ${contract.code}`);
   };
 
   const handleShareWhatsApp = async (contract: Contract) => {
     try {
       const res = await api.get(`/contracts/${contract.id}/whatsapp-share`);
+      const textToCopy = res.data?.message || `Olá, *${contract.clientName}*! Segue o link para assinatura do contrato ${contract.code}: https://app.versus.com.br/c/${contract.code.toLowerCase()}`;
+      
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(textToCopy);
+      }
+
       if (res.data?.whatsappUrl) {
         window.open(res.data.whatsappUrl, "_blank");
-        toast.success("Link para assinatura no WhatsApp aberto com sucesso!");
+        toast.success("WhatsApp aberto e mensagem copiada para a área de transferência!");
+      } else {
+        toast.success("Mensagem de assinatura copiada para o WhatsApp!");
       }
     } catch (err) {
       console.error("Erro ao gerar link de WhatsApp:", err);
-      const msg = `Olá, ${contract.clientName}! Segue o link para assinatura do contrato ${contract.code}: https://app.versus.com.br/c/${contract.code.toLowerCase()}`;
-      navigator.clipboard.writeText(msg);
-      toast.success("Mensagem de assinatura copiada para o WhatsApp!");
+      const msg = `Olá, *${contract.clientName}*! Segue o link para assinatura do contrato ${contract.code}: https://app.versus.com.br/c/${contract.code.toLowerCase()}`;
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(msg);
+      }
+      const encoded = encodeURIComponent(msg);
+      window.open(`https://wa.me/?text=${encoded}`, "_blank");
+      toast.success("WhatsApp aberto e link copiado!");
     }
   };
 
   const handleSignContract = async (contract: Contract) => {
-    if (!confirm(`Deseja assinar e homologar o contrato ${contract.code} digitalmente?`)) {
+    if (!confirm(`Deseja assinar e homologar o contrato ${contract.code} digitalmente com carimbo de auditoria?`)) {
       return;
     }
 
@@ -113,9 +127,13 @@ export default function ContractsPage() {
         status: "SIGNED",
       });
       toast.success(`Contrato ${contract.code} assinado com sucesso!`);
+      const updatedContract: Contract = { ...contract, ...res.data, status: "signed" };
       setContracts((prev) =>
-        prev.map((c) => (c.id === contract.id ? { ...c, ...res.data, status: "signed" } : c))
+        prev.map((c) => (c.id === contract.id ? updatedContract : c))
       );
+      if (selectedContract && selectedContract.id === contract.id) {
+        setSelectedContract(updatedContract);
+      }
     } catch (err) {
       console.error("Erro ao assinar contrato:", err);
       toast.error("Erro ao atualizar status do contrato.");

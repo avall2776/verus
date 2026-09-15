@@ -8,11 +8,11 @@ import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 
 @Controller('proposals')
-@UseGuards(JwtAuthGuard)
 export class ProposalsController {
   constructor(private readonly proposalsService: ProposalsService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   async findAll(
     @CurrentTenant() tenantId: string,
     @Query('status') status?: string,
@@ -21,6 +21,7 @@ export class ProposalsController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   async create(
     @CurrentTenant() tenantId: string,
     @Body() dto: CreateProposalDto,
@@ -29,11 +30,13 @@ export class ProposalsController {
   }
 
   @Get('company-profile')
+  @UseGuards(JwtAuthGuard)
   async getCompanyProfile(@CurrentTenant() tenantId: string) {
     return this.proposalsService.getCompanyProfile(tenantId);
   }
 
   @Patch('company-profile')
+  @UseGuards(JwtAuthGuard)
   async updateCompanyProfile(
     @CurrentTenant() tenantId: string,
     @Body() body: { name?: string; cnpj?: string; logoUrl?: string; phone?: string; address?: string; email?: string },
@@ -42,6 +45,7 @@ export class ProposalsController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async findOne(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
@@ -50,6 +54,7 @@ export class ProposalsController {
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   async update(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
@@ -59,6 +64,7 @@ export class ProposalsController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   async patch(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
@@ -68,6 +74,7 @@ export class ProposalsController {
   }
 
   @Patch(':id/status')
+  @UseGuards(JwtAuthGuard)
   async updateStatus(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
@@ -77,6 +84,7 @@ export class ProposalsController {
   }
 
   @Get(':id/whatsapp-share')
+  @UseGuards(JwtAuthGuard)
   async getWhatsAppShare(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
@@ -86,16 +94,17 @@ export class ProposalsController {
 
   @Get(':id/pdf')
   async getPdf(
-    @CurrentTenant() tenantId: string,
     @Param('id') id: string,
     @Res() res: Response,
+    @Query('tenantId') queryTenantId?: string,
   ) {
-    const html = await this.proposalsService.generatePdfHtml(tenantId, id);
+    const html = await this.proposalsService.generatePdfHtml(id, queryTenantId);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.send(html);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   async delete(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,

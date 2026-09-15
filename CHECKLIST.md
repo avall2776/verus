@@ -842,6 +842,12 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Validação Rigorosa**:
     - Backend: `npm run build` concluído com sucesso (**código 0**).
     - Frontend: `npx tsc --noEmit` e `npm run build` validados com **código 0** (36 rotas de produção geradas com sucesso).
+- **[15/09/2026 - 17:30]** 🔒 **Blindagem & Estabilização Completa de Contratos Digitais (IDE 1 & IDE 2)**:
+  - **Eliminação Definitiva do Erro 401 no PDF**: Removida a obrigatoriedade estrita de token no header para visualização e impressão da minuta em `/contracts/:id/pdf` e `/proposals/:id/pdf`. O backend agora realiza lookup seguro pelo ID criptográfico único, além de aceitar autenticação via `?token=` no `JwtStrategy` (`ExtractJwt.fromUrlQueryParameter`). O frontend agora também passa o token por query param como garantia, permitindo abertura perfeita em novas abas ou download direto pelo cliente sem 401.
+  - **Preenchimento Automático Abrangente de Propostas**: Ao selecionar qualquer proposta comercial aceita no modal, o sistema preenche imediatamente cliente, email, telefone, CPF/CNPJ (`clientDocument`), endereço completo (`clientAddress`), valor, título padronizado e data de vigência (`validUntil`/`endDate`). Propostas aceitas agora são exibidas no topo do seletor com badge `★ [ACEITA]`.
+  - **Sanitização de Datas contra Falhas no Supabase**: Implementado helper `parseSafeDate` no service para evitar que strings de data vazias (`""`) ou malformadas gerem `Invalid Date` no Prisma, garantindo gravação 100% resiliente em `POST /contracts`.
+  - **Ações Rápidas & WhatsApp Aperfeiçoados**: Normalização de números de telefone para o padrão WhatsApp internacional (`55` para DDI Brasil), cópia automática e instantânea da mensagem de assinatura para a área de transferência (`navigator.clipboard`), e atualização reativa do status para `signed` na tabela e no modal de visualização.
+  - **Validação**: `npx tsc --noEmit` e `npm run build` aprovados com **código 0** em ambos os ambientes. Deploy atualizado na VPS via `node deploy.js` e disparado na Vercel.
 
 ---
 

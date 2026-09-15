@@ -49,5 +49,5 @@ export declare class ProposalsService {
         logoUrl: string;
         address: string;
     }>;
-    generatePdfHtml(tenantId: string, id: string): Promise<string>;
+    generatePdfHtml(id: string, tenantId?: string): Promise<string>;
 }

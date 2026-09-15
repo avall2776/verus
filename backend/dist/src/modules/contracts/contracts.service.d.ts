@@ -189,5 +189,5 @@ export declare class ContractsService {
         message: string;
         whatsappUrl: string;
     }>;
-    generatePdfHtml(tenantId: string, id: string): Promise<string>;
+    generatePdfHtml(id: string, tenantId?: string): Promise<string>;
 }

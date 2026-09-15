@@ -33,26 +33,36 @@ export function ContractPreviewModal({
   });
 
   const handleOpenPdf = () => {
-    // Abre a rota oficial do backend formatada para impressão/PDF
-    window.open(`/api-backend/contracts/${contract.id}/pdf`, "_blank");
+    const token = typeof window !== "undefined" ? localStorage.getItem("versus_auth_token") || localStorage.getItem("token") : "";
+    const url = `/api-backend/contracts/${contract.id}/pdf${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+    window.open(url, "_blank");
+    toast.success(`Abrindo minuta oficial do contrato ${contract.code}`);
   };
 
   const handleCopyWhatsApp = async () => {
     try {
       const res = await api.get(`/contracts/${contract.id}/whatsapp-share`);
+      const textToCopy = res.data?.message || `Olá, *${contract.clientName}*! Segue o link para assinatura do contrato ${contract.code}: https://app.versus.com.br/c/${contract.code.toLowerCase()}`;
+      
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(textToCopy);
+      }
+
       if (res.data?.whatsappUrl) {
         window.open(res.data.whatsappUrl, "_blank");
-        toast.success("Link para WhatsApp gerado e aberto com sucesso!");
+        toast.success("WhatsApp aberto e mensagem copiada para envio!");
       } else {
-        const fallbackText = `Olá, ${contract.clientName}! Segue o link para assinatura do contrato ${contract.code}: https://app.versus.com.br/c/${contract.code.toLowerCase()}`;
-        navigator.clipboard.writeText(fallbackText);
         toast.success("Mensagem copiada para a área de transferência!");
       }
     } catch (err) {
       console.error("Erro ao obter link de WhatsApp:", err);
-      const fallbackText = `Olá, ${contract.clientName}! Segue o link para assinatura do contrato ${contract.code}: https://app.versus.com.br/c/${contract.code.toLowerCase()}`;
-      navigator.clipboard.writeText(fallbackText);
-      toast.success("Link copiado para a área de transferência!");
+      const fallbackText = `Olá, *${contract.clientName}*! Segue o link para assinatura do contrato ${contract.code}: https://app.versus.com.br/c/${contract.code.toLowerCase()}`;
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(fallbackText);
+      }
+      const encoded = encodeURIComponent(fallbackText);
+      window.open(`https://wa.me/?text=${encoded}`, "_blank");
+      toast.success("WhatsApp aberto e mensagem copiada!");
     }
   };
 

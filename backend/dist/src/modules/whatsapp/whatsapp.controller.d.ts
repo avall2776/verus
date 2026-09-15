@@ -34,11 +34,11 @@ export declare class WhatsappController {
         createdAt: Date;
         updatedAt: Date;
         status: string;
+        token: string | null;
         phoneNumber: string | null;
         profilePicUrl: string | null;
         profileName: string | null;
         qrCode: string | null;
-        token: string | null;
         phoneNumberId: string | null;
         isDefault: boolean;
         settings: import("@prisma/client/runtime/library").JsonValue | null;
@@ -76,11 +76,11 @@ export declare class WhatsappController {
         createdAt: Date;
         updatedAt: Date;
         status: string;
+        token: string | null;
         phoneNumber: string | null;
         profilePicUrl: string | null;
         profileName: string | null;
         qrCode: string | null;
-        token: string | null;
         phoneNumberId: string | null;
         isDefault: boolean;
         settings: import("@prisma/client/runtime/library").JsonValue | null;
@@ -121,11 +121,11 @@ export declare class WhatsappController {
         createdAt: Date;
         updatedAt: Date;
         status: string;
+        token: string | null;
         phoneNumber: string | null;
         profilePicUrl: string | null;
         profileName: string | null;
         qrCode: string | null;
-        token: string | null;
         phoneNumberId: string | null;
         isDefault: boolean;
         settings: import("@prisma/client/runtime/library").JsonValue | null;
