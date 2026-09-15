@@ -61,6 +61,12 @@ function parseChecklistMarkdown(markdown: string) {
     }
 
     if (line.startsWith('## 🚀 Roadmap Futuro')) {
+      if (currentPhase) {
+        if (currentItem) currentPhase.items.push(currentItem);
+        phases.push(currentPhase);
+        currentPhase = null;
+        currentItem = null;
+      }
       currentSection = 'roadmap';
       continue;
     }
@@ -115,15 +121,16 @@ function parseChecklistMarkdown(markdown: string) {
     }
 
     // Processa Fases
-    if (line.startsWith('### Fase')) {
+    const isPhaseLine = /^###\s+(?:[^\w\s]+\s+)?Fase\s+\d+/i.test(line);
+    if (isPhaseLine) {
       if (currentPhase) {
         if (currentItem) currentPhase.items.push(currentItem);
         phases.push(currentPhase);
       }
 
-      const matchPhase = line.match(/^###\s+Fase\s+(\d+)(?:\s*\(([^)]+)\))?:\s*(.+)$/i);
+      const matchPhase = line.match(/^###\s+(?:[^\w\s]+\s+)?Fase\s+(\d+)(?:\s*\(([^)]+)\))?:\s*(.+)$/i);
       const phaseNum = matchPhase ? parseInt(matchPhase[1], 10) : phases.length + 1;
-      const rawTitle = line.replace(/^###\s+/, '').trim();
+      const rawTitle = line.replace(/^###\s+(?:[^\w\s]+\s+)?/, '').trim();
       const cleanTitle = matchPhase ? matchPhase[3].trim() : rawTitle;
 
       currentPhase = {
@@ -138,7 +145,7 @@ function parseChecklistMarkdown(markdown: string) {
     }
 
     // Itens de checklist de uma fase
-    if (currentPhase) {
+    if (currentPhase && currentSection === 'phases') {
       const matchItem = line.match(/^-\s+\[( |x)\]\s+(.+)$/i);
       if (matchItem) {
         if (currentItem) {
@@ -153,8 +160,8 @@ function parseChecklistMarkdown(markdown: string) {
       }
 
       // Sub-itens detalhados
-      const matchSub = line.match(/^\*\s+(.+)$/);
-      if (matchSub && currentItem) {
+      const matchSub = line.match(/^[\*\-]\s+(.+)$/);
+      if (matchSub && currentItem && !line.includes('[ ]') && !line.includes('[x]')) {
         currentItem.subitems.push(matchSub[1].trim());
         continue;
       }
@@ -167,14 +174,17 @@ function parseChecklistMarkdown(markdown: string) {
     phases.push(currentPhase);
   }
 
+  // Ordena fases por id numérico
+  phases.sort((a, b) => a.id - b.id);
+
   // Calcula status de conclusão por fase
   let totalTasks = 0;
   let completedTasks = 0;
 
   phases.forEach(p => {
     if (p.items.length > 0) {
-      const allChecked = p.items.every(i => i.checked);
-      p.isCompleted = allChecked;
+      const hasUnchecked = p.items.some(i => !i.checked);
+      p.isCompleted = !hasUnchecked;
       p.items.forEach(i => {
         totalTasks++;
         if (i.checked) completedTasks++;
@@ -185,7 +195,10 @@ function parseChecklistMarkdown(markdown: string) {
   });
 
   const completedPhases = phases.filter(p => p.isCompleted).length;
-  const currentActivePhase = phases.find(p => !p.isCompleted) || phases[phases.length - 1];
+  const pendingPhase = phases.find(p => !p.isCompleted);
+  const currentActivePhaseTitle = pendingPhase 
+    ? `Fase ${pendingPhase.id}: ${pendingPhase.title}` 
+    : `Todas as ${phases.length} Fases Concluídas (100%)`;
 
   const completionPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 100;
   const lastPunch = punchIns[punchIns.length - 1] || null;
@@ -198,7 +211,7 @@ function parseChecklistMarkdown(markdown: string) {
       totalTasks,
       completedTasks,
       completionPercent,
-      currentActivePhaseTitle: currentActivePhase ? `Fase ${currentActivePhase.id}: ${currentActivePhase.title}` : 'Todas as Fases Concluídas',
+      currentActivePhaseTitle,
       lastPunchIn: lastPunch,
       updatedAt: new Date().toISOString()
     },

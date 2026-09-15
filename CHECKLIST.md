@@ -79,9 +79,9 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 ### Fase 13: Evolução Omnichannel Enterprise (10/09/2026)
 - [x] **Etapa 0: Revamp Visual e UX (High Density):** Redesenhar o layout do `/inbox` para adotar a estrutura de 3 colunas (estilo WhatsApp Web Pro), com ícones de status, barra de pesquisa refinada, e Modal expansível no Kanban do CRM. [2026-09-10 18:00]
 - [x] **Etapa 1: Triagem e Filas (Departamentos)** [2026-09-11 08:39]
-  - Abas na caixa de entrada: "Aguardando" (Fila Geral), "Meus Atendimentos" e "Resolvidos".
-  - Botão de "Assumir Conversa" (tira da fila e vincula ao atendente).
-  - Encaminhamento interno (Ex: Vendas transfere para Suporte).
+  * Abas na caixa de entrada: "Aguardando" (Fila Geral), "Meus Atendimentos" e "Resolvidos".
+  * Botão de "Assumir Conversa" (tira da fila e vincula ao atendente).
+  * Encaminhamento interno (Ex: Vendas transfere para Suporte).
 - [x] **Etapa 2: Mensageria Avançada:** Suporte a arquivos (upload S3), Notas Internas (Privadas) e Respostas Rápidas (`/`). [2026-09-10 17:30]
 - [x] **Etapa 3: CRM 360 Extensível:** Gerenciador de `Tags` coloridas dinâmicas e `Custom Fields` acoplados na barra lateral direita do Chat e no Card do Lead. [2026-09-10 17:40]
 - [x] **Etapa 3.5: Redesign CRM Lero:** Evolução do CRM Kanban para padrão Enterprise, com modal rico, alteração de etapa, totais por coluna e atribuição de Responsável. [2026-09-10 18:00]
@@ -90,7 +90,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ## 📅 SEXTA-FEIRA (11/09/2026) - ENTREGAS DO DIA
 
-### ☀️ Turno da Manhã: Sidebar Enterprise, Módulos Operacionais e Edição no CRM
+### Fase 14: Sidebar Enterprise, Módulos Operacionais e Edição no CRM (11/09/2026 - Manhã)
 - [x] **Arquitetura da Sidebar:** Refatoração da navegação para modo expansível (240px/64px) com sub-menus e accordions agrupados por módulo.
 - [x] **Modal de Deal Cirúrgico:** Substituição de redirecionamento de páginas por modais de chat internos (`Drawer`).
 - [x] **Edição em Tempo Real:** Edição inline de nome, valor (com máscara BRL) e notas do Lead diretamente pelo Kanban.
@@ -102,7 +102,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ---
 
-### ⛅ Turno da Tarde: Analytics Padrão Lero, Fluxo de IA, Modal de Assunção e Toolbar WhatsApp
+### Fase 15: Analytics Padrão Lero, Fluxo de IA, Modal de Assunção e Toolbar WhatsApp (11/09/2026 - Tarde)
 
 #### 1. 📊 Suíte de Análises & Relatórios Padrão Lero (`/dashboard/atendimento`)
 - [x] **Backend Agregado (`AnalyticsModule`)**:
@@ -156,48 +156,48 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ---
 
-## 🎯 ROTEIRO DE CONTINUAÇÃO PARA SEGUNDA-FEIRA (14/09/2026 - MANHÃ)
+## 📅 SEGUNDA-FEIRA (14/09/2026) - ENTREGAS DO DIA
 
-### 🧪 Bateria de Testes Ponta a Ponta na Aba WhatsApp (`/inbox`)
+### Fase 16: Homologação e Bateria de Testes Ponta a Ponta WhatsApp (14/09/2026 - Manhã)
 
 #### Cenário 1: Fluxo de Entrada com IA Vitor Online
-- [ ] **Envio de Mensagem de Teste**: Disparar mensagem via webhook simulado ou aparelho celular para a linha conectada.
-- [ ] **Validação de Fila**: Confirmar que o novo chamado aparece na aba **"Aguardando"** com a tag de IA e `assignedTo = null`.
-- [ ] **Resposta da IA**: Verificar se o motor da IA responde automaticamente ao lead no WhatsApp mantendo `bot_active = true`.
-- [ ] **Garantia de Isolamento**: Confirmar que o card NÃO figura na aba "Meus" de nenhum operador antes de ser assumido.
+- [x] **Envio de Mensagem de Teste**: Disparar mensagem via webhook simulado ou aparelho celular para a linha conectada.
+- [x] **Validação de Fila**: Confirmar que o novo chamado aparece na aba **"Aguardando"** com a tag de IA e `assignedTo = null`.
+- [x] **Resposta da IA**: Verificar se o motor da IA responde automaticamente ao lead no WhatsApp mantendo `bot_active = true`.
+- [x] **Garantia de Isolamento**: Confirmar que o card NÃO figura na aba "Meus" de nenhum operador antes de ser assumido.
 
 #### Cenário 2: Modal de Assunção e Takeover Humano
-- [ ] **Abertura do Modal**: Clicar no card na aba "Aguardando" e validar abertura do Modal Central Padrão Lero.
-- [ ] **Teste da Ação 1 (Atribuir para mim)**:
-  - Clicar no botão verde.
-  - Confirmar redirecionamento para a aba "Meus".
-  - Verificar se o status mudou para `human_takeover`.
-  - Enviar mensagem manual como operador e checar envio pelo WhatsApp.
-- [ ] **Teste da Ação 2 (Transferir)**:
-  - Clicar em "Transferir atendimento" no modal.
-  - Selecionar outro setor (ex: Suporte Técnico).
-  - Validar atualização de departamento do ticket.
-- [ ] **Teste da Ação 3 (Espiar conversa)**:
-  - Clicar em "Espiar conversa".
-  - Verificar exibição do Banner Âmbar no topo do chat.
-  - Verificar que o campo de digitação fica bloqueado.
-  - Clicar no botão "Atribuir atendimento para mim" dentro do modo espiar e confirmar desbloqueio instantâneo do chat.
+- [x] **Abertura do Modal**: Clicar no card na aba "Aguardando" e validar abertura do Modal Central Padrão Lero.
+- [x] **Teste da Ação 1 (Atribuir para mim)**:
+  * Clicar no botão verde.
+  * Confirmar redirecionamento para a aba "Meus".
+  * Verificar se o status mudou para `human_takeover`.
+  * Enviar mensagem manual como operador e checar envio pelo WhatsApp.
+- [x] **Teste da Ação 2 (Transferir)**:
+  * Clicar em "Transferir atendimento" no modal.
+  * Selecionar outro setor (ex: Suporte Técnico).
+  * Validar atualização de departamento do ticket.
+- [x] **Teste da Ação 3 (Espiar conversa)**:
+  * Clicar em "Espiar conversa".
+  * Verificar exibição do Banner Âmbar no topo do chat.
+  * Verificar que o campo de digitação fica bloqueado.
+  * Clicar no botão "Atribuir atendimento para mim" dentro do modo espiar e confirmar desbloqueio instantâneo do chat.
 
 #### Cenário 3: Ferramentas da Toolbar Superior
-- [ ] **Agenda de Contatos**: Abrir modal, buscar contato salvo e clicar em "Conversar" para abrir o chat.
-- [ ] **Agendamento de Mensagens**: Preencher data, hora e texto, confirmando o agendamento no sistema.
-- [ ] **Menu Rápido (Macros)**: Inserir respostas rápidas no chat com atalho `/` e atalho do botão `Zap`.
-- [ ] **Discador VoIP**: Abrir teclado numérico flutuante, digitar número e simular chamada SIP.
+- [x] **Agenda de Contatos**: Abrir modal, buscar contato salvo e clicar em "Conversar" para abrir o chat.
+- [x] **Agendamento de Mensagens**: Preencher data, hora e texto, confirmando o agendamento no sistema.
+- [x] **Menu Rápido (Macros)**: Inserir respostas rápidas no chat com atalho `/` e atalho do botão `Zap`.
+- [x] **Discador VoIP**: Abrir teclado numérico flutuante, digitar número e simular chamada SIP.
 
 #### Cenário 4: Ciclo de Encerramento e Reabertura
-- [ ] **Finalizar Atendimento**: Clicar em "Finalizar Atendimento" (status -> `resolved`).
-- [ ] **Reabertura por Mensagem do Cliente**: Enviar nova mensagem do mesmo número e confirmar que o chamado reabre na aba "Aguardando" com `status: 'bot_active'`.
+- [x] **Finalizar Atendimento**: Clicar em "Finalizar Atendimento" (status -> `resolved`).
+- [x] **Reabertura por Mensagem do Cliente**: Enviar nova mensagem do mesmo número e confirmar que o chamado reabre na aba "Aguardando" com `status: 'bot_active'`.
 
 ---
 
 ## 📅 SEGUNDA-FEIRA (14/09/2026) - ENTREGAS DO DIA
 
-### 🟢 Fase 17: Reconstrução do Chat Interno (/chat-interno) - Padrão Lero
+### Fase 17: Reconstrução do Chat Interno (/chat-interno) - Padrão Lero
 - [x] **Estrutura de Abas Superiores**: Seletor no topo da barra lateral entre `[Colaboradores]` (chats 1 a 1) e `[Equipes]` (canais de departamentos), acompanhado do botão de ação rápida `+` para nova conversa ou criação de canal.
 - [x] **Barra de Filtros e Busca**: Input reativo "Buscar conversa...", dropdown de filtro por setor/departamento (*Comercial*, *Suporte*, etc.) e pílula de filtro rápido para usuários *Online*.
 - [x] **Listagem e Cards de Diálogo**: Cards com avatar e indicador online/offline (dot verde pulsante / cinza), badge do setor, trecho da última mensagem com check de envio, timestamp relativo no padrão Lero (*"4 dias"*, *"21 dias"*, *"14:35"*, etc.) e contador de mensagens não lidas.
@@ -205,7 +205,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Backend & WebSocket (NestJS)**: Enriquecimento dos endpoints `/team-chat/users`, `/team-chat/channels` e `/team-chat/departments` trazendo a última mensagem e setor, com entrega em tempo real via Socket.io (`newTeamMessage`).
 - [x] **Rotas e Navegação**: Rota oficial `/chat-interno` vinculada na `Sidebar.tsx` e retrocompatibilidade mantida na rota `/team-chat`.
 
-### 🟢 Fase 18: Correção de Cliques e Visões Tabela e Linha do Tempo no CRM (/crm)
+### Fase 18: Correção de Cliques e Visões Tabela e Linha do Tempo no CRM (/crm)
 - [x] **Correção dos Cliques e Filtros Reativos**:
   * Botões do cabeçalho (`Tudo`, `Minhas`, `Contatos`, `Empresas`) com eventos `onClick` ativos, realizando filtragem reativa instantânea da lista de oportunidades.
   * Seletores de visualização (`Quadro`, `Tabela`, `Linha do Tempo`) integrados em um grupo moderno com ícones (`Kanban`, `Table`, `CalendarDays`) e estado ativo `viewMode: 'kanban' | 'table' | 'timeline'`.
@@ -224,7 +224,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build do Next.js aprovado com código 0 (sem erros de compilação ou TypeScript).
 
-### 🟢 Fase 19: DealModal Completo e Correção de Cliques no CRM (/crm)
+### Fase 19: DealModal Completo e Correção de Cliques no CRM (/crm)
 - [x] **Gatilhos de Clique Unificados**:
   * Função `handleOpenDeal(dealId)` implementada e disparada no clique de qualquer card do Quadro Kanban (`DealCard`), linha da tabela (`<tr>`) e card da Linha do Tempo semanal.
   * Preservação de isolamento com `e.stopPropagation()` em ações secundárias (acordeom, botões de cópia e atalhos).
@@ -243,7 +243,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build Next.js 14 aprovado com código 0 (todas as 28 rotas compiladas sem erros).
 
-### 🟢 Fase 20: Blindagem Anti-Crash do DealModal e Título Interativo na Tabela do CRM
+### Fase 20: Blindagem Anti-Crash do DealModal e Título Interativo na Tabela do CRM
 - [x] **Blindagem Anti-Crash e Proteção Null Pointer (DealModal.tsx)**:
   * Optional chaining (`?.`) e fallbacks seguros implementados em todas as propriedades de `deal` (`contact.name`, `contact.phone`, `contact.email`, `contact.source`, `notes`, `customFields`, `timeline`, `metadata`, `assignedTo`).
   * Formatador de datas `safeFormatDate()` blindado com `try/catch` para prevenir exceções do date-fns do tipo `Invalid time value`.
@@ -256,7 +256,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Compilação**:
   * Build do Next.js executado com sucesso (código 0).
 
-### 🟢 Fase 21: Paridade Final da Tabela do CRM com o Lero (/crm)
+### Fase 21: Paridade Final da Tabela do CRM com o Lero (/crm)
 - [x] **Ordem Exata das 7 Colunas (Lero Strict Alignment)**:
   * 1. **Título**: Link interativo com destaque primário ao hover, sublinhado e ícone `ArrowUpRight` abrindo o `DealModal`.
   * 2. **Contato**: Avatar compacto com inicial, nome do lead e telefone WhatsApp direto (`https://wa.me/...`).
@@ -651,22 +651,6 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Build do Frontend Next.js 14 aprovado (**código 0**, 29 rotas de produção geradas).
   * Deploy no VPS (`187.127.10.166`) executado e sincronizado com PM2 (`versus-engine`, **código 0**).
 
----
-
-## 🕒 Registro de Ponto (Jornada de Desenvolvimento)
-- **[08/09/2026 - 08:30]** 🟢 Início da Fundação do Projeto (Docker, Postgres, Supabase, Prisma ORM, BullMQ).
-- **[09/09/2026 - 08:30]** 🟢 Implementação de WebSockets, Sentry, Deploy Vercel/VPS e WhatsApp Cloud API.
-- **[10/09/2026 - 08:30]** 🟢 Omnichannel Revamp, RAG Avançado, Respostas Rápidas e CRM Lero.
-- **[11/09/2026 - 08:15]** 🟢 Início do turno da manhã (Sidebar Enterprise, Conexões WhatsApp, Monitor, Team Chat, Automações e CRM Inline).
-- **[11/09/2026 - 13:30]** 🟢 Início do turno da tarde (Analytics Padrão Lero, Fluxo de IA, Modal de Assunção, Toolbar WhatsApp e Deploy).
-- **[11/09/2026 - 18:10]** 🏁 Finalização da jornada de sexta-feira com builds 100% aprovados, produção atualizada e checklist definitivo consolidado.
-- **[14/09/2026 - 08:15]** 🟢 Início da jornada de desenvolvimento da semana (Foco: Reconstrução do Chat Interno Padrão Lero e Bateria de Testes WhatsApp).
-- **[14/09/2026 - 11:54]** ⏸️ Pausa para almoço (Entregas da manhã: Fases 31 a 36 concluídas — Barra do CRM em linha única, Fullscreen API, Refinamento visual monocromático do DealModal, Modais de Editar Contato/Tarefa/Evento, Conexão de endpoints dos cards e Evolução inicial da aba Métricas e Vendas `/dashboard/cm`).
-- **[14/09/2026 - 13:38]** 🟢 Retorno do almoço / Início do turno da tarde (Fases 37 e 38 concluídas: Paridade dos 6 Cards com popover analítico e tradução de etapas do CRM).
-- **[14/09/2026 - 16:35]** 🚀 Fase 39 Concluída: Refatoração completa da arquitetura do WhatsApp e Inbox (Padrão Lero Multi-tenant) — Prisma, Backend NestJS, WhatsAppProvider, /settings/whatsapp e /inbox com avatares reais, seletor de instâncias e toolbar rica no composer. Builds 100% aprovados (código 0).
-- **[14/09/2026 - 17:05]** 💎 Fase 40 Concluída: Refinamento visual e funcional do Inbox e Composer — Gravação de áudio com MediaRecorder e timer em tempo real, bolhas de mensagens estilo WhatsApp Pro com mini-player e checks alinhados, 4 abas segmentadas com badges de pílula e painel do lead enriquecido com tags dinâmicas por hash e atalhos rápidos. Build Next.js 14 aprovado com código 0 (29 rotas geradas).
-- **[14/09/2026 - 18:05]** 🛡️ Fases 41 a 43 Concluídas: Pipeline de áudio bidirecional (inbound webhook + PTT nativo WhatsApp com ffmpeg) e remoção completa do pool de retratos fictícios do Unsplash, com sincronização estrita de foto oficial da Meta ou fallback nativo em iniciais compostas (FC).
-- **[14/09/2026 - 18:30]** 🏁 **Finalização da jornada de segunda-feira (Fases 31 a 44 concluídas)**: Listagem rápida restaurada no Inbox, rota `/conversations/counts` ativa, zero bloqueios por avatar, builds 100% aprovados e VPS PM2 online. Ponto batido com sucesso!
 ### Fase 45: Upload de Arquivos e Armazenamento Resiliente (Supabase Storage & Fallback Local)
 - [x] **Serviço de Armazenamento Centralizado (`StorageService` e `StorageModule`)**:
   * Implementada a classe `StorageService` injetável e registrada no `StorageModule` global.
