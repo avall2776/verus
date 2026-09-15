@@ -818,6 +818,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Garantia de Campos Obrigatórios**: Implementado fallback seguro para o campo obrigatório `title` (`safeTitle`), garantindo que `@IsNotEmpty()` da API nunca seja violado mesmo que o usuário não preencha o título. Validação prévia de cliente, contatos e itens no `ProposalModal.tsx`.
   - **Tratamento Transparente de Erros**: Removido o fallback otimista que mascarava falhas e fechava o modal silenciosamente. Agora, erros retornados pelo Axios (`error.response?.data?.message`) são capturados, formatados e exibidos em `toast.error`, mantendo o modal aberto e impedindo perda de dados pelo usuário.
   - **Auditoria por Logs de Console**: Inseridos logs explícitos (`[PROPOSALS_PAYLOAD_SEND]`, `[PROPOSALS_API_SUCCESS]`, `[PROPOSALS_API_ERROR]`, `[PROPOSALS_MODAL]`) para auditoria em tempo real no DevTools de cada disparo, payload e resposta do backend.
+  - **Deploy Vercel Disparado**: Alterações comitadas e enviadas para `origin/main` (`commit e0cc6f2`), acionando o build e publicação contínua automática no ambiente oficial da Vercel.
   - **Validação**: `npx tsc --noEmit` código 0 e `npm run build` aprovado com **código 0** (36 rotas de produção geradas com sucesso).
 
 ---
