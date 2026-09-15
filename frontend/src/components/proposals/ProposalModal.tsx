@@ -22,82 +22,73 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
   // Código da proposta
   const [code, setCode] = useState(() => `PROP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
   
-  // Dados do emitente (Sua Empresa / Tenant)
-  const [issuerName, setIssuerName] = useState("Nexus Soluções & Tecnologia");
-  const [issuerDocument, setIssuerDocument] = useState("45.123.890/0001-22");
-  const [issuerPhone, setIssuerPhone] = useState("(11) 3090-5000");
-  const [issuerEmail, setIssuerEmail] = useState("contato@nexustec.com.br");
-  const [issuerAddress, setIssuerAddress] = useState("Av. Paulista, 1842, Cj. 72 - Bela Vista, São Paulo - SP");
+  // Dados do emitente (Sua Empresa / Tenant) - 100% limpos por padrão
+  const [issuerName, setIssuerName] = useState("");
+  const [issuerDocument, setIssuerDocument] = useState("");
+  const [issuerPhone, setIssuerPhone] = useState("");
+  const [issuerEmail, setIssuerEmail] = useState("");
+  const [issuerAddress, setIssuerAddress] = useState("");
   const [issuerLogoUrl, setIssuerLogoUrl] = useState<string>("");
 
-  // Dados do cliente
-  const [title, setTitle] = useState("Proposta de Prestação de Serviços Digitais");
+  // Dados do cliente - 100% limpos por padrão
+  const [title, setTitle] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientCompany, setClientCompany] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
-  const [sellerName, setSellerName] = useState("Equipe Comercial");
+  const [sellerName, setSellerName] = useState("");
   const [validUntil, setValidUntil] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 15);
     return d.toISOString().split("T")[0];
   });
   const [paymentMethod, setPaymentMethod] = useState("50% Entrada + 50% na Entrega");
-  const [notes, setNotes] = useState("A proposta inclui implementação assistida, suporte prioritário e garantia técnica de 90 dias após entrega final.");
+  const [notes, setNotes] = useState("");
 
-  // Itens dinâmicos do orçamento
+  // Itens dinâmicos do orçamento - nasce zerado com 1 item em branco
   const [items, setItems] = useState<ProposalItem[]>([
     {
       id: "item-1",
-      name: "Implantação Plataforma & Setup",
-      description: "Setup completo de canais WhatsApp, agentes de IA e treinamento de equipe",
+      name: "",
+      description: "",
       quantity: 1,
-      unitPrice: 4500,
+      unitPrice: 0,
       discountPercent: 0,
-      total: 4500
-    },
-    {
-      id: "item-2",
-      name: "Licenciamento Anual (10 Usuários)",
-      description: "Acesso contínuo com SLA de 99.9% e automações ilimitadas",
-      quantity: 1,
-      unitPrice: 7200,
-      discountPercent: 10,
-      total: 6480
+      total: 0
     }
   ]);
 
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sincronizar estado caso haja proposta em edição ou carregar cache do emitente
+  // Sincronizar estado caso haja proposta em edição ou resetar 100% limpo para nova proposta
   useEffect(() => {
     if (proposalToEdit && isOpen) {
       setCode(proposalToEdit.code);
-      setTitle(proposalToEdit.title);
-      setClientName(proposalToEdit.clientName);
+      setTitle(proposalToEdit.title || "");
+      setClientName(proposalToEdit.clientName || "");
       setClientCompany(proposalToEdit.clientCompany || "");
-      setClientEmail(proposalToEdit.clientEmail);
-      setClientPhone(proposalToEdit.clientPhone);
-      setSellerName(proposalToEdit.sellerName);
-      setValidUntil(proposalToEdit.validUntil);
-      setPaymentMethod(proposalToEdit.paymentMethod);
+      setClientEmail(proposalToEdit.clientEmail || "");
+      setClientPhone(proposalToEdit.clientPhone || "");
+      setSellerName(proposalToEdit.sellerName || "");
+      setValidUntil(proposalToEdit.validUntil || "");
+      setPaymentMethod(proposalToEdit.paymentMethod || "50% Entrada + 50% na Entrega");
       setNotes(proposalToEdit.notes || "");
       setItems(proposalToEdit.items && proposalToEdit.items.length > 0 ? proposalToEdit.items : [
         {
           id: `item-${Date.now()}`,
-          name: "Serviço Comercial",
+          name: "",
           quantity: 1,
-          unitPrice: proposalToEdit.total || 1000,
+          unitPrice: 0,
           discountPercent: 0,
-          total: proposalToEdit.total || 1000
+          total: 0
         }
       ]);
       setGlobalDiscount(proposalToEdit.discountTotal || 0);
 
       // Carregar emitente da proposta se houver
       if (proposalToEdit.issuer) {
-        setIssuerName(proposalToEdit.issuer.name || "Nexus Soluções & Tecnologia");
+        setIssuerName(proposalToEdit.issuer.name || "");
         setIssuerDocument(proposalToEdit.issuer.document || "");
         setIssuerPhone(proposalToEdit.issuer.phone || "");
         setIssuerEmail(proposalToEdit.issuer.email || "");
@@ -105,52 +96,34 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
         setIssuerLogoUrl(proposalToEdit.issuer.logoUrl || "");
       }
     } else if (!proposalToEdit && isOpen) {
-      // Carregar cache local de emitente anterior se existir
-      try {
-        const cached = localStorage.getItem("versus_proposal_issuer_cache");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed.name) setIssuerName(parsed.name);
-          if (parsed.document) setIssuerDocument(parsed.document);
-          if (parsed.phone) setIssuerPhone(parsed.phone);
-          if (parsed.email) setIssuerEmail(parsed.email);
-          if (parsed.address) setIssuerAddress(parsed.address);
-          if (parsed.logoUrl) setIssuerLogoUrl(parsed.logoUrl);
-        }
-      } catch (err) {
-        // Silencioso
-      }
-
+      // NOVA PROPOSTA: Nasce 100% limpa e zerada, sem dados fictícios
       setCode(`PROP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
-      setTitle("Proposta de Prestação de Serviços Digitais");
+      setTitle("");
       setClientName("");
       setClientCompany("");
       setClientEmail("");
       setClientPhone("");
-      setSellerName("Equipe Comercial");
+      setSellerName("");
       const d = new Date();
       d.setDate(d.getDate() + 15);
       setValidUntil(d.toISOString().split("T")[0]);
       setPaymentMethod("50% Entrada + 50% na Entrega");
-      setNotes("A proposta inclui implementação assistida, suporte prioritário e garantia técnica de 90 dias após entrega final.");
+      setNotes("");
+      setIssuerName("");
+      setIssuerDocument("");
+      setIssuerPhone("");
+      setIssuerEmail("");
+      setIssuerAddress("");
+      setIssuerLogoUrl("");
       setItems([
         {
-          id: "item-1",
-          name: "Implantação Plataforma & Setup",
-          description: "Setup completo de canais WhatsApp, agentes de IA e treinamento de equipe",
+          id: `item-${Date.now()}`,
+          name: "",
+          description: "",
           quantity: 1,
-          unitPrice: 4500,
+          unitPrice: 0,
           discountPercent: 0,
-          total: 4500
-        },
-        {
-          id: "item-2",
-          name: "Licenciamento Anual (10 Usuários)",
-          description: "Acesso contínuo com SLA de 99.9% e automações ilimitadas",
-          quantity: 1,
-          unitPrice: 7200,
-          discountPercent: 10,
-          total: 6480
+          total: 0
         }
       ]);
       setGlobalDiscount(0);

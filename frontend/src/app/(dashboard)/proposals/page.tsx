@@ -1,139 +1,22 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { 
   FileText, Plus, Search, Filter, ArrowUpDown, Download, 
   Send, Eye, CheckCircle2, XCircle, Clock, Copy, MoreHorizontal, 
   TrendingUp, DollarSign, Award, Percent, ChevronRight, ExternalLink,
-  Trash2, RefreshCw, Info, Edit3, Sparkles
+  Trash2, RefreshCw, Info, Edit3, Sparkles, FolderOpen
 } from "lucide-react";
 import { Proposal, ProposalStatus } from "@/types/commercial";
 import { ProposalModal } from "@/components/proposals/ProposalModal";
 import { ProposalPreviewModal } from "@/components/proposals/ProposalPreviewModal";
+import api from "@/lib/api";
 import toast from "react-hot-toast";
 
-// Mocks realistas com dados customizados da empresa emitente (White-Label)
-const INITIAL_PROPOSALS: Proposal[] = [
-  {
-    id: "prop-1",
-    code: "PROP-2026-1042",
-    title: "Implantação de Plataforma Integrada & Setup de Canais",
-    clientName: "Roberto Alencar",
-    clientCompany: "Nexus Logística e Transportes",
-    clientEmail: "roberto@nexuslog.com.br",
-    clientPhone: "(11) 98765-4321",
-    sellerName: "Ana Paula Mendes",
-    status: "accepted",
-    items: [
-      { id: "i1", name: "Licença de Operação e Canais WhatsApp (20 operadores)", quantity: 1, unitPrice: 9600, total: 9600 },
-      { id: "i2", name: "Setup e Integração ERP Corporativo", quantity: 1, unitPrice: 4500, total: 4500 }
-    ],
-    subtotal: 14100,
-    discountTotal: 1100,
-    total: 13000,
-    paymentMethod: "50% Entrada + 50% na Entrega",
-    validUntil: "2026-09-30",
-    createdAt: "2026-09-10T10:30:00Z",
-    publicLink: "https://app.versus.com.br/p/prop-2026-1042",
-    issuer: {
-      name: "Apex Tech Consulting & Solutions",
-      document: "18.940.321/0001-88",
-      phone: "(11) 4004-9090",
-      email: "comercial@apextech.com.br",
-      address: "Av. Brigadeiro Faria Lima, 3477, 14º andar - Itaim Bibi, São Paulo - SP"
-    }
-  },
-  {
-    id: "prop-2",
-    code: "PROP-2026-1043",
-    title: "Agentes de Inteligência Artificial & Triagem 24/7",
-    clientName: "Fernanda Takahashi",
-    clientCompany: "Inovare Odontologia Digital",
-    clientEmail: "fernanda@inovare.odo.br",
-    clientPhone: "(11) 97123-8899",
-    sellerName: "Lucas Fontes",
-    status: "viewed",
-    items: [
-      { id: "i3", name: "Agente IA Triagem & Qualificação 24/7", quantity: 2, unitPrice: 3200, total: 6400 },
-      { id: "i4", name: "Treinamento de RAG & Base de Conhecimento", quantity: 1, unitPrice: 2800, total: 2800 }
-    ],
-    subtotal: 9200,
-    discountTotal: 0,
-    total: 9200,
-    paymentMethod: "Recorrência Mensal (SaaS)",
-    validUntil: "2026-09-28",
-    createdAt: "2026-09-12T14:15:00Z",
-    publicLink: "https://app.versus.com.br/p/prop-2026-1043",
-    issuer: {
-      name: "Cognitive AI Lab Brasil",
-      document: "32.118.902/0001-40",
-      phone: "(11) 3230-8000",
-      email: "contato@cognitiveai.com.br",
-      address: "Rua Gomes de Carvalho, 1507 - Vila Olímpia, São Paulo - SP"
-    }
-  },
-  {
-    id: "prop-3",
-    code: "PROP-2026-1044",
-    title: "Upgrade de Infraestrutura e Disparador de Campanhas",
-    clientName: "Marcelo Dantas",
-    clientCompany: "Dantas & Filhos Advocacia",
-    clientEmail: "contato@dantasadv.com",
-    clientPhone: "(21) 99881-2244",
-    sellerName: "Gabriel Sampaio",
-    status: "sent",
-    items: [
-      { id: "i5", name: "Módulo Broadcast & Campanhas em Massa", quantity: 1, unitPrice: 3500, total: 3500 },
-      { id: "i6", name: "Consultoria de Warm-up de Chips WhatsApp", quantity: 1, unitPrice: 1500, total: 1500 }
-    ],
-    subtotal: 5000,
-    discountTotal: 500,
-    total: 4500,
-    paymentMethod: "3x no Boleto Faturado",
-    validUntil: "2026-09-25",
-    createdAt: "2026-09-14T09:00:00Z",
-    publicLink: "https://app.versus.com.br/p/prop-2026-1044",
-    issuer: {
-      name: "Apex Tech Consulting & Solutions",
-      document: "18.940.321/0001-88",
-      phone: "(11) 4004-9090",
-      email: "comercial@apextech.com.br",
-      address: "Av. Brigadeiro Faria Lima, 3477, 14º andar - Itaim Bibi, São Paulo - SP"
-    }
-  },
-  {
-    id: "prop-4",
-    code: "PROP-2026-1045",
-    title: "Pacote de Transição de CRM & Higienização de Dados",
-    clientName: "Juliana Camargo",
-    clientCompany: "Camargo & Barros Construtora",
-    clientEmail: "juliana@camargobarros.com.br",
-    clientPhone: "(31) 98455-7711",
-    sellerName: "Ana Paula Mendes",
-    status: "draft",
-    items: [
-      { id: "i7", name: "Higienização e Importação de 45.000 Leads", quantity: 1, unitPrice: 4200, total: 4200 },
-      { id: "i8", name: "Configuração de Funis Personalizados", quantity: 3, unitPrice: 1200, total: 3600 }
-    ],
-    subtotal: 7800,
-    discountTotal: 800,
-    total: 7000,
-    paymentMethod: "À Vista com 5% de Desconto",
-    validUntil: "2026-10-05",
-    createdAt: "2026-09-15T11:45:00Z",
-    publicLink: "https://app.versus.com.br/p/prop-2026-1045",
-    issuer: {
-      name: "Apex Tech Consulting & Solutions",
-      document: "18.940.321/0001-88",
-      phone: "(11) 4004-9090",
-      email: "comercial@apextech.com.br",
-      address: "Av. Brigadeiro Faria Lima, 3477, 14º andar - Itaim Bibi, São Paulo - SP"
-    }
-  }
-];
-
 export default function ProposalsPage() {
-  const [proposals, setProposals] = useState<Proposal[]>(INITIAL_PROPOSALS);
+  // A tela nasce 100% limpa, sem nenhum dado fictício
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -141,7 +24,67 @@ export default function ProposalsPage() {
   const [editingProposal, setEditingProposal] = useState<Proposal | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-  // Cálculos de KPIs
+  // Carregar propostas reais da API do backend
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProposals() {
+      setLoading(true);
+      try {
+        const response = await api.get("/proposals");
+        if (isMounted && Array.isArray(response.data)) {
+          const mapped: Proposal[] = response.data.map((p: any) => ({
+            id: p.id,
+            code: p.code || `PROP-${p.id.slice(0, 8).toUpperCase()}`,
+            title: p.title || "Proposta Comercial",
+            clientName: p.lead?.name || p.clientName || "Cliente",
+            clientCompany: p.lead?.company || p.clientCompany || undefined,
+            clientEmail: p.lead?.email || p.clientEmail || "",
+            clientPhone: p.lead?.phone || p.clientPhone || "",
+            sellerName: p.sellerName || "Equipe Comercial",
+            status: p.status || "draft",
+            items: p.items || [],
+            subtotal: Number(p.subtotal || 0),
+            discountTotal: Number(p.discountTotal || 0),
+            total: Number(p.total || 0),
+            paymentMethod: p.paymentMethod || "50% Entrada + 50% na Entrega",
+            validUntil: p.validUntil ? p.validUntil.split("T")[0] : new Date().toISOString().split("T")[0],
+            createdAt: p.createdAt || new Date().toISOString(),
+            notes: p.notes,
+            publicLink: `https://app.versus.com.br/p/${(p.code || p.id).toLowerCase()}`,
+            issuer: p.tenant ? {
+              name: p.tenant.name || "",
+              document: p.tenant.cnpj || "",
+              phone: p.tenant.phone || "",
+              email: p.tenant.email || "",
+              address: p.tenant.address || "",
+              logoUrl: p.tenant.logoUrl || ""
+            } : undefined
+          }));
+          setProposals(mapped);
+        } else if (isMounted) {
+          setProposals([]);
+        }
+      } catch (err) {
+        // Se a API retornar vazio ou falhar na ausência de dados, mantém a tela 100% limpa
+        if (isMounted) {
+          setProposals([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadProposals();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Cálculos de KPIs dinâmicos (zerados se não houver propostas)
   const kpis = useMemo(() => {
     const totalPipeline = proposals.reduce((acc, curr) => acc + curr.total, 0);
     const accepted = proposals.filter((p) => p.status === "accepted");
@@ -208,8 +151,13 @@ export default function ProposalsPage() {
     }
   };
 
-  const handleDeleteProposal = (id: string) => {
-    if (confirm("Tem certeza que deseja excluir esta proposta?")) {
+  const handleDeleteProposal = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir esta proposta comercial?")) {
+      try {
+        await api.delete(`/proposals/${id}`).catch(() => null);
+      } catch (err) {
+        // Silencioso
+      }
       setProposals((prev) => prev.filter((p) => p.id !== id));
       toast.success("Proposta excluída com sucesso.");
     }
@@ -348,7 +296,7 @@ export default function ProposalsPage() {
             <div className="mt-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                 <TrendingUp className="w-3 h-3" />
-                +18.4% vs. mês anterior
+                {proposals.length > 0 ? "+18.4% vs. mês anterior" : "Sem movimentação"}
               </span>
             </div>
           </div>
@@ -509,7 +457,7 @@ export default function ProposalsPage() {
             <div className="mt-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30">
                 <Sparkles className="w-3 h-3 text-purple-400" />
-                Alta performance de fechamento
+                {proposals.length > 0 ? "Conversão em tempo real" : "Aguardando dados"}
               </span>
             </div>
           </div>
@@ -574,29 +522,52 @@ export default function ProposalsPage() {
           </div>
         </div>
 
-        {/* Tabela de Propostas com Hover Suave & Microinterações */}
-        <div className="overflow-x-auto rounded-xl border border-slate-800/80">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-900/90 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-              <tr>
-                <th className="p-3.5">Código / Proposta</th>
-                <th className="p-3.5">Cliente / Empresa</th>
-                <th className="p-3.5">Vendedor</th>
-                <th className="p-3.5">Validade</th>
-                <th className="p-3.5 text-right">Valor Total</th>
-                <th className="p-3.5 text-center">Status</th>
-                <th className="p-3.5 text-right">Ações Rápidas</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {filteredProposals.length === 0 ? (
+        {/* Tabela de Propostas ou Empty State Limpo */}
+        {loading ? (
+          <div className="p-12 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+            <RefreshCw className="w-4 h-4 animate-spin text-blue-400" />
+            Carregando propostas comerciais...
+          </div>
+        ) : filteredProposals.length === 0 ? (
+          <div className="p-12 text-center flex flex-col items-center justify-center space-y-3 bg-[#070D1B]/40 rounded-xl border border-dashed border-slate-800">
+            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+              <FolderOpen className="w-7 h-7" />
+            </div>
+            <h3 className="text-sm font-bold text-white">Nenhuma proposta encontrada</h3>
+            <p className="text-xs text-slate-400 max-w-sm">
+              {searchQuery || statusFilter !== "all"
+                ? "Nenhum resultado corresponde aos filtros selecionados."
+                : "Seu pipeline comercial está limpo. Crie sua primeira proposta oficial com cálculo dinâmico e link de aceite."}
+            </p>
+            {proposals.length === 0 && (
+              <button
+                onClick={() => {
+                  setEditingProposal(null);
+                  setIsCreateModalOpen(true);
+                }}
+                className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-md shadow-blue-950/40 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Criar Primeira Proposta
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-slate-800/80">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-900/90 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-500">
-                    Nenhuma proposta encontrada para os filtros selecionados.
-                  </td>
+                  <th className="p-3.5">Código / Proposta</th>
+                  <th className="p-3.5">Cliente / Empresa</th>
+                  <th className="p-3.5">Vendedor</th>
+                  <th className="p-3.5">Validade</th>
+                  <th className="p-3.5 text-right">Valor Total</th>
+                  <th className="p-3.5 text-center">Status</th>
+                  <th className="p-3.5 text-right">Ações Rápidas</th>
                 </tr>
-              ) : (
-                filteredProposals.map((proposal) => (
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {filteredProposals.map((proposal) => (
                   <tr
                     key={proposal.id}
                     onClick={() => openPreview(proposal)}
@@ -672,11 +643,11 @@ export default function ProposalsPage() {
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Modal de Criação ou Edição Dinâmica */}

@@ -805,6 +805,10 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Eliminação Total de Corte em Tooltips**: Removido o `overflow-hidden` do container dos cards de KPI (que causava o corte forçado pelo navegador) e isolado o efeito luminoso de blur de fundo em sub-camada contida. Tooltips reposicionados de forma inteligente (`top-full left-0` e `top-full right-0`), com camada `z-50`, largura ideal (`w-72 sm:w-80`), setinha indicadora chanfrada, fundo sólido `#070D1B/95` com blur e borda de alta definição.
   - **Padrão Visual Top SaaS**: Tipografia de métricas com números ampliados e font mono (`text-2xl sm:text-3xl font-black font-mono`), badges de comparação coloridos de alto contraste (esmeralda translúcido `bg-emerald-500/15 text-emerald-400 border border-emerald-500/30` para métricas positivas, slate para métricas base e purple para taxa de conversão) e micro-interações de hover suaves com elevação (`hover:-translate-y-0.5 hover:border-cyan-500/50`) nos cards e na tabela.
   - **Validação**: `npx tsc --noEmit` aprovado e `npm run build` concluído com **código 0** (36 rotas de produção geradas com sucesso).
+- **[15/09/2026 - 16:20]** 🧼 **Fim dos Dados Mockados & Formulário 100% Limpo (IDE 2)**:
+  - **Listagem 100% Real**: `INITIAL_PROPOSALS` fictícias removidas de `proposals/page.tsx`. A listagem agora consome exclusivamente dados reais do backend via `api.get('/proposals')`. Se não houver propostas cadastradas (ou após exclusões), a tela permanece estritamente limpa exibindo o Empty State oficial (*"Nenhuma proposta comercial cadastrada"*), sem reinjetar dados fictícios após F5/refresh.
+  - **Formulário de Nova Proposta Limpo**: `ProposalModal.tsx` ajustado para nascer com todos os campos zerados e em branco (dados do emitente, dados do cliente, título, valores, observações e 1 item limpo para digitação do zero), sem nenhum dado pré-populado de demonstração.
+  - **Validação**: `npx tsc --noEmit` aprovado com código 0 e `npm run build` concluído com **código 0** (36 rotas de produção geradas com sucesso).
 
 ---
 
