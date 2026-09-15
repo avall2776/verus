@@ -688,6 +688,10 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Adição de pré-visualização elegante do anexo selecionado acima do textarea no Composer (com ícone da categoria, nome, tamanho em KB e botão de descarte).
   * Botão de envio adaptativo com estado de loading animado (`RefreshCw` com rotação) durante o upload de mídia.
   * Renderização aprimorada de cards de documentos na timeline do chat sem duplicar o nome como texto avulso.
+- [x] **Modal de Expansão (Lightbox) e Download Direto no Chat (`inbox/page.tsx`)**:
+  * Ao clicar em qualquer miniatura de imagem nas mensagens do chat, abre modal overlay escuro em tela cheia (estilo WhatsApp) com imagem em alta resolução e backdrop blur.
+  * Controles flutuantes no topo: botão de Download direto (gerando arquivo com nome limpo e extensão correta) e botão de Fechar (X).
+  * Fechamento automático com a tecla ESC ou ao clicar fora da imagem no backdrop escuro.
 - [x] **Validação e Deploy**:
   * Build do Backend NestJS aprovado (**código 0**).
   * Build do Frontend Next.js 14 aprovado (**código 0**, 31 rotas de produção geradas).
@@ -711,7 +715,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - **[14/09/2026 - 18:05]** 🛡️ Fases 41 a 43 Concluídas: Pipeline de áudio bidirecional (inbound webhook + PTT nativo WhatsApp com ffmpeg) e remoção completa do pool de retratos fictícios do Unsplash, com sincronização estrita de foto oficial da Meta ou fallback nativo em iniciais compostas (FC).
 - **[14/09/2026 - 18:30]** 🏁 Finalização da jornada de segunda-feira (Fases 31 a 44 concluídas): Listagem rápida restaurada no Inbox, rota `/conversations/counts` ativa, zero bloqueios por avatar, builds 100% aprovados e VPS PM2 online.
 - **[15/09/2026 - 08:01]** 🟢 Início da jornada de desenvolvimento de terça-feira (Foco: Fase 45 — Ajuste da rotina de upload de arquivos, Supabase Storage e Fallback Local).
-- **[15/09/2026 - 09:25]** 🚀 **Fase 45 Concluída com Sucesso**: `StorageService` implementado com Supabase Storage e fallback automático em disco local (`uploads/media/`), endpoints `/media/upload` e `/media/file/:filename`, envio oficial de fotos e PDFs para a Meta Graph API, prévia no composer do Inbox e testes de ponta a ponta 100% aprovados na VPS.
+- **[15/09/2026 - 09:42]** 🚀 **Fase 45 Concluída com Sucesso**: `StorageService` implementado com Supabase Storage e fallback automático em disco local (`uploads/media/`), endpoints `/media/upload` e `/media/file/:filename`, envio oficial de fotos e PDFs para a Meta Graph API, prévia no composer do Inbox e Lightbox estilo WhatsApp com download direto.
 
 ---
 
