@@ -423,6 +423,7 @@ model Proposal {
   paymentTerms  String?
   paymentMethod String?
   validUntil    DateTime?
+  acceptedAt    DateTime?
   notes         String?
   items         ProposalItem[]
   contracts     Contract[]

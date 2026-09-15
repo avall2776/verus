@@ -33,6 +33,8 @@ let ProposalsService = class ProposalsService {
             total: Number(item.totalPrice || 0),
             totalPrice: Number(item.totalPrice || 0),
         }));
+        const rawBaseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://verus-alpha.vercel.app';
+        const baseUrl = rawBaseUrl.replace(/\/+$/, '');
         return {
             ...p,
             id: p.id,
@@ -52,7 +54,7 @@ let ProposalsService = class ProposalsService {
             paymentTerms: p.paymentTerms,
             validUntil: p.validUntil ? new Date(p.validUntil).toISOString() : null,
             notes: p.notes || '',
-            publicLink: `https://app.versus.com.br/p/${(p.code || p.id).toLowerCase()}`,
+            publicLink: `${baseUrl}/p/${(p.code || p.id).toLowerCase()}`,
             items: formattedItems,
             issuer: p.tenant ? {
                 name: p.tenant.name || '',
@@ -368,19 +370,65 @@ let ProposalsService = class ProposalsService {
         });
         return { success: true, message: 'Proposta comercial excluída com sucesso' };
     }
-    async getWhatsAppShare(tenantId, id) {
+    async findPublicByCodeOrId(codeOrId) {
+        const clean = codeOrId.trim();
+        const proposal = await this.prisma.proposal.findFirst({
+            where: {
+                OR: [
+                    { code: { equals: clean, mode: 'insensitive' } },
+                    { id: clean },
+                ],
+            },
+            include: {
+                lead: true,
+                deal: true,
+                items: true,
+                tenant: true,
+            },
+        });
+        if (!proposal) {
+            throw new common_1.NotFoundException('Proposta comercial não encontrada ou código inválido.');
+        }
+        return this.formatProposal(proposal);
+    }
+    async acceptPublic(codeOrId) {
+        const proposal = await this.findPublicByCodeOrId(codeOrId);
+        const updated = await this.prisma.proposal.update({
+            where: { id: proposal.id },
+            data: {
+                status: 'ACCEPTED',
+                acceptedAt: new Date(),
+            },
+            include: {
+                lead: true,
+                deal: true,
+                items: true,
+                tenant: true,
+            },
+        });
+        return this.formatProposal(updated);
+    }
+    async getWhatsAppShare(tenantId, id, origin) {
         const proposal = await this.findOne(tenantId, id);
         const clientName = proposal.clientName || proposal.lead?.name || 'Cliente';
-        const clientPhone = proposal.clientPhone || proposal.lead?.phone?.replace(/\D/g, '') || '';
+        let clientPhone = proposal.clientPhone || proposal.lead?.phone?.replace(/\D/g, '') || '';
+        if (clientPhone && (clientPhone.length === 10 || clientPhone.length === 11) && !clientPhone.startsWith('55')) {
+            clientPhone = `55${clientPhone}`;
+        }
         const total = Number(proposal.totalValue).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        const message = `Olá, *${clientName}*! Tudo bem?\n\nSegue a sua *Proposta Comercial*: *${proposal.title}*\n💰 Valor Total: *${total}*\n📅 Validade: *${proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : 'A combinar'}*\n\nVocê pode revisar e aprovar todos os itens pelo link oficial da nossa plataforma. Qualquer dúvida estamos à disposição!`;
+        const rawBaseUrl = origin || process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://verus-alpha.vercel.app';
+        const baseUrl = rawBaseUrl.replace(/\/+$/, '');
+        const proposalLink = `${baseUrl}/p/${(proposal.code || proposal.id).toLowerCase()}`;
+        const message = `Olá, *${clientName}*! Tudo bem?\n\nSegue a sua *Proposta Comercial*: *${proposal.title}* (${proposal.code})\n💰 Valor Total: *${total}*\n📅 Validade: *${proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : 'A combinar'}*\n\nVocê pode revisar e aprovar todos os itens pelo link: ${proposalLink}`;
         const encodedMessage = encodeURIComponent(message);
         const whatsappUrl = clientPhone ? `https://wa.me/${clientPhone}?text=${encodedMessage}` : `https://wa.me/?text=${encodedMessage}`;
         return {
             proposalId: proposal.id,
+            code: proposal.code,
             title: proposal.title,
             clientName,
             clientPhone,
+            proposalLink,
             totalValue: Number(proposal.totalValue),
             message,
             whatsappUrl,

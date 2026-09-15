@@ -92,8 +92,10 @@ export default function ContractsPage() {
 
   const handleShareWhatsApp = async (contract: Contract) => {
     try {
-      const res = await api.get(`/contracts/${contract.id}/whatsapp-share`);
-      const textToCopy = res.data?.message || `Olá, *${contract.clientName}*! Segue o link para assinatura do contrato ${contract.code}: https://app.versus.com.br/c/${contract.code.toLowerCase()}`;
+      const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
+      const res = await api.get(`/contracts/${contract.id}/whatsapp-share?origin=${encodeURIComponent(origin)}`);
+      const fallbackUrl = `${origin}/c/${contract.code.toLowerCase()}`;
+      const textToCopy = res.data?.message || `Olá, *${contract.clientName}*! Segue o link oficial para assinatura digital do seu contrato: *${contract.title}* (${contract.code}).\n\nVocê pode revisar os termos e efetuar a assinatura eletrônica com validade jurídica pelo link: ${fallbackUrl}`;
       
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(textToCopy);
@@ -107,7 +109,9 @@ export default function ContractsPage() {
       }
     } catch (err) {
       console.error("Erro ao gerar link de WhatsApp:", err);
-      const msg = `Olá, *${contract.clientName}*! Segue o link para assinatura do contrato ${contract.code}: https://app.versus.com.br/c/${contract.code.toLowerCase()}`;
+      const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
+      const fallbackUrl = `${origin}/c/${contract.code.toLowerCase()}`;
+      const msg = `Olá, *${contract.clientName}*! Segue o link oficial para assinatura digital do seu contrato: *${contract.title}* (${contract.code}).\n\nVocê pode revisar os termos e efetuar a assinatura eletrônica com validade jurídica pelo link: ${fallbackUrl}`;
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(msg);
       }

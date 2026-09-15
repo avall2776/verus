@@ -33,34 +33,36 @@ export default function ProposalsPage() {
       try {
         const response = await api.get("/proposals");
         if (isMounted && Array.isArray(response.data)) {
-          const mapped: Proposal[] = response.data.map((p: any) => ({
-            id: p.id,
-            code: p.code || `PROP-${p.id.slice(0, 8).toUpperCase()}`,
-            title: p.title || "Proposta Comercial",
-            clientName: p.lead?.name || p.clientName || "Cliente",
-            clientCompany: p.lead?.company || p.clientCompany || undefined,
-            clientEmail: p.lead?.email || p.clientEmail || "",
-            clientPhone: p.lead?.phone || p.clientPhone || "",
-            sellerName: p.sellerName || "Equipe Comercial",
-            status: p.status || "draft",
-            items: p.items || [],
-            subtotal: Number(p.subtotal || 0),
-            discountTotal: Number(p.discountTotal || 0),
-            total: Number(p.total || 0),
-            paymentMethod: p.paymentMethod || "50% Entrada + 50% na Entrega",
-            validUntil: p.validUntil ? p.validUntil.split("T")[0] : new Date().toISOString().split("T")[0],
-            createdAt: p.createdAt || new Date().toISOString(),
-            notes: p.notes,
-            publicLink: `https://app.versus.com.br/p/${(p.code || p.id).toLowerCase()}`,
-            issuer: p.tenant ? {
-              name: p.tenant.name || "",
-              document: p.tenant.cnpj || "",
-              phone: p.tenant.phone || "",
-              email: p.tenant.email || "",
-              address: p.tenant.address || "",
-              logoUrl: p.tenant.logoUrl || ""
-            } : undefined
-          }));
+            const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
+            return {
+              id: p.id,
+              code: p.code || `PROP-${p.id.slice(0, 8).toUpperCase()}`,
+              title: p.title || "Proposta Comercial",
+              clientName: p.lead?.name || p.clientName || "Cliente",
+              clientCompany: p.lead?.company || p.clientCompany || undefined,
+              clientEmail: p.lead?.email || p.clientEmail || "",
+              clientPhone: p.lead?.phone || p.clientPhone || "",
+              sellerName: p.sellerName || "Equipe Comercial",
+              status: p.status || "draft",
+              items: p.items || [],
+              subtotal: Number(p.subtotal || 0),
+              discountTotal: Number(p.discountTotal || 0),
+              total: Number(p.total || 0),
+              paymentMethod: p.paymentMethod || "50% Entrada + 50% na Entrega",
+              validUntil: p.validUntil ? p.validUntil.split("T")[0] : new Date().toISOString().split("T")[0],
+              createdAt: p.createdAt || new Date().toISOString(),
+              notes: p.notes,
+              publicLink: `${origin}/p/${(p.code || p.id).toLowerCase()}`,
+              issuer: p.tenant ? {
+                name: p.tenant.name || "",
+                document: p.tenant.cnpj || "",
+                phone: p.tenant.phone || "",
+                email: p.tenant.email || "",
+                address: p.tenant.address || "",
+                logoUrl: p.tenant.logoUrl || ""
+              } : undefined
+            };
+          });
           setProposals(mapped);
         } else if (isMounted) {
           setProposals([]);
@@ -286,7 +288,8 @@ export default function ProposalsPage() {
   };
 
   const copyQuickLink = (proposal: Proposal) => {
-    const link = proposal.publicLink || `https://app.versus.com.br/p/${proposal.code.toLowerCase()}`;
+    const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
+    const link = proposal.publicLink || `${origin}/p/${proposal.code.toLowerCase()}`;
     navigator.clipboard.writeText(link);
     toast.success(`Link de aceite da proposta ${proposal.code} copiado!`);
   };

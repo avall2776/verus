@@ -28,8 +28,13 @@ export function ProposalPreviewModal({
 
   if (!isOpen || !proposal) return null;
 
+  const getOrigin = () => {
+    return typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
+  };
+
   const copyLink = () => {
-    const link = proposal.publicLink || `https://app.versus.com.br/p/${proposal.code.toLowerCase()}`;
+    const origin = getOrigin();
+    const link = proposal.publicLink || `${origin}/p/${proposal.code.toLowerCase()}`;
     navigator.clipboard.writeText(link);
     setCopied(true);
     toast.success("Link público de aceite copiado para a área de transferência!");
@@ -37,7 +42,8 @@ export function ProposalPreviewModal({
   };
 
   const shareViaWhatsApp = () => {
-    const link = proposal.publicLink || `https://app.versus.com.br/p/${proposal.code.toLowerCase()}`;
+    const origin = getOrigin();
+    const link = proposal.publicLink || `${origin}/p/${proposal.code.toLowerCase()}`;
     const cleanPhone = (proposal.clientPhone || "").replace(/\D/g, "");
     const message = encodeURIComponent(
       `Olá ${proposal.clientName}! Segue a proposta comercial oficial (${proposal.code}) elaborada para você no valor de R$ ${proposal.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}.\n\nVocê pode analisar todos os detalhes e assinar digitalmente pelo link seguro: ${link}\n\nFicamos à disposição para quaisquer dúvidas!`
@@ -359,7 +365,7 @@ export function ProposalPreviewModal({
             <div className="hidden sm:block text-right print:hidden">
               <span className="text-[10px] text-slate-500 block uppercase font-mono">Link de Acesso Seguro</span>
               <a
-                href={proposal.publicLink || `https://app.versus.com.br/p/${proposal.code.toLowerCase()}`}
+                href={proposal.publicLink || `${getOrigin()}/p/${proposal.code.toLowerCase()}`}
                 target="_blank"
                 rel="noreferrer"
                 className="text-xs font-medium text-blue-400 hover:underline flex items-center gap-1 justify-end"

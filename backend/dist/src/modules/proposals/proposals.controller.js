@@ -48,8 +48,15 @@ let ProposalsController = class ProposalsController {
     async updateStatus(tenantId, id, dto) {
         return this.proposalsService.updateStatus(tenantId, id, dto);
     }
-    async getWhatsAppShare(tenantId, id) {
-        return this.proposalsService.getWhatsAppShare(tenantId, id);
+    async getPublic(codeOrId) {
+        return this.proposalsService.findPublicByCodeOrId(codeOrId);
+    }
+    async acceptPublic(codeOrId) {
+        return this.proposalsService.acceptPublic(codeOrId);
+    }
+    async getWhatsAppShare(tenantId, id, queryOrigin, req) {
+        const origin = queryOrigin || req?.headers?.origin || (req?.headers?.referer ? new URL(req.headers.referer).origin : undefined);
+        return this.proposalsService.getWhatsAppShare(tenantId, id, origin);
     }
     async getPdf(id, res, queryTenantId) {
         const html = await this.proposalsService.generatePdfHtml(id, queryTenantId);
@@ -136,12 +143,28 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ProposalsController.prototype, "updateStatus", null);
 __decorate([
+    (0, common_1.Get)('public/:codeOrId'),
+    __param(0, (0, common_1.Param)('codeOrId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "getPublic", null);
+__decorate([
+    (0, common_1.Post)('public/:codeOrId/accept'),
+    __param(0, (0, common_1.Param)('codeOrId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "acceptPublic", null);
+__decorate([
     (0, common_1.Get)(':id/whatsapp-share'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Query)('origin')),
+    __param(3, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String, Object]),
     __metadata("design:returntype", Promise)
 ], ProposalsController.prototype, "getWhatsAppShare", null);
 __decorate([

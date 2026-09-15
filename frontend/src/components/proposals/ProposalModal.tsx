@@ -270,7 +270,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
       createdAt: proposalToEdit ? proposalToEdit.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       notes: notes.trim(),
-      publicLink: proposalToEdit?.publicLink || `https://app.versus.com.br/p/${(proposalToEdit?.code || code).toLowerCase()}`,
+      publicLink: proposalToEdit?.publicLink || `${typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app")}/p/${(proposalToEdit?.code || code).toLowerCase()}`,
       issuer: issuerData
     };
 

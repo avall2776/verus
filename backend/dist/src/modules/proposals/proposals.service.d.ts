@@ -15,11 +15,15 @@ export declare class ProposalsService {
         success: boolean;
         message: string;
     }>;
-    getWhatsAppShare(tenantId: string, id: string): Promise<{
+    findPublicByCodeOrId(codeOrId: string): Promise<any>;
+    acceptPublic(codeOrId: string): Promise<any>;
+    getWhatsAppShare(tenantId: string, id: string, origin?: string): Promise<{
         proposalId: any;
+        code: any;
         title: any;
         clientName: any;
         clientPhone: any;
+        proposalLink: string;
         totalValue: number;
         message: string;
         whatsappUrl: string;
