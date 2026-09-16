@@ -33,9 +33,17 @@ let UsersController = class UsersController {
         });
     }
     async updateProfile(req, body) {
+        const userId = req.user?.id || req.user?.userId;
+        if (!userId) {
+            throw new common_1.BadRequestException('ID de usuário não identificado no token.');
+        }
+        const name = body?.name?.trim();
+        if (!name) {
+            throw new common_1.BadRequestException('Nome do usuário é obrigatório.');
+        }
         return this.prisma.user.update({
-            where: { id: req.user.id },
-            data: { name: body.name },
+            where: { id: userId },
+            data: { name },
             select: {
                 id: true,
                 name: true,
@@ -46,9 +54,13 @@ let UsersController = class UsersController {
         });
     }
     async update(req, id, body) {
+        const name = body?.name?.trim();
+        if (!name) {
+            throw new common_1.BadRequestException('Nome do usuário é obrigatório.');
+        }
         return this.prisma.user.update({
             where: { id: id },
-            data: { name: body.name },
+            data: { name },
             select: {
                 id: true,
                 name: true,
@@ -69,6 +81,7 @@ __decorate([
 ], UsersController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Patch)('profile'),
+    (0, common_1.Put)('profile'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -77,6 +90,7 @@ __decorate([
 ], UsersController.prototype, "updateProfile", null);
 __decorate([
     (0, common_1.Patch)(':id'),
+    (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),

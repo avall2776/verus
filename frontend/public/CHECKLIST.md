@@ -1073,14 +1073,17 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 ### 🟡 FASE 54: CORREÇÃO DO PERFIL NO MENU LATERAL & PADRONIZAÇÃO MONOCROMÁTICA DA CONFIGURAÇÃO DE E-MAIL (IDE 2)
 > **Aviso de Exclusividade**: Fase em desenvolvimento exclusivo pela **IDE 2**. Não alterar via IDE 1.
 - [ ] **Correção do Perfil no Menu Lateral (`Sidebar.tsx`)**:
-  - Ajuste do modal de edição de perfil do operador no rodapé da Sidebar.
-  - Salvamento reativo do nome com atualização imediata de estado, localStorage e fechamento confiável do modal.
+  - Ajuste do modal de edição de perfil do operador no rodapé da Sidebar: sincronização imediata de `editName` ao abrir o modal, listener de tecla ESC e fechamento confiável via clique fora no backdrop (`onClick={(e) => e.stopPropagation()}`).
+  - Salvamento reativo do nome com atualização imediata de estado, `localStorage`, disparo de evento `user_updated` e persistência no banco de dados via endpoints `@Patch('profile')`, `@Put('profile')` e `@Patch(':id')` em `users.controller.ts`.
+  - Design corporativo limpo monocromático (`#0B1224`, `border-slate-800`, avatar azul corporativo sem gradientes).
 - [ ] **Padronização Monocromática nas Telas de Configuração de E-mail (`EmailSettingsTab.tsx`)**:
-  - Remoção de todos os gradientes coloridos pesados, bordas berrantes e efeitos excessivos.
-  - Aplicação rigorosa do design system corporativo (azul escuro `#0B1224`, cinza/slate `border-slate-800` e tipografia branca/slate).
+  - Remoção de todos os gradientes coloridos pesados, bordas berrantes e fundos não padronizados.
+  - Aplicação rigorosa do design system corporativo: cartões de provedores, guias e formulários em azul escuro `#0B1224`, inputs em `#070D1B`, bordas em `border-slate-800` e tipografia branca/slate.
   - Cores de alerta (amarelo e vermelho) restritas exclusivamente a diagnósticos críticos de transporte/falhas SMTP.
 - [ ] **Validação de Build, Homologação & Deploy**:
-  - `npx tsc --noEmit` e `npm run build` aprovados com código 0.
+  - `npx tsc --noEmit` aprovado com código 0 tanto no frontend quanto no backend.
+  - `npm run build` do frontend aprovado com código 0 gerando 36/36 páginas estáticas e dinâmicas.
+  - `npm run build` do backend aprovado com código 0.
   - Deploy sincronizado na VPS (Hostinger PM2 `versus-engine`) e Vercel.
   - Homologação condicionada à aprovação do usuário.
 

@@ -10,7 +10,7 @@ export declare class UsersController {
         isOnline: boolean;
     }[]>;
     updateProfile(req: any, body: {
-        name: string;
+        name?: string;
     }): Promise<{
         id: string;
         name: string;
@@ -19,7 +19,7 @@ export declare class UsersController {
         role: string;
     }>;
     update(req: any, id: string, body: {
-        name: string;
+        name?: string;
     }): Promise<{
         id: string;
         name: string;

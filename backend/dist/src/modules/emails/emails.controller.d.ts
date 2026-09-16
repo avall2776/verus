@@ -56,6 +56,7 @@ export declare class EmailsController {
     getTransportStatus(tenantId: string): Promise<{
         configured: boolean;
         connected: boolean;
+        provider: string;
         from: string;
         source: "tenant" | "none" | "env";
         connectionError: string;

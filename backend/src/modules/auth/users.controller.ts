@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Patch, Put, Body, Param, UseGuards, Request, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 
@@ -22,10 +22,20 @@ export class UsersController {
   }
 
   @Patch('profile')
-  async updateProfile(@Request() req, @Body() body: { name: string }) {
+  @Put('profile')
+  async updateProfile(@Request() req, @Body() body: { name?: string }) {
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      throw new BadRequestException('ID de usuário não identificado no token.');
+    }
+    const name = body?.name?.trim();
+    if (!name) {
+      throw new BadRequestException('Nome do usuário é obrigatório.');
+    }
+
     return this.prisma.user.update({
-      where: { id: req.user.id },
-      data: { name: body.name },
+      where: { id: userId },
+      data: { name },
       select: {
         id: true,
         name: true,
@@ -37,10 +47,16 @@ export class UsersController {
   }
 
   @Patch(':id')
-  async update(@Request() req, @Param('id') id: string, @Body() body: { name: string }) {
+  @Put(':id')
+  async update(@Request() req, @Param('id') id: string, @Body() body: { name?: string }) {
+    const name = body?.name?.trim();
+    if (!name) {
+      throw new BadRequestException('Nome do usuário é obrigatório.');
+    }
+
     return this.prisma.user.update({
       where: { id: id },
-      data: { name: body.name },
+      data: { name },
       select: {
         id: true,
         name: true,

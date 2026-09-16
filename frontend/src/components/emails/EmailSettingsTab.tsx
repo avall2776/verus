@@ -258,7 +258,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center p-16 space-y-4 rounded-2xl bg-slate-900/40 border border-slate-800">
+      <div className="flex flex-col items-center justify-center p-16 space-y-4 rounded-2xl bg-[#0B1224] border border-slate-800">
         <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
         <p className="text-sm text-slate-400 font-medium">Carregando configurações de e-mail do cliente...</p>
       </div>
@@ -268,33 +268,33 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300 pb-12">
       {/* Banner de Status Atual */}
-      <div className={`p-5 rounded-2xl border backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all shadow-lg ${
+      <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all shadow-md ${
         testResult.tested && testResult.success
-          ? "bg-slate-900/90 border-emerald-500/40 text-slate-200"
+          ? "bg-[#0B1224] border-blue-500/40 text-slate-200"
           : testResult.tested && !testResult.success
-          ? "bg-slate-900/90 border-rose-500/40 text-slate-200"
+          ? "bg-[#0B1224] border-rose-500/50 text-slate-200"
           : formData.configured
-          ? "bg-slate-900/90 border-blue-500/40 text-slate-200"
-          : "bg-slate-900/90 border-slate-800 text-slate-200"
+          ? "bg-[#0B1224] border-blue-500/30 text-slate-200"
+          : "bg-[#0B1224] border-slate-800 text-slate-200"
       }`}>
         <div className="flex items-start gap-3.5">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
             testResult.tested && testResult.success
-              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+              ? "bg-blue-600/10 text-blue-400 border border-blue-500/30"
               : testResult.tested && !testResult.success
               ? "bg-rose-500/10 text-rose-400 border border-rose-500/30"
               : formData.configured
               ? "bg-blue-600/10 text-blue-400 border border-blue-500/30"
-              : "bg-slate-800 text-slate-400 border border-slate-700"
+              : "bg-slate-800/80 text-slate-400 border border-slate-700"
           }`}>
             {testResult.tested && testResult.success ? (
-              <CheckCircle2 className="w-5 h-5" />
+              <CheckCircle2 className="w-5 h-5 text-blue-400" />
             ) : testResult.tested && !testResult.success ? (
-              <XCircle className="w-5 h-5" />
+              <XCircle className="w-5 h-5 text-rose-400" />
             ) : formData.configured ? (
-              <Shield className="w-5 h-5" />
+              <Shield className="w-5 h-5 text-blue-400" />
             ) : (
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="w-5 h-5 text-slate-400" />
             )}
           </div>
           <div>
@@ -308,7 +308,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                   ? "Configuração Registrada"
                   : "Nenhum E-mail Conectado"}
               </h3>
-              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-slate-300">
+              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-slate-800/80 border border-slate-700 text-slate-300">
                 Cliente Individual
               </span>
             </div>
@@ -355,7 +355,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 formData.provider === "gmail"
                   ? "bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
-                  : "bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
+                  : "bg-[#0B1224] border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
               }`}
             >
               <div>
@@ -381,7 +381,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 formData.provider === "hostinger"
                   ? "bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
-                  : "bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
+                  : "bg-[#0B1224] border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
               }`}
             >
               <div>
@@ -407,7 +407,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 formData.provider === "resend"
                   ? "bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
-                  : "bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
+                  : "bg-[#0B1224] border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
               }`}
             >
               <div>
@@ -433,7 +433,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 formData.provider === "smtp"
                   ? "bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
-                  : "bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
+                  : "bg-[#0B1224] border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
               }`}
             >
               <div>
@@ -457,7 +457,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
 
         {/* Guia de Ajuda Específico do Provedor Selecionado */}
         {formData.provider === "gmail" && (
-          <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 space-y-2">
+          <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 text-xs text-slate-300 space-y-2">
             <div className="flex items-center gap-2 font-bold text-white">
               <HelpCircle className="w-4 h-4 text-blue-400" />
               Como configurar o Gmail / Google Workspace:
@@ -485,7 +485,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
         )}
 
         {formData.provider === "hostinger" && (
-          <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 space-y-1">
+          <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 text-xs text-slate-300 space-y-1">
             <div className="flex items-center gap-2 font-bold text-white">
               <HelpCircle className="w-4 h-4 text-blue-400" />
               Como configurar o E-mail Hostinger / Titan:
@@ -497,7 +497,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
         )}
 
         {formData.provider === "resend" && (
-          <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 space-y-1">
+          <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 text-xs text-slate-300 space-y-1">
             <div className="flex items-center gap-2 font-bold text-white">
               <HelpCircle className="w-4 h-4 text-blue-400" />
               Como configurar o Resend:
@@ -519,7 +519,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
         )}
 
         {/* Campos do Formulário */}
-        <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-5">
+        <div className="p-6 rounded-2xl bg-[#0B1224] border border-slate-800 space-y-5">
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2 border-b border-slate-800 pb-3">
             <Key className="w-4 h-4 text-blue-400" />
             Credenciais de Autenticação do Cliente

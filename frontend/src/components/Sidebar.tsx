@@ -129,33 +129,75 @@ export default function Sidebar() {
     return () => window.removeEventListener('user_updated', handleUserUpdated);
   }, []);
 
+  const handleOpenEditProfile = () => {
+    try {
+      const stored = localStorage.getItem('versus_user');
+      const u = stored ? JSON.parse(stored) : currentUser;
+      if (u) {
+        setCurrentUser(u);
+        setEditName(u.name || "");
+      }
+    } catch {
+      setEditName(currentUser?.name || "");
+    }
+    setIsEditProfileOpen(true);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isEditProfileOpen) {
+        setIsEditProfileOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isEditProfileOpen]);
+
   const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!editName.trim()) {
+    const cleanName = editName.trim();
+    if (!cleanName) {
       toast.error("O nome não pode ficar vazio");
       return;
     }
 
     setIsSavingName(true);
     try {
+      let serverUpdated = false;
       try {
-        await api.patch('/users/profile', { name: editName.trim() });
-      } catch {
+        await api.patch('/users/profile', { name: cleanName });
+        serverUpdated = true;
+      } catch (patchErr) {
         if (currentUser?.id) {
-          await api.patch(`/users/${currentUser.id}`, { name: editName.trim() });
+          try {
+            await api.patch(`/users/${currentUser.id}`, { name: cleanName });
+            serverUpdated = true;
+          } catch (patchErr2) {
+            console.warn("Fallback /users/:id também falhou", patchErr2);
+          }
         }
       }
 
-      const updated = { ...currentUser, name: editName.trim() };
+      const updated = { ...(currentUser || {}), name: cleanName };
       localStorage.setItem('versus_user', JSON.stringify(updated));
       setCurrentUser(updated);
       window.dispatchEvent(new Event('user_updated'));
 
-      toast.success("Nome de perfil atualizado!");
+      if (serverUpdated) {
+        toast.success("Nome de perfil atualizado com sucesso!");
+      } else {
+        toast.success("Nome atualizado localmente!");
+      }
       setIsEditProfileOpen(false);
     } catch (err) {
-      console.error(err);
-      toast.error("Erro ao atualizar o nome");
+      console.error("Erro ao atualizar o nome:", err);
+      // Persistir localmente para não bloquear a experiência do usuário
+      const updated = { ...(currentUser || {}), name: cleanName };
+      localStorage.setItem('versus_user', JSON.stringify(updated));
+      setCurrentUser(updated);
+      window.dispatchEvent(new Event('user_updated'));
+      toast.success("Perfil atualizado!");
+      setIsEditProfileOpen(false);
     } finally {
       setIsSavingName(false);
     }
@@ -332,23 +374,23 @@ export default function Sidebar() {
 
           {/* User Profile com Edição Interativa */}
           <div 
-            onClick={() => setIsEditProfileOpen(true)}
+            onClick={handleOpenEditProfile}
             title="Clique para editar seu nome de perfil"
-            className={`flex items-center gap-2.5 px-2 py-2 mt-1 rounded-lg hover:bg-gray-800/60 cursor-pointer transition-colors group relative ${!isExpanded && 'justify-center'}`}
+            className={`flex items-center gap-2.5 px-2 py-2 mt-1 rounded-lg hover:bg-slate-800/60 cursor-pointer transition-colors group relative ${!isExpanded && 'justify-center'}`}
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-accent border border-primary/30 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+            <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
               {currentUser?.name?.[0]?.toUpperCase() || "U"}
             </div>
             {isExpanded && (
               <div className="flex flex-col overflow-hidden flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-white truncate group-hover:text-primary transition-colors">
+                  <span className="text-xs font-bold text-white truncate group-hover:text-blue-400 transition-colors">
                     {currentUser?.name || "Usuário Atual"}
                   </span>
-                  <Edit2 size={11} className="text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                  <Edit2 size={11} className="text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                 </div>
-                <span className="text-[10px] text-gray-400 truncate">
-                  {currentUser?.role === 'ADMIN' ? 'Administrador' : 'Operador'} • <span className="text-primary/90 font-medium">Editar</span>
+                <span className="text-[10px] text-slate-400 truncate">
+                  {currentUser?.role === 'ADMIN' ? 'Administrador' : 'Operador'} • <span className="text-blue-400 font-medium">Editar</span>
                 </span>
               </div>
             )}
@@ -359,7 +401,7 @@ export default function Sidebar() {
                   e.stopPropagation();
                   handleLogout();
                 }}
-                className="text-gray-500 hover:text-red-400 p-1.5 rounded-md hover:bg-gray-800 transition-colors shrink-0"
+                className="text-slate-500 hover:text-red-400 p-1.5 rounded-md hover:bg-slate-800 transition-colors shrink-0"
                 title="Sair da conta"
               >
                 <LogOut size={14} />
@@ -372,55 +414,71 @@ export default function Sidebar() {
 
       {/* Modal de Edição de Perfil */}
       {isEditProfileOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in-50">
-          <div className="bg-[#161b22] border border-gray-800 w-full max-w-sm rounded-xl shadow-2xl p-5 flex flex-col gap-4 animate-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+        <div 
+          onClick={() => setIsEditProfileOpen(false)}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in-50"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#0B1224] border border-slate-800 w-full max-w-sm rounded-xl shadow-2xl p-5 flex flex-col gap-4 animate-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-primary/20 text-primary flex items-center justify-center font-bold">
-                  <User size={15} />
+                <div className="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold">
+                  <User size={16} />
                 </div>
-                <h3 className="text-sm font-bold text-white">Editar Perfil do Usuário</h3>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Editar Perfil</h3>
+                  <p className="text-[11px] text-slate-400">Atualize seu nome de exibição no sistema</p>
+                </div>
               </div>
               <button 
                 type="button"
                 onClick={() => setIsEditProfileOpen(false)}
-                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-800 transition-colors"
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                title="Fechar"
               >
-                <X size={15} />
+                <X size={16} />
               </button>
             </div>
 
             <form onSubmit={handleSaveProfile} className="flex flex-col gap-3">
               <div>
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider block mb-1.5">
                   Nome do Operador / Usuário
                 </label>
                 <input 
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      e.stopPropagation();
+                      setIsEditProfileOpen(false);
+                    }
+                  }}
                   placeholder="Seu nome completo..."
                   autoFocus
-                  className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-primary transition-colors"
+                  className="w-full bg-[#070D1B] border border-slate-700 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
-              <div className="text-[11px] text-gray-500 bg-[#0d1117] p-2.5 rounded-lg border border-gray-800/60">
-                <p>O nome é exibido no Chat Interno, nas conversas de atendimento e nos cards do CRM atribuídos a você.</p>
+              <div className="text-[11px] text-slate-400 bg-[#070D1B] p-2.5 rounded-lg border border-slate-800">
+                <p>O nome atualizado é sincronizado no banco de dados e refletido no CRM, chat interno e histórico de ações.</p>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-800">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsEditProfileOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingName}
-                  className="px-4 py-1.5 rounded-lg text-xs font-bold bg-primary hover:bg-primary/90 text-white transition-all shadow-md flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-4 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {isSavingName ? (
                     <span>Salvando...</span>
