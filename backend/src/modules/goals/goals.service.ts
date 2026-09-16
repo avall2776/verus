@@ -13,10 +13,11 @@ export class GoalsService {
     return s === 'won' || s === 'ganho' || s === 'closed_won' || s === 'aprovado' || s === 'concluido' || s === 'signed';
   }
 
-  async getSummary(tenantId: string) {
+  async getSummary(tenantId: string, channel?: string) {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
+
     const startOfMonth = new Date(year, month, 1);
     const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
     const totalDays = endOfMonth.getDate();
@@ -44,13 +45,22 @@ export class GoalsService {
       totalRevenueTarget = 150000;
     }
 
-    // 2. Calcula receita real realizada no período (Deals Ganhos + Contratos Assinados)
+    // 2. Filtro opcional por canal de aquisição
+    const dealWhere: Prisma.DealWhereInput = {
+      tenantId,
+      createdAt: { gte: startOfMonth, lte: endOfMonth },
+    };
+
+    if (channel && channel !== 'all') {
+      dealWhere.contact = {
+        source: { contains: channel, mode: 'insensitive' },
+      };
+    }
+
+    // Calcula receita real realizada no período (Deals Ganhos + Contratos Assinados)
     const wonDeals = await this.prisma.deal.findMany({
-      where: {
-        tenantId,
-        createdAt: { gte: startOfMonth, lte: endOfMonth },
-      },
-      select: { id: true, status: true, value: true },
+      where: dealWhere,
+      select: { id: true, status: true, value: true, contact: { select: { source: true } } },
     });
 
     const dealsRevenue = wonDeals
@@ -111,6 +121,15 @@ export class GoalsService {
     const expectedPacePercentage = totalDays > 0 ? Math.round((daysPassed / totalDays) * 100) : 0;
     const paceGap = +(progressPercentage - expectedPacePercentage).toFixed(1);
 
+    const availableChannels = [
+      { id: 'all', name: 'Todos os Canais' },
+      { id: 'whatsapp', name: 'WhatsApp Oficial' },
+      { id: 'meta_ads', name: 'Meta Ads (Facebook/Instagram)' },
+      { id: 'google_ads', name: 'Google Ads' },
+      { id: 'organico', name: 'Orgânico / Site' },
+      { id: 'indicacao', name: 'Indicação / Parceiros' },
+    ];
+
     return {
       monthName: now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
       totalDays,
@@ -134,6 +153,7 @@ export class GoalsService {
       isBaseline,
       topSeller,
       goalsCount: revenueGoals.length,
+      selectedChannel: channel || 'all',
     };
   }
 
@@ -361,10 +381,22 @@ export class GoalsService {
       else if (index === 1) badgeTier = 'silver';
       else if (index === 2) badgeTier = 'bronze';
 
+      const rank = index + 1;
+      const badges = this.computeBadges({
+        dealsWon: stat.dealsWon,
+        totalDeals: stat.totalDeals,
+        totalRevenueWon: stat.revenueWon,
+        conversionRate: stat.conversionRate,
+        avgTicket: stat.avgTicket,
+        targetValue: stat.targetValue,
+        rank,
+      });
+
       return {
         ...stat,
-        rank: index + 1,
+        rank,
         badgeTier,
+        badges,
       };
     });
   }
@@ -406,6 +438,14 @@ export class GoalsService {
     const conversionRate = deals.length > 0 ? Math.round((wonDeals.length / deals.length) * 100) : 0;
     const avgTicket = wonDeals.length > 0 ? Math.round(totalRevenueWon / wonDeals.length) : 0;
 
+    const badges = this.computeBadges({
+      dealsWon: wonDeals.length,
+      totalDeals: deals.length,
+      totalRevenueWon,
+      conversionRate,
+      avgTicket,
+    });
+
     return {
       user,
       metrics: {
@@ -415,6 +455,7 @@ export class GoalsService {
         conversionRate,
         avgTicket,
       },
+      badges,
       recentDeals: deals.map((d) => ({
         id: d.id,
         title: d.title,
@@ -427,6 +468,87 @@ export class GoalsService {
         createdAt: d.createdAt.toISOString(),
       })),
     };
+  }
+
+  private computeBadges(metrics: {
+    dealsWon: number;
+    totalDeals: number;
+    totalRevenueWon: number;
+    conversionRate: number;
+    avgTicket: number;
+    rank?: number;
+    targetValue?: number;
+  }) {
+    const badges: { id: string; title: string; icon: string; description: string; color: string }[] = [];
+
+    // 1. Meta Batida (100%+)
+    const target = metrics.targetValue || 60000;
+    if (metrics.totalRevenueWon >= target) {
+      badges.push({
+        id: 'target_met',
+        title: 'Meta Batida (100%+)',
+        icon: '🏆',
+        description: 'Superou a meta estipulada para o ciclo.',
+        color: 'emerald',
+      });
+    }
+
+    // 2. Ticket Destaque
+    if (metrics.avgTicket >= 8000) {
+      badges.push({
+        id: 'high_ticket',
+        title: 'Ticket Destaque',
+        icon: '💎',
+        description: 'Ticket médio superior a R$ 8.000 por contrato fechado.',
+        color: 'cyan',
+      });
+    }
+
+    // 3. Closer de Elite
+    if (metrics.conversionRate >= 40 && metrics.dealsWon >= 2) {
+      badges.push({
+        id: 'elite_closer',
+        title: 'Closer de Elite',
+        icon: '⚡',
+        description: 'Taxa de conversão superior a 40% em oportunidades ativas.',
+        color: 'amber',
+      });
+    }
+
+    // 4. Volume Máximo
+    if (metrics.dealsWon >= 5 || metrics.rank === 1) {
+      badges.push({
+        id: 'top_volume',
+        title: 'Volume Máximo',
+        icon: '🚀',
+        description: 'Liderança destacada no volume de contratos fechados.',
+        color: 'blue',
+      });
+    }
+
+    // 5. Atirador de Elite
+    if (metrics.conversionRate >= 70 && metrics.totalDeals >= 2) {
+      badges.push({
+        id: 'sniper',
+        title: 'Atirador de Elite',
+        icon: '🎯',
+        description: 'Conversão cirúrgica de propostas em vendas (>70%).',
+        color: 'purple',
+      });
+    }
+
+    // 6. Primeira Venda
+    if (metrics.dealsWon >= 1 && badges.length === 0) {
+      badges.push({
+        id: 'first_blood',
+        title: 'Primeira Venda',
+        icon: '⭐',
+        description: 'Primeiro contrato do ciclo fechado com sucesso.',
+        color: 'blue',
+      });
+    }
+
+    return badges;
   }
 
   private async calculateCurrentMetric(

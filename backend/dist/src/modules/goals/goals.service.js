@@ -21,7 +21,7 @@ let GoalsService = class GoalsService {
         const s = (status || '').toLowerCase();
         return s === 'won' || s === 'ganho' || s === 'closed_won' || s === 'aprovado' || s === 'concluido' || s === 'signed';
     }
-    async getSummary(tenantId) {
+    async getSummary(tenantId, channel) {
         const now = new Date();
         const year = now.getFullYear();
         const month = now.getMonth();
@@ -43,12 +43,18 @@ let GoalsService = class GoalsService {
         if (isBaseline) {
             totalRevenueTarget = 150000;
         }
+        const dealWhere = {
+            tenantId,
+            createdAt: { gte: startOfMonth, lte: endOfMonth },
+        };
+        if (channel && channel !== 'all') {
+            dealWhere.contact = {
+                source: { contains: channel, mode: 'insensitive' },
+            };
+        }
         const wonDeals = await this.prisma.deal.findMany({
-            where: {
-                tenantId,
-                createdAt: { gte: startOfMonth, lte: endOfMonth },
-            },
-            select: { id: true, status: true, value: true },
+            where: dealWhere,
+            select: { id: true, status: true, value: true, contact: { select: { source: true } } },
         });
         const dealsRevenue = wonDeals
             .filter((d) => this.isWon(d.status))
@@ -94,6 +100,14 @@ let GoalsService = class GoalsService {
         const topSeller = leaderboard[0] || null;
         const expectedPacePercentage = totalDays > 0 ? Math.round((daysPassed / totalDays) * 100) : 0;
         const paceGap = +(progressPercentage - expectedPacePercentage).toFixed(1);
+        const availableChannels = [
+            { id: 'all', name: 'Todos os Canais' },
+            { id: 'whatsapp', name: 'WhatsApp Oficial' },
+            { id: 'meta_ads', name: 'Meta Ads (Facebook/Instagram)' },
+            { id: 'google_ads', name: 'Google Ads' },
+            { id: 'organico', name: 'Orgânico / Site' },
+            { id: 'indicacao', name: 'Indicação / Parceiros' },
+        ];
         return {
             monthName: now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
             totalDays,
@@ -117,6 +131,7 @@ let GoalsService = class GoalsService {
             isBaseline,
             topSeller,
             goalsCount: revenueGoals.length,
+            selectedChannel: channel || 'all',
         };
     }
     async findAll(tenantId) {
@@ -312,10 +327,21 @@ let GoalsService = class GoalsService {
                 badgeTier = 'silver';
             else if (index === 2)
                 badgeTier = 'bronze';
+            const rank = index + 1;
+            const badges = this.computeBadges({
+                dealsWon: stat.dealsWon,
+                totalDeals: stat.totalDeals,
+                totalRevenueWon: stat.revenueWon,
+                conversionRate: stat.conversionRate,
+                avgTicket: stat.avgTicket,
+                targetValue: stat.targetValue,
+                rank,
+            });
             return {
                 ...stat,
-                rank: index + 1,
+                rank,
                 badgeTier,
+                badges,
             };
         });
     }
@@ -352,6 +378,13 @@ let GoalsService = class GoalsService {
         const totalRevenueWon = wonDeals.reduce((acc, d) => acc + Number(d.value || 0), 0);
         const conversionRate = deals.length > 0 ? Math.round((wonDeals.length / deals.length) * 100) : 0;
         const avgTicket = wonDeals.length > 0 ? Math.round(totalRevenueWon / wonDeals.length) : 0;
+        const badges = this.computeBadges({
+            dealsWon: wonDeals.length,
+            totalDeals: deals.length,
+            totalRevenueWon,
+            conversionRate,
+            avgTicket,
+        });
         return {
             user,
             metrics: {
@@ -361,6 +394,7 @@ let GoalsService = class GoalsService {
                 conversionRate,
                 avgTicket,
             },
+            badges,
             recentDeals: deals.map((d) => ({
                 id: d.id,
                 title: d.title,
@@ -373,6 +407,65 @@ let GoalsService = class GoalsService {
                 createdAt: d.createdAt.toISOString(),
             })),
         };
+    }
+    computeBadges(metrics) {
+        const badges = [];
+        const target = metrics.targetValue || 60000;
+        if (metrics.totalRevenueWon >= target) {
+            badges.push({
+                id: 'target_met',
+                title: 'Meta Batida (100%+)',
+                icon: '🏆',
+                description: 'Superou a meta estipulada para o ciclo.',
+                color: 'emerald',
+            });
+        }
+        if (metrics.avgTicket >= 8000) {
+            badges.push({
+                id: 'high_ticket',
+                title: 'Ticket Destaque',
+                icon: '💎',
+                description: 'Ticket médio superior a R$ 8.000 por contrato fechado.',
+                color: 'cyan',
+            });
+        }
+        if (metrics.conversionRate >= 40 && metrics.dealsWon >= 2) {
+            badges.push({
+                id: 'elite_closer',
+                title: 'Closer de Elite',
+                icon: '⚡',
+                description: 'Taxa de conversão superior a 40% em oportunidades ativas.',
+                color: 'amber',
+            });
+        }
+        if (metrics.dealsWon >= 5 || metrics.rank === 1) {
+            badges.push({
+                id: 'top_volume',
+                title: 'Volume Máximo',
+                icon: '🚀',
+                description: 'Liderança destacada no volume de contratos fechados.',
+                color: 'blue',
+            });
+        }
+        if (metrics.conversionRate >= 70 && metrics.totalDeals >= 2) {
+            badges.push({
+                id: 'sniper',
+                title: 'Atirador de Elite',
+                icon: '🎯',
+                description: 'Conversão cirúrgica de propostas em vendas (>70%).',
+                color: 'purple',
+            });
+        }
+        if (metrics.dealsWon >= 1 && badges.length === 0) {
+            badges.push({
+                id: 'first_blood',
+                title: 'Primeira Venda',
+                icon: '⭐',
+                description: 'Primeiro contrato do ciclo fechado com sucesso.',
+                color: 'blue',
+            });
+        }
+        return badges;
     }
     async calculateCurrentMetric(tenantId, targetType, periodStart, periodEnd, userId) {
         if (targetType === 'REVENUE') {

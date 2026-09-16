@@ -26,8 +26,8 @@ let GoalsController = class GoalsController {
     async findAll(tenantId) {
         return this.goalsService.findAll(tenantId);
     }
-    async getSummary(tenantId) {
-        return this.goalsService.getSummary(tenantId);
+    async getSummary(tenantId, channel) {
+        return this.goalsService.getSummary(tenantId, channel);
     }
     async create(tenantId, dto) {
         return this.goalsService.create(tenantId, dto);
@@ -56,8 +56,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)('summary'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('channel')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], GoalsController.prototype, "getSummary", null);
 __decorate([

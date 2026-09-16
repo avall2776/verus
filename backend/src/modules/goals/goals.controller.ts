@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { GoalsService } from './goals.service';
 import { CreateGoalDto } from './dto/create-goal.dto';
 import { UpdateGoalDto } from './dto/update-goal.dto';
@@ -16,8 +16,11 @@ export class GoalsController {
   }
 
   @Get('summary')
-  async getSummary(@CurrentTenant() tenantId: string) {
-    return this.goalsService.getSummary(tenantId);
+  async getSummary(
+    @CurrentTenant() tenantId: string,
+    @Query('channel') channel?: string,
+  ) {
+    return this.goalsService.getSummary(tenantId, channel);
   }
 
   @Post()

@@ -26,7 +26,7 @@ export declare class GoalsController {
         };
         createdAt: string;
     }[]>;
-    getSummary(tenantId: string): Promise<{
+    getSummary(tenantId: string, channel?: string): Promise<{
         monthName: string;
         totalDays: number;
         daysPassed: number;
@@ -50,6 +50,13 @@ export declare class GoalsController {
         topSeller: {
             rank: number;
             badgeTier: "gold" | "silver" | "bronze" | "participant";
+            badges: {
+                id: string;
+                title: string;
+                icon: string;
+                description: string;
+                color: string;
+            }[];
             userId: string;
             id: string;
             name: string;
@@ -67,6 +74,7 @@ export declare class GoalsController {
             avgTicket: number;
         };
         goalsCount: number;
+        selectedChannel: string;
     }>;
     create(tenantId: string, dto: CreateGoalDto): Promise<{
         user: {
@@ -113,6 +121,13 @@ export declare class GoalsController {
     getLeaderboard(tenantId: string): Promise<{
         rank: number;
         badgeTier: "gold" | "silver" | "bronze" | "participant";
+        badges: {
+            id: string;
+            title: string;
+            icon: string;
+            description: string;
+            color: string;
+        }[];
         userId: string;
         id: string;
         name: string;
@@ -144,6 +159,13 @@ export declare class GoalsController {
             conversionRate: number;
             avgTicket: number;
         };
+        badges: {
+            id: string;
+            title: string;
+            icon: string;
+            description: string;
+            color: string;
+        }[];
         recentDeals: {
             id: string;
             title: string;

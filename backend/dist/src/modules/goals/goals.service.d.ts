@@ -6,7 +6,7 @@ export declare class GoalsService {
     private readonly prisma;
     constructor(prisma: PrismaService);
     private isWon;
-    getSummary(tenantId: string): Promise<{
+    getSummary(tenantId: string, channel?: string): Promise<{
         monthName: string;
         totalDays: number;
         daysPassed: number;
@@ -30,6 +30,13 @@ export declare class GoalsService {
         topSeller: {
             rank: number;
             badgeTier: "gold" | "silver" | "bronze" | "participant";
+            badges: {
+                id: string;
+                title: string;
+                icon: string;
+                description: string;
+                color: string;
+            }[];
             userId: string;
             id: string;
             name: string;
@@ -47,6 +54,7 @@ export declare class GoalsService {
             avgTicket: number;
         };
         goalsCount: number;
+        selectedChannel: string;
     }>;
     findAll(tenantId: string): Promise<{
         id: string;
@@ -115,6 +123,13 @@ export declare class GoalsService {
     getLeaderboard(tenantId: string): Promise<{
         rank: number;
         badgeTier: "gold" | "silver" | "bronze" | "participant";
+        badges: {
+            id: string;
+            title: string;
+            icon: string;
+            description: string;
+            color: string;
+        }[];
         userId: string;
         id: string;
         name: string;
@@ -146,6 +161,13 @@ export declare class GoalsService {
             conversionRate: number;
             avgTicket: number;
         };
+        badges: {
+            id: string;
+            title: string;
+            icon: string;
+            description: string;
+            color: string;
+        }[];
         recentDeals: {
             id: string;
             title: string;
@@ -158,5 +180,6 @@ export declare class GoalsService {
             createdAt: string;
         }[];
     }>;
+    private computeBadges;
     private calculateCurrentMetric;
 }

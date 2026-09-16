@@ -1002,23 +1002,26 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [ ] **Modelagem no Prisma & Banco de Dados (Supabase)**:
   - Modelo `EmailMessage` com suporte a pastas (`INBOX`, `SENT`, `DRAFT`, `TRASH`, `ARCHIVE`), estrelas (`isStarred`), lido/não-lido (`isRead`), remetente, destinatários, assunto, corpo (HTML/Text), anexos e vínculos com `Contact`/`Deal`.
   - Sincronização via `npx prisma db push` e geração do Prisma Client (`npx prisma generate`).
-- [ ] **Módulo Backend NestJS (`EmailsModule`)**:
+- [ ] **Módulo Backend NestJS (`EmailsModule`) & Transporte SMTP Real**:
   - `EmailsService` & `EmailsController` com endpoints protegidos por JWT e multitenancy isolado (`@CurrentTenant`):
     - `GET /emails`: Listagem paginada por pasta (`folder`), busca por texto, filtro de favoritos e não lidos.
     - `GET /emails/:id`: Consulta de e-mail detalhado com marcação automática de lido.
-    - `POST /emails/send`: Envio e criação de e-mail corporativo, com gravação no banco e histórico.
+    - `GET /emails/transport/status`: Diagnóstico e verificação de conectividade com o servidor SMTP/Resend em tempo real.
+    - `POST /emails/send`: Envio real de e-mails corporativos via Nodemailer (com suporte a SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, RESEND_API_KEY), logs detalhados de diagnóstico (`console.error`), gravação no Supabase (`folder: 'SENT'`) e tratamento de exceções com feedback claro ao usuário.
     - `PATCH /emails/:id/star`: Alternar status de favorito/estrela.
     - `PATCH /emails/:id/folder`: Mover e-mail entre pastas (lixeira, arquivo, caixa de entrada).
     - `DELETE /emails/:id`: Exclusão permanente.
 - [ ] **Interface Frontend Enterprise Next.js 14 (`/email-inbox`)**:
   - Layout 3-pane padrão Enterprise (Pastas à esquerda, Lista no centro, Leitor/Thread à direita).
   - Composer Modal de alto nível (`EmailComposerModal.tsx`) com envio, anexação rápida de propostas comerciais (`/p/[code]`) e contratos digitais (`/c/[code]`).
+  - Badge dinâmico de status do transporte SMTP na barra superior (Conectado / Configurado / Integrado) com tooltip de diagnóstico.
   - Filtros rápidos (Não Lidas, Com Anexos, Estrelas) e Empty States elegantes.
   - Zero mocks: consumo estrito da API real `/emails`.
 - [ ] **Homologação, Deploy na Nuvem e Validação**:
-  - Builds Backend e Frontend aprovados com código 0.
-  - Deploy sincronizado na VPS e Vercel.
-  - Finalização condicionada ao OK explícito do usuário.
+  - Builds Backend e Frontend aprovados com código 0 (`nest build` e `next build`).
+  - Deploy sincronizado na VPS Hostinger (`versus-engine` online via PM2) e Vercel.
+  - Template de variáveis SMTP configurado em `/root/verus/backend/.env` na VPS e em `.env.example`.
+  - Finalização condicionada ao OK explícito do usuário após teste de disparo com credenciais ativas.
 
 ---
 
