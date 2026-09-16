@@ -15,10 +15,40 @@ import { SellerDetailModal } from "@/components/goals/SellerDetailModal";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 
+// Formatadores seguros contra valores undefined/null
+const formatMoney = (val: any) => {
+  const num = Number(val);
+  if (isNaN(num)) return "0,00";
+  return num.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+const formatShortMoney = (val: any) => {
+  const num = Number(val);
+  if (isNaN(num)) return "0";
+  if (Math.abs(num) >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (Math.abs(num) >= 1000) return `${(num / 1000).toFixed(1)}k`;
+  return num.toLocaleString("pt-BR");
+};
+
+const formatNumber = (val: any) => {
+  const num = Number(val);
+  if (isNaN(num)) return "0";
+  return num.toLocaleString("pt-BR");
+};
+
+const getInitials = (name?: string | null) => {
+  if (!name || typeof name !== "string") return "VD";
+  const clean = name.trim();
+  if (!clean) return "VD";
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + (parts[1]?.[0] || "")).toUpperCase();
+};
+
 export default function GoalsPage() {
   const [goals, setGoals] = useState<CommercialGoal[]>([]);
   const [ranking, setRanking] = useState<SalesRepRanking[]>([]);
-  const [summary, setSummary] = useState<GoalRunRateSummary | null>(null);
+  const [summary, setSummary] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -52,15 +82,15 @@ export default function GoalsPage() {
         }),
       ]);
 
-      if (summaryRes.data) {
+      if (summaryRes?.data) {
         setSummary(summaryRes.data);
       }
 
-      if (Array.isArray(goalsRes.data)) {
+      if (Array.isArray(goalsRes?.data)) {
         setGoals(goalsRes.data);
       }
 
-      if (Array.isArray(rankingRes.data)) {
+      if (Array.isArray(rankingRes?.data)) {
         setRanking(rankingRes.data);
       }
     } catch (error) {
@@ -76,14 +106,45 @@ export default function GoalsPage() {
     loadData();
   }, [loadData]);
 
-  // Cálculos do Simulador Preditivo
-  const simulatedRunRate = useMemo(() => {
+  // Valores normalizados de Summary
+  const summaryMetrics = useMemo(() => {
     if (!summary) return null;
 
-    const baseProjected = summary.projectedRevenue;
-    const additionalFromBonus = dailyPaceBonus * summary.daysRemaining;
+    const totalTarget = Number(summary.totalTarget ?? summary.totalRevenueTarget ?? 0);
+    const totalCurrent = Number(summary.totalCurrent ?? summary.totalRevenueWon ?? 0);
+    const projectedRevenue = Number(summary.projectedRevenue ?? 0);
+    const currentDailyPace = Number(summary.currentDailyPace ?? summary.dailyPace ?? 0);
+    const dailyPaceNeeded = Number(summary.dailyPaceNeeded ?? summary.requiredDailyPace ?? 0);
+    const daysPassed = Number(summary.daysPassed ?? 0);
+    const daysRemaining = Number(summary.daysRemaining ?? 0);
+    const overallProgress = Number(summary.overallProgress ?? summary.progressPercentage ?? 0);
+    const expectedPacePercentage = Number(summary.expectedPacePercentage ?? 0);
+    const paceGap = Number(summary.paceGap ?? 0);
+    const healthStatus = String(summary.healthStatus ?? "on_track").toUpperCase();
+
+    return {
+      totalTarget,
+      totalCurrent,
+      projectedRevenue,
+      currentDailyPace,
+      dailyPaceNeeded,
+      daysPassed,
+      daysRemaining,
+      overallProgress,
+      expectedPacePercentage,
+      paceGap,
+      healthStatus,
+    };
+  }, [summary]);
+
+  // Cálculos do Simulador Preditivo
+  const simulatedRunRate = useMemo(() => {
+    if (!summaryMetrics) return null;
+
+    const baseProjected = summaryMetrics.projectedRevenue;
+    const additionalFromBonus = (Number(dailyPaceBonus) || 0) * summaryMetrics.daysRemaining;
     const totalProjected = baseProjected + additionalFromBonus;
-    const target = summary.totalTarget || 1;
+    const target = summaryMetrics.totalTarget > 0 ? summaryMetrics.totalTarget : 1;
     const simulatedProgress = Math.round((totalProjected / target) * 100);
 
     return {
@@ -92,7 +153,7 @@ export default function GoalsPage() {
       additionalRevenue: additionalFromBonus,
       target,
     };
-  }, [summary, dailyPaceBonus]);
+  }, [summaryMetrics, dailyPaceBonus]);
 
   const getStatusBadge = (status: CommercialGoal["status"]) => {
     switch (status) {
@@ -123,38 +184,40 @@ export default function GoalsPage() {
     }
   };
 
-  const getHealthBadge = (health: string) => {
-    switch (health) {
-      case "EXCEEDED":
-        return (
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
-            <Trophy className="w-3.5 h-3.5 text-yellow-400" /> Meta Batida
-          </span>
-        );
-      case "ON_TRACK":
-        return (
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1.5 shadow-sm">
-            <Flame className="w-3.5 h-3.5 text-cyan-400" /> Ritmo Acelerado (No Prazo)
-          </span>
-        );
-      case "BEHIND":
-        return (
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> Desacelerado (Atenção)
-          </span>
-        );
-      default:
-        return (
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
-            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" /> Ritmo Crítico
-          </span>
-        );
+  const getHealthBadge = (health?: string) => {
+    const h = String(health || "").toUpperCase();
+    if (h === "EXCEEDED" || h === "ACHIEVED") {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
+          <Trophy className="w-3.5 h-3.5 text-yellow-400" /> Meta Batida
+        </span>
+      );
     }
+    if (h === "ON_TRACK") {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1.5 shadow-sm">
+          <Flame className="w-3.5 h-3.5 text-cyan-400" /> No Ritmo (No Prazo)
+        </span>
+      );
+    }
+    if (h === "BEHIND" || h === "AT_RISK") {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> Desacelerado (Atenção)
+        </span>
+      );
+    }
+    return (
+      <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
+        <ShieldAlert className="w-3.5 h-3.5 text-rose-400" /> Ritmo Crítico
+      </span>
+    );
   };
 
-  const openSellerDrilldown = (userId: string, name: string) => {
+  const openSellerDrilldown = (userId?: string | null, name?: string) => {
+    if (!userId) return;
     setSelectedSellerId(userId);
-    setSelectedSellerName(name);
+    setSelectedSellerName(name || "Consultor Comercial");
   };
 
   const handleDeleteGoal = async (id: string) => {
@@ -211,7 +274,7 @@ export default function GoalsPage() {
       </div>
 
       {/* Hero: Motor Preditivo de Run Rate */}
-      {summary && (
+      {summaryMetrics && (
         <div className="p-6 rounded-2xl bg-[#0B1224] border border-slate-700/80 shadow-2xl relative overflow-hidden space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             <div className="space-y-2 max-w-2xl">
@@ -220,26 +283,26 @@ export default function GoalsPage() {
                   <Zap className="w-4 h-4" />
                   Motor Preditivo de Run Rate Comercial
                 </div>
-                {getHealthBadge(summary.healthStatus)}
+                {getHealthBadge(summaryMetrics.healthStatus)}
               </div>
 
               <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight">
                 Ritmo aponta para{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400">
-                  {summary.totalTarget > 0
-                    ? `${Math.round((summary.projectedRevenue / summary.totalTarget) * 100)}% de Atingimento`
+                  {summaryMetrics.totalTarget > 0
+                    ? `${Math.round((summaryMetrics.projectedRevenue / summaryMetrics.totalTarget) * 100)}% de Atingimento`
                     : "100% da Meta"}
                 </span>
               </h2>
 
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Com base nos {summary.daysPassed} dias decorridos do mês atual e na velocidade média diária de{" "}
+                Com base nos {summaryMetrics.daysPassed} dias decorridos do mês atual e na velocidade média diária de{" "}
                 <strong className="text-emerald-400 font-mono">
-                  R$ {summary.currentDailyPace.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/dia
+                  R$ {formatMoney(summaryMetrics.currentDailyPace)}/dia
                 </strong>
                 , a projeção matemática estima o faturamento final em{" "}
                 <strong className="text-white font-mono">
-                  R$ {summary.projectedRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  R$ {formatMoney(summaryMetrics.projectedRevenue)}
                 </strong>
                 .
               </p>
@@ -252,7 +315,7 @@ export default function GoalsPage() {
                   Dias Restantes
                 </span>
                 <span className="text-lg sm:text-xl font-bold font-mono text-cyan-400">
-                  {summary.daysRemaining} dias
+                  {summaryMetrics.daysRemaining} dias
                 </span>
               </div>
 
@@ -261,7 +324,7 @@ export default function GoalsPage() {
                   Ritmo Necessário
                 </span>
                 <span className="text-lg sm:text-xl font-bold font-mono text-amber-400">
-                  R$ {(summary.dailyPaceNeeded / 1000).toFixed(1)}k
+                  R$ {formatShortMoney(summaryMetrics.dailyPaceNeeded)}
                 </span>
               </div>
 
@@ -270,7 +333,7 @@ export default function GoalsPage() {
                   Ritmo Atual
                 </span>
                 <span className="text-lg sm:text-xl font-bold font-mono text-emerald-400">
-                  R$ {(summary.currentDailyPace / 1000).toFixed(1)}k
+                  R$ {formatShortMoney(summaryMetrics.currentDailyPace)}
                 </span>
               </div>
             </div>
@@ -283,42 +346,42 @@ export default function GoalsPage() {
                 <Activity className="w-3.5 h-3.5 text-blue-400" />
                 Faturamento Real Realizado (
                 <strong className="text-white font-mono">
-                  R$ {summary.totalCurrent.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  R$ {formatMoney(summaryMetrics.totalCurrent)}
                 </strong>
                 ) de{" "}
                 <span className="text-slate-500 font-mono">
-                  R$ {summary.totalTarget.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  R$ {formatMoney(summaryMetrics.totalTarget)}
                 </span>
               </span>
-              <span className="font-bold text-white font-mono">{summary.overallProgress}%</span>
+              <span className="font-bold text-white font-mono">{summaryMetrics.overallProgress}%</span>
             </div>
 
             <div className="w-full h-3 bg-[#070D1B] rounded-full overflow-hidden p-0.5 border border-slate-800 relative">
               {/* Linha vertical que marca o ritmo de tempo decorrido no mês */}
               <div 
                 className="absolute top-0 bottom-0 w-0.5 bg-amber-400 z-10 shadow-[0_0_8px_rgba(251,191,36,0.8)]"
-                style={{ left: `${Math.min(100, summary.expectedPacePercentage)}%` }}
-                title={`Ritmo de Tempo no Mês: ${summary.expectedPacePercentage}%`}
+                style={{ left: `${Math.min(100, Math.max(0, summaryMetrics.expectedPacePercentage))}%` }}
+                title={`Ritmo de Tempo no Mês: ${summaryMetrics.expectedPacePercentage}%`}
               />
               <div
                 className="h-full rounded-full bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-400 transition-all duration-700 shadow-sm"
-                style={{ width: `${Math.min(100, summary.overallProgress)}%` }}
+                style={{ width: `${Math.min(100, Math.max(0, summaryMetrics.overallProgress))}%` }}
               />
             </div>
 
             <div className="flex items-center justify-between text-[11px] text-slate-500">
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-                Marcador amarelo: Ritmo de tempo decorrido no mês ({summary.expectedPacePercentage}%)
+                Marcador amarelo: Ritmo de tempo decorrido no mês ({summaryMetrics.expectedPacePercentage}%)
               </span>
               <span>
-                {summary.paceGap >= 0 ? (
+                {summaryMetrics.paceGap >= 0 ? (
                   <span className="text-emerald-400 font-semibold">
-                    +{summary.paceGap}% acima da velocidade esperada
+                    +{summaryMetrics.paceGap}% acima da velocidade esperada
                   </span>
                 ) : (
                   <span className="text-rose-400 font-semibold">
-                    {summary.paceGap}% abaixo da velocidade esperada
+                    {summaryMetrics.paceGap}% abaixo da velocidade esperada
                   </span>
                 )}
               </span>
@@ -337,7 +400,7 @@ export default function GoalsPage() {
               <div className="text-xs text-slate-400">
                 Incremento adicional simulado:{" "}
                 <span className="font-mono font-bold text-cyan-400">
-                  +R$ {dailyPaceBonus.toLocaleString("pt-BR")}/dia
+                  +R$ {formatNumber(dailyPaceBonus)}/dia
                 </span>
               </div>
             </div>
@@ -365,14 +428,14 @@ export default function GoalsPage() {
                 <span className="text-slate-300">
                   Impacto projetado:{" "}
                   <strong className="text-emerald-400 font-mono">
-                    +R$ {simulatedRunRate.additionalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    +R$ {formatMoney(simulatedRunRate.additionalRevenue)}
                   </strong>{" "}
                   adicionais até o fechamento.
                 </span>
                 <span className="text-slate-200 font-medium">
                   Novo Fechamento Estimado:{" "}
                   <strong className="text-white font-mono">
-                    R$ {simulatedRunRate.totalProjected.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    R$ {formatMoney(simulatedRunRate.totalProjected)}
                   </strong>{" "}
                   ({simulatedRunRate.simulatedProgress}%)
                 </span>
@@ -414,9 +477,11 @@ export default function GoalsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {goals.map((goal) => {
+              const currentVal = Number(goal.currentValue || 0);
+              const targetVal = Number(goal.targetValue || 1) || 1;
               const percent = goal.progressPercentage !== undefined
-                ? goal.progressPercentage
-                : Math.min(100, Math.round((goal.currentValue / (goal.targetValue || 1)) * 100));
+                ? Number(goal.progressPercentage)
+                : Math.min(100, Math.round((currentVal / targetVal) * 100));
               const isCurrency = goal.targetType === "REVENUE" || goal.unit === "currency";
 
               return (
@@ -426,10 +491,10 @@ export default function GoalsPage() {
                 >
                   <div className="space-y-2">
                     <div className="flex items-start justify-between">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                        {goal.user ? `Vendedor: ${goal.user.name}` : "Meta Coletiva (Equipe)"}
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 truncate max-w-[180px]">
+                        {goal.user?.name ? `Vendedor: ${goal.user.name}` : "Meta Coletiva (Equipe)"}
                       </span>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={() => setEditingGoal(goal)}
                           className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
@@ -448,7 +513,7 @@ export default function GoalsPage() {
                     </div>
 
                     <h4 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
-                      {goal.title}
+                      {goal.title || "Meta"}
                     </h4>
 
                     <div className="pt-1">
@@ -460,12 +525,10 @@ export default function GoalsPage() {
                   <div>
                     <div className="flex items-baseline justify-between">
                       <span className="text-xl font-extrabold text-white font-mono">
-                        {isCurrency
-                          ? `R$ ${Number(goal.currentValue).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`
-                          : Number(goal.currentValue)}
+                        {isCurrency ? `R$ ${formatShortMoney(currentVal)}` : formatNumber(currentVal)}
                       </span>
                       <span className="text-xs text-slate-400 font-mono">
-                        Alvo: {isCurrency ? `R$ ${Number(goal.targetValue).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}` : Number(goal.targetValue)}
+                        Alvo: {isCurrency ? `R$ ${formatShortMoney(targetVal)}` : formatNumber(targetVal)}
                       </span>
                     </div>
 
@@ -473,7 +536,7 @@ export default function GoalsPage() {
                     <div className="w-full h-2 bg-[#070D1B] rounded-full overflow-hidden mt-2 p-0.5 border border-slate-800">
                       <div
                         className="h-full rounded-full bg-blue-600 transition-all duration-500"
-                        style={{ width: `${Math.min(100, percent)}%` }}
+                        style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
                       />
                     </div>
                   </div>
@@ -530,30 +593,30 @@ export default function GoalsPage() {
                       🥈 2º Lugar
                     </span>
                     <span className="text-xs text-slate-400 font-mono">
-                      {ranking[1].dealsWon ?? ranking[1].dealsCount} vendas
+                      {formatNumber(ranking[1].dealsWon ?? ranking[1].dealsCount)} vendas
                     </span>
                   </div>
 
                   <div className="my-4 text-center">
                     <div className="w-14 h-14 mx-auto rounded-full bg-slate-700 p-0.5 shadow-md">
                       <div className="w-full h-full rounded-full bg-[#0B1224] flex items-center justify-center text-base font-bold text-slate-200">
-                        {ranking[1].name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                        {getInitials(ranking[1].name)}
                       </div>
                     </div>
                     <h4 className="text-sm font-bold text-white mt-2 group-hover:text-blue-400 transition-colors">
-                      {ranking[1].name}
+                      {ranking[1].name || "Consultor"}
                     </h4>
-                    <p className="text-xs text-slate-400">{ranking[1].email || "Consultor"}</p>
+                    <p className="text-xs text-slate-400 truncate">{ranking[1].email || "Consultor"}</p>
                     <div className="text-lg font-extrabold text-cyan-400 font-mono mt-2">
-                      R$ {Number(ranking[1].totalRevenueWon ?? ranking[1].achievedValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      R$ {formatMoney(ranking[1].totalRevenueWon ?? ranking[1].achievedValue)}
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs text-slate-400">
-                      <span>Conversão: {ranking[1].conversionRate ?? 0}%</span>
+                      <span>Conversão: {Number(ranking[1].conversionRate || 0)}%</span>
                       <span className="text-slate-300 font-bold font-mono">
-                        Ticket: R$ {Number(ranking[1].avgTicket ?? 0).toLocaleString("pt-BR")}
+                        Ticket: R$ {formatShortMoney(ranking[1].avgTicket)}
                       </span>
                     </div>
                     <div className="text-[11px] text-center text-blue-400 flex items-center justify-center gap-1 pt-1 opacity-80 group-hover:opacity-100">
@@ -575,30 +638,30 @@ export default function GoalsPage() {
                       🥇 1º Lugar • Líder Comercial
                     </span>
                     <span className="text-xs font-semibold text-amber-400 font-mono">
-                      {ranking[0].dealsWon ?? ranking[0].dealsCount} vendas
+                      {formatNumber(ranking[0].dealsWon ?? ranking[0].dealsCount)} vendas
                     </span>
                   </div>
 
                   <div className="my-5 text-center">
                     <div className="w-18 h-18 mx-auto rounded-full bg-gradient-to-tr from-amber-400 to-yellow-600 p-1 shadow-lg shadow-amber-500/30">
                       <div className="w-16 h-16 rounded-full bg-[#070D1B] flex items-center justify-center text-lg font-black text-amber-400">
-                        {ranking[0].name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                        {getInitials(ranking[0].name)}
                       </div>
                     </div>
                     <h4 className="text-base font-extrabold text-white mt-2 group-hover:text-amber-300 transition-colors">
-                      {ranking[0].name}
+                      {ranking[0].name || "Líder Comercial"}
                     </h4>
-                    <p className="text-xs text-amber-300/80">{ranking[0].email || "Líder de Vendas"}</p>
+                    <p className="text-xs text-amber-300/80 truncate">{ranking[0].email || "Líder de Vendas"}</p>
                     <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500 font-mono mt-2">
-                      R$ {Number(ranking[0].totalRevenueWon ?? ranking[0].achievedValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      R$ {formatMoney(ranking[0].totalRevenueWon ?? ranking[0].achievedValue)}
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs text-amber-300 font-medium">
-                      <span>Conversão: {ranking[0].conversionRate ?? 0}%</span>
+                      <span>Conversão: {Number(ranking[0].conversionRate || 0)}%</span>
                       <span className="font-mono">
-                        Ticket: R$ {Number(ranking[0].avgTicket ?? 0).toLocaleString("pt-BR")}
+                        Ticket: R$ {formatShortMoney(ranking[0].avgTicket)}
                       </span>
                     </div>
                     <div className="text-[11px] text-center text-amber-400 flex items-center justify-center gap-1 pt-1 opacity-80 group-hover:opacity-100">
@@ -620,30 +683,30 @@ export default function GoalsPage() {
                       🥉 3º Lugar
                     </span>
                     <span className="text-xs text-slate-400 font-mono">
-                      {ranking[2].dealsWon ?? ranking[2].dealsCount} vendas
+                      {formatNumber(ranking[2].dealsWon ?? ranking[2].dealsCount)} vendas
                     </span>
                   </div>
 
                   <div className="my-4 text-center">
                     <div className="w-14 h-14 mx-auto rounded-full bg-amber-800/80 p-0.5 shadow-md">
                       <div className="w-full h-full rounded-full bg-[#0B1224] flex items-center justify-center text-base font-bold text-amber-200">
-                        {ranking[2].name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                        {getInitials(ranking[2].name)}
                       </div>
                     </div>
                     <h4 className="text-sm font-bold text-white mt-2 group-hover:text-blue-400 transition-colors">
-                      {ranking[2].name}
+                      {ranking[2].name || "Consultor"}
                     </h4>
-                    <p className="text-xs text-slate-400">{ranking[2].email || "Consultor"}</p>
+                    <p className="text-xs text-slate-400 truncate">{ranking[2].email || "Consultor"}</p>
                     <div className="text-lg font-extrabold text-cyan-400 font-mono mt-2">
-                      R$ {Number(ranking[2].totalRevenueWon ?? ranking[2].achievedValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      R$ {formatMoney(ranking[2].totalRevenueWon ?? ranking[2].achievedValue)}
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs text-slate-400">
-                      <span>Conversão: {ranking[2].conversionRate ?? 0}%</span>
+                      <span>Conversão: {Number(ranking[2].conversionRate || 0)}%</span>
                       <span className="text-slate-300 font-bold font-mono">
-                        Ticket: R$ {Number(ranking[2].avgTicket ?? 0).toLocaleString("pt-BR")}
+                        Ticket: R$ {formatShortMoney(ranking[2].avgTicket)}
                       </span>
                     </div>
                     <div className="text-[11px] text-center text-blue-400 flex items-center justify-center gap-1 pt-1 opacity-80 group-hover:opacity-100">
@@ -676,20 +739,20 @@ export default function GoalsPage() {
                         {rep.rank === 1 ? "🥇 1º" : rep.rank === 2 ? "🥈 2º" : rep.rank === 3 ? "🥉 3º" : `#${rep.rank}`}
                       </td>
                       <td className="p-3.5">
-                        <div className="font-semibold text-white">{rep.name}</div>
+                        <div className="font-semibold text-white">{rep.name || "Consultor"}</div>
                         <div className="text-[11px] text-slate-400">{rep.email || "Consultor"}</div>
                       </td>
                       <td className="p-3.5 text-center font-semibold text-slate-300">
-                        {rep.dealsWon ?? rep.dealsCount}
+                        {formatNumber(rep.dealsWon ?? rep.dealsCount)}
                       </td>
                       <td className="p-3.5 text-center font-mono text-cyan-400 font-semibold">
-                        {rep.conversionRate ?? 0}%
+                        {Number(rep.conversionRate || 0)}%
                       </td>
                       <td className="p-3.5 text-right text-slate-300 font-mono">
-                        R$ {Number(rep.avgTicket ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                        R$ {formatShortMoney(rep.avgTicket)}
                       </td>
                       <td className="p-3.5 text-right font-bold text-emerald-400 font-mono">
-                        R$ {Number(rep.totalRevenueWon ?? rep.achievedValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        R$ {formatMoney(rep.totalRevenueWon ?? rep.achievedValue)}
                       </td>
                       <td className="p-3.5 text-right">
                         <button

@@ -108,21 +108,32 @@ export class GoalsService {
     const leaderboard = await this.getLeaderboard(tenantId);
     const topSeller = leaderboard[0] || null;
 
+    const expectedPacePercentage = totalDays > 0 ? Math.round((daysPassed / totalDays) * 100) : 0;
+    const paceGap = +(progressPercentage - expectedPacePercentage).toFixed(1);
+
     return {
       monthName: now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
       totalDays,
       daysPassed,
       daysRemaining,
       totalRevenueTarget,
+      totalTarget: totalRevenueTarget,
       totalRevenueWon,
+      totalCurrent: totalRevenueWon,
       dailyPace,
+      currentDailyPace: dailyPace,
+      requiredDailyPace,
+      dailyPaceNeeded: requiredDailyPace,
       projectedRevenue,
       runRatePercentage,
       progressPercentage,
-      requiredDailyPace,
+      overallProgress: progressPercentage,
+      expectedPacePercentage,
+      paceGap,
       healthStatus,
       isBaseline,
       topSeller,
+      goalsCount: revenueGoals.length,
     };
   }
 
