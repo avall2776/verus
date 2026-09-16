@@ -164,14 +164,14 @@ export default function GoalsPage() {
     switch (status) {
       case "achieved":
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" /> Meta Superada
           </span>
         );
       case "on_track":
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 flex items-center gap-1">
-            <Flame className="w-3.5 h-3.5" /> No Ritmo
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800/80 text-slate-300 border border-slate-700 flex items-center gap-1">
+            <Flame className="w-3.5 h-3.5 text-blue-400" /> No Ritmo
           </span>
         );
       case "at_risk":
@@ -193,27 +193,27 @@ export default function GoalsPage() {
     const h = String(health || "").toUpperCase();
     if (h === "EXCEEDED" || h === "ACHIEVED") {
       return (
-        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
-          <Trophy className="w-3.5 h-3.5 text-yellow-400" /> Meta Batida
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30 flex items-center gap-1.5 shadow-sm">
+          <Trophy className="w-3.5 h-3.5 text-blue-400" /> Meta Batida
         </span>
       );
     }
     if (h === "ON_TRACK") {
       return (
-        <span className="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1.5 shadow-sm">
-          <Flame className="w-3.5 h-3.5 text-cyan-400" /> No Ritmo (No Prazo)
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1.5 shadow-sm">
+          <Flame className="w-3.5 h-3.5 text-blue-400" /> No Ritmo (No Prazo)
         </span>
       );
     }
     if (h === "BEHIND" || h === "AT_RISK") {
       return (
-        <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
           <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> Desacelerado (Atenção)
         </span>
       );
     }
     return (
-      <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
+      <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30 flex items-center gap-1.5 shadow-sm">
         <ShieldAlert className="w-3.5 h-3.5 text-rose-400" /> Ritmo Crítico
       </span>
     );
@@ -270,7 +270,7 @@ export default function GoalsPage() {
 
           <button
             onClick={() => setIsNewGoalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-[0_0_15px_rgba(0,85,255,0.25)] transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Nova Meta
@@ -280,7 +280,7 @@ export default function GoalsPage() {
 
       {/* Hero: Motor Preditivo de Run Rate */}
       {summaryMetrics && (
-        <div className="p-6 rounded-2xl bg-[#0B1224] border border-slate-700/80 shadow-2xl relative overflow-hidden space-y-6">
+        <div className="p-6 rounded-2xl bg-[#0B1224] border border-slate-800 shadow-2xl relative overflow-hidden space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             <div className="space-y-3 max-w-2xl">
               <div className="flex items-center gap-3">
@@ -483,9 +483,9 @@ export default function GoalsPage() {
 
       {/* Alerta Executivo de Aceleração Comercial (Quando Pace Gap é negativo ou status é At_risk/Behind) */}
       {summaryMetrics && (summaryMetrics.paceGap < 0 || summaryMetrics.healthStatus === "BEHIND" || summaryMetrics.healthStatus === "CRITICAL" || summaryMetrics.healthStatus === "AT_RISK") && (
-        <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-[#181512] to-rose-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in shadow-xl">
+        <div className="p-5 rounded-2xl bg-[#0B1224] border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in shadow-xl">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div className="space-y-1">
@@ -493,7 +493,7 @@ export default function GoalsPage() {
                 <h4 className="text-sm font-bold text-white">
                   Alerta Executivo de Ritmo Comercial: Ritmo {Math.abs(summaryMetrics.paceGap)}% abaixo do cronograma
                 </h4>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 uppercase">
                   Ação Recomendada
                 </span>
               </div>
@@ -510,7 +510,7 @@ export default function GoalsPage() {
           <div className="flex items-center gap-2 shrink-0">
             <a
               href="/settings/automations"
-              className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <Zap className="w-3.5 h-3.5" />
               Ativar Resgate de Leads
@@ -549,7 +549,7 @@ export default function GoalsPage() {
             </p>
             <button
               onClick={() => setIsNewGoalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-[0_0_15px_rgba(0,85,255,0.25)] transition-all"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all"
             >
               <Plus className="w-4 h-4" />
               Criar Primeira Meta

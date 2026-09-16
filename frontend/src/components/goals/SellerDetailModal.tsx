@@ -250,7 +250,7 @@ export function SellerDetailModal({
         <div className="p-4 border-t border-slate-800/80 bg-slate-900/60 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(0,85,255,0.25)] transition-all"
+            className="px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all"
           >
             Fechar Visualização
           </button>
