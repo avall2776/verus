@@ -64,4 +64,24 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], EmailSettingsDto.prototype, "isActive", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], EmailSettingsDto.prototype, "hasPassword", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], EmailSettingsDto.prototype, "configured", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], EmailSettingsDto.prototype, "connected", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EmailSettingsDto.prototype, "connectionError", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], EmailSettingsDto.prototype, "source", void 0);
 //# sourceMappingURL=email-settings.dto.js.map

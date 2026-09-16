@@ -48,13 +48,14 @@ let EmailsService = EmailsService_1 = class EmailsService {
                         const host = settings.smtpHost || (settings.provider === 'gmail' ? 'smtp.gmail.com' : (settings.provider === 'hostinger' ? 'smtp.hostinger.com' : 'smtp.gmail.com'));
                         const port = Number(settings.smtpPort) || (settings.provider === 'hostinger' ? 465 : 587);
                         const secure = settings.smtpSecure !== undefined ? Boolean(settings.smtpSecure) : (port === 465);
+                        const cleanPass = settings.provider === 'gmail' ? settings.smtpPass.replace(/\s+/g, '') : settings.smtpPass;
                         const transporter = nodemailer.createTransport({
                             host,
                             port,
                             secure,
                             auth: {
-                                user: settings.smtpUser,
-                                pass: settings.smtpPass,
+                                user: settings.smtpUser.trim(),
+                                pass: cleanPass,
                             },
                             tls: {
                                 rejectUnauthorized: false,
@@ -154,16 +155,20 @@ let EmailsService = EmailsService_1 = class EmailsService {
             select: { emailSettings: true },
         });
         const currentSettings = (currentTenant?.emailSettings || {});
+        let rawPass = dto.smtpPass ? dto.smtpPass : currentSettings.smtpPass;
+        if (dto.provider === 'gmail' && rawPass) {
+            rawPass = rawPass.replace(/\s+/g, '');
+        }
         const newSettings = {
             provider: dto.provider,
             smtpHost: dto.smtpHost || (dto.provider === 'gmail' ? 'smtp.gmail.com' : (dto.provider === 'hostinger' ? 'smtp.hostinger.com' : 'smtp.gmail.com')),
             smtpPort: Number(dto.smtpPort) || (dto.provider === 'hostinger' ? 465 : 587),
             smtpSecure: dto.smtpSecure !== undefined ? Boolean(dto.smtpSecure) : (dto.smtpPort === 465 || dto.provider === 'hostinger'),
-            smtpUser: dto.smtpUser || '',
-            smtpPass: dto.smtpPass ? dto.smtpPass : currentSettings.smtpPass,
-            fromName: dto.fromName || '',
-            fromEmail: dto.fromEmail || dto.smtpUser || '',
-            resendApiKey: dto.resendApiKey ? dto.resendApiKey : currentSettings.resendApiKey,
+            smtpUser: (dto.smtpUser || '').trim(),
+            smtpPass: rawPass,
+            fromName: (dto.fromName || '').trim(),
+            fromEmail: (dto.fromEmail || dto.smtpUser || '').trim(),
+            resendApiKey: (dto.resendApiKey ? dto.resendApiKey : currentSettings.resendApiKey || '').trim(),
             isActive: dto.isActive !== undefined ? Boolean(dto.isActive) : true,
             updatedAt: new Date().toISOString(),
         };
@@ -196,6 +201,9 @@ let EmailsService = EmailsService_1 = class EmailsService {
             });
             const s = (tenant?.emailSettings || {});
             passToUse = s.smtpPass;
+        }
+        if (dto.provider === 'gmail' && passToUse) {
+            passToUse = passToUse.replace(/\s+/g, '');
         }
         try {
             let testTransporter;

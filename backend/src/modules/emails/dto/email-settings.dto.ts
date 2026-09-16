@@ -40,4 +40,19 @@ export class EmailSettingsDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  hasPassword?: boolean;
+
+  @IsOptional()
+  configured?: boolean;
+
+  @IsOptional()
+  connected?: boolean;
+
+  @IsOptional()
+  connectionError?: string | null;
+
+  @IsOptional()
+  source?: string;
 }

@@ -153,8 +153,21 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
     setTesting(true);
     setTestResult({ tested: false, success: false });
 
+    const cleanPayload = {
+      provider: formData.provider,
+      smtpHost: formData.smtpHost,
+      smtpPort: Number(formData.smtpPort),
+      smtpSecure: Boolean(formData.smtpSecure),
+      smtpUser: formData.smtpUser?.trim(),
+      smtpPass: formData.smtpPass ? formData.smtpPass.replace(/\s+/g, '') : undefined,
+      fromName: formData.fromName?.trim(),
+      fromEmail: formData.fromEmail?.trim(),
+      resendApiKey: formData.resendApiKey?.trim(),
+      isActive: formData.isActive,
+    };
+
     try {
-      const res = await api.post("/emails/test-connection", formData);
+      const res = await api.post("/emails/test-connection", cleanPayload);
       if (res.data.success) {
         setTestResult({
           tested: true,
@@ -205,8 +218,22 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
     }
 
     setSaving(true);
+
+    const cleanPayload = {
+      provider: formData.provider,
+      smtpHost: formData.smtpHost,
+      smtpPort: Number(formData.smtpPort),
+      smtpSecure: Boolean(formData.smtpSecure),
+      smtpUser: formData.smtpUser?.trim(),
+      smtpPass: formData.smtpPass ? formData.smtpPass.replace(/\s+/g, '') : undefined,
+      fromName: formData.fromName?.trim(),
+      fromEmail: formData.fromEmail?.trim(),
+      resendApiKey: formData.resendApiKey?.trim(),
+      isActive: formData.isActive,
+    };
+
     try {
-      const res = await api.post("/emails/settings", formData);
+      const res = await api.post("/emails/settings", cleanPayload);
       toast.success(res.data.message || "Configurações salvas com sucesso!");
       if (res.data.connected) {
         setTestResult({

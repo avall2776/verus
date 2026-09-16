@@ -9,4 +9,9 @@ export declare class EmailSettingsDto {
     fromEmail?: string;
     resendApiKey?: string;
     isActive?: boolean;
+    hasPassword?: boolean;
+    configured?: boolean;
+    connected?: boolean;
+    connectionError?: string | null;
+    source?: string;
 }
