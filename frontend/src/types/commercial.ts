@@ -67,28 +67,90 @@ export type GoalCategory = 'revenue' | 'new_clients' | 'qualified_leads' | 'deal
 export interface CommercialGoal {
   id: string;
   title: string;
-  category: GoalCategory;
-  period: GoalPeriod;
+  targetType?: string;
+  category?: GoalCategory;
+  period?: GoalPeriod;
   targetValue: number;
   currentValue: number;
-  unit: 'currency' | 'count' | 'percentage';
-  startDate: string;
-  endDate: string;
+  unit?: 'currency' | 'count' | 'percentage';
+  startDate?: string;
+  endDate?: string;
+  periodStart?: string;
+  periodEnd?: string;
+  progressPercentage?: number;
   projectionRate: number; // Run rate calculado
   status: 'on_track' | 'at_risk' | 'achieved' | 'behind';
+  userId?: string | null;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+  createdAt?: string;
 }
 
 export interface SalesRepRanking {
   id: string;
+  userId?: string;
   name: string;
+  email?: string;
   avatar?: string;
-  role: string;
+  avatarUrl?: string;
+  role?: string;
   achievedValue: number;
   targetValue: number;
   percentAchieved: number;
   dealsCount: number;
+  dealsWon?: number;
+  totalDeals?: number;
+  totalRevenueWon?: number;
+  conversionRate?: number;
+  avgTicket?: number;
   rank: number; // 1, 2, 3...
   badgeTier?: 'gold' | 'silver' | 'bronze' | 'participant';
+}
+
+export interface GoalRunRateSummary {
+  totalTarget: number;
+  totalCurrent: number;
+  overallProgress: number;
+  daysInMonth: number;
+  daysPassed: number;
+  daysRemaining: number;
+  expectedPacePercentage: number;
+  projectedRevenue: number;
+  paceGap: number;
+  healthStatus: 'ON_TRACK' | 'BEHIND' | 'CRITICAL' | 'EXCEEDED';
+  dailyPaceNeeded: number;
+  currentDailyPace: number;
+  goalsCount: number;
+}
+
+export interface SellerDrilldownData {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role?: string;
+  };
+  metrics: {
+    totalDeals: number;
+    dealsWon: number;
+    totalRevenueWon: number;
+    conversionRate: number;
+    avgTicket: number;
+  };
+  recentDeals: {
+    id: string;
+    title: string;
+    value: number;
+    status: string;
+    isWon: boolean;
+    clientName: string;
+    clientCompany?: string | null;
+    clientPhone?: string | null;
+    createdAt: string;
+  }[];
 }
 
 // === ANALYTICS AVANÇADO ===

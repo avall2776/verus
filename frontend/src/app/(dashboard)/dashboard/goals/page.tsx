@@ -1,144 +1,98 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { 
   Target, TrendingUp, Award, Users, Plus, Calendar, 
   CheckCircle2, AlertTriangle, Flame, ArrowUpRight, Zap,
-  Trophy, Medal, ShieldAlert, Sparkles, DollarSign
+  Trophy, Medal, ShieldAlert, Sparkles, DollarSign, RefreshCw,
+  MoreVertical, Edit3, Trash2, Eye, Sliders, ChevronRight,
+  UserCheck, Briefcase, Activity
 } from "lucide-react";
-import { CommercialGoal, SalesRepRanking } from "@/types/commercial";
+import { CommercialGoal, SalesRepRanking, GoalRunRateSummary } from "@/types/commercial";
 import { NewGoalModal } from "@/components/goals/NewGoalModal";
+import { EditGoalModal } from "@/components/goals/EditGoalModal";
+import { SellerDetailModal } from "@/components/goals/SellerDetailModal";
+import api from "@/lib/api";
 import toast from "react-hot-toast";
 
-const INITIAL_GOALS: CommercialGoal[] = [
-  {
-    id: "g-1",
-    title: "Faturamento Mensal Geral",
-    category: "revenue",
-    period: "monthly",
-    targetValue: 250000,
-    currentValue: 194200,
-    unit: "currency",
-    startDate: "2026-09-01",
-    endDate: "2026-09-30",
-    projectionRate: 108.8, // Run rate de 108.8%
-    status: "on_track"
-  },
-  {
-    id: "g-2",
-    title: "Novos Clientes Enterprise",
-    category: "new_clients",
-    period: "monthly",
-    targetValue: 40,
-    currentValue: 33,
-    unit: "count",
-    startDate: "2026-09-01",
-    endDate: "2026-09-30",
-    projectionRate: 115.0,
-    status: "on_track"
-  },
-  {
-    id: "g-3",
-    title: "Reuniões & Demonstrações (SDR)",
-    category: "qualified_leads",
-    period: "monthly",
-    targetValue: 120,
-    currentValue: 98,
-    unit: "count",
-    startDate: "2026-09-01",
-    endDate: "2026-09-30",
-    projectionRate: 98.2,
-    status: "on_track"
-  },
-  {
-    id: "g-4",
-    title: "Ticket Médio Comercial",
-    category: "revenue",
-    period: "monthly",
-    targetValue: 10000,
-    currentValue: 11450,
-    unit: "currency",
-    startDate: "2026-09-01",
-    endDate: "2026-09-30",
-    projectionRate: 114.5,
-    status: "achieved"
-  }
-];
-
-const INITIAL_RANKING: SalesRepRanking[] = [
-  {
-    id: "rep-1",
-    name: "Ana Paula Mendes",
-    role: "Senior Account Executive",
-    achievedValue: 82500,
-    targetValue: 70000,
-    percentAchieved: 117.8,
-    dealsCount: 14,
-    rank: 1,
-    badgeTier: "gold"
-  },
-  {
-    id: "rep-2",
-    name: "Lucas Fontes",
-    role: "Closer Specialist",
-    achievedValue: 56400,
-    targetValue: 60000,
-    percentAchieved: 94.0,
-    dealsCount: 9,
-    rank: 2,
-    badgeTier: "silver"
-  },
-  {
-    id: "rep-3",
-    name: "Gabriel Sampaio",
-    role: "Inside Sales",
-    achievedValue: 52800,
-    targetValue: 60000,
-    percentAchieved: 88.0,
-    dealsCount: 8,
-    rank: 3,
-    badgeTier: "bronze"
-  },
-  {
-    id: "rep-4",
-    name: "Beatriz Nogueira",
-    role: "Business Developer",
-    achievedValue: 43200,
-    targetValue: 60000,
-    percentAchieved: 72.0,
-    dealsCount: 6,
-    rank: 4,
-    badgeTier: "participant"
-  }
-];
-
 export default function GoalsPage() {
-  const [goals, setGoals] = useState<CommercialGoal[]>(INITIAL_GOALS);
-  const [ranking, setRanking] = useState<SalesRepRanking[]>(INITIAL_RANKING);
-  const [selectedPeriod, setSelectedPeriod] = useState<"monthly" | "quarterly">("monthly");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [goals, setGoals] = useState<CommercialGoal[]>([]);
+  const [ranking, setRanking] = useState<SalesRepRanking[]>([]);
+  const [summary, setSummary] = useState<GoalRunRateSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Cálculos gerais de Run Rate
-  const runRateMetrics = useMemo(() => {
-    const revenueGoal = goals.find((g) => g.category === "revenue");
-    if (!revenueGoal) return { currentRunRate: 100, projectedRevenue: 0, daysRemaining: 15 };
+  // Modais
+  const [isNewGoalOpen, setIsNewGoalOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<CommercialGoal | null>(null);
+  const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
+  const [selectedSellerName, setSelectedSellerName] = useState<string>("");
 
-    const daysRemaining = 15; // Setembro tem 30 dias, hoje é dia 15
-    const daysPassed = 15;
-    const dailyAvg = revenueGoal.currentValue / daysPassed;
-    const projectedRevenue = revenueGoal.currentValue + (dailyAvg * daysRemaining);
-    const currentRunRate = (projectedRevenue / revenueGoal.targetValue) * 100;
+  // Simulador de ritmo diário
+  const [dailyPaceBonus, setDailyPaceBonus] = useState<number>(0);
+
+  // Carregar dados reais da API
+  const loadData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
+    else setRefreshing(true);
+
+    try {
+      const [summaryRes, goalsRes, rankingRes] = await Promise.all([
+        api.get("/goals/summary").catch((err) => {
+          console.error("Erro summary:", err);
+          return { data: null };
+        }),
+        api.get("/goals").catch((err) => {
+          console.error("Erro goals:", err);
+          return { data: [] };
+        }),
+        api.get("/goals/leaderboard").catch((err) => {
+          console.error("Erro leaderboard:", err);
+          return { data: [] };
+        }),
+      ]);
+
+      if (summaryRes.data) {
+        setSummary(summaryRes.data);
+      }
+
+      if (Array.isArray(goalsRes.data)) {
+        setGoals(goalsRes.data);
+      }
+
+      if (Array.isArray(rankingRes.data)) {
+        setRanking(rankingRes.data);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dados de metas:", error);
+      toast.error("Erro ao conectar com o serviço de metas comerciais.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Cálculos do Simulador Preditivo
+  const simulatedRunRate = useMemo(() => {
+    if (!summary) return null;
+
+    const baseProjected = summary.projectedRevenue;
+    const additionalFromBonus = dailyPaceBonus * summary.daysRemaining;
+    const totalProjected = baseProjected + additionalFromBonus;
+    const target = summary.totalTarget || 1;
+    const simulatedProgress = Math.round((totalProjected / target) * 100);
 
     return {
-      currentRunRate,
-      projectedRevenue,
-      daysRemaining
+      totalProjected,
+      simulatedProgress,
+      additionalRevenue: additionalFromBonus,
+      target,
     };
-  }, [goals]);
-
-  const handleSaveGoal = (newGoal: CommercialGoal) => {
-    setGoals((prev) => [newGoal, ...prev]);
-  };
+  }, [summary, dailyPaceBonus]);
 
   const getStatusBadge = (status: CommercialGoal["status"]) => {
     switch (status) {
@@ -169,370 +123,611 @@ export default function GoalsPage() {
     }
   };
 
+  const getHealthBadge = (health: string) => {
+    switch (health) {
+      case "EXCEEDED":
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
+            <Trophy className="w-3.5 h-3.5 text-yellow-400" /> Meta Batida
+          </span>
+        );
+      case "ON_TRACK":
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1.5 shadow-sm">
+            <Flame className="w-3.5 h-3.5 text-cyan-400" /> Ritmo Acelerado (No Prazo)
+          </span>
+        );
+      case "BEHIND":
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> Desacelerado (Atenção)
+          </span>
+        );
+      default:
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 shadow-sm">
+            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" /> Ritmo Crítico
+          </span>
+        );
+    }
+  };
+
+  const openSellerDrilldown = (userId: string, name: string) => {
+    setSelectedSellerId(userId);
+    setSelectedSellerName(name);
+  };
+
+  const handleDeleteGoal = async (id: string) => {
+    if (!confirm("Deseja realmente excluir esta meta comercial?")) return;
+    try {
+      await api.delete(`/goals/${id}`);
+      toast.success("Meta excluída com sucesso.");
+      loadData(true);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Erro ao excluir meta.");
+    }
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Cabeçalho */}
+    <div className="space-y-8 pb-12">
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-            <Target className="w-5 h-5" />
+          <div className="w-11 h-11 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+            <Target className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
               Metas & Desempenho Comercial
-              <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-medium">
-                Setembro 2026
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 font-medium">
+                Run Rate & Gamificação
               </span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-400">
-              Acompanhamento de ritmo (Run Rate), projeção de faturamento e ranking gamificado da equipe
+              Acompanhamento preditivo de ritmo, projeção de fechamento e leaderboard gamificado da equipe
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center p-1 rounded-xl bg-slate-900 border border-slate-800">
-            <button
-              onClick={() => setSelectedPeriod("monthly")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                selectedPeriod === "monthly"
-                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              Mês Atual
-            </button>
-            <button
-              onClick={() => setSelectedPeriod("quarterly")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                selectedPeriod === "quarterly"
-                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              Trimestre (Q3)
-            </button>
-          </div>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => loadData(true)}
+            disabled={refreshing}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0B1224] border border-slate-700/80 hover:border-slate-600 text-slate-300 hover:text-white text-xs font-semibold transition-all disabled:opacity-50"
+            title="Atualizar dados agora"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-blue-400" : ""}`} />
+            <span className="hidden sm:inline">Sincronizar</span>
+          </button>
 
           <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-xs shadow-lg shadow-cyan-500/25 transition-all"
+            onClick={() => setIsNewGoalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-[0_0_15px_rgba(0,85,255,0.25)] transition-all"
           >
             <Plus className="w-4 h-4" />
-            Definir Nova Meta
+            Nova Meta
           </button>
         </div>
       </div>
 
-      {/* Banner de Projeção de Ritmo (Run Rate Comercial) */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900/90 via-[#0B1528] to-slate-900/90 border border-cyan-500/30 shadow-xl relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
-              <Zap className="w-4 h-4" />
-              Projeção Preditiva de Ritmo (Run Rate)
+      {/* Hero: Motor Preditivo de Run Rate */}
+      {summary && (
+        <div className="p-6 rounded-2xl bg-[#0B1224] border border-slate-700/80 shadow-2xl relative overflow-hidden space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            <div className="space-y-2 max-w-2xl">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 text-blue-400 text-xs font-bold uppercase tracking-wider">
+                  <Zap className="w-4 h-4" />
+                  Motor Preditivo de Run Rate Comercial
+                </div>
+                {getHealthBadge(summary.healthStatus)}
+              </div>
+
+              <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight">
+                Ritmo aponta para{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400">
+                  {summary.totalTarget > 0
+                    ? `${Math.round((summary.projectedRevenue / summary.totalTarget) * 100)}% de Atingimento`
+                    : "100% da Meta"}
+                </span>
+              </h2>
+
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Com base nos {summary.daysPassed} dias decorridos do mês atual e na velocidade média diária de{" "}
+                <strong className="text-emerald-400 font-mono">
+                  R$ {summary.currentDailyPace.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/dia
+                </strong>
+                , a projeção matemática estima o faturamento final em{" "}
+                <strong className="text-white font-mono">
+                  R$ {summary.projectedRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </strong>
+                .
+              </p>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-white">
-              Ritmo Atual aponta para{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">
-                {runRateMetrics.currentRunRate.toFixed(1)}% de Atingimento
-              </span>
-            </h2>
-            <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-              Com base no volume negociado nos primeiros 15 dias, a projeção calculada estima o fechamento em{" "}
-              <strong className="text-white">
-                R$ {runRateMetrics.projectedRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </strong>
-              , superando a meta global estipulada em R$ 250.000,00.
-            </p>
+
+            {/* Quick Metrics Badges */}
+            <div className="grid grid-cols-3 gap-3 shrink-0 bg-[#070D1B] p-4 rounded-xl border border-slate-800">
+              <div className="text-center px-2 border-r border-slate-800">
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
+                  Dias Restantes
+                </span>
+                <span className="text-lg sm:text-xl font-bold font-mono text-cyan-400">
+                  {summary.daysRemaining} dias
+                </span>
+              </div>
+
+              <div className="text-center px-2 border-r border-slate-800">
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
+                  Ritmo Necessário
+                </span>
+                <span className="text-lg sm:text-xl font-bold font-mono text-amber-400">
+                  R$ {(summary.dailyPaceNeeded / 1000).toFixed(1)}k
+                </span>
+              </div>
+
+              <div className="text-center px-2">
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
+                  Ritmo Atual
+                </span>
+                <span className="text-lg sm:text-xl font-bold font-mono text-emerald-400">
+                  R$ {(summary.currentDailyPace / 1000).toFixed(1)}k
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4 shrink-0 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
-            <div className="text-center px-3 border-r border-slate-800">
-              <span className="text-[11px] uppercase tracking-wider text-slate-400 block">Dias Restantes</span>
-              <span className="text-xl font-bold font-mono text-cyan-400">
-                {runRateMetrics.daysRemaining} dias
+          {/* Barra de Progresso Comparativa: Ritmo Esperado vs Ritmo Real */}
+          <div className="space-y-2 pt-2 border-t border-slate-800/80">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-400 flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-blue-400" />
+                Faturamento Real Realizado (
+                <strong className="text-white font-mono">
+                  R$ {summary.totalCurrent.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </strong>
+                ) de{" "}
+                <span className="text-slate-500 font-mono">
+                  R$ {summary.totalTarget.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </span>
+              </span>
+              <span className="font-bold text-white font-mono">{summary.overallProgress}%</span>
+            </div>
+
+            <div className="w-full h-3 bg-[#070D1B] rounded-full overflow-hidden p-0.5 border border-slate-800 relative">
+              {/* Linha vertical que marca o ritmo de tempo decorrido no mês */}
+              <div 
+                className="absolute top-0 bottom-0 w-0.5 bg-amber-400 z-10 shadow-[0_0_8px_rgba(251,191,36,0.8)]"
+                style={{ left: `${Math.min(100, summary.expectedPacePercentage)}%` }}
+                title={`Ritmo de Tempo no Mês: ${summary.expectedPacePercentage}%`}
+              />
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-400 transition-all duration-700 shadow-sm"
+                style={{ width: `${Math.min(100, summary.overallProgress)}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-500">
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                Marcador amarelo: Ritmo de tempo decorrido no mês ({summary.expectedPacePercentage}%)
+              </span>
+              <span>
+                {summary.paceGap >= 0 ? (
+                  <span className="text-emerald-400 font-semibold">
+                    +{summary.paceGap}% acima da velocidade esperada
+                  </span>
+                ) : (
+                  <span className="text-rose-400 font-semibold">
+                    {summary.paceGap}% abaixo da velocidade esperada
+                  </span>
+                )}
               </span>
             </div>
-            <div className="text-center px-3 border-r border-slate-800">
-              <span className="text-[11px] uppercase tracking-wider text-slate-400 block">Média / Dia</span>
-              <span className="text-xl font-bold font-mono text-emerald-400">
-                R$ 12.946
-              </span>
+          </div>
+
+          {/* Simulador Interativo de Aceleração */}
+          <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800/80 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-cyan-400" />
+                <span className="text-xs font-bold text-slate-200">
+                  Simulador de Cenários: E se a equipe acelerar as vendas?
+                </span>
+              </div>
+              <div className="text-xs text-slate-400">
+                Incremento adicional simulado:{" "}
+                <span className="font-mono font-bold text-cyan-400">
+                  +R$ {dailyPaceBonus.toLocaleString("pt-BR")}/dia
+                </span>
+              </div>
             </div>
-            <div className="text-center px-3">
-              <span className="text-[11px] uppercase tracking-wider text-slate-400 block">Probabilidade</span>
-              <span className="text-xl font-bold font-mono text-white">
-                94.2%
-              </span>
+
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min={0}
+                max={15000}
+                step={500}
+                value={dailyPaceBonus}
+                onChange={(e) => setDailyPaceBonus(Number(e.target.value))}
+                className="w-full accent-blue-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+              />
+              <button
+                onClick={() => setDailyPaceBonus(0)}
+                className="text-[11px] px-2 py-1 rounded bg-slate-800 text-slate-400 hover:text-white shrink-0"
+              >
+                Resetar
+              </button>
             </div>
+
+            {simulatedRunRate && dailyPaceBonus > 0 && (
+              <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs border-t border-slate-800/60 animate-in fade-in">
+                <span className="text-slate-300">
+                  Impacto projetado:{" "}
+                  <strong className="text-emerald-400 font-mono">
+                    +R$ {simulatedRunRate.additionalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </strong>{" "}
+                  adicionais até o fechamento.
+                </span>
+                <span className="text-slate-200 font-medium">
+                  Novo Fechamento Estimado:{" "}
+                  <strong className="text-white font-mono">
+                    R$ {simulatedRunRate.totalProjected.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </strong>{" "}
+                  ({simulatedRunRate.simulatedProgress}%)
+                </span>
+              </div>
+            )}
           </div>
         </div>
+      )}
 
-        {/* Efeito luminoso de fundo */}
-        <div className="absolute -top-16 -right-16 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-      </div>
+      {/* Grid de Metas Comerciais Ativas */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <Target className="w-5 h-5 text-blue-400" />
+            Metas Comerciais Estabelecidas ({goals.length})
+          </h3>
+          <span className="text-xs text-slate-400">
+            Acompanhamento individual e coletivo
+          </span>
+        </div>
 
-      {/* Grid de Cards de Metas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        {goals.map((goal) => {
-          const percent = Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100));
-          const isCurrency = goal.unit === "currency";
-
-          return (
-            <div
-              key={goal.id}
-              className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-4 hover:border-cyan-500/40 transition-all group"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    {goal.category.replace("_", " ")}
-                  </span>
-                  <h3 className="text-sm font-bold text-white mt-0.5 group-hover:text-cyan-300 transition-colors">
-                    {goal.title}
-                  </h3>
-                </div>
-                {getStatusBadge(goal.status)}
-              </div>
-
-              {/* Valores */}
-              <div>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-extrabold text-white">
-                    {isCurrency
-                      ? `R$ ${(goal.currentValue / 1000).toFixed(1)}k`
-                      : goal.currentValue}
-                  </span>
-                  <span className="text-xs text-slate-400 font-mono">
-                    Alvo: {isCurrency ? `R$ ${(goal.targetValue / 1000).toFixed(1)}k` : goal.targetValue}
-                  </span>
-                </div>
-
-                {/* Barra de Progresso Gradiente */}
-                <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden mt-2 p-0.5 border border-slate-700/50">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-emerald-400 transition-all duration-700 shadow-sm shadow-cyan-500/50"
-                    style={{ width: `${percent}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Rodapé do Card com Run Rate Individual */}
-              <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-xs">
-                <span className="text-slate-400">Progresso Atual:</span>
-                <span className="font-bold text-cyan-400 font-mono">{percent}%</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Projeção Estimada:</span>
-                <span className="font-bold text-emerald-400 font-mono">{goal.projectionRate}%</span>
-              </div>
+        {goals.length === 0 ? (
+          <div className="p-8 text-center rounded-2xl bg-[#0B1224] border border-slate-800 space-y-3">
+            <div className="w-12 h-12 mx-auto rounded-full bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+              <Target className="w-6 h-6" />
             </div>
-          );
-        })}
+            <h4 className="text-sm font-bold text-white">Nenhuma meta configurada ainda</h4>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              Defina as metas do mês para calcular o Run Rate diário e classificar os vendedores no Leaderboard.
+            </p>
+            <button
+              onClick={() => setIsNewGoalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-[0_0_15px_rgba(0,85,255,0.25)] transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              Criar Primeira Meta
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {goals.map((goal) => {
+              const percent = goal.progressPercentage !== undefined
+                ? goal.progressPercentage
+                : Math.min(100, Math.round((goal.currentValue / (goal.targetValue || 1)) * 100));
+              const isCurrency = goal.targetType === "REVENUE" || goal.unit === "currency";
+
+              return (
+                <div
+                  key={goal.id}
+                  className="p-5 rounded-2xl bg-[#0B1224] border border-slate-800/80 hover:border-blue-500/40 transition-all group flex flex-col justify-between space-y-4"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        {goal.user ? `Vendedor: ${goal.user.name}` : "Meta Coletiva (Equipe)"}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setEditingGoal(goal)}
+                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                          title="Editar meta"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteGoal(goal.id)}
+                          className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                          title="Excluir meta"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <h4 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
+                      {goal.title}
+                    </h4>
+
+                    <div className="pt-1">
+                      {getStatusBadge(goal.status)}
+                    </div>
+                  </div>
+
+                  {/* Números */}
+                  <div>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-xl font-extrabold text-white font-mono">
+                        {isCurrency
+                          ? `R$ ${Number(goal.currentValue).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`
+                          : Number(goal.currentValue)}
+                      </span>
+                      <span className="text-xs text-slate-400 font-mono">
+                        Alvo: {isCurrency ? `R$ ${Number(goal.targetValue).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}` : Number(goal.targetValue)}
+                      </span>
+                    </div>
+
+                    {/* Barra de Progresso */}
+                    <div className="w-full h-2 bg-[#070D1B] rounded-full overflow-hidden mt-2 p-0.5 border border-slate-800">
+                      <div
+                        className="h-full rounded-full bg-blue-600 transition-all duration-500"
+                        style={{ width: `${Math.min(100, percent)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Rodapé do Card */}
+                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Atingimento:</span>
+                    <span className="font-bold text-cyan-400 font-mono">{percent}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Seção Leaderboard (Ranking Gamificado da Equipe Comercial) */}
-      <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-6">
+      {/* Leaderboard Gamificado & Pódio dos Top 3 */}
+      <div className="p-6 rounded-2xl bg-[#0B1224] border border-slate-700/80 shadow-2xl space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500/20 to-yellow-600/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
               <Trophy className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                Leaderboard de Vendas
+                Leaderboard Gamificado da Equipe
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-semibold">
-                  Ranking Gamificado
+                  Top Closers
                 </span>
               </h3>
               <p className="text-xs text-slate-400">
-                Desempenho individual por meta atingida, volume negociado e contratos fechados
+                Classificação em tempo real por contratos fechados, receita acumulada e taxa de conversão
               </p>
             </div>
           </div>
         </div>
 
-        {/* Pódio dos Top 3 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-          {/* 2º Lugar - Prata */}
-          {ranking[1] && (
-            <div className="order-2 md:order-1 p-5 rounded-2xl bg-gradient-to-b from-slate-800/60 to-slate-900/80 border border-slate-600/40 relative flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
-                  🥈 2º Lugar
-                </span>
-                <span className="text-xs text-slate-400 font-mono">
-                  {ranking[1].dealsCount} vendas
-                </span>
-              </div>
-
-              <div className="my-4 text-center">
-                <div className="w-14 h-14 mx-auto rounded-full bg-gradient-to-tr from-slate-400 to-slate-600 p-0.5 shadow-md">
-                  <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-base font-bold text-white">
-                    {ranking[1].name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                  </div>
-                </div>
-                <h4 className="text-sm font-bold text-white mt-2">{ranking[1].name}</h4>
-                <p className="text-xs text-slate-400">{ranking[1].role}</p>
-                <div className="text-lg font-extrabold text-cyan-400 font-mono mt-2">
-                  R$ {ranking[1].achievedValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs text-slate-300 mb-1">
-                  <span>Atingimento da Meta</span>
-                  <span className="font-bold text-white">{ranking[1].percentAchieved}%</span>
-                </div>
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-slate-400 rounded-full"
-                    style={{ width: `${Math.min(100, ranking[1].percentAchieved)}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 1º Lugar - Ouro (Destaque Principal) */}
-          {ranking[0] && (
-            <div className="order-1 md:order-2 p-6 rounded-2xl bg-gradient-to-b from-amber-500/10 via-[#131B32] to-slate-900/90 border-2 border-amber-500/40 relative flex flex-col justify-between shadow-2xl shadow-amber-500/10 md:-translate-y-2">
-              <div className="flex items-center justify-between">
-                <span className="px-3 py-1 rounded-lg text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
-                  🥇 1º Lugar • Líder Geral
-                </span>
-                <span className="text-xs font-semibold text-amber-400 font-mono">
-                  {ranking[0].dealsCount} vendas
-                </span>
-              </div>
-
-              <div className="my-5 text-center">
-                <div className="w-18 h-18 mx-auto rounded-full bg-gradient-to-tr from-amber-400 to-yellow-600 p-1 shadow-lg shadow-amber-500/30">
-                  <div className="w-16 h-16 rounded-full bg-slate-950 flex items-center justify-center text-lg font-black text-amber-400">
-                    {ranking[0].name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                  </div>
-                </div>
-                <h4 className="text-base font-extrabold text-white mt-2">{ranking[0].name}</h4>
-                <p className="text-xs text-amber-300/80">{ranking[0].role}</p>
-                <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500 font-mono mt-2">
-                  R$ {ranking[0].achievedValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs text-amber-300 font-medium mb-1">
-                  <span>Meta Superada!</span>
-                  <span className="font-extrabold text-white">{ranking[0].percentAchieved}%</span>
-                </div>
-                <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full"
-                    style={{ width: "100%" }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 3º Lugar - Bronze */}
-          {ranking[2] && (
-            <div className="order-3 p-5 rounded-2xl bg-gradient-to-b from-amber-900/20 to-slate-900/80 border border-amber-800/40 relative flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-900/40 text-amber-300 border border-amber-800 flex items-center gap-1.5">
-                  🥉 3º Lugar
-                </span>
-                <span className="text-xs text-slate-400 font-mono">
-                  {ranking[2].dealsCount} vendas
-                </span>
-              </div>
-
-              <div className="my-4 text-center">
-                <div className="w-14 h-14 mx-auto rounded-full bg-gradient-to-tr from-amber-600 to-amber-800 p-0.5 shadow-md">
-                  <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-base font-bold text-amber-200">
-                    {ranking[2].name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                  </div>
-                </div>
-                <h4 className="text-sm font-bold text-white mt-2">{ranking[2].name}</h4>
-                <p className="text-xs text-slate-400">{ranking[2].role}</p>
-                <div className="text-lg font-extrabold text-cyan-400 font-mono mt-2">
-                  R$ {ranking[2].achievedValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs text-slate-300 mb-1">
-                  <span>Atingimento da Meta</span>
-                  <span className="font-bold text-white">{ranking[2].percentAchieved}%</span>
-                </div>
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-amber-600 rounded-full"
-                    style={{ width: `${Math.min(100, ranking[2].percentAchieved)}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Tabela de classificação geral da equipe */}
-        <div className="overflow-x-auto rounded-xl border border-slate-800">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-900 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-              <tr>
-                <th className="p-3.5">Posição</th>
-                <th className="p-3.5">Consultor Comercial</th>
-                <th className="p-3.5 text-center">Contratos Fechados</th>
-                <th className="p-3.5 text-right">Meta Alvo</th>
-                <th className="p-3.5 text-right">Faturado</th>
-                <th className="p-3.5 text-right">% da Meta</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {ranking.map((rep) => (
-                <tr key={rep.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="p-3.5 font-bold font-mono">
-                    {rep.rank === 1 ? "🥇 1º" : rep.rank === 2 ? "🥈 2º" : rep.rank === 3 ? "🥉 3º" : `#${rep.rank}`}
-                  </td>
-                  <td className="p-3.5">
-                    <div className="font-semibold text-white">{rep.name}</div>
-                    <div className="text-[11px] text-slate-400">{rep.role}</div>
-                  </td>
-                  <td className="p-3.5 text-center font-semibold text-slate-300">
-                    {rep.dealsCount}
-                  </td>
-                  <td className="p-3.5 text-right text-slate-400 font-mono">
-                    R$ {rep.targetValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </td>
-                  <td className="p-3.5 text-right font-bold text-white font-mono">
-                    R$ {rep.achievedValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </td>
-                  <td className="p-3.5 text-right">
-                    <span
-                      className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold font-mono ${
-                        rep.percentAchieved >= 100
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                          : rep.percentAchieved >= 80
-                          ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
-                          : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
-                      }`}
-                    >
-                      {rep.percentAchieved}%
+        {ranking.length === 0 ? (
+          <div className="py-10 text-center text-slate-400 text-xs rounded-xl bg-[#070D1B] border border-slate-800">
+            Nenhum contrato fechado no período atual para exibir o Leaderboard.
+          </div>
+        ) : (
+          <>
+            {/* Pódio Visual dos Top 3 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              {/* 2º Lugar - Prata */}
+              {ranking[1] && (
+                <div 
+                  onClick={() => openSellerDrilldown(ranking[1].userId || ranking[1].id, ranking[1].name)}
+                  className="order-2 md:order-1 p-5 rounded-2xl bg-[#070D1B] border border-slate-600/40 relative flex flex-col justify-between hover:border-slate-400 cursor-pointer transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1.5">
+                      🥈 2º Lugar
                     </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    <span className="text-xs text-slate-400 font-mono">
+                      {ranking[1].dealsWon ?? ranking[1].dealsCount} vendas
+                    </span>
+                  </div>
+
+                  <div className="my-4 text-center">
+                    <div className="w-14 h-14 mx-auto rounded-full bg-slate-700 p-0.5 shadow-md">
+                      <div className="w-full h-full rounded-full bg-[#0B1224] flex items-center justify-center text-base font-bold text-slate-200">
+                        {ranking[1].name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                      </div>
+                    </div>
+                    <h4 className="text-sm font-bold text-white mt-2 group-hover:text-blue-400 transition-colors">
+                      {ranking[1].name}
+                    </h4>
+                    <p className="text-xs text-slate-400">{ranking[1].email || "Consultor"}</p>
+                    <div className="text-lg font-extrabold text-cyan-400 font-mono mt-2">
+                      R$ {Number(ranking[1].totalRevenueWon ?? ranking[1].achievedValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs text-slate-400">
+                      <span>Conversão: {ranking[1].conversionRate ?? 0}%</span>
+                      <span className="text-slate-300 font-bold font-mono">
+                        Ticket: R$ {Number(ranking[1].avgTicket ?? 0).toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-center text-blue-400 flex items-center justify-center gap-1 pt-1 opacity-80 group-hover:opacity-100">
+                      <span>Ver histórico completo</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 1º Lugar - Ouro (Destaque Principal) */}
+              {ranking[0] && (
+                <div 
+                  onClick={() => openSellerDrilldown(ranking[0].userId || ranking[0].id, ranking[0].name)}
+                  className="order-1 md:order-2 p-6 rounded-2xl bg-gradient-to-b from-amber-500/10 via-[#0B1224] to-[#070D1B] border-2 border-amber-500/50 relative flex flex-col justify-between shadow-2xl shadow-amber-500/10 md:-translate-y-2 hover:border-amber-400 cursor-pointer transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="px-3 py-1 rounded-lg text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-sm">
+                      🥇 1º Lugar • Líder Comercial
+                    </span>
+                    <span className="text-xs font-semibold text-amber-400 font-mono">
+                      {ranking[0].dealsWon ?? ranking[0].dealsCount} vendas
+                    </span>
+                  </div>
+
+                  <div className="my-5 text-center">
+                    <div className="w-18 h-18 mx-auto rounded-full bg-gradient-to-tr from-amber-400 to-yellow-600 p-1 shadow-lg shadow-amber-500/30">
+                      <div className="w-16 h-16 rounded-full bg-[#070D1B] flex items-center justify-center text-lg font-black text-amber-400">
+                        {ranking[0].name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                      </div>
+                    </div>
+                    <h4 className="text-base font-extrabold text-white mt-2 group-hover:text-amber-300 transition-colors">
+                      {ranking[0].name}
+                    </h4>
+                    <p className="text-xs text-amber-300/80">{ranking[0].email || "Líder de Vendas"}</p>
+                    <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500 font-mono mt-2">
+                      R$ {Number(ranking[0].totalRevenueWon ?? ranking[0].achievedValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs text-amber-300 font-medium">
+                      <span>Conversão: {ranking[0].conversionRate ?? 0}%</span>
+                      <span className="font-mono">
+                        Ticket: R$ {Number(ranking[0].avgTicket ?? 0).toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-center text-amber-400 flex items-center justify-center gap-1 pt-1 opacity-80 group-hover:opacity-100">
+                      <span>Ver histórico completo</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 3º Lugar - Bronze */}
+              {ranking[2] && (
+                <div 
+                  onClick={() => openSellerDrilldown(ranking[2].userId || ranking[2].id, ranking[2].name)}
+                  className="order-3 p-5 rounded-2xl bg-[#070D1B] border border-amber-900/40 relative flex flex-col justify-between hover:border-amber-700 cursor-pointer transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-950/60 text-amber-300 border border-amber-800 flex items-center gap-1.5">
+                      🥉 3º Lugar
+                    </span>
+                    <span className="text-xs text-slate-400 font-mono">
+                      {ranking[2].dealsWon ?? ranking[2].dealsCount} vendas
+                    </span>
+                  </div>
+
+                  <div className="my-4 text-center">
+                    <div className="w-14 h-14 mx-auto rounded-full bg-amber-800/80 p-0.5 shadow-md">
+                      <div className="w-full h-full rounded-full bg-[#0B1224] flex items-center justify-center text-base font-bold text-amber-200">
+                        {ranking[2].name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                      </div>
+                    </div>
+                    <h4 className="text-sm font-bold text-white mt-2 group-hover:text-blue-400 transition-colors">
+                      {ranking[2].name}
+                    </h4>
+                    <p className="text-xs text-slate-400">{ranking[2].email || "Consultor"}</p>
+                    <div className="text-lg font-extrabold text-cyan-400 font-mono mt-2">
+                      R$ {Number(ranking[2].totalRevenueWon ?? ranking[2].achievedValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs text-slate-400">
+                      <span>Conversão: {ranking[2].conversionRate ?? 0}%</span>
+                      <span className="text-slate-300 font-bold font-mono">
+                        Ticket: R$ {Number(ranking[2].avgTicket ?? 0).toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-center text-blue-400 flex items-center justify-center gap-1 pt-1 opacity-80 group-hover:opacity-100">
+                      <span>Ver histórico completo</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Tabela de Classificação Geral da Equipe */}
+            <div className="overflow-x-auto rounded-xl border border-slate-800">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#070D1B] text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                  <tr>
+                    <th className="p-3.5">Posição</th>
+                    <th className="p-3.5">Consultor Comercial</th>
+                    <th className="p-3.5 text-center">Vendas Fechadas</th>
+                    <th className="p-3.5 text-center">Taxa de Conversão</th>
+                    <th className="p-3.5 text-right">Ticket Médio</th>
+                    <th className="p-3.5 text-right">Faturamento Total</th>
+                    <th className="p-3.5 text-right">Ação</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 bg-[#0B1224]/50">
+                  {ranking.map((rep) => (
+                    <tr key={rep.userId || rep.id} className="hover:bg-slate-800/30 transition-colors">
+                      <td className="p-3.5 font-bold font-mono">
+                        {rep.rank === 1 ? "🥇 1º" : rep.rank === 2 ? "🥈 2º" : rep.rank === 3 ? "🥉 3º" : `#${rep.rank}`}
+                      </td>
+                      <td className="p-3.5">
+                        <div className="font-semibold text-white">{rep.name}</div>
+                        <div className="text-[11px] text-slate-400">{rep.email || "Consultor"}</div>
+                      </td>
+                      <td className="p-3.5 text-center font-semibold text-slate-300">
+                        {rep.dealsWon ?? rep.dealsCount}
+                      </td>
+                      <td className="p-3.5 text-center font-mono text-cyan-400 font-semibold">
+                        {rep.conversionRate ?? 0}%
+                      </td>
+                      <td className="p-3.5 text-right text-slate-300 font-mono">
+                        R$ {Number(rep.avgTicket ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
+                      </td>
+                      <td className="p-3.5 text-right font-bold text-emerald-400 font-mono">
+                        R$ {Number(rep.totalRevenueWon ?? rep.achievedValue).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="p-3.5 text-right">
+                        <button
+                          onClick={() => openSellerDrilldown(rep.userId || rep.id, rep.name)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/20 font-medium transition-colors"
+                        >
+                          <Eye className="w-3 h-3" />
+                          Detalhes
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Modal de Nova Meta */}
+      {/* Modais Integrados */}
       <NewGoalModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveGoal}
+        isOpen={isNewGoalOpen}
+        onClose={() => setIsNewGoalOpen(false)}
+        onSuccess={() => loadData(true)}
+      />
+
+      <EditGoalModal
+        isOpen={!!editingGoal}
+        onClose={() => setEditingGoal(null)}
+        goal={editingGoal}
+        onSuccess={() => loadData(true)}
+      />
+
+      <SellerDetailModal
+        isOpen={!!selectedSellerId}
+        onClose={() => setSelectedSellerId(null)}
+        userId={selectedSellerId}
+        userName={selectedSellerName}
       />
     </div>
   );
