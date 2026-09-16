@@ -801,44 +801,44 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Deploy**:
   * `npx tsc --noEmit` e `npm run build` validados com **código 0** em backend e frontend. Commit sincronizado no GitHub `main` e aceito pelo Vercel.
 
-### 🟢 FASE 51: ANALYTICS AVANÇADO (PRO) - MAPEAMENTO DE CANAIS, FUNIL DE CONVERSÃO & GARGALOS (16/09/2026 - Manhã) [EM ANDAMENTO - ATRIBUÍDO À IDE 1]
-- [ ] **Mapeamento de Canais de Aquisição (`GET /analytics/channels`)**:
+### 🟢 FASE 51: ANALYTICS AVANÇADO (PRO) - MAPEAMENTO DE CANAIS, FUNIL DE CONVERSÃO & GARGALOS (16/09/2026 - Manhã) [CONCLUÍDA]
+- [x] **Mapeamento de Canais de Aquisição (`GET /analytics/channels`)**:
   * Mapear origens de leads no banco (WhatsApp, Orgânico, Tráfego Pago/Meta Ads, Indicação, Google Ads).
   * Cálculo de volume de leads, deals, propostas geradas, contratos fechados, receita faturada e ticket médio por canal.
-- [ ] **Refinamento do Funil de Conversão & Drop-off (`GET /analytics/funnel`)**:
+- [x] **Refinamento do Funil de Conversão & Drop-off (`GET /analytics/funnel`)**:
   * Etapas completas: Leads Captados -> Em Atendimento -> Oportunidade / Deal -> Proposta Enviada -> Contrato Assinado.
   * Cálculo de conversão global, conversão passo-a-passo e taxa de abandono (drop-off) percentual.
-- [ ] **Diagnóstico de Gargalos Operacionais & SLAs (`GET /analytics/bottlenecks`)**:
+- [x] **Diagnóstico de Gargalos Operacionais & SLAs (`GET /analytics/bottlenecks`)**:
   * Métricas reais de Tempo de Primeira Resposta (FRT) e Tempo Médio de Atendimento (TMA) por departamento.
   * Distribuição horária de pico e identificação de gargalos críticos de sobrecarga.
-- [ ] **Interface Frontend Enterprise (`/dashboard/analytics`)**:
+- [x] **Interface Frontend Enterprise (`/dashboard/analytics`)**:
   * Design system oficial VERSUS (Dark Glassmorphism, paleta `#0B1224`, `#0055FF`, `#00D2FF`, contrastes acessíveis).
   * Seletor reativo de períodos (`7d`, `30d`, `90d`) conectado aos endpoints reais.
   * Modais de detalhamento técnico (Drilldown de Canal e Gargalos) e botões funcionais.
   * Ausência de dados mockados rígidos: consumo direto da API com Empty States elegantes.
-- [ ] **Homologação e Validação Final**:
+- [x] **Homologação e Validação Final**:
   * Builds de Backend e Frontend validados com código 0.
   * Teste operacional e aprovação final com OK explícito do usuário.
 
-### 🎯 FASE 52: METAS COMERCIAIS, RUN RATE & LEADERBOARD GAMIFICADO (16/09/2026 - Manhã) [EM ANDAMENTO - AUTORIDADE EXCLUSIVA IDE 2]
-> **Aviso de Coordenação entre Ambientes**: Esta fase está sendo desenvolvida com exclusividade pela **IDE 2**. A **IDE 1** não deve alterar ou sobrescrever os arquivos de Metas Comerciais (`/dashboard/goals`, `backend/src/modules/goals`, `frontend/src/components/goals`).
+### 🟢 FASE 52: METAS COMERCIAIS, RUN RATE & LEADERBOARD GAMIFICADO (16/09/2026 - Manhã) [CONCLUÍDA]
+> **Status**: ✅ Concluída, Homologada e Aprovada pelo Usuário.
 
-- [ ] **Backend NestJS & Prisma (`GoalsModule`) [IDE 2]**:
+- [x] **Backend NestJS & Prisma (`GoalsModule`) [IDE 2]**:
   * Implementação de `GET /goals/summary`: cálculo matemático de Run Rate `(receita atual / dias decorridos) * dias totais`, velocidade diária (*daily pace*), projeção de fechamento, status de saúde da meta e suporte a filtros por canal (`channel`).
   * Implementação de `PUT /goals/:id`: edição atômica de metas (título, targetValue, período, responsável) com validação via `UpdateGoalDto`.
   * Implementação de `DELETE /goals/:id`: exclusão segura com isolamento estrito por tenant.
   * Implementação de `GET /goals/leaderboard/:userId/details`: drilldown com histórico de propostas aceitas, negócios ganhos e badges de conquistas desbloqueadas (🏆 Meta Batida, 💎 Ticket Destaque, ⚡ Closer de Elite, 🚀 Volume Máximo).
-- [ ] **Interface, Filtros & Pódio Gamificado (`/dashboard/goals`) [IDE 2 Frontend]**:
+- [x] **Interface, Filtros & Pódio Gamificado (`/dashboard/goals`) [IDE 2 Frontend]**:
   * Eliminação completa de mocks estáticos (`INITIAL_GOALS`, `INITIAL_RANKING`), conectando a página 100% aos endpoints reais.
   * Cartão Executivo de Run Rate: barra de progresso viva, status inteligente (*No Ritmo*, *Atenção*, *Superada*), seletor dinâmico de canal de aquisição (WhatsApp, Meta Ads, Google Ads, Orgânico, Indicação) e simulador interativo de projeção.
   * Alerta Executivo de Aceleração Comercial: acionado automaticamente quando o ritmo estiver abaixo do cronograma, com atalhos para automações de resgate de leads e auditoria de funil.
   * Pódio Visual dos Top 3 Vendedores (🥇 Ouro, 🥈 Prata, 🥉 Bronze) com coroas, badges de performance, taxa de conversão individual e ticket médio.
   * Modal de Drilldown do Vendedor (`SellerDetailModal.tsx`): histórico detalhado de vendas e selos de conquistas disparado ao clicar no vendedor no ranking.
   * Conexão do `NewGoalModal.tsx` e criação do `EditGoalModal.tsx` integrados à API com feedbacks visuais e Empty States padrão Dark Glassmorphism.
-- [ ] **Homologação e Validação Final [IDE 2]**:
+- [x] **Homologação e Validação Final [IDE 2]**:
   * Builds de Frontend e Backend aprovados com código 0.
   * Teste de fluxo real de QA aprovado (criação, edição, exclusão no Supabase e sanidade matemática).
-  * Tarefa mantida como `[ ]` / `[EM ANDAMENTO]` até teste e aprovação formal do usuário com OK explícito.
+  * Homologação e aprovação formal do usuário com OK explícito.
 
 ---
 
@@ -1064,37 +1064,37 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **[16/09/2026 - 13:25]** ▶️ **Retorno do Almoço / Ponto Batido**: Início oficial das atividades do período da tarde. Ponto registrado com sucesso. Prioridades vespertinas: 1) Refinamento técnico contra duplicação de e-mails enviados no Inbox; 2) Início do desenvolvimento da Fase 55 (Central de Suporte Enterprise estilo Lero).
 
 - **[16/09/2026 - 11:23]** ⚡ **[IDE 2] Ativação de Tarefa & Início de Desenvolvimento: Fase 54 (Correção do Perfil no Menu Lateral & Padronização Monocromática da Configuração de E-mail)**:
-  - **Status**: ⏳ Em Andamento (Fase 54 - Autoridade Exclusiva IDE 2).
-  - **Divisão de Trabalho**: A **IDE 2** assume com autoridade exclusiva a **Fase 54 (Correção do Perfil no Menu Lateral & Padronização Monocromática da Configuração de E-mail)**, garantindo que a IDE 1 não execute esta frente e mantenha foco nas rotinas de backend do Inbox.
-  - **Escopo Definido**:
-    1. Correção do fluxo de salvamento e atualização do nome do operador/usuário no rodapé da barra lateral (`Sidebar.tsx`), garantindo persistência no banco/localStorage, despacho de eventos e fechamento fluido do modal.
-    2. Eliminação total de gradientes coloridos e excessos visuais na tela de Configuração de E-mail (`EmailSettingsTab.tsx`), adotando o padrão monocromático corporativo (azul escuro, cinza/slate e branco).
-    3. Builds com código 0 (`npx tsc --noEmit` e `npm run build`) e deploy sincronizado na VPS (PM2 `versus-engine`) e Vercel.
+  - **Status**: ✅ Concluída e Aprovada.
+  - **Divisão de Trabalho**: A **IDE 2** assumiu com autoridade exclusiva a **Fase 54 (Correção do Perfil no Menu Lateral & Padronização Monocromática da Configuração de E-mail)** e a **Fase 55 (Central de Suporte & Modais Lero)**, entregando ambas homologadas.
+  - **[16/09/2026 - 14:07]** ✅ **Conclusão & Homologação Aprovada pelo Usuário**:
+    - **Fase 54**: Correção do fluxo de salvamento do nome do operador, fechamento com clique fora no backdrop e tecla ESC, eliminação total de gradientes e padronização monocromática corporativa na tela de e-mails (`EmailSettingsTab.tsx`).
+    - **Fase 55**: Hover fluído no menu do rodapé da Sidebar, modais completos no padrão Lero (`SoundAlertsModal`, `KeyboardShortcutsModal`, `UserProfileModal`), e Central de Suporte Omnichannel (`SupportTicket`, `TicketMessage`, `SupportModule`, rota `/support` com Troubleshooting, Meus Chamados e Gestão de Atendimento em tempo real).
+    - **Build & Deploy**: Compilações com código 0 (`npx tsc --noEmit` e `npm run build`) e deploy ativo na VPS Hostinger (PM2 `versus-engine` PID 453433) e Vercel.
 
-### 🟡 FASE 54: CORREÇÃO DO PERFIL NO MENU LATERAL & PADRONIZAÇÃO MONOCROMÁTICA DA CONFIGURAÇÃO DE E-MAIL (IDE 2)
-> **Aviso de Exclusividade**: Fase em desenvolvimento exclusivo pela **IDE 2**. Não alterar via IDE 1.
-- [ ] **Correção do Perfil no Menu Lateral (`Sidebar.tsx`)**:
+### 🟢 FASE 54: CORREÇÃO DO PERFIL NO MENU LATERAL & PADRONIZAÇÃO MONOCROMÁTICA DA CONFIGURAÇÃO DE E-MAIL (IDE 2) [CONCLUÍDA]
+> **Status**: ✅ Concluída, Homologada e Aprovada pelo Usuário.
+- [x] **Correção do Perfil no Menu Lateral (`Sidebar.tsx`)**:
   - Ajuste do modal de edição de perfil do operador no rodapé da Sidebar: sincronização imediata de `editName` ao abrir o modal, listener de tecla ESC e fechamento confiável via clique fora no backdrop (`onClick={(e) => e.stopPropagation()}`).
   - Salvamento reativo do nome com atualização imediata de estado, `localStorage`, disparo de evento `user_updated` e persistência no banco de dados via endpoints `@Patch('profile')`, `@Put('profile')` e `@Patch(':id')` em `users.controller.ts`.
   - Design corporativo limpo monocromático (`#0B1224`, `border-slate-800`, avatar azul corporativo sem gradientes).
-- [ ] **Padronização Monocromática nas Telas de Configuração de E-mail (`EmailSettingsTab.tsx`)**:
+- [x] **Padronização Monocromática nas Telas de Configuração de E-mail (`EmailSettingsTab.tsx`)**:
   - Remoção de todos os gradientes coloridos pesados, bordas berrantes e fundos não padronizados.
   - Aplicação rigorosa do design system corporativo: cartões de provedores, guias e formulários em azul escuro `#0B1224`, inputs em `#070D1B`, bordas em `border-slate-800` e tipografia branca/slate.
   - Cores de alerta (amarelo e vermelho) restritas exclusivamente a diagnósticos críticos de transporte/falhas SMTP.
-- [ ] **Validação de Build, Homologação & Deploy**:
+- [x] **Validação de Build, Homologação & Deploy**:
   - `npx tsc --noEmit` aprovado com código 0 tanto no frontend quanto no backend.
   - `npm run build` do frontend aprovado com código 0 gerando 36/36 páginas estáticas e dinâmicas.
   - `npm run build` do backend aprovado com código 0.
   - Deploy sincronizado na VPS (Hostinger PM2 `versus-engine`) e Vercel.
-  - Homologação condicionada à aprovação do usuário.
+  - Homologação aprovada pelo usuário.
 
-### 🟡 FASE 55: CENTRAL DE SUPORTE E ATENDIMENTO ENTERPRISE & MODAIS PADRÃO LERO
-> **Status**: ⏳ Implementada e Pronta para Homologação (Hover Rodapé, Modais de Som/Atalhos/Perfil e Central Omnichannel).
-- [ ] **Modelagem e Banco de Dados (Prisma ORM)**:
+### 🟢 FASE 55: CENTRAL DE SUPORTE E ATENDIMENTO ENTERPRISE & MODAIS PADRÃO LERO [CONCLUÍDA]
+> **Status**: ✅ Concluída, Homologada e Aprovada pelo Usuário.
+- [x] **Modelagem e Banco de Dados (Prisma ORM)**:
   - Criação dos modelos `SupportTicket` e `TicketMessage` com isolamento multitenant (`tenantId`, `userId`, `contactId`) e índices de busca.
   - Adição do campo `avatarUrl String?` ao modelo `User` e relações de chamados em `User`, `Tenant` e `Contact`.
   - Sincronização executada com sucesso via `npx prisma db push` e geração do Prisma Client via `npx prisma generate`.
-- [ ] **Backend NestJS (`SupportModule`)**:
+- [x] **Backend NestJS (`SupportModule`)**:
   - `GET /support/tickets`: Listagem com filtros por status, prioridade, categoria, busca e escopo do solicitante (`myOnly`), além de contadores por status.
   - `POST /support/tickets`: Abertura de novos chamados com DTO validado e criação da primeira mensagem.
   - `GET /support/tickets/:id`: Consulta completa do ticket com histórico de mensagens e anexos.
@@ -1102,21 +1102,21 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - `PATCH /support/tickets/:id/status`: Transição e atualização de status do chamado.
   - `PATCH /support/tickets/:id/assign`: Atribuição de tickets entre operadores do time.
   - `@Patch('profile')` e `@Put('profile')` em `users.controller.ts`: Suporte à persistência do `avatarUrl` e `name`.
-- [ ] **Modais de Configuração Estilo Lero & Hover no Menu do Rodapé (`Sidebar.tsx`)**:
+- [x] **Modais de Configuração Estilo Lero & Hover no Menu do Rodapé (`Sidebar.tsx`)**:
   - **Hover Automático**: Popover do perfil no rodapé abre suavemente ao passar o mouse (`onMouseEnter`) com delay de tolerância no `onMouseLeave`, exibindo opções com transição fluida.
   - **Alertas Sonoros (`SoundAlertsModal.tsx`)**: Controles independentes de volume (0 a 100%) e toggles para WhatsApp, Instagram, Suporte e Sistema, com prévia de áudio sintetizado em tempo real via Web Audio API e persistência no `localStorage`.
   - **Atalhos de Teclado (`KeyboardShortcutsModal.tsx`)**: Alternância dinâmica de sistema operacional entre Windows/Linux e macOS, com busca rápida e categorias de navegação e atendimento.
   - **Perfil do Operador (`UserProfileModal.tsx`)**: Suporte a upload/link de foto de perfil com preview em tempo real, edição de nome completo e persistência no banco via API.
-- [ ] **Central de Suporte Omnichannel Frontend (`/support`)**:
+- [x] **Central de Suporte Omnichannel Frontend (`/support`)**:
   - **Autoatendimento & Troubleshooting**: Busca instantânea em cards de conhecimento para WhatsApp, SMTP, CRM, Metas e IA.
   - **Meus Chamados**: Listagem dos protocolos abertos pelo usuário com badges de status, prioridade e acompanhamento.
   - **Painel de Atendimento (Admin / Equipe)**: Visualização em tela dividida com lista de chamados e chat em tempo real, suporte a notas internas e alteração de status.
-- [ ] **Validação de Build, Homologação & Deploy**:
+- [x] **Validação de Build, Homologação & Deploy**:
   - `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
   - `npm run build` do frontend aprovado com código 0 gerando 37/37 páginas.
   - `npm run build` do backend aprovado com código 0.
   - Deploy sincronizado na VPS (Hostinger PM2 `versus-engine`) e Vercel.
-  - Homologação condicionada à aprovação do usuário.
+  - Homologação aprovada pelo usuário.
 
 ---
 
