@@ -4,6 +4,7 @@ import {
 import { EmailsService } from './emails.service';
 import { SendEmailDto } from './dto/send-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
+import { EmailSettingsDto } from './dto/email-settings.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 
@@ -11,6 +12,32 @@ import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 @UseGuards(JwtAuthGuard)
 export class EmailsController {
   constructor(private readonly emailsService: EmailsService) {}
+
+  @Get('settings')
+  async getEmailSettings(@CurrentTenant() tenantId: string) {
+    return this.emailsService.getEmailSettings(tenantId);
+  }
+
+  @Post('settings')
+  async saveEmailSettings(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: EmailSettingsDto,
+  ) {
+    return this.emailsService.saveEmailSettings(tenantId, dto);
+  }
+
+  @Post('test-connection')
+  async testConnection(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: EmailSettingsDto,
+  ) {
+    return this.emailsService.testConnection(tenantId, dto);
+  }
+
+  @Get('transport/status')
+  async getTransportStatus(@CurrentTenant() tenantId: string) {
+    return this.emailsService.getTransportStatus(tenantId);
+  }
 
   @Get()
   async listEmails(
@@ -35,11 +62,6 @@ export class EmailsController {
   @Get('counts')
   async getCounts(@CurrentTenant() tenantId: string) {
     return this.emailsService.getCounts(tenantId);
-  }
-
-  @Get('transport/status')
-  async getTransportStatus() {
-    return this.emailsService.getTransportStatus();
   }
 
   @Get(':id')

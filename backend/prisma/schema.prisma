@@ -76,6 +76,7 @@ model Tenant {
   metaToken         String?
   metaPhoneNumberId String?
   whatsappSettings  Json?    // { antiBanEnabled: boolean, typingDelayMs: number, messageDelayMs: number }
+  emailSettings     Json?    // { provider: string, smtpHost?: string, smtpPort?: number, smtpSecure?: boolean, smtpUser?: string, smtpPass?: string, fromName?: string, fromEmail?: string, resendApiKey?: string, isActive?: boolean }
 }
 
 // ------------------------------------------------------

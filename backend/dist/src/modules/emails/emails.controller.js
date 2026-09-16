@@ -17,11 +17,24 @@ const common_1 = require("@nestjs/common");
 const emails_service_1 = require("./emails.service");
 const send_email_dto_1 = require("./dto/send-email.dto");
 const update_email_dto_1 = require("./dto/update-email.dto");
+const email_settings_dto_1 = require("./dto/email-settings.dto");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 let EmailsController = class EmailsController {
     constructor(emailsService) {
         this.emailsService = emailsService;
+    }
+    async getEmailSettings(tenantId) {
+        return this.emailsService.getEmailSettings(tenantId);
+    }
+    async saveEmailSettings(tenantId, dto) {
+        return this.emailsService.saveEmailSettings(tenantId, dto);
+    }
+    async testConnection(tenantId, dto) {
+        return this.emailsService.testConnection(tenantId, dto);
+    }
+    async getTransportStatus(tenantId) {
+        return this.emailsService.getTransportStatus(tenantId);
     }
     async listEmails(tenantId, folder, search, isStarred, isRead, page, limit) {
         return this.emailsService.listEmails(tenantId, {
@@ -35,9 +48,6 @@ let EmailsController = class EmailsController {
     }
     async getCounts(tenantId) {
         return this.emailsService.getCounts(tenantId);
-    }
-    async getTransportStatus() {
-        return this.emailsService.getTransportStatus();
     }
     async getEmailById(tenantId, id) {
         return this.emailsService.getEmailById(tenantId, id);
@@ -60,6 +70,36 @@ let EmailsController = class EmailsController {
 };
 exports.EmailsController = EmailsController;
 __decorate([
+    (0, common_1.Get)('settings'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EmailsController.prototype, "getEmailSettings", null);
+__decorate([
+    (0, common_1.Post)('settings'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, email_settings_dto_1.EmailSettingsDto]),
+    __metadata("design:returntype", Promise)
+], EmailsController.prototype, "saveEmailSettings", null);
+__decorate([
+    (0, common_1.Post)('test-connection'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, email_settings_dto_1.EmailSettingsDto]),
+    __metadata("design:returntype", Promise)
+], EmailsController.prototype, "testConnection", null);
+__decorate([
+    (0, common_1.Get)('transport/status'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EmailsController.prototype, "getTransportStatus", null);
+__decorate([
     (0, common_1.Get)(),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('folder')),
@@ -79,12 +119,6 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], EmailsController.prototype, "getCounts", null);
-__decorate([
-    (0, common_1.Get)('transport/status'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], EmailsController.prototype, "getTransportStatus", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

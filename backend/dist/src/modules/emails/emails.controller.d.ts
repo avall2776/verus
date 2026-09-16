@@ -1,9 +1,59 @@
 import { EmailsService } from './emails.service';
 import { SendEmailDto } from './dto/send-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
+import { EmailSettingsDto } from './dto/email-settings.dto';
 export declare class EmailsController {
     private readonly emailsService;
     constructor(emailsService: EmailsService);
+    getEmailSettings(tenantId: string): Promise<{
+        provider: any;
+        smtpHost: any;
+        smtpPort: any;
+        smtpSecure: any;
+        smtpUser: any;
+        hasPassword: boolean;
+        fromName: any;
+        fromEmail: any;
+        resendApiKey: string;
+        isActive: any;
+        configured: boolean;
+        connected: boolean;
+        connectionError: string;
+        source: string;
+    }>;
+    saveEmailSettings(tenantId: string, dto: EmailSettingsDto): Promise<{
+        success: boolean;
+        message: string;
+        connected: boolean;
+        connectionError: any;
+        settings: any;
+    }>;
+    testConnection(tenantId: string, dto: EmailSettingsDto): Promise<{
+        success: boolean;
+        error: string;
+        message?: undefined;
+        details?: undefined;
+        code?: undefined;
+    } | {
+        success: boolean;
+        message: string;
+        error?: undefined;
+        details?: undefined;
+        code?: undefined;
+    } | {
+        success: boolean;
+        error: any;
+        details: any;
+        code: any;
+        message?: undefined;
+    }>;
+    getTransportStatus(tenantId: string): Promise<{
+        configured: boolean;
+        connected: boolean;
+        from: string;
+        source: "tenant" | "none" | "env";
+        connectionError: string;
+    }>;
     listEmails(tenantId: string, folder?: string, search?: string, isStarred?: string, isRead?: string, page?: string, limit?: string): Promise<{
         emails: ({
             contact: {
@@ -58,16 +108,6 @@ export declare class EmailsController {
         draft: number;
         trash: number;
         archive: number;
-    }>;
-    getTransportStatus(): Promise<{
-        configured: boolean;
-        connected: boolean;
-        provider: string;
-        host: string;
-        port: number;
-        user: string;
-        from: string;
-        connectionError: string;
     }>;
     getEmailById(tenantId: string, id: string): Promise<{
         contact: {

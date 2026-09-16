@@ -1,19 +1,59 @@
 import { PrismaService } from '../../shared/database/prisma.service';
 import { SendEmailDto } from './dto/send-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
+import { EmailSettingsDto } from './dto/email-settings.dto';
 export declare class EmailsService {
     private readonly prisma;
     private readonly logger;
     constructor(prisma: PrismaService);
     private getTransporter;
-    getTransportStatus(): Promise<{
+    getEmailSettings(tenantId: string): Promise<{
+        provider: any;
+        smtpHost: any;
+        smtpPort: any;
+        smtpSecure: any;
+        smtpUser: any;
+        hasPassword: boolean;
+        fromName: any;
+        fromEmail: any;
+        resendApiKey: string;
+        isActive: any;
         configured: boolean;
         connected: boolean;
-        provider: string;
-        host: string;
-        port: number;
-        user: string;
+        connectionError: string;
+        source: string;
+    }>;
+    saveEmailSettings(tenantId: string, dto: EmailSettingsDto): Promise<{
+        success: boolean;
+        message: string;
+        connected: boolean;
+        connectionError: any;
+        settings: any;
+    }>;
+    testConnection(tenantId: string, dto: EmailSettingsDto): Promise<{
+        success: boolean;
+        error: string;
+        message?: undefined;
+        details?: undefined;
+        code?: undefined;
+    } | {
+        success: boolean;
+        message: string;
+        error?: undefined;
+        details?: undefined;
+        code?: undefined;
+    } | {
+        success: boolean;
+        error: any;
+        details: any;
+        code: any;
+        message?: undefined;
+    }>;
+    getTransportStatus(tenantId?: string): Promise<{
+        configured: boolean;
+        connected: boolean;
         from: string;
+        source: "tenant" | "none" | "env";
         connectionError: string;
     }>;
     private getEffectiveTenantId;

@@ -38,11 +38,7 @@ let GoalsService = class GoalsService {
                 periodEnd: { gte: startOfMonth },
             },
         });
-        let totalRevenueTarget = revenueGoals.reduce((acc, g) => acc + Number(g.targetValue || 0), 0);
-        const isBaseline = totalRevenueTarget === 0;
-        if (isBaseline) {
-            totalRevenueTarget = 150000;
-        }
+        const totalRevenueTarget = revenueGoals.reduce((acc, g) => acc + Number(g.targetValue || 0), 0);
         const dealWhere = {
             tenantId,
             createdAt: { gte: startOfMonth, lte: endOfMonth },
@@ -68,10 +64,7 @@ let GoalsService = class GoalsService {
             select: { id: true, value: true },
         });
         const contractsRevenue = signedContracts.reduce((acc, c) => acc + Number(c.value || 0), 0);
-        let totalRevenueWon = Math.max(dealsRevenue, contractsRevenue);
-        if (totalRevenueWon === 0 && isBaseline) {
-            totalRevenueWon = Math.round((totalRevenueTarget * (daysPassed / totalDays)) * 0.92);
-        }
+        const totalRevenueWon = Math.max(dealsRevenue, contractsRevenue);
         const dailyPace = daysPassed > 0 ? +(totalRevenueWon / daysPassed).toFixed(2) : 0;
         const projectedRevenue = +(totalRevenueWon + (dailyPace * daysRemaining)).toFixed(2);
         const runRatePercentage = totalRevenueTarget > 0
@@ -128,7 +121,7 @@ let GoalsService = class GoalsService {
             expectedPacePercentage,
             paceGap,
             healthStatus,
-            isBaseline,
+            isBaseline: false,
             topSeller,
             goalsCount: revenueGoals.length,
             selectedChannel: channel || 'all',
@@ -278,6 +271,17 @@ let GoalsService = class GoalsService {
                 role: true,
             },
         });
+        const userGoals = await this.prisma.goal.findMany({
+            where: {
+                tenantId,
+                targetType: 'REVENUE',
+            },
+            select: {
+                id: true,
+                userId: true,
+                targetValue: true,
+            },
+        });
         const deals = await this.prisma.deal.findMany({
             where: { tenantId },
             select: {
@@ -295,6 +299,9 @@ let GoalsService = class GoalsService {
             const totalDeals = userDeals.length;
             const conversionRate = totalDeals > 0 ? Math.round((wonDeals.length / totalDeals) * 100) : 0;
             const avgTicket = wonDeals.length > 0 ? Math.round(totalRevenueWon / wonDeals.length) : 0;
+            const personalGoal = userGoals.find((g) => g.userId === u.id);
+            const targetValue = personalGoal ? Number(personalGoal.targetValue || 0) : 0;
+            const percentAchieved = targetValue > 0 ? +((totalRevenueWon / targetValue) * 100).toFixed(1) : 0;
             return {
                 userId: u.id,
                 id: u.id,
@@ -307,8 +314,8 @@ let GoalsService = class GoalsService {
                 dealsCount: wonDeals.length,
                 revenueWon: totalRevenueWon,
                 achievedValue: totalRevenueWon,
-                targetValue: 60000,
-                percentAchieved: 60000 > 0 ? +((totalRevenueWon / 60000) * 100).toFixed(1) : 0,
+                targetValue,
+                percentAchieved,
                 conversionRate,
                 avgTicket,
             };
@@ -410,14 +417,14 @@ let GoalsService = class GoalsService {
     }
     computeBadges(metrics) {
         const badges = [];
-        const target = metrics.targetValue || 60000;
-        if (metrics.totalRevenueWon >= target) {
+        const target = Number(metrics.targetValue || 0);
+        if (target > 0 && metrics.totalRevenueWon >= target) {
             badges.push({
                 id: 'target_met',
                 title: 'Meta Batida (100%+)',
                 icon: '🏆',
                 description: 'Superou a meta estipulada para o ciclo.',
-                color: 'emerald',
+                color: 'blue',
             });
         }
         if (metrics.avgTicket >= 8000) {

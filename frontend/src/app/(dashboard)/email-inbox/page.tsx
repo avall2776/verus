@@ -6,12 +6,13 @@ import {
   Search, RefreshCw, Plus, Paperclip, CheckCircle2, Clock,
   ShieldCheck, FileText, ChevronRight, Reply, Forward,
   Filter, ExternalLink, Download, ArrowRight, Sparkles, Eye,
-  Building2, User as UserIcon, AlertCircle
+  Building2, User as UserIcon, AlertCircle, Settings
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { EmailItem, EmailFolderCounts } from "@/types/email";
 import EmailComposerModal from "@/components/emails/EmailComposerModal";
+import EmailSettingsTab from "@/components/emails/EmailSettingsTab";
 
 export default function EmailInboxPage() {
   const [emails, setEmails] = useState<EmailItem[]>([]);
@@ -37,6 +38,9 @@ export default function EmailInboxPage() {
   const [composerInitialRecipient, setComposerInitialRecipient] = useState("");
   const [composerInitialSubject, setComposerInitialSubject] = useState("");
   const [composerInitialBody, setComposerInitialBody] = useState("");
+
+  // Aba Ativa: 'messages' (Caixa de mensagens) ou 'settings' (Configuração individual de e-mail)
+  const [currentTab, setCurrentTab] = useState<"messages" | "settings">("messages");
 
   // Status do Transporte SMTP
   const [transportStatus, setTransportStatus] = useState<{
@@ -231,29 +235,30 @@ export default function EmailInboxPage() {
             <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
               Inbox Unificado de E-mails
               <span 
+                onClick={() => setCurrentTab("settings")}
                 title={
                   transportStatus?.configured 
                     ? (transportStatus?.connected 
-                        ? `Servidor SMTP Conectado: ${transportStatus.host} (${transportStatus.user || 'autenticado'})` 
-                        : `Falha na Conexão SMTP: ${transportStatus.connectionError || 'Verifique credenciais no servidor'}`)
-                    : "SMTP não configurado no servidor. Configure SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS no .env da VPS."
+                        ? `Servidor SMTP Conectado: ${transportStatus.host} (${transportStatus.user || 'autenticado'}). Clique para configurar.` 
+                        : `Falha na Conexão SMTP: ${transportStatus.connectionError || 'Verifique credenciais'}. Clique para ajustar.`)
+                    : "SMTP não configurado. Clique para configurar a conta da empresa."
                 }
-                className={`text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full border font-bold flex items-center gap-1.5 ${
+                className={`text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full border font-bold flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 ${
                   transportStatus?.connected
-                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
                     : transportStatus?.configured
-                    ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                    : "bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                    ? "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
+                    : "bg-cyan-500/10 text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/20"
                 }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${
                   transportStatus?.connected ? "bg-emerald-400 animate-pulse" : transportStatus?.configured ? "bg-amber-400" : "bg-cyan-400"
                 }`} />
                 {transportStatus?.connected
-                  ? `SMTP Ativo (${transportStatus.provider})`
+                  ? `E-mail Conectado (${transportStatus.provider})`
                   : transportStatus?.configured
-                  ? "SMTP Configurado"
-                  : "SMTP Integrado"}
+                  ? "Configurado (Pendente)"
+                  : "Configurar E-mail"}
               </span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-400">
@@ -287,8 +292,57 @@ export default function EmailInboxPage() {
         </div>
       </div>
 
-      {/* Container 3-Pane Enterprise */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[760px]">
+      {/* Navegação de Abas do Módulo de E-mails */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+        <div className="flex items-center gap-2 p-1 rounded-xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-md">
+          <button
+            onClick={() => setCurrentTab("messages")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              currentTab === "messages"
+                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+            }`}
+          >
+            <Mail className="w-3.5 h-3.5" />
+            Caixa de Mensagens
+            {counts.unread > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-400 text-slate-950 font-bold ml-1">
+                {counts.unread}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setCurrentTab("settings")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              currentTab === "settings"
+                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+            }`}
+          >
+            <Settings className="w-3.5 h-3.5" />
+            Configuração de E-mail
+            <span className={`w-2 h-2 rounded-full ml-1 ${
+              transportStatus?.connected ? "bg-emerald-400" : "bg-amber-400 animate-pulse"
+            }`} />
+          </button>
+        </div>
+
+        {currentTab === "messages" && (
+          <div className="text-[11px] text-slate-400 hidden sm:block">
+            Pasta ativa: <strong className="text-white">{activeFolder}</strong> • {counts.inbox} mensagens
+          </div>
+        )}
+      </div>
+
+      {currentTab === "settings" ? (
+        <EmailSettingsTab onSettingsSaved={() => {
+          fetchTransportStatus();
+          fetchEmails(true);
+        }} />
+      ) : (
+        /* Container 3-Pane Enterprise */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[760px]">
         {/* PANE 1: Pastas e Navegação Lateral (col-span-3) */}
         <div className="lg:col-span-3 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md p-4 flex flex-col justify-between shadow-xl">
           <div className="space-y-4">
@@ -674,6 +728,7 @@ export default function EmailInboxPage() {
           )}
         </div>
       </div>
+      )}
 
       {/* Modal Composer */}
       <EmailComposerModal

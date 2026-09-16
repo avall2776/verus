@@ -19,9 +19,63 @@ let EmailsService = EmailsService_1 = class EmailsService {
         this.prisma = prisma;
         this.logger = new common_1.Logger(EmailsService_1.name);
     }
-    getTransporter() {
+    async getTransporter(tenantId) {
+        if (tenantId) {
+            try {
+                const effectiveId = await this.getEffectiveTenantId(tenantId);
+                const tenant = await this.prisma.tenant.findUnique({
+                    where: { id: effectiveId },
+                    select: { id: true, name: true, email: true, emailSettings: true },
+                });
+                const settings = tenant?.emailSettings;
+                if (settings && settings.isActive !== false) {
+                    if (settings.provider === 'resend' && settings.resendApiKey) {
+                        const transporter = nodemailer.createTransport({
+                            host: 'smtp.resend.com',
+                            port: 465,
+                            secure: true,
+                            auth: {
+                                user: 'resend',
+                                pass: settings.resendApiKey,
+                            },
+                        });
+                        const from = settings.fromEmail
+                            ? (settings.fromName ? `"${settings.fromName}" <${settings.fromEmail}>` : settings.fromEmail)
+                            : 'VERSUS <onboarding@resend.dev>';
+                        return { transporter, fromAddress: from, source: 'tenant' };
+                    }
+                    if (settings.smtpUser && settings.smtpPass) {
+                        const host = settings.smtpHost || (settings.provider === 'gmail' ? 'smtp.gmail.com' : (settings.provider === 'hostinger' ? 'smtp.hostinger.com' : 'smtp.gmail.com'));
+                        const port = Number(settings.smtpPort) || (settings.provider === 'hostinger' ? 465 : 587);
+                        const secure = settings.smtpSecure !== undefined ? Boolean(settings.smtpSecure) : (port === 465);
+                        const transporter = nodemailer.createTransport({
+                            host,
+                            port,
+                            secure,
+                            auth: {
+                                user: settings.smtpUser,
+                                pass: settings.smtpPass,
+                            },
+                            tls: {
+                                rejectUnauthorized: false,
+                            },
+                        });
+                        const fromName = settings.fromName || tenant.name || 'VERSUS';
+                        const fromEmail = settings.fromEmail || settings.smtpUser;
+                        return {
+                            transporter,
+                            fromAddress: `"${fromName}" <${fromEmail}>`,
+                            source: 'tenant',
+                        };
+                    }
+                }
+            }
+            catch (err) {
+                this.logger.warn(`Erro ao carregar configurações de e-mail do tenant ${tenantId}: ${err.message}`);
+            }
+        }
         if (process.env.RESEND_API_KEY && !process.env.SMTP_HOST) {
-            return nodemailer.createTransport({
+            const transporter = nodemailer.createTransport({
                 host: 'smtp.resend.com',
                 port: 465,
                 secure: true,
@@ -30,69 +84,200 @@ let EmailsService = EmailsService_1 = class EmailsService {
                     pass: process.env.RESEND_API_KEY,
                 },
             });
+            const from = process.env.SMTP_FROM || process.env.MAIL_FROM || 'VERSUS <onboarding@resend.dev>';
+            return { transporter, fromAddress: from, source: 'env' };
         }
         const host = process.env.SMTP_HOST;
         const port = Number(process.env.SMTP_PORT) || 587;
         const user = process.env.SMTP_USER;
         const pass = process.env.SMTP_PASS;
         const secure = process.env.SMTP_SECURE === 'true' || port === 465;
-        if (!host || !user || !pass) {
-            return null;
+        if (host && user && pass) {
+            const transporter = nodemailer.createTransport({
+                host,
+                port,
+                secure,
+                auth: { user, pass },
+                tls: { rejectUnauthorized: process.env.SMTP_IGNORE_TLS !== 'true' },
+            });
+            const from = process.env.SMTP_FROM || process.env.MAIL_FROM || (user ? `VERSUS <${user}>` : 'VERSUS <comercial@versus.com.br>');
+            return { transporter, fromAddress: from, source: 'env' };
         }
-        return nodemailer.createTransport({
-            host,
-            port,
-            secure,
-            auth: {
-                user,
-                pass,
-            },
-            tls: {
-                rejectUnauthorized: process.env.SMTP_IGNORE_TLS !== 'true',
-            },
-        });
+        return { transporter: null, fromAddress: '', source: 'none' };
     }
-    async getTransportStatus() {
-        const isResend = Boolean(process.env.RESEND_API_KEY && !process.env.SMTP_HOST);
-        const host = isResend ? 'smtp.resend.com' : (process.env.SMTP_HOST || null);
-        const port = Number(process.env.SMTP_PORT) || (isResend ? 465 : 587);
-        const user = isResend ? 'resend' : (process.env.SMTP_USER || null);
-        const hasPass = Boolean(process.env.SMTP_PASS || process.env.RESEND_API_KEY);
-        const from = process.env.SMTP_FROM || process.env.MAIL_FROM || (user ? `VERSUS <${user}>` : null);
-        const isConfigured = Boolean(host && user && hasPass);
-        let isConnected = false;
+    async getEmailSettings(tenantId) {
+        const effectiveId = await this.getEffectiveTenantId(tenantId);
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: effectiveId },
+            select: { id: true, name: true, email: true, emailSettings: true },
+        });
+        const s = (tenant?.emailSettings || {});
+        const hasTenantCreds = Boolean((s.smtpUser && s.smtpPass) || s.resendApiKey);
+        let connected = false;
         let connectionError = null;
-        if (isConfigured) {
+        if (hasTenantCreds) {
             try {
-                const transporter = this.getTransporter();
+                const { transporter } = await this.getTransporter(effectiveId);
                 if (transporter) {
                     await Promise.race([
                         transporter.verify(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout ao conectar no servidor SMTP (5s)')), 5000)),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout ao conectar no servidor de e-mail (5s)')), 5000)),
                     ]);
-                    isConnected = true;
+                    connected = true;
                 }
             }
             catch (err) {
-                connectionError = err.message || 'Erro ao verificar conexão SMTP';
-                console.error('[EMAIL_SMTP_VERIFY_ERROR] Falha ao testar conexão SMTP:', {
-                    host,
-                    port,
-                    user,
-                    error: err.message,
-                    code: err.code,
-                    response: err.response,
-                });
+                connectionError = err.message || 'Falha ao conectar no servidor SMTP';
             }
         }
         return {
-            configured: isConfigured,
+            provider: s.provider || 'gmail',
+            smtpHost: s.smtpHost || 'smtp.gmail.com',
+            smtpPort: s.smtpPort || 587,
+            smtpSecure: s.smtpSecure ?? false,
+            smtpUser: s.smtpUser || '',
+            hasPassword: Boolean(s.smtpPass),
+            fromName: s.fromName || tenant?.name || '',
+            fromEmail: s.fromEmail || s.smtpUser || '',
+            resendApiKey: s.resendApiKey ? `${s.resendApiKey.slice(0, 6)}...` : '',
+            isActive: s.isActive ?? true,
+            configured: hasTenantCreds,
+            connected,
+            connectionError,
+            source: hasTenantCreds ? 'tenant' : (process.env.SMTP_HOST || process.env.RESEND_API_KEY ? 'env' : 'none'),
+        };
+    }
+    async saveEmailSettings(tenantId, dto) {
+        const effectiveId = await this.getEffectiveTenantId(tenantId);
+        const currentTenant = await this.prisma.tenant.findUnique({
+            where: { id: effectiveId },
+            select: { emailSettings: true },
+        });
+        const currentSettings = (currentTenant?.emailSettings || {});
+        const newSettings = {
+            provider: dto.provider,
+            smtpHost: dto.smtpHost || (dto.provider === 'gmail' ? 'smtp.gmail.com' : (dto.provider === 'hostinger' ? 'smtp.hostinger.com' : 'smtp.gmail.com')),
+            smtpPort: Number(dto.smtpPort) || (dto.provider === 'hostinger' ? 465 : 587),
+            smtpSecure: dto.smtpSecure !== undefined ? Boolean(dto.smtpSecure) : (dto.smtpPort === 465 || dto.provider === 'hostinger'),
+            smtpUser: dto.smtpUser || '',
+            smtpPass: dto.smtpPass ? dto.smtpPass : currentSettings.smtpPass,
+            fromName: dto.fromName || '',
+            fromEmail: dto.fromEmail || dto.smtpUser || '',
+            resendApiKey: dto.resendApiKey ? dto.resendApiKey : currentSettings.resendApiKey,
+            isActive: dto.isActive !== undefined ? Boolean(dto.isActive) : true,
+            updatedAt: new Date().toISOString(),
+        };
+        await this.prisma.tenant.update({
+            where: { id: effectiveId },
+            data: {
+                emailSettings: newSettings,
+            },
+        });
+        const testRes = await this.testConnection(effectiveId, newSettings);
+        return {
+            success: true,
+            message: 'Configurações de e-mail salvas com sucesso para o cliente!',
+            connected: testRes.success,
+            connectionError: testRes.error || null,
+            settings: {
+                ...newSettings,
+                smtpPass: undefined,
+                hasPassword: Boolean(newSettings.smtpPass),
+            },
+        };
+    }
+    async testConnection(tenantId, dto) {
+        const effectiveId = await this.getEffectiveTenantId(tenantId);
+        let passToUse = dto.smtpPass;
+        if (!passToUse) {
+            const tenant = await this.prisma.tenant.findUnique({
+                where: { id: effectiveId },
+                select: { emailSettings: true },
+            });
+            const s = (tenant?.emailSettings || {});
+            passToUse = s.smtpPass;
+        }
+        try {
+            let testTransporter;
+            if (dto.provider === 'resend') {
+                const key = dto.resendApiKey;
+                if (!key) {
+                    return { success: false, error: 'Chave de API do Resend não informada.' };
+                }
+                testTransporter = nodemailer.createTransport({
+                    host: 'smtp.resend.com',
+                    port: 465,
+                    secure: true,
+                    auth: { user: 'resend', pass: key },
+                });
+            }
+            else {
+                const host = dto.smtpHost || (dto.provider === 'gmail' ? 'smtp.gmail.com' : (dto.provider === 'hostinger' ? 'smtp.hostinger.com' : 'smtp.gmail.com'));
+                const port = Number(dto.smtpPort) || (dto.provider === 'hostinger' ? 465 : 587);
+                const secure = dto.smtpSecure !== undefined ? Boolean(dto.smtpSecure) : (port === 465);
+                if (!dto.smtpUser || !passToUse) {
+                    return { success: false, error: 'E-mail do usuário e senha são obrigatórios para o teste de conexão.' };
+                }
+                testTransporter = nodemailer.createTransport({
+                    host,
+                    port,
+                    secure,
+                    auth: {
+                        user: dto.smtpUser,
+                        pass: passToUse,
+                    },
+                    tls: {
+                        rejectUnauthorized: false,
+                    },
+                });
+            }
+            await Promise.race([
+                testTransporter.verify(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de 7 segundos ao tentar conectar ao servidor de e-mail.')), 7000)),
+            ]);
+            return {
+                success: true,
+                message: 'Conexão e autenticação com o servidor de e-mail foram bem-sucedidas!',
+            };
+        }
+        catch (err) {
+            let friendlyMessage = err.message || 'Erro ao conectar ao servidor SMTP';
+            if (err.responseCode === 535 || friendlyMessage.includes('BadCredentials') || friendlyMessage.includes('Invalid login') || friendlyMessage.includes('Username and Password not accepted')) {
+                friendlyMessage = 'Credenciais rejeitadas pelo provedor. Verifique se o e-mail e a Senha de App (16 dígitos) estão corretos e se a autenticação em 2 etapas está ativa.';
+            }
+            else if (err.code === 'ETIMEDOUT' || err.code === 'ECONNREFUSED') {
+                friendlyMessage = `Não foi possível conectar ao host SMTP na porta informada (${err.code}).`;
+            }
+            return {
+                success: false,
+                error: friendlyMessage,
+                details: err.message,
+                code: err.code,
+            };
+        }
+    }
+    async getTransportStatus(tenantId) {
+        const effectiveId = tenantId ? await this.getEffectiveTenantId(tenantId) : null;
+        const { transporter, fromAddress, source } = await this.getTransporter(effectiveId || undefined);
+        let isConnected = false;
+        let connectionError = null;
+        if (transporter) {
+            try {
+                await Promise.race([
+                    transporter.verify(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout ao conectar no servidor SMTP (5s)')), 5000)),
+                ]);
+                isConnected = true;
+            }
+            catch (err) {
+                connectionError = err.message || 'Erro ao verificar conexão SMTP';
+            }
+        }
+        return {
+            configured: Boolean(transporter),
             connected: isConnected,
-            provider: isResend ? 'Resend' : (host || 'Nenhum'),
-            host,
-            port,
-            user: user ? `${user.slice(0, 3)}***@${user.split('@')[1] || 'dominio'}` : null,
-            from,
+            from: fromAddress || null,
+            source,
             connectionError,
         };
     }
@@ -251,27 +436,20 @@ let EmailsService = EmailsService_1 = class EmailsService {
                 deal: true,
             },
         });
-        const transporter = this.getTransporter();
+        const { transporter, fromAddress, source } = await this.getTransporter(effectiveTenantId);
         if (!transporter) {
-            const missingVars = [];
-            if (!process.env.SMTP_HOST && !process.env.RESEND_API_KEY)
-                missingVars.push('SMTP_HOST');
-            if (!process.env.SMTP_USER && !process.env.RESEND_API_KEY)
-                missingVars.push('SMTP_USER');
-            if (!process.env.SMTP_PASS && !process.env.RESEND_API_KEY)
-                missingVars.push('SMTP_PASS');
-            console.error('[EMAIL_SMTP_CONFIG_ERROR] Falha ao disparar e-mail externo: Credenciais SMTP ausentes no servidor.', {
+            console.error('[EMAIL_SMTP_CONFIG_ERROR] Falha ao disparar e-mail externo: Nenhuma credencial de e-mail conectada para o cliente.', {
                 destinatario: dto.recipientEmail,
                 assunto: dto.subject,
-                variaveisFaltantes: missingVars,
-                instrucoes: 'Configure SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS e MAIL_FROM no .env da VPS/Vercel.',
+                tenantId: effectiveTenantId,
+                source,
             });
-            throw new common_1.BadRequestException(`E-mail registrado no banco VERSUS, mas NÃO foi disparado externamente: Credenciais SMTP ausentes no ambiente do servidor (${missingVars.join(', ')}). Configure o .env na VPS.`);
+            throw new common_1.BadRequestException(`E-mail registrado no banco VERSUS, mas NÃO foi disparado externamente: Nenhuma conta de e-mail conectada para este cliente. Acesse a aba "Configurações de E-mail" para conectar seu Gmail ou servidor SMTP.`);
         }
         try {
-            const fromAddress = process.env.SMTP_FROM || process.env.MAIL_FROM || (process.env.SMTP_USER ? `"${dto.senderName || 'VERSUS'}" <${process.env.SMTP_USER}>` : `"${dto.senderName || 'VERSUS'}" <${dto.senderEmail || 'comercial@versus.com.br'}>`);
+            const finalFromAddress = fromAddress || (dto.senderEmail ? `"${dto.senderName || 'VERSUS'}" <${dto.senderEmail}>` : 'VERSUS <comercial@versus.com.br>');
             const mailOptions = {
-                from: fromAddress,
+                from: finalFromAddress,
                 to: dto.recipientName ? `"${dto.recipientName}" <${dto.recipientEmail}>` : dto.recipientEmail,
                 subject: dto.subject,
                 text: dto.bodyText,
