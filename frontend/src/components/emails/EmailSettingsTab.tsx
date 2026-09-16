@@ -259,7 +259,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-16 space-y-4 rounded-2xl bg-slate-900/40 border border-slate-800">
-        <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin" />
+        <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
         <p className="text-sm text-slate-400 font-medium">Carregando configurações de e-mail do cliente...</p>
       </div>
     );
@@ -268,24 +268,24 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300 pb-12">
       {/* Banner de Status Atual */}
-      <div className={`p-5 rounded-2xl border backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
+      <div className={`p-5 rounded-2xl border backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all shadow-lg ${
         testResult.tested && testResult.success
-          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+          ? "bg-slate-900/90 border-emerald-500/40 text-slate-200"
           : testResult.tested && !testResult.success
-          ? "bg-rose-500/10 border-rose-500/30 text-rose-300"
+          ? "bg-slate-900/90 border-rose-500/40 text-slate-200"
           : formData.configured
-          ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
-          : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+          ? "bg-slate-900/90 border-blue-500/40 text-slate-200"
+          : "bg-slate-900/90 border-slate-800 text-slate-200"
       }`}>
         <div className="flex items-start gap-3.5">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
             testResult.tested && testResult.success
-              ? "bg-emerald-500/20 text-emerald-400"
+              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
               : testResult.tested && !testResult.success
-              ? "bg-rose-500/20 text-rose-400"
+              ? "bg-rose-500/10 text-rose-400 border border-rose-500/30"
               : formData.configured
-              ? "bg-cyan-500/20 text-cyan-400"
-              : "bg-amber-500/20 text-amber-400"
+              ? "bg-blue-600/10 text-blue-400 border border-blue-500/30"
+              : "bg-slate-800 text-slate-400 border border-slate-700"
           }`}>
             {testResult.tested && testResult.success ? (
               <CheckCircle2 className="w-5 h-5" />
@@ -308,7 +308,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                   ? "Configuração Registrada"
                   : "Nenhum E-mail Conectado"}
               </h3>
-              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-black/40 border border-white/10 text-slate-300">
+              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-slate-300">
                 Cliente Individual
               </span>
             </div>
@@ -326,16 +326,16 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
           type="button"
           onClick={handleTestConnection}
           disabled={testing}
-          className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 hover:border-slate-500 text-xs font-semibold text-white transition-all shadow-md flex-shrink-0 disabled:opacity-50"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-xs font-semibold text-white transition-all shadow-sm flex-shrink-0 disabled:opacity-50"
         >
           {testing ? (
             <>
-              <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
-              Testando Handshake...
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-400" />
+              Testando Conexão...
             </>
           ) : (
             <>
-              <Send className="w-3.5 h-3.5 text-cyan-400" />
+              <Send className="w-3.5 h-3.5 text-blue-400" />
               Testar Conexão Agora
             </>
           )}
@@ -354,21 +354,25 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               onClick={() => handleSelectProvider("gmail")}
               className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 formData.provider === "gmail"
-                  ? "bg-gradient-to-b from-rose-500/20 to-red-600/10 border-red-500/50 shadow-lg shadow-red-500/10 ring-1 ring-red-500/30"
-                  : "bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
+                  ? "bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
+                  : "bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="w-7 h-7 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center font-bold text-xs">
+                  <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${
+                    formData.provider === "gmail" ? "bg-blue-600/20 text-blue-400" : "bg-slate-800 text-slate-300"
+                  }`}>
                     G
                   </span>
-                  {formData.provider === "gmail" && <Check className="w-4 h-4 text-red-400" />}
+                  {formData.provider === "gmail" && <Check className="w-4 h-4 text-blue-400" />}
                 </div>
                 <h4 className="text-xs font-bold text-white">Gmail / Workspace</h4>
-                <p className="text-[11px] text-slate-400 mt-1">smtp.gmail.com:587</p>
+                <p className="text-[11px] text-slate-400 mt-1 font-mono">smtp.gmail.com:587</p>
               </div>
-              <span className="text-[10px] text-red-400/90 font-medium mt-3">Requer Senha de App</span>
+              <span className={`text-[10px] font-medium mt-3 ${formData.provider === "gmail" ? "text-blue-400" : "text-slate-400"}`}>
+                Requer Senha de App
+              </span>
             </div>
 
             {/* Hostinger */}
@@ -376,21 +380,25 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               onClick={() => handleSelectProvider("hostinger")}
               className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 formData.provider === "hostinger"
-                  ? "bg-gradient-to-b from-purple-500/20 to-indigo-600/10 border-purple-500/50 shadow-lg shadow-purple-500/10 ring-1 ring-purple-500/30"
-                  : "bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
+                  ? "bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
+                  : "bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xs">
+                  <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${
+                    formData.provider === "hostinger" ? "bg-blue-600/20 text-blue-400" : "bg-slate-800 text-slate-300"
+                  }`}>
                     H
                   </span>
-                  {formData.provider === "hostinger" && <Check className="w-4 h-4 text-purple-400" />}
+                  {formData.provider === "hostinger" && <Check className="w-4 h-4 text-blue-400" />}
                 </div>
                 <h4 className="text-xs font-bold text-white">Hostinger / Titan</h4>
-                <p className="text-[11px] text-slate-400 mt-1">smtp.hostinger.com:465</p>
+                <p className="text-[11px] text-slate-400 mt-1 font-mono">smtp.hostinger.com:465</p>
               </div>
-              <span className="text-[10px] text-purple-400/90 font-medium mt-3">Senha comum do Webmail</span>
+              <span className={`text-[10px] font-medium mt-3 ${formData.provider === "hostinger" ? "text-blue-400" : "text-slate-400"}`}>
+                Senha comum do Webmail
+              </span>
             </div>
 
             {/* Resend */}
@@ -398,21 +406,25 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               onClick={() => handleSelectProvider("resend")}
               className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 formData.provider === "resend"
-                  ? "bg-gradient-to-b from-cyan-500/20 to-blue-600/10 border-cyan-500/50 shadow-lg shadow-cyan-500/10 ring-1 ring-cyan-500/30"
-                  : "bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
+                  ? "bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
+                  : "bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs">
+                  <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${
+                    formData.provider === "resend" ? "bg-blue-600/20 text-blue-400" : "bg-slate-800 text-slate-300"
+                  }`}>
                     R
                   </span>
-                  {formData.provider === "resend" && <Check className="w-4 h-4 text-cyan-400" />}
+                  {formData.provider === "resend" && <Check className="w-4 h-4 text-blue-400" />}
                 </div>
                 <h4 className="text-xs font-bold text-white">Resend API</h4>
-                <p className="text-[11px] text-slate-400 mt-1">Alta entregabilidade</p>
+                <p className="text-[11px] text-slate-400 mt-1 font-mono">Alta entregabilidade</p>
               </div>
-              <span className="text-[10px] text-cyan-400/90 font-medium mt-3">Chave de API (re_...)</span>
+              <span className={`text-[10px] font-medium mt-3 ${formData.provider === "resend" ? "text-blue-400" : "text-slate-400"}`}>
+                Chave de API (re_...)
+              </span>
             </div>
 
             {/* Custom SMTP */}
@@ -420,28 +432,34 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               onClick={() => handleSelectProvider("smtp")}
               className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 formData.provider === "smtp"
-                  ? "bg-gradient-to-b from-amber-500/20 to-orange-600/10 border-amber-500/50 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/30"
-                  : "bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
+                  ? "bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
+                  : "bg-slate-900/70 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <Server className="w-5 h-5 text-amber-400" />
-                  {formData.provider === "smtp" && <Check className="w-4 h-4 text-amber-400" />}
+                  <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${
+                    formData.provider === "smtp" ? "bg-blue-600/20 text-blue-400" : "bg-slate-800 text-slate-300"
+                  }`}>
+                    <Server className="w-4 h-4" />
+                  </span>
+                  {formData.provider === "smtp" && <Check className="w-4 h-4 text-blue-400" />}
                 </div>
                 <h4 className="text-xs font-bold text-white">SMTP Customizado</h4>
-                <p className="text-[11px] text-slate-400 mt-1">SendGrid, SES, Outlook...</p>
+                <p className="text-[11px] text-slate-400 mt-1 font-mono">SendGrid, SES, etc.</p>
               </div>
-              <span className="text-[10px] text-amber-400/90 font-medium mt-3">Host e porta manuais</span>
+              <span className={`text-[10px] font-medium mt-3 ${formData.provider === "smtp" ? "text-blue-400" : "text-slate-400"}`}>
+                Host e porta manuais
+              </span>
             </div>
           </div>
         </div>
 
         {/* Guia de Ajuda Específico do Provedor Selecionado */}
         {formData.provider === "gmail" && (
-          <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/20 text-xs text-slate-300 space-y-2">
-            <div className="flex items-center gap-2 font-bold text-red-400">
-              <HelpCircle className="w-4 h-4" />
+          <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 space-y-2">
+            <div className="flex items-center gap-2 font-bold text-white">
+              <HelpCircle className="w-4 h-4 text-blue-400" />
               Como configurar o Gmail / Google Workspace:
             </div>
             <ol className="list-decimal list-inside space-y-1 text-[12px] text-slate-400 pl-1 leading-relaxed">
@@ -454,7 +472,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                   href="https://myaccount.google.com/apppasswords"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-red-400 hover:underline font-semibold inline-flex items-center gap-1"
+                  className="text-blue-400 hover:underline font-semibold inline-flex items-center gap-1"
                 >
                   myaccount.google.com/apppasswords
                   <ExternalLink className="w-3 h-3 inline" />
@@ -467,21 +485,21 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
         )}
 
         {formData.provider === "hostinger" && (
-          <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/20 text-xs text-slate-300 space-y-1">
-            <div className="flex items-center gap-2 font-bold text-purple-400">
-              <HelpCircle className="w-4 h-4" />
+          <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 space-y-1">
+            <div className="flex items-center gap-2 font-bold text-white">
+              <HelpCircle className="w-4 h-4 text-blue-400" />
               Como configurar o E-mail Hostinger / Titan:
             </div>
             <p className="text-[12px] text-slate-400">
-              Insira o e-mail completo do seu domínio (ex: <code className="text-purple-300">contato@seudominio.com.br</code>) e a mesma senha utilizada para entrar no Webmail da Hostinger. A porta 465 com SSL já está configurada.
+              Insira o e-mail completo do seu domínio (ex: <code className="text-blue-300 font-mono">contato@seudominio.com.br</code>) e a mesma senha utilizada para entrar no Webmail da Hostinger. A porta 465 com SSL já está configurada.
             </p>
           </div>
         )}
 
         {formData.provider === "resend" && (
-          <div className="p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/20 text-xs text-slate-300 space-y-1">
-            <div className="flex items-center gap-2 font-bold text-cyan-400">
-              <HelpCircle className="w-4 h-4" />
+          <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 space-y-1">
+            <div className="flex items-center gap-2 font-bold text-white">
+              <HelpCircle className="w-4 h-4 text-blue-400" />
               Como configurar o Resend:
             </div>
             <p className="text-[12px] text-slate-400">
@@ -490,7 +508,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                 href="https://resend.com"
                 target="_blank"
                 rel="noreferrer"
-                className="text-cyan-400 hover:underline font-semibold inline-flex items-center gap-1"
+                className="text-blue-400 hover:underline font-semibold inline-flex items-center gap-1"
               >
                 resend.com
                 <ExternalLink className="w-3 h-3 inline" />
@@ -501,9 +519,9 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
         )}
 
         {/* Campos do Formulário */}
-        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-5">
+        <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-5">
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2 border-b border-slate-800 pb-3">
-            <Key className="w-4 h-4 text-cyan-400" />
+            <Key className="w-4 h-4 text-blue-400" />
             Credenciais de Autenticação do Cliente
           </h4>
 
@@ -517,7 +535,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                 value={formData.resendApiKey || ""}
                 onChange={(e) => setFormData({ ...formData, resendApiKey: e.target.value })}
                 placeholder={formData.hasPassword ? "•••••••••••••••• (Chave já salva)" : "re_123456789..."}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
           ) : (
@@ -538,7 +556,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                         ? "seu-email@gmail.com"
                         : "comercial@suaempresa.com.br"
                     }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
 
@@ -552,7 +570,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                       value={formData.smtpPass || ""}
                       onChange={(e) => setFormData({ ...formData, smtpPass: e.target.value })}
                       placeholder={formData.hasPassword ? "•••••••••••••••• (Senha já salva)" : "Digite a senha"}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors pr-10"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors pr-10"
                     />
                     <button
                       type="button"
@@ -620,7 +638,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                   value={formData.fromName || ""}
                   onChange={(e) => setFormData({ ...formData, fromName: e.target.value })}
                   placeholder="Ex: VERSUS Comercial ou Agência 26"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
@@ -633,7 +651,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                   value={formData.fromEmail || ""}
                   onChange={(e) => setFormData({ ...formData, fromEmail: e.target.value })}
                   placeholder={formData.smtpUser || "comercial@empresa.com.br"}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
             </div>
@@ -645,7 +663,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/25 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors disabled:opacity-50"
           >
             {saving ? (
               <>

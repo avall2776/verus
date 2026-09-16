@@ -456,9 +456,24 @@ export class EmailsService {
       }
     }
 
+    let provider = 'SMTP';
+    if (effectiveId) {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: effectiveId },
+        select: { emailSettings: true },
+      });
+      const s = (tenant?.emailSettings || {}) as any;
+      if (s.provider) {
+        provider = s.provider === 'gmail' ? 'GMAIL' : s.provider === 'hostinger' ? 'HOSTINGER' : s.provider === 'resend' ? 'RESEND' : 'SMTP';
+      } else if (process.env.RESEND_API_KEY && !process.env.SMTP_HOST) {
+        provider = 'RESEND';
+      }
+    }
+
     return {
       configured: Boolean(transporter),
       connected: isConnected,
+      provider,
       from: fromAddress || null,
       source,
       connectionError,

@@ -246,7 +246,7 @@ export default function EmailInboxPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-lg shadow-cyan-500/5">
+          <div className="w-10 h-10 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shadow-sm">
             <Mail className="w-5 h-5" />
           </div>
           <div>
@@ -257,26 +257,26 @@ export default function EmailInboxPage() {
                 title={
                   transportStatus?.configured 
                     ? (transportStatus?.connected 
-                        ? `Servidor SMTP Conectado: ${transportStatus.host} (${transportStatus.user || 'autenticado'}). Clique para configurar.` 
-                        : `Falha na Conexão SMTP: ${transportStatus.connectionError || 'Verifique credenciais'}. Clique para ajustar.`)
-                    : "SMTP não configurado. Clique para configurar a conta da empresa."
+                        ? `Servidor Conectado: ${transportStatus.host || transportStatus.provider || 'Ativo'}. Clique para gerenciar configurações.` 
+                        : `Falha na Conexão: ${transportStatus.connectionError || 'Verifique credenciais'}. Clique para ajustar.`)
+                    : "E-mail não configurado. Clique para configurar as credenciais."
                 }
-                className={`text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full border font-bold flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 ${
+                className={`text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border font-bold flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 ${
                   transportStatus?.connected
                     ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
                     : transportStatus?.configured
                     ? "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
-                    : "bg-cyan-500/10 text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/20"
+                    : "bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20"
                 }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${
-                  transportStatus?.connected ? "bg-emerald-400 animate-pulse" : transportStatus?.configured ? "bg-amber-400" : "bg-cyan-400"
+                  transportStatus?.connected ? "bg-emerald-400 animate-pulse" : transportStatus?.configured ? "bg-amber-400" : "bg-blue-400"
                 }`} />
                 {transportStatus?.connected
-                  ? `E-mail Conectado (${transportStatus.provider})`
+                  ? "E-MAIL CONECTADO"
                   : transportStatus?.configured
-                  ? "Configurado (Pendente)"
-                  : "Configurar E-mail"}
+                  ? "CONFIGURADO (PENDENTE)"
+                  : "CONFIGURAR E-MAIL"}
               </span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-400">
@@ -292,7 +292,7 @@ export default function EmailInboxPage() {
             className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 text-xs font-semibold transition-all shadow-md disabled:opacity-50"
             title="Sincronizar e-mails recebidos do Gmail via IMAP"
           >
-            <RefreshCw className={`w-4 h-4 text-cyan-400 ${isRefreshing ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-4 h-4 text-blue-400 ${isRefreshing ? "animate-spin" : ""}`} />
             <span className="hidden sm:inline">Sincronizar Gmail</span>
           </button>
 
@@ -303,7 +303,7 @@ export default function EmailInboxPage() {
               setComposerInitialBody("");
               setIsComposerOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/20 transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors"
           >
             <Plus className="w-4 h-4" />
             Escrever Novo E-mail
@@ -318,14 +318,14 @@ export default function EmailInboxPage() {
             onClick={() => setCurrentTab("messages")}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
               currentTab === "messages"
-                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25"
+                ? "bg-blue-600 text-white shadow-sm"
                 : "text-slate-400 hover:text-white hover:bg-slate-800/50"
             }`}
           >
             <Mail className="w-3.5 h-3.5" />
             Caixa de Mensagens
             {counts.unread > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-400 text-slate-950 font-bold ml-1">
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-500 text-white font-bold ml-1">
                 {counts.unread}
               </span>
             )}
@@ -335,7 +335,7 @@ export default function EmailInboxPage() {
             onClick={() => setCurrentTab("settings")}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
               currentTab === "settings"
-                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25"
+                ? "bg-blue-600 text-white shadow-sm"
                 : "text-slate-400 hover:text-white hover:bg-slate-800/50"
             }`}
           >
@@ -377,7 +377,7 @@ export default function EmailInboxPage() {
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   activeFolder === "INBOX" && !isStarredFilter
-                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow-sm"
+                    ? "bg-blue-600/15 text-blue-300 border border-blue-500/30 shadow-sm"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                 }`}
               >
@@ -386,7 +386,7 @@ export default function EmailInboxPage() {
                   <span>Caixa de Entrada</span>
                 </div>
                 {counts.unread > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500 text-slate-950">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white">
                     {counts.unread}
                   </span>
                 )}
@@ -398,7 +398,7 @@ export default function EmailInboxPage() {
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   isStarredFilter
-                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm"
+                    ? "bg-slate-800 text-white border border-slate-700 shadow-sm"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                 }`}
               >
@@ -418,7 +418,7 @@ export default function EmailInboxPage() {
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   activeFolder === "SENT" && !isStarredFilter
-                    ? "bg-blue-500/20 text-blue-300 border border-blue-500/30 shadow-sm"
+                    ? "bg-blue-600/15 text-blue-300 border border-blue-500/30 shadow-sm"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                 }`}
               >
@@ -438,7 +438,7 @@ export default function EmailInboxPage() {
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   activeFolder === "ARCHIVE" && !isStarredFilter
-                    ? "bg-purple-500/20 text-purple-300 border border-purple-500/30 shadow-sm"
+                    ? "bg-slate-800 text-white border border-slate-700 shadow-sm"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                 }`}
               >
@@ -458,7 +458,7 @@ export default function EmailInboxPage() {
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   activeFolder === "TRASH" && !isStarredFilter
-                    ? "bg-rose-500/20 text-rose-300 border border-rose-500/30 shadow-sm"
+                    ? "bg-slate-800 text-white border border-slate-700 shadow-sm"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                 }`}
               >
@@ -482,12 +482,12 @@ export default function EmailInboxPage() {
                   onClick={() => setIsUnreadFilter(!isUnreadFilter)}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                     isUnreadFilter
-                      ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
+                      ? "bg-blue-600/15 text-blue-300 border border-blue-500/30"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />
                     Somente Não Lidos
                   </span>
                   <span className="text-[10px] font-mono">{counts.unread}</span>
@@ -517,7 +517,7 @@ export default function EmailInboxPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por remetente, assunto..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
               />
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
@@ -550,13 +550,13 @@ export default function EmailInboxPage() {
                     onClick={() => handleSelectEmail(email)}
                     className={`p-3.5 cursor-pointer transition-all relative ${
                       isSelected
-                        ? "bg-slate-800/80 border-l-4 border-cyan-400 shadow-inner"
+                        ? "bg-slate-800/80 border-l-4 border-blue-500 shadow-sm"
                         : "hover:bg-slate-800/40"
                     }`}
                   >
                     {/* Não lido dot */}
                     {!email.isRead && (
-                      <span className="w-2 h-2 rounded-full bg-cyan-400 absolute left-1 top-4" />
+                      <span className="w-2 h-2 rounded-full bg-blue-500 absolute left-1 top-4" />
                     )}
 
                     <div className="flex justify-between items-start mb-1 gap-2">
@@ -576,7 +576,7 @@ export default function EmailInboxPage() {
                       </div>
                     </div>
 
-                    <div className={`text-xs truncate mb-1 ${!email.isRead ? "font-semibold text-cyan-300" : "text-slate-300"}`}>
+                    <div className={`text-xs truncate mb-1 ${!email.isRead ? "font-semibold text-blue-300" : "text-slate-300"}`}>
                       {email.subject}
                     </div>
 
@@ -587,7 +587,7 @@ export default function EmailInboxPage() {
                     <div className="mt-2 flex items-center gap-2">
                       {email.hasAttachments && (
                         <span className="flex items-center gap-1 text-[10px] text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-full border border-slate-700/60">
-                          <Paperclip className="w-2.5 h-2.5 text-cyan-400" />
+                          <Paperclip className="w-2.5 h-2.5 text-blue-400" />
                           Anexo
                         </span>
                       )}
@@ -635,7 +635,7 @@ export default function EmailInboxPage() {
                     </button>
                     <button
                       onClick={() => handleMoveFolder(selectedEmail.id, "ARCHIVE")}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-purple-400 hover:bg-slate-800 transition-colors"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
                       title="Arquivar"
                     >
                       <Archive className="w-4 h-4" />
@@ -649,7 +649,7 @@ export default function EmailInboxPage() {
                     </button>
                     <button
                       onClick={handleOpenReplyComposer}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-semibold border border-slate-700 transition-colors"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-400 text-xs font-semibold border border-slate-700 transition-colors"
                       title="Responder com o editor completo"
                     >
                       <Reply className="w-3.5 h-3.5" />
@@ -660,9 +660,9 @@ export default function EmailInboxPage() {
 
                 {/* Vínculo Comercial no CRM se houver */}
                 {(selectedEmail.contact || selectedEmail.deal) && (
-                  <div className="p-3 rounded-xl bg-blue-900/10 border border-blue-500/20 flex items-center justify-between text-xs">
+                  <div className="p-3 rounded-xl bg-blue-950/30 border border-blue-500/20 flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-cyan-400" />
+                      <Building2 className="w-4 h-4 text-blue-400" />
                       <span className="text-slate-300">
                         Vínculo CRM: <strong className="text-white">{selectedEmail.contact?.name || selectedEmail.deal?.title}</strong>
                       </span>
@@ -693,13 +693,13 @@ export default function EmailInboxPage() {
                           href={att.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-cyan-500/40 text-xs transition-colors group"
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-blue-500/40 text-xs transition-colors group"
                         >
                           <div className="flex items-center gap-2 truncate">
-                            <FileText className="w-4 h-4 text-cyan-400 shrink-0" />
+                            <FileText className="w-4 h-4 text-blue-400 shrink-0" />
                             <span className="text-slate-200 font-medium truncate">{att.name}</span>
                           </div>
-                          <Download className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 shrink-0" />
+                          <Download className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-400 shrink-0" />
                         </a>
                       ))}
                     </div>
@@ -717,12 +717,12 @@ export default function EmailInboxPage() {
                   value={quickReplyText}
                   onChange={(e) => setQuickReplyText(e.target.value)}
                   placeholder={`Responder para ${selectedEmail.senderName}...`}
-                  className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 resize-none"
+                  className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
                 />
                 <div className="flex items-center justify-between">
                   <button
                     onClick={handleOpenReplyComposer}
-                    className="text-xs text-slate-400 hover:text-cyan-400 flex items-center gap-1 font-semibold"
+                    className="text-xs text-slate-400 hover:text-blue-400 flex items-center gap-1 font-semibold"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     Abrir editor completo
@@ -730,7 +730,7 @@ export default function EmailInboxPage() {
                   <button
                     onClick={handleSendQuickReply}
                     disabled={sendingQuickReply || !quickReplyText.trim()}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors disabled:opacity-50"
                   >
                     <Send className="w-3.5 h-3.5" />
                     {sendingQuickReply ? "Enviando..." : "Responder E-mail"}

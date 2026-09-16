@@ -174,7 +174,7 @@ export default function EmailComposerModal({
               <button
                 type="button"
                 onClick={() => setShowCcBcc(!showCcBcc)}
-                className="text-[11px] font-semibold text-cyan-400 hover:underline"
+                className="text-[11px] font-semibold text-blue-400 hover:underline"
               >
                 {showCcBcc ? "Ocultar CC/CCO" : "+ Adicionar CC / CCO"}
               </button>
@@ -186,14 +186,14 @@ export default function EmailComposerModal({
                 value={recipientEmail}
                 onChange={(e) => setRecipientEmail(e.target.value)}
                 placeholder="cliente@empresa.com.br"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
               />
               <input
                 type="text"
                 value={recipientName}
                 onChange={(e) => setRecipientName(e.target.value)}
                 placeholder="Nome do contato (opcional)"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
@@ -208,7 +208,7 @@ export default function EmailComposerModal({
                   value={cc}
                   onChange={(e) => setCc(e.target.value)}
                   placeholder="gerencia@empresa.com.br"
-                  className="w-full px-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
               <div>
@@ -218,7 +218,7 @@ export default function EmailComposerModal({
                   value={bcc}
                   onChange={(e) => setBcc(e.target.value)}
                   placeholder="auditoria@versus.com.br"
-                  className="w-full px-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
@@ -233,14 +233,14 @@ export default function EmailComposerModal({
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Ex: Proposta Comercial PROP-2026 - Apresentação de Solução"
-              className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
             />
           </div>
 
           {/* Barra de Ações Rápidas Comerciais (Anexar Proposta / Contrato) */}
           <div className="flex flex-wrap items-center gap-2 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs">
             <span className="text-slate-400 text-[11px] font-semibold mr-1 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Inserir no E-mail:
+              <Sparkles className="w-3.5 h-3.5 text-blue-400" /> Inserir no E-mail:
             </span>
 
             {/* Inserir Proposta */}
@@ -251,7 +251,7 @@ export default function EmailComposerModal({
                   setShowProposalPicker(!showProposalPicker);
                   setShowContractPicker(false);
                 }}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 text-[11px] font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 text-[11px] font-medium transition-colors"
               >
                 <FileText className="w-3.5 h-3.5" />
                 Anexar Proposta ({proposals.length})
@@ -269,7 +269,7 @@ export default function EmailComposerModal({
                         onClick={() => handleAttachProposalLink(p)}
                         className="w-full text-left p-2 rounded-lg hover:bg-slate-800 text-[11px] text-white flex flex-col border border-transparent hover:border-slate-700 transition-colors"
                       >
-                        <span className="font-bold text-cyan-300 truncate">{p.title || p.code}</span>
+                        <span className="font-bold text-blue-300 truncate">{p.title || p.code}</span>
                         <span className="text-[10px] text-slate-400">{p.clientName} • R$ {Number(p.totalValue || 0).toLocaleString("pt-BR")}</span>
                       </button>
                     ))
@@ -286,9 +286,9 @@ export default function EmailComposerModal({
                   setShowContractPicker(!showContractPicker);
                   setShowProposalPicker(false);
                 }}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-400 border border-slate-700 text-[11px] font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-medium transition-colors"
               >
-                <ShieldCheck className="w-3.5 h-3.5" />
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
                 Anexar Contrato ({contracts.length})
               </button>
 
@@ -304,7 +304,7 @@ export default function EmailComposerModal({
                         onClick={() => handleAttachContractLink(c)}
                         className="w-full text-left p-2 rounded-lg hover:bg-slate-800 text-[11px] text-white flex flex-col border border-transparent hover:border-slate-700 transition-colors"
                       >
-                        <span className="font-bold text-purple-300 truncate">{c.title || c.code}</span>
+                        <span className="font-bold text-white truncate">{c.title || c.code}</span>
                         <span className="text-[10px] text-slate-400">{c.clientName} • R$ {Number(c.value || 0).toLocaleString("pt-BR")}</span>
                       </button>
                     ))
@@ -317,9 +317,9 @@ export default function EmailComposerModal({
             <button
               type="button"
               onClick={handleAddSampleAttachment}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 text-[11px] font-medium transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-medium transition-colors"
             >
-              <Paperclip className="w-3.5 h-3.5" />
+              <Paperclip className="w-3.5 h-3.5 text-blue-400" />
               + Anexar Documento
             </button>
           </div>
@@ -332,7 +332,7 @@ export default function EmailComposerModal({
                   key={index}
                   className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-[11px] text-slate-200"
                 >
-                  <Paperclip className="w-3 h-3 text-cyan-400" />
+                  <Paperclip className="w-3 h-3 text-blue-400" />
                   <span className="truncate max-w-[200px]">{att.name}</span>
                   <button
                     type="button"
@@ -355,7 +355,7 @@ export default function EmailComposerModal({
               value={bodyText}
               onChange={(e) => setBodyText(e.target.value)}
               placeholder="Prezado cliente, segue em anexo a proposta para avaliação..."
-              className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 leading-relaxed font-sans resize-y"
+              className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 leading-relaxed font-sans resize-y"
             />
           </div>
 
@@ -371,7 +371,7 @@ export default function EmailComposerModal({
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/20 transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors disabled:opacity-50"
             >
               {loading ? (
                 <>
