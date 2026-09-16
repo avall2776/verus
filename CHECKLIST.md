@@ -1002,6 +1002,28 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Divisão de Trabalho**: A **IDE 2** assume com autoridade exclusiva o desenvolvimento de ponta a ponta da **Fase 52 (Metas Comerciais, Motor de Run Rate & Leaderboard Gamificado)**, enquanto a **IDE 1** atua na **Fase 51 (Analytics Avançado PRO)**.
   - **Diretriz**: Padrão Top SaaS mundial, zero mocks, interatividade total com modais, código 0 e finalização estritamente condicionada ao OK explícito do usuário.
 
+### 🟡 FASE 52: METAS COMERCIAIS, MOTOR DE RUN RATE & LEADERBOARD GAMIFICADO (/dashboard/goals - IDE 2)
+> **Aviso de Exclusividade**: Fase sob desenvolvimento e homologação da **IDE 2**.
+- [x] **Modelagem e Persistência no Prisma/Supabase (`Goal`)**:
+  - Tabela `Goal` mapeada com suporte a alvos de receita (`REVENUE`), volume de vendas (`DEALS`) e leads (`LEADS`), períodos de vigência, metas de equipe e individuais.
+- [x] **Motor Matemático de Run Rate & Projeções Reais (`GET /goals/run-rate`)**:
+  - Cálculos estritamente reais extraídos de negociações ganhas (`Deal`) e contratos assinados (`Contract`) no Supabase.
+  - Ritmo diário realizado (`dailyPace`), ritmo diário necessário para atingimento (`requiredDailyPace`), projeção de fechamento do mês (`projectedRevenue`) e indicador dinâmico de gap de ritmo (`paceGap`).
+  - Suporte a filtros de segmentação por canal de origem (`all`, `whatsapp`, `meta_ads`, `google_ads`, `organico`, `indicacao`).
+- [x] **Gamificação & Badges Automáticas de Desempenho (`GET /goals/leaderboard`)**:
+  - Classificação em tempo real dos consultores comerciais por receita faturada, contratos ganhos e taxa de conversão.
+  - Atribuição reativa de selos de conquista: 🏆 *Meta Batida*, 💎 *Ticket Destaque*, ⚡ *Closer de Elite*, 🚀 *Volume Máximo* e 🎯 *Conversão Imbatível*.
+- [x] **Refinamento Visual Monocromático Corporativo (`/dashboard/goals`)**:
+  - Padrão executivo sóbrio baseado em azul escuro (`#0B1224`, `#070D1B`), slate (`border-slate-800`) e tipografia mono branca/azul.
+  - Remoção de gradientes dourados/multicoloridos no Pódio e Cards; cores quentes (âmbar/vermelho) reservadas exclusivamente para alertas funcionais de ritmo crítico.
+  - Modal analítico de drilldown do consultor (`SellerDetailModal.tsx`) com KPIs monocromáticos e histórico real de negociações.
+- [x] **Modais de CRUD Completo (`NewGoalModal.tsx` e `EditGoalModal.tsx`)**:
+  - Criação (`POST /goals`), Edição (`PUT /goals/:id`) e Exclusão (`DELETE /goals/:id`) 100% integradas ao banco.
+- [ ] **Homologação Final & Aprovação do Usuário**:
+  - Builds Backend e Frontend validados com código 0 (`nest build` e `next build`).
+  - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine` online) e Vercel.
+  - Aguardando validação visual e homologação explícita do usuário para fechamento de fase.
+
 - **[16/09/2026 - 08:44]** 💎 **[IDE 1] Conclusão de Tarefa: Fase 51 (Analytics Avançado PRO)**:
   - Todas as ferramentas, endpoints e modais operando com 100% de estabilidade na nuvem e validados pelo usuário.
 
