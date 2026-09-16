@@ -992,6 +992,34 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Divisão de Trabalho**: A **IDE 2** assume com autoridade exclusiva o desenvolvimento de ponta a ponta da **Fase 52 (Metas Comerciais, Motor de Run Rate & Leaderboard Gamificado)**, enquanto a **IDE 1** atua na **Fase 51 (Analytics Avançado PRO)**.
   - **Diretriz**: Padrão Top SaaS mundial, zero mocks, interatividade total com modais, código 0 e finalização estritamente condicionada ao OK explícito do usuário.
 
+- **[16/09/2026 - 08:48]** 🟢 **Início de Turno & Atribuição de Inbox de E-mail Unificado (IDE 1)**:
+  - **Status**: ⏳ Em Andamento (Fase 53 - Autoridade Exclusiva IDE 1).
+  - **Divisão de Trabalho**: A **IDE 1** assume com autoridade exclusiva o desenvolvimento de ponta a ponta da **Fase 53 (Inbox de E-mail Unificado `/email-inbox`)**. A **IDE 2** não deve alterar este módulo para evitar conflitos de desenvolvimento.
+  - **Diretriz do Usuário**: Padrão de ponta de mercado (Front / Superhuman / HubSpot), zero mocks, 100% conectado e operacional com PostgreSQL/Supabase via Prisma, módulo NestJS completo (`GET /emails`, `POST /emails/send`, pastas, estrelas, filtros), composer integrado a links de propostas e contratos, validação com código 0 e homologação estritamente condicionada ao OK explícito do usuário.
+
+### 🟢 FASE 53: INBOX DE E-MAIL UNIFICADO ENTERPRISE (/email-inbox - IDE 1)
+> **Aviso de Exclusividade**: Fase em desenvolvimento exclusivo pela **IDE 1**. Não alterar via IDE 2.
+- [ ] **Modelagem no Prisma & Banco de Dados (Supabase)**:
+  - Modelo `EmailMessage` com suporte a pastas (`INBOX`, `SENT`, `DRAFT`, `TRASH`, `ARCHIVE`), estrelas (`isStarred`), lido/não-lido (`isRead`), remetente, destinatários, assunto, corpo (HTML/Text), anexos e vínculos com `Contact`/`Deal`.
+  - Sincronização via `npx prisma db push` e geração do Prisma Client (`npx prisma generate`).
+- [ ] **Módulo Backend NestJS (`EmailsModule`)**:
+  - `EmailsService` & `EmailsController` com endpoints protegidos por JWT e multitenancy isolado (`@CurrentTenant`):
+    - `GET /emails`: Listagem paginada por pasta (`folder`), busca por texto, filtro de favoritos e não lidos.
+    - `GET /emails/:id`: Consulta de e-mail detalhado com marcação automática de lido.
+    - `POST /emails/send`: Envio e criação de e-mail corporativo, com gravação no banco e histórico.
+    - `PATCH /emails/:id/star`: Alternar status de favorito/estrela.
+    - `PATCH /emails/:id/folder`: Mover e-mail entre pastas (lixeira, arquivo, caixa de entrada).
+    - `DELETE /emails/:id`: Exclusão permanente.
+- [ ] **Interface Frontend Enterprise Next.js 14 (`/email-inbox`)**:
+  - Layout 3-pane padrão Enterprise (Pastas à esquerda, Lista no centro, Leitor/Thread à direita).
+  - Composer Modal de alto nível (`EmailComposerModal.tsx`) com envio, anexação rápida de propostas comerciais (`/p/[code]`) e contratos digitais (`/c/[code]`).
+  - Filtros rápidos (Não Lidas, Com Anexos, Estrelas) e Empty States elegantes.
+  - Zero mocks: consumo estrito da API real `/emails`.
+- [ ] **Homologação, Deploy na Nuvem e Validação**:
+  - Builds Backend e Frontend aprovados com código 0.
+  - Deploy sincronizado na VPS e Vercel.
+  - Finalização condicionada ao OK explícito do usuário.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
