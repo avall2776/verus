@@ -22,13 +22,15 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
-  Edit2
+  Edit2,
+  Plus
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import CompanyXRayModal from "@/components/super-admin/CompanyXRayModal";
 import ResetAdminPasswordModal from "@/components/super-admin/ResetAdminPasswordModal";
 import EditCompanyModal from "@/components/super-admin/EditCompanyModal";
+import CreateCompanyModal from "@/components/super-admin/CreateCompanyModal";
 
 export default function SuperAdminCompaniesPage() {
   const router = useRouter();
@@ -45,6 +47,7 @@ export default function SuperAdminCompaniesPage() {
   // Estados de modais
   const [xRayTenantId, setXRayTenantId] = useState<string | null>(null);
   const [isXRayOpen, setIsXRayOpen] = useState(false);
+  const [isCreateCompanyOpen, setIsCreateCompanyOpen] = useState(false);
 
   const [resetModalData, setResetModalData] = useState<{
     isOpen: boolean;
@@ -151,6 +154,14 @@ export default function SuperAdminCompaniesPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsCreateCompanyOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white transition-colors shadow-sm"
+          >
+            <Plus size={14} />
+            <span>Nova Empresa</span>
+          </button>
+
           <button
             onClick={() => fetchCompanies()}
             disabled={loading}
@@ -433,6 +444,12 @@ export default function SuperAdminCompaniesPage() {
         initialData={editCompanyData.company}
         onClose={() => setEditCompanyData((prev) => ({ ...prev, isOpen: false }))}
         onCompanyUpdated={() => fetchCompanies()}
+      />
+
+      <CreateCompanyModal
+        isOpen={isCreateCompanyOpen}
+        onClose={() => setIsCreateCompanyOpen(false)}
+        onCompanyCreated={() => fetchCompanies()}
       />
     </div>
   );

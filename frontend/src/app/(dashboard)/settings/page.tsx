@@ -11,15 +11,17 @@ import {
   Loader2,
   Sliders,
   ShieldCheck,
+  CreditCard,
 } from "lucide-react";
 
 import CompanySettingsTab from "@/components/settings/CompanySettingsTab";
+import PlanSettingsTab from "@/components/settings/PlanSettingsTab";
 import UsersSettingsTab from "@/components/settings/UsersSettingsTab";
 import DepartmentsSettingsTab from "@/components/settings/DepartmentsSettingsTab";
 import QuickRepliesSettingsTab from "@/components/settings/QuickRepliesSettingsTab";
 import AutomationsSettingsTab from "@/components/settings/AutomationsSettingsTab";
 
-type TabId = "company" | "users" | "departments" | "quick-replies" | "automations";
+type TabId = "company" | "plan" | "users" | "departments" | "quick-replies" | "automations";
 
 interface TabConfig {
   id: TabId;
@@ -34,6 +36,12 @@ const SETTINGS_TABS: TabConfig[] = [
     label: "Dados da Empresa",
     description: "Razão social, CNPJ, contato e configurações cadastrais do tenant",
     icon: Building,
+  },
+  {
+    id: "plan",
+    label: "Plano & Assinatura",
+    description: "Plano contratado, limites operacionais e recursos liberados",
+    icon: CreditCard,
   },
   {
     id: "users",
@@ -108,15 +116,16 @@ function SettingsContent() {
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => handleSelectTab(tab.id)}
-                className={`flex items-start gap-3 w-full p-3 rounded-xl transition-all text-left group ${
+                className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-150 group ${
                   isActive
-                    ? "bg-blue-600/15 border border-blue-500/30 text-white shadow-lg shadow-blue-500/5"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent"
+                    ? "bg-blue-600/15 border border-blue-500/30 shadow-sm"
+                    : "hover:bg-slate-800/50 border border-transparent"
                 }`}
               >
                 <div
-                  className={`mt-0.5 p-1.5 rounded-lg shrink-0 transition-colors ${
+                  className={`p-2 rounded-lg transition-colors shrink-0 ${
                     isActive
                       ? "bg-blue-600 text-white"
                       : "bg-slate-800/60 text-slate-400 group-hover:text-slate-200 group-hover:bg-slate-800"
@@ -145,6 +154,7 @@ function SettingsContent() {
         {/* Painel Central de Conteúdo */}
         <main className="flex-1 w-full min-w-0 bg-[#0B1224]/80 border border-slate-800/80 rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
           {activeTab === "company" && <CompanySettingsTab />}
+          {activeTab === "plan" && <PlanSettingsTab />}
           {activeTab === "users" && <UsersSettingsTab />}
           {activeTab === "departments" && <DepartmentsSettingsTab />}
           {activeTab === "quick-replies" && <QuickRepliesSettingsTab />}

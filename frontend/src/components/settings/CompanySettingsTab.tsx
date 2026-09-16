@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Building2, Save, ShieldCheck, CreditCard, Users, FileText, Phone, Mail, MapPin, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Building2, Save, ShieldCheck, CreditCard, Users, FileText, Phone, Mail, MapPin, Loader2, ChevronRight } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 
 export default function CompanySettingsTab() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [company, setCompany] = useState<any>(null);
@@ -86,10 +88,16 @@ export default function CompanySettingsTab() {
         </div>
 
         {company?.plan && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-600/10 border border-blue-500/20 text-xs font-semibold text-blue-300">
+          <button
+            type="button"
+            onClick={() => router.push("/settings?tab=plan")}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/20 hover:border-blue-500/40 text-xs font-semibold text-blue-300 transition-all group"
+            title="Clique para ver os detalhes da assinatura e limites"
+          >
             <ShieldCheck className="w-4 h-4 text-blue-400" />
             <span>Plano {company.plan.name}</span>
-          </div>
+            <ChevronRight className="w-3.5 h-3.5 text-blue-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+          </button>
         )}
       </div>
 

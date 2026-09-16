@@ -1203,8 +1203,18 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     6. **Comportamento de Navegação**: Menu lateral esquerdo totalmente visível e funcional. A tela de acolhimento permanece ativa na área central até o primeiro clique em qualquer item do menu para acessar o respectivo módulo.
     7. **Build & Deploy**: Validação com `npx tsc --noEmit` e `npm run build` (código 0) e deploy na VPS Hostinger (PM2) e Vercel.
 
+- **[16/09/2026 - 16:50]** ⚡ **Ativação de Tarefa: Refinamento de Sidebar Recolhida por Padrão & WelcomeDashboard Imersivo com Partículas e Revelação em Cascata**:
+  - **Status**: ⏳ Em Andamento (Iniciada formalmente; conclusão estritamente condicionada ao OK do usuário).
+  - **Escopo**:
+    1. **Menu Lateral Inicialmente Fechado (`Sidebar.tsx`)**: Categorias iniciam totalmente recolhidas por padrão no dashboard, expandindo apenas quando o usuário clica em uma categoria específica.
+    2. **WelcomeDashboard Imersivo e Altamente Animado**: Partículas sutis Three.js herdadas da tela de login, iluminação monocromática azul/slate, animação de revelação em cascata (fade-in / slide-up progressivo) para a saudação dinâmica e frase institucional.
+    3. **Build & Deploy**: Validação completa com `npx tsc --noEmit` e `npm run build` (código 0) e deploy na VPS Hostinger e Vercel.
+
 ### 🟡 FASE 57: TELA DE BOAS-VINDAS / PRELOADER CENTRAL PÓS-LOGIN (WelcomeDashboard)
 > **Status**: ⏳ Em Andamento (Iniciada formalmente; conclusão estritamente condicionada ao OK do usuário).
+- [ ] **Refinamentos de Imersão e Interação Visual**:
+  - [ ] **Sidebar Recolhida por Padrão (`Sidebar.tsx`)**: Categorias recolhidas por padrão para visualização limpa e expansão sob demanda.
+  - [ ] **WelcomeDashboard Imersivo (`WelcomeDashboard.tsx`)**: Integração de ondas de dados / partículas Three.js, iluminação corporativa e revelação tipográfica em cascata.
 - [x] **Componente Central `WelcomeDashboard.tsx`**:
   - [x] Saudação personalizada dinâmica ("Bem-vindo de volta, [Nome]").
   - [x] Frase de impacto institucional do ecossistema VERSUS.

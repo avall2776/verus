@@ -162,9 +162,11 @@ export default function Sidebar() {
       setIsExpanded(stored === 'true');
     }
     
-    // Auto-expand all groups by default
+    // Todas as categorias iniciam totalmente recolhidas/minimizadas por padrão
     const initialGroups: Record<string, boolean> = {};
-    NAV_GROUPS.forEach(g => initialGroups[g.title] = true);
+    NAV_GROUPS.forEach(g => {
+      initialGroups[g.title] = false;
+    });
     setExpandedGroups(initialGroups);
   }, []);
 
@@ -192,7 +194,7 @@ export default function Sidebar() {
         <div className="h-16 flex items-center justify-between border-b border-gray-800 px-4 shrink-0">
           {isExpanded ? (
             <div className="flex items-center gap-3 cursor-pointer hover:bg-gray-800/50 p-1.5 rounded-lg transition-colors w-full">
-              <div className="w-8 h-8 rounded bg-gradient-to-tr from-primary to-accent flex items-center justify-center font-bold text-white shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-blue-600 border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 shadow-sm">
                 V
               </div>
               <div className="flex flex-col overflow-hidden">
@@ -202,7 +204,7 @@ export default function Sidebar() {
               <ChevronDown size={14} className="text-gray-500 ml-auto" />
             </div>
           ) : (
-            <div className="w-8 h-8 rounded bg-gradient-to-tr from-primary to-accent flex items-center justify-center font-bold text-white shrink-0 mx-auto">
+            <div className="w-8 h-8 rounded-xl bg-blue-600 border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 mx-auto shadow-sm">
               V
             </div>
           )}
