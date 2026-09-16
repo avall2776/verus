@@ -46,6 +46,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
         isSuperAdmin,
+        permissions: user.permissions,
         avatarUrl: user.avatarUrl,
         tenantId: user.tenantId,
         tenantName: user.tenant?.name

@@ -15,6 +15,7 @@ export declare class MonitorService {
             role: string;
             password: string;
             isSuperAdmin: boolean;
+            permissions: import("@prisma/client/runtime/library").JsonValue | null;
             isOnline: boolean;
         };
         lastMessage: {

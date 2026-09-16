@@ -27,6 +27,7 @@ export declare class DepartmentsController {
                 role: string;
                 password: string;
                 isSuperAdmin: boolean;
+                permissions: import("@prisma/client/runtime/library").JsonValue | null;
                 isOnline: boolean;
             };
         } & {

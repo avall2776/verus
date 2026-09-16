@@ -24,18 +24,50 @@ let UsersController = class UsersController {
     }
     async findAll(req) {
         return this.prisma.user.findMany({
-            where: { tenantId: req.user.tenantId },
+            where: {
+                tenantId: req.user.tenantId,
+                isSuperAdmin: false,
+                role: { not: 'SUPER_ADMIN' },
+            },
             select: {
                 id: true,
                 name: true,
                 email: true,
                 role: true,
                 isActive: true,
+                isSuperAdmin: true,
+                permissions: true,
                 avatarUrl: true,
                 isOnline: true,
                 createdAt: true,
             },
             orderBy: { createdAt: 'desc' },
+        });
+    }
+    async getMe(req) {
+        const userId = req.user?.id || req.user?.userId;
+        if (!userId) {
+            throw new common_1.BadRequestException('ID de usuário não identificado no token.');
+        }
+        return this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                isActive: true,
+                isSuperAdmin: true,
+                permissions: true,
+                avatarUrl: true,
+                tenantId: true,
+                tenant: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
         });
     }
     async updateProfile(req, body) {
@@ -100,6 +132,9 @@ let UsersController = class UsersController {
             }
             updateData.role = role;
         }
+        if (body.permissions !== undefined) {
+            updateData.permissions = body.permissions;
+        }
         if (body.isActive !== undefined) {
             if (id === currentUserId && body.isActive === false) {
                 throw new common_1.BadRequestException('Você não pode desativar o seu próprio usuário.');
@@ -126,6 +161,7 @@ let UsersController = class UsersController {
                 email: true,
                 role: true,
                 isActive: true,
+                permissions: true,
                 avatarUrl: true,
                 isOnline: true,
                 tenantId: true,
@@ -153,12 +189,22 @@ let UsersController = class UsersController {
         const bcrypt = await Promise.resolve().then(() => require('bcrypt'));
         const hashedPassword = await bcrypt.hash(rawPass, 10);
         const role = (body.role || 'AGENT').toUpperCase() === 'ADMIN' ? 'ADMIN' : 'AGENT';
+        const defaultPermissions = {
+            inbox: true,
+            crm: true,
+            chat: true,
+            automations: role === 'ADMIN',
+            settings: role === 'ADMIN',
+            support: true,
+        };
+        const permissions = body.permissions !== undefined ? body.permissions : defaultPermissions;
         const newUser = await this.prisma.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
                 role,
+                permissions,
                 isActive: true,
                 tenantId,
             },
@@ -168,6 +214,7 @@ let UsersController = class UsersController {
                 email: true,
                 role: true,
                 isActive: true,
+                permissions: true,
                 avatarUrl: true,
                 isOnline: true,
             },
@@ -224,6 +271,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('me'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "getMe", null);
 __decorate([
     (0, common_1.Patch)('profile'),
     (0, common_1.Put)('profile'),

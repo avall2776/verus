@@ -14,18 +14,52 @@ export class UsersController {
   @Get()
   async findAll(@Request() req) {
     return this.prisma.user.findMany({
-      where: { tenantId: req.user.tenantId },
+      where: { 
+        tenantId: req.user.tenantId,
+        isSuperAdmin: false,
+        role: { not: 'SUPER_ADMIN' },
+      },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
         isActive: true,
+        isSuperAdmin: true,
+        permissions: true,
         avatarUrl: true,
         isOnline: true,
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  @Get('me')
+  async getMe(@Request() req) {
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      throw new BadRequestException('ID de usuário não identificado no token.');
+    }
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        isSuperAdmin: true,
+        permissions: true,
+        avatarUrl: true,
+        tenantId: true,
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
   }
 
@@ -69,7 +103,7 @@ export class UsersController {
   async update(
     @Request() req,
     @Param('id') id: string,
-    @Body() body: { name?: string; role?: string; isActive?: boolean; password?: string; avatarUrl?: string }
+    @Body() body: { name?: string; role?: string; isActive?: boolean; password?: string; avatarUrl?: string; permissions?: any }
   ) {
     const tenantId = req.user?.tenantId;
     const currentUserId = req.user?.id || req.user?.userId;
@@ -109,6 +143,10 @@ export class UsersController {
       updateData.role = role;
     }
 
+    if (body.permissions !== undefined) {
+      updateData.permissions = body.permissions;
+    }
+
     if (body.isActive !== undefined) {
       if (id === currentUserId && body.isActive === false) {
         throw new BadRequestException('Você não pode desativar o seu próprio usuário.');
@@ -138,6 +176,7 @@ export class UsersController {
         email: true,
         role: true,
         isActive: true,
+        permissions: true,
         avatarUrl: true,
         isOnline: true,
         tenantId: true,
@@ -153,7 +192,7 @@ export class UsersController {
   @Post()
   async create(
     @Request() req,
-    @Body() body: { name: string; email: string; password?: string; role?: string }
+    @Body() body: { name: string; email: string; password?: string; role?: string; permissions?: any }
   ) {
     const tenantId = req.user?.tenantId;
     if (!tenantId) throw new BadRequestException('Tenant não identificado.');
@@ -175,12 +214,23 @@ export class UsersController {
 
     const role = (body.role || 'AGENT').toUpperCase() === 'ADMIN' ? 'ADMIN' : 'AGENT';
 
+    const defaultPermissions = {
+      inbox: true,
+      crm: true,
+      chat: true,
+      automations: role === 'ADMIN',
+      settings: role === 'ADMIN',
+      support: true,
+    };
+    const permissions = body.permissions !== undefined ? body.permissions : defaultPermissions;
+
     const newUser = await this.prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         role,
+        permissions,
         isActive: true,
         tenantId,
       },
@@ -190,6 +240,7 @@ export class UsersController {
         email: true,
         role: true,
         isActive: true,
+        permissions: true,
         avatarUrl: true,
         isOnline: true,
       },

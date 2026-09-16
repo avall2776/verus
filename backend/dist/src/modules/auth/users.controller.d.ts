@@ -12,8 +12,25 @@ export declare class UsersController {
         createdAt: Date;
         isActive: boolean;
         role: string;
+        isSuperAdmin: boolean;
+        permissions: import("@prisma/client/runtime/library").JsonValue;
         isOnline: boolean;
     }[]>;
+    getMe(req: any): Promise<{
+        id: string;
+        name: string;
+        email: string;
+        avatarUrl: string;
+        tenantId: string;
+        tenant: {
+            id: string;
+            name: string;
+        };
+        isActive: boolean;
+        role: string;
+        isSuperAdmin: boolean;
+        permissions: import("@prisma/client/runtime/library").JsonValue;
+    }>;
     updateProfile(req: any, body: {
         name?: string;
         avatarUrl?: string;
@@ -32,6 +49,7 @@ export declare class UsersController {
         isActive?: boolean;
         password?: string;
         avatarUrl?: string;
+        permissions?: any;
     }): Promise<{
         message: string;
         user: {
@@ -42,6 +60,7 @@ export declare class UsersController {
             tenantId: string;
             isActive: boolean;
             role: string;
+            permissions: import("@prisma/client/runtime/library").JsonValue;
             isOnline: boolean;
         };
     }>;
@@ -50,6 +69,7 @@ export declare class UsersController {
         email: string;
         password?: string;
         role?: string;
+        permissions?: any;
     }): Promise<{
         message: string;
         user: {
@@ -59,6 +79,7 @@ export declare class UsersController {
             avatarUrl: string;
             isActive: boolean;
             role: string;
+            permissions: import("@prisma/client/runtime/library").JsonValue;
             isOnline: boolean;
         };
         emailSent: boolean;

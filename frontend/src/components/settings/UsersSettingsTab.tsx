@@ -16,10 +16,88 @@ import {
   CheckCircle2,
   XCircle,
   Send,
-  AlertCircle
+  AlertCircle,
+  MessageSquare,
+  Kanban,
+  MessagesSquare,
+  Zap,
+  Settings,
+  LifeBuoy,
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+
+export interface UserPermissions {
+  inbox: boolean;        // Atendimento & WhatsApp
+  crm: boolean;          // Funil Comercial (CRM)
+  chat: boolean;         // Chat da Equipe
+  automations: boolean;  // Automações & Agentes IA
+  settings: boolean;     // Configurações Gerais
+  support: boolean;      // Central de Suporte
+}
+
+export const DEFAULT_AGENT_PERMISSIONS: UserPermissions = {
+  inbox: true,
+  crm: true,
+  chat: true,
+  automations: false,
+  settings: false,
+  support: true,
+};
+
+export const DEFAULT_ADMIN_PERMISSIONS: UserPermissions = {
+  inbox: true,
+  crm: true,
+  chat: true,
+  automations: true,
+  settings: true,
+  support: true,
+};
+
+const PERMISSION_CONFIGS = [
+  {
+    key: "inbox" as keyof UserPermissions,
+    label: "Atendimento & WhatsApp",
+    badgeLabel: "Inbox",
+    description: "Inbox ao vivo, conversas e filas",
+    icon: MessageSquare,
+  },
+  {
+    key: "crm" as keyof UserPermissions,
+    label: "Funil Comercial (CRM)",
+    badgeLabel: "CRM",
+    description: "Gestão de leads, propostas e contatos",
+    icon: Kanban,
+  },
+  {
+    key: "chat" as keyof UserPermissions,
+    label: "Chat da Equipe",
+    badgeLabel: "Chat",
+    description: "Comunicação interna em tempo real",
+    icon: MessagesSquare,
+  },
+  {
+    key: "automations" as keyof UserPermissions,
+    label: "Automações & IA",
+    badgeLabel: "Automações",
+    description: "Regras de disparo e fluxos de IA",
+    icon: Zap,
+  },
+  {
+    key: "settings" as keyof UserPermissions,
+    label: "Configurações Gerais",
+    badgeLabel: "Config",
+    description: "Dados da empresa e integrações",
+    icon: Settings,
+  },
+  {
+    key: "support" as keyof UserPermissions,
+    label: "Central de Suporte",
+    badgeLabel: "Suporte",
+    description: "Abertura e gestão de chamados",
+    icon: LifeBuoy,
+  },
+];
 
 interface UserItem {
   id: string;
@@ -27,9 +105,98 @@ interface UserItem {
   email: string;
   role: string;
   isActive?: boolean;
+  isSuperAdmin?: boolean;
+  permissions?: UserPermissions;
   avatarUrl?: string;
   isOnline?: boolean;
   createdAt?: string;
+}
+
+function PermissionSelector({
+  role,
+  permissions,
+  onChange,
+}: {
+  role: "ADMIN" | "AGENT";
+  permissions: UserPermissions;
+  onChange: (perms: UserPermissions) => void;
+}) {
+  const isAdmin = role === "ADMIN";
+
+  const toggle = (key: keyof UserPermissions) => {
+    if (isAdmin) return;
+    onChange({
+      ...permissions,
+      [key]: !permissions[key],
+    });
+  };
+
+  return (
+    <div className="space-y-2 pt-3 border-t border-slate-800">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+          <Shield className="w-3.5 h-3.5 text-blue-400" />
+          <span>Módulos e Permissões Granulares</span>
+        </label>
+        {isAdmin ? (
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-600/15 text-blue-300 border border-blue-500/30">
+            Acesso Total (Administrador)
+          </span>
+        ) : (
+          <span className="text-[10px] text-slate-400 font-medium">
+            Selecione o que este atendente pode acessar
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+        {PERMISSION_CONFIGS.map((p) => {
+          const Icon = p.icon;
+          const isGranted = isAdmin ? true : permissions[p.key] !== false;
+
+          return (
+            <div
+              key={p.key}
+              onClick={() => toggle(p.key)}
+              className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 transition-all select-none ${
+                isGranted
+                  ? "bg-[#070D1B] border-blue-500/40 hover:border-blue-500/60"
+                  : "bg-[#070D1B]/40 border-slate-800 opacity-60 hover:opacity-80"
+              } ${isAdmin ? "cursor-default" : "cursor-pointer"}`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                    isGranted
+                      ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
+                      : "bg-slate-800 text-slate-500"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[11px] font-bold text-white truncate">
+                    {p.label}
+                  </div>
+                  <div className="text-[9px] text-slate-400 truncate">
+                    {p.description}
+                  </div>
+                </div>
+              </div>
+
+              <input
+                type="checkbox"
+                checked={isGranted}
+                disabled={isAdmin}
+                onChange={() => toggle(p.key)}
+                className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-0 focus:ring-offset-0 cursor-pointer disabled:cursor-default shrink-0 accent-blue-600"
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default function UsersSettingsTab() {
@@ -43,6 +210,7 @@ export default function UsersSettingsTab() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [invitePassword, setInvitePassword] = useState("");
   const [inviteRole, setInviteRole] = useState<"ADMIN" | "AGENT">("AGENT");
+  const [invitePermissions, setInvitePermissions] = useState<UserPermissions>(DEFAULT_AGENT_PERMISSIONS);
 
   // Modal de Edição de Usuário
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -52,6 +220,7 @@ export default function UsersSettingsTab() {
   const [editRole, setEditRole] = useState<"ADMIN" | "AGENT">("AGENT");
   const [editIsActive, setEditIsActive] = useState(true);
   const [editPassword, setEditPassword] = useState("");
+  const [editPermissions, setEditPermissions] = useState<UserPermissions>(DEFAULT_AGENT_PERMISSIONS);
 
   useEffect(() => {
     fetchUsers();
@@ -61,7 +230,12 @@ export default function UsersSettingsTab() {
     setLoading(true);
     try {
       const res = await api.get("/users");
-      setUsers(Array.isArray(res.data) ? res.data : []);
+      const list = Array.isArray(res.data) ? res.data : [];
+      // Garantir na ponta do frontend que Super Admin nunca apareça na gestão de equipe do tenant
+      const filtered = list.filter(
+        (u: any) => !u.isSuperAdmin && u.role !== "SUPER_ADMIN"
+      );
+      setUsers(filtered);
     } catch (err: any) {
       console.error("[USERS_FETCH_ERROR]", err);
       toast.error(err.response?.data?.message || "Erro ao carregar equipe de usuários.");
@@ -75,6 +249,7 @@ export default function UsersSettingsTab() {
     setInviteEmail("");
     setInvitePassword("");
     setInviteRole("AGENT");
+    setInvitePermissions(DEFAULT_AGENT_PERMISSIONS);
     setIsInviteModalOpen(true);
   };
 
@@ -87,11 +262,13 @@ export default function UsersSettingsTab() {
 
     setSubmittingInvite(true);
     try {
+      const permsToSave = inviteRole === "ADMIN" ? DEFAULT_ADMIN_PERMISSIONS : invitePermissions;
       const res = await api.post("/users", {
         name: inviteName.trim(),
         email: inviteEmail.trim(),
         password: invitePassword.trim() || undefined,
         role: inviteRole,
+        permissions: permsToSave,
       });
 
       toast.success(res.data?.message || "Membro convidado com sucesso!");
@@ -108,9 +285,21 @@ export default function UsersSettingsTab() {
   const handleOpenEditModal = (u: UserItem) => {
     setEditingUserId(u.id);
     setEditName(u.name || "");
-    setEditRole(u.role === "ADMIN" ? "ADMIN" : "AGENT");
+    const role = u.role === "ADMIN" ? "ADMIN" : "AGENT";
+    setEditRole(role);
     setEditIsActive(u.isActive !== false);
     setEditPassword("");
+
+    const perms = u.permissions || (role === "ADMIN" ? DEFAULT_ADMIN_PERMISSIONS : DEFAULT_AGENT_PERMISSIONS);
+    setEditPermissions({
+      inbox: perms.inbox !== false,
+      crm: perms.crm !== false,
+      chat: perms.chat !== false,
+      automations: role === "ADMIN" ? true : perms.automations === true,
+      settings: role === "ADMIN" ? true : perms.settings === true,
+      support: perms.support !== false,
+    });
+
     setIsEditModalOpen(true);
   };
 
@@ -124,10 +313,12 @@ export default function UsersSettingsTab() {
 
     setSubmittingEdit(true);
     try {
+      const permsToSave = editRole === "ADMIN" ? DEFAULT_ADMIN_PERMISSIONS : editPermissions;
       const payload: any = {
         name: editName.trim(),
         role: editRole,
         isActive: editIsActive,
+        permissions: permsToSave,
       };
       if (editPassword.trim()) {
         payload.password = editPassword.trim();
@@ -179,7 +370,7 @@ export default function UsersSettingsTab() {
             Equipe e Gestão de Acessos
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Gerencie os atendentes e administradores que operam a plataforma VERSUS.
+            Gerencie os atendentes e administradores vinculados à sua empresa e configure permissões de acesso por módulo.
           </p>
         </div>
 
@@ -193,14 +384,14 @@ export default function UsersSettingsTab() {
       </div>
 
       {/* Lista de Usuários */}
-      <div className="rounded-xl bg-[#070D1B] border border-slate-800/80 overflow-hidden divide-y divide-slate-800/60">
+      <div className="rounded-xl bg-[#070D1B] border border-slate-800/80 overflow-hidden divide-y divide-slate-800/60 shadow-lg">
         {users.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-500">
             Nenhum colaborador cadastrado além do administrador principal.
           </div>
         ) : (
           users.map((u) => {
-            const isAdmin = u.role === "ADMIN" || u.role === "SUPER_ADMIN";
+            const isAdmin = u.role === "ADMIN";
             const isActive = u.isActive !== false;
 
             return (
@@ -208,17 +399,17 @@ export default function UsersSettingsTab() {
                 key={u.id}
                 className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-900/40 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden relative">
+                <div className="flex items-start sm:items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden relative shadow-inner">
                     {u.avatarUrl ? (
                       <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" />
                     ) : (
                       <span>{u.name?.charAt(0).toUpperCase() || "U"}</span>
                     )}
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-xs font-bold text-white">{u.name}</h4>
+                      <h4 className="text-xs font-bold text-white truncate">{u.name}</h4>
                       {u.isOnline && (
                         <span className="w-2 h-2 rounded-full bg-emerald-400" title="Online no sistema" />
                       )}
@@ -232,11 +423,34 @@ export default function UsersSettingsTab() {
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-400 font-mono">{u.email}</p>
+                    <p className="text-[11px] text-slate-400 font-mono truncate">{u.email}</p>
+
+                    {/* Badges de Permissões Granulares */}
+                    <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                      <span className="text-[9px] text-slate-500 font-medium uppercase tracking-wider">Acessos:</span>
+                      {isAdmin ? (
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-blue-600/10 text-blue-400 border border-blue-500/30">
+                          Acesso Total
+                        </span>
+                      ) : (
+                        PERMISSION_CONFIGS.map((p) => {
+                          const isGranted = u.permissions ? u.permissions[p.key] !== false : (p.key === "automations" || p.key === "settings" ? false : true);
+                          if (!isGranted) return null;
+                          return (
+                            <span
+                              key={p.key}
+                              className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700"
+                            >
+                              {p.badgeLabel}
+                            </span>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5 self-end sm:self-center">
+                <div className="flex items-center gap-2.5 self-end sm:self-center shrink-0">
                   <span
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${
                       isAdmin
@@ -252,7 +466,7 @@ export default function UsersSettingsTab() {
                   <button
                     onClick={() => handleOpenEditModal(u)}
                     className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-slate-800 transition-colors"
-                    title="Editar membro da equipe"
+                    title="Editar dados e permissões"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
@@ -260,7 +474,7 @@ export default function UsersSettingsTab() {
                   {/* Botão de Exclusão */}
                   <button
                     onClick={() => handleDeleteUser(u.id, u.name)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition-colors"
                     title="Remover usuário"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -276,7 +490,7 @@ export default function UsersSettingsTab() {
       {isInviteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full max-w-md bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4"
+            className="w-full max-w-lg bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -336,7 +550,10 @@ export default function UsersSettingsTab() {
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => setInviteRole("AGENT")}
+                    onClick={() => {
+                      setInviteRole("AGENT");
+                      setInvitePermissions(DEFAULT_AGENT_PERMISSIONS);
+                    }}
                     className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                       inviteRole === "AGENT"
                         ? "bg-blue-600/20 border-blue-500 text-blue-300"
@@ -349,7 +566,10 @@ export default function UsersSettingsTab() {
 
                   <button
                     type="button"
-                    onClick={() => setInviteRole("ADMIN")}
+                    onClick={() => {
+                      setInviteRole("ADMIN");
+                      setInvitePermissions(DEFAULT_ADMIN_PERMISSIONS);
+                    }}
                     className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                       inviteRole === "ADMIN"
                         ? "bg-blue-600/20 border-blue-500 text-blue-300"
@@ -362,13 +582,20 @@ export default function UsersSettingsTab() {
                 </div>
               </div>
 
+              {/* Seletor de Permissões Granulares */}
+              <PermissionSelector
+                role={inviteRole}
+                permissions={invitePermissions}
+                onChange={setInvitePermissions}
+              />
+
               {/* Aviso de Disparo SMTP Real */}
               <div className="p-3 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-start gap-2.5 text-xs text-blue-300">
                 <Mail className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
                   <p className="font-semibold text-white">Disparo Automático de Convite</p>
                   <p className="text-[11px] text-slate-300 leading-relaxed">
-                    O convite corporativo com o link de acesso e credenciais provisórias será disparado através do servidor de e-mail conectado (SMTP) da sua empresa.
+                    O convite corporativo com o link de acesso e credenciais será enviado automaticamente pelo transporte de e-mail (SMTP) configurado pela sua empresa.
                   </p>
                 </div>
               </div>
@@ -384,7 +611,7 @@ export default function UsersSettingsTab() {
                 <button
                   type="submit"
                   disabled={submittingInvite}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors disabled:opacity-50 shadow-md"
                 >
                   {submittingInvite ? (
                     <>
@@ -408,13 +635,13 @@ export default function UsersSettingsTab() {
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full max-w-md bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4"
+            className="w-full max-w-lg bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
                 <Edit2 className="w-5 h-5 text-blue-400" />
-                <h3 className="text-base font-bold text-white">Editar Membro da Equipe</h3>
+                <h3 className="text-base font-bold text-white">Editar Membro e Permissões</h3>
               </div>
               <button
                 onClick={() => setIsEditModalOpen(false)}
@@ -442,7 +669,9 @@ export default function UsersSettingsTab() {
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => setEditRole("AGENT")}
+                    onClick={() => {
+                      setEditRole("AGENT");
+                    }}
                     className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                       editRole === "AGENT"
                         ? "bg-blue-600/20 border-blue-500 text-blue-300"
@@ -455,7 +684,10 @@ export default function UsersSettingsTab() {
 
                   <button
                     type="button"
-                    onClick={() => setEditRole("ADMIN")}
+                    onClick={() => {
+                      setEditRole("ADMIN");
+                      setEditPermissions(DEFAULT_ADMIN_PERMISSIONS);
+                    }}
                     className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                       editRole === "ADMIN"
                         ? "bg-blue-600/20 border-blue-500 text-blue-300"
@@ -499,7 +731,14 @@ export default function UsersSettingsTab() {
                 </div>
               </div>
 
-              <div className="space-y-1">
+              {/* Seletor de Permissões Granulares */}
+              <PermissionSelector
+                role={editRole}
+                permissions={editPermissions}
+                onChange={setEditPermissions}
+              />
+
+              <div className="space-y-1 pt-1">
                 <label className="text-xs font-semibold text-slate-300">Redefinir Senha (Opcional)</label>
                 <input
                   type="password"
@@ -509,7 +748,7 @@ export default function UsersSettingsTab() {
                   className="w-full p-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
                 />
                 <span className="text-[10px] text-slate-500">
-                  Preencha apenas se desejar atribuir uma nova senha para este operador.
+                  Preencha apenas se desejar redefinir a credencial deste colaborador.
                 </span>
               </div>
 
@@ -524,7 +763,7 @@ export default function UsersSettingsTab() {
                 <button
                   type="submit"
                   disabled={submittingEdit}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors disabled:opacity-50 shadow-md"
                 >
                   {submittingEdit ? (
                     <>

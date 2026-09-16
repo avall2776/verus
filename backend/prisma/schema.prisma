@@ -92,6 +92,7 @@ model User {
   role      String   // ADMIN, AGENT, SUPER_ADMIN
   isActive  Boolean  @default(true)
   isSuperAdmin Boolean @default(false)
+  permissions Json?   // { inbox: boolean, crm: boolean, chat: boolean, automations: boolean, settings: boolean, support: boolean }
   avatarUrl String?
   tenantId  String
   tenant    Tenant   @relation(fields: [tenantId], references: [id])

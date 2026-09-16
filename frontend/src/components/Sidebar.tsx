@@ -59,7 +59,7 @@ const NAV_GROUPS = [
     title: "OPERAÇÃO / ATENDIMENTO",
     items: [
       { name: "Monitor em Tempo Real", icon: Activity, href: "/monitor" },
-      { name: "WhatsApp", icon: WhatsAppIcon, href: "/inbox", showBadge: true },
+      { name: "WhatsApp", icon: WhatsAppIcon, href: "/inbox" },
       { name: "Métricas de Atendimento", icon: BarChart, href: "/dashboard/atendimento" },
     ]
   },
@@ -78,15 +78,14 @@ const NAV_GROUPS = [
   },
   {
     title: "MAIS RECURSOS / EXPANSÃO",
-    isNew: true,
     items: [
-      { name: "Propostas Comerciais", icon: FileText, href: "/proposals", badge: "NOVO" },
+      { name: "Propostas Comerciais", icon: FileText, href: "/proposals" },
       { name: "Contratos", icon: ScrollText, href: "/contracts" },
       { name: "Automações de Vendas", icon: Zap, href: "/settings?tab=automations" },
-      { name: "Analytics Avançado", icon: TrendingUp, href: "/dashboard/analytics", badge: "PRO" },
-      { name: "Metas Comerciais", icon: Target, href: "/dashboard/goals", badge: "NOVO" },
+      { name: "Analytics Avançado", icon: TrendingUp, href: "/dashboard/analytics" },
+      { name: "Metas Comerciais", icon: Target, href: "/dashboard/goals" },
       { name: "Inbox de E-mail", icon: Mail, href: "/email-inbox" },
-      { name: "Central de Suporte", icon: LifeBuoy, href: "/support", badge: "LERO" },
+      { name: "Central de Suporte", icon: LifeBuoy, href: "/support" },
     ]
   },
   {
@@ -119,15 +118,20 @@ export default function Sidebar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [menuTimeout, setMenuTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  const loadUser = () => {
+  const loadUser = async () => {
     try {
       const stored = localStorage.getItem('versus_user');
       if (stored) {
         const u = JSON.parse(stored);
         setCurrentUser(u);
       }
+      const res = await api.get('/users/me');
+      if (res.data) {
+        setCurrentUser(res.data);
+        localStorage.setItem('versus_user', JSON.stringify(res.data));
+      }
     } catch (e) {
-      console.error(e);
+      // Ignora erro se sessão ainda não carregada
     }
   };
 
@@ -184,6 +188,72 @@ export default function Sidebar() {
     setExpandedGroups(prev => ({ ...prev, [title]: !prev[title] }));
   };
 
+  const checkItemPermission = (href: string, user: any): boolean => {
+    if (!user) return true;
+    if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.isSuperAdmin) {
+      return true;
+    }
+
+    const perms = user.permissions || {
+      inbox: true,
+      crm: true,
+      chat: true,
+      automations: false,
+      settings: false,
+      support: true,
+    };
+
+    const base = href.split('?')[0];
+
+    // Visão Geral sempre liberada
+    if (base === '/dashboard') return true;
+
+    // Atendimento & WhatsApp
+    if (base === '/inbox' || base === '/monitor' || base === '/dashboard/atendimento' || base === '/email-inbox') {
+      return perms.inbox !== false;
+    }
+
+    // CRM / Comercial
+    if (
+      base === '/crm' ||
+      base === '/contacts' ||
+      base === '/dashboard/crm' ||
+      base === '/proposals' ||
+      base === '/contracts' ||
+      base === '/dashboard/goals' ||
+      base === '/dashboard/analytics'
+    ) {
+      return perms.crm !== false;
+    }
+
+    // Chat da Equipe
+    if (base === '/chat-interno') {
+      return perms.chat !== false;
+    }
+
+    // Automações & Agentes IA
+    if (href.includes('tab=automations') || base === '/agent') {
+      return perms.automations === true;
+    }
+
+    // Central de Suporte
+    if (base === '/support') {
+      return perms.support !== false;
+    }
+
+    // Configurações Gerais
+    if (base === '/settings' || href.includes('tab=users') || base === '/settings/whatsapp') {
+      return perms.settings === true;
+    }
+
+    return true;
+  };
+
+  const visibleGroups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => checkItemPermission(item.href, currentUser)),
+  })).filter((group) => group.items.length > 0);
+
   return (
     <aside 
       className={`bg-[#0B1224] border-r border-gray-800 flex flex-col justify-between h-full transition-[width] duration-200 ease-in-out relative z-20 shrink-0 ${isExpanded ? 'w-[260px]' : 'w-[64px]'}`}
@@ -220,7 +290,7 @@ export default function Sidebar() {
             <Menu size={18} />
           </button>
 
-          {NAV_GROUPS.map((group) => (
+          {visibleGroups.map((group) => (
             <div key={group.title} className="mb-4">
               {/* Group Header */}
               <div 
@@ -231,11 +301,6 @@ export default function Sidebar() {
                   <span className="text-[10px] font-bold text-gray-500 tracking-wider uppercase group-hover:text-gray-300 transition-colors truncate">
                     {group.title}
                   </span>
-                  {(group as any).isNew && (
-                    <span className="px-1.5 py-0.2 rounded-full text-[8px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0 animate-pulse">
-                      NOVO
-                    </span>
-                  )}
                 </div>
                 {expandedGroups[group.title] ? (
                   <ChevronDown size={12} className="text-gray-600 group-hover:text-gray-400 shrink-0 ml-1" />
@@ -273,16 +338,6 @@ export default function Sidebar() {
                       
                       {isExpanded && (
                         <span className="text-sm truncate flex-1">{item.name}</span>
-                      )}
-
-                      {isExpanded && (item as any).badge && (
-                        <span className={`ml-auto text-[9px] font-black px-1.5 py-0.5 rounded border shrink-0 ${
-                          (item as any).badge === 'NOVO' 
-                            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' 
-                            : 'bg-purple-500/20 text-purple-300 border-purple-500/40'
-                        }`}>
-                          {(item as any).badge}
-                        </span>
                       )}
 
                       {!isExpanded && (

@@ -12,6 +12,7 @@ export declare class AuthService {
             email: string;
             role: string;
             isSuperAdmin: boolean;
+            permissions: import("@prisma/client/runtime/library").JsonValue;
             avatarUrl: string;
             tenantId: string;
             tenantName: string;

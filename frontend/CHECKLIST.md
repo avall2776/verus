@@ -1230,6 +1230,41 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `npm run build` no frontend e backend aprovados com código 0 (39/39 rotas geradas).
   - [x] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
+- **[16/09/2026 - 17:10]** ⚡ **Ativação de Tarefa: Controle Granular de Permissões & Ocultação de Super Admin na Gestão de Equipe**:
+  - **Status**: ⏳ Em Andamento (Iniciada formalmente conforme autorização do usuário; conclusão estritamente condicionada ao OK).
+  - **Escopo**:
+    1. **Ocultar Super Admin da Listagem do Tenant (`/settings?tab=users`)**:
+       - Filtro estrito na consulta de usuários do tenant (`isSuperAdmin: false` e `role: { not: 'SUPER_ADMIN' }`), garantindo que apenas membros e administradores da própria empresa sejam exibidos.
+    2. **Controle Granular de Acessos ao Convidar e Editar Membros**:
+       - Modais de convite (`handleCreateUser`) e edição (`handleSaveEdit`) com seletores granulares de permissões por módulo: Atendimento/Inbox, CRM, Chat da Equipe, Automações, Configurações Gerais e Suporte.
+       - Persistência das permissões no banco de dados via Prisma (`permissions Json?` no modelo `User`).
+       - Aplicação da validação no frontend (`Sidebar.tsx` e rotas), ocultando módulos e submenus para os quais o colaborador não possui acesso concedido.
+    3. **Design System & Zero Mocks**:
+       - Manutenção rigorosa do padrão corporativo monocromático (azul escuro `#0B1224`, `#070D1B`, `border-slate-800`, textos slate e branco).
+    4. **Build e Deploy Obrigatórios**:
+       - Validação com `npx tsc --noEmit` e `npm run build` (código 0) e atualização na VPS (Hostinger PM2) e Vercel.
+
+### 🟡 FASE 58: CONTROLE GRANULAR DE PERMISSÕES & GESTÃO SEGURA DE EQUIPE
+> **Status**: ⏳ Em Andamento (Iniciada formalmente; conclusão estritamente condicionada ao OK do usuário).
+- [ ] **Backend: Banco de Dados & Endpoints de Usuários**:
+  - [ ] Campo `permissions Json?` no modelo `User` do Prisma (`prisma db push`).
+  - [ ] Filtro estrito em `UsersController.findAll` para ocultar contas de Super Admin (`isSuperAdmin: false` e `role: { not: 'SUPER_ADMIN' }`).
+  - [ ] Suporte a `permissions` no `create` (POST `/users`) e `update` (PATCH `/users/:id`).
+  - [ ] Retorno de `permissions` no login (`AuthService.login`) e perfil (`UsersController.getMe`).
+- [ ] **Frontend: Modais de Convite e Edição (`UsersSettingsTab.tsx`)**:
+  - [ ] Seletores/checkboxes granulares de permissões no modal de convite de novos membros.
+  - [ ] Seletores/checkboxes granulares de permissões no modal de edição de membros existentes.
+  - [ ] Badges visuais de permissões na listagem de usuários.
+- [ ] **Frontend: Validação de Acesso na Sidebar (`Sidebar.tsx`)**:
+  - [ ] Filtragem reativa dos itens e grupos de navegação com base nas permissões do colaborador logado.
+- [x] **Frontend: Refinamento Visual da Sidebar (`Sidebar.tsx`)**:
+  - Remoção completa de todos os badges flutuantes ('NOVO', 'PRO', 'LERO') das abas da seção "Mais Recursos / Expansão" e demais menus.
+  - Interface monocromática corporativa limpa, profissional e sem poluição visual.
+- [ ] **Validação de Build, Homologação & Deploy**:
+  - [x] `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
+  - [x] `npm run build` aprovado com código 0 em ambas as pontas.
+  - [ ] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
