@@ -195,6 +195,14 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 - **[11/09/2026 - 13:30]** 🟢 Início do turno da tarde (Foco: Analytics Padrão Lero, Fluxo de IA, Modal de Assunção e Toolbar WhatsApp).
 - **[11/09/2026 - 18:05]** 🏁 Finalização da jornada de sexta-feira com builds 100% aprovados e produção atualizada.
 - **[14/09/2026 - 08:15]** 🟢 Início da jornada de desenvolvimento da semana (Foco: Reconstrução do Chat Interno Padrão Lero e Bateria de Testes WhatsApp).
+- **[16/09/2026 - 08:15]** 🟢 **Início da jornada de desenvolvimento de quarta-feira (Foco: Analytics Avançado PRO - Mapeamento de Canais, Funil de Conversão, Gargalos e Integração Real)**. Status: ⏳ Em Andamento (Fase 51). Finalização condicionada ao OK explícito do usuário.
+
+### 🟢 FASE 51: ANALYTICS AVANÇADO (PRO) - MAPEAMENTO DE CANAIS, FUNIL & GARGALOS (16/09/2026)
+- [ ] Mapeamento de canais de aquisição (`GET /analytics/channels`) com volume, conversão e receita faturada.
+- [ ] Refinamento do funil de conversão e drop-off (`GET /analytics/funnel`).
+- [ ] Diagnóstico de gargalos operacionais e SLAs de atendimento (`GET /analytics/bottlenecks`).
+- [ ] Interface Frontend Enterprise (`/dashboard/analytics`) com seletor de períodos, modais interativos e Dark Glassmorphism.
+- [ ] Validação e testes com código 0 e homologação do usuário.
 
 ---
 

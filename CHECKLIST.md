@@ -702,7 +702,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Build do Frontend Next.js 14 aprovado (**código 0**, 31 rotas de produção geradas).
   * Deploy sincronizado com a VPS de produção (`187.127.10.166`) e PM2 online.
 
-### Fase 47: Agendamento de Mensagens (Alinhamento de Contrato, DTOs, Prisma, BullMQ e UI/UX) [EM ANDAMENTO]
+### Fase 47: Agendamento de Mensagens (Alinhamento de Contrato, DTOs, Prisma, BullMQ e UI/UX) [CONCLUÍDO]
 - [x] **Alinhamento de Contrato e DTOs (`/backend`)**:
   * Especificação do `ScheduleMessageDto` com validação estrita via class-validator (`@IsISO8601()`, `@IsNotEmpty()`, `@IsString()`, `@IsOptional()`).
   * Retrocompatibilidade garantida com suporte a `scheduledAt` e `timezone` opcionais no `SendMessageDto`.
@@ -771,16 +771,58 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * **Conexão Frontend Total**: `handleSaveProposal` em `proposals/page.tsx` conectado a `api.post('/proposals')` e `api.put('/proposals/:id')`, `handleDeleteProposal` conectado a `api.delete('/proposals/:id')`, e `ProposalModal.tsx` aguardando a persistência com async/await.
   * **Validação**: Builds de Frontend e Backend aprovados com código 0.
 
+### Fase 49: Motor de Automações Enterprise (/settings/automations) (15/09/2026) [CONCLUÍDO]
+- [x] **Banco de Dados & Prisma (Supabase)**:
+  * Modelos `Automation` e `AutomationLog` expandidos no `schema.prisma` com `triggerType`, `triggerConditions` (JSON), `actionType`, `actionPayload` (JSON), `description`, `payloadDetails` e `errorReason`.
+  * Sincronização executada com sucesso via `npx prisma db push` e `npx prisma generate` (código 0).
+- [x] **Backend NestJS**:
+  * DTOs `CreateAutomationDto` e `UpdateAutomationDto` implementados e validados para o `ValidationPipe`.
+  * `AutomationsService` enriquecido com suporte a multi-gatilhos (`PROPOSAL_ACCEPTED`, `CONTRACT_SIGNED`, `DEAL_CREATED`, `DEAL_STAGE_CHANGED`, `MESSAGE_RECEIVED`, `TAG_ADDED`, `INACTIVITY_TIMEOUT`).
+  * Interpolação de variáveis dinâmicas em tempo real (`{{clientName}}`, `{{proposalCode}}`, `{{dealTitle}}`, `{{value}}`, `{{userEmail}}`, `{{phone}}`, `{{companyName}}`).
+  * Endpoint de teste manual imediato (`POST /automations/:id/test`) para simulação de disparo e auditoria com badge 'Teste Simulado'.
+  * Rotas completas no `AutomationsController`: `GET /automations`, `POST /automations`, `POST /automations/:id/test`, `PATCH /automations/:id/toggle`, `GET /automations/logs`, `DELETE /automations/:id`.
+- [x] **Frontend Next.js 14 em Dark Glassmorphism**:
+  * Tipagem TypeScript estrita em `src/types/automation.ts`.
+  * Construtor visual passo a passo (`AutomationModal.tsx`): 1. Identificação, 2. Gatilho (QUANDO) com cards e refinamentos condicionais, 3. Ação (ENTÃO) com pílulas clicáveis de variáveis dinâmicas, cursor positioning no textarea e preview ao vivo.
+  * Nova página `/settings/automations/page.tsx` com KPIs superiores (Regras Ativas, Total Disparos, Taxa de Sucesso), abas 'Minhas Regras' (cards com switch, atalho de teste e exclusão) e 'Histórico (Logs)' com modal de inspeção de payload, além de empty state com presets rápidos.
+- [x] **Validação Rigorosa**:
+  * Backend: `npm run build` aprovado com **código 0**.
+  * Frontend: `npx tsc --noEmit` e `npm run build` aprovados com **código 0** (todas as 36 rotas compiladas com sucesso).
+
+### Fase 50: Blindagem de Deploy e Rotas Dinâmicas (Sentry dryRun & Vercel) (15/09/2026) [CONCLUÍDO]
+- [x] **Blindagem de Build Next.js (`next.config.mjs`)**:
+  * Configurado `dryRun: !process.env.SENTRY_AUTH_TOKEN` e `silent: true`, prevenindo que a ausência do token interrompa builds na Vercel.
+- [x] **Diretiva Dinâmica nas Rotas Públicas**:
+  * Adicionada declaração explícita `export const dynamic = 'force-dynamic'` nas páginas de assinatura `/c/[code]` e aceite `/p/[code]`, eliminando falhas de pré-renderização SSG.
+- [x] **Portal Público de Assinatura e Aceite**:
+  * Criação de páginas públicas `/c/[code]` (Contratos) e `/p/[code]` (Propostas) sem dependência de autenticação do backoffice, com layout institucional, trilha de auditoria e conformidade com MP 2.200-2/2001 e Lei 14.063/2020.
+- [x] **Eliminação de URLs Fictícias**:
+  * Substituídas referências estáticas por resolução dinâmica (`window.location.origin`, `NEXT_PUBLIC_APP_URL` ou `origin` da requisição) com fallback oficial para `https://verus-alpha.vercel.app`.
+- [x] **Validação & Deploy**:
+  * `npx tsc --noEmit` e `npm run build` validados com **código 0** em backend e frontend. Commit sincronizado no GitHub `main` e aceito pelo Vercel.
+
+### 🟢 FASE 51: ANALYTICS AVANÇADO (PRO) - MAPEAMENTO DE CANAIS, FUNIL DE CONVERSÃO & GARGALOS (16/09/2026 - Manhã) [EM ANDAMENTO]
+- [ ] **Mapeamento de Canais de Aquisição (`GET /analytics/channels`)**:
+  * Mapear origens de leads no banco (WhatsApp, Orgânico, Tráfego Pago/Meta Ads, Indicação, Google Ads).
+  * Cálculo de volume de leads, deals, propostas geradas, contratos fechados, receita faturada e ticket médio por canal.
+- [ ] **Refinamento do Funil de Conversão & Drop-off (`GET /analytics/funnel`)**:
+  * Etapas completas: Leads Captados -> Em Atendimento -> Oportunidade / Deal -> Proposta Enviada -> Contrato Assinado.
+  * Cálculo de conversão global, conversão passo-a-passo e taxa de abandono (drop-off) percentual.
+- [ ] **Diagnóstico de Gargalos Operacionais & SLAs (`GET /analytics/bottlenecks`)**:
+  * Métricas reais de Tempo de Primeira Resposta (FRT) e Tempo Médio de Atendimento (TMA) por departamento.
+  * Distribuição horária de pico e identificação de gargalos críticos de sobrecarga.
+- [ ] **Interface Frontend Enterprise (`/dashboard/analytics`)**:
+  * Design system oficial VERSUS (Dark Glassmorphism, paleta `#0B1224`, `#0055FF`, `#00D2FF`, contrastes acessíveis).
+  * Seletor reativo de períodos (`7d`, `30d`, `90d`) conectado aos endpoints reais.
+  * Modais de detalhamento técnico (Drilldown de Canal e Gargalos) e botões funcionais.
+  * Ausência de dados mockados rígidos: consumo direto da API com Empty States elegantes.
+- [ ] **Homologação e Validação Final**:
+  * Builds de Backend e Frontend validados com código 0.
+  * Teste operacional e aprovação final com OK explícito do usuário.
+
 ---
 
 ## 🕒 Registro de Ponto (Timesheet do Projeto)
-- **[15/09/2026 - 17:18]** 🟢 **Sincronização de Relatório & Deploy em Produção (IDE 2)**:
-  - Registro automático de ponto e horas reativado com ordenação cronológica e leitura local resiliente.
-- **[15/09/2026 - 16:45]** 🛡️ **Correção Crítica: Persistência de Propostas de Ponta a Ponta Concluída (IDE 1)**:
-  - Resolvida a ausência de chamadas à API no frontend e a rejeição por DTO estrito no backend.
-  - Tabelas Prisma `Proposal` e `ProposalItem` sincronizadas com suporte total a clientes e descontos.
-  - Endpoint `DELETE /proposals/:id` adicionado, eliminando erro de rota 404.
-  - Builds Next.js 14 e NestJS compilados com **código 0** e deploy sincronizado na VPS e Vercel.
 - **[08/09/2026 - 08:30]** 🟢 Início da Fundação do Projeto (Docker, Postgres, Supabase, Prisma ORM, BullMQ).
 - **[09/09/2026 - 08:30]** 🟢 Implementação de WebSockets, Sentry, Deploy Vercel/VPS e WhatsApp Cloud API.
 - **[10/09/2026 - 08:30]** 🟢 Omnichannel Revamp, RAG Avançado, Respostas Rápidas e CRM Lero.
@@ -901,6 +943,9 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
        - Criar módulo NestJS de E-mail (`GET /emails`, `POST /emails/send`, favoritos e exclusão).
        - Conectar a caixa de entrada (`/email-inbox`) com modal de composição rápida e integração nativa para anexar links de propostas e contratos.
   - **Validação de Código**: Backend e Frontend checados e prontos para reinício imediato amanhã com código 0.
+- **[16/09/2026 - 08:15]** 🟢 **Início da jornada de desenvolvimento de quarta-feira (Foco: Analytics Avançado PRO - Mapeamento de Canais, Funil de Conversão, Gargalos e Integração Real)**:
+  - **Status**: ⏳ Em Andamento (Fase 51).
+  - **Diretriz do Usuário**: Elevar a ferramenta ao nível das melhores plataformas SaaS do mercado, integrando 100% backend NestJS e frontend Next.js 14, com design system Dark Modern, modais funcionais e métricas técnicas reais. Tarefa em execução com código 0 e homologação do usuário.
 
 ---
 

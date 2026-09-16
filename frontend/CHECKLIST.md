@@ -702,7 +702,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * Build do Frontend Next.js 14 aprovado (**código 0**, 31 rotas de produção geradas).
   * Deploy sincronizado com a VPS de produção (`187.127.10.166`) e PM2 online.
 
-### Fase 47: Agendamento de Mensagens (Alinhamento de Contrato, DTOs, Prisma, BullMQ e UI/UX) [EM ANDAMENTO]
+### Fase 47: Agendamento de Mensagens (Alinhamento de Contrato, DTOs, Prisma, BullMQ e UI/UX) [CONCLUÍDO]
 - [x] **Alinhamento de Contrato e DTOs (`/backend`)**:
   * Especificação do `ScheduleMessageDto` com validação estrita via class-validator (`@IsISO8601()`, `@IsNotEmpty()`, `@IsString()`, `@IsOptional()`).
   * Retrocompatibilidade garantida com suporte a `scheduledAt` e `timezone` opcionais no `SendMessageDto`.
@@ -771,16 +771,58 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   * **Conexão Frontend Total**: `handleSaveProposal` em `proposals/page.tsx` conectado a `api.post('/proposals')` e `api.put('/proposals/:id')`, `handleDeleteProposal` conectado a `api.delete('/proposals/:id')`, e `ProposalModal.tsx` aguardando a persistência com async/await.
   * **Validação**: Builds de Frontend e Backend aprovados com código 0.
 
+### Fase 49: Motor de Automações Enterprise (/settings/automations) (15/09/2026) [CONCLUÍDO]
+- [x] **Banco de Dados & Prisma (Supabase)**:
+  * Modelos `Automation` e `AutomationLog` expandidos no `schema.prisma` com `triggerType`, `triggerConditions` (JSON), `actionType`, `actionPayload` (JSON), `description`, `payloadDetails` e `errorReason`.
+  * Sincronização executada com sucesso via `npx prisma db push` e `npx prisma generate` (código 0).
+- [x] **Backend NestJS**:
+  * DTOs `CreateAutomationDto` e `UpdateAutomationDto` implementados e validados para o `ValidationPipe`.
+  * `AutomationsService` enriquecido com suporte a multi-gatilhos (`PROPOSAL_ACCEPTED`, `CONTRACT_SIGNED`, `DEAL_CREATED`, `DEAL_STAGE_CHANGED`, `MESSAGE_RECEIVED`, `TAG_ADDED`, `INACTIVITY_TIMEOUT`).
+  * Interpolação de variáveis dinâmicas em tempo real (`{{clientName}}`, `{{proposalCode}}`, `{{dealTitle}}`, `{{value}}`, `{{userEmail}}`, `{{phone}}`, `{{companyName}}`).
+  * Endpoint de teste manual imediato (`POST /automations/:id/test`) para simulação de disparo e auditoria com badge 'Teste Simulado'.
+  * Rotas completas no `AutomationsController`: `GET /automations`, `POST /automations`, `POST /automations/:id/test`, `PATCH /automations/:id/toggle`, `GET /automations/logs`, `DELETE /automations/:id`.
+- [x] **Frontend Next.js 14 em Dark Glassmorphism**:
+  * Tipagem TypeScript estrita em `src/types/automation.ts`.
+  * Construtor visual passo a passo (`AutomationModal.tsx`): 1. Identificação, 2. Gatilho (QUANDO) com cards e refinamentos condicionais, 3. Ação (ENTÃO) com pílulas clicáveis de variáveis dinâmicas, cursor positioning no textarea e preview ao vivo.
+  * Nova página `/settings/automations/page.tsx` com KPIs superiores (Regras Ativas, Total Disparos, Taxa de Sucesso), abas 'Minhas Regras' (cards com switch, atalho de teste e exclusão) e 'Histórico (Logs)' com modal de inspeção de payload, além de empty state com presets rápidos.
+- [x] **Validação Rigorosa**:
+  * Backend: `npm run build` aprovado com **código 0**.
+  * Frontend: `npx tsc --noEmit` e `npm run build` aprovados com **código 0** (todas as 36 rotas compiladas com sucesso).
+
+### Fase 50: Blindagem de Deploy e Rotas Dinâmicas (Sentry dryRun & Vercel) (15/09/2026) [CONCLUÍDO]
+- [x] **Blindagem de Build Next.js (`next.config.mjs`)**:
+  * Configurado `dryRun: !process.env.SENTRY_AUTH_TOKEN` e `silent: true`, prevenindo que a ausência do token interrompa builds na Vercel.
+- [x] **Diretiva Dinâmica nas Rotas Públicas**:
+  * Adicionada declaração explícita `export const dynamic = 'force-dynamic'` nas páginas de assinatura `/c/[code]` e aceite `/p/[code]`, eliminando falhas de pré-renderização SSG.
+- [x] **Portal Público de Assinatura e Aceite**:
+  * Criação de páginas públicas `/c/[code]` (Contratos) e `/p/[code]` (Propostas) sem dependência de autenticação do backoffice, com layout institucional, trilha de auditoria e conformidade com MP 2.200-2/2001 e Lei 14.063/2020.
+- [x] **Eliminação de URLs Fictícias**:
+  * Substituídas referências estáticas por resolução dinâmica (`window.location.origin`, `NEXT_PUBLIC_APP_URL` ou `origin` da requisição) com fallback oficial para `https://verus-alpha.vercel.app`.
+- [x] **Validação & Deploy**:
+  * `npx tsc --noEmit` e `npm run build` validados com **código 0** em backend e frontend. Commit sincronizado no GitHub `main` e aceito pelo Vercel.
+
+### 🟢 FASE 51: ANALYTICS AVANÇADO (PRO) - MAPEAMENTO DE CANAIS, FUNIL DE CONVERSÃO & GARGALOS (16/09/2026 - Manhã) [EM ANDAMENTO]
+- [ ] **Mapeamento de Canais de Aquisição (`GET /analytics/channels`)**:
+  * Mapear origens de leads no banco (WhatsApp, Orgânico, Tráfego Pago/Meta Ads, Indicação, Google Ads).
+  * Cálculo de volume de leads, deals, propostas geradas, contratos fechados, receita faturada e ticket médio por canal.
+- [ ] **Refinamento do Funil de Conversão & Drop-off (`GET /analytics/funnel`)**:
+  * Etapas completas: Leads Captados -> Em Atendimento -> Oportunidade / Deal -> Proposta Enviada -> Contrato Assinado.
+  * Cálculo de conversão global, conversão passo-a-passo e taxa de abandono (drop-off) percentual.
+- [ ] **Diagnóstico de Gargalos Operacionais & SLAs (`GET /analytics/bottlenecks`)**:
+  * Métricas reais de Tempo de Primeira Resposta (FRT) e Tempo Médio de Atendimento (TMA) por departamento.
+  * Distribuição horária de pico e identificação de gargalos críticos de sobrecarga.
+- [ ] **Interface Frontend Enterprise (`/dashboard/analytics`)**:
+  * Design system oficial VERSUS (Dark Glassmorphism, paleta `#0B1224`, `#0055FF`, `#00D2FF`, contrastes acessíveis).
+  * Seletor reativo de períodos (`7d`, `30d`, `90d`) conectado aos endpoints reais.
+  * Modais de detalhamento técnico (Drilldown de Canal e Gargalos) e botões funcionais.
+  * Ausência de dados mockados rígidos: consumo direto da API com Empty States elegantes.
+- [ ] **Homologação e Validação Final**:
+  * Builds de Backend e Frontend validados com código 0.
+  * Teste operacional e aprovação final com OK explícito do usuário.
+
 ---
 
 ## 🕒 Registro de Ponto (Timesheet do Projeto)
-- **[15/09/2026 - 17:18]** 🟢 **Sincronização de Relatório & Deploy em Produção (IDE 2)**:
-  - Registro automático de ponto e horas reativado com ordenação cronológica e leitura local resiliente.
-- **[15/09/2026 - 16:45]** 🛡️ **Correção Crítica: Persistência de Propostas de Ponta a Ponta Concluída (IDE 1)**:
-  - Resolvida a ausência de chamadas à API no frontend e a rejeição por DTO estrito no backend.
-  - Tabelas Prisma `Proposal` e `ProposalItem` sincronizadas com suporte total a clientes e descontos.
-  - Endpoint `DELETE /proposals/:id` adicionado, eliminando erro de rota 404.
-  - Builds Next.js 14 e NestJS compilados com **código 0** e deploy sincronizado na VPS e Vercel.
 - **[08/09/2026 - 08:30]** 🟢 Início da Fundação do Projeto (Docker, Postgres, Supabase, Prisma ORM, BullMQ).
 - **[09/09/2026 - 08:30]** 🟢 Implementação de WebSockets, Sentry, Deploy Vercel/VPS e WhatsApp Cloud API.
 - **[10/09/2026 - 08:30]** 🟢 Omnichannel Revamp, RAG Avançado, Respostas Rápidas e CRM Lero.
@@ -842,6 +884,68 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Validação Rigorosa**:
     - Backend: `npm run build` concluído com sucesso (**código 0**).
     - Frontend: `npx tsc --noEmit` e `npm run build` validados com **código 0** (36 rotas de produção geradas com sucesso).
+- **[15/09/2026 - 17:30]** 🔒 **Blindagem & Estabilização Completa de Contratos Digitais (IDE 1 & IDE 2)**:
+  - **Eliminação Definitiva do Erro 401 no PDF**: Removida a obrigatoriedade estrita de token no header para visualização e impressão da minuta em `/contracts/:id/pdf` e `/proposals/:id/pdf`. O backend agora realiza lookup seguro pelo ID criptográfico único, além de aceitar autenticação via `?token=` no `JwtStrategy` (`ExtractJwt.fromUrlQueryParameter`). O frontend agora também passa o token por query param como garantia, permitindo abertura perfeita em novas abas ou download direto pelo cliente sem 401.
+  - **Preenchimento Automático Abrangente de Propostas**: Ao selecionar qualquer proposta comercial aceita no modal, o sistema preenche imediatamente cliente, email, telefone, CPF/CNPJ (`clientDocument`), endereço completo (`clientAddress`), valor, título padronizado e data de vigência (`validUntil`/`endDate`). Propostas aceitas agora são exibidas no topo do seletor com badge `★ [ACEITA]`.
+  - **Sanitização de Datas contra Falhas no Supabase**: Implementado helper `parseSafeDate` no service para evitar que strings de data vazias (`""`) ou malformadas gerem `Invalid Date` no Prisma, garantindo gravação 100% resiliente em `POST /contracts`.
+  - **Ações Rápidas & WhatsApp Aperfeiçoados**: Normalização de números de telefone para o padrão WhatsApp internacional (`55` para DDI Brasil), cópia automática e instantânea da mensagem de assinatura para a área de transferência (`navigator.clipboard`), e atualização reativa do status para `signed` na tabela e no modal de visualização.
+  - **Validação**: `npx tsc --noEmit` e `npm run build` aprovados com **código 0** em ambos os ambientes. Deploy atualizado na VPS via `node deploy.js` e disparado na Vercel.
+- **[15/09/2026 - 17:40]** ⚡ **Fase 49 Concluída com Sucesso: Motor de Automações Enterprise (/settings/automations)**:
+  - **Banco de Dados & Prisma (Supabase)**:
+    - Modelos `Automation` e `AutomationLog` expandidos no `schema.prisma` com `triggerType`, `triggerConditions` (JSON), `actionType`, `actionPayload` (JSON), `description`, `payloadDetails` e `errorReason`.
+    - Sincronização executada com sucesso via `npx prisma db push` e `npx prisma generate` (código 0).
+  - **Backend NestJS**:
+    - DTOs `CreateAutomationDto` e `UpdateAutomationDto` implementados e validados para o `ValidationPipe`.
+    - `AutomationsService` enriquecido com suporte a multi-gatilhos (`PROPOSAL_ACCEPTED`, `CONTRACT_SIGNED`, `DEAL_CREATED`, `DEAL_STAGE_CHANGED`, `MESSAGE_RECEIVED`, `TAG_ADDED`, `INACTIVITY_TIMEOUT`).
+    - Interpolação de variáveis dinâmicas em tempo real (`{{clientName}}`, `{{proposalCode}}`, `{{dealTitle}}`, `{{value}}`, `{{userEmail}}`, `{{phone}}`, `{{companyName}}`).
+    - Endpoint de teste manual imediato (`POST /automations/:id/test`) para simulação de disparo e auditoria com badge 'Teste Simulado'.
+    - Rotas completas no `AutomationsController`: `GET /automations`, `POST /automations`, `POST /automations/:id/test`, `PATCH /automations/:id/toggle`, `GET /automations/logs`, `DELETE /automations/:id`.
+  - **Frontend Next.js 14 em Dark Glassmorphism**:
+    - Tipagem TypeScript estrita em `src/types/automation.ts`.
+    - Construtor visual passo a passo (`AutomationModal.tsx`): 1. Identificação, 2. Gatilho (QUANDO) com cards e refinamentos condicionais, 3. Ação (ENTÃO) com pílulas clicáveis de variáveis dinâmicas, cursor positioning no textarea e preview ao vivo.
+    - Nova página `/settings/automations/page.tsx` com KPIs superiores (Regras Ativas, Total Disparos, Taxa de Sucesso), abas 'Minhas Regras' (cards com switch, atalho de teste e exclusão) e 'Histórico (Logs)' com modal de inspeção de payload, além de empty state com presets rápidos.
+  - **Validação Rigorosa**:
+    - Backend: `npm run build` aprovado com **código 0**.
+    - Frontend: `npx tsc --noEmit` e `npm run build` aprovados com **código 0** (todas as 36 rotas compiladas com sucesso).
+- **[15/09/2026 - 17:45]** 🌐 **Eliminação de Domínio Fictício & Portal de Assinatura Online (/c/[code] e /p/[code])**:
+  - **Remoção de URLs Fictícias**: Substituídas todas as ocorrências estáticas de `app.versus.com.br` por resolução dinâmica de URL (`window.location.origin` no frontend, `origin` do cliente ou `NEXT_PUBLIC_APP_URL` / `APP_URL` com fallback oficial para `https://verus-alpha.vercel.app`).
+  - **Portal Público de Assinatura de Contratos (`/c/[code]`)**: Criada a página pública oficial para que clientes assinem contratos diretamente pelo link recebido no WhatsApp/E-mail. Apresenta cabeçalho oficial da empresa, minutas, resumo financeiro, formulário de assinatura com carimbo de tempo, IP do cliente e validação conforme a MP 2.200-2/2001 e Lei 14.063/2020.
+  - **Portal Público de Aceite de Propostas (`/p/[code]`)**: Criada a página pública oficial para análise e aprovação instantânea de propostas comerciais pelos clientes (`POST /proposals/public/:code/accept`).
+  - **Endpoints Públicos no Backend (NestJS)**:
+    - `GET /contracts/public/:codeOrId` & `POST /contracts/public/:codeOrId/sign`: Acesso e assinatura pública segura sem bloqueio por JWT de backoffice.
+    - `GET /proposals/public/:codeOrId` & `POST /proposals/public/:codeOrId/accept`: Acesso e aprovação pública de propostas.
+  - **Compartilhamento WhatsApp 100% Funcional**: Mensagens agora incluem links reais e clicáveis direcionando imediatamente para `/c/[code]`.
+  - **Validação Rigorosa**: `npx tsc --noEmit` e `npm run build` aprovados com **código 0** em backend e frontend.
+- **[15/09/2026 - 17:55]** 🛡️ **Fase 50 Concluída com Sucesso: Blindagem de Build no Vercel (Sentry dryRun & Dynamic Force-Dynamic)**:
+  - **Causa Raiz Resolvida**: No pipeline CI da Vercel (`CI=true`), a ausência da variável `SENTRY_AUTH_TOKEN` causava timeout e interrupção do build em 24s durante o upload de source maps.
+  - **Configuração de Resiliência (`next.config.mjs`)**: Configurado `dryRun: !process.env.SENTRY_AUTH_TOKEN` e `silent: true`, permitindo que o build continue com sucesso em ambientes sem o token do Sentry cadastrado.
+  - **Diretiva Dinâmica nas Rotas Públicas**: Adicionada a declaração explícita `export const dynamic = "force-dynamic";` nas páginas de assinatura `/c/[code]` e `/p/[code]`, prevenindo falhas de pré-renderização estática (SSG) no Next.js 14.
+  - **Unificação de Notificações**: Padronizado o uso de `sonner` (`import { toast } from "sonner"`) em todos os fluxos públicos.
+  - **Validação & Deploy**: `npx tsc --noEmit` e `npm run build` validados com **código 0** (36 rotas). Commit `91ff0f3` enviado para `origin/main` e aceito pelo Vercel.
+- **[15/09/2026 - 18:10]** 🏁 **Fechamento do Expediente & Ponto Diário Batido (15/09/2026)**:
+  - **Status Geral do Projeto**: O ecossistema comercial do VERSUS encerra o dia com **100% de estabilidade**, builds rigorosamente validados com **código 0** no Backend (`nest build`) e no Frontend Next.js (`npx tsc --noEmit` e `npm run build` com todas as 36 rotas de produção geradas).
+  - **Resumo Consolidado das Entregas de Hoje**:
+    1. **Módulo de Propostas Comerciais**: Listagem sem mocks, KPIs dinâmicos, construtor de orçamentos, espelho visual, geração de link e portal público de aceite (`/p/[code]`).
+    2. **Módulo de Contratos Digitais End-to-End**: Modelagem Prisma/Supabase (`Contract`), tabela de contratos, importação automática de propostas aceitas, eliminação definitiva do erro 401 no PDF, trilha de auditoria com IP/data/hora e portal oficial de assinatura online (`/c/[code]`) em conformidade com a MP 2.200-2/2001 e Lei 14.063/2020.
+    3. **Motor de Automações Enterprise (`/settings/automations`)**: Suporte a multi-gatilhos, interpolação de variáveis dinâmicas, modal visual, teste simulado e histórico completo de logs de execução.
+    4. **Blindagem de Deploy & Resolução de URLs**: Eliminação de links estáticos fictícios, URL dinâmica para links de WhatsApp/E-mail, contingência para build sem `SENTRY_AUTH_TOKEN` na Vercel e deploy ativo no PM2 da VPS (`versus-engine`).
+  - **📋 Pauta & Próximos Passos Prioritários para Amanhã**:
+    1. **Analytics Avançado (PRO)**:
+       - Implementar `getChannels` no backend para mapear origens de leads e volume financeiro faturado por canal.
+       - Refinar `getFunnel` e `getBottlenecks` para fornecer métricas completas de Drop-off e SLAs (FRT e TMA por setor).
+       - Conectar os componentes do frontend (`/dashboard/analytics`) aos dados reais da API com filtros de período (`7d`, `30d`, `90d`).
+    2. **Metas Comerciais (NOVO)**:
+       - Implementar cálculo automatizado de ritmo de meta (Run Rate) e projeções financeiras de fechamento de período.
+       - Aprimorar e conectar o Leaderboard gamificado de consultores comerciais (ranking por pódio e medalhas).
+       - Conectar a criação e exclusão de metas (`POST /goals` e `DELETE /goals/:id`) à interface do frontend (`/dashboard/goals`).
+    3. **Inbox de E-mail Unificado**:
+       - Adicionar modelo `EmailMessage` no Prisma/Supabase (`npx prisma db push`).
+       - Criar módulo NestJS de E-mail (`GET /emails`, `POST /emails/send`, favoritos e exclusão).
+       - Conectar a caixa de entrada (`/email-inbox`) com modal de composição rápida e integração nativa para anexar links de propostas e contratos.
+  - **Validação de Código**: Backend e Frontend checados e prontos para reinício imediato amanhã com código 0.
+- **[16/09/2026 - 08:15]** 🟢 **Início da jornada de desenvolvimento de quarta-feira (Foco: Analytics Avançado PRO - Mapeamento de Canais, Funil de Conversão, Gargalos e Integração Real)**:
+  - **Status**: ⏳ Em Andamento (Fase 51).
+  - **Diretriz do Usuário**: Elevar a ferramenta ao nível das melhores plataformas SaaS do mercado, integrando 100% backend NestJS e frontend Next.js 14, com design system Dark Modern, modais funcionais e métricas técnicas reais. Tarefa em execução com código 0 e homologação do usuário.
 
 ---
 

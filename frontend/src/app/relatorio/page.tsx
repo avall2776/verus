@@ -89,14 +89,17 @@ export default function RelatorioPage() {
       const json = await res.json();
       setData(json);
       
-      // Expande as últimas 3 fases por padrão
+      // Expande as fases ativas e as últimas 4 fases por padrão
       if (json.phases && json.phases.length > 0) {
         const initialExpanded: { [key: number]: boolean } = {};
         const recentPhases = json.phases.slice(-4);
         recentPhases.forEach((p: Phase) => {
           initialExpanded[p.id] = true;
         });
-        setExpandedPhases(prev => ({ ...initialExpanded, ...prev }));
+        json.phases.filter((p: Phase) => !p.isCompleted).forEach((p: Phase) => {
+          initialExpanded[p.id] = true;
+        });
+        setExpandedPhases(initialExpanded);
       }
       setError(null);
     } catch (err: any) {
@@ -482,7 +485,7 @@ export default function RelatorioPage() {
                 </div>
               ) : (
                 filteredPhases.map((phase) => {
-                  const isExpanded = expandedPhases[phase.id] !== false;
+                  const isExpanded = !!expandedPhases[phase.id];
                   
                   return (
                     <div 

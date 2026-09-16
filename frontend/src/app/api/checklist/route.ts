@@ -49,7 +49,7 @@ function parseChecklistMarkdown(markdown: string) {
     const line = lines[i].trim();
 
     // Detecta cabeçalhos de seções principais
-    const isPontoSectionHeader = /^##\s+.*(?:Registro\s+de\s+Ponto|Timesheet|Histórico)/i.test(line);
+    const isPontoSectionHeader = /^##\s+.*(?:Registro\s+de\s+Ponto|Timesheet|Histórico\s+de\s+Ponto)/i.test(line);
     if (isPontoSectionHeader) {
       if (currentPhase) {
         if (currentItem) currentPhase.items.push(currentItem);
@@ -69,6 +69,11 @@ function parseChecklistMarkdown(markdown: string) {
         currentItem = null;
       }
       currentSection = 'roadmap';
+      continue;
+    }
+
+    if (/^##\s+.*(?:Fases)/i.test(line)) {
+      currentSection = 'phases';
       continue;
     }
 
@@ -96,12 +101,12 @@ function parseChecklistMarkdown(markdown: string) {
       } else if (rest.includes('🏁')) {
         type = 'end';
         icon = '🏁';
-      } else if (rest.includes('🚀') || rest.includes('💎') || rest.includes('🛡️') || rest.includes('🎯') || rest.includes('🧼') || rest.includes('📜') || rest.includes('👑')) {
+      } else if (rest.includes('🚀') || rest.includes('💎') || rest.includes('🛡️') || rest.includes('🎯') || rest.includes('🧼') || rest.includes('📜') || rest.includes('👑') || rest.includes('⚡')) {
         type = 'resume';
         icon = rest.match(/^[^\w\s]+/)?.[0] || '🚀';
       }
 
-      const cleanDesc = rest.replace(/^[^\w\s]+\s*/, '').replace(/^\*\*|\*\*$/g, '').trim();
+      const cleanDesc = rest.replace(/^[^\w\s]+\s*/, '').replace(/^(\*\*)+|(\*\*|:|\*\*:)+$/g, '').trim();
 
       punchIns.push({
         timestamp: `${date} ${time}`,
@@ -121,7 +126,7 @@ function parseChecklistMarkdown(markdown: string) {
 
     // Processa Roadmap
     if (currentSection === 'roadmap') {
-      const matchRoadmap = line.match(/^-\s+\[( |x)\]\s+\*\*([^*]+)\*\*:\s*(.+)$/i);
+      const matchRoadmap = line.match(/^-\s+\[( |x)\]\s+\*\*([^*:]+)(?::\*\*|\*\*:\s*|\*\*)\s*(.+)$/i);
       if (matchRoadmap) {
         roadmapItems.push({
           checked: matchRoadmap[1].toLowerCase() === 'x',
@@ -133,17 +138,18 @@ function parseChecklistMarkdown(markdown: string) {
     }
 
     // Processa Fases
-    const isPhaseLine = /^###\s+(?:[^\w\s]+\s+)?Fase\s+\d+/i.test(line);
+    const isPhaseLine = /^###\s+.*?\bFase\s+(\d+)/i.test(line);
     if (isPhaseLine) {
       if (currentPhase) {
         if (currentItem) currentPhase.items.push(currentItem);
         phases.push(currentPhase);
       }
+      currentSection = 'phases';
 
-      const matchPhase = line.match(/^###\s+(?:[^\w\s]+\s+)?Fase\s+(\d+)(?:\s*\(([^)]+)\))?:\s*(.+)$/i);
+      const matchPhase = line.match(/^###\s+.*?\bFase\s+(\d+)\s*:\s*(.+)$/i);
       const phaseNum = matchPhase ? parseInt(matchPhase[1], 10) : phases.length + 1;
-      const rawTitle = line.replace(/^###\s+(?:[^\w\s]+\s+)?/, '').trim();
-      const cleanTitle = matchPhase ? matchPhase[3].trim() : rawTitle;
+      const rawTitle = line.replace(/^###\s+/, '').trim();
+      const cleanTitle = matchPhase ? matchPhase[2].trim() : rawTitle;
 
       currentPhase = {
         id: phaseNum,
