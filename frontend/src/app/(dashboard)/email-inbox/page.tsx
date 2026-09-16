@@ -103,9 +103,17 @@ export default function EmailInboxPage() {
 
       fetchCounts();
       if (silent) toast.success("Caixa de entrada sincronizada!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("[EMAIL_FETCH_ERROR]", error);
-      toast.error("Erro ao sincronizar mensagens.");
+      if (error.response?.status === 401) {
+        toast.error("Sua sessão expirou. Redirecionando para login...");
+        setTimeout(() => {
+          if (typeof window !== "undefined") window.location.href = "/login";
+        }, 1200);
+        return;
+      }
+      const msg = error.response?.data?.message || "Erro ao sincronizar mensagens.";
+      toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);

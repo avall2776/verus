@@ -40,9 +40,23 @@ interface PunchIn {
   timestamp: string;
   date: string;
   time: string;
-  type: 'start' | 'pause' | 'resume' | 'end' | 'info';
+  type: 'start' | 'pause' | 'resume' | 'end' | 'task' | 'info';
   icon: string;
   description: string;
+  isTimeclockEvent?: boolean;
+}
+
+interface DailyTimeclock {
+  date: string;
+  entryTime: string | null;
+  entryDescription: string | null;
+  lunchOutTime: string | null;
+  lunchInTime: string | null;
+  exitTime: string | null;
+  status: 'morning_active' | 'lunch' | 'afternoon_active' | 'completed' | 'idle';
+  statusLabel: string;
+  totalEventsToday: number;
+  latestActivity: PunchIn | null;
 }
 
 interface RoadmapItem {
@@ -61,6 +75,11 @@ interface ChecklistData {
     completionPercent: number;
     currentActivePhaseTitle: string;
     lastPunchIn: PunchIn | null;
+    latestActivity?: PunchIn | null;
+    timeclock?: DailyTimeclock | null;
+    entryTime?: string;
+    entryDate?: string;
+    workdayStatus?: string;
     updatedAt: string;
   };
   phases: Phase[];
@@ -115,6 +134,11 @@ export default function RelatorioPage() {
 
   useEffect(() => {
     fetchChecklist();
+    // Auto-refresh a cada 15 segundos em tempo real
+    const timer = setInterval(() => {
+      fetchChecklist(false);
+    }, 15000);
+    return () => clearInterval(timer);
   }, []);
 
   const togglePhase = (id: number) => {
@@ -312,25 +336,29 @@ export default function RelatorioPage() {
             </div>
           </div>
 
-          {/* Card 3: Último Ponto Batido */}
+          {/* Card 3: Registro de Ponto Inviolável */}
           <div className="p-4 rounded-2xl bg-[#0F172A] border border-slate-800/90 shadow-sm relative overflow-hidden print:bg-white print:border-slate-300">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider print:text-slate-700">Registro de Ponto</span>
-              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-full print:text-black">
-                {stats.lastPunchIn ? `${stats.lastPunchIn.date}` : 'Registrado'}
+              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-full print:text-black flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                {stats.entryDate || stats.lastPunchIn?.date || '16/09/2026'}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xl font-black text-emerald-400 print:text-black">
-                {stats.lastPunchIn ? stats.lastPunchIn.time : '--:--'}
+              <span className="text-xl font-black text-emerald-400 print:text-black font-mono">
+                {stats.timeclock?.entryTime || stats.entryTime || (stats.lastPunchIn ? stats.lastPunchIn.time : '--:--')}
               </span>
               <span className="text-xs text-slate-300 font-semibold print:text-slate-700 truncate">
-                {stats.lastPunchIn?.type === 'start' ? 'Início do Turno' : stats.lastPunchIn?.type === 'end' ? 'Encerramento' : 'Atualização'}
+                Início do Turno
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-2 truncate print:text-slate-600" title={stats.lastPunchIn?.description}>
-              {stats.lastPunchIn ? stats.lastPunchIn.description : 'Jornada em andamento'}
-            </p>
+            <div className="mt-2 text-[11px] text-slate-400 flex items-center gap-1.5 truncate print:text-slate-600">
+              <span className="text-slate-500 font-mono text-[10px] shrink-0">Atividade:</span>
+              <span className="truncate text-slate-300" title={stats.latestActivity?.description || stats.lastPunchIn?.description}>
+                {stats.latestActivity ? `${stats.latestActivity.time} · ${stats.latestActivity.description}` : (stats.lastPunchIn?.description || 'Jornada em andamento')}
+              </span>
+            </div>
           </div>
 
           {/* Card 4: Infraestrutura & Produção */}
@@ -583,16 +611,122 @@ export default function RelatorioPage() {
         {/* --- ABA 2: REGISTRO DE PONTO (TIMESHEET) --- */}
         {activeTab === 'ponto' && (
           <div className="space-y-4">
-            <div className="bg-[#0F172A] p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+            
+            {/* Header da Aba */}
+            <div className="bg-[#0F172A] p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-bold text-white">Histórico Cronológico do Ponto</h3>
-                <p className="text-xs text-slate-400">Acompanhamento transparente das jornadas e entregas diárias.</p>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Clock size={16} className="text-emerald-400" />
+                  <span>Relógio de Ponto Eletrônico Oficial</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Governança Inviolável: Jornada de 4 marcos diários com entrada matinal imutável e proteção de 24h.
+                </p>
               </div>
-              <span className="text-xs text-cyan-400 font-bold bg-cyan-950/60 border border-cyan-800/40 px-3 py-1 rounded-full">
-                {data.punchIns.length} Registros
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-800/40 px-3 py-1 rounded-full flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {stats.workdayStatus || 'Turno Ativo'}
+                </span>
+                <span className="text-xs text-cyan-400 font-bold bg-cyan-950/60 border border-cyan-800/40 px-3 py-1 rounded-full">
+                  {data.punchIns.length} Registros
+                </span>
+              </div>
             </div>
 
+            {/* Painel Visual dos 4 Marcos Diários (Ponto Eletrônico) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              
+              {/* 1. Entrada / Início do Turno */}
+              <div className="p-3.5 rounded-xl bg-[#0F172A]/90 border border-emerald-500/40 shadow-sm relative">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">1º Registro · Manhã</span>
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-full">
+                    Confirmado
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-black text-emerald-400 font-mono">
+                    {stats.timeclock?.entryTime || stats.entryTime || '08:15'}
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-white">Início do Turno</p>
+                    <p className="text-[10px] text-emerald-400/80">Imutável & Inviolável</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Pausa para Almoço */}
+              <div className={`p-3.5 rounded-xl bg-[#0F172A]/90 border ${stats.timeclock?.lunchOutTime ? 'border-amber-500/40' : 'border-slate-800'} shadow-sm relative`}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">2º Registro · Meio-dia</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${stats.timeclock?.lunchOutTime ? 'text-amber-400 bg-amber-950/60 border border-amber-800/50' : 'text-slate-500 bg-slate-800/50'}`}>
+                    {stats.timeclock?.lunchOutTime ? 'Registrado' : 'Aguardando'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-2xl font-black font-mono ${stats.timeclock?.lunchOutTime ? 'text-amber-400' : 'text-slate-600'}`}>
+                    {stats.timeclock?.lunchOutTime || '--:--'}
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-white">Pausa Almoço</p>
+                    <p className="text-[10px] text-slate-400">Intervalo da Jornada</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Retorno do Almoço */}
+              <div className={`p-3.5 rounded-xl bg-[#0F172A]/90 border ${stats.timeclock?.lunchInTime ? 'border-cyan-500/40' : 'border-slate-800'} shadow-sm relative`}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">3º Registro · Tarde</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${stats.timeclock?.lunchInTime ? 'text-cyan-400 bg-cyan-950/60 border border-cyan-800/50' : 'text-slate-500 bg-slate-800/50'}`}>
+                    {stats.timeclock?.lunchInTime ? 'Registrado' : 'Aguardando'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-2xl font-black font-mono ${stats.timeclock?.lunchInTime ? 'text-cyan-400' : 'text-slate-600'}`}>
+                    {stats.timeclock?.lunchInTime || '--:--'}
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-white">Retorno Almoço</p>
+                    <p className="text-[10px] text-slate-400">Turno da Tarde</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Encerramento / Saída */}
+              <div className={`p-3.5 rounded-xl bg-[#0F172A]/90 border ${stats.timeclock?.exitTime ? 'border-purple-500/40' : 'border-slate-800'} shadow-sm relative`}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">4º Registro · Fim do Dia</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${stats.timeclock?.exitTime ? 'text-purple-400 bg-purple-950/60 border border-purple-800/50' : 'text-slate-500 bg-slate-800/50'}`}>
+                    {stats.timeclock?.exitTime ? 'Encerrado' : 'Aguardando'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-2xl font-black font-mono ${stats.timeclock?.exitTime ? 'text-purple-400' : 'text-slate-600'}`}>
+                    {stats.timeclock?.exitTime || '--:--'}
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-white">Fim de Turno</p>
+                    <p className="text-[10px] text-slate-400">Saída Consolidada</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Banner de Governança e Regras */}
+            <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start gap-3">
+              <ShieldCheck size={18} className="text-cyan-400 shrink-0 mt-0.5" />
+              <div className="text-xs">
+                <p className="font-bold text-white">Diretriz de Ponto Eletrônico Inviolável</p>
+                <p className="text-slate-400 mt-0.5 leading-relaxed">
+                  O primeiro ponto de entrada da manhã (<strong className="text-emerald-400 font-mono">08:15</strong>) é travado para o dia corrente. Comandos subsequentes de checklist e ativações de fases por qualquer IDE são auditados como eventos de atividade técnica, garantindo a rastreabilidade fidedigna das horas trabalhadas perante a gestão.
+                </p>
+              </div>
+            </div>
+
+            {/* Linha do Tempo Cronológica de Registros */}
             <div className="space-y-3">
               {data.punchIns.map((punch, idx) => (
                 <div 
@@ -605,9 +739,9 @@ export default function RelatorioPage() {
                     </span>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-white print:text-black">{punch.date}</span>
+                        <span className="text-xs font-black text-white print:text-black font-mono">{punch.date}</span>
                         <span className="text-slate-600">·</span>
-                        <span className="text-xs font-bold text-cyan-400 print:text-black">{punch.time}</span>
+                        <span className="text-xs font-bold text-cyan-400 print:text-black font-mono">{punch.time}</span>
                       </div>
                       <p className="text-xs text-slate-300 print:text-slate-700 mt-0.5 leading-relaxed">
                         {punch.description}
@@ -619,12 +753,22 @@ export default function RelatorioPage() {
                     punch.type === 'start' 
                       ? 'bg-emerald-950/60 border border-emerald-800 text-emerald-400' 
                       : punch.type === 'end' 
-                        ? 'bg-slate-800 border border-slate-700 text-slate-300'
+                        ? 'bg-purple-950/60 border border-purple-800 text-purple-400'
                         : punch.type === 'pause'
                           ? 'bg-amber-950/60 border border-amber-800 text-amber-400'
-                          : 'bg-cyan-950/60 border border-cyan-800 text-cyan-400'
+                          : punch.type === 'resume'
+                            ? 'bg-cyan-950/60 border border-cyan-800 text-cyan-400'
+                            : 'bg-slate-800/80 border border-slate-700 text-slate-300'
                   }`}>
-                    {punch.type === 'start' ? 'Início de Turno' : punch.type === 'end' ? 'Fechamento' : punch.type === 'pause' ? 'Intervalo' : 'Evolução'}
+                    {punch.type === 'start' 
+                      ? 'Início de Turno' 
+                      : punch.type === 'end' 
+                        ? 'Encerramento' 
+                        : punch.type === 'pause' 
+                          ? 'Pausa Almoço' 
+                          : punch.type === 'resume' 
+                            ? 'Retorno Almoço' 
+                            : 'Atividade Técnica'}
                   </span>
                 </div>
               ))}

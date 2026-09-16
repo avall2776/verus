@@ -16,6 +16,7 @@ export declare class EmailsService {
         from: string;
         connectionError: string;
     }>;
+    private getEffectiveTenantId;
     listEmails(tenantId: string, query: {
         folder?: string;
         search?: string;

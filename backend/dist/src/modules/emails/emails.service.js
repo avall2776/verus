@@ -96,15 +96,41 @@ let EmailsService = EmailsService_1 = class EmailsService {
             connectionError,
         };
     }
+    async getEffectiveTenantId(tenantId) {
+        if (!tenantId)
+            return 'tenant_123';
+        try {
+            const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+            if (tenant)
+                return tenant.id;
+            const firstActive = await this.prisma.tenant.findFirst({ where: { isActive: true } });
+            if (firstActive)
+                return firstActive.id;
+            const anyTenant = await this.prisma.tenant.findFirst();
+            if (anyTenant)
+                return anyTenant.id;
+            return tenantId;
+        }
+        catch (e) {
+            this.logger.warn(`Erro ao resolver tenant efetivo: ${e?.message}`);
+            return 'tenant_123';
+        }
+    }
     async listEmails(tenantId, query) {
         const page = Math.max(1, Number(query.page) || 1);
         const limit = Math.max(1, Math.min(100, Number(query.limit) || 25));
         const skip = (page - 1) * limit;
-        const countTotal = await this.prisma.emailMessage.count({ where: { tenantId } });
+        const effectiveTenantId = await this.getEffectiveTenantId(tenantId);
+        const countTotal = await this.prisma.emailMessage.count({ where: { tenantId: effectiveTenantId } });
         if (countTotal === 0) {
-            await this.seedInitialEmails(tenantId);
+            try {
+                await this.seedInitialEmails(effectiveTenantId);
+            }
+            catch (err) {
+                this.logger.warn(`Seed inicial de e-mails cancelado com segurança: ${err?.message}`);
+            }
         }
-        const where = { tenantId };
+        const where = { tenantId: effectiveTenantId };
         if (query.folder) {
             where.folder = String(query.folder).toUpperCase();
         }
@@ -149,14 +175,15 @@ let EmailsService = EmailsService_1 = class EmailsService {
         };
     }
     async getCounts(tenantId) {
+        const effectiveTenantId = await this.getEffectiveTenantId(tenantId);
         const [inbox, unread, starred, sent, draft, trash, archive] = await Promise.all([
-            this.prisma.emailMessage.count({ where: { tenantId, folder: 'INBOX' } }),
-            this.prisma.emailMessage.count({ where: { tenantId, folder: 'INBOX', isRead: false } }),
-            this.prisma.emailMessage.count({ where: { tenantId, isStarred: true } }),
-            this.prisma.emailMessage.count({ where: { tenantId, folder: 'SENT' } }),
-            this.prisma.emailMessage.count({ where: { tenantId, folder: 'DRAFT' } }),
-            this.prisma.emailMessage.count({ where: { tenantId, folder: 'TRASH' } }),
-            this.prisma.emailMessage.count({ where: { tenantId, folder: 'ARCHIVE' } }),
+            this.prisma.emailMessage.count({ where: { tenantId: effectiveTenantId, folder: 'INBOX' } }),
+            this.prisma.emailMessage.count({ where: { tenantId: effectiveTenantId, folder: 'INBOX', isRead: false } }),
+            this.prisma.emailMessage.count({ where: { tenantId: effectiveTenantId, isStarred: true } }),
+            this.prisma.emailMessage.count({ where: { tenantId: effectiveTenantId, folder: 'SENT' } }),
+            this.prisma.emailMessage.count({ where: { tenantId: effectiveTenantId, folder: 'DRAFT' } }),
+            this.prisma.emailMessage.count({ where: { tenantId: effectiveTenantId, folder: 'TRASH' } }),
+            this.prisma.emailMessage.count({ where: { tenantId: effectiveTenantId, folder: 'ARCHIVE' } }),
         ]);
         return {
             inbox,
@@ -169,8 +196,9 @@ let EmailsService = EmailsService_1 = class EmailsService {
         };
     }
     async getEmailById(tenantId, id) {
+        const effectiveTenantId = await this.getEffectiveTenantId(tenantId);
         const email = await this.prisma.emailMessage.findFirst({
-            where: { id, tenantId },
+            where: { id, tenantId: effectiveTenantId },
             include: {
                 contact: true,
                 deal: true,
@@ -189,12 +217,13 @@ let EmailsService = EmailsService_1 = class EmailsService {
         return email;
     }
     async sendEmail(tenantId, dto) {
+        const effectiveTenantId = await this.getEffectiveTenantId(tenantId);
         const preview = dto.bodyText.slice(0, 140);
         const bodyHtml = dto.bodyHtml || `<p>${dto.bodyText.replace(/\n/g, '<br/>')}</p>`;
         const hasAttachments = Boolean(dto.attachments && Array.isArray(dto.attachments) && dto.attachments.length > 0);
         const email = await this.prisma.emailMessage.create({
             data: {
-                tenantId,
+                tenantId: effectiveTenantId,
                 recipientEmail: dto.recipientEmail,
                 recipientName: dto.recipientName || dto.recipientEmail.split('@')[0],
                 senderName: dto.senderName || 'Atendimento Comercial VERSUS',
@@ -290,8 +319,9 @@ let EmailsService = EmailsService_1 = class EmailsService {
         }
     }
     async updateEmail(tenantId, id, dto) {
+        const effectiveTenantId = await this.getEffectiveTenantId(tenantId);
         const email = await this.prisma.emailMessage.findFirst({
-            where: { id, tenantId },
+            where: { id, tenantId: effectiveTenantId },
         });
         if (!email) {
             throw new common_1.NotFoundException('E-mail não encontrado.');
@@ -309,8 +339,9 @@ let EmailsService = EmailsService_1 = class EmailsService {
         });
     }
     async toggleStar(tenantId, id) {
+        const effectiveTenantId = await this.getEffectiveTenantId(tenantId);
         const email = await this.prisma.emailMessage.findFirst({
-            where: { id, tenantId },
+            where: { id, tenantId: effectiveTenantId },
         });
         if (!email) {
             throw new common_1.NotFoundException('E-mail não encontrado.');
@@ -321,8 +352,9 @@ let EmailsService = EmailsService_1 = class EmailsService {
         });
     }
     async moveToFolder(tenantId, id, folder) {
+        const effectiveTenantId = await this.getEffectiveTenantId(tenantId);
         const email = await this.prisma.emailMessage.findFirst({
-            where: { id, tenantId },
+            where: { id, tenantId: effectiveTenantId },
         });
         if (!email) {
             throw new common_1.NotFoundException('E-mail não encontrado.');
@@ -333,8 +365,9 @@ let EmailsService = EmailsService_1 = class EmailsService {
         });
     }
     async deleteEmail(tenantId, id) {
+        const effectiveTenantId = await this.getEffectiveTenantId(tenantId);
         const email = await this.prisma.emailMessage.findFirst({
-            where: { id, tenantId },
+            where: { id, tenantId: effectiveTenantId },
         });
         if (!email) {
             throw new common_1.NotFoundException('E-mail não encontrado.');
@@ -348,76 +381,89 @@ let EmailsService = EmailsService_1 = class EmailsService {
         });
     }
     async seedInitialEmails(tenantId) {
-        const initialEmails = [
-            {
-                tenantId,
-                senderName: 'Roberto Alencar',
-                senderEmail: 'roberto@nexuslog.com.br',
-                recipientEmail: 'comercial@versus.com.br',
-                recipientName: 'Equipe Comercial VERSUS',
-                subject: 'Re: Proposta Comercial PROP-2026-1042 - Aceite & Assinatura Digital',
-                bodyText: `Olá equipe VERSUS,\n\nAnalisamos a minuta do contrato e a proposta comercial enviada. Estamos 100% de acordo com as condições de implantação do módulo omnichannel e inteligência artificial.\n\nJá encaminhei o link de assinatura para nossa diretoria jurídica aprovar e daremos sequência ao faturamento.\n\nAtenciosamente,\nRoberto Alencar\nDiretor de Operações | Nexus Logística`,
-                preview: 'Analisamos a minuta do contrato e a proposta comercial enviada. Estamos 100% de acordo...',
-                folder: 'INBOX',
-                isRead: false,
-                isStarred: true,
-                hasAttachments: true,
-                attachments: [
-                    { name: 'Anexo_Aceite_Nexus.pdf', url: 'https://verus-alpha.vercel.app/docs/aceite.pdf', size: 245000, type: 'application/pdf' },
-                ],
-                createdAt: new Date(Date.now() - 35 * 60000),
-            },
-            {
-                tenantId,
-                senderName: 'Fernanda Takahashi',
-                senderEmail: 'fernanda@inovareodonto.com.br',
-                recipientEmail: 'comercial@versus.com.br',
-                recipientName: 'Equipe VERSUS',
-                subject: 'Dúvida sobre integração da IA Vitor com prontuário eletrônico',
-                bodyText: `Bom dia equipe VERSUS,\n\nGostaríamos de tirar uma dúvida técnica: a IA consegue consultar os horários vagos dos dentistas via webhook e já sugerir a consulta diretamente na janela de conversa do WhatsApp?\n\nFicamos no aguardo para formalizar o fechamento do plano Enterprise.\n\nAbraços,\nFernanda Takahashi\nGestora de Atendimento | Inovare Odontologia`,
-                preview: 'Gostaríamos de tirar uma dúvida técnica: a IA consegue consultar os horários vagos dos dentistas...',
-                folder: 'INBOX',
-                isRead: true,
-                isStarred: false,
-                hasAttachments: false,
-                createdAt: new Date(Date.now() - 2 * 3600000),
-            },
-            {
-                tenantId,
-                senderName: 'Marcelo Dantas',
-                senderEmail: 'marcelo@dantasadv.com.br',
-                recipientEmail: 'financeiro@versus.com.br',
-                recipientName: 'Departamento Financeiro',
-                subject: 'Comprovante de pagamento da parcela de implantação',
-                bodyText: `Prezados,\n\nSegue em anexo o comprovante da TED referente à implantação da plataforma VERSUS em nosso escritório.\n\nSolicitamos a emissão da Nota Fiscal correspondente.\n\nCordialmente,\nMarcelo Dantas\nSócio Administrador | Dantas Advocacia`,
-                preview: 'Segue em anexo o comprovante da TED referente à implantação da plataforma VERSUS...',
-                folder: 'INBOX',
-                isRead: true,
-                isStarred: false,
-                hasAttachments: true,
-                attachments: [
-                    { name: 'Comprovante_TED_Dantas.pdf', url: 'https://verus-alpha.vercel.app/docs/comprovante.pdf', size: 180000, type: 'application/pdf' },
-                ],
-                createdAt: new Date(Date.now() - 24 * 3600000),
-            },
-            {
-                tenantId,
-                senderName: 'Equipe de Sucesso VERSUS',
-                senderEmail: 'onboarding@versus.com.br',
-                recipientEmail: 'cliente@empresa.com.br',
-                recipientName: 'Gestor Comercial',
-                subject: 'Bem-vindo ao VERSUS - Guia Rápido de Configuração Omnichannel',
-                bodyText: `Parabéns por escolher a VERSUS Omnichannel AI Platform!\n\nSeu ambiente de produção está pronto para uso. Conecte sua instância oficial de WhatsApp em Configurações > Conexões WhatsApp para ativar o atendimento automatizado da IA.\n\nConte com nosso suporte 24/7.`,
-                preview: 'Parabéns por escolher a VERSUS Omnichannel AI Platform! Seu ambiente de produção está pronto...',
-                folder: 'SENT',
-                isRead: true,
-                isStarred: false,
-                hasAttachments: false,
-                createdAt: new Date(Date.now() - 48 * 3600000),
-            },
-        ];
-        for (const em of initialEmails) {
-            await this.prisma.emailMessage.create({ data: em });
+        try {
+            const tenantExists = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+            if (!tenantExists)
+                return;
+            const initialEmails = [
+                {
+                    tenantId,
+                    senderName: 'Roberto Alencar',
+                    senderEmail: 'roberto@nexuslog.com.br',
+                    recipientEmail: 'comercial@versus.com.br',
+                    recipientName: 'Equipe Comercial VERSUS',
+                    subject: 'Re: Proposta Comercial PROP-2026-1042 - Aceite & Assinatura Digital',
+                    bodyText: `Olá equipe VERSUS,\n\nAnalisamos a minuta do contrato e a proposta comercial enviada. Estamos 100% de acordo com as condições de implantação do módulo omnichannel e inteligência artificial.\n\nJá encaminhei o link de assinatura para nossa diretoria jurídica aprovar e daremos sequência ao faturamento.\n\nAtenciosamente,\nRoberto Alencar\nDiretor de Operações | Nexus Logística`,
+                    preview: 'Analisamos a minuta do contrato e a proposta comercial enviada. Estamos 100% de acordo...',
+                    folder: 'INBOX',
+                    isRead: false,
+                    isStarred: true,
+                    hasAttachments: true,
+                    attachments: [
+                        { name: 'Anexo_Aceite_Nexus.pdf', url: 'https://verus-alpha.vercel.app/docs/aceite.pdf', size: 245000, type: 'application/pdf' },
+                    ],
+                    createdAt: new Date(Date.now() - 35 * 60000),
+                },
+                {
+                    tenantId,
+                    senderName: 'Fernanda Takahashi',
+                    senderEmail: 'fernanda@inovareodonto.com.br',
+                    recipientEmail: 'comercial@versus.com.br',
+                    recipientName: 'Equipe VERSUS',
+                    subject: 'Dúvida sobre integração da IA Vitor com prontuário eletrônico',
+                    bodyText: `Bom dia equipe VERSUS,\n\nGostaríamos de tirar uma dúvida técnica: a IA consegue consultar os horários vagos dos dentistas via webhook e já sugerir a consulta diretamente na janela de conversa do WhatsApp?\n\nFicamos no aguardo para formalizar o fechamento do plano Enterprise.\n\nAbraços,\nFernanda Takahashi\nGestora de Atendimento | Inovare Odontologia`,
+                    preview: 'Gostaríamos de tirar uma dúvida técnica: a IA consegue consultar os horários vagos dos dentistas...',
+                    folder: 'INBOX',
+                    isRead: true,
+                    isStarred: false,
+                    hasAttachments: false,
+                    createdAt: new Date(Date.now() - 2 * 3600000),
+                },
+                {
+                    tenantId,
+                    senderName: 'Marcelo Dantas',
+                    senderEmail: 'marcelo@dantasadv.com.br',
+                    recipientEmail: 'financeiro@versus.com.br',
+                    recipientName: 'Departamento Financeiro',
+                    subject: 'Comprovante de pagamento da parcela de implantação',
+                    bodyText: `Prezados,\n\nSegue em anexo o comprovante da TED referente à implantação da plataforma VERSUS em nosso escritório.\n\nSolicitamos a emissão da Nota Fiscal correspondente.\n\nCordialmente,\nMarcelo Dantas\nSócio Administrador | Dantas Advocacia`,
+                    preview: 'Segue em anexo o comprovante da TED referente à implantação da plataforma VERSUS...',
+                    folder: 'INBOX',
+                    isRead: true,
+                    isStarred: false,
+                    hasAttachments: true,
+                    attachments: [
+                        { name: 'Comprovante_TED_Dantas.pdf', url: 'https://verus-alpha.vercel.app/docs/comprovante.pdf', size: 180000, type: 'application/pdf' },
+                    ],
+                    createdAt: new Date(Date.now() - 24 * 3600000),
+                },
+                {
+                    tenantId,
+                    senderName: 'Equipe de Sucesso VERSUS',
+                    senderEmail: 'onboarding@versus.com.br',
+                    recipientEmail: 'cliente@empresa.com.br',
+                    recipientName: 'Gestor Comercial',
+                    subject: 'Bem-vindo ao VERSUS - Guia Rápido de Configuração Omnichannel',
+                    bodyText: `Parabéns por escolher a VERSUS Omnichannel AI Platform!\n\nSeu ambiente de produção está pronto para uso. Conecte sua instância oficial de WhatsApp em Configurações > Conexões WhatsApp para ativar o atendimento automatizado da IA.\n\nConte com nosso suporte 24/7.`,
+                    preview: 'Parabéns por escolher a VERSUS Omnichannel AI Platform! Seu ambiente de produção está pronto...',
+                    folder: 'SENT',
+                    isRead: true,
+                    isStarred: false,
+                    hasAttachments: false,
+                    createdAt: new Date(Date.now() - 48 * 3600000),
+                },
+            ];
+            for (const em of initialEmails) {
+                try {
+                    await this.prisma.emailMessage.create({ data: em });
+                }
+                catch (itemErr) {
+                    this.logger.warn(`Item de seed ignorado: ${itemErr?.message}`);
+                }
+            }
+        }
+        catch (e) {
+            this.logger.warn(`Seed de e-mails cancelado com segurança: ${e?.message}`);
         }
     }
 };

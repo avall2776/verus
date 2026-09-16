@@ -843,6 +843,15 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 ---
 
 ## 🕒 Registro de Ponto (Timesheet do Projeto)
+
+> ### 🛡️ REGRA DE GOVERNANÇA DE PONTO ELETRÔNICO INVIOLÁVEL (SISTEMA DE PONTO VERSUS)
+> 1. **Inviolabilidade da Entrada (Início do Turno)**: O primeiro ponto batido do dia (seja registrado pela IDE 1 ou pela IDE 2) é estritamente **imutável e inviolável**. Nenhuma IDE ou comando de checklist posterior durante o dia tem autorização para alterar o horário de início da jornada daquele dia.
+> 2. **Pausa para Almoço / Meio-dia**: Autorizado a ser registrado uma única vez ao longo do dia, marcando o intervalo da equipe (`⏸️`).
+> 3. **Retorno do Almoço / Turno da Tarde**: Autorizado a ser registrado uma única vez ao dia na retomada dos trabalhos (`▶️`).
+> 4. **Saída / Fim de Turno**: Autorizado a ser registrado uma única vez no encerramento das atividades do dia (`🏁`).
+> 5. **Proteção da Janela de 24h**: O histórico diário do dia corrente e de dias anteriores é protegido contra reescritas.
+> 6. **Atividades vs. Ponto da Jornada**: Aberturas e conclusões de tarefas e fases (`Fase 51`, `Fase 52`, etc.) são eventos técnicos de progresso (`⚡`, `🚀`, `💎`, `🎯`), e **NUNCA** devem ser registradas com a nomenclatura "Início de Turno", para não colidir com o relógio de ponto da equipe.
+
 - **[08/09/2026 - 08:30]** 🟢 Início da Fundação do Projeto (Docker, Postgres, Supabase, Prisma ORM, BullMQ).
 - **[09/09/2026 - 08:30]** 🟢 Implementação de WebSockets, Sentry, Deploy Vercel/VPS e WhatsApp Cloud API.
 - **[10/09/2026 - 08:30]** 🟢 Omnichannel Revamp, RAG Avançado, Respostas Rápidas e CRM Lero.
@@ -963,9 +972,10 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
        - Criar módulo NestJS de E-mail (`GET /emails`, `POST /emails/send`, favoritos e exclusão).
        - Conectar a caixa de entrada (`/email-inbox`) com modal de composição rápida e integração nativa para anexar links de propostas e contratos.
   - **Validação de Código**: Backend e Frontend checados e prontos para reinício imediato amanhã com código 0.
-- **[16/09/2026 - 08:15]** 🟢 **Início da jornada de desenvolvimento de quarta-feira (Foco: Analytics Avançado PRO - Mapeamento de Canais, Funil de Conversão, Gargalos e Integração Real)**:
-  - **Status**: ⏳ Em Andamento (Fase 51 - IDE 1).
-  - **Diretriz do Usuário**: Elevar a ferramenta ao nível das melhores plataformas SaaS do mercado, integrando 100% backend NestJS e frontend Next.js 14, com design system Dark Modern, modais funcionais e métricas técnicas reais. Tarefa em execução com código 0 e homologação do usuário.
+- **[16/09/2026 - 08:15]** 🟢 **Início de Turno (Manhã) - Ponto Eletrônico Registrado & Imutável (Equipe de Engenharia)**:
+  - **Registro Oficial de Ponto**: Ponto de entrada matinal registrado às 08:15 (Regra de Ponto Eletrônico: Imutável e Inviolável ao longo de todo o dia).
+  - **Foco do Dia**: Analytics Avançado PRO (IDE 1), Metas Comerciais & Leaderboard Gamificado (IDE 2), e Inbox de E-mail Unificado (IDE 1).
+  - **Diretriz Geral**: Padrão Top SaaS mundial, zero mocks, interatividade total com modais, código 0 e finalização estritamente condicionada ao OK explícito do usuário.
 
 ### 🟢 FASE 51: ANALYTICS AVANÇADO (PRO) - MAPEAMENTO DE CANAIS, FUNIL DE CONVERSÃO & GARGALOS (16/09/2026 - IDE 1)
 - [x] **Mapeamento de Canais de Aquisição (`GET /analytics/channels`)**:
@@ -987,14 +997,15 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine` online) e Vercel (36 rotas compiladas).
   - **Homologado e aprovado com OK explícito do usuário**.
 
-- **[16/09/2026 - 08:44]** 💎 **Fase 51 Concluída com Sucesso (Analytics Avançado PRO)**:
-  - Todas as ferramentas, endpoints e modais operando com 100% de estabilidade na nuvem e validados pelo usuário.
-- **[16/09/2026 - 08:38]** 🟢 **Início de Turno & Atribuição de Metas Comerciais (IDE 2)**:
+- **[16/09/2026 - 08:38]** ⚡ **[IDE 2] Ativação de Tarefa & Início de Desenvolvimento: Fase 52 (Metas Comerciais, Run Rate & Leaderboard Gamificado)**:
   - **Status**: ⏳ Em Andamento (Fase 52).
   - **Divisão de Trabalho**: A **IDE 2** assume com autoridade exclusiva o desenvolvimento de ponta a ponta da **Fase 52 (Metas Comerciais, Motor de Run Rate & Leaderboard Gamificado)**, enquanto a **IDE 1** atua na **Fase 51 (Analytics Avançado PRO)**.
   - **Diretriz**: Padrão Top SaaS mundial, zero mocks, interatividade total com modais, código 0 e finalização estritamente condicionada ao OK explícito do usuário.
 
-- **[16/09/2026 - 08:48]** 🟢 **Início de Turno & Atribuição de Inbox de E-mail Unificado (IDE 1)**:
+- **[16/09/2026 - 08:44]** 💎 **[IDE 1] Conclusão de Tarefa: Fase 51 (Analytics Avançado PRO)**:
+  - Todas as ferramentas, endpoints e modais operando com 100% de estabilidade na nuvem e validados pelo usuário.
+
+- **[16/09/2026 - 08:48]** ⚡ **[IDE 1] Ativação de Tarefa & Início de Desenvolvimento: Fase 53 (Inbox de E-mail Unificado Enterprise)**:
   - **Status**: ⏳ Em Andamento (Fase 53 - Autoridade Exclusiva IDE 1).
   - **Divisão de Trabalho**: A **IDE 1** assume com autoridade exclusiva o desenvolvimento de ponta a ponta da **Fase 53 (Inbox de E-mail Unificado `/email-inbox`)**. A **IDE 2** não deve alterar este módulo para evitar conflitos de desenvolvimento.
   - **Diretriz do Usuário**: Padrão de ponta de mercado (Front / Superhuman / HubSpot), zero mocks, 100% conectado e operacional com PostgreSQL/Supabase via Prisma, módulo NestJS completo (`GET /emails`, `POST /emails/send`, pastas, estrelas, filtros), composer integrado a links de propostas e contratos, validação com código 0 e homologação estritamente condicionada ao OK explícito do usuário.

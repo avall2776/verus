@@ -19,13 +19,27 @@ interface Phase {
   items: PhaseItem[];
 }
 
-interface PunchIn {
+export interface PunchIn {
   timestamp: string;
   date: string;
   time: string;
-  type: 'start' | 'pause' | 'resume' | 'end' | 'info';
+  type: 'start' | 'pause' | 'resume' | 'end' | 'task' | 'info';
   icon: string;
   description: string;
+  isTimeclockEvent?: boolean;
+}
+
+export interface DailyTimeclock {
+  date: string;
+  entryTime: string | null;
+  entryDescription: string | null;
+  lunchOutTime: string | null;
+  lunchInTime: string | null;
+  exitTime: string | null;
+  status: 'morning_active' | 'lunch' | 'afternoon_active' | 'completed' | 'idle';
+  statusLabel: string;
+  totalEventsToday: number;
+  latestActivity: PunchIn | null;
 }
 
 interface RoadmapItem {
@@ -232,11 +246,101 @@ function parseChecklistMarkdown(markdown: string) {
     return 0;
   };
 
-  // Ordena os pontos rigorosamente do mais recente para o mais antigo
-  punchIns.sort((a, b) => parseDateTime(b.date, b.time) - parseDateTime(a.date, a.time));
+  // Agrupamento por Data para aplicação da Regra de Inviolabilidade de Ponto
+  const punchesByDate = new Map<string, PunchIn[]>();
+  for (const p of punchIns) {
+    if (!punchesByDate.has(p.date)) {
+      punchesByDate.set(p.date, []);
+    }
+    punchesByDate.get(p.date)!.push(p);
+  }
 
-  // O último ponto batido é sempre o elemento mais recente
-  const lastPunch = punchIns[0] || null;
+  // Ordena os eventos de cada dia cronologicamente (do mais antigo para o mais recente)
+  // e identifica o primeiro ponto de entrada oficial do dia (Imutável)
+  punchesByDate.forEach((dayList: PunchIn[]) => {
+    dayList.sort((a: PunchIn, b: PunchIn) => parseDateTime(a.date, a.time) - parseDateTime(b.date, b.time));
+
+    let entrySet = false;
+    for (let idx = 0; idx < dayList.length; idx++) {
+      const item = dayList[idx];
+      const descLower = item.description.toLowerCase();
+
+      // Regra de Ponto Eletrônico: O primeiro evento da manhã com 🟢 ou "início" (ou o primeiro do dia)
+      // é a Entrada Oficial e Imutável da jornada.
+      if (!entrySet && (idx === 0 || item.icon === '🟢' || descLower.includes('início') || descLower.includes('inicio'))) {
+        item.type = 'start';
+        item.isTimeclockEvent = true;
+        entrySet = true;
+      } else if (item.icon === '⏸️' || descLower.includes('almoço') || descLower.includes('almoco') || descLower.includes('intervalo') || descLower.includes('pausa')) {
+        item.type = 'pause';
+        item.isTimeclockEvent = true;
+      } else if (item.icon === '🏁' || descLower.includes('finalização') || descLower.includes('finalizacao') || descLower.includes('fim de turno') || descLower.includes('encerramento') || descLower.includes('saída')) {
+        item.type = 'end';
+        item.isTimeclockEvent = true;
+      } else if (descLower.includes('retorno') || descLower.includes('volta do almoço') || descLower.includes('turno da tarde')) {
+        item.type = 'resume';
+        item.isTimeclockEvent = true;
+      } else {
+        // Tarefa/atividade técnica ao longo do dia (ex: ativação de fase, deploy, refatoração)
+        item.type = 'task';
+        item.isTimeclockEvent = false;
+      }
+    }
+  });
+
+  // Ordena as datas das mais recentes para as mais antigas
+  const sortedDates: string[] = [];
+  punchesByDate.forEach((_, dateKey) => {
+    sortedDates.push(dateKey);
+  });
+  sortedDates.sort((a: string, b: string) => {
+    return parseDateTime(b, '12:00') - parseDateTime(a, '12:00');
+  });
+
+  const latestDate = sortedDates[0] || '';
+  const todayPunches = latestDate ? punchesByDate.get(latestDate)! : [];
+
+  // Ponto Oficial do Dia (Governança Inviolável: entrada da manhã é estritamente o menor horário)
+  const entryPunch = todayPunches.find(p => p.type === 'start') || todayPunches[0] || null;
+  const lunchOutPunch = todayPunches.find(p => p.type === 'pause') || null;
+  const lunchInPunch = todayPunches.find(p => p.type === 'resume') || null;
+  const exitPunch = todayPunches.find(p => p.type === 'end') || null;
+
+  // A última atividade do dia registrada na linha do tempo
+  const latestActivity = todayPunches.length > 0 ? todayPunches[todayPunches.length - 1] : null;
+
+  let currentWorkdayStatus: DailyTimeclock['status'] = 'idle';
+  let workdayStatusLabel = 'Aguardando Início';
+
+  if (exitPunch) {
+    currentWorkdayStatus = 'completed';
+    workdayStatusLabel = 'Jornada Concluída';
+  } else if (lunchInPunch) {
+    currentWorkdayStatus = 'afternoon_active';
+    workdayStatusLabel = 'Turno da Tarde Ativo';
+  } else if (lunchOutPunch) {
+    currentWorkdayStatus = 'lunch';
+    workdayStatusLabel = 'Intervalo de Almoço';
+  } else if (entryPunch) {
+    currentWorkdayStatus = 'morning_active';
+    workdayStatusLabel = 'Turno Ativo (Em Andamento)';
+  }
+
+  const timeclock: DailyTimeclock = {
+    date: latestDate,
+    entryTime: entryPunch ? entryPunch.time : null,
+    entryDescription: entryPunch ? entryPunch.description : null,
+    lunchOutTime: lunchOutPunch ? lunchOutPunch.time : null,
+    lunchInTime: lunchInPunch ? lunchInPunch.time : null,
+    exitTime: exitPunch ? exitPunch.time : null,
+    status: currentWorkdayStatus,
+    statusLabel: workdayStatusLabel,
+    totalEventsToday: todayPunches.length,
+    latestActivity
+  };
+
+  // Lista geral ordenada cronologicamente decrescente para histórico visual na aba
+  punchIns.sort((a, b) => parseDateTime(b.date, b.time) - parseDateTime(a.date, a.time));
 
   return {
     stats: {
@@ -247,7 +351,12 @@ function parseChecklistMarkdown(markdown: string) {
       completedTasks,
       completionPercent,
       currentActivePhaseTitle,
-      lastPunchIn: lastPunch,
+      lastPunchIn: entryPunch, // Imutável: entrada oficial do dia (08:15)
+      latestActivity,
+      timeclock,
+      entryTime: entryPunch?.time || '--:--',
+      entryDate: latestDate,
+      workdayStatus: workdayStatusLabel,
       updatedAt: new Date().toISOString()
     },
     phases,
