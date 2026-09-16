@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Patch,
+  Put,
   Post,
   Body,
   Param,
@@ -14,6 +15,7 @@ import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { TenantsService } from './tenants.service';
 import { QueryTenantsDto } from './dto/query-tenants.dto';
 import { UpdateTenantStatusDto } from './dto/update-tenant-status.dto';
+import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { ResetAdminPasswordDto } from './dto/reset-admin-password.dto';
 
 @UseGuards(JwtAuthGuard)
@@ -52,10 +54,36 @@ export class TenantsController {
     return this.tenantsService.findAll(query);
   }
 
+  @Get('plans/list')
+  async getPlans(@Request() req) {
+    this.checkSuperAdmin(req);
+    return this.tenantsService.getPlans();
+  }
+
   @Get(':id')
   async findOne(@Request() req, @Param('id') id: string) {
     this.checkSuperAdmin(req);
     return this.tenantsService.findOne(id);
+  }
+
+  @Patch(':id')
+  async update(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: UpdateTenantDto
+  ) {
+    this.checkSuperAdmin(req);
+    return this.tenantsService.update(id, body);
+  }
+
+  @Put(':id')
+  async updatePut(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: UpdateTenantDto
+  ) {
+    this.checkSuperAdmin(req);
+    return this.tenantsService.update(id, body);
   }
 
   @Patch(':id/status')

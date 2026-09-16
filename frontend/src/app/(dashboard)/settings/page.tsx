@@ -1,237 +1,171 @@
 "use client";
 
-import { useState } from "react";
-import { User, Building, Users, CreditCard, Save, Upload, Plus, Shield, CheckCircle2, MessageSquare, Network, Zap } from "lucide-react";
+import React, { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Building,
+  Users,
+  Network,
+  MessageSquare,
+  Zap,
+  Loader2,
+  Sliders,
+  ShieldCheck,
+} from "lucide-react";
 
-export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("profile");
+import CompanySettingsTab from "@/components/settings/CompanySettingsTab";
+import UsersSettingsTab from "@/components/settings/UsersSettingsTab";
+import DepartmentsSettingsTab from "@/components/settings/DepartmentsSettingsTab";
+import QuickRepliesSettingsTab from "@/components/settings/QuickRepliesSettingsTab";
+import AutomationsSettingsTab from "@/components/settings/AutomationsSettingsTab";
 
-  const tabs = [
-    { id: "profile", name: "Perfil de Admin", icon: User },
-    { id: "company", name: "Dados da Empresa", icon: Building },
-    { id: "team", name: "Equipe e Usuários", icon: Users },
-    { id: "billing", name: "Assinatura", icon: CreditCard },
-    { id: "departments", name: "Departamentos e Filas", icon: Network, href: "/settings/departments" },
-    { id: "quick-replies", name: "Respostas Rápidas", icon: MessageSquare, href: "/settings/quick-replies" },
-    { id: "automations", name: "Automações e Gatilhos", icon: Zap, href: "/settings/automations" },
-  ];
+type TabId = "company" | "users" | "departments" | "quick-replies" | "automations";
+
+interface TabConfig {
+  id: TabId;
+  label: string;
+  description: string;
+  icon: React.ElementType;
+}
+
+const SETTINGS_TABS: TabConfig[] = [
+  {
+    id: "company",
+    label: "Dados da Empresa",
+    description: "Razão social, CNPJ, contato e configurações cadastrais do tenant",
+    icon: Building,
+  },
+  {
+    id: "users",
+    label: "Equipe e Usuários",
+    description: "Gestão de acessos, convite de colaboradores e níveis de permissão",
+    icon: Users,
+  },
+  {
+    id: "departments",
+    label: "Departamentos e Filas",
+    description: "Segmentação de atendimento, roteamento de filas e filiais",
+    icon: Network,
+  },
+  {
+    id: "quick-replies",
+    label: "Respostas Rápidas",
+    description: "Atalhos de teclado (macros) para envio ágil de mensagens no Inbox",
+    icon: MessageSquare,
+  },
+  {
+    id: "automations",
+    label: "Automações e Gatilhos",
+    description: "Gatilhos de fluxo, regras automáticas do CRM e webhooks",
+    icon: Zap,
+  },
+];
+
+function SettingsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawTab = searchParams.get("tab") as TabId | null;
+
+  const activeTab: TabId =
+    rawTab && SETTINGS_TABS.some((t) => t.id === rawTab) ? rawTab : "company";
+
+  const handleSelectTab = (tabId: TabId) => {
+    router.push(`/settings?tab=${tabId}`, { scroll: false });
+  };
 
   return (
-    <div className="flex flex-col h-full w-full max-w-6xl mx-auto gap-6 pb-8">
-      
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-black text-white tracking-wide">Configurações Globais</h1>
-        <p className="text-sm text-text-secondary mt-1">Gerencie sua conta, equipe e informações de faturamento.</p>
+    <div className="flex flex-col h-full w-full max-w-7xl mx-auto gap-6 pb-8 animate-in fade-in duration-150">
+      {/* Header Corporativo */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+        <div>
+          <h1 className="text-2xl font-black text-white tracking-wide flex items-center gap-2.5">
+            <Sliders className="w-6 h-6 text-blue-500" />
+            Configurações do Sistema
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Central de administração corporativa, controle de acessos da equipe e parametrizações operacionais.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#070D1B] border border-slate-800 text-xs text-slate-400">
+          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <span>Ambiente Seguro Multi-Tenant</span>
+        </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8 flex-1">
-        
-        {/* Menu Lateral das Abas */}
-        <div className="w-full md:w-64 flex-shrink-0 flex flex-col gap-2">
-          {tabs.map((tab) => {
-            if (tab.href) {
-              return (
-                <a
-                  key={tab.id}
-                  href={tab.href}
-                  className="flex items-center gap-3 w-full p-3 rounded-xl transition-all font-semibold text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 border border-transparent"
-                >
-                  <tab.icon size={18} />
-                  {tab.name}
-                </a>
-              );
-            }
+      {/* Layout de Abas: Navegação Lateral + Painel de Conteúdo */}
+      <div className="flex flex-col lg:flex-row gap-6 flex-1 items-start">
+        {/* Menu Lateral de Abas */}
+        <aside className="w-full lg:w-72 shrink-0 flex flex-col gap-1.5 bg-[#0B1224]/80 border border-slate-800/80 rounded-2xl p-3 shadow-xl backdrop-blur-sm">
+          <div className="px-3 py-2 text-[10px] font-bold tracking-wider uppercase text-slate-400">
+            Módulos de Configuração
+          </div>
+
+          {SETTINGS_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
 
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 w-full p-3 rounded-xl transition-all font-semibold text-sm
-                  ${activeTab === tab.id 
-                    ? 'bg-primary/20 text-accent border border-primary/30 shadow-[0_0_15px_rgba(0,85,255,0.15)]' 
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50 border border-transparent'}
-                `}
+                onClick={() => handleSelectTab(tab.id)}
+                className={`flex items-start gap-3 w-full p-3 rounded-xl transition-all text-left group ${
+                  isActive
+                    ? "bg-blue-600/15 border border-blue-500/30 text-white shadow-lg shadow-blue-500/5"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent"
+                }`}
               >
-                <tab.icon size={18} />
-                {tab.name}
+                <div
+                  className={`mt-0.5 p-1.5 rounded-lg shrink-0 transition-colors ${
+                    isActive
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-800/60 text-slate-400 group-hover:text-slate-200 group-hover:bg-slate-800"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <span
+                    className={`text-xs font-bold block ${
+                      isActive ? "text-white" : "text-slate-300 group-hover:text-white"
+                    }`}
+                  >
+                    {tab.label}
+                  </span>
+                  <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+                    {tab.description}
+                  </p>
+                </div>
               </button>
             );
           })}
-        </div>
+        </aside>
 
-        {/* Conteúdo da Aba Ativa */}
-        <div className="flex-1 bg-panel/40 border border-gray-800/60 rounded-2xl p-6 md:p-8 backdrop-blur-md min-h-[500px]">
-          
-          {/* ================= ABA 1: PERFIL ADMIN ================= */}
-          {activeTab === "profile" && (
-            <div className="flex flex-col gap-8 animate-fade-in">
-              <div className="flex items-center justify-between border-b border-gray-800 pb-4">
-                <h2 className="text-lg font-bold text-white">Meu Perfil</h2>
-                <button className="bg-primary text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-[0_0_10px_rgba(0,85,255,0.3)] flex items-center gap-2">
-                  <Save size={14} /> Salvar Alterações
-                </button>
-              </div>
-
-              <div className="flex items-center gap-6">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-black text-3xl shadow-lg relative group">
-                  A
-                  <button className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Upload size={20} className="text-white" />
-                  </button>
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white">Foto de Perfil</h3>
-                  <p className="text-xs text-gray-400 mt-1 mb-2">Recomendado: 256x256px, formato PNG ou JPG.</p>
-                  <button className="text-xs font-bold text-accent hover:underline">Remover foto</button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Nome Completo</label>
-                  <input type="text" defaultValue="Admin VERSUS" className="bg-background border border-gray-800 rounded-lg p-3 text-sm text-white outline-none focus:border-accent" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">E-mail Corporativo</label>
-                  <input type="email" defaultValue="admin@versus.com" disabled className="bg-background/50 border border-gray-800 rounded-lg p-3 text-sm text-gray-500 outline-none cursor-not-allowed" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Nova Senha</label>
-                  <input type="password" placeholder="••••••••" className="bg-background border border-gray-800 rounded-lg p-3 text-sm text-white outline-none focus:border-accent" />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ================= ABA 2: EMPRESA ================= */}
-          {activeTab === "company" && (
-            <div className="flex flex-col gap-8 animate-fade-in">
-              <div className="flex items-center justify-between border-b border-gray-800 pb-4">
-                <h2 className="text-lg font-bold text-white">Dados da Empresa</h2>
-                <button className="bg-primary text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-[0_0_10px_rgba(0,85,255,0.3)] flex items-center gap-2">
-                  <Save size={14} /> Salvar Dados
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 gap-6">
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Nome Fantasia</label>
-                  <input type="text" placeholder="Sua Empresa LTDA" className="bg-background border border-gray-800 rounded-lg p-3 text-sm text-white outline-none focus:border-accent" />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">CNPJ</label>
-                    <input type="text" placeholder="00.000.000/0001-00" className="bg-background border border-gray-800 rounded-lg p-3 text-sm text-white outline-none focus:border-accent" />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Telefone Comercial</label>
-                    <input type="text" placeholder="+55 (00) 00000-0000" className="bg-background border border-gray-800 rounded-lg p-3 text-sm text-white outline-none focus:border-accent" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ================= ABA 3: EQUIPE ================= */}
-          {activeTab === "team" && (
-            <div className="flex flex-col gap-6 animate-fade-in">
-              <div className="flex items-center justify-between border-b border-gray-800 pb-4">
-                <div>
-                  <h2 className="text-lg font-bold text-white">Equipe e Usuários</h2>
-                  <p className="text-xs text-gray-400 mt-1">Gerencie quem tem acesso à sua plataforma.</p>
-                </div>
-                <button className="bg-primary text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-[0_0_10px_rgba(0,85,255,0.3)] flex items-center gap-2">
-                  <Plus size={14} /> Convidar Membro
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {/* User Card */}
-                <div className="flex items-center justify-between p-4 bg-background/50 border border-gray-800 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold">
-                      A
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                        Admin VERSUS <span className="bg-accent/20 text-accent text-[0.6rem] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">Você</span>
-                      </h4>
-                      <p className="text-xs text-gray-400">admin@versus.com</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-400 font-bold bg-gray-900 px-3 py-1.5 rounded-lg border border-gray-700">
-                    <Shield size={14} /> Administrador
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-background/50 border border-gray-800 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
-                      M
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white">Maria Vendedora</h4>
-                      <p className="text-xs text-gray-400">maria@versus.com</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 text-xs text-gray-400 font-bold bg-gray-900 px-3 py-1.5 rounded-lg border border-gray-700">
-                      <User size={14} /> Atendente
-                    </div>
-                    <button className="text-xs text-red-400 hover:underline">Remover</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ================= ABA 4: ASSINATURA ================= */}
-          {activeTab === "billing" && (
-            <div className="flex flex-col gap-8 animate-fade-in">
-              <div className="flex items-center justify-between border-b border-gray-800 pb-4">
-                <h2 className="text-lg font-bold text-white">Assinatura e Uso</h2>
-              </div>
-
-              {/* Current Plan Card */}
-              <div className="bg-gradient-to-r from-primary/20 to-accent/20 border border-accent/30 rounded-2xl p-6 relative overflow-hidden">
-                <div className="absolute -top-10 -right-10 w-32 h-32 bg-accent/20 blur-3xl rounded-full" />
-                
-                <h3 className="text-accent text-sm font-bold uppercase tracking-widest mb-1">Seu Plano Atual</h3>
-                <div className="flex items-end gap-2 mb-4">
-                  <span className="text-3xl font-black text-white">Enterprise</span>
-                  <span className="text-sm text-gray-300 pb-1">/ ilimitado</span>
-                </div>
-                
-                <ul className="flex flex-col gap-2 mb-6">
-                  <li className="flex items-center gap-2 text-sm text-gray-300"><CheckCircle2 size={16} className="text-accent" /> Leads ilimitados</li>
-                  <li className="flex items-center gap-2 text-sm text-gray-300"><CheckCircle2 size={16} className="text-accent" /> Agente IA com GPT-4o</li>
-                  <li className="flex items-center gap-2 text-sm text-gray-300"><CheckCircle2 size={16} className="text-accent" /> Equipe ilimitada</li>
-                </ul>
-
-                <button className="bg-background text-white text-sm font-bold px-6 py-2.5 rounded-lg hover:bg-gray-900 transition-colors border border-gray-700">
-                  Gerenciar Faturamento (Stripe)
-                </button>
-              </div>
-
-              {/* API Usage */}
-              <div className="bg-background/50 border border-gray-800 rounded-2xl p-6">
-                <h3 className="text-sm font-bold text-white mb-4">Consumo da IA (Mês Atual)</h3>
-                <div className="w-full bg-gray-900 rounded-full h-3 mb-2 border border-gray-800">
-                  <div className="bg-accent h-full rounded-full w-[45%]" />
-                </div>
-                <div className="flex justify-between text-xs text-gray-400">
-                  <span>4.500 mensagens processadas</span>
-                  <span>10.000 (Limite)</span>
-                </div>
-              </div>
-
-            </div>
-          )}
-
-        </div>
+        {/* Painel Central de Conteúdo */}
+        <main className="flex-1 w-full min-w-0 bg-[#0B1224]/80 border border-slate-800/80 rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
+          {activeTab === "company" && <CompanySettingsTab />}
+          {activeTab === "users" && <UsersSettingsTab />}
+          {activeTab === "departments" && <DepartmentsSettingsTab />}
+          {activeTab === "quick-replies" && <QuickRepliesSettingsTab />}
+          {activeTab === "automations" && <AutomationsSettingsTab />}
+        </main>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-slate-400 space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <p className="text-xs font-semibold">Carregando configurações...</p>
+        </div>
+      }
+    >
+      <SettingsContent />
+    </Suspense>
   );
 }

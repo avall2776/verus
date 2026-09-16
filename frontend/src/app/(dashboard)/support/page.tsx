@@ -5,7 +5,7 @@ import {
   LifeBuoy, MessageSquare, ShieldCheck, AlertCircle, CheckCircle2, 
   Clock, Plus, Search, Filter, RefreshCw, Send, Lock, User, 
   ExternalLink, ChevronRight, HelpCircle, Smartphone, Mail, 
-  Target, Bot, Zap, ArrowRight, X, AlertTriangle, Eye
+  Target, Bot, Zap, ArrowRight, X, AlertTriangle, Eye, Building2
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
@@ -37,6 +37,27 @@ interface SupportTicket {
   category: string;
   createdAt: string;
   updatedAt: string;
+  tenant?: {
+    id: string;
+    name: string;
+    cnpj?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    logoUrl?: string;
+    isActive?: boolean;
+    plan?: {
+      id: string;
+      name: string;
+      price: number;
+    };
+    _count?: {
+      users?: number;
+      contracts?: number;
+      contacts?: number;
+      supportTickets?: number;
+    };
+  };
   user?: {
     id: string;
     name: string;
@@ -634,6 +655,60 @@ export default function SupportPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* Card de Dados Cadastrais da Empresa */}
+                  {selectedTicket.tenant && (
+                    <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2.5 my-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-lg bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                            <Building2 className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="text-xs font-bold text-white">
+                            {selectedTicket.tenant.name}
+                          </span>
+                          {selectedTicket.tenant.plan && (
+                            <span className="px-2 py-0.5 rounded-md bg-blue-600/10 border border-blue-500/20 text-[10px] font-semibold text-blue-300">
+                              Plano {selectedTicket.tenant.plan.name}
+                            </span>
+                          )}
+                        </div>
+
+                        {selectedTicket.tenant.cnpj && (
+                          <span className="text-[10px] font-mono text-slate-400">
+                            CNPJ: {selectedTicket.tenant.cnpj}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-800/60 text-[11px]">
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">E-mail:</span>
+                          <span className="text-slate-300 truncate block font-medium" title={selectedTicket.tenant.email}>
+                            {selectedTicket.tenant.email || "Não cadastrado"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Telefone:</span>
+                          <span className="text-slate-300 truncate block font-medium">
+                            {selectedTicket.tenant.phone || "Não cadastrado"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Usuários no Tenant:</span>
+                          <span className="text-slate-300 font-semibold">
+                            {selectedTicket.tenant._count?.users ?? "—"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Total de Chamados:</span>
+                          <span className="text-slate-300 font-semibold">
+                            {selectedTicket.tenant._count?.supportTickets ?? "—"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Mensagens do Chamado (Timeline) */}
                   <div className="flex-1 overflow-y-auto space-y-3 py-4 pr-1">

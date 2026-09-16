@@ -509,7 +509,7 @@ export default function GoalsPage() {
 
           <div className="flex items-center gap-2 shrink-0">
             <a
-              href="/settings/automations"
+              href="/settings?tab=automations"
               className="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <Zap className="w-3.5 h-3.5" />

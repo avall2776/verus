@@ -18,16 +18,19 @@ import {
   ShieldAlert,
   Loader2,
   FileText,
-  DollarSign
+  DollarSign,
+  Edit2
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import EditCompanyModal from "./EditCompanyModal";
 
 interface CompanyXRayModalProps {
   tenantId: string | null;
   isOpen: boolean;
   onClose: () => void;
   onNavigateToSupport?: (ticketId: string) => void;
+  onCompanyUpdated?: (updated: any) => void;
 }
 
 export default function CompanyXRayModal({
@@ -35,10 +38,12 @@ export default function CompanyXRayModal({
   isOpen,
   onClose,
   onNavigateToSupport,
+  onCompanyUpdated,
 }: CompanyXRayModalProps) {
   const [activeTab, setActiveTab] = useState<"cadastro" | "metricas" | "conexoes" | "chamados">("cadastro");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen || !tenantId) return;
@@ -94,12 +99,22 @@ export default function CompanyXRayModal({
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs font-semibold transition-colors shadow-sm"
+              title="Editar Dados Cadastrais da Empresa"
+            >
+              <Edit2 size={13} />
+              <span>Editar Dados</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Tab Navigation */}
@@ -422,7 +437,14 @@ export default function CompanyXRayModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-slate-800 bg-[#070D1B] flex justify-end">
+        <div className="p-4 border-t border-slate-800 bg-[#070D1B] flex items-center justify-between">
+          <button
+            onClick={() => setIsEditModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs font-semibold transition-colors"
+          >
+            <Edit2 size={14} />
+            <span>Editar Informações da Empresa</span>
+          </button>
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition-colors"
@@ -431,6 +453,26 @@ export default function CompanyXRayModal({
           </button>
         </div>
       </div>
+
+      {/* Modal de Edição de Dados da Empresa */}
+      <EditCompanyModal
+        isOpen={isEditModalOpen}
+        tenantId={tenantId}
+        initialData={data?.company}
+        onClose={() => setIsEditModalOpen(false)}
+        onCompanyUpdated={(updated) => {
+          setData((prev: any) => prev ? {
+            ...prev,
+            company: {
+              ...prev.company,
+              ...updated,
+            }
+          } : prev);
+          if (onCompanyUpdated) {
+            onCompanyUpdated(updated);
+          }
+        }}
+      />
     </div>
   );
 }

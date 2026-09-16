@@ -21,12 +21,14 @@ import {
   RefreshCw,
   Loader2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Edit2
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import CompanyXRayModal from "@/components/super-admin/CompanyXRayModal";
 import ResetAdminPasswordModal from "@/components/super-admin/ResetAdminPasswordModal";
+import EditCompanyModal from "@/components/super-admin/EditCompanyModal";
 
 export default function SuperAdminCompaniesPage() {
   const router = useRouter();
@@ -54,6 +56,16 @@ export default function SuperAdminCompaniesPage() {
     tenantId: null,
     tenantName: "",
     adminEmail: "",
+  });
+
+  const [editCompanyData, setEditCompanyData] = useState<{
+    isOpen: boolean;
+    tenantId: string | null;
+    company: any;
+  }>({
+    isOpen: false,
+    tenantId: null,
+    company: null,
   });
 
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -319,6 +331,19 @@ export default function SuperAdminCompaniesPage() {
                           <span className="font-semibold">Raio-X</span>
                         </button>
 
+                        {/* Botão Editar */}
+                        <button
+                          onClick={() => setEditCompanyData({
+                            isOpen: true,
+                            tenantId: company.id,
+                            company: company,
+                          })}
+                          title="Editar Dados da Empresa"
+                          className="p-1.5 rounded bg-[#070D1B] border border-slate-800 hover:border-slate-700 text-blue-400 hover:text-blue-300 transition-colors"
+                        >
+                          <Edit2 size={13} />
+                        </button>
+
                         {/* Botão Redefinir Senha */}
                         <button
                           onClick={() => handleOpenResetPassword(company)}
@@ -387,6 +412,7 @@ export default function SuperAdminCompaniesPage() {
         tenantId={xRayTenantId}
         isOpen={isXRayOpen}
         onClose={() => setIsXRayOpen(false)}
+        onCompanyUpdated={() => fetchCompanies()}
         onNavigateToSupport={(ticketId) => {
           router.push(`/super-admin/support?ticketId=${ticketId}`);
         }}
@@ -399,6 +425,14 @@ export default function SuperAdminCompaniesPage() {
         adminEmail={resetModalData.adminEmail}
         onClose={() => setResetModalData((prev) => ({ ...prev, isOpen: false }))}
         onSuccess={() => fetchCompanies()}
+      />
+
+      <EditCompanyModal
+        isOpen={editCompanyData.isOpen}
+        tenantId={editCompanyData.tenantId}
+        initialData={editCompanyData.company}
+        onClose={() => setEditCompanyData((prev) => ({ ...prev, isOpen: false }))}
+        onCompanyUpdated={() => fetchCompanies()}
       />
     </div>
   );

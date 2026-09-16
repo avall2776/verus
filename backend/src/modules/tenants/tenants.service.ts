@@ -422,4 +422,49 @@ export class TenantsService {
       data: updateData,
     });
   }
+
+  async getPlans() {
+    return this.prisma.plan.findMany({
+      orderBy: { price: 'desc' },
+    });
+  }
+
+  async update(id: string, dto: any) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id } });
+    if (!tenant) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
+    const data: any = {};
+    if (dto.name !== undefined) data.name = dto.name.trim();
+    if (dto.cnpj !== undefined) data.cnpj = dto.cnpj.trim();
+    if (dto.email !== undefined) data.email = dto.email.trim();
+    if (dto.phone !== undefined) data.phone = dto.phone.trim();
+    if (dto.address !== undefined) data.address = dto.address.trim();
+    if (dto.logoUrl !== undefined) data.logoUrl = dto.logoUrl ? dto.logoUrl.trim() : null;
+    if (dto.isActive !== undefined) data.isActive = Boolean(dto.isActive);
+
+    if (dto.planId) {
+      const plan = await this.prisma.plan.findUnique({ where: { id: dto.planId } });
+      if (!plan) {
+        throw new BadRequestException('Plano informado não existe.');
+      }
+      data.planId = dto.planId;
+    }
+
+    const updated = await this.prisma.tenant.update({
+      where: { id },
+      data,
+      include: {
+        plan: {
+          select: { id: true, name: true, price: true },
+        },
+      },
+    });
+
+    return {
+      message: `Empresa "${updated.name}" atualizada com sucesso.`,
+      tenant: updated,
+    };
+  }
 }

@@ -219,4 +219,46 @@ export declare class TenantsService {
         emailSettings: import("@prisma/client/runtime/library").JsonValue | null;
         planId: string;
     }>;
+    getPlans(): Promise<{
+        id: string;
+        name: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        hasCRM: boolean;
+        hasWhatsApp: boolean;
+        hasInstagram: boolean;
+        hasAIAgent: boolean;
+        maxUsers: number;
+        maxAIMsgs: number;
+    }[]>;
+    update(id: string, dto: any): Promise<{
+        message: string;
+        tenant: {
+            plan: {
+                id: string;
+                name: string;
+                price: import("@prisma/client/runtime/library").Decimal;
+            };
+        } & {
+            id: string;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            cnpj: string | null;
+            logoUrl: string | null;
+            address: string | null;
+            isActive: boolean;
+            aiName: string | null;
+            aiModel: string;
+            aiPrompt: string | null;
+            aiKnowledgeBase: string | null;
+            aiTemperature: number;
+            metaToken: string | null;
+            metaPhoneNumberId: string | null;
+            whatsappSettings: import("@prisma/client/runtime/library").JsonValue | null;
+            emailSettings: import("@prisma/client/runtime/library").JsonValue | null;
+            planId: string;
+        };
+    }>;
 }

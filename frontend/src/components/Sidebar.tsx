@@ -82,7 +82,7 @@ const NAV_GROUPS = [
     items: [
       { name: "Propostas Comerciais", icon: FileText, href: "/proposals", badge: "NOVO" },
       { name: "Contratos", icon: ScrollText, href: "/contracts" },
-      { name: "Automações de Vendas", icon: Zap, href: "/settings/automations" },
+      { name: "Automações de Vendas", icon: Zap, href: "/settings?tab=automations" },
       { name: "Analytics Avançado", icon: TrendingUp, href: "/dashboard/analytics", badge: "PRO" },
       { name: "Metas Comerciais", icon: Target, href: "/dashboard/goals", badge: "NOVO" },
       { name: "Inbox de E-mail", icon: Mail, href: "/email-inbox" },
@@ -95,8 +95,8 @@ const NAV_GROUPS = [
       { name: "Visão Geral", icon: LayoutDashboard, href: "/dashboard" },
       { name: "Base de Contatos", icon: Users, href: "/contacts" },
       { name: "Agentes de IA", icon: Bot, href: "/agent" },
-      { name: "Automações & Regras", icon: Zap, href: "/settings/automations" },
-      { name: "Usuários & Acessos", icon: Users, href: "/settings/users" },
+      { name: "Automações & Regras", icon: Zap, href: "/settings?tab=automations" },
+      { name: "Usuários & Acessos", icon: Users, href: "/settings?tab=users" },
       { name: "Conexões WhatsApp", icon: Smartphone, href: "/settings/whatsapp" },
       { name: "Configurações Gerais", icon: Settings, href: "/settings" },
     ]
@@ -245,7 +245,10 @@ export default function Sidebar() {
               {/* Group Items */}
               <div className={`flex flex-col gap-1 ${!isExpanded ? 'items-center' : ''} ${(!expandedGroups[group.title] && isExpanded) ? 'hidden' : ''}`}>
                 {group.items.map((item) => {
-                  const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                  const itemBase = item.href.split('?')[0];
+                  const isActive = item.href.includes('?')
+                    ? pathname === itemBase
+                    : pathname === item.href || (item.href !== '/dashboard' && item.href !== '/settings' && pathname.startsWith(item.href));
                   const isInbox = item.href === '/inbox';
                   const shouldBlink = isInbox && hasGlobalUnread && !isActive;
 

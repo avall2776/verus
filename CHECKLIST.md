@@ -1139,16 +1139,19 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ### 🟡 FASE 56: SUPER ADMIN MASTER, AUDITORIA & CONSOLIDAÇÃO DE CONFIGURAÇÕES (/settings & /super-admin)
 > **Status**: ⏳ Em Andamento (Iniciada formalmente; conclusão estritamente condicionada ao OK do usuário).
-- [ ] **Remoção de Redundâncias & Perfil Unificado**:
+- [x] **Remoção de Redundâncias & Perfil Unificado**:
   - Eliminar telas ou rotas secundárias redundantes de perfil/foto, centralizando a gestão exclusivamente no modal corporativo `UserProfileModal.tsx`.
-- [ ] **Consolidação em Configurações Gerais (`/settings`)**:
-  - Centralizar em abas unificadas e reativas sem reload ou redirects quebrados:
-    - Aba 1: Dados da Empresa (Tenant).
-    - Aba 2: Equipe e Usuários (antigo `/settings/users` unificado em aba).
-    - Aba 3: Departamentos e Filiais (antigo `/settings/departments` unificado em aba).
-    - Aba 4: Respostas Rápidas (antigo `/settings/quick-replies` unificado em aba).
-    - Aba 5: Automações de Atendimento (antigo `/settings/automations` unificado em aba).
-  - Atualizar a navegação na `Sidebar.tsx` para direcionar diretamente para a respectiva aba em `/settings?tab=...`.
+- [x] **Consolidação em Configurações Gerais (`/settings`)**:
+  - Centralizar em abas unificadas e reativas por URL (`?tab=company, users, departments, quick-replies, automations`) sem reload ou redirects quebrados:
+    - Aba 1: Dados da Empresa (Tenant - `GET/PATCH /tenants/me`).
+    - Aba 2: Equipe e Usuários (gestão real de membros, convite com hash bcrypt, remoção com trava de segurança).
+    - Aba 3: Departamentos e Filiais (gestão de filas e filiais vinculadas aos usuários).
+    - Aba 4: Respostas Rápidas (gestão de atalhos/macros `/atalho` no Inbox).
+    - Aba 5: Automações de Atendimento (regras e histórico de execuções com modal corporativo).
+  - Atualizar a navegação na `Sidebar.tsx` para direcionar diretamente para as abas reativas em `/settings?tab=...`.
+  - Redirecionar sub-rotas antigas (`/settings/users`, `/settings/departments`, `/settings/quick-replies`, `/settings/automations`) para a respectiva aba sem tela de 404 ou páginas "Em Construção".
+- [x] **Suporte & Vínculo com Dados Cadastrais da Empresa**:
+  - Integração do card completo de dados cadastrais da empresa (`tenant`) no detalhe dos chamados de suporte (`/support`), exibindo Razão Social, CNPJ, Plano, Contato e métricas de usuários/chamados para troubleshooting ágil.
 - [x] **Autenticação & Flag de Super Admin**:
   - Modelagem no Prisma (`isSuperAdmin Boolean @default(false)` e role `SUPER_ADMIN` no modelo `User`).
   - Atualização do login no backend (`AuthService`) e `JwtStrategy` para propagar `isSuperAdmin`.

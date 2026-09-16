@@ -11,8 +11,10 @@ import {
   Headphones,
   ArrowUpRight,
   ShieldAlert,
-  Layers
+  Layers,
+  Edit2
 } from "lucide-react";
+import UserProfileModal from "@/components/modals/UserProfileModal";
 
 const ADMIN_MENU = [
   { name: "Métricas Globais", icon: BarChart4, href: "/super-admin" },
@@ -29,8 +31,9 @@ export default function SuperAdminLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-  useEffect(() => {
+  const loadUser = () => {
     try {
       const stored = localStorage.getItem("versus_user");
       if (stored) {
@@ -40,10 +43,18 @@ export default function SuperAdminLayout({
     } catch (e) {
       console.error(e);
     }
+  };
+
+  useEffect(() => {
+    loadUser();
+    const handleUserUpdated = () => loadUser();
+    window.addEventListener("user_updated", handleUserUpdated);
+    return () => window.removeEventListener("user_updated", handleUserUpdated);
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("versus_auth_token");
+    localStorage.removeItem("versus_token");
     localStorage.removeItem("versus_user");
     router.push("/login");
   };
@@ -106,20 +117,37 @@ export default function SuperAdminLayout({
             <ArrowUpRight size={14} className="text-slate-400" />
           </Link>
 
-          <div className="flex items-center justify-between p-2 rounded-lg bg-[#0B1224] border border-slate-800">
+          <div 
+            onClick={() => setIsProfileModalOpen(true)}
+            className="flex items-center justify-between p-2 rounded-lg bg-[#0B1224] border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 cursor-pointer transition-all group"
+            title="Editar Perfil (Nome, Foto e Dados)"
+          >
             <div className="flex items-center gap-2 overflow-hidden">
-              <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                {currentUser?.name?.charAt(0) || "SA"}
+              <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm">
+                {currentUser?.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  currentUser?.name?.charAt(0)?.toUpperCase() || "SA"
+                )}
               </div>
               <div className="hidden md:flex flex-col overflow-hidden">
-                <span className="text-xs font-bold text-white truncate">{currentUser?.name || "Super Admin"}</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-bold text-white truncate group-hover:text-blue-400 transition-colors">
+                    {currentUser?.name || "Super Admin"}
+                  </span>
+                  <Edit2 size={10} className="text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                </div>
                 <span className="text-[10px] text-slate-400 truncate">{currentUser?.email || "admin@versus.com"}</span>
               </div>
             </div>
             <button
-              onClick={handleLogout}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLogout();
+              }}
               title="Sair da Conta"
-              className="text-slate-400 hover:text-rose-400 p-1 rounded hover:bg-slate-800 transition-colors"
+              className="text-slate-400 hover:text-rose-400 p-1.5 rounded hover:bg-slate-800 transition-colors shrink-0"
             >
               <LogOut size={15} />
             </button>
@@ -151,6 +179,14 @@ export default function SuperAdminLayout({
           {children}
         </div>
       </main>
+
+      {/* Modal de Edição de Perfil do Super Admin */}
+      <UserProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        currentUser={currentUser}
+        onUserUpdated={(updated) => setCurrentUser(updated)}
+      />
     </div>
   );
 }
