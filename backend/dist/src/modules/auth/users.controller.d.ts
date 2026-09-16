@@ -6,24 +6,29 @@ export declare class UsersController {
         id: string;
         name: string;
         email: string;
+        avatarUrl: string;
         role: string;
         isOnline: boolean;
     }[]>;
     updateProfile(req: any, body: {
         name?: string;
+        avatarUrl?: string;
     }): Promise<{
         id: string;
         name: string;
         email: string;
+        avatarUrl: string;
         tenantId: string;
         role: string;
     }>;
     update(req: any, id: string, body: {
         name?: string;
+        avatarUrl?: string;
     }): Promise<{
         id: string;
         name: string;
         email: string;
+        avatarUrl: string;
         tenantId: string;
         role: string;
     }>;

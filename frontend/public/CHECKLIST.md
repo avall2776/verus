@@ -1088,34 +1088,35 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - Deploy sincronizado na VPS (Hostinger PM2 `versus-engine`) e Vercel.
   - Homologação condicionada à aprovação do usuário.
 
-### 🟡 FASE 55: CENTRAL DE SUPORTE E ATENDIMENTO ENTERPRISE (ESTILO LERO)
-> **Status**: 📅 Agendada para desenvolvimento no período da tarde (Estruturação Cliente & Administrador).
+### 🟡 FASE 55: CENTRAL DE SUPORTE E ATENDIMENTO ENTERPRISE & MODAIS PADRÃO LERO
+> **Status**: ⏳ Implementada e Pronta para Homologação (Hover Rodapé, Modais de Som/Atalhos/Perfil e Central Omnichannel).
 - [ ] **Modelagem e Banco de Dados (Prisma ORM)**:
-  - Criação dos modelos `SupportTicket` e `TicketMessage` com isolamento multitenant (`tenantId`, `userId`, `contactId`).
-  - Definição de enums e campos: `status` (`OPEN`, `IN_PROGRESS`, `WAITING_CLIENT`, `RESOLVED`, `CLOSED`), `priority` (`LOW`, `MEDIUM`, `HIGH`, `URGENT`), `category` (Financeiro, Dúvida Técnica, Bug, Solicitação de Recurso), assunto, descrição e anexos.
-  - Sincronização do banco de dados via `npx prisma db push` e geração do cliente com `npx prisma generate`.
+  - Criação dos modelos `SupportTicket` e `TicketMessage` com isolamento multitenant (`tenantId`, `userId`, `contactId`) e índices de busca.
+  - Adição do campo `avatarUrl String?` ao modelo `User` e relações de chamados em `User`, `Tenant` e `Contact`.
+  - Sincronização executada com sucesso via `npx prisma db push` e geração do Prisma Client via `npx prisma generate`.
 - [ ] **Backend NestJS (`SupportModule`)**:
-  - `GET /support/tickets`: Listagem paginada de chamados com filtros por status, prioridade, solicitante e atendente responsável.
-  - `POST /support/tickets`: Abertura de novos chamados com validação por DTOs e atribuição automática ou sob demanda.
-  - `GET /support/tickets/:id`: Consulta de detalhes do chamado com histórico cronológico de mensagens e anexos.
-  - `POST /support/tickets/:id/messages`: Envio de mensagens e respostas no chamado, com suporte a mensagens internas do atendente e respostas ao cliente.
-  - `PATCH /support/tickets/:id/status`: Transição e atualização de status do chamado com registro de logs.
-  - `PATCH /support/tickets/:id/assign`: Atribuição e transferência de tickets entre operadores do time.
-  - Todos os endpoints protegidos por JWT e multitenant isolado (`@CurrentTenant`).
-- [ ] **Frontend Enterprise (Interface do Cliente & Administrador - Estilo Lero)**:
-  - Rota dedicada e integrada à barra lateral (`Sidebar.tsx`): `/support` ou `/central-ajuda`.
-  - **Visão do Solicitante / Cliente**:
-    - Listagem clara de seus chamados abertos e histórico de resolução.
-    - Modal simplificado de abertura de ticket com anexos e categorização inteligente.
-    - Dicas rápidas de autoatendimento e troubleshooting contextual para dúvidas frequentes antes da abertura do chamado.
-  - **Visão do Administrador / Operador de Suporte (Estilo Lero)**:
-    - Painel centralizado com fila de atendimento, ordenação por urgência/SLA e contadores em tempo real.
-    - Chat de chamado integrado para troca de mensagens, envio de documentos e finalização do atendimento.
-- [ ] **Design System Monocromático Corporativo**:
-  - Aplicação estrita da paleta institucional do VERSUS: azul escuro `#070D1B`, `bg-slate-900`, `border-slate-800`, botões em `bg-blue-600 hover:bg-blue-500` e tipografia branca/slate, sem gradientes coloridos pesados.
-- [ ] **Build, Homologação & Deploy**:
-  - `npx tsc --noEmit` e `npm run build` aprovados com código 0 de erro.
-  - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e na Vercel.
+  - `GET /support/tickets`: Listagem com filtros por status, prioridade, categoria, busca e escopo do solicitante (`myOnly`), além de contadores por status.
+  - `POST /support/tickets`: Abertura de novos chamados com DTO validado e criação da primeira mensagem.
+  - `GET /support/tickets/:id`: Consulta completa do ticket com histórico de mensagens e anexos.
+  - `POST /support/tickets/:id/messages`: Envio de mensagens e respostas no chamado, com suporte a notas internas (`isInternal`) e reabertura automática de status.
+  - `PATCH /support/tickets/:id/status`: Transição e atualização de status do chamado.
+  - `PATCH /support/tickets/:id/assign`: Atribuição de tickets entre operadores do time.
+  - `@Patch('profile')` e `@Put('profile')` em `users.controller.ts`: Suporte à persistência do `avatarUrl` e `name`.
+- [ ] **Modais de Configuração Estilo Lero & Hover no Menu do Rodapé (`Sidebar.tsx`)**:
+  - **Hover Automático**: Popover do perfil no rodapé abre suavemente ao passar o mouse (`onMouseEnter`) com delay de tolerância no `onMouseLeave`, exibindo opções com transição fluida.
+  - **Alertas Sonoros (`SoundAlertsModal.tsx`)**: Controles independentes de volume (0 a 100%) e toggles para WhatsApp, Instagram, Suporte e Sistema, com prévia de áudio sintetizado em tempo real via Web Audio API e persistência no `localStorage`.
+  - **Atalhos de Teclado (`KeyboardShortcutsModal.tsx`)**: Alternância dinâmica de sistema operacional entre Windows/Linux e macOS, com busca rápida e categorias de navegação e atendimento.
+  - **Perfil do Operador (`UserProfileModal.tsx`)**: Suporte a upload/link de foto de perfil com preview em tempo real, edição de nome completo e persistência no banco via API.
+- [ ] **Central de Suporte Omnichannel Frontend (`/support`)**:
+  - **Autoatendimento & Troubleshooting**: Busca instantânea em cards de conhecimento para WhatsApp, SMTP, CRM, Metas e IA.
+  - **Meus Chamados**: Listagem dos protocolos abertos pelo usuário com badges de status, prioridade e acompanhamento.
+  - **Painel de Atendimento (Admin / Equipe)**: Visualização em tela dividida com lista de chamados e chat em tempo real, suporte a notas internas e alteração de status.
+- [ ] **Validação de Build, Homologação & Deploy**:
+  - `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
+  - `npm run build` do frontend aprovado com código 0 gerando 37/37 páginas.
+  - `npm run build` do backend aprovado com código 0.
+  - Deploy sincronizado na VPS (Hostinger PM2 `versus-engine`) e Vercel.
+  - Homologação condicionada à aprovação do usuário.
 
 ---
 

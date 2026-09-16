@@ -28,6 +28,7 @@ let UsersController = class UsersController {
                 name: true,
                 email: true,
                 role: true,
+                avatarUrl: true,
                 isOnline: true
             }
         });
@@ -37,35 +38,51 @@ let UsersController = class UsersController {
         if (!userId) {
             throw new common_1.BadRequestException('ID de usuário não identificado no token.');
         }
-        const name = body?.name?.trim();
-        if (!name) {
-            throw new common_1.BadRequestException('Nome do usuário é obrigatório.');
+        const updateData = {};
+        if (body.name !== undefined) {
+            const name = body.name?.trim();
+            if (!name) {
+                throw new common_1.BadRequestException('Nome do usuário é obrigatório.');
+            }
+            updateData.name = name;
+        }
+        if (body.avatarUrl !== undefined) {
+            updateData.avatarUrl = body.avatarUrl;
         }
         return this.prisma.user.update({
             where: { id: userId },
-            data: { name },
+            data: updateData,
             select: {
                 id: true,
                 name: true,
                 email: true,
                 role: true,
+                avatarUrl: true,
                 tenantId: true
             }
         });
     }
     async update(req, id, body) {
-        const name = body?.name?.trim();
-        if (!name) {
-            throw new common_1.BadRequestException('Nome do usuário é obrigatório.');
+        const updateData = {};
+        if (body.name !== undefined) {
+            const name = body.name?.trim();
+            if (!name) {
+                throw new common_1.BadRequestException('Nome do usuário é obrigatório.');
+            }
+            updateData.name = name;
+        }
+        if (body.avatarUrl !== undefined) {
+            updateData.avatarUrl = body.avatarUrl;
         }
         return this.prisma.user.update({
             where: { id: id },
-            data: { name },
+            data: updateData,
             select: {
                 id: true,
                 name: true,
                 email: true,
                 role: true,
+                avatarUrl: true,
                 tenantId: true
             }
         });

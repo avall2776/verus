@@ -19,6 +19,7 @@ export declare class DepartmentsController {
                 id: string;
                 name: string;
                 email: string;
+                avatarUrl: string | null;
                 tenantId: string;
                 createdAt: Date;
                 updatedAt: Date;

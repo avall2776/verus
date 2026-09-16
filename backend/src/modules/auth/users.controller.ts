@@ -16,6 +16,7 @@ export class UsersController {
         name: true,
         email: true,
         role: true,
+        avatarUrl: true,
         isOnline: true
       }
     });
@@ -23,24 +24,33 @@ export class UsersController {
 
   @Patch('profile')
   @Put('profile')
-  async updateProfile(@Request() req, @Body() body: { name?: string }) {
+  async updateProfile(@Request() req, @Body() body: { name?: string; avatarUrl?: string }) {
     const userId = req.user?.id || req.user?.userId;
     if (!userId) {
       throw new BadRequestException('ID de usuário não identificado no token.');
     }
-    const name = body?.name?.trim();
-    if (!name) {
-      throw new BadRequestException('Nome do usuário é obrigatório.');
+    
+    const updateData: any = {};
+    if (body.name !== undefined) {
+      const name = body.name?.trim();
+      if (!name) {
+        throw new BadRequestException('Nome do usuário é obrigatório.');
+      }
+      updateData.name = name;
+    }
+    if (body.avatarUrl !== undefined) {
+      updateData.avatarUrl = body.avatarUrl;
     }
 
     return this.prisma.user.update({
       where: { id: userId },
-      data: { name },
+      data: updateData,
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        avatarUrl: true,
         tenantId: true
       }
     });
@@ -48,22 +58,31 @@ export class UsersController {
 
   @Patch(':id')
   @Put(':id')
-  async update(@Request() req, @Param('id') id: string, @Body() body: { name?: string }) {
-    const name = body?.name?.trim();
-    if (!name) {
-      throw new BadRequestException('Nome do usuário é obrigatório.');
+  async update(@Request() req, @Param('id') id: string, @Body() body: { name?: string; avatarUrl?: string }) {
+    const updateData: any = {};
+    if (body.name !== undefined) {
+      const name = body.name?.trim();
+      if (!name) {
+        throw new BadRequestException('Nome do usuário é obrigatório.');
+      }
+      updateData.name = name;
+    }
+    if (body.avatarUrl !== undefined) {
+      updateData.avatarUrl = body.avatarUrl;
     }
 
     return this.prisma.user.update({
       where: { id: id },
-      data: { name },
+      data: updateData,
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        avatarUrl: true,
         tenantId: true
       }
     });
   }
 }
+

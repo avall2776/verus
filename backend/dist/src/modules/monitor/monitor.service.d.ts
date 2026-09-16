@@ -7,6 +7,7 @@ export declare class MonitorService {
             id: string;
             name: string;
             email: string;
+            avatarUrl: string | null;
             tenantId: string;
             createdAt: Date;
             updatedAt: Date;

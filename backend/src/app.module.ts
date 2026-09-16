@@ -23,6 +23,7 @@ import { ProposalsModule } from './modules/proposals/proposals.module';
 import { GoalsModule } from './modules/goals/goals.module';
 import { ContractsModule } from './modules/contracts/contracts.module';
 import { EmailsModule } from './modules/emails/emails.module';
+import { SupportModule } from './modules/support/support.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { EmailsModule } from './modules/emails/emails.module';
     GoalsModule,
     ContractsModule,
     EmailsModule,
+    SupportModule,
   ],
   controllers: [],
   providers: [],
