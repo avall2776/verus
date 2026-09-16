@@ -1145,9 +1145,9 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ### 🟡 FASE 56: SUPER ADMIN MASTER, AUDITORIA & CONSOLIDAÇÃO DE CONFIGURAÇÕES (/settings & /super-admin)
 > **Status**: ⏳ Em Andamento (Iniciada formalmente; conclusão estritamente condicionada ao OK do usuário).
-- [ ] **Refinamento em Equipe e Usuários (/settings?tab=users)**:
-  - [ ] **Modal de Edição de Membro**: Permitir alterar Nome, Cargo (`Administrador` / `Atendente`) e Status (`Ativo` / `Inativo`).
-  - [ ] **Disparo de Convite por E-mail via SMTP Próprio**: Disparar e-mail de convite com link de login pelo transporter SMTP configurado no tenant.
+- [x] **Refinamento em Equipe e Usuários (/settings?tab=users)**:
+  - [x] **Modal de Edição de Membro**: Permitir alterar Nome, Cargo (`Administrador` / `Atendente`), Status (`Ativo` / `Inativo`) e redefinição opcional de senha com modal corporativo responsivo.
+  - [x] **Disparo de Convite por E-mail via SMTP Próprio**: Disparo automático de e-mail de convite corporativo formatado em HTML com link de acesso e credenciais via transporter SMTP configurado no tenant.
 - [x] **Remoção de Redundâncias & Perfil Unificado**:
   - Eliminar telas ou rotas secundárias redundantes de perfil/foto, centralizando a gestão exclusivamente no modal corporativo `UserProfileModal.tsx`.
 - [x] **Consolidação em Configurações Gerais (`/settings`)**:

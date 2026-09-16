@@ -30,6 +30,18 @@ export declare class EmailsService {
         connectionError: any;
         settings: any;
     }>;
+    sendUserInvitationEmail(params: {
+        tenantId: string;
+        recipientEmail: string;
+        recipientName: string;
+        role: string;
+        initialPassword?: string;
+        inviterName?: string;
+        loginUrl?: string;
+    }): Promise<{
+        sent: boolean;
+        error?: string;
+    }>;
     testConnection(tenantId: string, dto: EmailSettingsDto): Promise<{
         success: boolean;
         error: string;
@@ -91,9 +103,6 @@ export declare class EmailsService {
             createdAt: Date;
             updatedAt: Date;
             contactId: string | null;
-            dealId: string | null;
-            folder: string;
-            proposalId: string | null;
             recipientEmail: string;
             recipientName: string | null;
             senderName: string;
@@ -103,8 +112,11 @@ export declare class EmailsService {
             subject: string;
             bodyText: string;
             bodyHtml: string | null;
+            dealId: string | null;
+            proposalId: string | null;
             contractId: string | null;
             threadId: string | null;
+            folder: string;
             attachments: import("@prisma/client/runtime/library").JsonValue | null;
             isRead: boolean;
             isStarred: boolean;
@@ -158,9 +170,6 @@ export declare class EmailsService {
         createdAt: Date;
         updatedAt: Date;
         contactId: string | null;
-        dealId: string | null;
-        folder: string;
-        proposalId: string | null;
         recipientEmail: string;
         recipientName: string | null;
         senderName: string;
@@ -170,8 +179,11 @@ export declare class EmailsService {
         subject: string;
         bodyText: string;
         bodyHtml: string | null;
+        dealId: string | null;
+        proposalId: string | null;
         contractId: string | null;
         threadId: string | null;
+        folder: string;
         attachments: import("@prisma/client/runtime/library").JsonValue | null;
         isRead: boolean;
         isStarred: boolean;
@@ -213,9 +225,6 @@ export declare class EmailsService {
         createdAt: Date;
         updatedAt: Date;
         contactId: string | null;
-        dealId: string | null;
-        folder: string;
-        proposalId: string | null;
         recipientEmail: string;
         recipientName: string | null;
         senderName: string;
@@ -225,8 +234,11 @@ export declare class EmailsService {
         subject: string;
         bodyText: string;
         bodyHtml: string | null;
+        dealId: string | null;
+        proposalId: string | null;
         contractId: string | null;
         threadId: string | null;
+        folder: string;
         attachments: import("@prisma/client/runtime/library").JsonValue | null;
         isRead: boolean;
         isStarred: boolean;
@@ -241,9 +253,6 @@ export declare class EmailsService {
         createdAt: Date;
         updatedAt: Date;
         contactId: string | null;
-        dealId: string | null;
-        folder: string;
-        proposalId: string | null;
         recipientEmail: string;
         recipientName: string | null;
         senderName: string;
@@ -253,8 +262,11 @@ export declare class EmailsService {
         subject: string;
         bodyText: string;
         bodyHtml: string | null;
+        dealId: string | null;
+        proposalId: string | null;
         contractId: string | null;
         threadId: string | null;
+        folder: string;
         attachments: import("@prisma/client/runtime/library").JsonValue | null;
         isRead: boolean;
         isStarred: boolean;
@@ -269,9 +281,6 @@ export declare class EmailsService {
         createdAt: Date;
         updatedAt: Date;
         contactId: string | null;
-        dealId: string | null;
-        folder: string;
-        proposalId: string | null;
         recipientEmail: string;
         recipientName: string | null;
         senderName: string;
@@ -281,8 +290,11 @@ export declare class EmailsService {
         subject: string;
         bodyText: string;
         bodyHtml: string | null;
+        dealId: string | null;
+        proposalId: string | null;
         contractId: string | null;
         threadId: string | null;
+        folder: string;
         attachments: import("@prisma/client/runtime/library").JsonValue | null;
         isRead: boolean;
         isStarred: boolean;
@@ -297,9 +309,6 @@ export declare class EmailsService {
         createdAt: Date;
         updatedAt: Date;
         contactId: string | null;
-        dealId: string | null;
-        folder: string;
-        proposalId: string | null;
         recipientEmail: string;
         recipientName: string | null;
         senderName: string;
@@ -309,8 +318,11 @@ export declare class EmailsService {
         subject: string;
         bodyText: string;
         bodyHtml: string | null;
+        dealId: string | null;
+        proposalId: string | null;
         contractId: string | null;
         threadId: string | null;
+        folder: string;
         attachments: import("@prisma/client/runtime/library").JsonValue | null;
         isRead: boolean;
         isStarred: boolean;
@@ -325,9 +337,6 @@ export declare class EmailsService {
         createdAt: Date;
         updatedAt: Date;
         contactId: string | null;
-        dealId: string | null;
-        folder: string;
-        proposalId: string | null;
         recipientEmail: string;
         recipientName: string | null;
         senderName: string;
@@ -337,8 +346,11 @@ export declare class EmailsService {
         subject: string;
         bodyText: string;
         bodyHtml: string | null;
+        dealId: string | null;
+        proposalId: string | null;
         contractId: string | null;
         threadId: string | null;
+        folder: string;
         attachments: import("@prisma/client/runtime/library").JsonValue | null;
         isRead: boolean;
         isStarred: boolean;

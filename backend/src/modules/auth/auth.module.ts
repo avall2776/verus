@@ -6,6 +6,8 @@ import { AuthController } from './auth.controller';
 import { UsersController } from './users.controller';
 import { AuthService } from './auth.service';
 
+import { EmailsModule } from '../emails/emails.module';
+
 @Global()
 @Module({
   imports: [
@@ -14,6 +16,7 @@ import { AuthService } from './auth.service';
       secret: process.env.JWT_SECRET || 'super-secret-key-change-me',
       signOptions: { expiresIn: '1d' },
     }),
+    EmailsModule,
   ],
   controllers: [AuthController, UsersController],
   providers: [JwtStrategy, AuthService],

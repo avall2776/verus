@@ -20,13 +20,13 @@ export declare class WhatsappService {
         createdAt: Date;
         updatedAt: Date;
         status: string;
+        settings: import("@prisma/client/runtime/library").JsonValue | null;
         phoneNumber: string | null;
         profilePicUrl: string | null;
         profileName: string | null;
         qrCode: string | null;
         phoneNumberId: string | null;
         isDefault: boolean;
-        settings: import("@prisma/client/runtime/library").JsonValue | null;
         lastConnectedAt: Date | null;
     }[]>;
     getInstanceById(tenantId: string, id: string): Promise<{
@@ -45,13 +45,13 @@ export declare class WhatsappService {
         createdAt: Date;
         updatedAt: Date;
         status: string;
+        settings: import("@prisma/client/runtime/library").JsonValue | null;
         phoneNumber: string | null;
         profilePicUrl: string | null;
         profileName: string | null;
         qrCode: string | null;
         phoneNumberId: string | null;
         isDefault: boolean;
-        settings: import("@prisma/client/runtime/library").JsonValue | null;
         lastConnectedAt: Date | null;
     }>;
     createInstance(tenantId: string, data: any): Promise<{
@@ -62,13 +62,13 @@ export declare class WhatsappService {
         updatedAt: Date;
         status: string;
         token: string | null;
+        settings: import("@prisma/client/runtime/library").JsonValue | null;
         phoneNumber: string | null;
         profilePicUrl: string | null;
         profileName: string | null;
         qrCode: string | null;
         phoneNumberId: string | null;
         isDefault: boolean;
-        settings: import("@prisma/client/runtime/library").JsonValue | null;
         lastConnectedAt: Date | null;
     }>;
     updateInstance(tenantId: string, id: string, data: any): Promise<{
@@ -79,13 +79,13 @@ export declare class WhatsappService {
         updatedAt: Date;
         status: string;
         token: string | null;
+        settings: import("@prisma/client/runtime/library").JsonValue | null;
         phoneNumber: string | null;
         profilePicUrl: string | null;
         profileName: string | null;
         qrCode: string | null;
         phoneNumberId: string | null;
         isDefault: boolean;
-        settings: import("@prisma/client/runtime/library").JsonValue | null;
         lastConnectedAt: Date | null;
     }>;
     deleteInstance(tenantId: string, id: string): Promise<{
@@ -122,13 +122,13 @@ export declare class WhatsappService {
         updatedAt: Date;
         status: string;
         token: string | null;
+        settings: import("@prisma/client/runtime/library").JsonValue | null;
         phoneNumber: string | null;
         profilePicUrl: string | null;
         profileName: string | null;
         qrCode: string | null;
         phoneNumberId: string | null;
         isDefault: boolean;
-        settings: import("@prisma/client/runtime/library").JsonValue | null;
         lastConnectedAt: Date | null;
     }>;
     fetchContactProfilePicture(tenantId: string, phone: string): Promise<string | null>;

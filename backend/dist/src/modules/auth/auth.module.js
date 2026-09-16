@@ -14,6 +14,7 @@ const jwt_strategy_1 = require("./jwt.strategy");
 const auth_controller_1 = require("./auth.controller");
 const users_controller_1 = require("./users.controller");
 const auth_service_1 = require("./auth.service");
+const emails_module_1 = require("../emails/emails.module");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
@@ -26,6 +27,7 @@ exports.AuthModule = AuthModule = __decorate([
                 secret: process.env.JWT_SECRET || 'super-secret-key-change-me',
                 signOptions: { expiresIn: '1d' },
             }),
+            emails_module_1.EmailsModule,
         ],
         controllers: [auth_controller_1.AuthController, users_controller_1.UsersController],
         providers: [jwt_strategy_1.JwtStrategy, auth_service_1.AuthService],

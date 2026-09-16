@@ -42,9 +42,9 @@ export declare class AutomationsController {
         tenantId: string;
         contactId: string | null;
         status: string;
+        dealId: string | null;
         executedAt: Date;
         automationId: string;
-        dealId: string | null;
         errorReason: string | null;
         payloadDetails: import("@prisma/client/runtime/library").JsonValue | null;
     })[]>;
@@ -55,9 +55,9 @@ export declare class AutomationsController {
             tenantId: string;
             contactId: string | null;
             status: string;
+            dealId: string | null;
             executedAt: Date;
             automationId: string;
-            dealId: string | null;
             errorReason: string | null;
             payloadDetails: import("@prisma/client/runtime/library").JsonValue | null;
         }[];

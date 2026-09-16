@@ -23,6 +23,7 @@ export declare class DepartmentsController {
                 tenantId: string;
                 createdAt: Date;
                 updatedAt: Date;
+                isActive: boolean;
                 role: string;
                 password: string;
                 isSuperAdmin: boolean;

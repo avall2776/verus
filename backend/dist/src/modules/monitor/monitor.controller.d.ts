@@ -11,6 +11,7 @@ export declare class MonitorController {
             tenantId: string;
             createdAt: Date;
             updatedAt: Date;
+            isActive: boolean;
             role: string;
             password: string;
             isSuperAdmin: boolean;

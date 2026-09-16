@@ -90,6 +90,7 @@ model User {
   email     String   @unique
   password  String
   role      String   // ADMIN, AGENT, SUPER_ADMIN
+  isActive  Boolean  @default(true)
   isSuperAdmin Boolean @default(false)
   avatarUrl String?
   tenantId  String

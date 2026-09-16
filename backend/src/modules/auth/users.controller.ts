@@ -1,11 +1,15 @@
 import { Controller, Get, Post, Delete, Patch, Put, Body, Param, UseGuards, Request, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { EmailsService } from '../emails/emails.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailsService: EmailsService,
+  ) {}
 
   @Get()
   async findAll(@Request() req) {
@@ -16,9 +20,12 @@ export class UsersController {
         name: true,
         email: true,
         role: true,
+        isActive: true,
         avatarUrl: true,
-        isOnline: true
-      }
+        isOnline: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -50,16 +57,33 @@ export class UsersController {
         name: true,
         email: true,
         role: true,
+        isActive: true,
         avatarUrl: true,
-        tenantId: true
-      }
+        tenantId: true,
+      },
     });
   }
 
   @Patch(':id')
   @Put(':id')
-  async update(@Request() req, @Param('id') id: string, @Body() body: { name?: string; avatarUrl?: string }) {
+  async update(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { name?: string; role?: string; isActive?: boolean; password?: string; avatarUrl?: string }
+  ) {
+    const tenantId = req.user?.tenantId;
+    const currentUserId = req.user?.id || req.user?.userId;
+
+    const targetUser = await this.prisma.user.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!targetUser) {
+      throw new BadRequestException('Usuário não encontrado na sua empresa.');
+    }
+
     const updateData: any = {};
+
     if (body.name !== undefined) {
       const name = body.name?.trim();
       if (!name) {
@@ -67,22 +91,63 @@ export class UsersController {
       }
       updateData.name = name;
     }
+
+    if (body.role !== undefined) {
+      const role = body.role.toUpperCase();
+      if (role !== 'ADMIN' && role !== 'AGENT') {
+        throw new BadRequestException('Cargo inválido. Utilize ADMIN ou AGENT.');
+      }
+      // Trava de segurança: não permitir que o único ADMIN remova seu próprio acesso de admin
+      if (id === currentUserId && role !== 'ADMIN') {
+        const adminCount = await this.prisma.user.count({
+          where: { tenantId, role: 'ADMIN', isActive: true },
+        });
+        if (adminCount <= 1) {
+          throw new BadRequestException('Você é o único Administrador ativo da empresa e não pode alterar seu cargo para Atendente.');
+        }
+      }
+      updateData.role = role;
+    }
+
+    if (body.isActive !== undefined) {
+      if (id === currentUserId && body.isActive === false) {
+        throw new BadRequestException('Você não pode desativar o seu próprio usuário.');
+      }
+      updateData.isActive = Boolean(body.isActive);
+    }
+
+    if (body.password) {
+      const rawPass = body.password.trim();
+      if (rawPass.length < 6) {
+        throw new BadRequestException('A nova senha deve ter no mínimo 6 caracteres.');
+      }
+      const bcrypt = await import('bcrypt');
+      updateData.password = await bcrypt.hash(rawPass, 10);
+    }
+
     if (body.avatarUrl !== undefined) {
       updateData.avatarUrl = body.avatarUrl;
     }
 
-    return this.prisma.user.update({
-      where: { id: id },
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
       data: updateData,
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        isActive: true,
         avatarUrl: true,
-        tenantId: true
-      }
+        isOnline: true,
+        tenantId: true,
+      },
     });
+
+    return {
+      message: 'Membro atualizado com sucesso!',
+      user: updatedUser,
+    };
   }
 
   @Post()
@@ -108,14 +173,15 @@ export class UsersController {
     const bcrypt = await import('bcrypt');
     const hashedPassword = await bcrypt.hash(rawPass, 10);
 
-    const role = (body.role || 'AGENT').toUpperCase();
+    const role = (body.role || 'AGENT').toUpperCase() === 'ADMIN' ? 'ADMIN' : 'AGENT';
 
     const newUser = await this.prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: role === 'ADMIN' ? 'ADMIN' : 'AGENT',
+        role,
+        isActive: true,
         tenantId,
       },
       select: {
@@ -123,14 +189,37 @@ export class UsersController {
         name: true,
         email: true,
         role: true,
+        isActive: true,
         avatarUrl: true,
         isOnline: true,
-      }
+      },
     });
 
+    // Disparo automático de convite via SMTP real do Tenant
+    let emailSent = false;
+    let emailError: string | undefined;
+    try {
+      const inviteRes = await this.emailsService.sendUserInvitationEmail({
+        tenantId,
+        recipientEmail: email,
+        recipientName: name,
+        role,
+        initialPassword: rawPass,
+        inviterName: req.user?.name || 'Administrador',
+      });
+      emailSent = inviteRes.sent;
+      emailError = inviteRes.error;
+    } catch (err: any) {
+      emailError = err.message;
+    }
+
     return {
-      message: 'Usuário cadastrado com sucesso!',
+      message: emailSent
+        ? 'Membro cadastrado com sucesso! E-mail de convite enviado via SMTP.'
+        : 'Membro cadastrado com sucesso! (Configure o Inbox de E-mails para envio automático de convites).',
       user: newUser,
+      emailSent,
+      emailError,
     };
   }
 
@@ -144,7 +233,7 @@ export class UsersController {
     }
 
     const targetUser = await this.prisma.user.findFirst({
-      where: { id, tenantId }
+      where: { id, tenantId },
     });
 
     if (!targetUser) {
@@ -158,4 +247,3 @@ export class UsersController {
     };
   }
 }
-
