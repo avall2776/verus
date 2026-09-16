@@ -801,7 +801,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação & Deploy**:
   * `npx tsc --noEmit` e `npm run build` validados com **código 0** em backend e frontend. Commit sincronizado no GitHub `main` e aceito pelo Vercel.
 
-### 🟢 FASE 51: ANALYTICS AVANÇADO (PRO) - MAPEAMENTO DE CANAIS, FUNIL DE CONVERSÃO & GARGALOS (16/09/2026 - Manhã) [EM ANDAMENTO]
+### 🟢 FASE 51: ANALYTICS AVANÇADO (PRO) - MAPEAMENTO DE CANAIS, FUNIL DE CONVERSÃO & GARGALOS (16/09/2026 - Manhã) [EM ANDAMENTO - ATRIBUÍDO À IDE 1]
 - [ ] **Mapeamento de Canais de Aquisição (`GET /analytics/channels`)**:
   * Mapear origens de leads no banco (WhatsApp, Orgânico, Tráfego Pago/Meta Ads, Indicação, Google Ads).
   * Cálculo de volume de leads, deals, propostas geradas, contratos fechados, receita faturada e ticket médio por canal.
@@ -819,6 +819,24 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [ ] **Homologação e Validação Final**:
   * Builds de Backend e Frontend validados com código 0.
   * Teste operacional e aprovação final com OK explícito do usuário.
+
+### 🎯 FASE 52: METAS COMERCIAIS, RUN RATE & LEADERBOARD GAMIFICADO (16/09/2026 - Manhã) [EM ANDAMENTO - AUTORIDADE EXCLUSIVA IDE 2]
+> **Aviso de Coordenação entre Ambientes**: Esta fase está sendo desenvolvida com exclusividade pela **IDE 2**. A **IDE 1** não deve alterar ou sobrescrever os arquivos de Metas Comerciais (`/dashboard/goals`, `backend/src/modules/goals`, `frontend/src/components/goals`).
+
+- [ ] **Backend NestJS & Prisma (`GoalsModule`) [IDE 2]**:
+  * Implementação de `GET /goals/summary`: cálculo matemático de Run Rate `(receita atual / dias decorridos) * dias totais`, velocidade diária (*daily pace*), projeção de fechamento e status de saúde da meta.
+  * Implementação de `PUT /goals/:id`: edição atômica de metas (título, targetValue, período, responsável) com validação via `UpdateGoalDto`.
+  * Implementação de `DELETE /goals/:id`: exclusão segura com isolamento estrito por tenant.
+  * Implementação de `GET /goals/leaderboard/:userId/details`: drilldown com histórico de propostas aceitas e negócios ganhos pelo consultor.
+- [ ] **Interface & Pódio Gamificado (`/dashboard/goals`) [IDE 2 Frontend]**:
+  * Eliminação completa de mocks estáticos (`INITIAL_GOALS`, `INITIAL_RANKING`), conectando a página 100% aos endpoints reais.
+  * Cartão Executivo de Run Rate: barra de progresso viva, status inteligente (*No Ritmo*, *Atenção*, *Superada*), simulador interativo de projeção e contagem regressiva para fechamento do mês.
+  * Pódio Visual dos Top 3 Vendedores (🥇 Ouro, 🥈 Prata, 🥉 Bronze) com coroas, badges de performance, taxa de conversão individual e ticket médio.
+  * Modal de Drilldown do Vendedor (`SellerDetailModal.tsx`): histórico detalhado de vendas disparado ao clicar no vendedor no ranking.
+  * Conexão do `NewGoalModal.tsx` e criação do `EditGoalModal.tsx` integrados à API com feedbacks visuais e Empty States padrão Dark Glassmorphism.
+- [ ] **Homologação e Validação Final [IDE 2]**:
+  * Builds de Frontend e Backend aprovados com código 0.
+  * Tarefa mantida como `[ ]` / `[EM ANDAMENTO]` até teste e aprovação formal do usuário com OK explícito.
 
 ---
 
@@ -944,8 +962,63 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
        - Conectar a caixa de entrada (`/email-inbox`) com modal de composição rápida e integração nativa para anexar links de propostas e contratos.
   - **Validação de Código**: Backend e Frontend checados e prontos para reinício imediato amanhã com código 0.
 - **[16/09/2026 - 08:15]** 🟢 **Início da jornada de desenvolvimento de quarta-feira (Foco: Analytics Avançado PRO - Mapeamento de Canais, Funil de Conversão, Gargalos e Integração Real)**:
-  - **Status**: ⏳ Em Andamento (Fase 51).
+  - **Status**: ⏳ Em Andamento (Fase 51 - IDE 1).
   - **Diretriz do Usuário**: Elevar a ferramenta ao nível das melhores plataformas SaaS do mercado, integrando 100% backend NestJS e frontend Next.js 14, com design system Dark Modern, modais funcionais e métricas técnicas reais. Tarefa em execução com código 0 e homologação do usuário.
+
+### 🟢 FASE 51: ANALYTICS AVANÇADO (PRO) - MAPEAMENTO DE CANAIS, FUNIL DE CONVERSÃO & GARGALOS (16/09/2026 - IDE 1)
+- [x] **Mapeamento de Canais de Aquisição (`GET /analytics/channels`)**:
+  - Mapear origens de leads no banco (WhatsApp, Meta Ads, Google Ads, Indicação, Orgânico).
+  - Cálculo de volume de leads, deals, propostas geradas, contratos fechados, receita faturada e ticket médio por canal.
+- [x] **Refinamento do Funil de Conversão & Drop-off (`GET /analytics/funnel`)**:
+  - Etapas completas: Leads Captados -> Em Atendimento -> Oportunidade / Deal -> Proposta Enviada -> Contrato Assinado.
+  - Cálculo de conversão global, conversão passo-a-passo e taxa de abandono (drop-off) percentual.
+- [x] **Diagnóstico de Gargalos Operacionais & SLAs (`GET /analytics/bottlenecks`)**:
+  - Métricas reais de Tempo de Primeira Resposta (FRT) e Tempo Médio de Atendimento (TMA) por departamento.
+  - Distribuição horária de pico e identificação de gargalos críticos de sobrecarga com sugestões acionáveis da IA.
+- [x] **Interface Frontend Enterprise (`/dashboard/analytics`)**:
+  - Design system oficial VERSUS (Dark Glassmorphism, paleta `#0B1224`, `#0055FF`, `#00D2FF`, contrastes acessíveis).
+  - Seletor reativo de períodos (`7d`, `30d`, `90d`) conectado aos endpoints reais via Axios.
+  - Modais de detalhamento técnico (`ChannelDetailModal.tsx` e `BottleneckAuditModal.tsx`).
+  - Exportação funcional de relatório completo em CSV (UTF-8 com BOM para Excel) e botão de atualização em tempo real.
+- [x] **Homologação, Deploy na Nuvem e Aprovação**:
+  - Builds de Backend e Frontend validados com código 0.
+  - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine` online) e Vercel (36 rotas compiladas).
+  - **Homologado e aprovado com OK explícito do usuário**.
+
+- **[16/09/2026 - 08:44]** 💎 **Fase 51 Concluída com Sucesso (Analytics Avançado PRO)**:
+  - Todas as ferramentas, endpoints e modais operando com 100% de estabilidade na nuvem e validados pelo usuário.
+- **[16/09/2026 - 08:38]** 🟢 **Início de Turno & Atribuição de Metas Comerciais (IDE 2)**:
+  - **Status**: ⏳ Em Andamento (Fase 52).
+  - **Divisão de Trabalho**: A **IDE 2** assume com autoridade exclusiva o desenvolvimento de ponta a ponta da **Fase 52 (Metas Comerciais, Motor de Run Rate & Leaderboard Gamificado)**, enquanto a **IDE 1** atua na **Fase 51 (Analytics Avançado PRO)**.
+  - **Diretriz**: Padrão Top SaaS mundial, zero mocks, interatividade total com modais, código 0 e finalização estritamente condicionada ao OK explícito do usuário.
+
+- **[16/09/2026 - 08:48]** 🟢 **Início de Turno & Atribuição de Inbox de E-mail Unificado (IDE 1)**:
+  - **Status**: ⏳ Em Andamento (Fase 53 - Autoridade Exclusiva IDE 1).
+  - **Divisão de Trabalho**: A **IDE 1** assume com autoridade exclusiva o desenvolvimento de ponta a ponta da **Fase 53 (Inbox de E-mail Unificado `/email-inbox`)**. A **IDE 2** não deve alterar este módulo para evitar conflitos de desenvolvimento.
+  - **Diretriz do Usuário**: Padrão de ponta de mercado (Front / Superhuman / HubSpot), zero mocks, 100% conectado e operacional com PostgreSQL/Supabase via Prisma, módulo NestJS completo (`GET /emails`, `POST /emails/send`, pastas, estrelas, filtros), composer integrado a links de propostas e contratos, validação com código 0 e homologação estritamente condicionada ao OK explícito do usuário.
+
+### 🟢 FASE 53: INBOX DE E-MAIL UNIFICADO ENTERPRISE (/email-inbox - IDE 1)
+> **Aviso de Exclusividade**: Fase em desenvolvimento exclusivo pela **IDE 1**. Não alterar via IDE 2.
+- [ ] **Modelagem no Prisma & Banco de Dados (Supabase)**:
+  - Modelo `EmailMessage` com suporte a pastas (`INBOX`, `SENT`, `DRAFT`, `TRASH`, `ARCHIVE`), estrelas (`isStarred`), lido/não-lido (`isRead`), remetente, destinatários, assunto, corpo (HTML/Text), anexos e vínculos com `Contact`/`Deal`.
+  - Sincronização via `npx prisma db push` e geração do Prisma Client (`npx prisma generate`).
+- [ ] **Módulo Backend NestJS (`EmailsModule`)**:
+  - `EmailsService` & `EmailsController` com endpoints protegidos por JWT e multitenancy isolado (`@CurrentTenant`):
+    - `GET /emails`: Listagem paginada por pasta (`folder`), busca por texto, filtro de favoritos e não lidos.
+    - `GET /emails/:id`: Consulta de e-mail detalhado com marcação automática de lido.
+    - `POST /emails/send`: Envio e criação de e-mail corporativo, com gravação no banco e histórico.
+    - `PATCH /emails/:id/star`: Alternar status de favorito/estrela.
+    - `PATCH /emails/:id/folder`: Mover e-mail entre pastas (lixeira, arquivo, caixa de entrada).
+    - `DELETE /emails/:id`: Exclusão permanente.
+- [ ] **Interface Frontend Enterprise Next.js 14 (`/email-inbox`)**:
+  - Layout 3-pane padrão Enterprise (Pastas à esquerda, Lista no centro, Leitor/Thread à direita).
+  - Composer Modal de alto nível (`EmailComposerModal.tsx`) com envio, anexação rápida de propostas comerciais (`/p/[code]`) e contratos digitais (`/c/[code]`).
+  - Filtros rápidos (Não Lidas, Com Anexos, Estrelas) e Empty States elegantes.
+  - Zero mocks: consumo estrito da API real `/emails`.
+- [ ] **Homologação, Deploy na Nuvem e Validação**:
+  - Builds Backend e Frontend aprovados com código 0.
+  - Deploy sincronizado na VPS e Vercel.
+  - Finalização condicionada ao OK explícito do usuário.
 
 ---
 
