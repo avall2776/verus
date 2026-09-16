@@ -1026,42 +1026,40 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - Todas as ferramentas, endpoints e modais operando com 100% de estabilidade na nuvem e validados pelo usuário.
 
 - **[16/09/2026 - 08:48]** ⚡ **[IDE 1] Ativação de Tarefa & Início de Desenvolvimento: Fase 53 (Inbox de E-mail Unificado Enterprise)**:
-  - **Status**: ⏳ Em Andamento (Fase 53 - Autoridade Exclusiva IDE 1).
-  - **Divisão de Trabalho**: A **IDE 1** assume com autoridade exclusiva o desenvolvimento de ponta a ponta da **Fase 53 (Inbox de E-mail Unificado `/email-inbox`)**. A **IDE 2** não deve alterar este módulo para evitar conflitos de desenvolvimento.
-  - **Diretriz do Usuário**: Padrão de ponta de mercado (Front / Superhuman / HubSpot), zero mocks, 100% conectado e operacional com PostgreSQL/Supabase via Prisma, módulo NestJS completo (`GET /emails`, `POST /emails/send`, pastas, estrelas, filtros), composer integrado a links de propostas e contratos, validação com código 0 e homologação estritamente condicionada ao OK explícito do usuário.
+  - **Status**: ✅ Concluída, Homologada e Aprovada pelo Usuário.
+  - **Divisão de Trabalho**: A **IDE 1** concluiu com autoridade exclusiva o desenvolvimento de ponta a ponta da **Fase 53 (Inbox de E-mail Unificado `/email-inbox`)**.
+  - **Diretriz do Usuário**: Padrão de ponta de mercado (Front / Superhuman / HubSpot), zero mocks, 100% conectado e operacional com PostgreSQL/Supabase via Prisma, módulo NestJS completo (`GET /emails`, `POST /emails/send`, pastas, estrelas, filtros), composer integrado a links de propostas e contratos, sincronização bidirecional de exclusão em tempo real com Gmail/IMAP, guarda de idempotência no envio, validação com código 0 e homologação aprovada com OK explícito do usuário.
 
-### 🟢 FASE 53: INBOX DE E-MAIL UNIFICADO ENTERPRISE (/email-inbox - IDE 1)
-> **Aviso de Exclusividade**: Fase em desenvolvimento exclusivo pela **IDE 1**. Não alterar via IDE 2.
-- [ ] **Modelagem no Prisma & Banco de Dados (Supabase)**:
+### 🟢 FASE 53: INBOX DE E-MAIL UNIFICADO ENTERPRISE (/email-inbox - IDE 1) [CONCLUÍDA]
+> **Status**: ✅ Concluída, Homologada e Aprovada pelo Usuário.
+- [x] **Modelagem no Prisma & Banco de Dados (Supabase)**:
   - Modelo `EmailMessage` com suporte a pastas (`INBOX`, `SENT`, `DRAFT`, `TRASH`, `ARCHIVE`), estrelas (`isStarred`), lido/não-lido (`isRead`), remetente, destinatários, assunto, corpo (HTML/Text), anexos e vínculos com `Contact`/`Deal`.
   - Sincronização via `npx prisma db push` e geração do Prisma Client (`npx prisma generate`).
-- [ ] **Módulo Backend NestJS (`EmailsModule`) & Transporte SMTP Real**:
+- [x] **Módulo Backend NestJS (`EmailsModule`) & Transporte SMTP Real**:
   - `EmailsService` & `EmailsController` com endpoints protegidos por JWT e multitenancy isolado (`@CurrentTenant`):
-    - `GET /emails`: Listagem paginada por pasta (`folder`), busca por texto, filtro de favoritos e não lidos.
+    - `GET /emails`: Listagem paginada por pasta (`folder`), busca por texto, filtro de favoritos e não lidos com deduplicação por chave única.
     - `GET /emails/:id`: Consulta de e-mail detalhado com marcação automática de lido.
     - `GET /emails/transport/status`: Diagnóstico e verificação de conectividade com o servidor SMTP/Resend em tempo real.
-    - `POST /emails/send`: Envio real de e-mails corporativos via Nodemailer (com suporte a SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, RESEND_API_KEY), logs detalhados de diagnóstico (`console.error`), gravação no Supabase (`folder: 'SENT'`) e tratamento de exceções com feedback claro ao usuário.
+    - `POST /emails/send`: Envio real de e-mails corporativos via Nodemailer com suporte dinâmico a contas individuais salvas no banco (Gmail / Hostinger / Resend / SMTP), guarda de idempotência no backend (janela de 15s contra duplicidades), rollback automático de registros fantasma em falhas de envio e captura de RFC Message-ID.
     - `PATCH /emails/:id/star`: Alternar status de favorito/estrela.
-    - `PATCH /emails/:id/folder`: Mover e-mail entre pastas (lixeira, arquivo, caixa de entrada).
-    - `DELETE /emails/:id`: Exclusão permanente.
-- [ ] **Interface Frontend Enterprise Next.js 14 (`/email-inbox`)**:
+    - `PATCH /emails/:id/folder`: Mover e-mail entre pastas com sincronização IMAP em tempo real (`syncActionToImap` move para `[Gmail]/Lixeira` ou restaura para `INBOX`).
+    - `DELETE /emails/:id`: Exclusão permanente do PostgreSQL e expurgo definitivo do servidor IMAP via `messageDelete`.
+- [x] **Interface Frontend Enterprise Next.js 14 (`/email-inbox`)**:
   - Layout 3-pane padrão Enterprise (Pastas à esquerda, Lista no centro, Leitor/Thread à direita).
+  - Trava síncrona de submissão via `useRef` contra cliques duplos no envio e na resposta rápida inline.
   - Composer Modal de alto nível (`EmailComposerModal.tsx`) com envio, anexação rápida de propostas comerciais (`/p/[code]`) e contratos digitais (`/c/[code]`).
-  - Badge dinâmico de status do transporte SMTP na barra superior (Conectado / Configurado / Integrado) com tooltip de diagnóstico.
-  - Filtros rápidos (Não Lidas, Com Anexos, Estrelas) e Empty States elegantes.
+  - Badge dinâmico de status do transporte SMTP na barra superior (`• E-MAIL CONECTADO`) traduzido e limpo.
+  - Design corporativo monocromático rigoroso (azul escuro `#0B1224`, cinza `#070D1B`, `border-slate-800` e tipografia branca/slate), sem gradientes coloridos pesados.
+  - Ações dinâmicas de gerenciamento na interface: mover para lixeira na lista e no leitor, restaurar para a entrada e excluir definitivamente.
   - Zero mocks: consumo estrito da API real `/emails`.
-- [ ] **Homologação, Deploy na Nuvem e Validação**:
+- [x] **Homologação, Deploy na Nuvem e Validação**:
   - Builds Backend e Frontend aprovados com código 0 (`nest build` e `next build`).
-  - Deploy sincronizado na VPS Hostinger (`versus-engine` online via PM2) e Vercel.
-  - Template de variáveis SMTP configurado em `/root/verus/backend/.env` na VPS e em `.env.example`.
-  - Finalização condicionada ao OK explícito do usuário após teste de disparo com credenciais ativas.
-  - **[16/09/2026 - 11:45]** 🎯 **Refinamento Visual e Técnico do Inbox de E-mails Concluído**:
-    - **Badge Superior**: Corrigido para `• E-MAIL CONECTADO` em português limpo, eliminando o erro de variável `(undefined)`.
-    - **Design Monocromático Corporativo**: Removidos todos os gradientes coloridos pesados (cyan, rosa, roxo e âmbar) em `/email-inbox`, `EmailSettingsTab.tsx` e `EmailComposerModal.tsx`. Aplicada estritamente a identidade visual padrão do VERSUS (azul escuro `bg-blue-600`, ardósia `bg-slate-900`, `border-slate-800` e tipografia branca/slate).
-    - **Validação & Deploy**: `npx tsc --noEmit` e `npm run build` executados com código 0 de erro. Deploy ativo e sincronizado na VPS Hostinger (PM2 `versus-engine` PID 452377) e na Vercel via commit `8c0c380`.
-  - [ ] **Refinamento Técnico Agendado (Período da Tarde)**: Investigar e corrigir duplicação visual de e-mails na listagem/pasta de e-mails enviados (`SENT`).
-  - **[16/09/2026 - 11:56]** ⏸️ **Pausa para Almoço / Ponto Batido**: Período matutino concluído com êxito total. Inbox de e-mails refinado, design corporativo monocromático 100% aplicado, compilações com código 0, deploy ativo na VPS (PM2 `versus-engine`) e Vercel, e demandas da tarde registradas no checklist (Refinamento da duplicação no Inbox e Fase 55 - Central de Suporte Enterprise estilo Lero). Retorno previsto para o início da tarde.
-  - **[16/09/2026 - 13:25]** ▶️ **Retorno do Almoço / Ponto Batido**: Início oficial das atividades do período da tarde. Ponto registrado com sucesso. Prioridades vespertinas: 1) Refinamento técnico contra duplicação de e-mails enviados no Inbox; 2) Início do desenvolvimento da Fase 55 (Central de Suporte Enterprise estilo Lero).
+  - Deploy sincronizado na VPS Hostinger (`versus-engine` online via PM2 PID 453767) e Vercel.
+  - Sincronização em tempo real de exclusão com Gmail IMAP testada e homologada (código 0).
+  - **[16/09/2026 - 11:45]** 🎯 **Refinamento Visual e Técnico do Inbox de E-mails Concluído**: Badge corrigido para `• E-MAIL CONECTADO`, remoção total de gradientes e aplicação do design corporativo monocromático.
+  - **[16/09/2026 - 11:56]** ⏸️ **Pausa para Almoço / Ponto Batido**: Período matutino concluído com êxito total.
+  - **[16/09/2026 - 13:25]** ▶️ **Retorno do Almoço / Ponto Batido**: Atividades da tarde iniciadas.
+  - **[16/09/2026 - 14:50]** 🎯 **Homologação Oficial & Aprovação Concluída**: Refinamento de sincronização de exclusão IMAP com Gmail e eliminação de duplicidades testado e aprovado com OK explícito do usuário. Fase 53 100% concluída.
 
 - **[16/09/2026 - 11:23]** ⚡ **[IDE 2] Ativação de Tarefa & Início de Desenvolvimento: Fase 54 (Correção do Perfil no Menu Lateral & Padronização Monocromática da Configuração de E-mail)**:
   - **Status**: ✅ Concluída e Aprovada.
