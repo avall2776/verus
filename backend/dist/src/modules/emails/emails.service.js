@@ -528,11 +528,154 @@ let EmailsService = EmailsService_1 = class EmailsService {
         }
         return email;
     }
+    async syncActionToImap(effectiveTenantId, email, action) {
+        try {
+            const tenant = await this.prisma.tenant.findUnique({
+                where: { id: effectiveTenantId },
+                select: { emailSettings: true },
+            });
+            const s = (tenant?.emailSettings || {});
+            const user = (s.smtpUser || process.env.SMTP_USER || '').trim();
+            const pass = (s.smtpPass || process.env.SMTP_PASS || '').replace(/\s+/g, '');
+            const provider = s.provider || 'gmail';
+            if (!user || !pass) {
+                this.logger.debug(`[IMAP_SYNC_ACTION] Credenciais não disponíveis para tenant ${effectiveTenantId}. Ação ${action} mantida apenas no banco.`);
+                return;
+            }
+            let host = 'imap.gmail.com';
+            let port = 993;
+            let secure = true;
+            if (provider === 'hostinger') {
+                host = 'imap.hostinger.com';
+                port = 993;
+            }
+            else if (provider === 'smtp') {
+                host = s.imapHost || (s.smtpHost ? s.smtpHost.replace('smtp.', 'imap.') : 'imap.gmail.com');
+                port = s.imapPort ? Number(s.imapPort) : 993;
+            }
+            const { ImapFlow } = await Promise.resolve().then(() => require('imapflow'));
+            const client = new ImapFlow({
+                host,
+                port,
+                secure,
+                auth: { user, pass },
+                logger: false,
+            });
+            await client.connect();
+            try {
+                const mailboxes = await client.list();
+                const trashBox = mailboxes.find(m => m.specialUse === '\\Trash')?.path || '[Gmail]/Lixeira';
+                const sentBox = mailboxes.find(m => m.specialUse === '\\Sent')?.path || '[Gmail]/E-mails enviados';
+                const archiveBox = mailboxes.find(m => m.specialUse === '\\All')?.path || '[Gmail]/Todos os e-mails';
+                const foldersToSearch = [];
+                if (action === 'PERMANENT_DELETE') {
+                    foldersToSearch.push(trashBox, 'INBOX', sentBox);
+                }
+                else if (email.folder === 'SENT') {
+                    foldersToSearch.push(sentBox, 'INBOX');
+                }
+                else if (email.folder === 'TRASH') {
+                    foldersToSearch.push(trashBox, 'INBOX');
+                }
+                else {
+                    foldersToSearch.push('INBOX', trashBox, sentBox);
+                }
+                let targetUid = null;
+                let foundFolder = null;
+                for (const folderPath of foldersToSearch) {
+                    if (!folderPath)
+                        continue;
+                    try {
+                        const lock = await client.getMailboxLock(folderPath);
+                        try {
+                            if (email.threadId && email.threadId.includes('@')) {
+                                const cleanId = email.threadId.trim();
+                                const uids = await client.search({ header: { 'message-id': cleanId } }, { uid: true });
+                                if (uids && uids.length > 0) {
+                                    targetUid = uids[0];
+                                    foundFolder = folderPath;
+                                    break;
+                                }
+                            }
+                            if (!targetUid && email.subject && email.subject.trim() !== '') {
+                                const uids = await client.search({ subject: email.subject.trim() }, { uid: true });
+                                if (uids && uids.length > 0) {
+                                    targetUid = uids[0];
+                                    foundFolder = folderPath;
+                                    break;
+                                }
+                            }
+                        }
+                        finally {
+                            lock.release();
+                        }
+                    }
+                    catch (folderErr) {
+                        this.logger.debug(`[IMAP_SYNC_ACTION] Não foi possível buscar na pasta ${folderPath}: ${folderErr?.message}`);
+                    }
+                }
+                if (targetUid && foundFolder) {
+                    const lock = await client.getMailboxLock(foundFolder);
+                    try {
+                        if (action === 'TRASH') {
+                            if (foundFolder !== trashBox) {
+                                await client.messageMove(targetUid, trashBox, { uid: true });
+                                this.logger.log(`[IMAP_SYNC_ACTION] E-mail ${email.id} (UID ${targetUid}) movido com sucesso para ${trashBox}`);
+                            }
+                        }
+                        else if (action === 'PERMANENT_DELETE') {
+                            await client.messageDelete(targetUid, { uid: true });
+                            this.logger.log(`[IMAP_SYNC_ACTION] E-mail ${email.id} (UID ${targetUid}) excluído permanentemente do servidor IMAP`);
+                        }
+                        else if (action === 'RESTORE') {
+                            if (foundFolder !== 'INBOX') {
+                                await client.messageMove(targetUid, 'INBOX', { uid: true });
+                                this.logger.log(`[IMAP_SYNC_ACTION] E-mail ${email.id} (UID ${targetUid}) restaurado para INBOX`);
+                            }
+                        }
+                        else if (action === 'ARCHIVE') {
+                            if (archiveBox && foundFolder !== archiveBox) {
+                                await client.messageMove(targetUid, archiveBox, { uid: true });
+                                this.logger.log(`[IMAP_SYNC_ACTION] E-mail ${email.id} (UID ${targetUid}) arquivado para ${archiveBox}`);
+                            }
+                        }
+                    }
+                    finally {
+                        lock.release();
+                    }
+                }
+                else {
+                    this.logger.warn(`[IMAP_SYNC_ACTION] Mensagem não encontrada no IMAP para sincronizar ação ${action}: ${email.subject} (${email.threadId})`);
+                }
+            }
+            finally {
+                await client.logout().catch(() => { });
+            }
+        }
+        catch (err) {
+            this.logger.warn(`[IMAP_SYNC_ACTION_WARN] Falha ao sincronizar ação ${action} com o servidor IMAP: ${err?.message}`);
+        }
+    }
     async sendEmail(tenantId, dto) {
         const effectiveTenantId = await this.getEffectiveTenantId(tenantId);
         const preview = dto.bodyText.slice(0, 140);
         const bodyHtml = dto.bodyHtml || `<p>${dto.bodyText.replace(/\n/g, '<br/>')}</p>`;
         const hasAttachments = Boolean(dto.attachments && Array.isArray(dto.attachments) && dto.attachments.length > 0);
+        const recentCutoff = new Date(Date.now() - 15000);
+        const existingRecent = await this.prisma.emailMessage.findFirst({
+            where: {
+                tenantId: effectiveTenantId,
+                recipientEmail: dto.recipientEmail,
+                subject: dto.subject,
+                folder: (dto.folder || 'SENT').toUpperCase(),
+                createdAt: { gte: recentCutoff },
+            },
+            include: { contact: true, deal: true },
+        });
+        if (existingRecent) {
+            this.logger.warn(`[EMAIL_DEDUPLICATION_GUARD] Submissão duplicada prevenida para ${dto.recipientEmail} (${dto.subject})`);
+            return existingRecent;
+        }
         const email = await this.prisma.emailMessage.create({
             data: {
                 tenantId: effectiveTenantId,
@@ -565,13 +708,14 @@ let EmailsService = EmailsService_1 = class EmailsService {
         });
         const { transporter, fromAddress, source } = await this.getTransporter(effectiveTenantId);
         if (!transporter) {
+            await this.prisma.emailMessage.delete({ where: { id: email.id } }).catch(() => { });
             console.error('[EMAIL_SMTP_CONFIG_ERROR] Falha ao disparar e-mail externo: Nenhuma credencial de e-mail conectada para o cliente.', {
                 destinatario: dto.recipientEmail,
                 assunto: dto.subject,
                 tenantId: effectiveTenantId,
                 source,
             });
-            throw new common_1.BadRequestException(`E-mail registrado no banco VERSUS, mas NÃO foi disparado externamente: Nenhuma conta de e-mail conectada para este cliente. Acesse a aba "Configurações de E-mail" para conectar seu Gmail ou servidor SMTP.`);
+            throw new common_1.BadRequestException(`Nenhuma conta de e-mail conectada para este cliente. Acesse a aba "Configurações de E-mail" para conectar seu Gmail ou servidor SMTP.`);
         }
         try {
             const finalFromAddress = fromAddress || (dto.senderEmail ? `"${dto.senderName || 'VERSUS'}" <${dto.senderEmail}>` : 'VERSUS <comercial@versus.com.br>');
@@ -607,9 +751,16 @@ let EmailsService = EmailsService_1 = class EmailsService {
                 response: info.response,
                 destinatario: dto.recipientEmail,
             });
+            if (info?.messageId && (!email.threadId || !email.threadId.includes('@'))) {
+                await this.prisma.emailMessage.update({
+                    where: { id: email.id },
+                    data: { threadId: info.messageId },
+                }).catch(() => { });
+            }
             return email;
         }
         catch (error) {
+            await this.prisma.emailMessage.delete({ where: { id: email.id } }).catch(() => { });
             console.error('[EMAIL_DISPATCH_EXTERNAL_ERROR] Exceção crítica ao disparar e-mail externo via SMTP:', {
                 destinatario: dto.recipientEmail,
                 assunto: dto.subject,
@@ -620,7 +771,7 @@ let EmailsService = EmailsService_1 = class EmailsService {
                 responseCode: error?.responseCode,
                 stack: error?.stack,
             });
-            throw new common_1.BadRequestException(`Falha na entrega do e-mail externo pelo servidor SMTP: ${error?.message || 'Erro de conexão/autenticação'}. O e-mail foi registrado no banco, mas não chegou à caixa de entrada do destinatário.`);
+            throw new common_1.BadRequestException(`Falha na entrega do e-mail externo pelo servidor SMTP: ${error?.message || 'Erro de conexão/autenticação'}. O envio foi cancelado para não gerar duplicatas.`);
         }
     }
     async updateEmail(tenantId, id, dto) {
@@ -664,10 +815,21 @@ let EmailsService = EmailsService_1 = class EmailsService {
         if (!email) {
             throw new common_1.NotFoundException('E-mail não encontrado.');
         }
-        return this.prisma.emailMessage.update({
+        const targetFolder = folder.toUpperCase();
+        const updated = await this.prisma.emailMessage.update({
             where: { id },
-            data: { folder: folder.toUpperCase() },
+            data: { folder: targetFolder },
         });
+        if (targetFolder === 'TRASH') {
+            this.syncActionToImap(effectiveTenantId, email, 'TRASH').catch(() => { });
+        }
+        else if (targetFolder === 'INBOX') {
+            this.syncActionToImap(effectiveTenantId, email, 'RESTORE').catch(() => { });
+        }
+        else if (targetFolder === 'ARCHIVE') {
+            this.syncActionToImap(effectiveTenantId, email, 'ARCHIVE').catch(() => { });
+        }
+        return updated;
     }
     async deleteEmail(tenantId, id) {
         const effectiveTenantId = await this.getEffectiveTenantId(tenantId);
@@ -678,8 +840,10 @@ let EmailsService = EmailsService_1 = class EmailsService {
             throw new common_1.NotFoundException('E-mail não encontrado.');
         }
         if (email.folder === 'TRASH') {
+            this.syncActionToImap(effectiveTenantId, email, 'PERMANENT_DELETE').catch(() => { });
             return this.prisma.emailMessage.delete({ where: { id } });
         }
+        this.syncActionToImap(effectiveTenantId, email, 'TRASH').catch(() => { });
         return this.prisma.emailMessage.update({
             where: { id },
             data: { folder: 'TRASH' },

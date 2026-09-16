@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { 
   Mail, Inbox, Send, Archive, Trash2, Star, 
   Search, RefreshCw, Plus, Paperclip, CheckCircle2, Clock,
   ShieldCheck, FileText, ChevronRight, Reply, Forward,
   Filter, ExternalLink, Download, ArrowRight, Sparkles, Eye,
-  Building2, User as UserIcon, AlertCircle, Settings
+  Building2, User as UserIcon, AlertCircle, Settings, Undo2
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
@@ -56,6 +56,7 @@ export default function EmailInboxPage() {
   // Resposta rápida inline
   const [quickReplyText, setQuickReplyText] = useState("");
   const [sendingQuickReply, setSendingQuickReply] = useState(false);
+  const isSendingQuickReplyRef = useRef(false);
 
   // Carregar status do SMTP
   const fetchTransportStatus = useCallback(async () => {
@@ -77,7 +78,7 @@ export default function EmailInboxPage() {
     }
   }, []);
 
-  // Carregar lista de e-mails
+  // Carregar lista de e-mails com garantia de unicidade
   const fetchEmails = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true);
     else setIsRefreshing(true);
@@ -92,14 +93,23 @@ export default function EmailInboxPage() {
 
       const res = await api.get("/emails", { params });
       const items: EmailItem[] = res.data?.emails || [];
-      setEmails(items);
+      
+      // Deduplicação estrita de IDs para impedir qualquer duplicata visual
+      const uniqueMap = new Map<string, EmailItem>();
+      items.forEach((item) => {
+        if (item && item.id) {
+          uniqueMap.set(item.id, item);
+        }
+      });
+      const uniqueItems = Array.from(uniqueMap.values());
+      setEmails(uniqueItems);
 
       // Manter ou selecionar o primeiro e-mail se nada estiver selecionado
-      if (items.length > 0) {
+      if (uniqueItems.length > 0) {
         setSelectedEmail((prev) => {
-          if (!prev) return items[0];
-          const found = items.find((i) => i.id === prev.id);
-          return found || items[0];
+          if (!prev) return uniqueItems[0];
+          const found = uniqueItems.find((i) => i.id === prev.id);
+          return found || uniqueItems[0];
         });
       } else {
         setSelectedEmail(null);
@@ -164,16 +174,41 @@ export default function EmailInboxPage() {
     }
   };
 
-  // Mover para Pasta (Arquivo ou Lixeira)
-  const handleMoveFolder = async (emailId: string, targetFolder: string) => {
+  // Mover para Pasta (Arquivo, Lixeira ou Restaurar para Entrada)
+  const handleMoveFolder = async (emailId: string, targetFolder: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     try {
       await api.patch(`/emails/${emailId}/folder`, { folder: targetFolder });
-      toast.success(
-        targetFolder === "TRASH" ? "E-mail movido para a Lixeira." : "E-mail arquivado com sucesso."
-      );
+      const label = targetFolder === "TRASH" 
+        ? "E-mail movido para a Lixeira e sincronizado com o provedor." 
+        : targetFolder === "INBOX" 
+        ? "E-mail restaurado para a Caixa de Entrada." 
+        : "E-mail arquivado com sucesso.";
+      toast.success(label);
+      if (selectedEmail?.id === emailId) {
+        setSelectedEmail(null);
+      }
       fetchEmails(true);
     } catch (error) {
       toast.error("Erro ao mover e-mail.");
+    }
+  };
+
+  // Excluir Permanentemente (quando já estiver na lixeira)
+  const handlePermanentDelete = async (emailId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!window.confirm("Deseja realmente excluir este e-mail definitivamente? A mensagem será apagada permanentemente do VERSUS e do servidor do seu e-mail.")) {
+      return;
+    }
+    try {
+      await api.delete(`/emails/${emailId}`);
+      toast.success("E-mail excluído definitivamente!");
+      if (selectedEmail?.id === emailId) {
+        setSelectedEmail(null);
+      }
+      fetchEmails(true);
+    } catch (error) {
+      toast.error("Erro ao excluir e-mail definitivamente.");
     }
   };
 
@@ -191,10 +226,11 @@ export default function EmailInboxPage() {
     }
   };
 
-  // Enviar Resposta Rápida inline
+  // Enviar Resposta Rápida inline com trava anti-duplicação
   const handleSendQuickReply = async () => {
-    if (!selectedEmail || !quickReplyText.trim()) return;
+    if (!selectedEmail || !quickReplyText.trim() || isSendingQuickReplyRef.current || sendingQuickReply) return;
 
+    isSendingQuickReplyRef.current = true;
     setSendingQuickReply(true);
     try {
       const payload = {
@@ -217,6 +253,7 @@ export default function EmailInboxPage() {
       toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
     } finally {
       setSendingQuickReply(false);
+      isSendingQuickReplyRef.current = false;
     }
   };
 
@@ -567,9 +604,27 @@ export default function EmailInboxPage() {
                         <button
                           onClick={(e) => handleToggleStar(email.id, e)}
                           className="text-slate-500 hover:text-amber-400 transition-colors"
+                          title={email.isStarred ? "Remover estrela" : "Com estrela"}
                         >
                           <Star className={`w-3.5 h-3.5 ${email.isStarred ? "fill-amber-400 text-amber-400" : ""}`} />
                         </button>
+                        {activeFolder === "TRASH" ? (
+                          <button
+                            onClick={(e) => handlePermanentDelete(email.id, e)}
+                            className="text-slate-500 hover:text-red-400 transition-colors p-0.5 rounded"
+                            title="Excluir definitivamente"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => handleMoveFolder(email.id, "TRASH", e)}
+                            className="text-slate-500 hover:text-red-400 transition-colors p-0.5 rounded"
+                            title="Mover para lixeira"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                         <span className="text-[10px] font-mono text-slate-400">
                           {formatEmailDate(email.createdAt)}
                         </span>
@@ -633,28 +688,51 @@ export default function EmailInboxPage() {
                     >
                       <Star className={`w-4 h-4 ${selectedEmail.isStarred ? "fill-amber-400 text-amber-400" : ""}`} />
                     </button>
-                    <button
-                      onClick={() => handleMoveFolder(selectedEmail.id, "ARCHIVE")}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
-                      title="Arquivar"
-                    >
-                      <Archive className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleMoveFolder(selectedEmail.id, "TRASH")}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors"
-                      title="Mover para lixeira"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={handleOpenReplyComposer}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-400 text-xs font-semibold border border-slate-700 transition-colors"
-                      title="Responder com o editor completo"
-                    >
-                      <Reply className="w-3.5 h-3.5" />
-                      Responder
-                    </button>
+                    {activeFolder === "TRASH" ? (
+                      <>
+                        <button
+                          onClick={(e) => handleMoveFolder(selectedEmail.id, "INBOX", e)}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs font-semibold border border-slate-700 transition-colors"
+                          title="Restaurar para a Caixa de Entrada"
+                        >
+                          <Undo2 className="w-3.5 h-3.5" />
+                          Restaurar
+                        </button>
+                        <button
+                          onClick={(e) => handlePermanentDelete(selectedEmail.id, e)}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-400 text-xs font-semibold border border-red-800/60 transition-colors"
+                          title="Excluir definitivamente do VERSUS e do servidor de e-mail"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Excluir Definitivamente
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleMoveFolder(selectedEmail.id, "ARCHIVE")}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+                          title="Arquivar"
+                        >
+                          <Archive className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => handleMoveFolder(selectedEmail.id, "TRASH", e)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors"
+                          title="Mover para lixeira"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={handleOpenReplyComposer}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-400 text-xs font-semibold border border-slate-700 transition-colors"
+                          title="Responder com o editor completo"
+                        >
+                          <Reply className="w-3.5 h-3.5" />
+                          Responder
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 

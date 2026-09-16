@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   X, Send, Paperclip, FileText, CheckCircle2, 
   Sparkles, Loader2, ArrowRight, ShieldCheck, Link as LinkIcon, Trash2
@@ -29,6 +29,7 @@ export default function EmailComposerModal({
   replyToId,
 }: EmailComposerModalProps) {
   const [loading, setLoading] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [recipientEmail, setRecipientEmail] = useState(initialRecipient);
   const [recipientName, setRecipientName] = useState("");
   const [subject, setSubject] = useState(initialSubject);
@@ -99,6 +100,8 @@ export default function EmailComposerModal({
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isSubmittingRef.current || loading) return;
+
     if (!recipientEmail || !recipientEmail.includes("@")) {
       toast.error("Informe um e-mail de destinatário válido.");
       return;
@@ -114,6 +117,7 @@ export default function EmailComposerModal({
       return;
     }
 
+    isSubmittingRef.current = true;
     setLoading(true);
     try {
       const payload = {
@@ -137,6 +141,7 @@ export default function EmailComposerModal({
       toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
     } finally {
       setLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 

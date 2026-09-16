@@ -180,6 +180,7 @@ export declare class EmailsService {
         sentAt: Date | null;
         receivedAt: Date | null;
     }>;
+    private syncActionToImap;
     sendEmail(tenantId: string, dto: SendEmailDto): Promise<{
         contact: {
             id: string;
