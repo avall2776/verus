@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Building2, Save, Loader2, CreditCard, Mail, Phone, MapPin, FileText, CheckCircle2, XCircle } from "lucide-react";
+import { X, Building2, Save, Loader2, CreditCard, Mail, Phone, MapPin, FileText, CheckCircle2, XCircle, Sparkles } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
 
@@ -27,6 +27,17 @@ export default function EditCompanyModal({
   const [address, setAddress] = useState("");
   const [planId, setPlanId] = useState("");
   const [isActive, setIsActive] = useState(true);
+
+  // Estados de Plano Personalizado
+  const [isCustomPlan, setIsCustomPlan] = useState(false);
+  const [customPlanName, setCustomPlanName] = useState("");
+  const [customPlanPrice, setCustomPlanPrice] = useState("299.00");
+  const [customMaxUsers, setCustomMaxUsers] = useState("5");
+  const [customMaxAIMsgs, setCustomMaxAIMsgs] = useState("3000");
+  const [customHasCRM, setCustomHasCRM] = useState(true);
+  const [customHasWhatsApp, setCustomHasWhatsApp] = useState(true);
+  const [customHasInstagram, setCustomHasInstagram] = useState(false);
+  const [customHasAIAgent, setCustomHasAIAgent] = useState(true);
 
   const [plans, setPlans] = useState<any[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
@@ -85,6 +96,37 @@ export default function EditCompanyModal({
 
     setSaving(true);
     try {
+      let resolvedPlanId = planId;
+
+      // Se for plano personalizado, cria o plano primeiro
+      if (isCustomPlan) {
+        if (!customPlanName.trim()) {
+          toast.error("Informe o nome do plano personalizado.");
+          setSaving(false);
+          return;
+        }
+
+        const priceNumber = parseFloat(customPlanPrice);
+        if (isNaN(priceNumber) || priceNumber < 0) {
+          toast.error("Informe um valor mensal válido para o plano personalizado.");
+          setSaving(false);
+          return;
+        }
+
+        const planRes = await api.post("/tenants/plans", {
+          name: customPlanName.trim(),
+          price: priceNumber,
+          maxUsers: parseInt(customMaxUsers, 10) || 3,
+          maxAIMsgs: parseInt(customMaxAIMsgs, 10) || 0,
+          hasCRM: customHasCRM,
+          hasWhatsApp: customHasWhatsApp,
+          hasInstagram: customHasInstagram,
+          hasAIAgent: customHasAIAgent,
+        });
+
+        resolvedPlanId = planRes.data.id;
+      }
+
       const payload: any = {
         name: name.trim(),
         cnpj: cnpj.trim() || null,
@@ -94,8 +136,8 @@ export default function EditCompanyModal({
         isActive,
       };
 
-      if (planId) {
-        payload.planId = planId;
+      if (resolvedPlanId && resolvedPlanId !== "custom") {
+        payload.planId = resolvedPlanId;
       }
 
       const res = await api.patch(`/tenants/${tenantId}`, payload);
@@ -206,8 +248,15 @@ export default function EditCompanyModal({
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-300">Plano de Assinatura</label>
               <select
-                value={planId}
-                onChange={(e) => setPlanId(e.target.value)}
+                value={isCustomPlan ? "custom" : planId}
+                onChange={(e) => {
+                  if (e.target.value === "custom") {
+                    setIsCustomPlan(true);
+                  } else {
+                    setIsCustomPlan(false);
+                    setPlanId(e.target.value);
+                  }
+                }}
                 className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
               >
                 <option value="">Manter plano atual</option>
@@ -216,6 +265,7 @@ export default function EditCompanyModal({
                     {p.name} - R$ {Number(p.price).toFixed(2)}/mês
                   </option>
                 ))}
+                <option value="custom" className="text-blue-400 font-bold">+ Criar Plano Personalizado...</option>
               </select>
             </div>
 
@@ -232,6 +282,101 @@ export default function EditCompanyModal({
               </select>
             </div>
           </div>
+
+          {/* Sub-Card: Configuração de Plano Personalizado */}
+          {isCustomPlan && (
+            <div className="p-4 rounded-xl bg-[#070D1B] border border-blue-500/30 space-y-3 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <span className="text-xs font-bold text-blue-400 flex items-center gap-1.5">
+                  <Sparkles size={14} /> Novo Plano Personalizado
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium">Parâmetros exclusivos para este cliente</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 block">Nome do Plano *</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Custom Avall"
+                    value={customPlanName}
+                    onChange={(e) => setCustomPlanName(e.target.value)}
+                    className="w-full bg-[#0B1224] border border-slate-800 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                    required={isCustomPlan}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 block">Valor Mensal (R$) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Ex: 350.00"
+                    value={customPlanPrice}
+                    onChange={(e) => setCustomPlanPrice(e.target.value)}
+                    className="w-full bg-[#0B1224] border border-slate-800 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                    required={isCustomPlan}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 block">Limite de Usuários</label>
+                  <input
+                    type="number"
+                    placeholder="Ex: 5"
+                    value={customMaxUsers}
+                    onChange={(e) => setCustomMaxUsers(e.target.value)}
+                    className="w-full bg-[#0B1224] border border-slate-800 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 block mb-1.5">Módulos Inclusos:</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-[#0B1224] border border-slate-800 text-slate-300 hover:text-white">
+                    <input
+                      type="checkbox"
+                      checked={customHasCRM}
+                      onChange={(e) => setCustomHasCRM(e.target.checked)}
+                      className="rounded border-slate-700 text-blue-600 focus:ring-0"
+                    />
+                    <span className="text-[11px] font-medium">Funil CRM</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-[#0B1224] border border-slate-800 text-slate-300 hover:text-white">
+                    <input
+                      type="checkbox"
+                      checked={customHasWhatsApp}
+                      onChange={(e) => setCustomHasWhatsApp(e.target.checked)}
+                      className="rounded border-slate-700 text-blue-600 focus:ring-0"
+                    />
+                    <span className="text-[11px] font-medium">WhatsApp</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-[#0B1224] border border-slate-800 text-slate-300 hover:text-white">
+                    <input
+                      type="checkbox"
+                      checked={customHasAIAgent}
+                      onChange={(e) => setCustomHasAIAgent(e.target.checked)}
+                      className="rounded border-slate-700 text-blue-600 focus:ring-0"
+                    />
+                    <span className="text-[11px] font-medium">Agente IA</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-[#0B1224] border border-slate-800 text-slate-300 hover:text-white">
+                    <input
+                      type="checkbox"
+                      checked={customHasInstagram}
+                      onChange={(e) => setCustomHasInstagram(e.target.checked)}
+                      className="rounded border-slate-700 text-blue-600 focus:ring-0"
+                    />
+                    <span className="text-[11px] font-medium">Instagram</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Rodapé de Ações */}
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-800">
@@ -257,3 +402,4 @@ export default function EditCompanyModal({
     </div>
   );
 }
+

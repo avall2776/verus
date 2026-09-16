@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { QueryTenantsDto } from './dto/query-tenants.dto';
+import { CreateTenantDto } from './dto/create-tenant.dto';
+import { CreatePlanDto } from './dto/create-plan.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -423,10 +425,162 @@ export class TenantsService {
     });
   }
 
+  private async ensureStandardPlans() {
+    const defaultPlans = [
+      {
+        name: 'Básico',
+        price: 99.00,
+        hasCRM: false,
+        hasWhatsApp: true,
+        hasInstagram: false,
+        hasAIAgent: false,
+        maxUsers: 1,
+        maxAIMsgs: 0,
+      },
+      {
+        name: 'Pro',
+        price: 199.90,
+        hasCRM: true,
+        hasWhatsApp: true,
+        hasInstagram: false,
+        hasAIAgent: true,
+        maxUsers: 3,
+        maxAIMsgs: 2000,
+      },
+      {
+        name: 'Enterprise',
+        price: 499.00,
+        hasCRM: true,
+        hasWhatsApp: true,
+        hasInstagram: true,
+        hasAIAgent: true,
+        maxUsers: 10,
+        maxAIMsgs: 10000,
+      },
+    ];
+
+    for (const dp of defaultPlans) {
+      const exists = await this.prisma.plan.findFirst({
+        where: { name: { equals: dp.name, mode: 'insensitive' } },
+      });
+      if (!exists) {
+        await this.prisma.plan.create({ data: dp });
+      }
+    }
+  }
+
   async getPlans() {
+    await this.ensureStandardPlans();
     return this.prisma.plan.findMany({
-      orderBy: { price: 'desc' },
+      orderBy: { price: 'asc' },
     });
+  }
+
+  async createPlan(dto: CreatePlanDto) {
+    if (!dto.name || dto.price === undefined) {
+      throw new BadRequestException('Nome e preço do plano são obrigatórios.');
+    }
+    const created = await this.prisma.plan.create({
+      data: {
+        name: dto.name.trim(),
+        price: dto.price,
+        hasCRM: dto.hasCRM ?? false,
+        hasWhatsApp: dto.hasWhatsApp ?? true,
+        hasInstagram: dto.hasInstagram ?? false,
+        hasAIAgent: dto.hasAIAgent ?? false,
+        maxUsers: dto.maxUsers ?? 1,
+        maxAIMsgs: dto.maxAIMsgs ?? 0,
+      },
+    });
+    return created;
+  }
+
+  async updatePlan(id: string, dto: Partial<CreatePlanDto>) {
+    const plan = await this.prisma.plan.findUnique({ where: { id } });
+    if (!plan) throw new NotFoundException('Plano não encontrado.');
+
+    const data: any = {};
+    if (dto.name !== undefined) data.name = dto.name.trim();
+    if (dto.price !== undefined) data.price = dto.price;
+    if (dto.hasCRM !== undefined) data.hasCRM = dto.hasCRM;
+    if (dto.hasWhatsApp !== undefined) data.hasWhatsApp = dto.hasWhatsApp;
+    if (dto.hasInstagram !== undefined) data.hasInstagram = dto.hasInstagram;
+    if (dto.hasAIAgent !== undefined) data.hasAIAgent = dto.hasAIAgent;
+    if (dto.maxUsers !== undefined) data.maxUsers = dto.maxUsers;
+    if (dto.maxAIMsgs !== undefined) data.maxAIMsgs = dto.maxAIMsgs;
+
+    return this.prisma.plan.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async create(dto: CreateTenantDto) {
+    let planId = dto.planId;
+
+    if (!planId && dto.customPlan) {
+      const custom = await this.createPlan(dto.customPlan);
+      planId = custom.id;
+    }
+
+    if (!planId) {
+      await this.ensureStandardPlans();
+      const firstPlan = await this.prisma.plan.findFirst({ orderBy: { price: 'asc' } });
+      if (!firstPlan) throw new BadRequestException('Nenhum plano disponível.');
+      planId = firstPlan.id;
+    }
+
+    // Validar se e-mail de admin já existe
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.adminEmail.toLowerCase().trim() },
+    });
+    if (existingUser) {
+      throw new BadRequestException('Já existe um usuário cadastrado com este e-mail.');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.adminPassword, 10);
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const tenant = await tx.tenant.create({
+        data: {
+          name: dto.name.trim(),
+          cnpj: dto.cnpj?.trim() || null,
+          email: dto.email?.trim() || dto.adminEmail.toLowerCase().trim(),
+          phone: dto.phone?.trim() || null,
+          address: dto.address?.trim() || null,
+          planId,
+          isActive: true,
+        },
+        include: {
+          plan: true,
+        },
+      });
+
+      const user = await tx.user.create({
+        data: {
+          name: dto.adminName.trim(),
+          email: dto.adminEmail.toLowerCase().trim(),
+          password: hashedPassword,
+          role: 'ADMIN',
+          isActive: true,
+          isSuperAdmin: false,
+          tenantId: tenant.id,
+        },
+      });
+
+      return { tenant, user };
+    });
+
+    return {
+      message: `Empresa "${result.tenant.name}" e administrador "${result.user.name}" criados com sucesso!`,
+      tenant: result.tenant,
+      adminUser: {
+        id: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+        role: result.user.role,
+      },
+    };
   }
 
   async update(id: string, dto: any) {

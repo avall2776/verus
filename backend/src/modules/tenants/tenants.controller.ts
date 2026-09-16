@@ -17,6 +17,8 @@ import { QueryTenantsDto } from './dto/query-tenants.dto';
 import { UpdateTenantStatusDto } from './dto/update-tenant-status.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { ResetAdminPasswordDto } from './dto/reset-admin-password.dto';
+import { CreateTenantDto } from './dto/create-tenant.dto';
+import { CreatePlanDto } from './dto/create-plan.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('tenants')
@@ -54,10 +56,32 @@ export class TenantsController {
     return this.tenantsService.findAll(query);
   }
 
+  @Post()
+  async create(@Request() req, @Body() body: CreateTenantDto) {
+    this.checkSuperAdmin(req);
+    return this.tenantsService.create(body);
+  }
+
   @Get('plans/list')
   async getPlans(@Request() req) {
     this.checkSuperAdmin(req);
     return this.tenantsService.getPlans();
+  }
+
+  @Post('plans')
+  async createPlan(@Request() req, @Body() body: CreatePlanDto) {
+    this.checkSuperAdmin(req);
+    return this.tenantsService.createPlan(body);
+  }
+
+  @Patch('plans/:id')
+  async updatePlan(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: Partial<CreatePlanDto>,
+  ) {
+    this.checkSuperAdmin(req);
+    return this.tenantsService.updatePlan(id, body);
   }
 
   @Get(':id')

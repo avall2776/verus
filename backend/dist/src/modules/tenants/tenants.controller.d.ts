@@ -3,6 +3,8 @@ import { QueryTenantsDto } from './dto/query-tenants.dto';
 import { UpdateTenantStatusDto } from './dto/update-tenant-status.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { ResetAdminPasswordDto } from './dto/reset-admin-password.dto';
+import { CreateTenantDto } from './dto/create-tenant.dto';
+import { CreatePlanDto } from './dto/create-plan.dto';
 export declare class TenantsController {
     private readonly tenantsService;
     constructor(tenantsService: TenantsService);
@@ -121,6 +123,49 @@ export declare class TenantsController {
             totalPages: number;
         };
     }>;
+    create(req: any, body: CreateTenantDto): Promise<{
+        message: string;
+        tenant: {
+            plan: {
+                id: string;
+                name: string;
+                price: import("@prisma/client/runtime/library").Decimal;
+                hasCRM: boolean;
+                hasWhatsApp: boolean;
+                hasInstagram: boolean;
+                hasAIAgent: boolean;
+                maxUsers: number;
+                maxAIMsgs: number;
+            };
+        } & {
+            id: string;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            cnpj: string | null;
+            logoUrl: string | null;
+            address: string | null;
+            isActive: boolean;
+            aiName: string | null;
+            aiModel: string;
+            aiPrompt: string | null;
+            aiKnowledgeBase: string | null;
+            aiTemperature: number;
+            metaToken: string | null;
+            metaPhoneNumberId: string | null;
+            whatsappSettings: import("@prisma/client/runtime/library").JsonValue | null;
+            emailSettings: import("@prisma/client/runtime/library").JsonValue | null;
+            planId: string;
+        };
+        adminUser: {
+            id: string;
+            name: string;
+            email: string;
+            role: string;
+        };
+    }>;
     getPlans(req: any): Promise<{
         id: string;
         name: string;
@@ -132,6 +177,28 @@ export declare class TenantsController {
         maxUsers: number;
         maxAIMsgs: number;
     }[]>;
+    createPlan(req: any, body: CreatePlanDto): Promise<{
+        id: string;
+        name: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        hasCRM: boolean;
+        hasWhatsApp: boolean;
+        hasInstagram: boolean;
+        hasAIAgent: boolean;
+        maxUsers: number;
+        maxAIMsgs: number;
+    }>;
+    updatePlan(req: any, id: string, body: Partial<CreatePlanDto>): Promise<{
+        id: string;
+        name: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        hasCRM: boolean;
+        hasWhatsApp: boolean;
+        hasInstagram: boolean;
+        hasAIAgent: boolean;
+        maxUsers: number;
+        maxAIMsgs: number;
+    }>;
     findOne(req: any, id: string): Promise<{
         company: {
             id: string;

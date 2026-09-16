@@ -1,5 +1,7 @@
 import { PrismaService } from '../../shared/database/prisma.service';
 import { QueryTenantsDto } from './dto/query-tenants.dto';
+import { CreateTenantDto } from './dto/create-tenant.dto';
+import { CreatePlanDto } from './dto/create-plan.dto';
 export declare class TenantsService {
     private readonly prisma;
     constructor(prisma: PrismaService);
@@ -219,6 +221,7 @@ export declare class TenantsService {
         emailSettings: import("@prisma/client/runtime/library").JsonValue | null;
         planId: string;
     }>;
+    private ensureStandardPlans;
     getPlans(): Promise<{
         id: string;
         name: string;
@@ -230,6 +233,71 @@ export declare class TenantsService {
         maxUsers: number;
         maxAIMsgs: number;
     }[]>;
+    createPlan(dto: CreatePlanDto): Promise<{
+        id: string;
+        name: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        hasCRM: boolean;
+        hasWhatsApp: boolean;
+        hasInstagram: boolean;
+        hasAIAgent: boolean;
+        maxUsers: number;
+        maxAIMsgs: number;
+    }>;
+    updatePlan(id: string, dto: Partial<CreatePlanDto>): Promise<{
+        id: string;
+        name: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        hasCRM: boolean;
+        hasWhatsApp: boolean;
+        hasInstagram: boolean;
+        hasAIAgent: boolean;
+        maxUsers: number;
+        maxAIMsgs: number;
+    }>;
+    create(dto: CreateTenantDto): Promise<{
+        message: string;
+        tenant: {
+            plan: {
+                id: string;
+                name: string;
+                price: import("@prisma/client/runtime/library").Decimal;
+                hasCRM: boolean;
+                hasWhatsApp: boolean;
+                hasInstagram: boolean;
+                hasAIAgent: boolean;
+                maxUsers: number;
+                maxAIMsgs: number;
+            };
+        } & {
+            id: string;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            cnpj: string | null;
+            logoUrl: string | null;
+            address: string | null;
+            isActive: boolean;
+            aiName: string | null;
+            aiModel: string;
+            aiPrompt: string | null;
+            aiKnowledgeBase: string | null;
+            aiTemperature: number;
+            metaToken: string | null;
+            metaPhoneNumberId: string | null;
+            whatsappSettings: import("@prisma/client/runtime/library").JsonValue | null;
+            emailSettings: import("@prisma/client/runtime/library").JsonValue | null;
+            planId: string;
+        };
+        adminUser: {
+            id: string;
+            name: string;
+            email: string;
+            role: string;
+        };
+    }>;
     update(id: string, dto: any): Promise<{
         message: string;
         tenant: {

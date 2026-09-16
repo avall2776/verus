@@ -20,6 +20,8 @@ const query_tenants_dto_1 = require("./dto/query-tenants.dto");
 const update_tenant_status_dto_1 = require("./dto/update-tenant-status.dto");
 const update_tenant_dto_1 = require("./dto/update-tenant.dto");
 const reset_admin_password_dto_1 = require("./dto/reset-admin-password.dto");
+const create_tenant_dto_1 = require("./dto/create-tenant.dto");
+const create_plan_dto_1 = require("./dto/create-plan.dto");
 let TenantsController = class TenantsController {
     constructor(tenantsService) {
         this.tenantsService = tenantsService;
@@ -46,9 +48,21 @@ let TenantsController = class TenantsController {
         this.checkSuperAdmin(req);
         return this.tenantsService.findAll(query);
     }
+    async create(req, body) {
+        this.checkSuperAdmin(req);
+        return this.tenantsService.create(body);
+    }
     async getPlans(req) {
         this.checkSuperAdmin(req);
         return this.tenantsService.getPlans();
+    }
+    async createPlan(req, body) {
+        this.checkSuperAdmin(req);
+        return this.tenantsService.createPlan(body);
+    }
+    async updatePlan(req, id, body) {
+        this.checkSuperAdmin(req);
+        return this.tenantsService.updatePlan(id, body);
     }
     async findOne(req, id) {
         this.checkSuperAdmin(req);
@@ -103,12 +117,37 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "findAll", null);
 __decorate([
+    (0, common_1.Post)(),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, create_tenant_dto_1.CreateTenantDto]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "create", null);
+__decorate([
     (0, common_1.Get)('plans/list'),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "getPlans", null);
+__decorate([
+    (0, common_1.Post)('plans'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, create_plan_dto_1.CreatePlanDto]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "createPlan", null);
+__decorate([
+    (0, common_1.Patch)('plans/:id'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "updatePlan", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Request)()),

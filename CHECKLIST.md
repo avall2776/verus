@@ -1192,12 +1192,33 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     1. Fila lateral de chamados com filtros rápidos (Status, Prioridade, Empresa).
     2. Chat bidirecional em tempo real com alternância entre Resposta Pública e Nota Interna (🔒).
     3. Card Raio-X da Empresa no painel lateral direito para troubleshooting imediato.
+- **[16/09/2026 - 16:35]** ⚡ **Ativação de Tarefa: Tela de Boas-Vindas Centralizada / Preloader Pós-Login (WelcomeDashboard)**:
+  - **Status**: ⏳ Em Andamento (Iniciada formalmente conforme autorização do usuário; conclusão estritamente condicionada ao OK).
+  - **Escopo**:
+    1. **Componente Central de Boas-Vindas (`WelcomeDashboard`)**: Criação da tela centralizada no miolo do dashboard exibida pós-login.
+    2. **Saudação e Identidade**: Saudação personalizada ("Bem-vindo de volta, [Nome do Usuário]") puxando do perfil/token do usuário logado.
+    3. **Frase de Impacto Institucional**: Mensagem oficial da autoridade do VERSUS em vendas e inteligência operacional.
+    4. **Efeito Visual de Entrada**: Animação de entrada suave estilo login (`hologramBoot` / float monocromático), respeitando rigorosamente o padrão azul escuro, slate e branco (sem gradientes).
+    5. **Card de Dicas de Produtividade**: Atalhos rápidos (ex: `Ctrl+K` para busca, `/atalho` no Inbox).
+    6. **Comportamento de Navegação**: Menu lateral esquerdo totalmente visível e funcional. A tela de acolhimento permanece ativa na área central até o primeiro clique em qualquer item do menu para acessar o respectivo módulo.
+    7. **Build & Deploy**: Validação com `npx tsc --noEmit` e `npm run build` (código 0) e deploy na VPS Hostinger (PM2) e Vercel.
+
+### 🟡 FASE 57: TELA DE BOAS-VINDAS / PRELOADER CENTRAL PÓS-LOGIN (WelcomeDashboard)
+> **Status**: ⏳ Em Andamento (Iniciada formalmente; conclusão estritamente condicionada ao OK do usuário).
+- [x] **Componente Central `WelcomeDashboard.tsx`**:
+  - [x] Saudação personalizada dinâmica ("Bem-vindo de volta, [Nome]").
+  - [x] Frase de impacto institucional do ecossistema VERSUS.
+  - [x] Efeito visual de entrada idêntico ao da tela de login (animação holográfica monocromática).
+  - [x] Card de produtividade corporativa com atalho `Ctrl+K` e dicas operacionais.
+  - [x] Cards de acesso rápido para WhatsApp/Inbox, CRM, Monitor e Suporte.
+  - [x] Toggle opcional para visualização das métricas analíticas diárias.
+- [x] **Comportamento de Navegação**:
+  - [x] Sidebar esquerda 100% carregada, visível e interativa.
+  - [x] Navegação instantânea ao clicar em qualquer item do menu lateral.
 - [x] **Validação de Build, Homologação & Deploy**:
-  - `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
-  - `npm run build` do frontend aprovado com código 0 (39/39 rotas geradas).
-  - `npm run build` do backend aprovado com código 0.
-  - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
-  - Homologação em andamento para aprovação formal do usuário com OK explícito.
+  - [x] `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
+  - [x] `npm run build` no frontend e backend aprovados com código 0 (39/39 rotas geradas).
+  - [x] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
 ---
 
