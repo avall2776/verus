@@ -32,4 +32,11 @@ export class CreatePlanDto {
   @IsOptional()
   @IsNumber()
   maxAIMsgs?: number;
+
+  @IsOptional()
+  @IsNumber()
+  maxWorkspaces?: number;
+
+  @IsOptional()
+  modules?: any;
 }

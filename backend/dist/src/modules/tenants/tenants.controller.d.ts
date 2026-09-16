@@ -35,6 +35,8 @@ export declare class TenantsController {
             hasAIAgent: boolean;
             maxUsers: number;
             maxAIMsgs: number;
+            maxWorkspaces: number;
+            modules: import("@prisma/client/runtime/library").JsonValue | null;
         };
     } & {
         id: string;
@@ -136,6 +138,8 @@ export declare class TenantsController {
                 hasAIAgent: boolean;
                 maxUsers: number;
                 maxAIMsgs: number;
+                maxWorkspaces: number;
+                modules: import("@prisma/client/runtime/library").JsonValue | null;
             };
         } & {
             id: string;
@@ -176,6 +180,8 @@ export declare class TenantsController {
         hasAIAgent: boolean;
         maxUsers: number;
         maxAIMsgs: number;
+        maxWorkspaces: number;
+        modules: import("@prisma/client/runtime/library").JsonValue | null;
     }[]>;
     createPlan(req: any, body: CreatePlanDto): Promise<{
         id: string;
@@ -187,6 +193,8 @@ export declare class TenantsController {
         hasAIAgent: boolean;
         maxUsers: number;
         maxAIMsgs: number;
+        maxWorkspaces: number;
+        modules: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     updatePlan(req: any, id: string, body: Partial<CreatePlanDto>): Promise<{
         id: string;
@@ -198,6 +206,8 @@ export declare class TenantsController {
         hasAIAgent: boolean;
         maxUsers: number;
         maxAIMsgs: number;
+        maxWorkspaces: number;
+        modules: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     findOne(req: any, id: string): Promise<{
         company: {
@@ -221,6 +231,8 @@ export declare class TenantsController {
                 hasAIAgent: boolean;
                 maxUsers: number;
                 maxAIMsgs: number;
+                maxWorkspaces: number;
+                modules: import("@prisma/client/runtime/library").JsonValue | null;
             };
         };
         diagnostics: {

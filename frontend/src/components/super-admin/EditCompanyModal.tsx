@@ -34,10 +34,18 @@ export default function EditCompanyModal({
   const [customPlanPrice, setCustomPlanPrice] = useState("299.00");
   const [customMaxUsers, setCustomMaxUsers] = useState("5");
   const [customMaxAIMsgs, setCustomMaxAIMsgs] = useState("3000");
-  const [customHasCRM, setCustomHasCRM] = useState(true);
-  const [customHasWhatsApp, setCustomHasWhatsApp] = useState(true);
-  const [customHasInstagram, setCustomHasInstagram] = useState(false);
-  const [customHasAIAgent, setCustomHasAIAgent] = useState(true);
+  const [customModules, setCustomModules] = useState<Record<string, boolean>>({
+    crm: true,
+    whatsapp: true,
+    aiAgent: true,
+    emailInbox: true,
+    analytics: false,
+    goals: true,
+    proposalsContracts: false,
+    automations: false,
+    support: true,
+    teamChat: true,
+  });
 
   const [plans, setPlans] = useState<any[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
@@ -118,10 +126,11 @@ export default function EditCompanyModal({
           price: priceNumber,
           maxUsers: parseInt(customMaxUsers, 10) || 3,
           maxAIMsgs: parseInt(customMaxAIMsgs, 10) || 0,
-          hasCRM: customHasCRM,
-          hasWhatsApp: customHasWhatsApp,
-          hasInstagram: customHasInstagram,
-          hasAIAgent: customHasAIAgent,
+          hasCRM: Boolean(customModules.crm),
+          hasWhatsApp: Boolean(customModules.whatsapp),
+          hasInstagram: Boolean(customModules.instagram),
+          hasAIAgent: Boolean(customModules.aiAgent),
+          modules: customModules,
         });
 
         resolvedPlanId = planRes.data.id;
@@ -332,47 +341,39 @@ export default function EditCompanyModal({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-400 block mb-1.5">Módulos Inclusos:</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-[#0B1224] border border-slate-800 text-slate-300 hover:text-white">
-                    <input
-                      type="checkbox"
-                      checked={customHasCRM}
-                      onChange={(e) => setCustomHasCRM(e.target.checked)}
-                      className="rounded border-slate-700 text-blue-600 focus:ring-0"
-                    />
-                    <span className="text-[11px] font-medium">Funil CRM</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-[#0B1224] border border-slate-800 text-slate-300 hover:text-white">
-                    <input
-                      type="checkbox"
-                      checked={customHasWhatsApp}
-                      onChange={(e) => setCustomHasWhatsApp(e.target.checked)}
-                      className="rounded border-slate-700 text-blue-600 focus:ring-0"
-                    />
-                    <span className="text-[11px] font-medium">WhatsApp</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-[#0B1224] border border-slate-800 text-slate-300 hover:text-white">
-                    <input
-                      type="checkbox"
-                      checked={customHasAIAgent}
-                      onChange={(e) => setCustomHasAIAgent(e.target.checked)}
-                      className="rounded border-slate-700 text-blue-600 focus:ring-0"
-                    />
-                    <span className="text-[11px] font-medium">Agente IA</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-[#0B1224] border border-slate-800 text-slate-300 hover:text-white">
-                    <input
-                      type="checkbox"
-                      checked={customHasInstagram}
-                      onChange={(e) => setCustomHasInstagram(e.target.checked)}
-                      className="rounded border-slate-700 text-blue-600 focus:ring-0"
-                    />
-                    <span className="text-[11px] font-medium">Instagram</span>
-                  </label>
+                <label className="text-[10px] font-bold text-slate-400 block mb-1.5">
+                  Módulos Liberados no Plano Customizado ({Object.values(customModules).filter(Boolean).length}/10):
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                  {[
+                    { key: "crm", label: "Funil CRM" },
+                    { key: "whatsapp", label: "WhatsApp" },
+                    { key: "aiAgent", label: "Agente IA" },
+                    { key: "emailInbox", label: "E-mail Inbox" },
+                    { key: "analytics", label: "Analytics PRO" },
+                    { key: "goals", label: "Metas/Ranking" },
+                    { key: "proposalsContracts", label: "Propostas/Contr." },
+                    { key: "automations", label: "Automações" },
+                    { key: "support", label: "Central Suporte" },
+                    { key: "teamChat", label: "Chat Equipe" },
+                  ].map((mod) => (
+                    <label 
+                      key={mod.key} 
+                      className={`flex items-center gap-2 cursor-pointer p-2 rounded-lg border transition-all ${
+                        customModules[mod.key]
+                          ? "bg-[#0B1224] border-blue-500/40 text-white"
+                          : "bg-[#0B1224] border-slate-800 text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={Boolean(customModules[mod.key])}
+                        onChange={(e) => setCustomModules(prev => ({ ...prev, [mod.key]: e.target.checked }))}
+                        className="rounded border-slate-700 text-blue-600 focus:ring-0"
+                      />
+                      <span className="text-[11px] font-medium truncate">{mod.label}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
             </div>

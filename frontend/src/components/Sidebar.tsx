@@ -33,7 +33,8 @@ import {
   LifeBuoy,
   Volume2,
   Keyboard,
-  ShieldCheck
+  ShieldCheck,
+  Building2,
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -42,6 +43,7 @@ import toast from "react-hot-toast";
 import SoundAlertsModal from "@/components/modals/SoundAlertsModal";
 import KeyboardShortcutsModal from "@/components/modals/KeyboardShortcutsModal";
 import UserProfileModal from "@/components/modals/UserProfileModal";
+import WorkspaceManagerModal, { WorkspaceItem } from "@/components/modals/WorkspaceManagerModal";
 
 function WhatsAppIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
   return (
@@ -118,6 +120,12 @@ export default function Sidebar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [menuTimeout, setMenuTimeout] = useState<NodeJS.Timeout | null>(null);
 
+  // Gerenciamento de Workspaces / Unidades
+  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
+  const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
+  const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
+  const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceItem | null>(null);
+
   const loadUser = async () => {
     try {
       const stored = localStorage.getItem('versus_user');
@@ -135,11 +143,51 @@ export default function Sidebar() {
     }
   };
 
+  const loadWorkspaces = async () => {
+    try {
+      const res = await api.get('/workspaces');
+      if (res.data?.workspaces) {
+        const list: WorkspaceItem[] = res.data.workspaces;
+        setWorkspaces(list);
+
+        const storedActive = localStorage.getItem('versus_active_workspace');
+        if (storedActive) {
+          try {
+            const parsed = JSON.parse(storedActive);
+            const found = list.find((w) => w.id === parsed.id);
+            if (found) {
+              setActiveWorkspace(found);
+              return;
+            }
+          } catch (err) {
+            // Ignora JSON inválido
+          }
+        }
+
+        const defaultWs = list.find((w) => w.isDefault) || list[0];
+        if (defaultWs) {
+          setActiveWorkspace(defaultWs);
+          localStorage.setItem('versus_active_workspace', JSON.stringify(defaultWs));
+        }
+      }
+    } catch (e) {
+      // Ignora erro
+    }
+  };
+
   useEffect(() => {
     loadUser();
+    loadWorkspaces();
     const handleUserUpdated = () => loadUser();
+    const handleWsUpdated = () => loadWorkspaces();
     window.addEventListener('user_updated', handleUserUpdated);
-    return () => window.removeEventListener('user_updated', handleUserUpdated);
+    window.addEventListener('workspace_updated', handleWsUpdated);
+    window.addEventListener('workspace_switched', handleWsUpdated);
+    return () => {
+      window.removeEventListener('user_updated', handleUserUpdated);
+      window.removeEventListener('workspace_updated', handleWsUpdated);
+      window.removeEventListener('workspace_switched', handleWsUpdated);
+    };
   }, []);
 
   const handleMouseEnterUser = () => {
@@ -260,22 +308,121 @@ export default function Sidebar() {
     >
       <div className="flex flex-col h-full overflow-hidden">
         
-        {/* Header / Tenant Selector */}
-        <div className="h-16 flex items-center justify-between border-b border-gray-800 px-4 shrink-0">
+        {/* Header / Workspace & Tenant Selector */}
+        <div className="h-16 flex items-center justify-between border-b border-gray-800 px-3 shrink-0 relative">
           {isExpanded ? (
-            <div className="flex items-center gap-3 cursor-pointer hover:bg-gray-800/50 p-1.5 rounded-lg transition-colors w-full">
-              <div className="w-8 h-8 rounded-xl bg-blue-600 border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 shadow-sm">
-                V
+            <div 
+              onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
+              className="flex items-center gap-2.5 cursor-pointer hover:bg-gray-800/50 p-1.5 rounded-xl transition-colors w-full select-none"
+              title="Clique para alternar ou gerenciar workspaces"
+            >
+              <div 
+                className="w-8 h-8 rounded-xl border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 shadow-sm overflow-hidden"
+                style={{ backgroundColor: activeWorkspace?.themeColor || "#2563EB" }}
+              >
+                {activeWorkspace?.logoUrl ? (
+                  <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{activeWorkspace?.name?.charAt(0).toUpperCase() || "W"}</span>
+                )}
               </div>
-              <div className="flex flex-col overflow-hidden">
-                <span className="text-sm font-bold text-white truncate leading-tight">VERSUS INC.</span>
-                <span className="text-[10px] text-gray-400 truncate">Plano Enterprise</span>
+              <div className="flex flex-col overflow-hidden min-w-0 flex-1">
+                <span className="text-xs font-bold text-white truncate leading-tight">
+                  {activeWorkspace?.name || "Workspace Principal"}
+                </span>
+                <span className="text-[10px] text-gray-400 truncate">
+                  {currentUser?.tenantName ? `${currentUser.tenantName}` : "VERSUS INC."}
+                </span>
               </div>
-              <ChevronDown size={14} className="text-gray-500 ml-auto" />
+              <ChevronDown 
+                size={14} 
+                className={`text-gray-500 ml-auto transition-transform duration-200 ${isWorkspaceDropdownOpen ? "rotate-180 text-blue-400" : ""}`} 
+              />
             </div>
           ) : (
-            <div className="w-8 h-8 rounded-xl bg-blue-600 border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 mx-auto shadow-sm">
-              V
+            <div 
+              onClick={() => {
+                setIsExpanded(true);
+                setIsWorkspaceDropdownOpen(true);
+              }}
+              className="w-8 h-8 rounded-xl border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 mx-auto shadow-sm cursor-pointer overflow-hidden"
+              style={{ backgroundColor: activeWorkspace?.themeColor || "#2563EB" }}
+              title={activeWorkspace?.name || "Workspace"}
+            >
+              {activeWorkspace?.logoUrl ? (
+                <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <span>{activeWorkspace?.name?.charAt(0).toUpperCase() || "W"}</span>
+              )}
+            </div>
+          )}
+
+          {/* Dropdown de Seleção de Workspaces */}
+          {isExpanded && isWorkspaceDropdownOpen && (
+            <div className="absolute top-16 left-3 right-3 bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Workspaces / Unidades
+              </div>
+
+              <div className="max-h-48 overflow-y-auto custom-scrollbar divide-y divide-slate-800/40 my-1">
+                {workspaces.map((ws) => {
+                  const isSelected = activeWorkspace?.id === ws.id;
+                  return (
+                    <button
+                      key={ws.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveWorkspace(ws);
+                        localStorage.setItem("versus_active_workspace", JSON.stringify(ws));
+                        setIsWorkspaceDropdownOpen(false);
+                        toast.success(`Workspace "${ws.name}" ativado!`);
+                        window.dispatchEvent(new Event("workspace_switched"));
+                      }}
+                      className={`w-full flex items-center gap-2.5 p-2 rounded-xl text-left transition-colors ${
+                        isSelected
+                          ? "bg-blue-600/15 text-white"
+                          : "hover:bg-slate-800/60 text-slate-300 hover:text-white"
+                      }`}
+                    >
+                      <div
+                        className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden"
+                        style={{ backgroundColor: ws.themeColor || "#2563EB" }}
+                      >
+                        {ws.logoUrl ? (
+                          <img src={ws.logoUrl} alt={ws.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span>{ws.name.charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-semibold truncate">{ws.name}</div>
+                        {ws.isDefault && (
+                          <span className="text-[9px] text-blue-400">Principal</span>
+                        )}
+                      </div>
+
+                      {isSelected && (
+                        <Check size={14} className="text-blue-400 shrink-0" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="pt-2 border-t border-slate-800/80 mt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsWorkspaceDropdownOpen(false);
+                    setIsWorkspaceModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 p-2 rounded-xl bg-[#070D1B] hover:bg-slate-800 text-blue-400 hover:text-blue-300 text-xs font-bold transition-colors border border-slate-800 hover:border-blue-500/30 shadow-sm"
+                >
+                  <Building2 size={14} />
+                  <span>Gerenciar Workspaces</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -559,6 +706,16 @@ export default function Sidebar() {
       <KeyboardShortcutsModal
         isOpen={isKeyboardModalOpen}
         onClose={() => setIsKeyboardModalOpen(false)}
+      />
+
+      <WorkspaceManagerModal
+        isOpen={isWorkspaceModalOpen}
+        onClose={() => setIsWorkspaceModalOpen(false)}
+        activeWorkspaceId={activeWorkspace?.id}
+        onWorkspaceSelected={(ws) => {
+          setActiveWorkspace(ws);
+          loadWorkspaces();
+        }}
       />
     </aside>
   );

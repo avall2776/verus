@@ -79,6 +79,8 @@ export declare class TenantsService {
                 hasAIAgent: boolean;
                 maxUsers: number;
                 maxAIMsgs: number;
+                maxWorkspaces: number;
+                modules: import("@prisma/client/runtime/library").JsonValue | null;
             };
         };
         diagnostics: {
@@ -170,6 +172,8 @@ export declare class TenantsService {
             hasAIAgent: boolean;
             maxUsers: number;
             maxAIMsgs: number;
+            maxWorkspaces: number;
+            modules: import("@prisma/client/runtime/library").JsonValue | null;
         };
     } & {
         id: string;
@@ -232,6 +236,8 @@ export declare class TenantsService {
         hasAIAgent: boolean;
         maxUsers: number;
         maxAIMsgs: number;
+        maxWorkspaces: number;
+        modules: import("@prisma/client/runtime/library").JsonValue | null;
     }[]>;
     createPlan(dto: CreatePlanDto): Promise<{
         id: string;
@@ -243,6 +249,8 @@ export declare class TenantsService {
         hasAIAgent: boolean;
         maxUsers: number;
         maxAIMsgs: number;
+        maxWorkspaces: number;
+        modules: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     updatePlan(id: string, dto: Partial<CreatePlanDto>): Promise<{
         id: string;
@@ -254,6 +262,8 @@ export declare class TenantsService {
         hasAIAgent: boolean;
         maxUsers: number;
         maxAIMsgs: number;
+        maxWorkspaces: number;
+        modules: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     create(dto: CreateTenantDto): Promise<{
         message: string;
@@ -268,6 +278,8 @@ export declare class TenantsService {
                 hasAIAgent: boolean;
                 maxUsers: number;
                 maxAIMsgs: number;
+                maxWorkspaces: number;
+                modules: import("@prisma/client/runtime/library").JsonValue | null;
             };
         } & {
             id: string;

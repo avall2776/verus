@@ -14,10 +14,105 @@ import {
   RefreshCw, 
   DollarSign,
   CheckCircle2,
-  X
+  X,
+  Kanban,
+  Mail,
+  BarChart3,
+  Target,
+  FileText,
+  Zap,
+  LifeBuoy,
+  MessagesSquare,
+  Check
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
+
+interface SystemModule {
+  key: string;
+  name: string;
+  desc: string;
+}
+
+const ALL_SYSTEM_MODULES: SystemModule[] = [
+  {
+    key: "crm",
+    name: "Funil Comercial (CRM)",
+    desc: "Pipeline comercial Kanban, gestão de oportunidades e etapas de vendas",
+  },
+  {
+    key: "whatsapp",
+    name: "Conexão WhatsApp & Disparos",
+    desc: "Instância WhatsApp oficial, QR Code, webhooks e disparos em massa",
+  },
+  {
+    key: "aiAgent",
+    name: "Agente de IA (Vitor / Automação)",
+    desc: "Atendimento autônomo com LLM treinado com inteligência de negócio",
+  },
+  {
+    key: "emailInbox",
+    name: "Inbox de E-mail Unificado Enterprise",
+    desc: "Sincronização SMTP/IMAP, leitura e resposta centralizada pelo painel",
+  },
+  {
+    key: "analytics",
+    name: "Analytics Avançado (PRO)",
+    desc: "Relatórios preditivos, taxas de conversão por canal e métricas em tempo real",
+  },
+  {
+    key: "goals",
+    name: "Metas Comerciais & Leaderboard",
+    desc: "Metas individuais e em equipe com ranking de performance e produtividade",
+  },
+  {
+    key: "proposalsContracts",
+    name: "Propostas Comerciais & Contratos Digitais",
+    desc: "Gerador de propostas, minutas contratuais e esteira de fechamento",
+  },
+  {
+    key: "automations",
+    name: "Motor de Automações & Gatilhos",
+    desc: "Fluxos programados de mensagens, follow-ups e mudança de status",
+  },
+  {
+    key: "support",
+    name: "Central de Suporte Omnichannel",
+    desc: "Abertura de chamados prioritários, troubleshooting e suporte técnico",
+  },
+  {
+    key: "teamChat",
+    name: "Chat Interno da Equipe",
+    desc: "Comunicação interna direta entre operadores e gestores de cada tenant",
+  },
+];
+
+const getModuleIcon = (key: string) => {
+  switch (key) {
+    case "crm": return Kanban;
+    case "whatsapp": return MessageSquare;
+    case "aiAgent": return Bot;
+    case "emailInbox": return Mail;
+    case "analytics": return BarChart3;
+    case "goals": return Target;
+    case "proposalsContracts": return FileText;
+    case "automations": return Zap;
+    case "support": return LifeBuoy;
+    case "teamChat": return MessagesSquare;
+    default: return CheckCircle2;
+  }
+};
+
+const getPlanModuleStatus = (plan: any, moduleKey: string): boolean => {
+  if (plan.modules && typeof plan.modules === "object" && plan.modules[moduleKey] !== undefined) {
+    return Boolean(plan.modules[moduleKey]);
+  }
+  if (moduleKey === "crm") return Boolean(plan.hasCRM);
+  if (moduleKey === "whatsapp") return Boolean(plan.hasWhatsApp);
+  if (moduleKey === "aiAgent") return Boolean(plan.hasAIAgent);
+  if (moduleKey === "support" || moduleKey === "teamChat") return true;
+  return false;
+};
 
 export default function SuperAdminPlansPage() {
   const [plans, setPlans] = useState<any[]>([]);
@@ -30,10 +125,18 @@ export default function SuperAdminPlansPage() {
   const [newPlanPrice, setNewPlanPrice] = useState("299.00");
   const [newMaxUsers, setNewMaxUsers] = useState("3");
   const [newMaxAIMsgs, setNewMaxAIMsgs] = useState("2000");
-  const [newHasCRM, setNewHasCRM] = useState(true);
-  const [newHasWhatsApp, setNewHasWhatsApp] = useState(true);
-  const [newHasInstagram, setNewHasInstagram] = useState(false);
-  const [newHasAIAgent, setNewHasAIAgent] = useState(true);
+  const [newModules, setNewModules] = useState<Record<string, boolean>>({
+    crm: true,
+    whatsapp: true,
+    aiAgent: true,
+    emailInbox: true,
+    analytics: false,
+    goals: true,
+    proposalsContracts: false,
+    automations: false,
+    support: true,
+    teamChat: true,
+  });
   const [creatingLoading, setCreatingLoading] = useState(false);
 
   const fetchPlans = async () => {
@@ -53,12 +156,52 @@ export default function SuperAdminPlansPage() {
     fetchPlans();
   }, []);
 
-  const handleToggleFeature = (planId: string, featureKey: string) => {
+  const handleToggleModule = (planId: string, moduleKey: string) => {
     setPlans(prev => prev.map(plan => {
       if (plan.id === planId) {
+        const currentModules: Record<string, boolean> = plan.modules && typeof plan.modules === "object" 
+          ? { ...plan.modules } 
+          : {
+              crm: plan.hasCRM ?? true,
+              whatsapp: plan.hasWhatsApp ?? true,
+              aiAgent: plan.hasAIAgent ?? false,
+              emailInbox: false,
+              analytics: false,
+              goals: false,
+              proposalsContracts: false,
+              automations: false,
+              support: true,
+              teamChat: true,
+            };
+
+        const nextVal = !getPlanModuleStatus(plan, moduleKey);
+        currentModules[moduleKey] = nextVal;
+
         return {
           ...plan,
-          [featureKey]: !plan[featureKey]
+          modules: currentModules,
+          hasCRM: moduleKey === "crm" ? nextVal : plan.hasCRM,
+          hasWhatsApp: moduleKey === "whatsapp" ? nextVal : plan.hasWhatsApp,
+          hasAIAgent: moduleKey === "aiAgent" ? nextVal : plan.hasAIAgent,
+        };
+      }
+      return plan;
+    }));
+  };
+
+  const handleToggleAllModules = (planId: string, activate: boolean) => {
+    setPlans(prev => prev.map(plan => {
+      if (plan.id === planId) {
+        const nextModules: Record<string, boolean> = {};
+        ALL_SYSTEM_MODULES.forEach(m => {
+          nextModules[m.key] = activate;
+        });
+        return {
+          ...plan,
+          modules: nextModules,
+          hasCRM: activate,
+          hasWhatsApp: activate,
+          hasAIAgent: activate,
         };
       }
       return plan;
@@ -80,15 +223,28 @@ export default function SuperAdminPlansPage() {
   const handleSavePlan = async (plan: any) => {
     setSavingId(plan.id);
     try {
+      const activeModules = plan.modules || {
+        crm: Boolean(plan.hasCRM),
+        whatsapp: Boolean(plan.hasWhatsApp),
+        aiAgent: Boolean(plan.hasAIAgent),
+        emailInbox: false,
+        analytics: false,
+        goals: false,
+        proposalsContracts: false,
+        automations: false,
+        support: true,
+        teamChat: true,
+      };
+
       await api.patch(`/tenants/plans/${plan.id}`, {
         name: plan.name,
         price: parseFloat(plan.price),
-        hasCRM: plan.hasCRM,
-        hasWhatsApp: plan.hasWhatsApp,
-        hasInstagram: plan.hasInstagram,
-        hasAIAgent: plan.hasAIAgent,
         maxUsers: parseInt(plan.maxUsers, 10),
         maxAIMsgs: parseInt(plan.maxAIMsgs, 10),
+        hasCRM: activeModules.crm ?? plan.hasCRM,
+        hasWhatsApp: activeModules.whatsapp ?? plan.hasWhatsApp,
+        hasAIAgent: activeModules.aiAgent ?? plan.hasAIAgent,
+        modules: activeModules,
       });
       toast.success(`Plano "${plan.name}" salvo com sucesso!`);
     } catch (err: any) {
@@ -119,10 +275,10 @@ export default function SuperAdminPlansPage() {
         price,
         maxUsers: parseInt(newMaxUsers, 10) || 1,
         maxAIMsgs: parseInt(newMaxAIMsgs, 10) || 0,
-        hasCRM: newHasCRM,
-        hasWhatsApp: newHasWhatsApp,
-        hasInstagram: newHasInstagram,
-        hasAIAgent: newHasAIAgent,
+        hasCRM: Boolean(newModules.crm),
+        hasWhatsApp: Boolean(newModules.whatsapp),
+        hasAIAgent: Boolean(newModules.aiAgent),
+        modules: newModules,
       });
 
       toast.success(`Plano "${res.data.name}" criado com sucesso!`);
@@ -148,7 +304,7 @@ export default function SuperAdminPlansPage() {
             <span>Matriz de Planos & Permissões</span>
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Configure os recursos contratados, limites de usuários e cotas de IA para cada nível de assinatura.
+            Configure os 10 módulos do sistema, limites operacionais e cotas de IA para cada nível de assinatura.
           </p>
         </div>
 
@@ -176,14 +332,14 @@ export default function SuperAdminPlansPage() {
       <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-3">
         <ShieldAlert size={18} className="text-blue-400 shrink-0 mt-0.5" />
         <div className="text-xs text-blue-300 leading-relaxed">
-          <strong className="block text-white mb-0.5">Impacto Estratégico em Tempo Real:</strong>
-          As permissões e limites definidos aqui governam diretamente o que os operadores das empresas clientes conseguem visualizar e utilizar no CRM.
+          <strong className="block text-white mb-0.5">Governança Master & Persistência em Tempo Real:</strong>
+          As permissões e módulos definidos aqui governam diretamente o que os operadores das empresas (tenants) conseguem acessar no VERSUS. A desativação de um módulo bloqueia o recurso no respectivo tenant.
         </div>
       </div>
 
       {/* Modal/Formulário de Criação de Novo Plano */}
       {isCreating && (
-        <form onSubmit={handleCreatePlan} className="p-5 rounded-2xl bg-[#0B1224] border border-blue-500/40 space-y-4 animate-in fade-in duration-200 shadow-xl">
+        <form onSubmit={handleCreatePlan} className="p-6 rounded-2xl bg-[#0B1224] border border-blue-500/40 space-y-5 animate-in fade-in duration-200 shadow-2xl">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <div className="flex items-center gap-2">
               <Sparkles size={16} className="text-blue-400" />
@@ -246,51 +402,68 @@ export default function SuperAdminPlansPage() {
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-slate-400 block mb-1.5">Módulos Habilitados:</label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <label className="flex items-center gap-2 p-2.5 rounded-lg bg-[#070D1B] border border-slate-800 text-xs text-slate-200 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={newHasCRM}
-                  onChange={(e) => setNewHasCRM(e.target.checked)}
-                  className="rounded border-slate-700 text-blue-600 focus:ring-0"
-                />
-                <span>Funil Comercial CRM</span>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[11px] font-bold text-slate-300">
+                Módulos do Sistema ({Object.values(newModules).filter(Boolean).length}/10 selecionados):
               </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const all: Record<string, boolean> = {};
+                    ALL_SYSTEM_MODULES.forEach(m => (all[m.key] = true));
+                    setNewModules(all);
+                  }}
+                  className="text-[10px] text-blue-400 hover:text-blue-300 font-semibold"
+                >
+                  Marcar Todos
+                </button>
+                <span className="text-slate-600 text-[10px]">|</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const all: Record<string, boolean> = {};
+                    ALL_SYSTEM_MODULES.forEach(m => (all[m.key] = false));
+                    setNewModules(all);
+                  }}
+                  className="text-[10px] text-slate-400 hover:text-white font-semibold"
+                >
+                  Desmarcar Todos
+                </button>
+              </div>
+            </div>
 
-              <label className="flex items-center gap-2 p-2.5 rounded-lg bg-[#070D1B] border border-slate-800 text-xs text-slate-200 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={newHasWhatsApp}
-                  onChange={(e) => setNewHasWhatsApp(e.target.checked)}
-                  className="rounded border-slate-700 text-blue-600 focus:ring-0"
-                />
-                <span>WhatsApp Oficial</span>
-              </label>
-
-              <label className="flex items-center gap-2 p-2.5 rounded-lg bg-[#070D1B] border border-slate-800 text-xs text-slate-200 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={newHasAIAgent}
-                  onChange={(e) => setNewHasAIAgent(e.target.checked)}
-                  className="rounded border-slate-700 text-blue-600 focus:ring-0"
-                />
-                <span>Agente IA Vitor</span>
-              </label>
-
-              <label className="flex items-center gap-2 p-2.5 rounded-lg bg-[#070D1B] border border-slate-800 text-xs text-slate-200 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={newHasInstagram}
-                  onChange={(e) => setNewHasInstagram(e.target.checked)}
-                  className="rounded border-slate-700 text-blue-600 focus:ring-0"
-                />
-                <span>Instagram Direct</span>
-              </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+              {ALL_SYSTEM_MODULES.map((mod) => {
+                const IconComponent = getModuleIcon(mod.key);
+                const active = Boolean(newModules[mod.key]);
+                return (
+                  <div
+                    key={mod.key}
+                    onClick={() => setNewModules(prev => ({ ...prev, [mod.key]: !prev[mod.key] }))}
+                    className={`p-3 rounded-xl border transition-all cursor-pointer select-none flex flex-col justify-between gap-2 ${
+                      active 
+                        ? "bg-blue-950/20 border-blue-500/40 text-white" 
+                        : "bg-[#070D1B] border-slate-800 text-slate-400 hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <IconComponent size={16} className={active ? "text-blue-400" : "text-slate-500"} />
+                      <div className={`w-7 h-4 rounded-full relative transition-colors ${active ? "bg-blue-600" : "bg-slate-800"}`}>
+                        <div className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-all ${active ? "left-3.5" : "left-0.5"}`} />
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block leading-snug">{mod.name}</span>
+                      <span className="text-[10px] text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">{mod.desc}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
             <button
               type="button"
               onClick={() => setIsCreating(false)}
@@ -314,115 +487,157 @@ export default function SuperAdminPlansPage() {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
           <Loader2 size={32} className="animate-spin text-blue-500" />
-          <span className="text-xs font-medium">Carregando matriz de planos...</span>
+          <span className="text-xs font-medium">Carregando matriz de planos e permissões...</span>
         </div>
       ) : plans.length === 0 ? (
         <div className="text-center py-16 bg-[#0B1224] border border-slate-800 rounded-2xl text-slate-400 text-xs">
           Nenhum plano cadastrado no sistema. Clique em &quot;Criar Novo Plano&quot; para começar.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans.map((plan) => (
-            <div 
-              key={plan.id} 
-              className="bg-[#0B1224] border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-xl transition-all hover:border-slate-700 relative"
-            >
-              <div>
-                {/* Header do Card */}
-                <div className="border-b border-slate-800 pb-4 mb-4 flex items-start justify-between">
-                  <div>
-                    <h2 className="text-base font-bold text-white tracking-wide">{plan.name}</h2>
-                    <div className="flex items-baseline gap-1 mt-1">
-                      <span className="text-lg font-black text-blue-400">R$ {Number(plan.price).toFixed(2)}</span>
-                      <span className="text-[10px] text-slate-400">/mês</span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {plans.map((plan) => {
+            const activeCount = ALL_SYSTEM_MODULES.filter(m => getPlanModuleStatus(plan, m.key)).length;
+
+            return (
+              <div 
+                key={plan.id} 
+                className="bg-[#0B1224] border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-xl transition-all hover:border-slate-700 relative"
+              >
+                <div>
+                  {/* Header do Card */}
+                  <div className="border-b border-slate-800 pb-4 mb-4 flex items-start justify-between">
+                    <div>
+                      <h2 className="text-base font-bold text-white tracking-wide">{plan.name}</h2>
+                      <div className="flex items-baseline gap-1 mt-1">
+                        <span className="text-xl font-black text-blue-400">R$ {Number(plan.price).toFixed(2)}</span>
+                        <span className="text-[10px] text-slate-400">/mês</span>
+                      </div>
                     </div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                      {plan.maxUsers} {plan.maxUsers === 1 ? "usuário" : "usuários"}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                    {plan.maxUsers} {plan.maxUsers === 1 ? "usuário" : "usuários"}
-                  </span>
-                </div>
 
-                {/* Módulos do Sistema */}
-                <div className="space-y-3">
-                  <h3 className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
-                    Módulos Liberados
-                  </h3>
-
-                  <div className="space-y-2">
-                    {[
-                      { key: "hasCRM", label: "Acesso ao Funil CRM" },
-                      { key: "hasWhatsApp", label: "Conexão WhatsApp" },
-                      { key: "hasAIAgent", label: "Agente IA (Vitor)" },
-                      { key: "hasInstagram", label: "Integração Instagram" },
-                    ].map((feature) => (
-                      <div key={feature.key} className="flex items-center justify-between p-2 rounded-lg bg-[#070D1B] border border-slate-800/80">
-                        <span className="text-xs text-slate-300 font-medium">{feature.label}</span>
+                  {/* Módulos do Sistema (10 Módulos) */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+                        Módulos Liberados ({activeCount}/10)
+                      </h3>
+                      <div className="flex items-center gap-1.5 text-[10px]">
                         <button
                           type="button"
-                          onClick={() => handleToggleFeature(plan.id, feature.key)}
-                          className={`w-9 h-5 rounded-full relative transition-colors ${
-                            plan[feature.key] ? "bg-blue-600" : "bg-slate-800"
-                          }`}
+                          onClick={() => handleToggleAllModules(plan.id, true)}
+                          className="text-blue-400 hover:text-blue-300 font-semibold"
                         >
-                          <div 
-                            className={`w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-all ${
-                              plan[feature.key] ? "left-4.5" : "left-0.5"
-                            }`} 
-                          />
+                          Todos
+                        </button>
+                        <span className="text-slate-600">|</span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleAllModules(plan.id, false)}
+                          className="text-slate-400 hover:text-white font-semibold"
+                        >
+                          Nenhum
                         </button>
                       </div>
-                    ))}
+                    </div>
+
+                    <div className="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
+                      {ALL_SYSTEM_MODULES.map((mod) => {
+                        const IconComponent = getModuleIcon(mod.key);
+                        const isEnabled = getPlanModuleStatus(plan, mod.key);
+
+                        return (
+                          <div 
+                            key={mod.key} 
+                            onClick={() => handleToggleModule(plan.id, mod.key)}
+                            className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer select-none transition-all ${
+                              isEnabled 
+                                ? "bg-[#070D1B] border-slate-800 hover:border-slate-700" 
+                                : "bg-[#070D1B]/40 border-slate-900/60 opacity-60 hover:opacity-100"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0 pr-2">
+                              <IconComponent size={14} className={isEnabled ? "text-blue-400 shrink-0" : "text-slate-500 shrink-0"} />
+                              <div className="min-w-0">
+                                <span className={`text-xs font-medium block truncate ${isEnabled ? "text-slate-200" : "text-slate-500"}`}>
+                                  {mod.name}
+                                </span>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleModule(plan.id, mod.key);
+                              }}
+                              className={`w-8 h-4.5 rounded-full relative transition-colors shrink-0 ${
+                                isEnabled ? "bg-blue-600" : "bg-slate-800"
+                              }`}
+                            >
+                              <div 
+                                className={`w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-all ${
+                                  isEnabled ? "left-4" : "left-0.5"
+                                }`} 
+                              />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Limites Numéricos */}
+                  <div className="space-y-3 border-t border-slate-800 pt-4 mt-4">
+                    <h3 className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+                      Limites de Consumo
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-400 block">Máx. Usuários</label>
+                        <input
+                          type="number"
+                          value={plan.maxUsers}
+                          onChange={(e) => handleUpdateLimit(plan.id, "maxUsers", parseInt(e.target.value, 10) || 1)}
+                          className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded px-2.5 py-1.5 text-xs text-white outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-400 block">Cota Mensagens IA</label>
+                        <input
+                          type="number"
+                          value={plan.maxAIMsgs}
+                          onChange={(e) => handleUpdateLimit(plan.id, "maxAIMsgs", parseInt(e.target.value, 10) || 0)}
+                          className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded px-2.5 py-1.5 text-xs text-white outline-none"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Limites Numéricos */}
-                <div className="space-y-3 border-t border-slate-800 pt-4 mt-4">
-                  <h3 className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
-                    Limites de Consumo
-                  </h3>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-slate-400 block">Máx. Usuários</label>
-                      <input
-                        type="number"
-                        value={plan.maxUsers}
-                        onChange={(e) => handleUpdateLimit(plan.id, "maxUsers", parseInt(e.target.value, 10) || 1)}
-                        className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded px-2.5 py-1.5 text-xs text-white outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-slate-400 block">Cota Mensagens IA</label>
-                      <input
-                        type="number"
-                        value={plan.maxAIMsgs}
-                        onChange={(e) => handleUpdateLimit(plan.id, "maxAIMsgs", parseInt(e.target.value, 10) || 0)}
-                        className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded px-2.5 py-1.5 text-xs text-white outline-none"
-                      />
-                    </div>
-                  </div>
+                {/* Ação Salvar Card */}
+                <div className="pt-5 mt-4 border-t border-slate-800 flex justify-end">
+                  <button
+                    type="button"
+                    disabled={savingId === plan.id}
+                    onClick={() => handleSavePlan(plan)}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors shadow-sm disabled:opacity-50"
+                  >
+                    {savingId === plan.id ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Save size={13} />
+                    )}
+                    <span>Salvar Configurações</span>
+                  </button>
                 </div>
               </div>
-
-              {/* Ação Salvar Card */}
-              <div className="pt-5 mt-4 border-t border-slate-800 flex justify-end">
-                <button
-                  type="button"
-                  disabled={savingId === plan.id}
-                  onClick={() => handleSavePlan(plan)}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors shadow-sm disabled:opacity-50"
-                >
-                  {savingId === plan.id ? (
-                    <Loader2 size={13} className="animate-spin" />
-                  ) : (
-                    <Save size={13} />
-                  )}
-                  <span>Salvar Configurações</span>
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

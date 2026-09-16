@@ -54,4 +54,8 @@ __decorate([
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
 ], CreatePlanDto.prototype, "maxAIMsgs", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], CreatePlanDto.prototype, "modules", void 0);
 //# sourceMappingURL=create-plan.dto.js.map

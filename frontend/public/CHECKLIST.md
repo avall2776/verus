@@ -1263,6 +1263,83 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `npm run build` aprovado com código 0 em ambas as pontas.
   - [x] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
+- **[16/09/2026 - 17:30]** ⚡ **Ativação de Tarefa: Módulo de Gerenciamento Real de Workspaces / Unidades & Limites por Plano**:
+  - **Status**: ⏳ Em Andamento (Iniciada formalmente conforme autorização do usuário; conclusão estritamente condicionada ao OK).
+  - **Escopo**:
+    1. **Modelagem no Banco de Dados (Prisma)**:
+       - Criação do modelo `Workspace` (`id`, `name`, `description`, `logoUrl`, `themeColor`, `isDefault`, `tenantId`, `createdAt`, `updatedAt`).
+       - Limite de workspaces por plano de assinatura (`maxWorkspaces` em `Plan`).
+       - Bloqueio com erro `"Limite do plano atingido"` caso a empresa tente criar mais workspaces do que o contratado.
+    2. **Backend NestJS (`WorkspacesModule`)**:
+       - `GET /workspaces`: Listagem dos workspaces da empresa com métricas de uso e limite contratado.
+       - `POST /workspaces`: Criação de novo workspace com validação de limites do plano.
+       - `PATCH /workspaces/:id`: Atualização de nome, descrição, logoUrl e themeColor.
+       - `DELETE /workspaces/:id`: Remoção segura com bloqueio do workspace principal (`isDefault`).
+    3. **Interface Frontend (`WorkspaceManagerModal.tsx` & `Sidebar.tsx`)**:
+       - Acesso direto pelo seletor de Workspace no topo da Sidebar ("Workspace 1 / Gerenciar Workspaces").
+       - Modal completo com listagem, contador dinâmico de uso ("Workspaces utilizados: X de Y"), alerta visual de limite de plano atingido.
+       - Formulário de criação e edição com upload de logo (PNG/SVG/JPG), descrição e paleta/personalização de cores corporativas do tema.
+    4. **Design System & Zero Mocks**:
+       - Monocromático corporativo (#0B1224, #070D1B, border-slate-800, textos em slate e branco).
+    5. **Build e Deploy Obrigatórios**:
+       - `npx tsc --noEmit` e `npm run build` aprovados com código 0 em ambas as pontas.
+       - Deploy imediato na VPS (Hostinger PM2) e Vercel.
+
+### 🟡 FASE 59: GESTÃO DE WORKSPACES / UNIDADES & LIMITES DE PLANO
+> **Status**: ⏳ Em Andamento (Iniciada formalmente; conclusão estritamente condicionada ao OK do usuário).
+- [ ] **Backend: Modelagem Prisma & Banco de Dados**:
+  - [ ] Modelo `Workspace` e campo `maxWorkspaces` no `Plan` (`prisma db push`).
+  - [ ] Workspace inicial padrão automático caso o tenant ainda não possua nenhum.
+- [ ] **Backend: Módulo NestJS (`WorkspacesModule`)**:
+  - [ ] `WorkspacesService` com regras de limites de plano, multitenancy e CRUD.
+  - [ ] `WorkspacesController` com rotas `GET /workspaces`, `POST /workspaces`, `PATCH /workspaces/:id`, `DELETE /workspaces/:id`.
+  - [ ] Registro do módulo no `AppModule`.
+- [ ] **Frontend: Modal de Gerenciamento (`WorkspaceManagerModal.tsx`)**:
+  - [ ] Contador de uso em tempo real (X de Y) e alerta de limite do plano atingido.
+  - [ ] Criação e edição de workspaces com nome, descrição, upload de logo e cores do tema.
+  - [ ] Exclusão segura com confirmação.
+- [ ] **Frontend: Integração no Cabeçalho da Sidebar (`Sidebar.tsx`)**:
+  - [ ] Dropdown interativo no header da Sidebar com listagem dos workspaces e botão "Gerenciar Workspaces".
+  - [ ] Persistência do workspace ativo no `localStorage` e recarregamento reativo.
+- [x] **[16/09/2026 - 17:35]** ⚡ **Conclusão: Expansão Completa da Matriz de Planos & Permissões (Fase 60)**:
+  - **Status**: ✅ Concluído com Sucesso e Aprovado.
+  - **Mapeamento dos 10 Módulos do Sistema**: Funil Comercial CRM (`crm`), Conexão WhatsApp & Disparos (`whatsapp`), Agente IA Vitor (`aiAgent`), Inbox de E-mail Unificado (`emailInbox`), Analytics Avançado PRO (`analytics`), Metas & Leaderboard (`goals`), Propostas & Contratos Digitais (`proposalsContracts`), Motor de Automações (`automations`), Central de Suporte Omnichannel (`support`) e Chat Interno da Equipe (`teamChat`).
+  - **Backend & Prisma**: Campo `modules Json?` no modelo `Plan`, sincronizado no Supabase (`prisma db push`), aceito no DTO e nos métodos `createPlan`/`updatePlan` de `tenants.service.ts`.
+  - **Frontend Super Admin (`/super-admin/planos` e `/super-admin/plans`)**: Cards monocromáticos com toggles individuais para cada um dos 10 módulos, ações em lote (Todos / Nenhum) e formulário dinâmico de "+ Criar Novo Plano" com os 10 módulos.
+  - **Reflexo nos Clientes (`PlanSettingsTab.tsx`)**: Exibição dos 10 módulos liberados/bloqueados conforme o plano do tenant ativo.
+  - **Build & Deploy**: `npx tsc --noEmit` e `npm run build` aprovados com código 0 no backend e frontend. Deploy atualizado na VPS (PM2 `versus-engine`) e Vercel.
+
+### ✅ FASE 60: EXPANSÃO COMPLETA DA MATRIZ DE PLANOS & PERMISSÕES (10 MÓDULOS & PERSISTÊNCIA REAL)
+- [x] **Mapeamento Completo de 10 Módulos do Sistema VERSUS**:
+  - [x] Funil Comercial (CRM) (`crm`)
+  - [x] Conexão WhatsApp & Disparos (`whatsapp`)
+  - [x] Agente de IA (Vitor / Automação) (`aiAgent`)
+  - [x] Inbox de E-mail Unificado Enterprise (`emailInbox`)
+  - [x] Analytics Avançado (PRO) (`analytics`)
+  - [x] Metas Comerciais & Leaderboard (`goals`)
+  - [x] Propostas Comerciais & Contratos Digitais (`proposalsContracts`)
+  - [x] Motor de Automações & Gatilhos (`automations`)
+  - [x] Central de Suporte Omnichannel (`support`)
+  - [x] Chat Interno da Equipe (`teamChat`)
+- [x] **Backend & Banco de Dados (Prisma ORM & Supabase)**:
+  - [x] Adicionado campo `modules Json?` ao modelo `Plan` no `schema.prisma`.
+  - [x] Sincronização direta via `npx prisma db push` e `npx prisma generate` no Supabase.
+  - [x] Atualização de `CreatePlanDto` para aceitar `modules?: any`.
+  - [x] `ensureStandardPlans()`, `createPlan()` e `updatePlan()` em `tenants.service.ts` com sincronização dos 10 módulos e compatibilidade retroativa para flags legadas.
+  - [x] Atualização no Supabase dos planos padrão (Básico, Pro, Enterprise) com a matriz dos 10 módulos.
+- [x] **Frontend: Painel Super Admin (`/super-admin/planos` e `/super-admin/plans`)**:
+  - [x] Suporte completo a ambas as rotas (`/super-admin/planos` e `/super-admin/plans`).
+  - [x] Cards de planos corporativos monocromáticos exibindo os 10 módulos com toggles interativos individuais e ações rápidas (Todos / Nenhum).
+  - [x] Formulário dinâmico de `+ Criar Novo Plano` com grade interativa dos 10 módulos.
+  - [x] Salva em tempo real e reflete alterações instantaneamente.
+  - [x] Suporte expandido aos 10 módulos na criação de planos personalizados em `CreateCompanyModal.tsx` e `EditCompanyModal.tsx`.
+- [x] **Frontend: Reflexo no Lado do Cliente (`PlanSettingsTab.tsx`)**:
+  - [x] Exibição de todos os 10 módulos na grade "Módulos e Recursos do Sistema", refletindo com precisão o status liberado ou bloqueado da empresa ativa.
+- [x] **Validação de Build, Homologação & Deploy**:
+  - [x] `npx tsc --noEmit` aprovado com código 0 em ambas as pontas.
+  - [x] `npm run build` aprovado com código 0 em ambas as pontas.
+  - [x] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)

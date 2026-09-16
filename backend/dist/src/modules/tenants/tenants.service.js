@@ -395,6 +395,18 @@ let TenantsService = class TenantsService {
                 hasAIAgent: false,
                 maxUsers: 1,
                 maxAIMsgs: 0,
+                modules: {
+                    crm: false,
+                    whatsapp: true,
+                    aiAgent: false,
+                    emailInbox: false,
+                    analytics: false,
+                    goals: false,
+                    proposalsContracts: false,
+                    automations: false,
+                    support: true,
+                    teamChat: true,
+                },
             },
             {
                 name: 'Pro',
@@ -405,6 +417,18 @@ let TenantsService = class TenantsService {
                 hasAIAgent: true,
                 maxUsers: 3,
                 maxAIMsgs: 2000,
+                modules: {
+                    crm: true,
+                    whatsapp: true,
+                    aiAgent: true,
+                    emailInbox: true,
+                    analytics: false,
+                    goals: true,
+                    proposalsContracts: true,
+                    automations: true,
+                    support: true,
+                    teamChat: true,
+                },
             },
             {
                 name: 'Enterprise',
@@ -415,14 +439,38 @@ let TenantsService = class TenantsService {
                 hasAIAgent: true,
                 maxUsers: 10,
                 maxAIMsgs: 10000,
+                modules: {
+                    crm: true,
+                    whatsapp: true,
+                    aiAgent: true,
+                    emailInbox: true,
+                    analytics: true,
+                    goals: true,
+                    proposalsContracts: true,
+                    automations: true,
+                    support: true,
+                    teamChat: true,
+                },
             },
         ];
         for (const dp of defaultPlans) {
-            const exists = await this.prisma.plan.findFirst({
+            const existing = await this.prisma.plan.findFirst({
                 where: { name: { equals: dp.name, mode: 'insensitive' } },
             });
-            if (!exists) {
+            if (!existing) {
                 await this.prisma.plan.create({ data: dp });
+            }
+            else if (!existing.modules) {
+                await this.prisma.plan.update({
+                    where: { id: existing.id },
+                    data: {
+                        modules: dp.modules,
+                        hasCRM: dp.hasCRM,
+                        hasWhatsApp: dp.hasWhatsApp,
+                        hasAIAgent: dp.hasAIAgent,
+                        hasInstagram: dp.hasInstagram,
+                    },
+                });
             }
         }
     }
@@ -436,16 +484,29 @@ let TenantsService = class TenantsService {
         if (!dto.name || dto.price === undefined) {
             throw new common_1.BadRequestException('Nome e preço do plano são obrigatórios.');
         }
+        const modules = dto.modules || {
+            crm: dto.hasCRM ?? false,
+            whatsapp: dto.hasWhatsApp ?? true,
+            aiAgent: dto.hasAIAgent ?? false,
+            emailInbox: false,
+            analytics: false,
+            goals: false,
+            proposalsContracts: false,
+            automations: false,
+            support: true,
+            teamChat: true,
+        };
         const created = await this.prisma.plan.create({
             data: {
                 name: dto.name.trim(),
                 price: dto.price,
-                hasCRM: dto.hasCRM ?? false,
-                hasWhatsApp: dto.hasWhatsApp ?? true,
-                hasInstagram: dto.hasInstagram ?? false,
-                hasAIAgent: dto.hasAIAgent ?? false,
+                hasCRM: modules.crm ?? dto.hasCRM ?? false,
+                hasWhatsApp: modules.whatsapp ?? dto.hasWhatsApp ?? true,
+                hasInstagram: modules.instagram ?? dto.hasInstagram ?? false,
+                hasAIAgent: modules.aiAgent ?? dto.hasAIAgent ?? false,
                 maxUsers: dto.maxUsers ?? 1,
                 maxAIMsgs: dto.maxAIMsgs ?? 0,
+                modules,
             },
         });
         return created;
@@ -471,6 +532,17 @@ let TenantsService = class TenantsService {
             data.maxUsers = dto.maxUsers;
         if (dto.maxAIMsgs !== undefined)
             data.maxAIMsgs = dto.maxAIMsgs;
+        if (dto.modules !== undefined) {
+            data.modules = dto.modules;
+            if (dto.modules.crm !== undefined)
+                data.hasCRM = Boolean(dto.modules.crm);
+            if (dto.modules.whatsapp !== undefined)
+                data.hasWhatsApp = Boolean(dto.modules.whatsapp);
+            if (dto.modules.aiAgent !== undefined)
+                data.hasAIAgent = Boolean(dto.modules.aiAgent);
+            if (dto.modules.instagram !== undefined)
+                data.hasInstagram = Boolean(dto.modules.instagram);
+        }
         return this.prisma.plan.update({
             where: { id },
             data,

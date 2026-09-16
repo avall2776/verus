@@ -85,7 +85,10 @@ export default function SuperAdminLayout({
             </p>
             
             {ADMIN_MENU.map((item) => {
-              const isActive = pathname === item.href || (item.href !== "/super-admin" && pathname.startsWith(item.href));
+              const isActive = 
+                pathname === item.href || 
+                (item.href === "/super-admin/planos" && pathname.startsWith("/super-admin/plans")) || 
+                (item.href !== "/super-admin" && pathname.startsWith(item.href));
               
               return (
                 <Link 

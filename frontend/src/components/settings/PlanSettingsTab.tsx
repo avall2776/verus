@@ -11,13 +11,81 @@ import {
   CheckCircle2, 
   XCircle, 
   ArrowUpRight, 
-  HelpCircle, 
   Loader2, 
   Zap,
-  PhoneCall
+  Kanban,
+  Mail,
+  BarChart3,
+  Target,
+  FileText,
+  LifeBuoy,
+  MessagesSquare
 } from "lucide-react";
 import api from "@/lib/api";
 import { useRouter } from "next/navigation";
+
+const CLIENT_PLAN_MODULES = [
+  {
+    key: "crm",
+    name: "Funil Comercial (CRM)",
+    desc: "Pipeline comercial Kanban, gestão de oportunidades e etapas de vendas.",
+    icon: Kanban,
+  },
+  {
+    key: "whatsapp",
+    name: "Conexão WhatsApp & Disparos",
+    desc: "Instância de atendimento oficial conectada e disparos em massa.",
+    icon: MessageSquare,
+  },
+  {
+    key: "aiAgent",
+    name: "Agente de IA (Vitor / Automação)",
+    desc: "Atendimento autônomo inteligente treinado com o conhecimento da sua empresa.",
+    icon: Bot,
+  },
+  {
+    key: "emailInbox",
+    name: "Inbox de E-mail Unificado Enterprise",
+    desc: "Sincronização SMTP/IMAP, leitura e resposta de e-mails corporativos.",
+    icon: Mail,
+  },
+  {
+    key: "analytics",
+    name: "Analytics Avançado (PRO)",
+    desc: "Dashboards analíticos de conversão, projeções e métricas da equipe.",
+    icon: BarChart3,
+  },
+  {
+    key: "goals",
+    name: "Metas Comerciais & Leaderboard",
+    desc: "Acompanhamento de metas individuais/equipe e ranking de desempenho.",
+    icon: Target,
+  },
+  {
+    key: "proposalsContracts",
+    name: "Propostas Comerciais & Contratos Digitais",
+    desc: "Emissão de propostas comerciais e contratos com assinatura eletrônica.",
+    icon: FileText,
+  },
+  {
+    key: "automations",
+    name: "Motor de Automações & Gatilhos",
+    desc: "Fluxos programados de mensagens, follow-ups e mudança de status.",
+    icon: Zap,
+  },
+  {
+    key: "support",
+    name: "Central de Suporte Omnichannel",
+    desc: "Abertura de chamados prioritários e canal direto com especialistas técnicos.",
+    icon: LifeBuoy,
+  },
+  {
+    key: "teamChat",
+    name: "Chat Interno da Equipe",
+    desc: "Comunicação corporativa direta entre colaboradores e gestores.",
+    icon: MessagesSquare,
+  },
+];
 
 export default function PlanSettingsTab() {
   const router = useRouter();
@@ -58,10 +126,23 @@ export default function PlanSettingsTab() {
     hasAIAgent: true,
     maxUsers: 3,
     maxAIMsgs: 2000,
+    modules: null,
+  };
+
+  const isModuleActive = (moduleKey: string) => {
+    if (plan.modules && typeof plan.modules === "object" && plan.modules[moduleKey] !== undefined) {
+      return Boolean(plan.modules[moduleKey]);
+    }
+    if (moduleKey === "crm") return Boolean(plan.hasCRM);
+    if (moduleKey === "whatsapp") return Boolean(plan.hasWhatsApp);
+    if (moduleKey === "aiAgent") return Boolean(plan.hasAIAgent);
+    if (moduleKey === "support" || moduleKey === "teamChat") return true;
+    return false;
   };
 
   const usersCount = tenant?._count?.users || 1;
   const userUsagePercent = Math.min(100, Math.round((usersCount / (plan.maxUsers || 1)) * 100));
+  const activeModulesCount = CLIENT_PLAN_MODULES.filter(m => isModuleActive(m.key)).length;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -73,7 +154,7 @@ export default function PlanSettingsTab() {
             <span>Meu Plano & Assinatura</span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Visualize o plano contratado, recursos habilitados e cotas operacionais da sua empresa.
+            Visualize o plano contratado, os 10 módulos do sistema e as cotas operacionais da sua empresa.
           </p>
         </div>
 
@@ -100,7 +181,7 @@ export default function PlanSettingsTab() {
             Plano {plan.name}
           </h3>
           <p className="text-xs text-slate-400 max-w-xl">
-            Ambiente corporativo provisionado com acesso prioritário aos canais de comunicação e ferramentas de vendas.
+            Ambiente corporativo provisionado no VERSUS com acesso aos módulos liberados para sua operação comercial.
           </p>
         </div>
 
@@ -115,72 +196,59 @@ export default function PlanSettingsTab() {
         </div>
       </div>
 
-      {/* Grade de Recursos e Módulos Inclusos */}
+      {/* Grade de Recursos e Módulos Inclusos (10 Módulos) */}
       <div className="space-y-3">
-        <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-          Módulos e Recursos Habilitados na Assinatura
-        </h4>
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+            Módulos e Recursos do Sistema ({activeModulesCount}/10 Liberados)
+          </h4>
+          <span className="text-[11px] text-slate-500">
+            Governança Master
+          </span>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          {/* CRM */}
-          <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800/80 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-200">Funil de Vendas CRM</span>
-              {plan.hasCRM ? (
-                <CheckCircle2 size={16} className="text-emerald-400" />
-              ) : (
-                <XCircle size={16} className="text-slate-600" />
-              )}
-            </div>
-            <p className="text-[11px] text-slate-400">
-              {plan.hasCRM ? "Pipeline comercial completo e gestão de oportunidades ativo." : "Módulo indisponível no plano atual."}
-            </p>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          {CLIENT_PLAN_MODULES.map((mod) => {
+            const Icon = mod.icon;
+            const active = isModuleActive(mod.key);
 
-          {/* WhatsApp */}
-          <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800/80 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-200">WhatsApp Oficial</span>
-              {plan.hasWhatsApp ? (
-                <CheckCircle2 size={16} className="text-emerald-400" />
-              ) : (
-                <XCircle size={16} className="text-slate-600" />
-              )}
-            </div>
-            <p className="text-[11px] text-slate-400">
-              {plan.hasWhatsApp ? "Instância de atendimento conectada e sincronizada." : "Módulo indisponível no plano atual."}
-            </p>
-          </div>
+            return (
+              <div 
+                key={mod.key} 
+                className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
+                  active 
+                    ? "bg-[#070D1B] border-slate-800" 
+                    : "bg-[#070D1B]/40 border-slate-900/60 opacity-60"
+                }`}
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-800">
+                      <Icon size={16} className={active ? "text-blue-400" : "text-slate-600"} />
+                    </div>
+                    {active ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                        <CheckCircle2 size={11} />
+                        <span>Liberado</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-slate-800/40 px-2 py-0.5 rounded border border-slate-800">
+                        <XCircle size={11} />
+                        <span>Bloqueado</span>
+                      </span>
+                    )}
+                  </div>
+                  <h5 className="text-xs font-bold text-slate-200 leading-snug">
+                    {mod.name}
+                  </h5>
+                </div>
 
-          {/* Agente IA */}
-          <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800/80 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-200">Agente IA (Vitor)</span>
-              {plan.hasAIAgent ? (
-                <CheckCircle2 size={16} className="text-emerald-400" />
-              ) : (
-                <XCircle size={16} className="text-slate-600" />
-              )}
-            </div>
-            <p className="text-[11px] text-slate-400">
-              {plan.hasAIAgent ? `Atendimento autônomo com cota de até ${plan.maxAIMsgs} msgs/mês.` : "Módulo de IA não contratado."}
-            </p>
-          </div>
-
-          {/* Instagram */}
-          <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800/80 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-200">Instagram Direct</span>
-              {plan.hasInstagram ? (
-                <CheckCircle2 size={16} className="text-emerald-400" />
-              ) : (
-                <XCircle size={16} className="text-slate-600" />
-              )}
-            </div>
-            <p className="text-[11px] text-slate-400">
-              {plan.hasInstagram ? "Recepção e envio de directs centralizado." : "Disponível a partir do plano Enterprise."}
-            </p>
-          </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  {mod.desc}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -216,7 +284,7 @@ export default function PlanSettingsTab() {
         <div className="p-5 rounded-xl bg-[#070D1B] border border-slate-800 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Bot size={16} className="text-indigo-400" />
+              <Bot size={16} className="text-blue-400" />
               <span className="text-xs font-bold text-white">Cota Mensal do Agente IA</span>
             </div>
             <span className="text-xs font-mono font-bold text-slate-200">
@@ -225,7 +293,7 @@ export default function PlanSettingsTab() {
           </div>
 
           <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-indigo-500 rounded-full w-1/4" />
+            <div className="h-full bg-blue-500 rounded-full w-1/4" />
           </div>
 
           <p className="text-[11px] text-slate-400">
@@ -235,16 +303,16 @@ export default function PlanSettingsTab() {
       </div>
 
       {/* Banner de Upgrade / Suporte */}
-      <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-950/40 via-slate-900 to-[#0B1224] border border-blue-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-5 rounded-2xl bg-[#0B1224] border border-blue-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-blue-400" />
             <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-              Precisa de mais vagas ou um plano personalizado?
+              Precisa de mais vagas ou liberar módulos adicionais?
             </h4>
           </div>
           <p className="text-xs text-slate-300">
-            Nossa equipe técnica pode ajustar cotas de IA, conexões adicionais e limites exclusivos para sua operação.
+            Nossa equipe técnica pode ajustar cotas de IA, liberar módulos avançados e personalizar limites para sua operação.
           </p>
         </div>
 

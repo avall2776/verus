@@ -34,6 +34,7 @@ const contracts_module_1 = require("./modules/contracts/contracts.module");
 const emails_module_1 = require("./modules/emails/emails.module");
 const support_module_1 = require("./modules/support/support.module");
 const tenants_module_1 = require("./modules/tenants/tenants.module");
+const workspaces_module_1 = require("./modules/workspaces/workspaces.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -66,6 +67,7 @@ exports.AppModule = AppModule = __decorate([
             emails_module_1.EmailsModule,
             support_module_1.SupportModule,
             tenants_module_1.TenantsModule,
+            workspaces_module_1.WorkspacesModule,
         ],
         controllers: [],
         providers: [],
