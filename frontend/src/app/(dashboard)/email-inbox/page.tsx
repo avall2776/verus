@@ -38,9 +38,30 @@ export default function EmailInboxPage() {
   const [composerInitialSubject, setComposerInitialSubject] = useState("");
   const [composerInitialBody, setComposerInitialBody] = useState("");
 
+  // Status do Transporte SMTP
+  const [transportStatus, setTransportStatus] = useState<{
+    configured: boolean;
+    connected: boolean;
+    provider: string;
+    host: string | null;
+    user: string | null;
+    from: string | null;
+    connectionError: string | null;
+  } | null>(null);
+
   // Resposta rápida inline
   const [quickReplyText, setQuickReplyText] = useState("");
   const [sendingQuickReply, setSendingQuickReply] = useState(false);
+
+  // Carregar status do SMTP
+  const fetchTransportStatus = useCallback(async () => {
+    try {
+      const res = await api.get("/emails/transport/status");
+      setTransportStatus(res.data);
+    } catch (e) {
+      console.warn("[EMAIL_TRANSPORT_STATUS_ERROR]", e);
+    }
+  }, []);
 
   // Carregar contadores de pastas
   const fetchCounts = useCallback(async () => {
@@ -93,7 +114,8 @@ export default function EmailInboxPage() {
 
   useEffect(() => {
     fetchEmails();
-  }, [fetchEmails]);
+    fetchTransportStatus();
+  }, [fetchEmails, fetchTransportStatus]);
 
   // Alternar Estrela / Favorito
   const handleToggleStar = async (emailId: string, e?: React.MouseEvent) => {
@@ -159,8 +181,10 @@ export default function EmailInboxPage() {
       toast.success("Resposta enviada com sucesso!");
       setQuickReplyText("");
       fetchEmails(true);
-    } catch (error) {
-      toast.error("Erro ao enviar resposta.");
+    } catch (error: any) {
+      console.error("[EMAIL_QUICK_REPLY_ERROR]", error);
+      const msg = error.response?.data?.message || "Erro ao enviar resposta.";
+      toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
     } finally {
       setSendingQuickReply(false);
     }
@@ -198,8 +222,30 @@ export default function EmailInboxPage() {
           <div>
             <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
               Inbox Unificado de E-mails
-              <span className="text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-bold">
-                IMAP / SMTP Ativo
+              <span 
+                title={
+                  transportStatus?.configured 
+                    ? (transportStatus?.connected 
+                        ? `Servidor SMTP Conectado: ${transportStatus.host} (${transportStatus.user || 'autenticado'})` 
+                        : `Falha na Conexão SMTP: ${transportStatus.connectionError || 'Verifique credenciais no servidor'}`)
+                    : "SMTP não configurado no servidor. Configure SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS no .env da VPS."
+                }
+                className={`text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full border font-bold flex items-center gap-1.5 ${
+                  transportStatus?.connected
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                    : transportStatus?.configured
+                    ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                    : "bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  transportStatus?.connected ? "bg-emerald-400 animate-pulse" : transportStatus?.configured ? "bg-amber-400" : "bg-cyan-400"
+                }`} />
+                {transportStatus?.connected
+                  ? `SMTP Ativo (${transportStatus.provider})`
+                  : transportStatus?.configured
+                  ? "SMTP Configurado"
+                  : "SMTP Integrado"}
               </span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-400">

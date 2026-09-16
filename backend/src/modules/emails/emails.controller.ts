@@ -37,6 +37,11 @@ export class EmailsController {
     return this.emailsService.getCounts(tenantId);
   }
 
+  @Get('transport/status')
+  async getTransportStatus() {
+    return this.emailsService.getTransportStatus();
+  }
+
   @Get(':id')
   async getEmailById(
     @CurrentTenant() tenantId: string,

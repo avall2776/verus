@@ -119,35 +119,83 @@ export declare class AnalyticsService {
             createdAt: string;
         }[];
     }>;
+    getChannels(tenantId: string, startDate?: string, endDate?: string): Promise<{
+        channels: {
+            id: string;
+            name: string;
+            type: string;
+            color: string;
+            leadsCount: number;
+            dealsCount: number;
+            proposalsCount: number;
+            contractsSignedCount: number;
+            totalRevenue: number;
+            conversionRate: number;
+            avgTicket: number;
+            percentOfTotalRevenue: number;
+        }[];
+        totalLeads: number;
+        totalRevenue: number;
+        topChannel: string;
+        fastestGrowingChannel: string;
+        isBaseline: boolean;
+    }>;
     getFunnel(tenantId: string, startDate?: string, endDate?: string): Promise<{
         totalLeads: number;
         contractsSigned: number;
         overallConversion: number;
+        totalRevenue: number;
+        avgTicket: number;
+        avgSalesCycleHours: number;
         stages: {
+            stage: string;
             name: string;
             count: number;
+            conversion: string;
             percent: number;
-            dropoff: number;
+            dropoff: string;
+            dropoffCount: number;
+            duration: string;
+            fill: string;
             color: string;
         }[];
+        benchmarkComparison: {
+            industryConversion: number;
+            versusConversion: number;
+            delta: number;
+        };
+        isBaseline: boolean;
     }>;
     getBottlenecks(tenantId: string, startDate?: string, endDate?: string): Promise<{
         tmaMinutes: number;
         frtMinutes: number;
         slaCompliancePercent: number;
         criticalBottleneck: string;
+        departmentBottlenecks: {
+            department: string;
+            name: string;
+            frtMin: number;
+            tmaMin: number;
+            sla: number;
+            queue: number;
+            fillFrt: string;
+            fillTma: string;
+            health: string;
+        }[];
         hourlyBottlenecks: {
             hour: string;
             frtMin: number;
             tmaMin: number;
             volume: number;
+            queue: number;
             bottleneckLevel: string;
         }[];
-        departmentBottlenecks: {
-            department: string;
-            avgFrt: number;
-            avgTma: number;
-            health: string;
+        recommendations: {
+            id: string;
+            type: string;
+            title: string;
+            description: string;
+            impact: string;
         }[];
     }>;
 }

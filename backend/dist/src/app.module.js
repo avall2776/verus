@@ -31,6 +31,7 @@ const storage_module_1 = require("./shared/storage/storage.module");
 const proposals_module_1 = require("./modules/proposals/proposals.module");
 const goals_module_1 = require("./modules/goals/goals.module");
 const contracts_module_1 = require("./modules/contracts/contracts.module");
+const emails_module_1 = require("./modules/emails/emails.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -60,6 +61,7 @@ exports.AppModule = AppModule = __decorate([
             proposals_module_1.ProposalsModule,
             goals_module_1.GoalsModule,
             contracts_module_1.ContractsModule,
+            emails_module_1.EmailsModule,
         ],
         controllers: [],
         providers: [],
