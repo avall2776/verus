@@ -108,7 +108,7 @@ export function SellerDetailModal({
                   <span className="text-[11px] font-medium text-slate-400 block mb-1">
                     Receita Faturada
                   </span>
-                  <div className="text-lg font-bold font-mono text-emerald-400">
+                  <div className="text-lg font-bold font-mono text-white">
                     R${" "}
                     {data.metrics.totalRevenueWon.toLocaleString("pt-BR", {
                       minimumFractionDigits: 2,
@@ -141,7 +141,7 @@ export function SellerDetailModal({
                   <span className="text-[11px] font-medium text-slate-400 block mb-1">
                     Ticket Médio
                   </span>
-                  <div className="text-lg font-bold font-mono text-amber-400">
+                  <div className="text-lg font-bold font-mono text-white">
                     R${" "}
                     {data.metrics.avgTicket.toLocaleString("pt-BR", {
                       minimumFractionDigits: 0,
@@ -155,10 +155,10 @@ export function SellerDetailModal({
                 <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800/80 space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <Award className="w-4 h-4 text-amber-400" />
+                      <Award className="w-4 h-4 text-blue-400" />
                       Conquistas & Selos Desbloqueados ({data.badges.length})
                     </h4>
-                    <span className="text-[10px] text-amber-400/80 font-medium">
+                    <span className="text-[10px] text-blue-400/80 font-medium">
                       Reconhecimento Gamificado
                     </span>
                   </div>
@@ -167,7 +167,7 @@ export function SellerDetailModal({
                     {data.badges.map((badge) => (
                       <div
                         key={badge.id}
-                        className="p-2.5 rounded-lg bg-[#0B1224] border border-slate-700/60 flex items-start gap-2.5"
+                        className="p-2.5 rounded-lg bg-[#0B1224] border border-slate-800 flex items-start gap-2.5"
                       >
                         <span className="text-xl p-1.5 rounded-md bg-slate-800/80 shrink-0">
                           {badge.icon}
@@ -214,7 +214,7 @@ export function SellerDetailModal({
                             <div className="font-semibold text-white flex items-center gap-2">
                               {deal.title}
                               {deal.isWon && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
                                   Ganho
                                 </span>
                               )}

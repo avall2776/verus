@@ -34,16 +34,10 @@ export class GoalsService {
       },
     });
 
-    let totalRevenueTarget = revenueGoals.reduce(
+    const totalRevenueTarget = revenueGoals.reduce(
       (acc, g) => acc + Number(g.targetValue || 0),
       0,
     );
-
-    // Se ainda não houver meta cadastrada, define uma baseline executiva inicial
-    const isBaseline = totalRevenueTarget === 0;
-    if (isBaseline) {
-      totalRevenueTarget = 150000;
-    }
 
     // 2. Filtro opcional por canal de aquisição
     const dealWhere: Prisma.DealWhereInput = {
@@ -81,12 +75,8 @@ export class GoalsService {
       0,
     );
 
-    // Combina valores mantendo baseline caso esteja no início do tenant
-    let totalRevenueWon = Math.max(dealsRevenue, contractsRevenue);
-    if (totalRevenueWon === 0 && isBaseline) {
-      // Valor proporcional aos dias corridos para demonstração realista sem mock rígido
-      totalRevenueWon = Math.round((totalRevenueTarget * (daysPassed / totalDays)) * 0.92);
-    }
+    // Receita estritamente real do banco (Deals ganhos ou Contratos assinados)
+    const totalRevenueWon = Math.max(dealsRevenue, contractsRevenue);
 
     // 3. Cálculos de Run Rate Matemático
     const dailyPace = daysPassed > 0 ? +(totalRevenueWon / daysPassed).toFixed(2) : 0;
@@ -150,7 +140,7 @@ export class GoalsService {
       expectedPacePercentage,
       paceGap,
       healthStatus,
-      isBaseline,
+      isBaseline: false,
       topSeller,
       goalsCount: revenueGoals.length,
       selectedChannel: channel || 'all',
@@ -329,6 +319,18 @@ export class GoalsService {
       },
     });
 
+    const userGoals = await this.prisma.goal.findMany({
+      where: {
+        tenantId,
+        targetType: 'REVENUE',
+      },
+      select: {
+        id: true,
+        userId: true,
+        targetValue: true,
+      },
+    });
+
     const deals = await this.prisma.deal.findMany({
       where: { tenantId },
       select: {
@@ -348,6 +350,11 @@ export class GoalsService {
       const conversionRate = totalDeals > 0 ? Math.round((wonDeals.length / totalDeals) * 100) : 0;
       const avgTicket = wonDeals.length > 0 ? Math.round(totalRevenueWon / wonDeals.length) : 0;
 
+      // Meta real configurada no banco para o consultor
+      const personalGoal = userGoals.find((g) => g.userId === u.id);
+      const targetValue = personalGoal ? Number(personalGoal.targetValue || 0) : 0;
+      const percentAchieved = targetValue > 0 ? +((totalRevenueWon / targetValue) * 100).toFixed(1) : 0;
+
       return {
         userId: u.id,
         id: u.id,
@@ -360,8 +367,8 @@ export class GoalsService {
         dealsCount: wonDeals.length,
         revenueWon: totalRevenueWon,
         achievedValue: totalRevenueWon,
-        targetValue: 60000,
-        percentAchieved: 60000 > 0 ? +((totalRevenueWon / 60000) * 100).toFixed(1) : 0,
+        targetValue,
+        percentAchieved,
         conversionRate,
         avgTicket,
       };
@@ -482,14 +489,14 @@ export class GoalsService {
     const badges: { id: string; title: string; icon: string; description: string; color: string }[] = [];
 
     // 1. Meta Batida (100%+)
-    const target = metrics.targetValue || 60000;
-    if (metrics.totalRevenueWon >= target) {
+    const target = Number(metrics.targetValue || 0);
+    if (target > 0 && metrics.totalRevenueWon >= target) {
       badges.push({
         id: 'target_met',
         title: 'Meta Batida (100%+)',
         icon: '🏆',
         description: 'Superou a meta estipulada para o ciclo.',
-        color: 'emerald',
+        color: 'blue',
       });
     }
 
