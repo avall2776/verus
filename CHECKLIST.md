@@ -1059,6 +1059,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - **Badge Superior**: Corrigido para `• E-MAIL CONECTADO` em português limpo, eliminando o erro de variável `(undefined)`.
     - **Design Monocromático Corporativo**: Removidos todos os gradientes coloridos pesados (cyan, rosa, roxo e âmbar) em `/email-inbox`, `EmailSettingsTab.tsx` e `EmailComposerModal.tsx`. Aplicada estritamente a identidade visual padrão do VERSUS (azul escuro `bg-blue-600`, ardósia `bg-slate-900`, `border-slate-800` e tipografia branca/slate).
     - **Validação & Deploy**: `npx tsc --noEmit` e `npm run build` executados com código 0 de erro. Deploy ativo e sincronizado na VPS Hostinger (PM2 `versus-engine` PID 452377) e na Vercel via commit `8c0c380`.
+  - [ ] **Refinamento Técnico Agendado (Período da Tarde)**: Investigar e corrigir duplicação visual de e-mails na listagem/pasta de e-mails enviados (`SENT`).
 
 - **[16/09/2026 - 11:23]** ⚡ **[IDE 2] Ativação de Tarefa & Início de Desenvolvimento: Fase 54 (Correção do Perfil no Menu Lateral & Padronização Monocromática da Configuração de E-mail)**:
   - **Status**: ⏳ Em Andamento (Fase 54 - Autoridade Exclusiva IDE 2).
@@ -1081,6 +1082,35 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - `npx tsc --noEmit` e `npm run build` aprovados com código 0.
   - Deploy sincronizado na VPS (Hostinger PM2 `versus-engine`) e Vercel.
   - Homologação condicionada à aprovação do usuário.
+
+### 🟡 FASE 55: CENTRAL DE SUPORTE E ATENDIMENTO ENTERPRISE (ESTILO LERO)
+> **Status**: 📅 Agendada para desenvolvimento no período da tarde (Estruturação Cliente & Administrador).
+- [ ] **Modelagem e Banco de Dados (Prisma ORM)**:
+  - Criação dos modelos `SupportTicket` e `TicketMessage` com isolamento multitenant (`tenantId`, `userId`, `contactId`).
+  - Definição de enums e campos: `status` (`OPEN`, `IN_PROGRESS`, `WAITING_CLIENT`, `RESOLVED`, `CLOSED`), `priority` (`LOW`, `MEDIUM`, `HIGH`, `URGENT`), `category` (Financeiro, Dúvida Técnica, Bug, Solicitação de Recurso), assunto, descrição e anexos.
+  - Sincronização do banco de dados via `npx prisma db push` e geração do cliente com `npx prisma generate`.
+- [ ] **Backend NestJS (`SupportModule`)**:
+  - `GET /support/tickets`: Listagem paginada de chamados com filtros por status, prioridade, solicitante e atendente responsável.
+  - `POST /support/tickets`: Abertura de novos chamados com validação por DTOs e atribuição automática ou sob demanda.
+  - `GET /support/tickets/:id`: Consulta de detalhes do chamado com histórico cronológico de mensagens e anexos.
+  - `POST /support/tickets/:id/messages`: Envio de mensagens e respostas no chamado, com suporte a mensagens internas do atendente e respostas ao cliente.
+  - `PATCH /support/tickets/:id/status`: Transição e atualização de status do chamado com registro de logs.
+  - `PATCH /support/tickets/:id/assign`: Atribuição e transferência de tickets entre operadores do time.
+  - Todos os endpoints protegidos por JWT e multitenant isolado (`@CurrentTenant`).
+- [ ] **Frontend Enterprise (Interface do Cliente & Administrador - Estilo Lero)**:
+  - Rota dedicada e integrada à barra lateral (`Sidebar.tsx`): `/support` ou `/central-ajuda`.
+  - **Visão do Solicitante / Cliente**:
+    - Listagem clara de seus chamados abertos e histórico de resolução.
+    - Modal simplificado de abertura de ticket com anexos e categorização inteligente.
+    - Dicas rápidas de autoatendimento e troubleshooting contextual para dúvidas frequentes antes da abertura do chamado.
+  - **Visão do Administrador / Operador de Suporte (Estilo Lero)**:
+    - Painel centralizado com fila de atendimento, ordenação por urgência/SLA e contadores em tempo real.
+    - Chat de chamado integrado para troca de mensagens, envio de documentos e finalização do atendimento.
+- [ ] **Design System Monocromático Corporativo**:
+  - Aplicação estrita da paleta institucional do VERSUS: azul escuro `#070D1B`, `bg-slate-900`, `border-slate-800`, botões em `bg-blue-600 hover:bg-blue-500` e tipografia branca/slate, sem gradientes coloridos pesados.
+- [ ] **Build, Homologação & Deploy**:
+  - `npx tsc --noEmit` e `npm run build` aprovados com código 0 de erro.
+  - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e na Vercel.
 
 ---
 
