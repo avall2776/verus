@@ -59,6 +59,7 @@ model Tenant {
   proposals    Proposal[]
   goals        Goal[]
   contracts    Contract[]
+  emails       EmailMessage[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -138,6 +139,7 @@ model Contact {
   messages  Message[]
   deals     Deal[]
   proposals Proposal[]
+  emails    EmailMessage[]
   automationLogs AutomationLog[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -202,6 +204,7 @@ model Deal {
   contact    Contact  @relation(fields: [contactId], references: [id])
   assignee   User?    @relation(fields: [assignedTo], references: [id])
   proposals  Proposal[]
+  emails     EmailMessage[]
   automationLogs AutomationLog[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -510,3 +513,52 @@ model Contract {
   @@index([tenantId, status])
   @@index([proposalId])
 }
+
+// ------------------------------------------------------
+// INBOX DE E-MAIL UNIFICADO ENTERPRISE
+// ------------------------------------------------------
+
+model EmailMessage {
+  id             String    @id @default(uuid())
+  tenantId       String
+  contactId      String?
+  dealId         String?
+  proposalId     String?
+  contractId     String?
+  
+  threadId       String?
+  senderName     String
+  senderEmail    String
+  recipientEmail String
+  recipientName  String?
+  cc             String?
+  bcc            String?
+  
+  subject        String
+  bodyText       String    @db.Text
+  bodyHtml       String?   @db.Text
+  preview        String?
+  
+  folder         String    @default("INBOX") // INBOX, SENT, DRAFT, TRASH, ARCHIVE
+  isRead         Boolean   @default(false)
+  isStarred      Boolean   @default(false)
+  hasAttachments Boolean   @default(false)
+  attachments    Json?     // [{ name: string, url: string, size: number, type: string }]
+  
+  sentAt         DateTime?
+  receivedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contact        Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  deal           Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, folder])
+  @@index([tenantId, isStarred])
+  @@index([tenantId, isRead])
+  @@index([tenantId, threadId])
+  @@index([contactId])
+  @@index([dealId])
+}
+

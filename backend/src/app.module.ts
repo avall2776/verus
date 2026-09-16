@@ -22,6 +22,7 @@ import { StorageModule } from './shared/storage/storage.module';
 import { ProposalsModule } from './modules/proposals/proposals.module';
 import { GoalsModule } from './modules/goals/goals.module';
 import { ContractsModule } from './modules/contracts/contracts.module';
+import { EmailsModule } from './modules/emails/emails.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ContractsModule } from './modules/contracts/contracts.module';
     ProposalsModule,
     GoalsModule,
     ContractsModule,
+    EmailsModule,
   ],
   controllers: [],
   providers: [],

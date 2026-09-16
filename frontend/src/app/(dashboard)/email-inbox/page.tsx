@@ -1,65 +1,204 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { 
   Mail, Inbox, Send, Archive, Trash2, Star, 
-  Search, RefreshCw, Plus, Paperclip, CheckCircle2, Clock
+  Search, RefreshCw, Plus, Paperclip, CheckCircle2, Clock,
+  ShieldCheck, FileText, ChevronRight, Reply, Forward,
+  Filter, ExternalLink, Download, ArrowRight, Sparkles, Eye,
+  Building2, User as UserIcon, AlertCircle
 } from "lucide-react";
+import api from "@/lib/api";
 import toast from "react-hot-toast";
-
-const INITIAL_EMAILS = [
-  {
-    id: "em-1",
-    sender: "Roberto Alencar",
-    company: "Nexus Logística",
-    subject: "Re: Proposta Comercial PROP-2026-1042 - Aceite & Assinatura",
-    preview: "Olá Ana Paula, analisamos a minuta do contrato e os anexos técnicos e estamos de acordo com os termos...",
-    time: "10:45",
-    read: false,
-    starred: true,
-    tag: "Comercial"
-  },
-  {
-    id: "em-2",
-    sender: "Fernanda Takahashi",
-    company: "Inovare Odontologia",
-    subject: "Dúvida sobre integração do Agente de IA com nosso sistema",
-    preview: "Bom dia equipe VERSUS, gostaríamos de tirar uma dúvida sobre a API de integração para prontuários eletrônicos...",
-    time: "Ontem",
-    read: true,
-    starred: false,
-    tag: "Técnico"
-  },
-  {
-    id: "em-3",
-    sender: "Marcelo Dantas",
-    company: "Dantas Advocacia",
-    subject: "Comprovante de pagamento da parcela de entrada",
-    preview: "Prezados, segue em anexo o comprovante da TED referente à implantação do módulo de mensagens...",
-    time: "14 Set",
-    read: true,
-    starred: false,
-    tag: "Financeiro"
-  }
-];
+import { EmailItem, EmailFolderCounts } from "@/types/email";
+import EmailComposerModal from "@/components/emails/EmailComposerModal";
 
 export default function EmailInboxPage() {
-  const [emails, setEmails] = useState(INITIAL_EMAILS);
-  const [selectedEmail, setSelectedEmail] = useState(INITIAL_EMAILS[0]);
+  const [emails, setEmails] = useState<EmailItem[]>([]);
+  const [selectedEmail, setSelectedEmail] = useState<EmailItem | null>(null);
+  const [activeFolder, setActiveFolder] = useState<string>("INBOX");
   const [search, setSearch] = useState("");
+  const [isStarredFilter, setIsStarredFilter] = useState(false);
+  const [isUnreadFilter, setIsUnreadFilter] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [counts, setCounts] = useState<EmailFolderCounts>({
+    inbox: 0,
+    unread: 0,
+    starred: 0,
+    sent: 0,
+    draft: 0,
+    trash: 0,
+    archive: 0,
+  });
+
+  // Modal de Novo E-mail
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [composerInitialRecipient, setComposerInitialRecipient] = useState("");
+  const [composerInitialSubject, setComposerInitialSubject] = useState("");
+  const [composerInitialBody, setComposerInitialBody] = useState("");
+
+  // Resposta rápida inline
+  const [quickReplyText, setQuickReplyText] = useState("");
+  const [sendingQuickReply, setSendingQuickReply] = useState(false);
+
+  // Carregar contadores de pastas
+  const fetchCounts = useCallback(async () => {
+    try {
+      const res = await api.get("/emails/counts");
+      setCounts(res.data);
+    } catch (e) {
+      console.error("[EMAIL_COUNTS_ERROR]", e);
+    }
+  }, []);
+
+  // Carregar lista de e-mails
+  const fetchEmails = useCallback(async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    else setIsRefreshing(true);
+
+    try {
+      const params: any = {
+        folder: isStarredFilter ? undefined : activeFolder,
+        isStarred: isStarredFilter ? true : undefined,
+        isRead: isUnreadFilter ? false : undefined,
+        search: search.trim() || undefined,
+      };
+
+      const res = await api.get("/emails", { params });
+      const items: EmailItem[] = res.data?.emails || [];
+      setEmails(items);
+
+      // Manter ou selecionar o primeiro e-mail se nada estiver selecionado
+      if (items.length > 0) {
+        setSelectedEmail((prev) => {
+          if (!prev) return items[0];
+          const found = items.find((i) => i.id === prev.id);
+          return found || items[0];
+        });
+      } else {
+        setSelectedEmail(null);
+      }
+
+      fetchCounts();
+      if (silent) toast.success("Caixa de entrada sincronizada!");
+    } catch (error) {
+      console.error("[EMAIL_FETCH_ERROR]", error);
+      toast.error("Erro ao sincronizar mensagens.");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [activeFolder, isStarredFilter, isUnreadFilter, search, fetchCounts]);
+
+  useEffect(() => {
+    fetchEmails();
+  }, [fetchEmails]);
+
+  // Alternar Estrela / Favorito
+  const handleToggleStar = async (emailId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      const res = await api.patch(`/emails/${emailId}/star`);
+      setEmails((prev) =>
+        prev.map((item) => (item.id === emailId ? { ...item, isStarred: res.data.isStarred } : item))
+      );
+      if (selectedEmail?.id === emailId) {
+        setSelectedEmail((prev) => (prev ? { ...prev, isStarred: res.data.isStarred } : null));
+      }
+      fetchCounts();
+    } catch (error) {
+      toast.error("Erro ao favoritar e-mail.");
+    }
+  };
+
+  // Mover para Pasta (Arquivo ou Lixeira)
+  const handleMoveFolder = async (emailId: string, targetFolder: string) => {
+    try {
+      await api.patch(`/emails/${emailId}/folder`, { folder: targetFolder });
+      toast.success(
+        targetFolder === "TRASH" ? "E-mail movido para a Lixeira." : "E-mail arquivado com sucesso."
+      );
+      fetchEmails(true);
+    } catch (error) {
+      toast.error("Erro ao mover e-mail.");
+    }
+  };
+
+  // Selecionar E-mail e Marcar como Lido
+  const handleSelectEmail = async (email: EmailItem) => {
+    setSelectedEmail(email);
+    if (!email.isRead) {
+      try {
+        await api.get(`/emails/${email.id}`);
+        setEmails((prev) =>
+          prev.map((i) => (i.id === email.id ? { ...i, isRead: true } : i))
+        );
+        fetchCounts();
+      } catch (e) {}
+    }
+  };
+
+  // Enviar Resposta Rápida inline
+  const handleSendQuickReply = async () => {
+    if (!selectedEmail || !quickReplyText.trim()) return;
+
+    setSendingQuickReply(true);
+    try {
+      const payload = {
+        recipientEmail: selectedEmail.senderEmail,
+        recipientName: selectedEmail.senderName,
+        subject: selectedEmail.subject.startsWith("Re:") 
+          ? selectedEmail.subject 
+          : `Re: ${selectedEmail.subject}`,
+        bodyText: quickReplyText.trim(),
+        threadId: selectedEmail.id,
+      };
+
+      await api.post("/emails/send", payload);
+      toast.success("Resposta enviada com sucesso!");
+      setQuickReplyText("");
+      fetchEmails(true);
+    } catch (error) {
+      toast.error("Erro ao enviar resposta.");
+    } finally {
+      setSendingQuickReply(false);
+    }
+  };
+
+  // Abrir Modal de Novo E-mail como Resposta Completa
+  const handleOpenReplyComposer = () => {
+    if (!selectedEmail) return;
+    setComposerInitialRecipient(selectedEmail.senderEmail);
+    setComposerInitialSubject(
+      selectedEmail.subject.startsWith("Re:") ? selectedEmail.subject : `Re: ${selectedEmail.subject}`
+    );
+    setComposerInitialBody(`\n\n--- Em ${new Date(selectedEmail.createdAt).toLocaleString("pt-BR")}, ${selectedEmail.senderName} escreveu:\n> ${selectedEmail.bodyText.replace(/\n/g, "\n> ")}`);
+    setIsComposerOpen(true);
+  };
+
+  const formatEmailDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    if (isToday) {
+      return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    }
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6 animate-in fade-in duration-300">
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-lg shadow-cyan-500/5">
             <Mail className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+            <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
               Inbox Unificado de E-mails
-              <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-medium">
+              <span className="text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-bold">
                 IMAP / SMTP Ativo
               </span>
             </h1>
@@ -69,124 +208,429 @@ export default function EmailInboxPage() {
           </div>
         </div>
 
-        <button
-          onClick={() => toast.success("Novo redator de e-mail comercial aberto.")}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-xs shadow-lg shadow-cyan-500/25 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          Escrever Novo E-mail
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => fetchEmails(true)}
+            disabled={isRefreshing}
+            className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all"
+            title="Sincronizar caixa de entrada"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-cyan-400" : ""}`} />
+          </button>
+
+          <button
+            onClick={() => {
+              setComposerInitialRecipient("");
+              setComposerInitialSubject("");
+              setComposerInitialBody("");
+              setIsComposerOpen(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/20 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            Escrever Novo E-mail
+          </button>
+        </div>
       </div>
 
-      {/* Container de E-mails em 2 Colunas */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[720px]">
-        {/* Lista de Mensagens */}
-        <div className="lg:col-span-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md flex flex-col overflow-hidden">
-          <div className="p-3 border-b border-slate-800">
+      {/* Container 3-Pane Enterprise */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[760px]">
+        {/* PANE 1: Pastas e Navegação Lateral (col-span-3) */}
+        <div className="lg:col-span-3 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md p-4 flex flex-col justify-between shadow-xl">
+          <div className="space-y-4">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2">
+              Pastas & Diretórios
+            </div>
+
+            <nav className="space-y-1">
+              <button
+                onClick={() => {
+                  setActiveFolder("INBOX");
+                  setIsStarredFilter(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeFolder === "INBOX" && !isStarredFilter
+                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Inbox className="w-4 h-4" />
+                  <span>Caixa de Entrada</span>
+                </div>
+                {counts.unread > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500 text-slate-950">
+                    {counts.unread}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsStarredFilter(true);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  isStarredFilter
+                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Star className="w-4 h-4" />
+                  <span>Com Estrela</span>
+                </div>
+                {counts.starred > 0 && (
+                  <span className="text-slate-400 font-mono text-[11px]">{counts.starred}</span>
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  setActiveFolder("SENT");
+                  setIsStarredFilter(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeFolder === "SENT" && !isStarredFilter
+                    ? "bg-blue-500/20 text-blue-300 border border-blue-500/30 shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Send className="w-4 h-4" />
+                  <span>Enviados</span>
+                </div>
+                {counts.sent > 0 && (
+                  <span className="text-slate-400 font-mono text-[11px]">{counts.sent}</span>
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  setActiveFolder("ARCHIVE");
+                  setIsStarredFilter(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeFolder === "ARCHIVE" && !isStarredFilter
+                    ? "bg-purple-500/20 text-purple-300 border border-purple-500/30 shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Archive className="w-4 h-4" />
+                  <span>Arquivados</span>
+                </div>
+                {counts.archive > 0 && (
+                  <span className="text-slate-400 font-mono text-[11px]">{counts.archive}</span>
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  setActiveFolder("TRASH");
+                  setIsStarredFilter(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeFolder === "TRASH" && !isStarredFilter
+                    ? "bg-rose-500/20 text-rose-300 border border-rose-500/30 shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Trash2 className="w-4 h-4" />
+                  <span>Lixeira</span>
+                </div>
+                {counts.trash > 0 && (
+                  <span className="text-slate-400 font-mono text-[11px]">{counts.trash}</span>
+                )}
+              </button>
+            </nav>
+
+            {/* Filtros Rápidos */}
+            <div className="pt-4 border-t border-slate-800 space-y-2">
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2">
+                Filtros Dinâmicos
+              </div>
+              <div className="space-y-1">
+                <button
+                  onClick={() => setIsUnreadFilter(!isUnreadFilter)}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                    isUnreadFilter
+                      ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                    Somente Não Lidos
+                  </span>
+                  <span className="text-[10px] font-mono">{counts.unread}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Rodapé de Status */}
+          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              Sincronizado
+            </span>
+            <span className="font-mono text-slate-400">PostgreSQL</span>
+          </div>
+        </div>
+
+        {/* PANE 2: Lista de Mensagens (col-span-4) */}
+        <div className="lg:col-span-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md flex flex-col overflow-hidden shadow-xl">
+          {/* Barra de Busca e Filtro */}
+          <div className="p-3.5 border-b border-slate-800 space-y-2.5">
             <div className="relative">
               <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Pesquisar e-mails comerciais..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                placeholder="Buscar por remetente, assunto..."
+                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
               />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
+              <span className="font-semibold text-white">
+                {isStarredFilter ? "Com Estrela" : activeFolder} ({emails.length})
+              </span>
+              <span>Ordenado por mais recente</span>
             </div>
           </div>
 
+          {/* Lista de E-mails */}
           <div className="flex-1 overflow-y-auto divide-y divide-slate-800/60">
-            {emails.map((email) => {
-              const isSelected = selectedEmail?.id === email.id;
-              return (
-                <div
-                  key={email.id}
-                  onClick={() => setSelectedEmail(email)}
-                  className={`p-4 cursor-pointer transition-colors ${
-                    isSelected
-                      ? "bg-slate-800/60 border-l-2 border-cyan-400"
-                      : "hover:bg-slate-800/30"
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="font-semibold text-xs text-white">
-                      {email.sender}
-                    </span>
-                    <span className="text-[10px] text-slate-400">{email.time}</span>
+            {isLoading ? (
+              <div className="p-8 text-center text-xs text-slate-500 animate-pulse space-y-2">
+                <Mail className="w-6 h-6 mx-auto text-slate-600 animate-bounce" />
+                <p>Carregando e-mails...</p>
+              </div>
+            ) : emails.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-500 space-y-2">
+                <Inbox className="w-8 h-8 mx-auto text-slate-600" />
+                <p className="font-semibold text-slate-400">Nenhum e-mail encontrado</p>
+                <p className="text-[11px] text-slate-500">Esta pasta está vazia no momento.</p>
+              </div>
+            ) : (
+              emails.map((email) => {
+                const isSelected = selectedEmail?.id === email.id;
+                return (
+                  <div
+                    key={email.id}
+                    onClick={() => handleSelectEmail(email)}
+                    className={`p-3.5 cursor-pointer transition-all relative ${
+                      isSelected
+                        ? "bg-slate-800/80 border-l-4 border-cyan-400 shadow-inner"
+                        : "hover:bg-slate-800/40"
+                    }`}
+                  >
+                    {/* Não lido dot */}
+                    {!email.isRead && (
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 absolute left-1 top-4" />
+                    )}
+
+                    <div className="flex justify-between items-start mb-1 gap-2">
+                      <span className={`text-xs truncate ${!email.isRead ? "font-bold text-white" : "font-semibold text-slate-200"}`}>
+                        {email.senderName}
+                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={(e) => handleToggleStar(email.id, e)}
+                          className="text-slate-500 hover:text-amber-400 transition-colors"
+                        >
+                          <Star className={`w-3.5 h-3.5 ${email.isStarred ? "fill-amber-400 text-amber-400" : ""}`} />
+                        </button>
+                        <span className="text-[10px] font-mono text-slate-400">
+                          {formatEmailDate(email.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className={`text-xs truncate mb-1 ${!email.isRead ? "font-semibold text-cyan-300" : "text-slate-300"}`}>
+                      {email.subject}
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                      {email.preview || email.bodyText}
+                    </p>
+
+                    <div className="mt-2 flex items-center gap-2">
+                      {email.hasAttachments && (
+                        <span className="flex items-center gap-1 text-[10px] text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-full border border-slate-700/60">
+                          <Paperclip className="w-2.5 h-2.5 text-cyan-400" />
+                          Anexo
+                        </span>
+                      )}
+                      {email.contact && (
+                        <span className="text-[10px] text-slate-400 bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/20">
+                          Lead: {email.contact.name}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-xs font-medium text-slate-300 line-clamp-1 mb-1">
-                    {email.subject}
-                  </div>
-                  <p className="text-[11px] text-slate-400 line-clamp-2">
-                    {email.preview}
-                  </p>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
-        {/* Visualizador de Mensagem Selecionada */}
-        <div className="lg:col-span-7 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md flex flex-col overflow-hidden p-6">
+        {/* PANE 3: Visualizador de Mensagem & Ações (col-span-5) */}
+        <div className="lg:col-span-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md flex flex-col overflow-hidden shadow-xl p-6">
           {selectedEmail ? (
-            <div className="flex-1 flex flex-col justify-between">
-              <div>
-                <div className="flex justify-between items-start border-b border-slate-800 pb-4 mb-4">
-                  <div>
-                    <h3 className="text-base font-bold text-white mb-1">
+            <div className="flex-1 flex flex-col justify-between overflow-y-auto">
+              <div className="space-y-4">
+                {/* Header do E-mail Selecionado */}
+                <div className="flex items-start justify-between border-b border-slate-800 pb-4">
+                  <div className="space-y-1">
+                    <h3 className="text-base font-black text-white leading-tight">
                       {selectedEmail.subject}
                     </h3>
-                    <div className="text-xs text-slate-400">
-                      De: <strong className="text-slate-200">{selectedEmail.sender}</strong> ({selectedEmail.company})
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <span>De:</span>
+                      <strong className="text-white font-semibold">{selectedEmail.senderName}</strong>
+                      <span className="text-slate-500 font-mono">({selectedEmail.senderEmail})</span>
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Para: <span className="text-slate-300">{selectedEmail.recipientEmail}</span>
                     </div>
                   </div>
-                  <span className="text-xs font-mono text-slate-400">
-                    {selectedEmail.time}
-                  </span>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleToggleStar(selectedEmail.id)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-slate-800 transition-colors"
+                      title="Favoritar"
+                    >
+                      <Star className={`w-4 h-4 ${selectedEmail.isStarred ? "fill-amber-400 text-amber-400" : ""}`} />
+                    </button>
+                    <button
+                      onClick={() => handleMoveFolder(selectedEmail.id, "ARCHIVE")}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-purple-400 hover:bg-slate-800 transition-colors"
+                      title="Arquivar"
+                    >
+                      <Archive className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleMoveFolder(selectedEmail.id, "TRASH")}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors"
+                      title="Mover para lixeira"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={handleOpenReplyComposer}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-semibold border border-slate-700 transition-colors"
+                      title="Responder com o editor completo"
+                    >
+                      <Reply className="w-3.5 h-3.5" />
+                      Responder
+                    </button>
+                  </div>
                 </div>
 
-                <div className="text-xs text-slate-300 leading-relaxed space-y-4">
-                  <p>Prezada equipe comercial do VERSUS,</p>
-                  <p>{selectedEmail.preview}</p>
-                  <p>
-                    Gostaríamos de confirmar o agendamento da reunião de alinhamento para o onboarding na próxima quinta-feira.
-                  </p>
-                  <p>
-                    Atenciosamente,<br />
-                    <strong>{selectedEmail.sender}</strong><br />
-                    {selectedEmail.company}
-                  </p>
+                {/* Vínculo Comercial no CRM se houver */}
+                {(selectedEmail.contact || selectedEmail.deal) && (
+                  <div className="p-3 rounded-xl bg-blue-900/10 border border-blue-500/20 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-cyan-400" />
+                      <span className="text-slate-300">
+                        Vínculo CRM: <strong className="text-white">{selectedEmail.contact?.name || selectedEmail.deal?.title}</strong>
+                      </span>
+                    </div>
+                    {selectedEmail.deal?.value && (
+                      <span className="font-mono font-bold text-emerald-400">
+                        R$ {Number(selectedEmail.deal.value).toLocaleString("pt-BR")}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Corpo do E-mail */}
+                <div className="text-xs text-slate-200 leading-relaxed space-y-3 font-sans whitespace-pre-line p-2">
+                  {selectedEmail.bodyText}
                 </div>
+
+                {/* Lista de Anexos */}
+                {selectedEmail.attachments && selectedEmail.attachments.length > 0 && (
+                  <div className="pt-4 border-t border-slate-800 space-y-2">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Anexos ({selectedEmail.attachments.length})
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {selectedEmail.attachments.map((att, idx) => (
+                        <a
+                          key={idx}
+                          href={att.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-cyan-500/40 text-xs transition-colors group"
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <FileText className="w-4 h-4 text-cyan-400 shrink-0" />
+                            <span className="text-slate-200 font-medium truncate">{att.name}</span>
+                          </div>
+                          <Download className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 shrink-0" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Caixa de Resposta Rápida */}
-              <div className="mt-6 pt-4 border-t border-slate-800">
+              {/* Caixa de Resposta Rápida Inline */}
+              <div className="mt-6 pt-4 border-t border-slate-800 space-y-2">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Resposta Rápida
+                </span>
                 <textarea
                   rows={3}
-                  placeholder="Escreva uma resposta rápida por e-mail..."
-                  className="w-full p-3 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 resize-none mb-3"
+                  value={quickReplyText}
+                  onChange={(e) => setQuickReplyText(e.target.value)}
+                  placeholder={`Responder para ${selectedEmail.senderName}...`}
+                  className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 resize-none"
                 />
-                <div className="flex justify-between items-center">
-                  <button className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800">
-                    <Paperclip className="w-4 h-4" />
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={handleOpenReplyComposer}
+                    className="text-xs text-slate-400 hover:text-cyan-400 flex items-center gap-1 font-semibold"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    Abrir editor completo
                   </button>
                   <button
-                    onClick={() => toast.success("Resposta enviada com sucesso!")}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md transition-colors"
+                    onClick={handleSendQuickReply}
+                    disabled={sendingQuickReply || !quickReplyText.trim()}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md transition-colors disabled:opacity-50"
                   >
                     <Send className="w-3.5 h-3.5" />
-                    Responder E-mail
+                    {sendingQuickReply ? "Enviando..." : "Responder E-mail"}
                   </button>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-xs text-slate-500">
-              Selecione um e-mail para visualizar os detalhes.
+            <div className="flex-1 flex flex-col items-center justify-center text-xs text-slate-500 space-y-2">
+              <Mail className="w-10 h-10 text-slate-700" />
+              <p className="font-semibold text-slate-400">Nenhum e-mail selecionado</p>
+              <p className="text-[11px] text-slate-500">Escolha uma mensagem na lista para ler e responder.</p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Modal Composer */}
+      <EmailComposerModal
+        isOpen={isComposerOpen}
+        onClose={() => setIsComposerOpen(false)}
+        onEmailSent={() => fetchEmails(true)}
+        initialRecipient={composerInitialRecipient}
+        initialSubject={composerInitialSubject}
+        initialBody={composerInitialBody}
+        replyToId={selectedEmail?.id}
+      />
     </div>
   );
 }
