@@ -313,6 +313,126 @@ export class EmailsService {
   }
 
   /**
+   * Sincroniza e-mails recebidos da caixa postal via IMAP (Gmail, Hostinger ou custom)
+   */
+  async syncEmails(tenantId: string) {
+    const effectiveId = await this.getEffectiveTenantId(tenantId);
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: effectiveId },
+      select: { id: true, name: true, email: true, emailSettings: true },
+    });
+
+    const s = (tenant?.emailSettings || {}) as any;
+    const user = (s.smtpUser || process.env.SMTP_USER || '').trim();
+    const pass = (s.smtpPass || process.env.SMTP_PASS || '').replace(/\s+/g, '');
+    const provider = s.provider || 'gmail';
+
+    if (!user || !pass) {
+      throw new BadRequestException('Configurações de e-mail ausentes para sincronização IMAP. Configure sua conta na aba de configurações.');
+    }
+
+    // Determinar configurações do servidor IMAP
+    let host = 'imap.gmail.com';
+    let port = 993;
+    let secure = true;
+
+    if (provider === 'hostinger') {
+      host = 'imap.hostinger.com';
+      port = 993;
+    } else if (provider === 'smtp') {
+      host = s.imapHost || (s.smtpHost ? s.smtpHost.replace('smtp.', 'imap.') : 'imap.gmail.com');
+      port = s.imapPort ? Number(s.imapPort) : 993;
+    }
+
+    const { ImapFlow } = await import('imapflow');
+    const { simpleParser } = await import('mailparser');
+
+    const client = new ImapFlow({
+      host,
+      port,
+      secure,
+      auth: { user, pass },
+      logger: false,
+    });
+
+    let newEmailsCount = 0;
+    let totalMessages = 0;
+
+    try {
+      await client.connect();
+      const lock = await client.getMailboxLock('INBOX');
+
+      try {
+        const mb = client.mailbox;
+        totalMessages = (mb && typeof mb === 'object' ? mb.exists : 0) || 0;
+        if (totalMessages > 0) {
+          const fetchLimit = Math.min(totalMessages, 30);
+          const range = totalMessages > fetchLimit ? `${totalMessages - fetchLimit + 1}:*` : '1:*';
+
+          for await (let message of client.fetch(range, { envelope: true, source: true, flags: true, uid: true })) {
+            const parsed = await simpleParser(message.source);
+            const messageId = parsed.messageId || `imap-${message.uid}-${effectiveId}`;
+            const subject = parsed.subject || '(Sem assunto)';
+            const senderName = parsed.from?.value?.[0]?.name || parsed.from?.text || 'Remetente Desconhecido';
+            const senderEmail = parsed.from?.value?.[0]?.address || 'desconhecido@email.com';
+            const date = parsed.date || new Date();
+            const bodyText = parsed.text || '';
+            const bodyHtml = (parsed.html as string) || (parsed.textAsHtml as string) || null;
+            const preview = bodyText.slice(0, 160).replace(/\s+/g, ' ').trim();
+            const isRead = message.flags ? message.flags.has('\\Seen') : false;
+            const isStarred = message.flags ? message.flags.has('\\Flagged') : false;
+
+            const exists = await this.prisma.emailMessage.findFirst({
+              where: {
+                tenantId: effectiveId,
+                threadId: messageId,
+              },
+            });
+
+            if (!exists) {
+              await this.prisma.emailMessage.create({
+                data: {
+                  tenantId: effectiveId,
+                  threadId: messageId,
+                  senderName,
+                  senderEmail,
+                  recipientEmail: user,
+                  recipientName: s.fromName || tenant.name || 'VERSUS',
+                  subject,
+                  bodyText,
+                  bodyHtml,
+                  preview,
+                  folder: 'INBOX',
+                  isRead,
+                  isStarred,
+                  hasAttachments: Boolean(parsed.attachments && parsed.attachments.length > 0),
+                  sentAt: date,
+                  receivedAt: new Date(),
+                },
+              });
+              newEmailsCount++;
+            }
+          }
+        }
+      } finally {
+        lock.release();
+      }
+
+      await client.logout();
+
+      return {
+        success: true,
+        message: `Sincronização concluída com sucesso! ${newEmailsCount} novo(s) e-mail(s) importado(s).`,
+        totalInBox: totalMessages,
+        newEmailsCount,
+      };
+    } catch (err: any) {
+      this.logger.error(`[IMAP_SYNC_ERROR] Falha ao sincronizar e-mails: ${err.message}`);
+      throw new BadRequestException(`Erro ao conectar no servidor IMAP: ${err.message}`);
+    }
+  }
+
+  /**
    * Diagnóstico do status de configuração do transporte de e-mails para o Tenant
    */
   async getTransportStatus(tenantId?: string) {

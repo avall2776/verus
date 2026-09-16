@@ -34,6 +34,11 @@ export class EmailsController {
     return this.emailsService.testConnection(tenantId, dto);
   }
 
+  @Post('sync')
+  async syncEmails(@CurrentTenant() tenantId: string) {
+    return this.emailsService.syncEmails(tenantId);
+  }
+
   @Get('transport/status')
   async getTransportStatus(@CurrentTenant() tenantId: string) {
     return this.emailsService.getTransportStatus(tenantId);

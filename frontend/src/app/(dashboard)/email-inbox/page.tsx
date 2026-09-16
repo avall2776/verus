@@ -124,6 +124,24 @@ export default function EmailInboxPage() {
     }
   }, [activeFolder, isStarredFilter, isUnreadFilter, search, fetchCounts]);
 
+  // Sincronização IMAP em tempo real com o servidor de e-mail (Gmail/Hostinger)
+  const handleSyncInbox = async () => {
+    setIsRefreshing(true);
+    try {
+      toast.loading("Sincronizando com o Gmail...", { id: "sync-toast" });
+      const res = await api.post("/emails/sync");
+      toast.success(res.data.message || "E-mails sincronizados com sucesso!", { id: "sync-toast" });
+      await fetchEmails(true);
+    } catch (err: any) {
+      console.warn("[SYNC_ERROR]", err);
+      const msg = err.response?.data?.message || "Erro ao sincronizar com servidor IMAP.";
+      toast.error(typeof msg === "string" ? msg : JSON.stringify(msg), { id: "sync-toast" });
+      await fetchEmails(true);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   useEffect(() => {
     fetchEmails();
     fetchTransportStatus();
@@ -269,12 +287,13 @@ export default function EmailInboxPage() {
 
         <div className="flex items-center gap-2.5">
           <button
-            onClick={() => fetchEmails(true)}
+            onClick={handleSyncInbox}
             disabled={isRefreshing}
-            className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all"
-            title="Sincronizar caixa de entrada"
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 text-xs font-semibold transition-all shadow-md disabled:opacity-50"
+            title="Sincronizar e-mails recebidos do Gmail via IMAP"
           >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-cyan-400" : ""}`} />
+            <RefreshCw className={`w-4 h-4 text-cyan-400 ${isRefreshing ? "animate-spin" : ""}`} />
+            <span className="hidden sm:inline">Sincronizar Gmail</span>
           </button>
 
           <button

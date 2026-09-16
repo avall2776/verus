@@ -14,7 +14,7 @@ conn.on('ready', () => {
     npm install --legacy-peer-deps && 
     npx prisma generate &&
     npm run build && 
-    pm2 restart versus-engine &&
+    pm2 restart versus-engine --update-env &&
     echo "Deploy Backend finalizado!"
   `, (err, stream) => {
     if (err) throw err;

@@ -33,6 +33,9 @@ let EmailsController = class EmailsController {
     async testConnection(tenantId, dto) {
         return this.emailsService.testConnection(tenantId, dto);
     }
+    async syncEmails(tenantId) {
+        return this.emailsService.syncEmails(tenantId);
+    }
     async getTransportStatus(tenantId) {
         return this.emailsService.getTransportStatus(tenantId);
     }
@@ -92,6 +95,13 @@ __decorate([
     __metadata("design:paramtypes", [String, email_settings_dto_1.EmailSettingsDto]),
     __metadata("design:returntype", Promise)
 ], EmailsController.prototype, "testConnection", null);
+__decorate([
+    (0, common_1.Post)('sync'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], EmailsController.prototype, "syncEmails", null);
 __decorate([
     (0, common_1.Get)('transport/status'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

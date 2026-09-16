@@ -49,6 +49,12 @@ export declare class EmailsService {
         code: any;
         message?: undefined;
     }>;
+    syncEmails(tenantId: string): Promise<{
+        success: boolean;
+        message: string;
+        totalInBox: number;
+        newEmailsCount: number;
+    }>;
     getTransportStatus(tenantId?: string): Promise<{
         configured: boolean;
         connected: boolean;
