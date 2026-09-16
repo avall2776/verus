@@ -112,6 +112,9 @@ function parseChecklistMarkdown(markdown: string) {
       } else if (rest.includes('⏸️')) {
         type = 'pause';
         icon = '⏸️';
+      } else if (rest.includes('▶️')) {
+        type = 'resume';
+        icon = '▶️';
       } else if (rest.includes('🏁')) {
         type = 'end';
         icon = '🏁';
@@ -271,14 +274,36 @@ function parseChecklistMarkdown(markdown: string) {
         item.type = 'start';
         item.isTimeclockEvent = true;
         entrySet = true;
-      } else if (item.icon === '⏸️' || descLower.includes('almoço') || descLower.includes('almoco') || descLower.includes('intervalo') || descLower.includes('pausa')) {
+      } else if (
+        item.icon === '▶️' || 
+        descLower.includes('retorno') || 
+        descLower.includes('volta do almoço') || 
+        descLower.includes('volta do almoco') || 
+        descLower.includes('turno da tarde')
+      ) {
+        item.type = 'resume';
+        item.isTimeclockEvent = true;
+      } else if (
+        item.icon === '⏸️' || 
+        descLower.includes('pausa') || 
+        descLower.includes('intervalo') || 
+        descLower.includes('saída para almoço') || 
+        (descLower.includes('almoço') && !descLower.includes('retorno') && !descLower.includes('volta')) || 
+        (descLower.includes('almoco') && !descLower.includes('retorno') && !descLower.includes('volta'))
+      ) {
         item.type = 'pause';
         item.isTimeclockEvent = true;
-      } else if (item.icon === '🏁' || descLower.includes('finalização') || descLower.includes('finalizacao') || descLower.includes('fim de turno') || descLower.includes('encerramento') || descLower.includes('saída')) {
+      } else if (
+        item.icon === '🏁' || 
+        descLower.includes('finalização') || 
+        descLower.includes('finalizacao') || 
+        descLower.includes('fim de turno') || 
+        descLower.includes('fim do turno') || 
+        descLower.includes('encerramento') || 
+        descLower.includes('saída') || 
+        descLower.includes('saida')
+      ) {
         item.type = 'end';
-        item.isTimeclockEvent = true;
-      } else if (descLower.includes('retorno') || descLower.includes('volta do almoço') || descLower.includes('turno da tarde')) {
-        item.type = 'resume';
         item.isTimeclockEvent = true;
       } else {
         // Tarefa/atividade técnica ao longo do dia (ex: ativação de fase, deploy, refatoração)

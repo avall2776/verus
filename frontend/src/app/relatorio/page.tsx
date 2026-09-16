@@ -624,9 +624,19 @@ export default function RelatorioPage() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-800/40 px-3 py-1 rounded-full flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  {stats.workdayStatus || 'Turno Ativo'}
+                <span className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 ${
+                  stats.timeclock?.exitTime 
+                    ? 'text-purple-400 bg-purple-950/60 border border-purple-800/40' 
+                    : stats.timeclock?.lunchInTime
+                      ? 'text-cyan-400 bg-cyan-950/60 border border-cyan-800/40'
+                      : stats.timeclock?.lunchOutTime
+                        ? 'text-amber-400 bg-amber-950/60 border border-amber-800/40'
+                        : 'text-emerald-400 bg-emerald-950/60 border border-emerald-800/40'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${
+                    stats.timeclock?.exitTime ? 'bg-purple-400' : 'bg-emerald-400 animate-pulse'
+                  }`} />
+                  {stats.workdayStatus || (stats.timeclock?.exitTime ? 'Jornada Concluída' : 'Turno Ativo')}
                 </span>
                 <span className="text-xs text-cyan-400 font-bold bg-cyan-950/60 border border-cyan-800/40 px-3 py-1 rounded-full">
                   {data.punchIns.length} Registros
