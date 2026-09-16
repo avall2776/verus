@@ -6,7 +6,7 @@ import {
   CheckCircle2, AlertTriangle, Flame, ArrowUpRight, Zap,
   Trophy, Medal, ShieldAlert, Sparkles, DollarSign, RefreshCw,
   MoreVertical, Edit3, Trash2, Eye, Sliders, ChevronRight,
-  UserCheck, Briefcase, Activity
+  UserCheck, Briefcase, Activity, Filter
 } from "lucide-react";
 import { CommercialGoal, SalesRepRanking, GoalRunRateSummary } from "@/types/commercial";
 import { NewGoalModal } from "@/components/goals/NewGoalModal";
@@ -52,6 +52,9 @@ export default function GoalsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Filtro por canal de origem
+  const [selectedChannel, setSelectedChannel] = useState<string>("all");
+
   // Modais
   const [isNewGoalOpen, setIsNewGoalOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<CommercialGoal | null>(null);
@@ -62,13 +65,15 @@ export default function GoalsPage() {
   const [dailyPaceBonus, setDailyPaceBonus] = useState<number>(0);
 
   // Carregar dados reais da API
-  const loadData = useCallback(async (isSilent = false) => {
+  const loadData = useCallback(async (isSilent = false, channel?: string) => {
     if (!isSilent) setLoading(true);
     else setRefreshing(true);
 
+    const activeChannel = channel !== undefined ? channel : selectedChannel;
+
     try {
       const [summaryRes, goalsRes, rankingRes] = await Promise.all([
-        api.get("/goals/summary").catch((err) => {
+        api.get("/goals/summary", { params: { channel: activeChannel } }).catch((err) => {
           console.error("Erro summary:", err);
           return { data: null };
         }),
@@ -100,7 +105,7 @@ export default function GoalsPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [selectedChannel]);
 
   useEffect(() => {
     loadData();
@@ -277,7 +282,7 @@ export default function GoalsPage() {
       {summaryMetrics && (
         <div className="p-6 rounded-2xl bg-[#0B1224] border border-slate-700/80 shadow-2xl relative overflow-hidden space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-            <div className="space-y-2 max-w-2xl">
+            <div className="space-y-3 max-w-2xl">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5 text-blue-400 text-xs font-bold uppercase tracking-wider">
                   <Zap className="w-4 h-4" />
@@ -306,6 +311,37 @@ export default function GoalsPage() {
                 </strong>
                 .
               </p>
+
+              {/* Filtro Dinâmico por Canal de Origem */}
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5 mr-1">
+                  <Filter className="w-3.5 h-3.5 text-blue-400" />
+                  Canal de Aquisição:
+                </span>
+                {[
+                  { id: "all", label: "Todos os Canais" },
+                  { id: "whatsapp", label: "WhatsApp" },
+                  { id: "meta_ads", label: "Meta Ads" },
+                  { id: "google_ads", label: "Google Ads" },
+                  { id: "organico", label: "Orgânico" },
+                  { id: "indicacao", label: "Indicação" },
+                ].map((ch) => (
+                  <button
+                    key={ch.id}
+                    onClick={() => {
+                      setSelectedChannel(ch.id);
+                      loadData(true, ch.id);
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                      selectedChannel === ch.id
+                        ? "bg-blue-600 text-white shadow-sm shadow-blue-500/30 font-semibold"
+                        : "bg-[#070D1B] border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
+                    }`}
+                  >
+                    {ch.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Quick Metrics Badges */}
@@ -441,6 +477,51 @@ export default function GoalsPage() {
                 </span>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Alerta Executivo de Aceleração Comercial (Quando Pace Gap é negativo ou status é At_risk/Behind) */}
+      {summaryMetrics && (summaryMetrics.paceGap < 0 || summaryMetrics.healthStatus === "BEHIND" || summaryMetrics.healthStatus === "CRITICAL" || summaryMetrics.healthStatus === "AT_RISK") && (
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-[#181512] to-rose-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in shadow-xl">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-bold text-white">
+                  Alerta Executivo de Ritmo Comercial: Ritmo {Math.abs(summaryMetrics.paceGap)}% abaixo do cronograma
+                </h4>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase">
+                  Ação Recomendada
+                </span>
+              </div>
+              <p className="text-xs text-slate-300">
+                A velocidade média atual aponta para um déficit de{" "}
+                <strong className="text-rose-400 font-mono">
+                  R$ {formatMoney(Math.max(0, summaryMetrics.totalTarget - summaryMetrics.projectedRevenue))}
+                </strong>{" "}
+                em relação à meta do ciclo. Acione o playbook de recuperação comercial.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href="/settings/automations"
+              className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              Ativar Resgate de Leads
+            </a>
+            <a
+              href="/dashboard/analytics"
+              className="px-3.5 py-2 rounded-xl bg-[#070D1B] hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            >
+              <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
+              Ver Funil & Gargalos
+            </a>
           </div>
         </div>
       )}
@@ -610,9 +691,25 @@ export default function GoalsPage() {
                     <div className="text-lg font-extrabold text-cyan-400 font-mono mt-2">
                       R$ {formatMoney(ranking[1].totalRevenueWon ?? ranking[1].achievedValue)}
                     </div>
+
+                    {/* Badges de Conquistas */}
+                    {ranking[1].badges && ranking[1].badges.length > 0 && (
+                      <div className="flex flex-wrap items-center justify-center gap-1 mt-2">
+                        {ranking[1].badges.slice(0, 3).map((b) => (
+                          <span
+                            key={b.id}
+                            title={`${b.title}: ${b.description}`}
+                            className="text-xs px-1.5 py-0.5 rounded bg-[#0B1224] border border-slate-700/80 text-slate-300 flex items-center gap-1 cursor-help"
+                          >
+                            <span>{b.icon}</span>
+                            <span className="text-[10px] font-semibold">{b.title}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
                     <div className="flex justify-between text-xs text-slate-400">
                       <span>Conversão: {Number(ranking[1].conversionRate || 0)}%</span>
                       <span className="text-slate-300 font-bold font-mono">
@@ -655,9 +752,25 @@ export default function GoalsPage() {
                     <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500 font-mono mt-2">
                       R$ {formatMoney(ranking[0].totalRevenueWon ?? ranking[0].achievedValue)}
                     </div>
+
+                    {/* Badges de Conquistas */}
+                    {ranking[0].badges && ranking[0].badges.length > 0 && (
+                      <div className="flex flex-wrap items-center justify-center gap-1 mt-2.5">
+                        {ranking[0].badges.slice(0, 3).map((b) => (
+                          <span
+                            key={b.id}
+                            title={`${b.title}: ${b.description}`}
+                            className="text-xs px-2 py-0.5 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-200 flex items-center gap-1 cursor-help"
+                          >
+                            <span>{b.icon}</span>
+                            <span className="text-[10px] font-bold">{b.title}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 pt-2 border-t border-amber-500/20">
                     <div className="flex justify-between text-xs text-amber-300 font-medium">
                       <span>Conversão: {Number(ranking[0].conversionRate || 0)}%</span>
                       <span className="font-mono">
@@ -700,9 +813,25 @@ export default function GoalsPage() {
                     <div className="text-lg font-extrabold text-cyan-400 font-mono mt-2">
                       R$ {formatMoney(ranking[2].totalRevenueWon ?? ranking[2].achievedValue)}
                     </div>
+
+                    {/* Badges de Conquistas */}
+                    {ranking[2].badges && ranking[2].badges.length > 0 && (
+                      <div className="flex flex-wrap items-center justify-center gap-1 mt-2">
+                        {ranking[2].badges.slice(0, 3).map((b) => (
+                          <span
+                            key={b.id}
+                            title={`${b.title}: ${b.description}`}
+                            className="text-xs px-1.5 py-0.5 rounded bg-[#0B1224] border border-slate-700/80 text-slate-300 flex items-center gap-1 cursor-help"
+                          >
+                            <span>{b.icon}</span>
+                            <span className="text-[10px] font-semibold">{b.title}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
                     <div className="flex justify-between text-xs text-slate-400">
                       <span>Conversão: {Number(ranking[2].conversionRate || 0)}%</span>
                       <span className="text-slate-300 font-bold font-mono">
@@ -725,6 +854,7 @@ export default function GoalsPage() {
                   <tr>
                     <th className="p-3.5">Posição</th>
                     <th className="p-3.5">Consultor Comercial</th>
+                    <th className="p-3.5">Conquistas</th>
                     <th className="p-3.5 text-center">Vendas Fechadas</th>
                     <th className="p-3.5 text-center">Taxa de Conversão</th>
                     <th className="p-3.5 text-right">Ticket Médio</th>
@@ -741,6 +871,23 @@ export default function GoalsPage() {
                       <td className="p-3.5">
                         <div className="font-semibold text-white">{rep.name || "Consultor"}</div>
                         <div className="text-[11px] text-slate-400">{rep.email || "Consultor"}</div>
+                      </td>
+                      <td className="p-3.5">
+                        <div className="flex items-center gap-1">
+                          {rep.badges && rep.badges.length > 0 ? (
+                            rep.badges.slice(0, 3).map((b) => (
+                              <span
+                                key={b.id}
+                                title={`${b.title}: ${b.description}`}
+                                className="text-xs px-1.5 py-0.5 rounded bg-[#070D1B] border border-slate-700/80 cursor-help"
+                              >
+                                {b.icon}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-[11px] text-slate-500">—</span>
+                          )}
+                        </div>
                       </td>
                       <td className="p-3.5 text-center font-semibold text-slate-300">
                         {formatNumber(rep.dealsWon ?? rep.dealsCount)}

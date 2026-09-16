@@ -89,6 +89,14 @@ export interface CommercialGoal {
   createdAt?: string;
 }
 
+export interface SellerBadge {
+  id: string;
+  title: string;
+  icon: string;
+  description: string;
+  color: string;
+}
+
 export interface SalesRepRanking {
   id: string;
   userId?: string;
@@ -108,6 +116,7 @@ export interface SalesRepRanking {
   avgTicket?: number;
   rank: number; // 1, 2, 3...
   badgeTier?: 'gold' | 'silver' | 'bronze' | 'participant';
+  badges?: SellerBadge[];
 }
 
 export interface GoalRunRateSummary {
@@ -120,10 +129,12 @@ export interface GoalRunRateSummary {
   expectedPacePercentage: number;
   projectedRevenue: number;
   paceGap: number;
-  healthStatus: 'ON_TRACK' | 'BEHIND' | 'CRITICAL' | 'EXCEEDED';
+  healthStatus: 'ON_TRACK' | 'BEHIND' | 'CRITICAL' | 'EXCEEDED' | string;
   dailyPaceNeeded: number;
   currentDailyPace: number;
   goalsCount: number;
+  selectedChannel?: string;
+  availableChannels?: { id: string; name: string }[];
 }
 
 export interface SellerDrilldownData {
@@ -140,6 +151,7 @@ export interface SellerDrilldownData {
     conversionRate: number;
     avgTicket: number;
   };
+  badges?: SellerBadge[];
   recentDeals: {
     id: string;
     title: string;

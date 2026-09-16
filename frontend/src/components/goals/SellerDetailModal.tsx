@@ -150,6 +150,42 @@ export function SellerDetailModal({
                 </div>
               </div>
 
+              {/* Badges de Conquistas do Consultor */}
+              {data.badges && data.badges.length > 0 && (
+                <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                      <Award className="w-4 h-4 text-amber-400" />
+                      Conquistas & Selos Desbloqueados ({data.badges.length})
+                    </h4>
+                    <span className="text-[10px] text-amber-400/80 font-medium">
+                      Reconhecimento Gamificado
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {data.badges.map((badge) => (
+                      <div
+                        key={badge.id}
+                        className="p-2.5 rounded-lg bg-[#0B1224] border border-slate-700/60 flex items-start gap-2.5"
+                      >
+                        <span className="text-xl p-1.5 rounded-md bg-slate-800/80 shrink-0">
+                          {badge.icon}
+                        </span>
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                            {badge.title}
+                          </div>
+                          <p className="text-[11px] text-slate-400 leading-tight">
+                            {badge.description}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Tabela de Negócios Recentes */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
