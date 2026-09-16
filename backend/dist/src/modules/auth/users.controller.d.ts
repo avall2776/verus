@@ -32,4 +32,23 @@ export declare class UsersController {
         tenantId: string;
         role: string;
     }>;
+    create(req: any, body: {
+        name: string;
+        email: string;
+        password?: string;
+        role?: string;
+    }): Promise<{
+        message: string;
+        user: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string;
+            role: string;
+            isOnline: boolean;
+        };
+    }>;
+    deleteUser(req: any, id: string): Promise<{
+        message: string;
+    }>;
 }

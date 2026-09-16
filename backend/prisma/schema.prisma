@@ -89,7 +89,8 @@ model User {
   name      String
   email     String   @unique
   password  String
-  role      String   // ADMIN, AGENT
+  role      String   // ADMIN, AGENT, SUPER_ADMIN
+  isSuperAdmin Boolean @default(false)
   avatarUrl String?
   tenantId  String
   tenant    Tenant   @relation(fields: [tenantId], references: [id])

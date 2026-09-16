@@ -10,6 +10,7 @@ export declare class SupportController {
         category?: string;
         search?: string;
         myOnly?: string;
+        tenantId?: string;
     }): Promise<{
         tickets: ({
             contact: {
@@ -17,6 +18,17 @@ export declare class SupportController {
                 name: string;
                 phone: string;
                 email: string;
+            };
+            tenant: {
+                id: string;
+                name: string;
+                phone: string;
+                email: string;
+                plan: {
+                    name: string;
+                };
+                cnpj: string;
+                isActive: boolean;
             };
             _count: {
                 messages: number;
@@ -65,6 +77,31 @@ export declare class SupportController {
             name: string;
             phone: string;
             email: string;
+        };
+        tenant: {
+            id: string;
+            name: string;
+            phone: string;
+            email: string;
+            createdAt: Date;
+            _count: {
+                supportTickets: number;
+                users: number;
+                contacts: number;
+                contracts: number;
+            };
+            plan: {
+                id: string;
+                name: string;
+                price: import("@prisma/client/runtime/library").Decimal;
+            };
+            cnpj: string;
+            logoUrl: string;
+            address: string;
+            isActive: boolean;
+            metaPhoneNumberId: string;
+            whatsappSettings: import("@prisma/client/runtime/library").JsonValue;
+            emailSettings: import("@prisma/client/runtime/library").JsonValue;
         };
         messages: ({
             sender: {

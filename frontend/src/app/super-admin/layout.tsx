@@ -1,18 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { 
   BarChart4, 
   Building2, 
   ShieldCheck, 
   LogOut, 
-  TerminalSquare 
+  Headphones,
+  ArrowUpRight,
+  ShieldAlert,
+  Layers
 } from "lucide-react";
 
 const ADMIN_MENU = [
   { name: "Métricas Globais", icon: BarChart4, href: "/super-admin" },
-  { name: "Gestão de Clientes", icon: Building2, href: "/super-admin/clientes" },
+  { name: "Empresas (Tenants)", icon: Building2, href: "/super-admin/companies" },
+  { name: "Central de Atendimento", icon: Headphones, href: "/super-admin/support" },
   { name: "Planos e Permissões", icon: ShieldCheck, href: "/super-admin/planos" },
 ];
 
@@ -22,42 +27,67 @@ export default function SuperAdminLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("versus_user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setCurrentUser(parsed);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("versus_auth_token");
+    localStorage.removeItem("versus_user");
+    router.push("/login");
+  };
 
   return (
-    <div className="h-screen flex w-full overflow-hidden bg-[#02040a]">
-      {/* Sidebar do Super Admin */}
-      <aside className="w-16 md:w-64 bg-[#0a0f1c] border-r border-indigo-900/50 flex flex-col justify-between h-full transition-all duration-300 relative z-20">
+    <div className="h-screen flex w-full overflow-hidden bg-[#070D1B] text-slate-100 font-sans">
+      {/* Sidebar do Super Admin Monocromática */}
+      <aside className="w-16 md:w-64 bg-[#0B1224] border-r border-slate-800 flex flex-col justify-between h-full transition-all duration-300 relative z-20 shrink-0">
         
-        {/* Logo Area */}
+        {/* Header da Sidebar */}
         <div>
-          <div className="h-16 flex items-center justify-center md:justify-start md:px-6 border-b border-indigo-900/50 bg-[#060913]">
-            <div className="flex items-center gap-2">
-              <TerminalSquare size={24} className="text-indigo-400 hidden md:block" />
-              <span className="font-black text-white hidden md:block text-xl tracking-wider">SUPER ADMIN</span>
-              <span className="font-black text-indigo-400 md:hidden text-2xl">SA</span>
+          <div className="h-16 flex items-center justify-center md:justify-start md:px-5 border-b border-slate-800 bg-[#070D1B]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold shrink-0">
+                <Layers size={18} />
+              </div>
+              <div className="hidden md:flex flex-col">
+                <span className="font-black text-white text-sm tracking-wider uppercase">VERSUS MASTER</span>
+                <span className="text-[10px] text-blue-400 font-semibold tracking-wider uppercase">Super Admin Console</span>
+              </div>
             </div>
           </div>
 
           {/* Navegação Principal */}
-          <nav className="p-4 flex flex-col gap-2 mt-2">
-            <p className="hidden md:block text-[0.65rem] text-indigo-500/70 uppercase font-bold tracking-widest px-2 mb-2">Painel Mestre SaaS</p>
+          <nav className="p-3 flex flex-col gap-1.5 mt-2">
+            <p className="hidden md:block text-[10px] text-slate-400 uppercase font-bold tracking-widest px-2 mb-1">
+              Administração Global
+            </p>
             
             {ADMIN_MENU.map((item) => {
-              // Ajuste simples para active state
               const isActive = pathname === item.href || (item.href !== "/super-admin" && pathname.startsWith(item.href));
               
               return (
                 <Link 
                   key={item.href} 
                   href={item.href} 
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group relative
+                  className={`flex items-center gap-3 p-2.5 rounded-lg transition-all duration-150 group relative
                     ${isActive 
-                      ? 'bg-indigo-600/10 text-indigo-400 shadow-[inset_4px_0_0_0_rgba(99,102,241,1)]' 
-                      : 'text-gray-400 hover:bg-[#111827]/50 hover:text-white'
+                      ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 font-semibold' 
+                      : 'text-slate-400 hover:bg-slate-800/60 hover:text-white border border-transparent'
                     }`}
                 >
-                  <item.icon size={20} className={isActive ? 'text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.6)]' : 'group-hover:text-indigo-300 transition-colors'} />
-                  <span className={`hidden md:block font-semibold text-[0.9rem] ${isActive ? 'text-white' : ''}`}>
+                  <item.icon size={18} className={isActive ? 'text-blue-400' : 'group-hover:text-slate-200 transition-colors'} />
+                  <span className={`hidden md:block text-xs ${isActive ? 'text-white' : ''}`}>
                     {item.name}
                   </span>
                 </Link>
@@ -66,33 +96,58 @@ export default function SuperAdminLayout({
           </nav>
         </div>
 
-        {/* Rodapé - Dono */}
-        <div className="p-4 border-t border-indigo-900/50 flex flex-col gap-2 bg-[#060913]">
-          <Link href="/login" className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl cursor-pointer hover:bg-red-500/20 hover:border-red-500/40 transition-colors group">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-600 to-red-400 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-[0_0_10px_rgba(239,68,68,0.3)]">
-              👑
-            </div>
-            <div className="hidden md:flex flex-col overflow-hidden w-full">
-              <span className="text-sm font-bold text-white truncate">Founder VERSUS</span>
-              <span className="text-xs text-red-400 truncate font-semibold">Sair do Painel</span>
-            </div>
-            <LogOut size={16} className="text-red-400 hidden md:block shrink-0 transition-colors" />
+        {/* Rodapé do Super Admin */}
+        <div className="p-3 border-t border-slate-800 flex flex-col gap-2 bg-[#070D1B]">
+          <Link
+            href="/dashboard"
+            className="hidden md:flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition-all text-xs font-medium"
+          >
+            <span>Acessar CRM Operacional</span>
+            <ArrowUpRight size={14} className="text-slate-400" />
           </Link>
+
+          <div className="flex items-center justify-between p-2 rounded-lg bg-[#0B1224] border border-slate-800">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                {currentUser?.name?.charAt(0) || "SA"}
+              </div>
+              <div className="hidden md:flex flex-col overflow-hidden">
+                <span className="text-xs font-bold text-white truncate">{currentUser?.name || "Super Admin"}</span>
+                <span className="text-[10px] text-slate-400 truncate">{currentUser?.email || "admin@versus.com"}</span>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Sair da Conta"
+              className="text-slate-400 hover:text-rose-400 p-1 rounded hover:bg-slate-800 transition-colors"
+            >
+              <LogOut size={15} />
+            </button>
+          </div>
         </div>
       </aside>
 
       {/* Área Principal */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Topbar Simplificada para Admin */}
-        <header className="h-16 border-b border-indigo-900/50 bg-[#0a0f1c]/50 backdrop-blur-md flex items-center justify-end px-4 md:px-8 sticky top-0 z-10 w-full">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-[#02040a] border border-indigo-900/50 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.1)]">
-            <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)] animate-pulse" />
-            <span className="text-xs font-semibold text-indigo-400">Sistemas Operacionais</span>
+        {/* Topbar Corporativa */}
+        <header className="h-14 border-b border-slate-800 bg-[#0B1224]/80 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-10 w-full shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:inline">Ambiente:</span>
+            <span className="text-xs font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+              SaaS Multi-Tenant Cloud
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1 bg-[#070D1B] border border-slate-800 rounded-full">
+              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+              <span className="text-[11px] font-semibold text-slate-300">Infraestrutura Ativa</span>
+            </div>
           </div>
         </header>
         
-        {/* Container rolável do conteúdo */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+        {/* Container do Conteúdo */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar bg-[#070D1B]">
           {children}
         </div>
       </main>

@@ -32,7 +32,8 @@ import {
   Sparkles,
   LifeBuoy,
   Volume2,
-  Keyboard
+  Keyboard,
+  ShieldCheck
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -403,6 +404,21 @@ export default function Sidebar() {
                   <LifeBuoy size={15} className="text-blue-400" />
                   <span>Central de Suporte</span>
                 </button>
+
+                {/* Opção Super Admin (se aplicável) */}
+                {(currentUser?.isSuperAdmin || currentUser?.role === 'SUPER_ADMIN') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      router.push("/super-admin/companies");
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-colors text-left font-semibold"
+                  >
+                    <ShieldCheck size={15} />
+                    <span>Console Super Admin</span>
+                  </button>
+                )}
 
                 <div className="h-px bg-slate-800/80 my-1" />
 

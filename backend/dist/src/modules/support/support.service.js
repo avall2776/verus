@@ -17,7 +17,15 @@ let SupportService = class SupportService {
         this.prisma = prisma;
     }
     async findAll(tenantId, filters) {
-        const where = { tenantId };
+        const where = {};
+        if (filters.isSuperAdmin) {
+            if (filters.targetTenantId && filters.targetTenantId !== 'ALL') {
+                where.tenantId = filters.targetTenantId;
+            }
+        }
+        else {
+            where.tenantId = tenantId;
+        }
         if (filters.status && filters.status !== 'ALL') {
             where.status = filters.status;
         }
@@ -36,10 +44,23 @@ let SupportService = class SupportService {
                 { description: { contains: filters.search, mode: 'insensitive' } },
             ];
         }
+        const countWhere = { ...where };
+        delete countWhere.status;
         const [tickets, total, open, inProgress, waitingClient, resolved, closed] = await Promise.all([
             this.prisma.supportTicket.findMany({
                 where,
                 include: {
+                    tenant: {
+                        select: {
+                            id: true,
+                            name: true,
+                            cnpj: true,
+                            email: true,
+                            phone: true,
+                            isActive: true,
+                            plan: { select: { name: true } }
+                        }
+                    },
                     user: {
                         select: { id: true, name: true, email: true, role: true, avatarUrl: true }
                     },
@@ -55,12 +76,12 @@ let SupportService = class SupportService {
                 },
                 orderBy: { updatedAt: 'desc' }
             }),
-            this.prisma.supportTicket.count({ where: { tenantId } }),
-            this.prisma.supportTicket.count({ where: { tenantId, status: 'OPEN' } }),
-            this.prisma.supportTicket.count({ where: { tenantId, status: 'IN_PROGRESS' } }),
-            this.prisma.supportTicket.count({ where: { tenantId, status: 'WAITING_CLIENT' } }),
-            this.prisma.supportTicket.count({ where: { tenantId, status: 'RESOLVED' } }),
-            this.prisma.supportTicket.count({ where: { tenantId, status: 'CLOSED' } }),
+            this.prisma.supportTicket.count({ where: countWhere }),
+            this.prisma.supportTicket.count({ where: { ...countWhere, status: 'OPEN' } }),
+            this.prisma.supportTicket.count({ where: { ...countWhere, status: 'IN_PROGRESS' } }),
+            this.prisma.supportTicket.count({ where: { ...countWhere, status: 'WAITING_CLIENT' } }),
+            this.prisma.supportTicket.count({ where: { ...countWhere, status: 'RESOLVED' } }),
+            this.prisma.supportTicket.count({ where: { ...countWhere, status: 'CLOSED' } }),
         ]);
         return {
             tickets,
@@ -74,10 +95,36 @@ let SupportService = class SupportService {
             }
         };
     }
-    async findOne(id, tenantId) {
+    async findOne(id, tenantId, isSuperAdmin) {
+        const where = isSuperAdmin ? { id } : { id, tenantId };
         const ticket = await this.prisma.supportTicket.findFirst({
-            where: { id, tenantId },
+            where,
             include: {
+                tenant: {
+                    select: {
+                        id: true,
+                        name: true,
+                        cnpj: true,
+                        email: true,
+                        phone: true,
+                        address: true,
+                        logoUrl: true,
+                        isActive: true,
+                        createdAt: true,
+                        plan: { select: { id: true, name: true, price: true } },
+                        whatsappSettings: true,
+                        emailSettings: true,
+                        metaPhoneNumberId: true,
+                        _count: {
+                            select: {
+                                users: true,
+                                contracts: true,
+                                contacts: true,
+                                supportTickets: true,
+                            }
+                        }
+                    }
+                },
                 user: {
                     select: { id: true, name: true, email: true, role: true, avatarUrl: true }
                 },
@@ -136,9 +183,10 @@ let SupportService = class SupportService {
         });
         return ticket;
     }
-    async addMessage(ticketId, tenantId, userId, dto) {
+    async addMessage(ticketId, tenantId, userId, dto, isSuperAdmin) {
+        const where = isSuperAdmin ? { id: ticketId } : { id: ticketId, tenantId };
         const ticket = await this.prisma.supportTicket.findFirst({
-            where: { id: ticketId, tenantId },
+            where,
             include: { user: true }
         });
         if (!ticket) {
@@ -149,12 +197,13 @@ let SupportService = class SupportService {
             select: { name: true, role: true }
         });
         const isInternal = Boolean(dto.isInternal);
+        const senderRole = isSuperAdmin ? 'SUPER_ADMIN' : (sender?.role || 'AGENT');
         const message = await this.prisma.ticketMessage.create({
             data: {
                 ticketId,
                 senderId: userId,
-                senderName: sender?.name || 'Operador',
-                senderRole: sender?.role || 'AGENT',
+                senderName: sender?.name || (isSuperAdmin ? 'Super Admin' : 'Operador'),
+                senderRole,
                 content: dto.content.trim(),
                 isInternal,
                 attachments: dto.attachments || null
@@ -170,7 +219,7 @@ let SupportService = class SupportService {
             nextStatus = 'IN_PROGRESS';
         }
         else if (!isInternal) {
-            if (sender?.role === 'ADMIN' || sender?.role === 'AGENT') {
+            if (isSuperAdmin || sender?.role === 'ADMIN' || sender?.role === 'AGENT') {
                 nextStatus = 'WAITING_CLIENT';
             }
             else {
@@ -186,14 +235,13 @@ let SupportService = class SupportService {
         });
         return message;
     }
-    async updateStatus(ticketId, tenantId, status) {
+    async updateStatus(ticketId, tenantId, status, isSuperAdmin) {
         const validStatuses = ['OPEN', 'IN_PROGRESS', 'WAITING_CLIENT', 'RESOLVED', 'CLOSED'];
         if (!validStatuses.includes(status)) {
             throw new common_1.BadRequestException(`Status inválido. Escolha entre: ${validStatuses.join(', ')}`);
         }
-        const ticket = await this.prisma.supportTicket.findFirst({
-            where: { id: ticketId, tenantId }
-        });
+        const where = isSuperAdmin ? { id: ticketId } : { id: ticketId, tenantId };
+        const ticket = await this.prisma.supportTicket.findFirst({ where });
         if (!ticket) {
             throw new common_1.NotFoundException('Chamado de suporte não encontrado.');
         }
@@ -210,10 +258,9 @@ let SupportService = class SupportService {
             }
         });
     }
-    async assign(ticketId, tenantId, assignedToId) {
-        const ticket = await this.prisma.supportTicket.findFirst({
-            where: { id: ticketId, tenantId }
-        });
+    async assign(ticketId, tenantId, assignedToId, isSuperAdmin) {
+        const where = isSuperAdmin ? { id: ticketId } : { id: ticketId, tenantId };
+        const ticket = await this.prisma.supportTicket.findFirst({ where });
         if (!ticket) {
             throw new common_1.NotFoundException('Chamado de suporte não encontrado.');
         }

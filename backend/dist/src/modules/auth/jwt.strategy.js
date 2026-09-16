@@ -28,10 +28,17 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
     }
     async validate(payload) {
         const { sub: userId, tenantId, role } = payload;
-        if (!userId || !tenantId) {
-            throw new common_1.UnauthorizedException('Token inválido ou sem contexto de Tenant.');
+        const isSuperAdmin = Boolean(payload.isSuperAdmin || role === 'SUPER_ADMIN');
+        if (!userId) {
+            throw new common_1.UnauthorizedException('Token inválido.');
         }
-        return { id: userId, userId, tenantId, role: role || 'AGENT' };
+        return {
+            id: userId,
+            userId,
+            tenantId: tenantId || null,
+            role: role || 'AGENT',
+            isSuperAdmin
+        };
     }
 };
 exports.JwtStrategy = JwtStrategy;

@@ -9,7 +9,10 @@ export declare class AuthController {
             name: string;
             email: string;
             role: string;
+            isSuperAdmin: boolean;
+            avatarUrl: string;
             tenantId: string;
+            tenantName: string;
         };
     }>;
 }

@@ -23,6 +23,7 @@ let SupportController = class SupportController {
         this.supportService = supportService;
     }
     async findAll(req, query) {
+        const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
         const tenantId = req.user.tenantId;
         const userId = query.myOnly === 'true' ? (req.user.id || req.user.userId) : undefined;
         return this.supportService.findAll(tenantId, {
@@ -30,12 +31,15 @@ let SupportController = class SupportController {
             priority: query.priority,
             category: query.category,
             search: query.search,
-            userId
+            userId,
+            isSuperAdmin,
+            targetTenantId: query.tenantId
         });
     }
     async findOne(req, id) {
+        const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
         const tenantId = req.user.tenantId;
-        return this.supportService.findOne(id, tenantId);
+        return this.supportService.findOne(id, tenantId, isSuperAdmin);
     }
     async create(req, dto) {
         const tenantId = req.user.tenantId;
@@ -43,20 +47,23 @@ let SupportController = class SupportController {
         return this.supportService.create(tenantId, userId, dto);
     }
     async addMessage(req, id, dto) {
+        const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
         const tenantId = req.user.tenantId;
         const userId = req.user.id || req.user.userId;
-        return this.supportService.addMessage(id, tenantId, userId, dto);
+        return this.supportService.addMessage(id, tenantId, userId, dto, isSuperAdmin);
     }
     async updateStatus(req, id, body) {
+        const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
         const tenantId = req.user.tenantId;
         if (!body?.status) {
             throw new common_1.BadRequestException('Status é obrigatório.');
         }
-        return this.supportService.updateStatus(id, tenantId, body.status);
+        return this.supportService.updateStatus(id, tenantId, body.status, isSuperAdmin);
     }
     async assign(req, id, body) {
+        const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
         const tenantId = req.user.tenantId;
-        return this.supportService.assign(id, tenantId, body?.assignedToId ?? null);
+        return this.supportService.assign(id, tenantId, body?.assignedToId ?? null, isSuperAdmin);
     }
 };
 exports.SupportController = SupportController;

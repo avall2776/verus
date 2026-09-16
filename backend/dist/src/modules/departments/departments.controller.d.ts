@@ -25,6 +25,7 @@ export declare class DepartmentsController {
                 updatedAt: Date;
                 role: string;
                 password: string;
+                isSuperAdmin: boolean;
                 isOnline: boolean;
             };
         } & {

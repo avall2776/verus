@@ -11,6 +11,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
         userId: any;
         tenantId: any;
         role: any;
+        isSuperAdmin: boolean;
     }>;
 }
 export {};

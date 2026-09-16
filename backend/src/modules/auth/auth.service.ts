@@ -13,10 +13,17 @@ export class AuthService {
   async login(email: string, pass: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },
+      include: { tenant: { select: { id: true, name: true, isActive: true } } }
     });
 
     if (!user) {
       throw new UnauthorizedException('E-mail ou senha incorretos.');
+    }
+
+    const isSuperAdmin = Boolean(user.isSuperAdmin || user.role === 'SUPER_ADMIN');
+
+    if (!isSuperAdmin && user.tenant && !user.tenant.isActive) {
+      throw new UnauthorizedException('O acesso desta empresa está suspenso temporariamente pela administração.');
     }
 
     const isMatch = await bcrypt.compare(pass, user.password);
@@ -24,7 +31,12 @@ export class AuthService {
       throw new UnauthorizedException('E-mail ou senha incorretos.');
     }
 
-    const payload = { sub: user.id, tenantId: user.tenantId, role: user.role };
+    const payload = { 
+      sub: user.id, 
+      tenantId: user.tenantId, 
+      role: user.role,
+      isSuperAdmin 
+    };
     
     return {
       access_token: this.jwtService.sign(payload),
@@ -33,7 +45,10 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
-        tenantId: user.tenantId
+        isSuperAdmin,
+        avatarUrl: user.avatarUrl,
+        tenantId: user.tenantId,
+        tenantName: user.tenant?.name
       }
     };
   }

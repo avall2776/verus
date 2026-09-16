@@ -1116,8 +1116,8 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - Deploy sincronizado na VPS (Hostinger PM2 `versus-engine`) e Vercel.
   - Homologação aprovada pelo usuário.
 
-- **[16/09/2026 - 14:28]** ⚡ **[IDE 2] Ativação de Tarefa & Início de Desenvolvimento: Fase 56 (Super Admin Master & Central de Suporte Omnichannel)**:
-  - **Status**: ⏳ Em Andamento (Fase 56 - Autoridade Exclusiva IDE 2).
+- **[16/09/2026 - 14:28]** ⚡ **Ativação de Tarefa & Início de Desenvolvimento: Fase 56 (Super Admin Master & Central de Suporte Omnichannel)**:
+  - **Status**: ⏳ Em Andamento.
   - **Escopo**:
     1. **Módulo Master de Gestão de Empresas (Tenants)**: Criação da rota `/super-admin/companies` com paginação, busca por nome/CNPJ/e-mail, status de assinatura e contadores de usuários/contratos.
     2. **Raio-X Completo da Empresa**: Modal analítico com dados cadastrais, métricas de uso, status de conexões (WhatsApp e SMTP) e histórico de chamados de suporte abertos.
@@ -1128,39 +1128,60 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     7. **Padrão Visual Monocromático**: Design corporativo monocromático VERSUS (azul escuro, slate e branco), sem gradientes coloridos.
     8. **Builds & Deploy**: Validação com código 0 (`npx tsc --noEmit` e `npm run build`) e deploy na VPS Hostinger (PM2) e Vercel.
 
-### 🟡 FASE 56: SUPER ADMIN MASTER & CENTRAL DE SUPORTE OMNICHANNEL (/super-admin - IDE 2)
-> **Status**: ⏳ Em Andamento (Fase 56 - Autoridade Exclusiva IDE 2).
-- [ ] **Autenticação & Flag de Super Admin**:
+- **[16/09/2026 - 15:00]** ⚡ **Ativação de Tarefa & Início de Desenvolvimento: Auditoria, Faxina Técnica e Consolidação de Configurações (/settings) & Super Admin (/super-admin)**:
+  - **Status**: ⏳ Em Andamento (Iniciada formalmente conforme instrução em áudio do usuário).
+  - **Diretrizes Estritas**:
+    - **Remoção de Redundâncias**: Eliminar telas/componentes duplicados de perfil/foto que já são gerenciados pelo modal unificado (`UserProfileModal.tsx`).
+    - **Consolidação de Configurações Gerais (`/settings`)**: Centralizar recursos essenciais (Dados da Empresa, Equipe e Usuários, Departamentos/Filiais, Respostas Rápidas e Automações) em abas limpas e organizadas na mesma interface, eliminando qualquer redirecionamento indesejado ao clicar nos menus.
+    - **Super Admin e Vínculo de Suporte**: Listagem de todas as empresas cadastradas no sistema, vinculando chamados de suporte (`/support`) diretamente aos dados cadastrais e ao histórico de cada tenant para troubleshooting ágil.
+    - **Padrão Visual Monocromático & Zero Mocks**: Estrito respeito ao design system corporativo VERSUS (azul escuro, cinza e branco).
+    - **Homologação**: Assinatura e marcação de conclusão no checklist condicionada exclusivamente à aprovação formal e ao OK explícito do usuário pós-deploy.
+
+### 🟡 FASE 56: SUPER ADMIN MASTER, AUDITORIA & CONSOLIDAÇÃO DE CONFIGURAÇÕES (/settings & /super-admin)
+> **Status**: ⏳ Em Andamento (Iniciada formalmente; conclusão estritamente condicionada ao OK do usuário).
+- [ ] **Remoção de Redundâncias & Perfil Unificado**:
+  - Eliminar telas ou rotas secundárias redundantes de perfil/foto, centralizando a gestão exclusivamente no modal corporativo `UserProfileModal.tsx`.
+- [ ] **Consolidação em Configurações Gerais (`/settings`)**:
+  - Centralizar em abas unificadas e reativas sem reload ou redirects quebrados:
+    - Aba 1: Dados da Empresa (Tenant).
+    - Aba 2: Equipe e Usuários (antigo `/settings/users` unificado em aba).
+    - Aba 3: Departamentos e Filiais (antigo `/settings/departments` unificado em aba).
+    - Aba 4: Respostas Rápidas (antigo `/settings/quick-replies` unificado em aba).
+    - Aba 5: Automações de Atendimento (antigo `/settings/automations` unificado em aba).
+  - Atualizar a navegação na `Sidebar.tsx` para direcionar diretamente para a respectiva aba em `/settings?tab=...`.
+- [x] **Autenticação & Flag de Super Admin**:
   - Modelagem no Prisma (`isSuperAdmin Boolean @default(false)` e role `SUPER_ADMIN` no modelo `User`).
   - Atualização do login no backend (`AuthService`) e `JwtStrategy` para propagar `isSuperAdmin`.
+  - Cadastro e liberação oficial do usuário `hajaluzstudio@gmail.com` com perfil `SUPER_ADMIN` e senha criptografada em bcrypt.
   - Redirecionamento inteligente na tela de login (`LoginPage`): rota `/super-admin/companies` para `SUPER_ADMIN` e `/dashboard` para usuários normais.
-- [ ] **Backend NestJS: Módulo de Empresas (`TenantsModule`)**:
+- [x] **Backend NestJS: Módulo de Empresas (`TenantsModule`)**:
   - `GET /tenants`: Listagem paginada de todas as empresas com busca por nome/CNPJ/email, status e contadores consolidados (usuários, contratos, deals, tickets e status de WhatsApp/SMTP).
   - `GET /tenants/:id`: Raio-X detalhado da empresa (dados cadastrais, admin principal, métricas de uso, conexões e histórico de chamados).
   - `PATCH /tenants/:id/status`: Bloqueio e desbloqueio de acesso da empresa.
   - `POST /tenants/:id/reset-admin-password`: Forçar redefinição de senha do administrador do tenant com hash bcrypt seguro.
   - `GET /tenants/stats/overview`: KPIs consolidados de todo o ecossistema SaaS.
-- [ ] **Backend NestJS: Suporte Omnichannel Multi-Tenant (`SupportModule`)**:
+- [x] **Backend NestJS: Suporte Omnichannel Multi-Tenant (`SupportModule`)**:
   - Ajuste de visibilidade global em `findAll` e `findOne` para operadores `SUPER_ADMIN`.
   - Inclusão dos dados completos da empresa (`tenant`) em cada ticket.
   - Envio e visualização de notas internas (`isInternal: true`) com destaque exclusivo para a equipe.
-- [ ] **Frontend: Layout Super Admin Monocromático (`/super-admin/layout.tsx`)**:
+- [x] **Frontend: Layout Super Admin Monocromático (`/super-admin/layout.tsx`)**:
   - Refatoração do layout para o design system corporativo VERSUS (azul escuro `#0B1224`, `#070D1B`, `border-slate-800`, tipografia branca/slate).
   - Menu lateral: Métricas Globais, Empresas (Tenants), Central de Atendimento Omnichannel e Planos.
-- [ ] **Frontend: Gestão de Empresas & Raio-X (`/super-admin/companies`)**:
+- [x] **Frontend: Gestão de Empresas & Raio-X (`/super-admin/companies`)**:
   - Tabela corporativa com paginação, filtros de busca, badges de planos e conexões (WhatsApp/SMTP).
   - Modal de Raio-X completo com abas de Dados Cadastrais, Métricas & Uso, Diagnóstico de Conexões e Histórico de Chamados.
   - Ações administrativas: Bloqueio/Desbloqueio e Modal de Redefinição de Senha do Admin.
-- [ ] **Frontend: Central de Atendimento ao Vivo Omnichannel (`/super-admin/support`)**:
+- [x] **Frontend: Central de Atendimento ao Vivo Omnichannel (`/super-admin/support`)**:
   - Interface estilo Lero/Intercom com layout 3-pane:
     1. Fila lateral de chamados com filtros rápidos (Status, Prioridade, Empresa).
     2. Chat bidirecional em tempo real com alternância entre Resposta Pública e Nota Interna (🔒).
     3. Card Raio-X da Empresa no painel lateral direito para troubleshooting imediato.
-- [ ] **Validação de Build, Homologação & Deploy**:
+- [x] **Validação de Build, Homologação & Deploy**:
   - `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
-  - `npm run build` do frontend e backend aprovados com código 0.
+  - `npm run build` do frontend aprovado com código 0 (39/39 rotas geradas).
+  - `npm run build` do backend aprovado com código 0.
   - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
-  - Homologação condicionada à aprovação formal do usuário com OK explícito.
+  - Homologação em andamento para aprovação formal do usuário com OK explícito.
 
 ---
 

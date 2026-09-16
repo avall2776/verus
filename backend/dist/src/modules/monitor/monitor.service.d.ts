@@ -13,6 +13,7 @@ export declare class MonitorService {
             updatedAt: Date;
             role: string;
             password: string;
+            isSuperAdmin: boolean;
             isOnline: boolean;
         };
         lastMessage: {

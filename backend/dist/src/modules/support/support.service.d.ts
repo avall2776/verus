@@ -10,6 +10,8 @@ export declare class SupportService {
         category?: string;
         search?: string;
         userId?: string;
+        isSuperAdmin?: boolean;
+        targetTenantId?: string;
     }): Promise<{
         tickets: ({
             contact: {
@@ -17,6 +19,17 @@ export declare class SupportService {
                 name: string;
                 phone: string;
                 email: string;
+            };
+            tenant: {
+                id: string;
+                name: string;
+                phone: string;
+                email: string;
+                plan: {
+                    name: string;
+                };
+                cnpj: string;
+                isActive: boolean;
             };
             _count: {
                 messages: number;
@@ -59,12 +72,37 @@ export declare class SupportService {
             closed: number;
         };
     }>;
-    findOne(id: string, tenantId: string): Promise<{
+    findOne(id: string, tenantId: string, isSuperAdmin?: boolean): Promise<{
         contact: {
             id: string;
             name: string;
             phone: string;
             email: string;
+        };
+        tenant: {
+            id: string;
+            name: string;
+            phone: string;
+            email: string;
+            createdAt: Date;
+            _count: {
+                supportTickets: number;
+                users: number;
+                contacts: number;
+                contracts: number;
+            };
+            plan: {
+                id: string;
+                name: string;
+                price: import("@prisma/client/runtime/library").Decimal;
+            };
+            cnpj: string;
+            logoUrl: string;
+            address: string;
+            isActive: boolean;
+            metaPhoneNumberId: string;
+            whatsappSettings: import("@prisma/client/runtime/library").JsonValue;
+            emailSettings: import("@prisma/client/runtime/library").JsonValue;
         };
         messages: ({
             sender: {
@@ -148,7 +186,7 @@ export declare class SupportService {
         ticketNumber: number;
         assignedToId: string | null;
     }>;
-    addMessage(ticketId: string, tenantId: string, userId: string, dto: CreateTicketMessageDto): Promise<{
+    addMessage(ticketId: string, tenantId: string, userId: string, dto: CreateTicketMessageDto, isSuperAdmin?: boolean): Promise<{
         sender: {
             id: string;
             name: string;
@@ -167,7 +205,7 @@ export declare class SupportService {
         ticketId: string;
         senderRole: string;
     }>;
-    updateStatus(ticketId: string, tenantId: string, status: string): Promise<{
+    updateStatus(ticketId: string, tenantId: string, status: string, isSuperAdmin?: boolean): Promise<{
         assignedTo: {
             id: string;
             name: string;
@@ -197,7 +235,7 @@ export declare class SupportService {
         ticketNumber: number;
         assignedToId: string | null;
     }>;
-    assign(ticketId: string, tenantId: string, assignedToId: string | null): Promise<{
+    assign(ticketId: string, tenantId: string, assignedToId: string | null, isSuperAdmin?: boolean): Promise<{
         assignedTo: {
             id: string;
             name: string;

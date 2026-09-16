@@ -11,7 +11,10 @@ export declare class AuthService {
             name: string;
             email: string;
             role: string;
+            isSuperAdmin: boolean;
+            avatarUrl: string;
             tenantId: string;
+            tenantName: string;
         };
     }>;
 }

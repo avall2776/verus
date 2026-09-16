@@ -22,6 +22,7 @@ export declare class DepartmentsService {
                 updatedAt: Date;
                 role: string;
                 password: string;
+                isSuperAdmin: boolean;
                 isOnline: boolean;
             };
         } & {

@@ -1,60 +1,164 @@
 "use client";
 
-import { Activity, Building2, CreditCard, Cpu, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { 
+  Building2, 
+  CreditCard, 
+  Users, 
+  Headphones, 
+  ArrowUpRight, 
+  FileText, 
+  RefreshCw,
+  Loader2,
+  ShieldCheck,
+  Activity
+} from "lucide-react";
+import api from "@/lib/api";
+import { toast } from "sonner";
 
 export default function SuperAdminDashboard() {
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/tenants/stats/overview");
+      setStats(res.data);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erro ao carregar métricas globais.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
   const kpis = [
-    { title: "MRR (Receita Recorrente)", value: "R$ 145.200", change: "+12.5%", trend: "up", icon: CreditCard, color: "text-emerald-400" },
-    { title: "Assinantes Ativos", value: "342", change: "+8", trend: "up", icon: Building2, color: "text-indigo-400" },
-    { title: "Consumo OpenAI (Mês)", value: "R$ 4.250", change: "+15%", trend: "up", icon: Cpu, color: "text-red-400", alert: true },
-    { title: "Sessões Totais (Hoje)", value: "12.450", change: "-2.1%", trend: "down", icon: Activity, color: "text-gray-400" },
+    {
+      title: "MRR Estimado",
+      value: loading ? "..." : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(stats?.estimatedMRR || 0),
+      subtitle: `${stats?.activeTenants || 0} empresas assinantes ativas`,
+      icon: CreditCard,
+      color: "text-emerald-400",
+      href: "/super-admin/companies",
+    },
+    {
+      title: "Empresas no Ecossistema",
+      value: loading ? "..." : String(stats?.totalTenants || 0),
+      subtitle: `${stats?.blockedTenants || 0} suspensas/bloqueadas`,
+      icon: Building2,
+      color: "text-blue-400",
+      href: "/super-admin/companies",
+    },
+    {
+      title: "Operadores Cadastrados",
+      value: loading ? "..." : String(stats?.totalUsers || 0),
+      subtitle: "Usuários ativos em todas as instâncias",
+      icon: Users,
+      color: "text-slate-300",
+      href: "/super-admin/companies",
+    },
+    {
+      title: "Chamados em Fila de Espera",
+      value: loading ? "..." : String(stats?.openTickets || 0),
+      subtitle: "Aguardando resposta ou triagem",
+      icon: Headphones,
+      color: stats?.openTickets > 0 ? "text-amber-400" : "text-slate-400",
+      href: "/super-admin/support",
+    },
   ];
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-8">
-      
+    <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-10">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-black text-white tracking-wide">Dashboard Master</h1>
-        <p className="text-sm text-gray-400 mt-1">Acompanhe a saúde financeira e operacional de todo o ecossistema SaaS.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-white tracking-wide">Métricas Globais do SaaS</h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Visão executiva em tempo real de faturamento, crescimento de tenants e demanda de suporte.
+          </p>
+        </div>
+
+        <button
+          onClick={fetchStats}
+          disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B1224] border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+        >
+          <RefreshCw size={13} className={loading ? "animate-spin text-blue-400" : ""} />
+          <span>Atualizar Dados</span>
+        </button>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((kpi, index) => (
-          <div key={index} className={`bg-[#0a0f1c] border ${kpi.alert ? 'border-red-900/50 shadow-[0_0_15px_rgba(239,68,68,0.1)]' : 'border-indigo-900/40'} rounded-2xl p-5 flex flex-col gap-4 relative overflow-hidden group hover:border-indigo-700/50 transition-colors`}>
-            
-            <div className="flex justify-between items-start">
-              <div className={`p-2 rounded-xl bg-[#060913] border border-indigo-900/30 ${kpi.color}`}>
-                <kpi.icon size={20} />
-              </div>
-              <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${kpi.trend === 'up' ? 'text-emerald-400 bg-emerald-400/10' : 'text-red-400 bg-red-400/10'}`}>
-                {kpi.trend === 'up' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                {kpi.change}
+          <Link
+            key={index}
+            href={kpi.href}
+            className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between group"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                {kpi.title}
+              </span>
+              <div className={`p-2 rounded-lg bg-[#070D1B] border border-slate-800 ${kpi.color}`}>
+                <kpi.icon size={16} />
               </div>
             </div>
-            
+
             <div>
-              <h3 className="text-[0.75rem] font-bold text-indigo-400/70 uppercase tracking-widest">{kpi.title}</h3>
-              <p className="text-3xl font-black text-white mt-1">{kpi.value}</p>
+              <p className="text-2xl font-black text-white font-mono tracking-tight group-hover:text-blue-400 transition-colors">
+                {kpi.value}
+              </p>
+              <span className="text-[11px] text-slate-400 mt-1 block">
+                {kpi.subtitle}
+              </span>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
-      {/* Gráfico de Crescimento */}
-      <div className="bg-[#0a0f1c] border border-indigo-900/40 rounded-2xl p-6 flex flex-col gap-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-sm font-bold text-white flex items-center gap-2">
-            <Activity size={16} className="text-indigo-400" /> Crescimento de MRR vs Custo de API (6 Meses)
-          </h2>
+      {/* Ações Rápidas do Master */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-5 rounded-xl bg-[#0B1224] border border-slate-800 space-y-3">
+          <div className="flex items-center gap-2 text-white font-bold text-sm">
+            <Building2 size={16} className="text-blue-400" />
+            <span>Gestão de Empresas (Tenants)</span>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Consulte a lista de empresas, analise métricas individuais no Raio-X, ative/bloqueie acessos e redefina senhas com um clique.
+          </p>
+          <Link
+            href="/super-admin/companies"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors"
+          >
+            <span>Gerenciar Empresas</span>
+            <ArrowUpRight size={14} />
+          </Link>
         </div>
-        
-        <div className="w-full h-64 border border-indigo-900/20 rounded-xl bg-[#060913] flex items-center justify-center text-indigo-500/40 font-bold text-sm">
-          [Gráfico Area Chart: MRR subindo em verde, Custo de API acompanhando em vermelho]
+
+        <div className="p-5 rounded-xl bg-[#0B1224] border border-slate-800 space-y-3">
+          <div className="flex items-center gap-2 text-white font-bold text-sm">
+            <Headphones size={16} className="text-blue-400" />
+            <span>Central de Atendimento ao Vivo</span>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Atenda clientes de qualquer empresa em tempo real, registre notas internas para a equipe e confira diagnósticos no card lateral.
+          </p>
+          <Link
+            href="/super-admin/support"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors border border-slate-700"
+          >
+            <span>Abrir Fila de Atendimento</span>
+            <ArrowUpRight size={14} />
+          </Link>
         </div>
       </div>
-
     </div>
   );
 }

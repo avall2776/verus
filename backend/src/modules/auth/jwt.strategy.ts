@@ -18,11 +18,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     const { sub: userId, tenantId, role } = payload;
-    
-    if (!userId || !tenantId) {
-      throw new UnauthorizedException('Token inválido ou sem contexto de Tenant.');
+    const isSuperAdmin = Boolean(payload.isSuperAdmin || role === 'SUPER_ADMIN');
+
+    if (!userId) {
+      throw new UnauthorizedException('Token inválido.');
     }
 
-    return { id: userId, userId, tenantId, role: role || 'AGENT' };
+    return { 
+      id: userId, 
+      userId, 
+      tenantId: tenantId || null, 
+      role: role || 'AGENT', 
+      isSuperAdmin 
+    };
   }
 }

@@ -177,7 +177,12 @@ export default function LoginPage() {
       
       localStorage.setItem("versus_auth_token", data.access_token);
       localStorage.setItem("versus_user", JSON.stringify(data.user));
-      router.push("/dashboard");
+      
+      if (data.user?.isSuperAdmin || data.user?.role === 'SUPER_ADMIN') {
+        router.push("/super-admin/companies");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || "Erro ao conectar com o servidor.");
       setLoading(false);
