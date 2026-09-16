@@ -1056,6 +1056,28 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - Template de variáveis SMTP configurado em `/root/verus/backend/.env` na VPS e em `.env.example`.
   - Finalização condicionada ao OK explícito do usuário após teste de disparo com credenciais ativas.
 
+- **[16/09/2026 - 11:23]** ⚡ **[IDE 2] Ativação de Tarefa & Início de Desenvolvimento: Fase 54 (Correção do Perfil no Menu Lateral & Padronização Monocromática da Configuração de E-mail)**:
+  - **Status**: ⏳ Em Andamento (Fase 54 - Autoridade Exclusiva IDE 2).
+  - **Divisão de Trabalho**: A **IDE 2** assume com autoridade exclusiva a **Fase 54 (Correção do Perfil no Menu Lateral & Padronização Monocromática da Configuração de E-mail)**, garantindo que a IDE 1 não execute esta frente e mantenha foco nas rotinas de backend do Inbox.
+  - **Escopo Definido**:
+    1. Correção do fluxo de salvamento e atualização do nome do operador/usuário no rodapé da barra lateral (`Sidebar.tsx`), garantindo persistência no banco/localStorage, despacho de eventos e fechamento fluido do modal.
+    2. Eliminação total de gradientes coloridos e excessos visuais na tela de Configuração de E-mail (`EmailSettingsTab.tsx`), adotando o padrão monocromático corporativo (azul escuro, cinza/slate e branco).
+    3. Builds com código 0 (`npx tsc --noEmit` e `npm run build`) e deploy sincronizado na VPS (PM2 `versus-engine`) e Vercel.
+
+### 🟡 FASE 54: CORREÇÃO DO PERFIL NO MENU LATERAL & PADRONIZAÇÃO MONOCROMÁTICA DA CONFIGURAÇÃO DE E-MAIL (IDE 2)
+> **Aviso de Exclusividade**: Fase em desenvolvimento exclusivo pela **IDE 2**. Não alterar via IDE 1.
+- [ ] **Correção do Perfil no Menu Lateral (`Sidebar.tsx`)**:
+  - Ajuste do modal de edição de perfil do operador no rodapé da Sidebar.
+  - Salvamento reativo do nome com atualização imediata de estado, localStorage e fechamento confiável do modal.
+- [ ] **Padronização Monocromática nas Telas de Configuração de E-mail (`EmailSettingsTab.tsx`)**:
+  - Remoção de todos os gradientes coloridos pesados, bordas berrantes e efeitos excessivos.
+  - Aplicação rigorosa do design system corporativo (azul escuro `#0B1224`, cinza/slate `border-slate-800` e tipografia branca/slate).
+  - Cores de alerta (amarelo e vermelho) restritas exclusivamente a diagnósticos críticos de transporte/falhas SMTP.
+- [ ] **Validação de Build, Homologação & Deploy**:
+  - `npx tsc --noEmit` e `npm run build` aprovados com código 0.
+  - Deploy sincronizado na VPS (Hostinger PM2 `versus-engine`) e Vercel.
+  - Homologação condicionada à aprovação do usuário.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
