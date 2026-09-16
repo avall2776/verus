@@ -395,6 +395,7 @@ let TenantsService = class TenantsService {
                 hasAIAgent: false,
                 maxUsers: 1,
                 maxAIMsgs: 0,
+                maxWorkspaces: 1,
                 modules: {
                     crm: false,
                     whatsapp: true,
@@ -417,6 +418,7 @@ let TenantsService = class TenantsService {
                 hasAIAgent: true,
                 maxUsers: 3,
                 maxAIMsgs: 2000,
+                maxWorkspaces: 3,
                 modules: {
                     crm: true,
                     whatsapp: true,
@@ -439,6 +441,7 @@ let TenantsService = class TenantsService {
                 hasAIAgent: true,
                 maxUsers: 10,
                 maxAIMsgs: 10000,
+                maxWorkspaces: 10,
                 modules: {
                     crm: true,
                     whatsapp: true,
@@ -506,6 +509,7 @@ let TenantsService = class TenantsService {
                 hasAIAgent: modules.aiAgent ?? dto.hasAIAgent ?? false,
                 maxUsers: dto.maxUsers ?? 1,
                 maxAIMsgs: dto.maxAIMsgs ?? 0,
+                maxWorkspaces: dto.maxWorkspaces ?? 1,
                 modules,
             },
         });
@@ -532,6 +536,8 @@ let TenantsService = class TenantsService {
             data.maxUsers = dto.maxUsers;
         if (dto.maxAIMsgs !== undefined)
             data.maxAIMsgs = dto.maxAIMsgs;
+        if (dto.maxWorkspaces !== undefined)
+            data.maxWorkspaces = dto.maxWorkspaces;
         if (dto.modules !== undefined) {
             data.modules = dto.modules;
             if (dto.modules.crm !== undefined)

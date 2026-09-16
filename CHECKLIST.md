@@ -1338,7 +1338,61 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação de Build, Homologação & Deploy**:
   - [x] `npx tsc --noEmit` aprovado com código 0 em ambas as pontas.
   - [x] `npm run build` aprovado com código 0 em ambas as pontas.
-  - [x] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+- **[17/09/2026 - Manhã]** ⚡ **Agendamento para Execução: Widget Flutuante de Suporte ("Suporte Versus" - Padrão Lero) (Fase 61)**:
+  - **Status**: ⏳ Agendada para Amanhã (17/09/2026).
+  - **Escopo**:
+    1. **Botão Flutuante (Floating Trigger)**: Ícone flutuante discreto e corporativo de suporte fixado no canto inferior da tela (acima da barra lateral ou rodapé), visível em todas as páginas do painel do cliente com indicador de status e avisos.
+    2. **Popover / Modal de Suporte do Cliente**:
+       - Header: Título "Suporte Versus", abas rápidas entre "Suporte" (chamados ativos) e "Avisos" (notificações e atualizações do sistema).
+       - Seção de Chamados Recentes ("Ver meus chamados"): Listagem compacta dos chamados abertos pelo cliente (protocolo ex: #HD-0801, status e última resposta).
+       - Botão destacado: "Abrir solicitação de suporte" (dispara modal de criação de ticket integrado ao `SupportModule`).
+       - Botão de acesso: "Ir para a Central de Ajuda" (redireciona para a rota `/support` com a base de conhecimento e troubleshooting).
+    3. **Integração Real com o Backend**: Consumo dos endpoints de `SupportTicket` e avisos do tenant logado em tempo real, exibindo contadores corretos.
+    4. **Padrão Monocromático & Zero Mocks**: Estritamente alinhado ao design system corporativo do VERSUS (azul escuro, slate e branco, sem gradientes berrantes).
+    5. **Build e Deploy Obrigatórios**: `npx tsc --noEmit` e `npm run build` (código 0) e deploy imediato na VPS (PM2) e Vercel.
+
+### 🟡 FASE 61: WIDGET FLUTUANTE DE SUPORTE ("SUPORTE VERSUS" - PADRÃO LERO)
+> **Status**: ⏳ Agendada para Amanhã (17/09/2026).
+- [ ] **Botão Flutuante (Floating Trigger)**:
+  - [ ] Ícone discreto e corporativo de suporte fixado no canto inferior da tela.
+  - [ ] Indicador/badge de status e avisos pendentes.
+  - [ ] Presença global no layout de todas as páginas do cliente.
+- [ ] **Popover / Modal de Suporte do Cliente**:
+  - [ ] Header "Suporte Versus" com alternância de abas "Suporte" e "Avisos".
+  - [ ] Seção "Ver meus chamados" com listagem compacta de tickets, protocolos e status.
+  - [ ] Botão destacado "Abrir solicitação de suporte" com formulário modal integrado.
+  - [ ] Botão "Ir para a Central de Ajuda" redirecionando para `/support`.
+- [ ] **Integração Backend & Zero Mocks**:
+  - [ ] Consumo real dos endpoints do `SupportModule` para o tenant ativo.
+- [ ] **Validação de Build, Homologação & Deploy**:
+  - [ ] `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
+  - [ ] `npm run build` aprovado com código 0 em ambas as pontas.
+  - [ ] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
+- **[17/09/2026 - Manhã]** ⚡ **Agendamento para Execução: Busca no Chat Interno & Central de Notificações Global (Fase 62)**:
+  - **Status**: ⏳ Agendada para Amanhã (17/09/2026).
+  - **Escopo**:
+    1. **Funcionalidade de Busca no Chat Interno (`/chat`)**: Conectar o campo de input "Buscar conversa..." na listagem do chat interno para filtrar dinamicamente os colaboradores, equipes e conversas ativas em tempo real conforme digitação.
+    2. **Central de Notificações Global (Ícone do Sininho no Topo Superior Direito)**: Conectar o ícone de notificações (sino) localizado no canto superior direito do header para que, ao ser clicado, abra um Popover / Dropdown de Notificações interativo listando notificações em tempo real (novas mensagens do chat interno, atualizações de chamados de suporte, alertas de metas ou avisos do sistema), com opção de marcar como lidas.
+    3. **Padrão Monocromático & Zero Mocks**: Azul escuro, slate e branco, sem gradientes berrantes.
+    4. **Build e Deploy Obrigatórios**: `npx tsc --noEmit` e `npm run build` (código 0) e deploy imediato na VPS (PM2) e Vercel.
+
+### 🟡 FASE 62: BUSCA NO CHAT INTERNO & CENTRAL DE NOTIFICAÇÕES GLOBAL
+> **Status**: ⏳ Agendada para Amanhã (17/09/2026).
+- [ ] **Busca em Tempo Real no Chat Interno (`/chat`)**:
+  - [ ] Conexão do input "Buscar conversa..." com filtro reativo de contatos e equipes.
+  - [ ] Tratamento para estado sem resultados com mensagem amigável.
+- [ ] **Central de Notificações Global (Sininho no Header)**:
+  - [ ] Popover / Dropdown de notificações interativo acionado pelo sino no canto superior direito.
+  - [ ] Listagem de notificações reais (mensagens de chat interno, suporte, metas, sistema).
+  - [ ] Badge contador de notificações não lidas.
+  - [ ] Ação de "Marcar todas como lidas" e marcar individual.
+- [ ] **Padrão Monocromático & Zero Mocks**:
+  - [ ] Coerência total com design corporativo VERSUS.
+- [ ] **Validação de Build, Homologação & Deploy**:
+  - [ ] `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
+  - [ ] `npm run build` aprovado com código 0 em ambas as pontas.
+  - [ ] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
 ---
 

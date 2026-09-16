@@ -7,5 +7,6 @@ export declare class CreatePlanDto {
     hasAIAgent?: boolean;
     maxUsers?: number;
     maxAIMsgs?: number;
+    maxWorkspaces?: number;
     modules?: any;
 }
