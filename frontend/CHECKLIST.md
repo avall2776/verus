@@ -1135,10 +1135,19 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - **Consolidação de Configurações Gerais (`/settings`)**: Centralizar recursos essenciais (Dados da Empresa, Equipe e Usuários, Departamentos/Filiais, Respostas Rápidas e Automações) em abas limpas e organizadas na mesma interface, eliminando qualquer redirecionamento indesejado ao clicar nos menus.
     - **Super Admin e Vínculo de Suporte**: Listagem de todas as empresas cadastradas no sistema, vinculando chamados de suporte (`/support`) diretamente aos dados cadastrais e ao histórico de cada tenant para troubleshooting ágil.
     - **Padrão Visual Monocromático & Zero Mocks**: Estrito respeito ao design system corporativo VERSUS (azul escuro, cinza e branco).
-    - **Homologação**: Assinatura e marcação de conclusão no checklist condicionada exclusivamente à aprovação formal e ao OK explícito do usuário pós-deploy.
+- **[16/09/2026 - 16:15]** ⚡ **Ativação de Tarefa: Refinamento Cirúrgico em Equipe e Usuários (/settings?tab=users) & Convite via SMTP Próprio**:
+  - **Status**: ⏳ Em Andamento (Iniciada formalmente; conclusão estritamente condicionada ao OK do usuário).
+  - **Escopo**:
+    1. **Edição de Membros da Equipe**: Adicionar botão de edição (lápis) em cada linha de usuário, permitindo alterar Nome, Cargo (`Administrador` / `Atendente`) e Status (`Ativo` / `Inativo`) via modal interativo e responsivo.
+    2. **Envio de E-mail de Convite via SMTP Próprio**: Conectar a criação de membros (`POST /users`) ao serviço de transporte SMTP do tenant (`tenant.emailSettings`), disparando e-mail corporativo formatado com link de acesso e credenciais de ativação.
+    3. **Padrão Monocromático & Zero Mocks**: Manter rigorosamente o design system corporativo VERSUS (azul escuro, cinza e branco).
+    4. **Build & Deploy**: Validação completa com `npx tsc --noEmit` e `npm run build` (código 0) e deploy na VPS e Vercel.
 
 ### 🟡 FASE 56: SUPER ADMIN MASTER, AUDITORIA & CONSOLIDAÇÃO DE CONFIGURAÇÕES (/settings & /super-admin)
 > **Status**: ⏳ Em Andamento (Iniciada formalmente; conclusão estritamente condicionada ao OK do usuário).
+- [ ] **Refinamento em Equipe e Usuários (/settings?tab=users)**:
+  - [ ] **Modal de Edição de Membro**: Permitir alterar Nome, Cargo (`Administrador` / `Atendente`) e Status (`Ativo` / `Inativo`).
+  - [ ] **Disparo de Convite por E-mail via SMTP Próprio**: Disparar e-mail de convite com link de login pelo transporter SMTP configurado no tenant.
 - [x] **Remoção de Redundâncias & Perfil Unificado**:
   - Eliminar telas ou rotas secundárias redundantes de perfil/foto, centralizando a gestão exclusivamente no modal corporativo `UserProfileModal.tsx`.
 - [x] **Consolidação em Configurações Gerais (`/settings`)**:
@@ -1173,7 +1182,11 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Frontend: Gestão de Empresas & Raio-X (`/super-admin/companies`)**:
   - Tabela corporativa com paginação, filtros de busca, badges de planos e conexões (WhatsApp/SMTP).
   - Modal de Raio-X completo com abas de Dados Cadastrais, Métricas & Uso, Diagnóstico de Conexões e Histórico de Chamados.
-  - Ações administrativas: Bloqueio/Desbloqueio e Modal de Redefinição de Senha do Admin.
+  - Ações administrativas: Bloqueio/Desbloqueio, Modal de Redefinição de Senha do Admin e Modal de Edição Completa da Empresa (`EditCompanyModal`).
+  - Permite alterar Razão Social, CNPJ, E-mail, Telefone, Endereço, Plano de Assinatura e Status Ativo tanto pela tabela quanto pelo Raio-X, com persistência no Supabase/Prisma via `PATCH /tenants/:id`.
+- [x] **Frontend: Perfil do Operador no Super Admin (`/super-admin/layout.tsx`)**:
+  - Integração no rodapé do console com o `UserProfileModal` oficial do sistema.
+  - Permite alterar nome e foto de perfil (upload local ou presets), com persistência no banco (`PATCH /users/profile`), atualização no `localStorage` e sincronização reativa em tempo real (`user_updated`).
 - [x] **Frontend: Central de Atendimento ao Vivo Omnichannel (`/super-admin/support`)**:
   - Interface estilo Lero/Intercom com layout 3-pane:
     1. Fila lateral de chamados com filtros rápidos (Status, Prioridade, Empresa).
