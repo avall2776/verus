@@ -94,5 +94,14 @@ export class AnalyticsController {
   ) {
     return this.analyticsService.getBottlenecks(tenantId, startDate, endDate);
   }
+
+  @Get('channels')
+  async getChannels(
+    @CurrentTenant() tenantId: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string
+  ) {
+    return this.analyticsService.getChannels(tenantId, startDate, endDate);
+  }
 }
 
