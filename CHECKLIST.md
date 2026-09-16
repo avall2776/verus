@@ -824,18 +824,20 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 > **Aviso de Coordenação entre Ambientes**: Esta fase está sendo desenvolvida com exclusividade pela **IDE 2**. A **IDE 1** não deve alterar ou sobrescrever os arquivos de Metas Comerciais (`/dashboard/goals`, `backend/src/modules/goals`, `frontend/src/components/goals`).
 
 - [ ] **Backend NestJS & Prisma (`GoalsModule`) [IDE 2]**:
-  * Implementação de `GET /goals/summary`: cálculo matemático de Run Rate `(receita atual / dias decorridos) * dias totais`, velocidade diária (*daily pace*), projeção de fechamento e status de saúde da meta.
+  * Implementação de `GET /goals/summary`: cálculo matemático de Run Rate `(receita atual / dias decorridos) * dias totais`, velocidade diária (*daily pace*), projeção de fechamento, status de saúde da meta e suporte a filtros por canal (`channel`).
   * Implementação de `PUT /goals/:id`: edição atômica de metas (título, targetValue, período, responsável) com validação via `UpdateGoalDto`.
   * Implementação de `DELETE /goals/:id`: exclusão segura com isolamento estrito por tenant.
-  * Implementação de `GET /goals/leaderboard/:userId/details`: drilldown com histórico de propostas aceitas e negócios ganhos pelo consultor.
-- [ ] **Interface & Pódio Gamificado (`/dashboard/goals`) [IDE 2 Frontend]**:
+  * Implementação de `GET /goals/leaderboard/:userId/details`: drilldown com histórico de propostas aceitas, negócios ganhos e badges de conquistas desbloqueadas (🏆 Meta Batida, 💎 Ticket Destaque, ⚡ Closer de Elite, 🚀 Volume Máximo).
+- [ ] **Interface, Filtros & Pódio Gamificado (`/dashboard/goals`) [IDE 2 Frontend]**:
   * Eliminação completa de mocks estáticos (`INITIAL_GOALS`, `INITIAL_RANKING`), conectando a página 100% aos endpoints reais.
-  * Cartão Executivo de Run Rate: barra de progresso viva, status inteligente (*No Ritmo*, *Atenção*, *Superada*), simulador interativo de projeção e contagem regressiva para fechamento do mês.
+  * Cartão Executivo de Run Rate: barra de progresso viva, status inteligente (*No Ritmo*, *Atenção*, *Superada*), seletor dinâmico de canal de aquisição (WhatsApp, Meta Ads, Google Ads, Orgânico, Indicação) e simulador interativo de projeção.
+  * Alerta Executivo de Aceleração Comercial: acionado automaticamente quando o ritmo estiver abaixo do cronograma, com atalhos para automações de resgate de leads e auditoria de funil.
   * Pódio Visual dos Top 3 Vendedores (🥇 Ouro, 🥈 Prata, 🥉 Bronze) com coroas, badges de performance, taxa de conversão individual e ticket médio.
-  * Modal de Drilldown do Vendedor (`SellerDetailModal.tsx`): histórico detalhado de vendas disparado ao clicar no vendedor no ranking.
+  * Modal de Drilldown do Vendedor (`SellerDetailModal.tsx`): histórico detalhado de vendas e selos de conquistas disparado ao clicar no vendedor no ranking.
   * Conexão do `NewGoalModal.tsx` e criação do `EditGoalModal.tsx` integrados à API com feedbacks visuais e Empty States padrão Dark Glassmorphism.
 - [ ] **Homologação e Validação Final [IDE 2]**:
   * Builds de Frontend e Backend aprovados com código 0.
+  * Teste de fluxo real de QA aprovado (criação, edição, exclusão no Supabase e sanidade matemática).
   * Tarefa mantida como `[ ]` / `[EM ANDAMENTO]` até teste e aprovação formal do usuário com OK explícito.
 
 ---
