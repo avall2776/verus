@@ -1246,24 +1246,22 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ### 🟡 FASE 58: CONTROLE GRANULAR DE PERMISSÕES & GESTÃO SEGURA DE EQUIPE
 > **Status**: ⏳ Em Andamento (Iniciada formalmente; conclusão estritamente condicionada ao OK do usuário).
-- [ ] **Backend: Banco de Dados & Endpoints de Usuários**:
-  - [ ] Campo `permissions Json?` no modelo `User` do Prisma (`prisma db push`).
-  - [ ] Filtro estrito em `UsersController.findAll` para ocultar contas de Super Admin (`isSuperAdmin: false` e `role: { not: 'SUPER_ADMIN' }`).
-  - [ ] Suporte a `permissions` no `create` (POST `/users`) e `update` (PATCH `/users/:id`).
-  - [ ] Retorno de `permissions` no login (`AuthService.login`) e perfil (`UsersController.getMe`).
-- [ ] **Frontend: Modais de Convite e Edição (`UsersSettingsTab.tsx`)**:
-  - [ ] Seletores/checkboxes granulares de permissões no modal de convite de novos membros.
-  - [ ] Seletores/checkboxes granulares de permissões no modal de edição de membros existentes.
-  - [ ] Badges visuais de permissões na listagem de usuários.
-- [ ] **Frontend: Validação de Acesso na Sidebar (`Sidebar.tsx`)**:
-  - [ ] Filtragem reativa dos itens e grupos de navegação com base nas permissões do colaborador logado.
-- [x] **Frontend: Refinamento Visual da Sidebar (`Sidebar.tsx`)**:
-  - Remoção completa de todos os badges flutuantes ('NOVO', 'PRO', 'LERO') das abas da seção "Mais Recursos / Expansão" e demais menus.
-  - Interface monocromática corporativa limpa, profissional e sem poluição visual.
-- [ ] **Validação de Build, Homologação & Deploy**:
+- [x] **Backend: Banco de Dados & Endpoints de Usuários**:
+  - [x] Campo `permissions Json?` no modelo `User` do Prisma (`prisma db push`).
+  - [x] Filtro estrito em `UsersController.findAll` para ocultar contas de Super Admin (`isSuperAdmin: false` e `role: { not: 'SUPER_ADMIN' }`).
+  - [x] Suporte a `permissions` no `create` (POST `/users`) e `update` (PATCH `/users/:id`).
+  - [x] Retorno de `permissions` no login (`AuthService.login`) e perfil (`UsersController.getMe`).
+- [x] **Frontend: Modais de Convite e Edição (`UsersSettingsTab.tsx`)**:
+  - [x] Seletores/checkboxes granulares de permissões no modal de convite de novos membros.
+  - [x] Seletores/checkboxes granulares de permissões no modal de edição de membros existentes.
+  - [x] Badges visuais de permissões na listagem de usuários.
+- [x] **Frontend: Validação de Acesso na Sidebar (`Sidebar.tsx`)**:
+  - [x] Filtragem reativa dos itens e grupos de navegação com base nas permissões do colaborador logado.
+  - [x] Atualização e sincronização contínua com `/users/me`.
+- [x] **Validação de Build, Homologação & Deploy**:
   - [x] `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
   - [x] `npm run build` aprovado com código 0 em ambas as pontas.
-  - [ ] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+  - [x] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
 ---
 
