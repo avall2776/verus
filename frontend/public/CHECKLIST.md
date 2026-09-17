@@ -1928,13 +1928,55 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `CreateProposalDto` e `UpdateProposalDto` aceitando `logoUrl` e payload de `issuer`.
   - [x] Persistência bidirecional no `ProposalsService` (proposta e fallback do tenant).
   - [x] Envio correto do DataURL/URL no `ProposalModal.tsx` e tela `/proposals`.
-- [x] **Refinamento de Impressão A4 (@media print)**:
-  - [x] Regra `@page` em `globals.css` eliminando cabeçalhos e rodapés nativos do navegador.
-  - [x] Ocultação do widget flutuante de suporte e botões de ação no documento impresso.
-  - [x] Remoção de sombras de container e controle de quebra de página (`page-break-inside: avoid`).
-  - [x] Encaixe limpo de todo o conteúdo em página única A4 com tipografia nítida.
+  - [x] **Resolução do erro `request entity too large` (HTTP 413)**:
+    - [x] Configuração de `json({ limit: '25mb' })` e `urlencoded({ limit: '25mb' })` no NestJS (`backend/src/main.ts`).
+    - [x] Otimizador client-side com HTML5 Canvas no `ProposalModal.tsx` que redimensiona imagens para dimensões de alta definição (550x240px) gerando DataURLs leves (~35KB a 65KB), preservando transparência PNG e eliminando peso no banco.
+- [x] **Refinamento de Impressão A4 e Isolamento Total do Documento**:
+  - [x] Regra `@page` em `globals.css` eliminando cabeçalhos e rodapés nativos do navegador (URLs, títulos e datas).
+  - [x] **Eliminação do "Print da Tela do Dashboard"**: Adicionado wrapper `print:hidden` ao redor de todo o painel operacional de `/proposals` (cards de métricas, filtros de status, campo de busca e tabela), além de `Topbar` e `FloatingSupportWidget`.
+  - [x] Na impressão, **apenas o espelho do documento oficial da proposta do cliente** é renderizado.
+  - [x] Remoção de sombras de container, desobstrução de overflow dos layouts pais e controle de quebra (`page-break-inside: avoid`).
+  - [x] Encaixe limpo de todo o conteúdo em página única A4 com tipografia nítida e logotipo corporativo nítido.
 - [x] **Homologação, Build & Deploy**:
-  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0.
+  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
+  - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine` online) e Vercel via commits `ca45ace`, `f828dac` e `5e8fc84`.
+
+- [x] **[17/09/2026 - 15:45]** ⚡ **[IDE 1] Conclusão: Reformulação Estrutural, Layout Fluido e Migração de Segurança dos Agentes de IA para o Super Admin Console (`/super-admin/ai-agents`) (Fase 71)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Remoção de Caixas Aninhadas e Múltiplos Scrolls (Layout Fluido)**:
+    - Fim definitivo da rolagem dupla e containers do tipo "quadrados dentro de quadrados".
+    - O novo módulo adota layout contínuo e fluido governado pelo scroll vertical natural da janela do navegador.
+    - O editor de System Prompt e a base de conhecimento (RAG) possuem amplitude vertical generosa (`min-h-[380px]`), sem barras de rolagem internas que interfiram na navegação da página.
+  - **Adequação Rígida ao Design System Monocromático**:
+    - Eliminação completa de cores vibrantes (ciano, roxo, âmbar).
+    - Paleta 100% corporativa com fundo `#070D1B`, cards em `#0B1224`, bordas em `slate-800`/`slate-700` e tipografia nítida em branco e `slate-300`/`slate-400`.
+  - **Migração Exclusiva para o Super Admin Console (`/super-admin/ai-agents`)**:
+    - Módulo de Agentes de IA realocado para o painel global do VERSUS Master Super Admin (`/super-admin/ai-agents`).
+    - Removido do menu da barra lateral dos clientes comuns (`Sidebar.tsx`) para impedir que usuários quebrem o bot ou alterem prompts sensíveis.
+    - Adicionado ao menu lateral do Super Admin (`ADMIN_MENU` em `super-admin/layout.tsx`).
+    - Seletor de empresa/tenant integrado no topo do console para governança e calibração individual por tenant via cabeçalho `x-target-tenant-id` suportado pelo backend (`tenant.decorator.ts`).
+    - Rota legada `/agent` protegida com redirecionamento automático para administradores e tela de bloqueio com aviso informativo para tenants comuns.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` e `npm run build` aprovados com código 0 (44/44 páginas estáticas geradas).
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine` online com 0% CPU) e Vercel via commits `2129979` e `5e8fc84`.
+
+### 🟢 FASE 71: REFORMULAÇÃO ESTRUTURAL E MIGRAÇÃO DOS AGENTES DE IA PARA O SUPER ADMIN CONSOLE [CONCLUÍDA - IDE 1]
+> **Status**: ✅ Concluída com Sucesso, Builds Código 0 e Homologada em Produção.
+- [x] **Layout Fluido & Fim de Caixas Aninhadas**:
+  - [x] Eliminação de containers encaixotados e scrolls internos bloqueantes.
+  - [x] Fluxo vertical natural na janela do navegador com visualização contínua.
+  - [x] Editor amplo de System Prompt com altura ergonômica sem scroll preso.
+- [x] **Design System Monocromático Estrito**:
+  - [x] Paleta oficial VERSUS: `#0B1224`, `#070D1B`, `slate-800` e tipografia branca/slate-300.
+  - [x] Eliminação total de tons berrantes de ciano e roxo.
+- [x] **Governança Exclusiva no Super Admin Console**:
+  - [x] Nova rota `/super-admin/ai-agents` com seletor dinâmico de empresas/tenants.
+  - [x] Remoção de "Agentes de IA" da barra lateral dos clientes comuns (`Sidebar.tsx`).
+  - [x] Inclusão de "Agentes de IA" no menu do Super Admin (`ADMIN_MENU` em `super-admin/layout.tsx`).
+  - [x] Suporte a `x-target-tenant-id` no `CurrentTenant` decorator do NestJS para governança multitenant.
+  - [x] Proteção e redirecionamento da rota legada `/agent`.
+- [x] **Homologação, Build & Deploy**:
+  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 em ambas as pontas.
   - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`).
 
 ---
