@@ -1527,6 +1527,22 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
     - Deploy atualizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
+- [x] **[17/09/2026 - 10:35]** ⚡ **[IDE 1] Conclusão: Correção de Filtros do Inbox, Popover de Opções e Foto de Perfil da Instância (/inbox)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Aprovado.
+  - **Filtros de Conversas (Tabs)**:
+    - Backend (`chat.service.ts`): Suporte direto a `tab=all` e `tab=unread` sem travar apenas em `waiting`, permitindo carregar todas as conversas do workspace/tenant e manter permissões de agentes.
+    - Frontend (`inbox/page.tsx`): Sincronização reativa de `useQuery` com `activeFilterTab`, conectando as abas *Tudo*, *Não lidas*, *Aguardando*, *Meus* e *Resolvidos* à listagem em tempo real, sem telas vazias.
+  - **Isolamento do Popover de Opções (Três Pontinhos)**:
+    - Desacoplamento dos estados entre o menu lateral esquerdo (`showLeftHeaderMenu`) e o menu da conversa ativa (`showChatOptionsMenu`).
+    - Inclusão de backdrop invisível com clique-fora (`fixed inset-0 z-40`) e posicionamento `z-50` flutuante com sombra profunda, eliminando sobreposições.
+  - **Foto de Perfil da Instância (Linha Principal)**:
+    - Renderização da foto de perfil (`activeInstance?.profilePicUrl || waStatus?.profilePicUrl`) em avatar circular de 40px no cabeçalho da Linha Principal na coluna esquerda.
+    - Status de presença em tempo real (dot esmeralda pulsante quando conectado) e seletor de instâncias (`showInstanceDropdown`) com fotos de perfil em miniaturas.
+    - Exibição da foto da instância no chat quando a conversa for com o próprio número/Linha Principal.
+  - **Validação de Build, Homologação & Deploy**:
+    - `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend - 42 rotas compiladas).
+    - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
 - [x] **[17/09/2026 - 09:48]** ⚡ **[IDE 2] Conclusão: Gestão de Equipe e Operadores do Super Admin - Métricas, Permissões e Auditoria / Espiar Conversas (Fase 65)**:
   - **Status**: ✅ Concluído com Sucesso e Homologado.
   - **Módulo Administrativo de Operadores (`/super-admin/operators`)**:
@@ -1601,6 +1617,33 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Validação de Build & Deploy**:
   - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
   - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
+- [ ] **[17/09/2026 - 10:35]** ⚡ **[IDE 2] Início: Evolução do Kanban de Engenharia - Padrão CRM Enterprise, Drag & Drop, Criação por Chat IA & Desduplicação Automática (Fase 67)**:
+  - **Status**: 🟡 Em Andamento por IDE 2.
+  - **Kanban Nível CRM Enterprise**: Drag & Drop fluido com `@hello-pangea/dnd` nas 4 colunas, visualização dupla (Kanban e Tabela/Lista interativa com ordenação).
+  - **Modal Enterprise Estilo DealModal**: Raio-X da empresa cliente de origem, atribuição de equipe/responsável com avatar, checklist interativo de sub-tarefas de desenvolvimento e parecer da IA em destaque.
+  - **Criação de Cards Diretamente pelo Chat da IA**: Conversão instantânea de ideias discutidas com a IA em cards no Kanban com 1 clique ("📌 Criar Card no Kanban com Esta Solução") ou por comando no chat.
+  - **Desduplicação Inteligente no Suporte**: IA compara novos chamados com o backlog ativo; se for o mesmo problema (ex: 10 clientes relatando a mesma falha), agrupa no mesmo card, adiciona as empresas e eleva a prioridade para Alta/Crítica.
+  - **Deploy Automático**: Sincronização automática para mover cards concluídos para "Deploy Realizado" no deploy da VPS/Vercel.
+  - **Build & Deploy**: Validação de build com código 0 e sincronização com VPS Hostinger e Vercel.
+
+### 🟡 FASE 67: EVOLUÇÃO DO KANBAN DE ENGENHARIA - PADRÃO CRM ENTERPRISE, DRAG & DROP & IA AGÊNTICA [EM ANDAMENTO - IDE 2]
+- [ ] **Kanban Drag & Drop & Visão Dupla (CRM Standard)**:
+  - [ ] Arrastar e soltar nativo com `@hello-pangea/dnd` entre colunas.
+  - [ ] Alternador de visualização: Kanban vs. Tabela/Lista com ordenação por prioridade, data e responsável.
+- [ ] **Modal Enterprise de Iniciativa**:
+  - [ ] Raio-X da empresa cliente, tickets vinculados e extração de ideias.
+  - [ ] Atribuição de equipe/desenvolvedor responsável com avatar corporativo.
+  - [ ] Checklist técnico de tarefas com marcação interativa.
+- [ ] **Criação Direta de Cards via Chat com a IA**:
+  - [ ] Botão e comando de chat para a IA projetar e criar o card no Kanban automaticamente.
+- [ ] **Desduplicação Inteligente no Suporte**:
+  - [ ] IA semântica que identifica múltiplos clientes com o mesmo problema, unifica no mesmo card e eleva a prioridade.
+- [ ] **Deploy Automático**:
+  - [ ] Rotina de deploy que sincroniza e move frentes prontas para "Deploy Realizado".
+- [ ] **Validação de Build & Deploy**:
+  - [ ] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
+  - [ ] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
 ---
 
