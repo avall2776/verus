@@ -1,8 +1,9 @@
-import { Bell, Search, Menu } from "lucide-react";
+import { Search, Menu } from "lucide-react";
+import NotificationsPopover from "@/components/notifications/NotificationsPopover";
 
 export default function Topbar() {
   return (
-    <header className="h-16 border-b border-gray-800 bg-panel/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-10 w-full">
+    <header className="h-16 border-b border-gray-800 bg-panel/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-20 w-full">
       {/* Mobile Menu Button & Search */}
       <div className="flex items-center gap-4 w-full md:w-auto">
         <button className="md:hidden text-text-secondary hover:text-white transition-colors">
@@ -27,11 +28,8 @@ export default function Topbar() {
           <span className="text-xs font-semibold text-text-secondary">IA Vitor Online</span>
         </div>
 
-        {/* Notifications */}
-        <button className="relative p-2 text-text-secondary hover:text-white transition-colors rounded-full hover:bg-gray-800/50">
-          <Bell size={20} />
-          <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_5px_rgba(239,68,68,0.8)]" />
-        </button>
+        {/* Central de Notificações Global (Popover Interativo em Tempo Real) */}
+        <NotificationsPopover />
       </div>
     </header>
   );

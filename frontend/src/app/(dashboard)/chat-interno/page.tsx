@@ -312,19 +312,21 @@ export default function ChatInternoPage() {
     }, 80);
   };
 
-  // Filtragem de Colaboradores
+  // Filtragem Dinâmica de Colaboradores
   const filteredUsers = useMemo(() => {
     return users.filter(u => {
-      // Ignora o próprio usuário logado se desejado, ou permite conversar consigo mesmo
+      // Ignora o próprio usuário logado se desejado
       if (u.id === currentUserId) return false;
 
-      // Filtro de Busca
+      // Filtro de Busca em Tempo Real (nome, email, cargo, setor e trecho da última mensagem)
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
+        const q = searchQuery.toLowerCase().trim();
         const matchesName = u.name?.toLowerCase().includes(q);
         const matchesEmail = u.email?.toLowerCase().includes(q);
+        const matchesRole = u.role?.toLowerCase().includes(q);
+        const matchesDept = u.department?.toLowerCase().includes(q);
         const matchesMsg = u.lastMessage?.content?.toLowerCase().includes(q);
-        if (!matchesName && !matchesEmail && !matchesMsg) return false;
+        if (!matchesName && !matchesEmail && !matchesRole && !matchesDept && !matchesMsg) return false;
       }
 
       // Filtro de Setor
@@ -332,22 +334,23 @@ export default function ChatInternoPage() {
         if (u.department?.toLowerCase() !== selectedDepartment.toLowerCase()) return false;
       }
 
-      // Filtro de Status
+      // Filtro de Status Online
       if (onlyOnline && !u.isOnline) return false;
 
       return true;
     });
   }, [users, searchQuery, selectedDepartment, onlyOnline, currentUserId]);
 
-  // Filtragem de Canais
+  // Filtragem Dinâmica de Equipes / Canais
   const filteredChannels = useMemo(() => {
     return channels.filter(c => {
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
+        const q = searchQuery.toLowerCase().trim();
         const matchesName = c.name?.toLowerCase().includes(q);
         const matchesDesc = c.description?.toLowerCase().includes(q);
+        const matchesDept = c.department?.toLowerCase().includes(q);
         const matchesMsg = c.lastMessage?.content?.toLowerCase().includes(q);
-        if (!matchesName && !matchesDesc && !matchesMsg) return false;
+        if (!matchesName && !matchesDesc && !matchesDept && !matchesMsg) return false;
       }
       return true;
     });
@@ -395,8 +398,14 @@ export default function ChatInternoPage() {
             >
               <UserIcon size={14} />
               <span>Colaboradores</span>
-              <span className="text-[10px] bg-slate-800 px-1.5 py-0.2 rounded-full text-slate-400 font-mono">
-                {users.filter(u => u.id !== currentUserId).length}
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono transition-colors ${
+                searchQuery.trim()
+                  ? filteredUsers.length > 0 
+                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
+                    : 'bg-slate-800 text-slate-500'
+                  : 'bg-slate-800 text-slate-400'
+              }`}>
+                {searchQuery.trim() ? filteredUsers.length : users.filter(u => u.id !== currentUserId).length}
               </span>
             </button>
 
@@ -410,8 +419,14 @@ export default function ChatInternoPage() {
             >
               <Hash size={14} />
               <span>Equipes</span>
-              <span className="text-[10px] bg-slate-800 px-1.5 py-0.2 rounded-full text-slate-400 font-mono">
-                {channels.length}
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono transition-colors ${
+                searchQuery.trim()
+                  ? filteredChannels.length > 0 
+                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
+                    : 'bg-slate-800 text-slate-500'
+                  : 'bg-slate-800 text-slate-400'
+              }`}>
+                {searchQuery.trim() ? filteredChannels.length : channels.length}
               </span>
             </button>
           </div>
@@ -427,12 +442,18 @@ export default function ChatInternoPage() {
               placeholder="Buscar conversa..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#1E293B] border border-slate-700/60 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder:text-slate-500 outline-none focus:border-blue-500 focus:bg-[#0B1224] transition-all"
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setSearchQuery('');
+                }
+              }}
+              className="w-full bg-[#1E293B] border border-slate-700/60 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder:text-slate-500 outline-none focus:border-blue-500 focus:bg-[#0B1224] transition-all"
             />
             {searchQuery && (
               <button 
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                title="Limpar busca (Esc)"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white p-1 transition-colors"
               >
                 <X size={13} />
               </button>
@@ -488,10 +509,42 @@ export default function ChatInternoPage() {
             ))
           ) : activeTab === 'users' ? (
             filteredUsers.length === 0 ? (
-              <div className="text-center py-10 px-4 text-slate-500 text-xs flex flex-col items-center">
-                <Users size={32} className="mb-2 opacity-30" />
-                <span>Nenhum colaborador encontrado com os filtros aplicados.</span>
-              </div>
+              searchQuery.trim() ? (
+                /* Empty State de Busca Ativa em Colaboradores */
+                <div className="py-10 px-4 flex flex-col items-center text-center animate-fadeIn">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-800/90 border border-slate-700/80 flex items-center justify-center text-blue-400 mb-3 shadow-[0_0_20px_rgba(59,130,246,0.15)]">
+                    <Search size={22} className="opacity-90" />
+                  </div>
+                  <h4 className="text-xs font-bold text-white mb-1">Nenhum colaborador encontrado</h4>
+                  <p className="text-[11px] text-slate-400 max-w-[240px] leading-relaxed mb-3">
+                    Não encontramos colaboradores ou conversas para <span className="text-blue-300 font-semibold">"{searchQuery}"</span>.
+                  </p>
+
+                  {filteredChannels.length > 0 && (
+                    <button
+                      onClick={() => setActiveTab('channels')}
+                      className="mb-3 px-3 py-1.5 rounded-lg bg-blue-600/15 border border-blue-500/30 text-blue-400 hover:bg-blue-600/25 text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Hash size={12} />
+                      <span>Ver {filteredChannels.length} canal(is) em Equipes</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer border border-slate-700 shadow-sm"
+                  >
+                    <X size={13} />
+                    <span>Limpar busca</span>
+                  </button>
+                </div>
+              ) : (
+                /* Empty State Padrão sem Busca */
+                <div className="text-center py-10 px-4 text-slate-500 text-xs flex flex-col items-center">
+                  <Users size={32} className="mb-2 opacity-30 text-slate-400" />
+                  <span className="font-medium">Nenhum colaborador encontrado com os filtros aplicados.</span>
+                </div>
+              )
             ) : (
               filteredUsers.map(u => {
                 const isSelected = activeChatId === u.id;
@@ -574,16 +627,56 @@ export default function ChatInternoPage() {
           ) : (
             /* ABA EQUIPES / CANAIS */
             filteredChannels.length === 0 ? (
-              <div className="text-center py-10 px-4 text-slate-500 text-xs flex flex-col items-center">
-                <Hash size={32} className="mb-2 opacity-30" />
-                <span>Nenhum canal de equipe encontrado.</span>
-                <button
-                  onClick={() => setShowNewChatModal(true)}
-                  className="mt-3 text-xs text-blue-400 hover:text-blue-300 font-semibold underline"
-                >
-                  Criar primeiro canal
-                </button>
-              </div>
+              searchQuery.trim() ? (
+                /* Empty State de Busca Ativa em Canais */
+                <div className="py-10 px-4 flex flex-col items-center text-center animate-fadeIn">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-800/90 border border-slate-700/80 flex items-center justify-center text-blue-400 mb-3 shadow-[0_0_20px_rgba(59,130,246,0.15)]">
+                    <Search size={22} className="opacity-90" />
+                  </div>
+                  <h4 className="text-xs font-bold text-white mb-1">Nenhum canal encontrado</h4>
+                  <p className="text-[11px] text-slate-400 max-w-[240px] leading-relaxed mb-3">
+                    Não encontramos nenhum canal ou equipe para <span className="text-blue-300 font-semibold">"{searchQuery}"</span>.
+                  </p>
+
+                  {filteredUsers.length > 0 && (
+                    <button
+                      onClick={() => setActiveTab('users')}
+                      className="mb-3 px-3 py-1.5 rounded-lg bg-blue-600/15 border border-blue-500/30 text-blue-400 hover:bg-blue-600/25 text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <UserIcon size={12} />
+                      <span>Ver {filteredUsers.length} colaborador(es)</span>
+                    </button>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer border border-slate-700 shadow-sm"
+                    >
+                      <X size={13} />
+                      <span>Limpar busca</span>
+                    </button>
+                    <button
+                      onClick={() => setShowNewChatModal(true)}
+                      className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors cursor-pointer shadow-sm"
+                    >
+                      + Criar Canal
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Empty State Padrão sem Canais */
+                <div className="text-center py-10 px-4 text-slate-500 text-xs flex flex-col items-center">
+                  <Hash size={32} className="mb-2 opacity-30 text-slate-400" />
+                  <span>Nenhum canal de equipe encontrado.</span>
+                  <button
+                    onClick={() => setShowNewChatModal(true)}
+                    className="mt-3 text-xs text-blue-400 hover:text-blue-300 font-semibold underline cursor-pointer"
+                  >
+                    Criar primeiro canal
+                  </button>
+                </div>
+              )
             ) : (
               filteredChannels.map(c => {
                 const isSelected = activeChatId === c.id;

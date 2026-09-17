@@ -26,6 +26,7 @@ import { EmailsModule } from './modules/emails/emails.module';
 import { SupportModule } from './modules/support/support.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { WorkspacesModule } from './modules/workspaces/workspaces.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { WorkspacesModule } from './modules/workspaces/workspaces.module';
     SupportModule,
     TenantsModule,
     WorkspacesModule,
+    NotificationsModule,
   ],
   controllers: [],
   providers: [],
