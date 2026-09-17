@@ -1433,6 +1433,33 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `npm run build` aprovado com código 0 em ambas as pontas (40/40 rotas geradas).
   - [x] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
+- **[17/09/2026 - 09:05]** ⚡ **[IDE 2] Ativação de Tarefa & Início de Desenvolvimento: Fase 63 (Refinamento da Central de Atendimento & Suporte Super Admin)**:
+  - **Status**: ⚡ Em Desenvolvimento Ativo (Exclusividade IDE 2).
+  - **Escopo**:
+    1. **Correção de Layout (Sobreposição de Textos)**: Ajuste estrutural do cabeçalho e card de chamados para eliminar sobreposição entre o assunto/título do chamado e as tags de status.
+    2. **Modal / Visualização Completa da Dúvida**: Modal/gaveta limpa e expansível onde o administrador e atendente podem ler 100% da descrição completa enviada pelo cliente sem truncamento ou cortes.
+    3. **Tradução Integral para o Português**: Tradução de todos os termos residuais em inglês na tela (badges de status `OPEN` -> `Aberto`, `RESOLVED` -> `Resolvido`, `WAITING_CLIENT` -> `Aguardando Cliente`, `IN_PROGRESS` -> `Em Atendimento`, `CLOSED` -> `Fechado`, prioridades e contadores).
+    4. **Chat Interno da Equipe no Atendimento**: Adicionar canal/aba de Chat Interno entre atendentes e administradores na interface do chamado (ao lado de Resposta Pública e Nota Interna) para alinhamento rápido da equipe.
+    5. **Padrão Monocromático & Zero Mocks**: Seguir rigorosamente o design corporativo VERSUS (#0B1224, slate e branco).
+    6. **Build e Deploy Obrigatórios**: `npx tsc --noEmit` e `npm run build` (código 0) e deploy sincronizado na VPS (PM2) e Vercel.
+
+### 🟡 FASE 63: REFINAMENTO DA CENTRAL DE ATENDIMENTO & SUPORTE SUPER ADMIN [EM DESENVOLVIMENTO - IDE 2]
+> **Status**: ⚡ Em Desenvolvimento Ativo (Exclusividade IDE 2).
+- [ ] **Correção de Layout (Sobreposição de Textos no Card e Header)**:
+  - [ ] Eliminar sobreposição entre título/assunto e tags de status em cards e cabeçalhos.
+- [ ] **Modal / Visualização Completa da Dúvida do Cliente**:
+  - [ ] Ação de expansão para ler o texto completo do chamado em modal corporativo de alta legibilidade.
+- [ ] **Tradução Integral para o Português (100% PT-BR)**:
+  - [ ] Tradução das tags de status ('Aberto', 'Resolvido', 'Em Atendimento', etc.) e prioridades.
+- [ ] **Chat Interno da Equipe no Atendimento**:
+  - [ ] Integração de aba/modo de Chat Interno entre membros da equipe dentro da central de suporte.
+- [ ] **Padrão Monocromático & Zero Mocks**:
+  - [ ] Identidade visual VERSUS de alta densidade.
+- [ ] **Validação de Build, Homologação & Deploy**:
+  - [ ] `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
+  - [ ] `npm run build` aprovado com código 0 em ambas as pontas.
+  - [ ] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
