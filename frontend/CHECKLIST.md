@@ -1658,6 +1658,22 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
   - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
+- [x] **[17/09/2026 - 11:00]** ⚡ **Conclusão: Auto-Scroll na Última Mensagem & Painel de Contato Inicialmente Recolhido no Inbox (/inbox)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e em Produção.
+  - **Auto-Scroll Instantâneo na Última Mensagem**:
+    - Implementação de `scrollToBottom` combinando `scrollIntoView({ behavior: 'auto', block: 'end' })` com fallback direto para `container.scrollTop = container.scrollHeight`.
+    - Disparo automático imediato e via micro-timer ao selecionar qualquer conversa, trocar de contato ou ao carregar histórico de mensagens via API.
+    - Ancoragem invisível `<div ref={messagesEndRef} className="h-0 w-0 shrink-0" />` ao final da lista garantindo precisão milimétrica de rolagem sem corte de mensagens.
+  - **Painel Lateral de Dados do Contato Recolhido por Padrão**:
+    - Estado inicial de `showContactInfo` configurado como `false`, liberando a largura total da tela para leitura fluida das mensagens.
+    - Abertura sob demanda exclusivamente ao clicar no botão de alternância/detalhes no cabeçalho superior direito.
+  - **Design Corporativo Monocromático VERSUS**:
+    - Fidelidade ao layout padrão WhatsApp Web pintado com a paleta corporativa `#0B1224`, `#17253D`, `#1E293B` e branco.
+  - **Validação de Build, Homologação & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
+    - `npm run build` aprovado com código 0 (42/42 rotas compiladas no Next.js).
+    - Deploy sincronizado com sucesso na VPS Hostinger (PM2 `versus-engine` online) e Vercel.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
