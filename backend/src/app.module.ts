@@ -27,6 +27,7 @@ import { SupportModule } from './modules/support/support.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { WorkspacesModule } from './modules/workspaces/workspaces.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { SearchModule } from './modules/search/search.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     TenantsModule,
     WorkspacesModule,
     NotificationsModule,
+    SearchModule,
   ],
   controllers: [],
   providers: [],

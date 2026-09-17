@@ -1412,6 +1412,13 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] Tratamento para estado sem resultados com mensagem amigável, sugestão de aba cruzada e ícone elegante.
   - [x] Suporte ao atalho `Escape` e botão `X` para limpar a busca instantaneamente.
   - [x] Sincronização uniforme da rota `/chat` com `/chat-interno`.
+- [x] **Busca Global no Topo do Header ("Buscar leads, conversas...")**:
+  - [x] Conexão do input da Topbar com dropdown flutuante reativo em tempo real (`GlobalSearchBar.tsx`).
+  - [x] Endpoint backend `GET /search?q=` (`SearchModule`, `SearchService`, `SearchController`) pesquisando em tempo real:
+    - Leads & Oportunidades do CRM (título, contato, telefone, status e valor formatado em BRL).
+    - Conversas & Contatos do Atendimento (WhatsApp / Inbox com redirecionamento direto).
+    - Colaboradores da Equipe (cargo, status online e atalho para conversa).
+    - Atalhos rápidos de navegação nos módulos e suporte ao atalho global de teclado `Ctrl + K` / `Cmd + K`.
 - [x] **Central de Notificações Global (Sininho no Header)**:
   - [x] Popover / Dropdown de notificações interativo acionado pelo sino no canto superior direito (`NotificationsPopover.tsx`).
   - [x] Listagem consolidada de notificações reais (mensagens de chat interno, suporte, metas, avisos do sistema).

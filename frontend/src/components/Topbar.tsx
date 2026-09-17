@@ -1,22 +1,19 @@
-import { Search, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import NotificationsPopover from "@/components/notifications/NotificationsPopover";
+import GlobalSearchBar from "@/components/search/GlobalSearchBar";
 
 export default function Topbar() {
   return (
     <header className="h-16 border-b border-gray-800 bg-panel/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-20 w-full">
-      {/* Mobile Menu Button & Search */}
+      {/* Mobile Menu Button & Busca Global Reativa */}
       <div className="flex items-center gap-4 w-full md:w-auto">
         <button className="md:hidden text-text-secondary hover:text-white transition-colors">
           <Menu size={24} />
         </button>
         
-        <div className="relative w-full md:w-80 group hidden md:block">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-accent transition-colors" />
-          <input 
-            type="text"
-            placeholder="Buscar leads, conversas..."
-            className="w-full bg-background border border-gray-800/60 rounded-full pl-10 pr-4 py-2 text-sm text-text-primary outline-none transition-all focus:border-accent/50 focus:shadow-[0_0_10px_rgba(0,210,255,0.15)] placeholder:text-gray-600"
-          />
+        {/* Barra de Busca Global Interativa (Leads, Conversas, Equipe e Módulos) */}
+        <div className="hidden md:block">
+          <GlobalSearchBar />
         </div>
       </div>
 
