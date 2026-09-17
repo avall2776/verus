@@ -1941,6 +1941,44 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
   - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine` online) e Vercel via commits `ca45ace`, `f828dac` e `5e8fc84`.
 
+- [x] **[17/09/2026 - 15:45]** ⚡ **[IDE 1] Conclusão: Reformulação Estrutural, Layout Fluido e Migração de Segurança dos Agentes de IA para o Super Admin Console (`/super-admin/ai-agents`) (Fase 71)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Remoção de Caixas Aninhadas e Múltiplos Scrolls (Layout Fluido)**:
+    - Fim definitivo da rolagem dupla e containers do tipo "quadrados dentro de quadrados".
+    - O novo módulo adota layout contínuo e fluido governado pelo scroll vertical natural da janela do navegador.
+    - O editor de System Prompt e a base de conhecimento (RAG) possuem amplitude vertical generosa (`min-h-[380px]`), sem barras de rolagem internas que interfiram na navegação da página.
+  - **Adequação Rígida ao Design System Monocromático**:
+    - Eliminação completa de cores vibrantes (ciano, roxo, âmbar).
+    - Paleta 100% corporativa com fundo `#070D1B`, cards em `#0B1224`, bordas em `slate-800`/`slate-700` e tipografia nítida em branco e `slate-300`/`slate-400`.
+  - **Migração Exclusiva para o Super Admin Console (`/super-admin/ai-agents`)**:
+    - Módulo de Agentes de IA realocado para o painel global do VERSUS Master Super Admin (`/super-admin/ai-agents`).
+    - Removido do menu da barra lateral dos clientes comuns (`Sidebar.tsx`) para impedir que usuários quebrem o bot ou alterem prompts sensíveis.
+    - Adicionado ao menu lateral do Super Admin (`ADMIN_MENU` em `super-admin/layout.tsx`).
+    - Seletor de empresa/tenant integrado no topo do console para governança e calibração individual por tenant via cabeçalho `x-target-tenant-id` suportado pelo backend (`tenant.decorator.ts`).
+    - Rota legada `/agent` protegida com redirecionamento automático para administradores e tela de bloqueio com aviso informativo para tenants comuns.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` e `npm run build` aprovados com código 0 (44/44 páginas estáticas geradas).
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine` online com 0% CPU) e Vercel via commits `2129979` e `5e8fc84`.
+
+### 🟢 FASE 71: REFORMULAÇÃO ESTRUTURAL E MIGRAÇÃO DOS AGENTES DE IA PARA O SUPER ADMIN CONSOLE [CONCLUÍDA - IDE 1]
+> **Status**: ✅ Concluída com Sucesso, Builds Código 0 e Homologada em Produção.
+- [x] **Layout Fluido & Fim de Caixas Aninhadas**:
+  - [x] Eliminação de containers encaixotados e scrolls internos bloqueantes.
+  - [x] Fluxo vertical natural na janela do navegador com visualização contínua.
+  - [x] Editor amplo de System Prompt com altura ergonômica sem scroll preso.
+- [x] **Design System Monocromático Estrito**:
+  - [x] Paleta oficial VERSUS: `#0B1224`, `#070D1B`, `slate-800` e tipografia branca/slate-300.
+  - [x] Eliminação total de tons berrantes de ciano e roxo.
+- [x] **Governança Exclusiva no Super Admin Console**:
+  - [x] Nova rota `/super-admin/ai-agents` com seletor dinâmico de empresas/tenants.
+  - [x] Remoção de "Agentes de IA" da barra lateral dos clientes comuns (`Sidebar.tsx`).
+  - [x] Inclusão de "Agentes de IA" no menu do Super Admin (`ADMIN_MENU` em `super-admin/layout.tsx`).
+  - [x] Suporte a `x-target-tenant-id` no `CurrentTenant` decorator do NestJS para governança multitenant.
+  - [x] Proteção e redirecionamento da rota legada `/agent`.
+- [x] **Homologação, Build & Deploy**:
+  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 em ambas as pontas.
+  - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`).
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
