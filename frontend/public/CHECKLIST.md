@@ -1362,23 +1362,27 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     3. **Backend & Governança**: Consumo estrito dos endpoints de `SupportTicket` e avisos do tenant em tempo real. Design monocromático oficial VERSUS (azul escuro `#0B1224`, slate e branco).
     4. **Builds & Deploy**: Validação com código 0 (`npx tsc --noEmit` e `npm run build`) e deploy na VPS Hostinger (PM2) e Vercel.
 
-### 🟡 FASE 61: WIDGET FLUTUANTE DE SUPORTE ("SUPORTE VERSUS" - PADRÃO LERO) [EM DESENVOLVIMENTO - IDE 1]
-> **Status**: ⚡ Em Desenvolvimento Ativo (Exclusividade IDE 1).
-- [ ] **Botão Flutuante (Floating Trigger)**:
-  - [ ] Ícone discreto e corporativo de suporte fixado no canto inferior da tela.
-  - [ ] Indicador/badge de status e avisos pendentes.
-  - [ ] Presença global no layout de todas as páginas do cliente.
-- [ ] **Popover / Modal de Suporte do Cliente**:
-  - [ ] Header "Suporte Versus" com alternância de abas "Suporte" e "Avisos".
-  - [ ] Seção "Ver meus chamados" com listagem compacta de tickets, protocolos e status.
-  - [ ] Botão destacado "Abrir solicitação de suporte" com formulário modal integrado.
-  - [ ] Botão "Ir para a Central de Ajuda" redirecionando para `/support`.
-- [ ] **Integração Backend & Zero Mocks**:
-  - [ ] Consumo real dos endpoints do `SupportModule` para o tenant ativo.
-- [ ] **Validação de Build, Homologação & Deploy**:
-  - [ ] `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
-  - [ ] `npm run build` aprovado com código 0 em ambas as pontas.
-  - [ ] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+### 🟢 FASE 61: WIDGET FLUTUANTE DE SUPORTE ("SUPORTE VERSUS" - PADRÃO LERO) [CONCLUÍDA - IDE 1]
+> **Status**: ✅ Concluída com Sucesso, Builds Código 0 e Deploy Efetuado.
+- [x] **Botão Flutuante (Floating Trigger)**:
+  - [x] Ícone discreto e corporativo de suporte fixado no canto inferior da tela (`fixed bottom-6 right-6 z-50`).
+  - [x] Indicador/badge de status e avisos pendentes (dot verde pulsante e contador numérico de chamados ativos).
+  - [x] Presença global no layout de todas as páginas do cliente (`layout.tsx`).
+- [x] **Popover / Modal de Suporte do Cliente**:
+  - [x] Header "Suporte Versus" com alternância de abas "Suporte" e "Avisos".
+  - [x] Seção "Ver meus chamados" com listagem compacta de tickets, protocolos e status.
+  - [x] Botão destacado "Abrir solicitação de suporte" com formulário embutido integrado (`POST /support/tickets`).
+  - [x] Botão "Ir para a Central de Ajuda" redirecionando para `/support`.
+- [x] **Integração Backend & Zero Mocks**:
+  - [x] Consumo real dos endpoints do `SupportModule` para o tenant ativo e nova rota `GET /support/notices` para telemetria de serviços e comunicados da versão.
+- [x] **Validação de Build, Homologação & Deploy**:
+  - [x] `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
+  - [x] `npm run build` aprovado com código 0 em ambas as pontas (40/40 rotas geradas).
+  - [x] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
+- **[17/09/2026 - 08:16]** 💎 **[IDE 1] Conclusão de Tarefa & Validação: Fase 61 (Widget Flutuante de Suporte "Suporte Versus" - Padrão Lero)**:
+  - **Status**: ✅ Concluída com Sucesso, Builds Código 0 e Deploy Efetuado.
+  - **Resultado**: Widget flutuante de suporte 100% implementado e ativo no layout global do painel do cliente, consumindo tickets reais e telemetria de avisos da API, com criação ágil embutida e redirecionamento direto para a Central de Ajuda.
 
 - **[17/09/2026 - 08:05]** ⚡ **[IDE 2] Ativação de Tarefa & Início de Desenvolvimento: Fase 62 (Busca no Chat Interno & Central de Notificações Global)**:
   - **Status**: ⚡ Em Desenvolvimento Ativo (Exclusividade IDE 2).
