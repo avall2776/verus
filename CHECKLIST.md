@@ -1674,6 +1674,22 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - `npm run build` aprovado com código 0 (42/42 rotas compiladas no Next.js).
     - Deploy sincronizado com sucesso na VPS Hostinger (PM2 `versus-engine` online) e Vercel.
 
+- [/] **[17/09/2026 - 11:05]** 🚀 **[IDE 2] Início da Tarefa: Reestruturação da Central de Atendimento ao Vivo - Padrão WhatsApp Business Corporativo, Sub-aba de Chat Interno da Equipe & Copiloto IA de Atendimento Híbrido (Fase 68)**:
+  - **Status**: 🔄 Em Andamento pelo Agente IDE 2.
+  - **Reestruturação Visual no Padrão WhatsApp Business Corporativo**:
+    - Aplicação da estética refinada do WhatsApp (`/inbox`): wallpaper com doodle sutil (`WHATSAPP_WALLPAPER_BG`), balões com cauda SVG integrada, duplo check de confirmação ciano (`#22D3EE`), pílulas de datas e cápsula de envio limpa.
+    - Foco total e despoluição da área de suporte ao cliente: eliminação de mensagens técnicas misturadas dentro da mesma conversa de atendimento.
+  - **Subcategoria / Sub-aba de Chat Interno da Equipe**:
+    - Criação de seletor limpo no topo da Central de Atendimento:
+      - **Aba 1: Atendimento ao Cliente**: Canal 100% focado no atendimento ao cliente com layout WhatsApp e respostas humanizadas.
+      - **Aba 2: Chat Interno da Equipe**: Canal privativo entre operadores master e atendentes para alinhamentos internos, sem qualquer poluição na conversa do cliente.
+  - **Copiloto IA de Atendimento Híbrido (AI Copilot)**:
+    - O atendente humano mantém 100% o controle da conversa (atendimento empático e humanizado).
+    - A IA atua em segundo plano como assistente do operador: analisa a dúvida do cliente e sugere respostas técnicas prontas, empáticas e detalhadas com 1 clique (`[✨ Usar Sugestão]`), preenchendo o input para revisão/ajuste e recomendando atualização de status.
+  - **Validação de Build, Homologação & Deploy**:
+    - `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
+    - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
