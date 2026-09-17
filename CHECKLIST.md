@@ -2043,6 +2043,23 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - `npm run build` aprovado com código 0 (44/44 páginas estáticas geradas).
     - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
 
+- [x] **[17/09/2026 - 16:22]** ⚡ **[IDE 1] Restauração do Preloader Original & Ajuste de Precisão na Tela de Login (`/login`)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Restauração Completa do Preloader Original**:
+    - Preloader restaurado ao estado original de excelência (`VersusPreloader.tsx`):
+      - Logotipo 'V' tridimensional imponente ao centro que levita e reage com inércia física e parallax ao movimento do mouse do usuário.
+      - Campo 3D de bolículas/partículas circulares sutis com transparência e rotação suave.
+      - Animação limpa e livre de poluição: Logomarca VERSUS, frase de efeito *"Inteligência em Vendas & Atendimento Omnichannel"*, mensagem elegante de boas-vindas com ponto luminescente e linha com efeito shimmer.
+      - Fade-out suave de 1.000ms ao avançar para a dashboard.
+  - **Ajustes de Precisão na Tela de Login (`/login`)**:
+    - **Remoção do Botão 'IR PARA O SITE'**: Link completamente retirado do canto superior esquerdo para manter foco total no formulário de autenticação.
+    - **Correção Estrita de Cores**: Fundo oficial em azul escuro `#0B1224`, neblina Three.js calibrada em `0x0B1224`, e partículas em azul corporativo sóbrio (`0x3b82f6`), eliminando qualquer tom de azul neon berrante.
+    - **Card de Login com Glassmorphism nas Bolinhas**: Card em `bg-[#0B1224]/35` com `border border-slate-800/60` e `backdrop-blur-2xl`, permitindo ver as partículas/bolinhas do fundo fluindo suavemente por trás do vidro fosco embaçado com total elegância.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 (44/44 páginas estáticas e dinâmicas geradas).
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
