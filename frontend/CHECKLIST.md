@@ -1751,6 +1751,23 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [ ] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
   - [ ] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
+- [/] **[17/09/2026 - 11:42]** 🚀 **[IDE 2] Início da Tarefa: Evolução da IA Arquiteto-Chefe na Engenharia de Produto - Interface Fullscreen Estilo OpenAI, Markdown Formatado e Conversação por Áudio/Voz (Fase 70)**:
+  - **Status**: 🔄 Em Andamento pelo Agente IDE 2.
+  - **Interface Fullscreen / Expandida Estilo ChatGPT / OpenAI**:
+    - Ao alternar para a aba "IA Arquiteto-Chefe", ocultar automaticamente as métricas de topo e elementos de Kanban que espremiam a tela, proporcionando área 100% dedicada e imersiva de chat.
+    - Layout centralizado moderno (`max-w-4xl`), espaçoso, com mensagens do usuário e respostas da IA organizadas com clareza executiva.
+  - **Renderização Rica de Markdown (Padrão OpenAI)**:
+    - Integração de `react-markdown` e `remark-gfm` com componentes customizados para blocos de código com destaque e botão de "Copiar Código", títulos formatados, tópicos estilizados, negrito e tabelas, eliminando a exibição de markdown cru (`**texto**`).
+  - **Conversação por Áudio / Voz (Whisper Native)**:
+    - Botão de gravação de áudio no input com timer regressivo/progressivo e indicador visual de gravação.
+    - Endpoint `POST /engineering/chat/transcribe-audio` com transcrição oficial via OpenAI Whisper (`whisper-1`) em português.
+    - Envio autônomo do áudio transcrito diretamente para o Engenheiro-Chefe.
+  - **Preservação de Ações Agênticas**:
+    - Manutenção do botão interativo **`📌 Criar Card no Kanban com Esta Solução`** abaixo de cada resposta técnica da IA.
+  - **Validação de Build, Homologação & Deploy**:
+    - `npx nest build`, `npx tsc --noEmit` e `npm run build` aprovados com código 0.
+    - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
