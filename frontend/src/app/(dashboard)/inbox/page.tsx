@@ -67,6 +67,8 @@ function InboxContent() {
   const contactIdParam = searchParams.get('contactId');
   const conversationIdParam = searchParams.get('conversationId') || searchParams.get('chat');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [contacts, setContacts] = useState<any[]>([]);
@@ -97,7 +99,25 @@ function InboxContent() {
   const [activeFilterTab, setActiveFilterTab] = useState<'all' | 'unread' | 'waiting' | 'mine' | 'resolved'>('all');
   const [showSearchInChat, setShowSearchInChat] = useState(false);
   const [chatSearchQuery, setChatSearchQuery] = useState('');
-  const [showContactInfo, setShowContactInfo] = useState(true);
+  const [showContactInfo, setShowContactInfo] = useState(false);
+
+  // Helper de auto-scroll para a última mensagem
+  const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+    } else if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  };
+
+  // Efeito de rolagem automática sempre que mensagens ou chat ativo mudarem
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom('auto');
+      const timer = setTimeout(() => scrollToBottom('auto'), 60);
+      return () => clearTimeout(timer);
+    }
+  }, [messages.length, activeChat]);
 
   // Estados de Gravação de Áudio via MediaRecorder
   const [isRecording, setIsRecording] = useState(false);
@@ -782,8 +802,9 @@ function InboxContent() {
         const { data } = await api.get(`/conversations/${activeChat}/messages`);
         setMessages(data);
         setTimeout(() => {
+          scrollToBottom('auto');
           textareaRef.current?.focus();
-        }, 150);
+        }, 50);
       } catch (error) {
         console.error("Erro ao buscar mensagens:", error);
       }
@@ -2017,7 +2038,7 @@ function InboxContent() {
             )}
 
             {/* Chat Messages (Padrão Estrutural WhatsApp com Ticks Inline e Balões Corporativos) */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-2.5 z-10 scrollbar-thin">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-2.5 z-10 scrollbar-thin">
               {messages.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-2">
                   <Bot size={40} className="text-slate-600" />
@@ -2229,6 +2250,8 @@ function InboxContent() {
                   );
                 })
               )}
+              {/* Âncora invisível para scroll automático na última mensagem */}
+              <div ref={messagesEndRef} className="h-0 w-0 shrink-0" />
             </div>
 
             {/* Chat Input Area (Estrutura e Formato Idênticos ao WhatsApp) */}

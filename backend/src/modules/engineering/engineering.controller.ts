@@ -17,6 +17,8 @@ import { CreateEngineeringItemDto } from './dto/create-engineering-item.dto';
 import { UpdateEngineeringItemDto } from './dto/update-engineering-item.dto';
 import { CreateFromTicketDto } from './dto/create-from-ticket.dto';
 import { ChatEngineeringDto } from './dto/chat-engineering.dto';
+import { CreateCardFromChatDto } from './dto/create-card-from-chat.dto';
+import { UpdateChecklistDto } from './dto/update-checklist.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('engineering')
@@ -64,6 +66,16 @@ export class EngineeringController {
     return this.engineeringService.update(id, dto);
   }
 
+  @Patch('items/:id/checklist')
+  async updateChecklist(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: UpdateChecklistDto,
+  ) {
+    this.checkSuperAdmin(req);
+    return this.engineeringService.updateChecklist(id, dto);
+  }
+
   @Delete('items/:id')
   async delete(@Request() req, @Param('id') id: string) {
     this.checkSuperAdmin(req);
@@ -94,9 +106,21 @@ export class EngineeringController {
     return this.engineeringService.chatWithEngineeringAI(dto);
   }
 
+  @Post('chat/create-card')
+  async createCardFromChat(@Request() req, @Body() dto: CreateCardFromChatDto) {
+    this.checkSuperAdmin(req);
+    return this.engineeringService.createCardFromChat(dto);
+  }
+
   @Delete('chat/history')
   async clearChatHistory(@Request() req) {
     this.checkSuperAdmin(req);
     return this.engineeringService.clearChatHistory();
+  }
+
+  @Post('sync-deploy')
+  async syncDeploy(@Request() req) {
+    this.checkSuperAdmin(req);
+    return this.engineeringService.syncDeploy();
   }
 }

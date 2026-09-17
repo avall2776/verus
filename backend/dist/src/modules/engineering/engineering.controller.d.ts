@@ -3,6 +3,8 @@ import { CreateEngineeringItemDto } from './dto/create-engineering-item.dto';
 import { UpdateEngineeringItemDto } from './dto/update-engineering-item.dto';
 import { CreateFromTicketDto } from './dto/create-from-ticket.dto';
 import { ChatEngineeringDto } from './dto/chat-engineering.dto';
+import { CreateCardFromChatDto } from './dto/create-card-from-chat.dto';
+import { UpdateChecklistDto } from './dto/update-checklist.dto';
 export declare class EngineeringController {
     private readonly engineeringService;
     constructor(engineeringService: EngineeringService);
@@ -25,6 +27,9 @@ export declare class EngineeringController {
             aiSummary: string | null;
             technicalNotes: string | null;
             estimatedHours: number | null;
+            checklist: import("@prisma/client/runtime/library").JsonValue | null;
+            affectedTenants: import("@prisma/client/runtime/library").JsonValue | null;
+            affectedCount: number;
         }[];
         stats: {
             total: number;
@@ -51,6 +56,9 @@ export declare class EngineeringController {
         aiSummary: string | null;
         technicalNotes: string | null;
         estimatedHours: number | null;
+        checklist: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedTenants: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedCount: number;
     }>;
     create(req: any, dto: CreateEngineeringItemDto): Promise<{
         id: string;
@@ -69,6 +77,9 @@ export declare class EngineeringController {
         aiSummary: string | null;
         technicalNotes: string | null;
         estimatedHours: number | null;
+        checklist: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedTenants: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedCount: number;
     }>;
     update(req: any, id: string, dto: UpdateEngineeringItemDto): Promise<{
         id: string;
@@ -87,6 +98,30 @@ export declare class EngineeringController {
         aiSummary: string | null;
         technicalNotes: string | null;
         estimatedHours: number | null;
+        checklist: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedTenants: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedCount: number;
+    }>;
+    updateChecklist(req: any, id: string, dto: UpdateChecklistDto): Promise<{
+        id: string;
+        tags: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+        assignedTo: string | null;
+        title: string;
+        description: string;
+        stage: string;
+        category: string;
+        priority: string;
+        sourceType: string;
+        sourceTicketId: string | null;
+        tenantName: string | null;
+        aiSummary: string | null;
+        technicalNotes: string | null;
+        estimatedHours: number | null;
+        checklist: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedTenants: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedCount: number;
     }>;
     delete(req: any, id: string): Promise<{
         id: string;
@@ -105,6 +140,9 @@ export declare class EngineeringController {
         aiSummary: string | null;
         technicalNotes: string | null;
         estimatedHours: number | null;
+        checklist: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedTenants: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedCount: number;
     }>;
     createFromTicket(req: any, dto: CreateFromTicketDto): Promise<{
         id: string;
@@ -123,6 +161,31 @@ export declare class EngineeringController {
         aiSummary: string | null;
         technicalNotes: string | null;
         estimatedHours: number | null;
+        checklist: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedTenants: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedCount: number;
+    } | {
+        isMerged: boolean;
+        mergeMessage: string;
+        id: string;
+        tags: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+        assignedTo: string | null;
+        title: string;
+        description: string;
+        stage: string;
+        category: string;
+        priority: string;
+        sourceType: string;
+        sourceTicketId: string | null;
+        tenantName: string | null;
+        aiSummary: string | null;
+        technicalNotes: string | null;
+        estimatedHours: number | null;
+        checklist: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedTenants: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedCount: number;
     }>;
     analyzeItem(req: any, id: string): Promise<{
         id: string;
@@ -141,6 +204,9 @@ export declare class EngineeringController {
         aiSummary: string | null;
         technicalNotes: string | null;
         estimatedHours: number | null;
+        checklist: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedTenants: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedCount: number;
     }>;
     getChatHistory(req: any): Promise<{
         id: string;
@@ -153,8 +219,34 @@ export declare class EngineeringController {
         id: string;
         createdAt: Date;
     }>;
+    createCardFromChat(req: any, dto: CreateCardFromChatDto): Promise<{
+        id: string;
+        tags: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+        assignedTo: string | null;
+        title: string;
+        description: string;
+        stage: string;
+        category: string;
+        priority: string;
+        sourceType: string;
+        sourceTicketId: string | null;
+        tenantName: string | null;
+        aiSummary: string | null;
+        technicalNotes: string | null;
+        estimatedHours: number | null;
+        checklist: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedTenants: import("@prisma/client/runtime/library").JsonValue | null;
+        affectedCount: number;
+    }>;
     clearChatHistory(req: any): Promise<{
         success: boolean;
+        message: string;
+    }>;
+    syncDeploy(req: any): Promise<{
+        success: boolean;
+        count: number;
         message: string;
     }>;
 }

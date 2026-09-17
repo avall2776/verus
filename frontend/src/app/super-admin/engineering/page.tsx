@@ -32,8 +32,15 @@ import {
   ShieldCheck, 
   Copy,
   Building2,
-  X
+  X,
+  Kanban as KanbanIcon,
+  Table as TableIcon,
+  CheckSquare,
+  Square,
+  ArrowUpDown,
+  Users
 } from "lucide-react";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import api from "@/lib/api";
 import { toast } from "sonner";
 
@@ -65,6 +72,7 @@ const PRIORITIES: Record<string, { label: string; color: string; badge: string }
 
 export default function EngineeringDashboard() {
   const [activeTab, setActiveTab] = useState<"kanban" | "ai_chat">("kanban");
+  const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [items, setItems] = useState<any[]>([]);
   const [stats, setStats] = useState({
     total: 0,
@@ -80,10 +88,17 @@ export default function EngineeringDashboard() {
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [priorityFilter, setPriorityFilter] = useState("ALL");
 
+  // Ordenação na Tabela
+  const [tableSortField, setTableSortField] = useState<string>("createdAt");
+  const [tableSortDirection, setTableSortDirection] = useState<"asc" | "desc">("desc");
+
   // Modais
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [modalTab, setModalTab] = useState<"overview" | "clients" | "checklist" | "ai_plan">("overview");
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
+  const [newChecklistText, setNewChecklistText] = useState("");
+  const [syncingDeploy, setSyncingDeploy] = useState(false);
 
   // Form State para Criação Manual
   const [formTitle, setFormTitle] = useState("");
@@ -92,12 +107,14 @@ export default function EngineeringDashboard() {
   const [formStage, setFormStage] = useState("CAPTURED");
   const [formDescription, setFormDescription] = useState("");
   const [formTags, setFormTags] = useState("");
+  const [formAssignedTo, setFormAssignedTo] = useState("");
   const [submittingForm, setSubmittingForm] = useState(false);
 
   // Chat com IA State
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [creatingCardFromMessageId, setCreatingCardFromMessageId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Carregar Backlog
@@ -149,6 +166,33 @@ export default function EngineeringDashboard() {
     }
   }, [activeTab]);
 
+  // DRAG AND DROP NATIVO (@hello-pangea/dnd)
+  const handleDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+    const targetStage = destination.droppableId;
+    const previousItems = [...items];
+
+    // Atualização Otimista
+    setItems((prev) =>
+      prev.map((item) => (item.id === draggableId ? { ...item, stage: targetStage } : item))
+    );
+
+    try {
+      await api.patch(`/engineering/items/${draggableId}`, { stage: targetStage });
+      const stageLabel = STAGES.find((s) => s.id === targetStage)?.label || targetStage;
+      toast.success(`Iniciativa movida para "${stageLabel}"`);
+      fetchBacklog();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao sincronizar estágio da iniciativa.");
+      setItems(previousItems); // Rollback
+    }
+  };
+
   // Criar Item Manualmente
   const handleCreateItem = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,6 +215,7 @@ export default function EngineeringDashboard() {
         stage: formStage,
         description: formDescription.trim(),
         tags: tagsArray,
+        assignedTo: formAssignedTo.trim() || null,
         sourceType: "MANUAL",
       });
 
@@ -179,6 +224,7 @@ export default function EngineeringDashboard() {
       setFormTitle("");
       setFormDescription("");
       setFormTags("");
+      setFormAssignedTo("");
       fetchBacklog();
     } catch (err: any) {
       console.error(err);
@@ -188,7 +234,7 @@ export default function EngineeringDashboard() {
     }
   };
 
-  // Mover Estágio do Card
+  // Mover Estágio do Card (Botões)
   const handleMoveStage = async (item: any, newStage: string) => {
     try {
       await api.patch(`/engineering/items/${item.id}`, { stage: newStage });
@@ -243,6 +289,75 @@ export default function EngineeringDashboard() {
     }
   };
 
+  // Checklist: Toggle Task
+  const handleToggleChecklist = async (taskId: string) => {
+    if (!selectedItem) return;
+
+    const currentChecklist = Array.isArray(selectedItem.checklist) ? [...selectedItem.checklist] : [];
+    const updatedChecklist = currentChecklist.map((task: any) =>
+      task.id === taskId ? { ...task, done: !task.done } : task
+    );
+
+    setSelectedItem({ ...selectedItem, checklist: updatedChecklist });
+    setItems((prev) =>
+      prev.map((i) => (i.id === selectedItem.id ? { ...i, checklist: updatedChecklist } : i))
+    );
+
+    try {
+      await api.patch(`/engineering/items/${selectedItem.id}/checklist`, {
+        checklist: updatedChecklist,
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao atualizar sub-tarefa.");
+    }
+  };
+
+  // Checklist: Adicionar Nova Tarefa
+  const handleAddChecklistTask = async () => {
+    if (!newChecklistText.trim() || !selectedItem) return;
+
+    const currentChecklist = Array.isArray(selectedItem.checklist) ? [...selectedItem.checklist] : [];
+    const newTask = {
+      id: Date.now().toString(),
+      text: newChecklistText.trim(),
+      done: false,
+    };
+    const updatedChecklist = [...currentChecklist, newTask];
+
+    setSelectedItem({ ...selectedItem, checklist: updatedChecklist });
+    setItems((prev) =>
+      prev.map((i) => (i.id === selectedItem.id ? { ...i, checklist: updatedChecklist } : i))
+    );
+    setNewChecklistText("");
+
+    try {
+      await api.patch(`/engineering/items/${selectedItem.id}/checklist`, {
+        checklist: updatedChecklist,
+      });
+      toast.success("Sub-tarefa adicionada ao checklist!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao salvar sub-tarefa.");
+    }
+  };
+
+  // Atualizar Responsável Técnico no Card
+  const handleUpdateAssignee = async (newAssignee: string) => {
+    if (!selectedItem) return;
+    setSelectedItem({ ...selectedItem, assignedTo: newAssignee });
+    setItems((prev) =>
+      prev.map((i) => (i.id === selectedItem.id ? { ...i, assignedTo: newAssignee } : i))
+    );
+    try {
+      await api.patch(`/engineering/items/${selectedItem.id}`, { assignedTo: newAssignee });
+      toast.success("Responsável técnico atualizado!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao atualizar responsável.");
+    }
+  };
+
   // Enviar Mensagem no Chat de IA
   const handleSendChatMessage = async (presetPrompt?: string) => {
     const text = presetPrompt || chatInput;
@@ -278,6 +393,49 @@ export default function EngineeringDashboard() {
     }
   };
 
+  // CRIAR CARD NO KANBAN DIRETAMENTE DO CHAT COM A IA
+  const handleCreateCardFromChat = async (messageContent: string, messageId: string) => {
+    setCreatingCardFromMessageId(messageId);
+    toast.info("A IA Arquiteta está transformando esta solução em um card do Kanban...");
+
+    try {
+      const res = await api.post("/engineering/chat/create-card", {
+        messageContext: messageContent,
+        stage: "AI_ANALYSIS",
+      });
+
+      toast.success("Iniciativa criada com sucesso no Kanban!");
+      await fetchBacklog();
+
+      // Transiciona para o Kanban e abre o card criado
+      setActiveTab("kanban");
+      setSelectedItem(res.data);
+      setModalTab("ai_plan");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Erro ao criar card pelo chat.");
+    } finally {
+      setCreatingCardFromMessageId(null);
+    }
+  };
+
+  // Sincronizar Deploy Automático (Mover tarefas em desenvolvimento para DEPLOYED)
+  const handleSyncDeploy = async () => {
+    if (!confirm("Deseja marcar todas as frentes 'Em Desenvolvimento' como 'Deploy Realizado'?")) return;
+
+    setSyncingDeploy(true);
+    try {
+      const res = await api.post("/engineering/sync-deploy");
+      toast.success(res.data.message || "Deploy sincronizado com sucesso!");
+      fetchBacklog();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao sincronizar deploy.");
+    } finally {
+      setSyncingDeploy(false);
+    }
+  };
+
   // Limpar Chat de IA
   const handleClearChat = async () => {
     if (!confirm("Deseja limpar todo o histórico de conversas com a IA?")) return;
@@ -290,6 +448,27 @@ export default function EngineeringDashboard() {
       toast.error("Erro ao limpar histórico.");
     }
   };
+
+  // Itens ordenados para a visualização em Tabela
+  const sortedTableItems = [...items].sort((a, b) => {
+    if (tableSortField === "priority") {
+      const order: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
+      const diff = (order[b.priority] || 0) - (order[a.priority] || 0);
+      return tableSortDirection === "desc" ? diff : -diff;
+    }
+    if (tableSortField === "title") {
+      return tableSortDirection === "desc"
+        ? b.title.localeCompare(a.title)
+        : a.title.localeCompare(b.title);
+    }
+    if (tableSortField === "affectedCount") {
+      const diff = (b.affectedCount || 1) - (a.affectedCount || 1);
+      return tableSortDirection === "desc" ? diff : -diff;
+    }
+    // Default: createdAt
+    const diff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return tableSortDirection === "desc" ? diff : -diff;
+  });
 
   return (
     <div className="flex flex-col h-full bg-[#070D1B] text-slate-100 overflow-hidden font-sans">
@@ -305,17 +484,18 @@ export default function EngineeringDashboard() {
                 Engenharia de Produto
               </h1>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-bold uppercase">
-                Core Innovation
+                Enterprise Hub
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              Pipeline automatizado de backlog, captura do suporte e IA Arquiteto de Software Chefe
+              Kanban Nível CRM, Drag & Drop nativo, IA Arquiteta Agêntica e Desduplicação de Suporte
             </p>
           </div>
         </div>
 
-        {/* CONTROLES DO TOPO: Alternador de Abas & Nova Iniciativa */}
-        <div className="flex items-center gap-3">
+        {/* CONTROLES DO TOPO: Alternador de Abas, Sincronizar Deploy & Nova Iniciativa */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Alternador de Abas Principais */}
           <div className="flex items-center p-1 bg-[#070D1B] border border-slate-800 rounded-lg">
             <button
               onClick={() => setActiveTab("kanban")}
@@ -342,17 +522,29 @@ export default function EngineeringDashboard() {
             </button>
           </div>
 
+          {/* Sincronização Automática de Deploy */}
+          <button
+            onClick={handleSyncDeploy}
+            disabled={syncingDeploy}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/15 hover:bg-emerald-600/25 border border-emerald-500/30 text-emerald-400 rounded-lg text-xs font-bold transition-all cursor-pointer"
+            title="Mover tarefas em desenvolvimento para 'Deploy Realizado'"
+          >
+            <Rocket size={14} className={syncingDeploy ? "animate-spin" : ""} />
+            <span className="hidden sm:inline">Sincronizar Deploy</span>
+          </button>
+
+          {/* Botão Nova Iniciativa */}
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="flex items-center gap-2 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
           >
             <Plus size={15} />
-            <span>Nova Frente Técnica</span>
+            <span>Nova Frente</span>
           </button>
         </div>
       </header>
 
-      {/* METRICAS DE TOPO (KPIs) */}
+      {/* MÉTRICAS DE TOPO (KPIs) */}
       <section className="px-4 md:px-6 py-3 border-b border-slate-800/80 bg-[#091020] grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0">
         <div className="bg-[#0B1224] border border-slate-800 rounded-lg p-2.5 flex items-center justify-between">
           <div>
@@ -405,10 +597,10 @@ export default function EngineeringDashboard() {
         </div>
       </section>
 
-      {/* CONTEÚDO PRINCIPAL: TAB 1 (KANBAN) OU TAB 2 (AI CHAT) */}
+      {/* CONTEÚDO PRINCIPAL: TAB 1 (KANBAN/TABELA) OU TAB 2 (AI CHAT) */}
       {activeTab === "kanban" ? (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          {/* BARRA DE FILTROS */}
+          {/* BARRA DE FILTROS & VISÃO DUPLA (KANBAN VS TABELA) */}
           <div className="p-3 md:px-6 bg-[#070D1B] border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2 flex-1 min-w-[240px] max-w-md bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-1.5">
               <Search size={14} className="text-slate-500 shrink-0" />
@@ -416,12 +608,38 @@ export default function EngineeringDashboard() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por título, chamado ou tag..."
+                placeholder="Buscar por título, chamado, cliente ou responsável..."
                 className="bg-transparent text-xs text-white placeholder-slate-500 outline-none w-full"
               />
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              {/* Alternador Kanban vs Tabela */}
+              <div className="flex items-center p-1 bg-[#0B1224] border border-slate-800 rounded-lg">
+                <button
+                  onClick={() => setViewMode("kanban")}
+                  className={`p-1.5 rounded-md text-xs font-bold transition-all ${
+                    viewMode === "kanban"
+                      ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                  title="Modo Visual Kanban"
+                >
+                  <KanbanIcon size={14} />
+                </button>
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`p-1.5 rounded-md text-xs font-bold transition-all ${
+                    viewMode === "table"
+                      ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                  title="Modo Tabela Detalhada"
+                >
+                  <TableIcon size={14} />
+                </button>
+              </div>
+
               {/* Filtro Categoria */}
               <div className="flex items-center gap-1.5 bg-[#0B1224] border border-slate-800 rounded-lg px-2.5 py-1">
                 <Filter size={12} className="text-slate-500" />
@@ -459,7 +677,7 @@ export default function EngineeringDashboard() {
 
               <button
                 onClick={fetchBacklog}
-                className="p-1.5 bg-[#0B1224] border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white rounded-lg transition-all"
+                className="p-1.5 bg-[#0B1224] border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white rounded-lg transition-all cursor-pointer"
                 title="Atualizar Backlog"
               >
                 <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
@@ -467,179 +685,335 @@ export default function EngineeringDashboard() {
             </div>
           </div>
 
-          {/* KANBAN BOARD */}
-          <div className="flex-1 overflow-x-auto p-4 md:px-6 bg-[#070D1B]">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 min-w-[1000px] h-full items-start">
-              {STAGES.map((col) => {
-                const colItems = items.filter((item) => item.stage === col.id);
-                const ColIcon = col.icon;
+          {/* VISUALIZAÇÃO KANBAN (DRAG AND DROP) */}
+          {viewMode === "kanban" ? (
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <div className="flex-1 overflow-x-auto p-4 md:px-6 bg-[#070D1B]">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 min-w-[1050px] h-full items-start">
+                  {STAGES.map((col) => {
+                    const colItems = items.filter((item) => item.stage === col.id);
+                    const ColIcon = col.icon;
 
-                return (
-                  <div
-                    key={col.id}
-                    className="bg-[#0B1224] border border-slate-800 rounded-xl flex flex-col max-h-full overflow-hidden shadow-sm"
-                  >
-                    {/* Cabeçalho da Coluna */}
-                    <div className="p-3 border-b border-slate-800/80 bg-[#091020] flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-6 h-6 rounded-md flex items-center justify-center ${col.bg} ${col.border} border`}>
-                          <ColIcon size={14} className={col.color} />
-                        </div>
-                        <h3 className="text-xs font-bold text-white tracking-wide">
-                          {col.label}
-                        </h3>
-                      </div>
-                      <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-bold">
-                        {colItems.length}
-                      </span>
-                    </div>
-
-                    {/* Lista de Cards da Coluna */}
-                    <div className="p-3 flex flex-col gap-3 overflow-y-auto flex-1 min-h-[350px]">
-                      {colItems.length === 0 ? (
-                        <div className="p-6 text-center border border-dashed border-slate-800/80 rounded-lg text-slate-500 text-xs my-auto">
-                          Nenhum item nesta etapa
-                        </div>
-                      ) : (
-                        colItems.map((item) => {
-                          const catInfo = CATEGORIES[item.category] || { label: item.category, badge: "bg-slate-800 text-slate-300" };
-                          const prioInfo = PRIORITIES[item.priority] || { label: item.priority, badge: "bg-slate-800 text-slate-300" };
-                          const isAnalyzing = analyzingId === item.id;
-
-                          return (
-                            <div
-                              key={item.id}
-                              className="p-3.5 bg-[#0F172A] border border-slate-800 hover:border-slate-700 rounded-xl transition-all shadow-sm hover:shadow-md flex flex-col gap-2.5 group"
-                            >
-                              {/* Badges de Categoria & Prioridade */}
-                              <div className="flex items-center justify-between gap-1">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${catInfo.badge}`}>
-                                  {catInfo.label}
-                                </span>
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${prioInfo.badge}`}>
-                                  {prioInfo.label}
-                                </span>
+                    return (
+                      <Droppable droppableId={col.id} key={col.id}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                            className={`bg-[#0B1224] border rounded-xl flex flex-col max-h-full overflow-hidden shadow-sm transition-all ${
+                              snapshot.isDraggingOver
+                                ? "border-cyan-500/60 bg-[#0c162f] shadow-lg shadow-cyan-500/10"
+                                : "border-slate-800"
+                            }`}
+                          >
+                            {/* Cabeçalho da Coluna */}
+                            <div className="p-3 border-b border-slate-800/80 bg-[#091020] flex items-center justify-between shrink-0">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-6 h-6 rounded-md flex items-center justify-center ${col.bg} ${col.border} border`}>
+                                  <ColIcon size={14} className={col.color} />
+                                </div>
+                                <h3 className="text-xs font-bold text-white tracking-wide">
+                                  {col.label}
+                                </h3>
                               </div>
-
-                              {/* Título & Origem */}
-                              <div>
-                                <h4
-                                  onClick={() => setSelectedItem(item)}
-                                  className="text-xs font-bold text-white hover:text-cyan-400 transition-all cursor-pointer leading-snug"
-                                >
-                                  {item.title}
-                                </h4>
-                                {item.sourceType === "SUPPORT_TICKET" && (
-                                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-1">
-                                    <Building2 size={11} className="text-cyan-400 shrink-0" />
-                                    <span className="truncate">{item.tenantName || "Cliente Suporte"}</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Descrição Snippet */}
-                              <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
-                                {item.description}
-                              </p>
-
-                              {/* Tags */}
-                              {Array.isArray(item.tags) && item.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                  {item.tags.map((tag: string, idx: number) => (
-                                    <span
-                                      key={idx}
-                                      className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-400 border border-slate-700/60 font-mono"
-                                    >
-                                      #{tag}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-
-                              {/* Indicador de Parecer IA */}
-                              {item.aiSummary && (
-                                <div
-                                  onClick={() => setSelectedItem(item)}
-                                  className="flex items-center gap-1.5 p-1.5 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[10px] font-semibold cursor-pointer hover:bg-purple-500/20 transition-all"
-                                >
-                                  <Sparkles size={12} className="text-purple-400 shrink-0" />
-                                  <span className="truncate">Parecer Técnico da IA disponível</span>
-                                </div>
-                              )}
-
-                              {/* Ações Inferiores do Card */}
-                              <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1">
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    onClick={() => handleAnalyzeWithAI(item)}
-                                    disabled={isAnalyzing}
-                                    className="p-1 rounded bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 text-[10px] font-bold flex items-center gap-1 px-1.5 transition-all cursor-pointer"
-                                    title="Gerar parecer de arquitetura e impacto com IA"
-                                  >
-                                    <Sparkles size={11} className={isAnalyzing ? "animate-spin" : ""} />
-                                    <span>{isAnalyzing ? "Analisando..." : "IA Análise"}</span>
-                                  </button>
-
-                                  <button
-                                    onClick={() => setSelectedItem(item)}
-                                    className="p-1 rounded bg-slate-800 text-slate-300 hover:text-white text-[10px] px-2 font-medium transition-all cursor-pointer"
-                                  >
-                                    Detalhes
-                                  </button>
-                                </div>
-
-                                {/* Botões de Movimentação de Estágio */}
-                                <div className="flex items-center gap-1">
-                                  {col.id !== "CAPTURED" && (
-                                    <button
-                                      onClick={() => {
-                                        const prevStage =
-                                          col.id === "AI_ANALYSIS"
-                                            ? "CAPTURED"
-                                            : col.id === "IN_DEVELOPMENT"
-                                            ? "AI_ANALYSIS"
-                                            : "IN_DEVELOPMENT";
-                                        handleMoveStage(item, prevStage);
-                                      }}
-                                      className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all cursor-pointer"
-                                      title="Voltar etapa"
-                                    >
-                                      <ArrowLeft size={11} />
-                                    </button>
-                                  )}
-
-                                  {col.id !== "DEPLOYED" && (
-                                    <button
-                                      onClick={() => {
-                                        const nextStage =
-                                          col.id === "CAPTURED"
-                                            ? "AI_ANALYSIS"
-                                            : col.id === "AI_ANALYSIS"
-                                            ? "IN_DEVELOPMENT"
-                                            : "DEPLOYED";
-                                        handleMoveStage(item, nextStage);
-                                      }}
-                                      className="p-1 rounded bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-300 transition-all cursor-pointer"
-                                      title="Avançar etapa"
-                                    >
-                                      <ArrowRight size={11} />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
+                              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-bold">
+                                {colItems.length}
+                              </span>
                             </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+
+                            {/* Lista de Cards com Draggable */}
+                            <div className="p-3 flex flex-col gap-3 overflow-y-auto flex-1 min-h-[380px]">
+                              {colItems.length === 0 ? (
+                                <div className="p-6 text-center border border-dashed border-slate-800/80 rounded-lg text-slate-500 text-xs my-auto">
+                                  Arraste ou crie cards aqui
+                                </div>
+                              ) : (
+                                colItems.map((item, index) => {
+                                  const catInfo = CATEGORIES[item.category] || { label: item.category, badge: "bg-slate-800 text-slate-300" };
+                                  const prioInfo = PRIORITIES[item.priority] || { label: item.priority, badge: "bg-slate-800 text-slate-300" };
+                                  const isAnalyzing = analyzingId === item.id;
+                                  const checklistCount = Array.isArray(item.checklist) ? item.checklist.length : 0;
+                                  const checklistDone = Array.isArray(item.checklist) ? item.checklist.filter((t: any) => t.done).length : 0;
+
+                                  return (
+                                    <Draggable key={item.id} draggableId={item.id} index={index}>
+                                      {(dragProvided, dragSnapshot) => (
+                                        <div
+                                          ref={dragProvided.innerRef}
+                                          {...dragProvided.draggableProps}
+                                          {...dragProvided.dragHandleProps}
+                                          className={`p-3.5 bg-[#0F172A] border rounded-xl transition-all shadow-sm flex flex-col gap-2.5 group cursor-grab active:cursor-grabbing ${
+                                            dragSnapshot.isDragging
+                                              ? "border-cyan-400 bg-[#17233f] shadow-2xl scale-[1.02] ring-2 ring-cyan-500/30"
+                                              : "border-slate-800 hover:border-slate-700 hover:shadow-md"
+                                          }`}
+                                        >
+                                          {/* Badges: Categoria & Prioridade */}
+                                          <div className="flex items-center justify-between gap-1">
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${catInfo.badge}`}>
+                                              {catInfo.label}
+                                            </span>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${prioInfo.badge}`}>
+                                              {prioInfo.label}
+                                            </span>
+                                          </div>
+
+                                          {/* Título & Empresas Afetadas */}
+                                          <div>
+                                            <h4
+                                              onClick={() => {
+                                                setSelectedItem(item);
+                                                setModalTab("overview");
+                                              }}
+                                              className="text-xs font-bold text-white hover:text-cyan-400 transition-all cursor-pointer leading-snug"
+                                            >
+                                              {item.title}
+                                            </h4>
+
+                                            {/* Indicador de Múltiplos Clientes Afetados */}
+                                            {item.affectedCount > 1 ? (
+                                              <div className="flex items-center gap-1.5 text-[10px] text-rose-400 font-bold mt-1 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-md w-fit">
+                                                <Building2 size={11} className="shrink-0" />
+                                                <span>{item.affectedCount} empresas impactadas</span>
+                                              </div>
+                                            ) : item.tenantName ? (
+                                              <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-1">
+                                                <Building2 size={11} className="text-cyan-400 shrink-0" />
+                                                <span className="truncate">{item.tenantName}</span>
+                                              </div>
+                                            ) : null}
+                                          </div>
+
+                                          {/* Descrição Snippet */}
+                                          <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                                            {item.description}
+                                          </p>
+
+                                          {/* Checklist Mini Status */}
+                                          {checklistCount > 0 && (
+                                            <div className="flex items-center gap-2 text-[10px] text-slate-400 bg-[#070D1B] px-2 py-1 rounded-lg border border-slate-800/80">
+                                              <CheckSquare size={11} className={checklistDone === checklistCount ? "text-emerald-400" : "text-blue-400"} />
+                                              <span>{checklistDone}/{checklistCount} tarefas concluídas</span>
+                                              <div className="flex-1 bg-slate-800 h-1.5 rounded-full overflow-hidden ml-1">
+                                                <div
+                                                  className="bg-blue-500 h-full transition-all"
+                                                  style={{ width: `${(checklistDone / checklistCount) * 100}%` }}
+                                                />
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* Indicador de Parecer IA */}
+                                          {item.aiSummary && (
+                                            <div
+                                              onClick={() => {
+                                                setSelectedItem(item);
+                                                setModalTab("ai_plan");
+                                              }}
+                                              className="flex items-center gap-1.5 p-1.5 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[10px] font-semibold cursor-pointer hover:bg-purple-500/20 transition-all"
+                                            >
+                                              <Sparkles size={12} className="text-purple-400 shrink-0" />
+                                              <span className="truncate">Parecer de Engenharia pronto</span>
+                                            </div>
+                                          )}
+
+                                          {/* Responsável & Ações Rápidas */}
+                                          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1 text-[10px]">
+                                            <div className="flex items-center gap-1.5 truncate text-slate-400">
+                                              <div className="w-5 h-5 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-300 font-bold text-[9px] shrink-0">
+                                                {item.assignedTo ? item.assignedTo.slice(0, 2).toUpperCase() : <User size={10} />}
+                                              </div>
+                                              <span className="truncate max-w-[90px] font-medium text-slate-300">
+                                                {item.assignedTo || "Sem time"}
+                                              </span>
+                                            </div>
+
+                                            <div className="flex items-center gap-1">
+                                              <button
+                                                onClick={() => handleAnalyzeWithAI(item)}
+                                                disabled={isAnalyzing}
+                                                className="p-1 rounded bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 text-[10px] font-bold flex items-center gap-1 px-1.5 transition-all cursor-pointer"
+                                                title="Gerar parecer de arquitetura com IA"
+                                              >
+                                                <Sparkles size={11} className={isAnalyzing ? "animate-spin" : ""} />
+                                                <span>IA</span>
+                                              </button>
+
+                                              <button
+                                                onClick={() => {
+                                                  setSelectedItem(item);
+                                                  setModalTab("overview");
+                                                }}
+                                                className="p-1 rounded bg-slate-800 text-slate-300 hover:text-white text-[10px] px-2 font-medium transition-all cursor-pointer"
+                                              >
+                                                Abrir
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </Draggable>
+                                  );
+                                })
+                              )}
+                              {provided.placeholder}
+                            </div>
+                          </div>
+                        )}
+                      </Droppable>
+                    );
+                  })}
+                </div>
+              </div>
+            </DragDropContext>
+          ) : (
+            /* VISUALIZAÇÃO EM TABELA / LISTA (ESTILO CRM) */
+            <div className="flex-1 overflow-auto p-4 md:px-6 bg-[#070D1B]">
+              <div className="bg-[#0B1224] border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-800 bg-[#091020] text-[10px] uppercase font-bold text-slate-400">
+                      <th
+                        onClick={() => {
+                          setTableSortField("title");
+                          setTableSortDirection(tableSortDirection === "asc" ? "desc" : "asc");
+                        }}
+                        className="p-3.5 cursor-pointer hover:text-white transition-all"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span>Iniciativa de Engenharia</span>
+                          <ArrowUpDown size={11} />
+                        </div>
+                      </th>
+                      <th className="p-3.5">Categoria</th>
+                      <th
+                        onClick={() => {
+                          setTableSortField("priority");
+                          setTableSortDirection(tableSortDirection === "asc" ? "desc" : "asc");
+                        }}
+                        className="p-3.5 cursor-pointer hover:text-white transition-all"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span>Prioridade</span>
+                          <ArrowUpDown size={11} />
+                        </div>
+                      </th>
+                      <th className="p-3.5">Estágio</th>
+                      <th
+                        onClick={() => {
+                          setTableSortField("affectedCount");
+                          setTableSortDirection(tableSortDirection === "asc" ? "desc" : "asc");
+                        }}
+                        className="p-3.5 cursor-pointer hover:text-white transition-all"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span>Impacto</span>
+                          <ArrowUpDown size={11} />
+                        </div>
+                      </th>
+                      <th className="p-3.5">Responsável</th>
+                      <th
+                        onClick={() => {
+                          setTableSortField("createdAt");
+                          setTableSortDirection(tableSortDirection === "asc" ? "desc" : "asc");
+                        }}
+                        className="p-3.5 cursor-pointer hover:text-white transition-all"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span>Criação</span>
+                          <ArrowUpDown size={11} />
+                        </div>
+                      </th>
+                      <th className="p-3.5 text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 text-xs">
+                    {sortedTableItems.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="p-8 text-center text-slate-500">
+                          Nenhuma iniciativa encontrada com os filtros selecionados.
+                        </td>
+                      </tr>
+                    ) : (
+                      sortedTableItems.map((item) => {
+                        const catInfo = CATEGORIES[item.category] || { label: item.category, badge: "bg-slate-800 text-slate-300" };
+                        const prioInfo = PRIORITIES[item.priority] || { label: item.priority, badge: "bg-slate-800 text-slate-300" };
+                        const stageInfo = STAGES.find((s) => s.id === item.stage) || STAGES[0];
+
+                        return (
+                          <tr
+                            key={item.id}
+                            className="hover:bg-slate-800/30 transition-all cursor-pointer"
+                            onClick={() => {
+                              setSelectedItem(item);
+                              setModalTab("overview");
+                            }}
+                          >
+                            <td className="p-3.5">
+                              <div className="font-bold text-white max-w-sm truncate">
+                                {item.title}
+                              </div>
+                              <div className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+                                {item.description}
+                              </div>
+                            </td>
+                            <td className="p-3.5">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${catInfo.badge}`}>
+                                {catInfo.label}
+                              </span>
+                            </td>
+                            <td className="p-3.5">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${prioInfo.badge}`}>
+                                {prioInfo.label}
+                              </span>
+                            </td>
+                            <td className="p-3.5">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${stageInfo.bg} ${stageInfo.border} ${stageInfo.color}`}>
+                                {stageInfo.label}
+                              </span>
+                            </td>
+                            <td className="p-3.5">
+                              {item.affectedCount > 1 ? (
+                                <span className="text-[10px] font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-md">
+                                  {item.affectedCount} empresas
+                                </span>
+                              ) : (
+                                <span className="text-[11px] text-slate-400 truncate max-w-[120px] block">
+                                  {item.tenantName || "1 empresa"}
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-3.5">
+                              <span className="text-slate-300 font-medium text-[11px]">
+                                {item.assignedTo || "—"}
+                              </span>
+                            </td>
+                            <td className="p-3.5 text-slate-500 text-[11px]">
+                              {new Date(item.createdAt).toLocaleDateString('pt-BR')}
+                            </td>
+                            <td className="p-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => {
+                                  setSelectedItem(item);
+                                  setModalTab("overview");
+                                }}
+                                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                              >
+                                Abrir
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       ) : (
-        /* TAB 2: CHAT DEDICADO COM A IA (ENGENHEIRO DE SOFTWARE CHEFE) */
+        /* TAB 2: CHAT DEDICADO COM A IA COM CRIAÇÃO DE CARDS NO KANBAN */
         <div className="flex-1 flex flex-col min-h-0 bg-[#070D1B] overflow-hidden">
           {/* BARRA SUPERIOR DO CHAT */}
           <div className="p-3 md:px-6 bg-[#0B1224] border-b border-slate-800 flex items-center justify-between shrink-0">
@@ -653,18 +1027,18 @@ export default function EngineeringDashboard() {
                     Engenheiro de Software Chefe (VERSUS AI Architect)
                   </h3>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">
-                    OpenAI Conectada
+                    Agente de Criação Ativo
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Consulte arquitetura de software, design de APIs, otimização de queries e análise de feedbacks do backlog
+                  Converse para projetar novas ferramentas, arquitetar APIs e clique em "Criar Card no Kanban" para abrir a demanda automaticamente
                 </p>
               </div>
             </div>
 
             <button
               onClick={handleClearChat}
-              className="text-xs text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-all flex items-center gap-1.5"
+              className="text-xs text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-all flex items-center gap-1.5 cursor-pointer"
               title="Limpar histórico de conversa"
             >
               <Trash2 size={13} />
@@ -678,26 +1052,26 @@ export default function EngineeringDashboard() {
               <Zap size={11} className="text-amber-400" /> Prompts Rápidos:
             </span>
             <button
+              onClick={() => handleSendChatMessage("Quero criar uma nova integração com gateway de pagamento Pix para gerar cobranças automáticas no CRM. Como arquitetar isso?")}
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0F172A] border border-slate-800 hover:border-purple-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
+            >
+              💳 Nova API de Cobrança Pix
+            </button>
+            <button
               onClick={() => handleSendChatMessage("Analise o backlog atual de feedbacks capturados do suporte e me dê as 3 prioridades críticas de arquitetura.")}
-              className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0F172A] border border-slate-800 hover:border-purple-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap"
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0F172A] border border-slate-800 hover:border-purple-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
             >
               💡 Priorizar Backlog de Feedbacks
             </button>
             <button
               onClick={() => handleSendChatMessage("Projete a arquitetura de uma nova API RESTful e Webhook para integração de novos canais de mensageria no VERSUS.")}
-              className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0F172A] border border-slate-800 hover:border-cyan-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap"
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0F172A] border border-slate-800 hover:border-cyan-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
             >
               🔌 Arquitetar Nova API & Webhook
             </button>
-            <button
-              onClick={() => handleSendChatMessage("Como podemos otimizar o índice de busca e o tempo de resposta das queries de chamados e conversas no PostgreSQL com Prisma?")}
-              className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0F172A] border border-slate-800 hover:border-amber-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap"
-            >
-              ⚡ Otimização de Queries & Prisma
-            </button>
           </div>
 
-          {/* STREAM DE MENSAGENS */}
+          {/* STREAM DE MENSAGENS COM BOTÃO DE CRIAÇÃO NO KANBAN */}
           <div className="flex-1 overflow-y-auto p-4 md:px-6 space-y-4">
             {chatMessages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-8 max-w-md mx-auto">
@@ -705,20 +1079,21 @@ export default function EngineeringDashboard() {
                   <Cpu size={28} />
                 </div>
                 <h4 className="text-sm font-bold text-white mb-1">
-                  Assistente de Engenharia & Inovação
+                  Assistente de Engenharia & Inovação Agêntica
                 </h4>
                 <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                  Eu analiso feedbacks dos clientes vindos do suporte, projeto novas extensões, crio especificações de APIs e auxilio no roadmap tecnológico do VERSUS.
+                  Diga a ideia de ferramenta ou melhoria que deseja construir. A IA projetará o código e permitirá você criar o card no Kanban com 1 clique!
                 </p>
                 <div className="text-[11px] text-slate-500 bg-[#0B1224] p-3 rounded-lg border border-slate-800 text-left w-full space-y-1">
-                  <p className="font-semibold text-slate-400">Experimente perguntar:</p>
-                  <p>• "Quais módulos do VERSUS precisam de refatoração para suportar 50 mil conversas/dia?"</p>
-                  <p>• "Como conectar uma extensão externa de telefonia VoIP ao Inbox?"</p>
+                  <p className="font-semibold text-slate-400">Exemplos práticos:</p>
+                  <p>• "IA, como criar uma extensão para discador VoIP no WhatsApp?"</p>
+                  <p>• "Quero otimizar o tempo de resposta das mensagens usando cache Redis."</p>
                 </div>
               </div>
             ) : (
               chatMessages.map((msg, index) => {
                 const isAI = msg.role === "assistant";
+                const isCreating = creatingCardFromMessageId === msg.id;
 
                 return (
                   <div
@@ -735,19 +1110,35 @@ export default function EngineeringDashboard() {
                       {isAI ? <Bot size={15} /> : <User size={15} />}
                     </div>
 
-                    <div
-                      className={`p-3.5 rounded-2xl text-xs leading-relaxed max-w-2xl border shadow-sm ${
-                        isAI
-                          ? "bg-[#0B1224] border-slate-800 text-slate-200"
-                          : "bg-blue-600 text-white border-blue-500"
-                      }`}
-                    >
-                      <div className="whitespace-pre-wrap font-sans font-normal selection:bg-cyan-500/30">
-                        {msg.content}
+                    <div className="flex flex-col gap-2 max-w-2xl">
+                      <div
+                        className={`p-3.5 rounded-2xl text-xs leading-relaxed border shadow-sm ${
+                          isAI
+                            ? "bg-[#0B1224] border-slate-800 text-slate-200"
+                            : "bg-blue-600 text-white border-blue-500"
+                        }`}
+                      >
+                        <div className="whitespace-pre-wrap font-sans font-normal selection:bg-cyan-500/30">
+                          {msg.content}
+                        </div>
+                        <div className={`text-[9px] mt-1 text-right ${isAI ? "text-slate-500" : "text-blue-200"}`}>
+                          {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                        </div>
                       </div>
-                      <div className={`text-[9px] mt-1 text-right ${isAI ? "text-slate-500" : "text-blue-200"}`}>
-                        {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
-                      </div>
+
+                      {/* BOTÃO DE CRIAÇÃO NO KANBAN COM ESTA SOLUÇÃO */}
+                      {isAI && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleCreateCardFromChat(msg.content, msg.id || index.toString())}
+                            disabled={isCreating}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/40 text-cyan-300 text-xs font-bold transition-all shadow-sm cursor-pointer"
+                          >
+                            <Plus size={13} className={isCreating ? "animate-spin" : "text-cyan-400"} />
+                            <span>{isCreating ? "Criando Card..." : "📌 Criar Card no Kanban com Esta Solução"}</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -814,7 +1205,7 @@ export default function EngineeringDashboard() {
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
               >
                 <X size={16} />
               </button>
@@ -871,20 +1262,35 @@ export default function EngineeringDashboard() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
-                  Estágio Inicial
-                </label>
-                <select
-                  value={formStage}
-                  onChange={(e) => setFormStage(e.target.value)}
-                  className="w-full bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-500"
-                >
-                  <option value="CAPTURED">Ideias Capturadas</option>
-                  <option value="AI_ANALYSIS">Em Análise por IA</option>
-                  <option value="IN_DEVELOPMENT">Em Desenvolvimento</option>
-                  <option value="DEPLOYED">Deploy Realizado</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    Estágio Inicial
+                  </label>
+                  <select
+                    value={formStage}
+                    onChange={(e) => setFormStage(e.target.value)}
+                    className="w-full bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-500"
+                  >
+                    <option value="CAPTURED">Ideias Capturadas</option>
+                    <option value="AI_ANALYSIS">Em Análise por IA</option>
+                    <option value="IN_DEVELOPMENT">Em Desenvolvimento</option>
+                    <option value="DEPLOYED">Deploy Realizado</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    Responsável / Equipe
+                  </label>
+                  <input
+                    type="text"
+                    value={formAssignedTo}
+                    onChange={(e) => setFormAssignedTo(e.target.value)}
+                    placeholder="Ex: Time Backend, Vitor"
+                    className="w-full bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500"
+                  />
+                </div>
               </div>
 
               <div>
@@ -896,7 +1302,7 @@ export default function EngineeringDashboard() {
                   required
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder="Descreva o escopo técnico, endpoints necessários, regras de negócio e motivação..."
+                  placeholder="Descreva o escopo técnico, regras de negócio e objetivo final..."
                   className="w-full bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500 resize-none"
                 />
               </div>
@@ -935,122 +1341,309 @@ export default function EngineeringDashboard() {
         </div>
       )}
 
-      {/* MODAL: DETALHES E PARECER TÉCNICO DA INICIATIVA */}
+      {/* MODAL ENTERPRISE DE INICIATIVA (NÍVEL DEALMODAL CRM) */}
       {selectedItem && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+          <div className="bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
             {/* Header do Modal */}
             <div className="p-4 border-b border-slate-800 bg-[#070D1B] flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-                  <Cpu size={16} />
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                  <Cpu size={18} />
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white truncate max-w-md">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-white truncate max-w-lg">
                     {selectedItem.title}
                   </h3>
                   <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
                     <span>Origem: <strong>{selectedItem.sourceType}</strong></span>
-                    {selectedItem.tenantName && <span>• {selectedItem.tenantName}</span>}
-                    <span>• Criado em {new Date(selectedItem.createdAt).toLocaleDateString('pt-BR')}</span>
+                    <span>•</span>
+                    <span>Criado em {new Date(selectedItem.createdAt).toLocaleDateString('pt-BR')}</span>
+                    {selectedItem.affectedCount > 1 && (
+                      <>
+                        <span>•</span>
+                        <span className="text-rose-400 font-bold">{selectedItem.affectedCount} empresas impactadas</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedItem(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Conteúdo do Modal */}
+            {/* Abas do Modal Enterprise */}
+            <div className="px-5 border-b border-slate-800 bg-[#091020] flex items-center gap-4 text-xs font-bold shrink-0">
+              <button
+                onClick={() => setModalTab("overview")}
+                className={`py-3 border-b-2 transition-all cursor-pointer ${
+                  modalTab === "overview"
+                    ? "border-blue-500 text-blue-400"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Visão Geral & Time
+              </button>
+              <button
+                onClick={() => setModalTab("clients")}
+                className={`py-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                  modalTab === "clients"
+                    ? "border-cyan-500 text-cyan-400"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <span>Raio-X dos Clientes</span>
+                {selectedItem.affectedCount > 1 && (
+                  <span className="px-1.5 py-0.2 bg-rose-500/20 text-rose-400 rounded-full text-[10px] font-bold">
+                    {selectedItem.affectedCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setModalTab("checklist")}
+                className={`py-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                  modalTab === "checklist"
+                    ? "border-emerald-500 text-emerald-400"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <span>Checklist Técnico</span>
+                {Array.isArray(selectedItem.checklist) && selectedItem.checklist.length > 0 && (
+                  <span className="px-1.5 py-0.2 bg-slate-800 text-slate-300 rounded-full text-[10px]">
+                    {selectedItem.checklist.filter((t: any) => t.done).length}/{selectedItem.checklist.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setModalTab("ai_plan")}
+                className={`py-3 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+                  modalTab === "ai_plan"
+                    ? "border-purple-500 text-purple-400"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <Sparkles size={12} />
+                <span>Parecer IA</span>
+              </button>
+            </div>
+
+            {/* Conteúdo das Abas */}
             <div className="p-5 overflow-y-auto space-y-4 flex-1">
-              {/* Badges & Mudança Rápida de Estágio */}
-              <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-[#070D1B] border border-slate-800 rounded-xl">
-                <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${CATEGORIES[selectedItem.category]?.badge}`}>
-                    {CATEGORIES[selectedItem.category]?.label || selectedItem.category}
-                  </span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${PRIORITIES[selectedItem.priority]?.badge}`}>
-                    {PRIORITIES[selectedItem.priority]?.label || selectedItem.priority}
-                  </span>
-                </div>
+              {/* ABA 1: VISÃO GERAL */}
+              {modalTab === "overview" && (
+                <div className="space-y-4">
+                  {/* Badges & Controles de Estágio e Responsável */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3.5 bg-[#070D1B] border border-slate-800 rounded-xl">
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Estágio do Kanban:</span>
+                      <select
+                        value={selectedItem.stage}
+                        onChange={(e) => handleMoveStage(selectedItem, e.target.value)}
+                        className="w-full bg-[#0B1224] border border-slate-700 text-xs font-bold text-cyan-300 rounded-lg p-2 outline-none cursor-pointer"
+                      >
+                        {STAGES.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Mover Estágio:</span>
-                  <select
-                    value={selectedItem.stage}
-                    onChange={(e) => handleMoveStage(selectedItem, e.target.value)}
-                    className="bg-[#0B1224] border border-slate-700 text-xs font-bold text-cyan-300 rounded-lg px-2 py-1 outline-none cursor-pointer"
-                  >
-                    {STAGES.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Descrição Completa */}
-              <div>
-                <h4 className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <FileText size={13} className="text-blue-400" />
-                  <span>Descrição & Relato do Chamado</span>
-                </h4>
-                <div className="p-3.5 bg-[#070D1B] border border-slate-800 rounded-xl text-xs text-slate-300 whitespace-pre-wrap leading-relaxed font-mono">
-                  {selectedItem.description}
-                </div>
-              </div>
-
-              {/* Parecer Técnico da IA */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <h4 className="text-[11px] font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles size={13} className="text-purple-400" />
-                    <span>Parecer do Arquiteto de Software Chefe (IA)</span>
-                  </h4>
-                  <button
-                    onClick={() => handleAnalyzeWithAI(selectedItem)}
-                    disabled={analyzingId === selectedItem.id}
-                    className="px-2 py-1 rounded bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
-                  >
-                    <Sparkles size={11} className={analyzingId === selectedItem.id ? "animate-spin" : ""} />
-                    <span>{analyzingId === selectedItem.id ? "Analisando..." : "Regerar Parecer IA"}</span>
-                  </button>
-                </div>
-
-                {selectedItem.aiSummary ? (
-                  <div className="p-4 bg-purple-950/10 border border-purple-500/30 rounded-xl text-xs text-purple-100 whitespace-pre-wrap leading-relaxed">
-                    {selectedItem.aiSummary}
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Responsável / Equipe:</span>
+                      <input
+                        type="text"
+                        defaultValue={selectedItem.assignedTo || ""}
+                        onBlur={(e) => handleUpdateAssignee(e.target.value)}
+                        placeholder="Ex: Time Backend, Vitor"
+                        className="w-full bg-[#0B1224] border border-slate-700 text-xs font-semibold text-white rounded-lg p-2 outline-none focus:border-blue-500"
+                      />
+                    </div>
                   </div>
-                ) : (
-                  <div className="p-4 bg-[#070D1B] border border-dashed border-purple-500/30 rounded-xl text-center">
-                    <p className="text-xs text-slate-400 mb-2">
-                      Nenhum parecer técnico gerado ainda para esta iniciativa.
-                    </p>
+
+                  {/* Descrição Completa */}
+                  <div>
+                    <h4 className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                      <FileText size={13} className="text-blue-400" />
+                      <span>Descrição da Iniciativa & Relato</span>
+                    </h4>
+                    <div className="p-3.5 bg-[#070D1B] border border-slate-800 rounded-xl text-xs text-slate-300 whitespace-pre-wrap leading-relaxed font-mono">
+                      {selectedItem.description}
+                    </div>
+                  </div>
+
+                  {/* Notas Técnicas Adicionais */}
+                  {selectedItem.technicalNotes && (
+                    <div>
+                      <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                        Histórico & Notas Técnicas
+                      </h4>
+                      <div className="p-3 bg-[#070D1B] border border-slate-800 rounded-xl text-xs text-slate-400 whitespace-pre-wrap">
+                        {selectedItem.technicalNotes}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ABA 2: RAIO-X DOS CLIENTES AFETADOS & ORIGEM */}
+              {modalTab === "clients" && (
+                <div className="space-y-4">
+                  <div className="p-4 bg-cyan-950/20 border border-cyan-500/30 rounded-xl flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-white">Impacto em Clientes</h4>
+                      <p className="text-[11px] text-slate-400">
+                        {selectedItem.affectedCount > 1
+                          ? `Identificado por ${selectedItem.affectedCount} empresas diferentes. Prioridade unificada.`
+                          : `Identificado pelo chamado de 1 empresa.`}
+                      </p>
+                    </div>
+                    <span className="text-lg font-black text-cyan-300 px-3 py-1 bg-cyan-500/20 border border-cyan-500/40 rounded-lg">
+                      {selectedItem.affectedCount} {selectedItem.affectedCount === 1 ? "Cliente" : "Clientes"}
+                    </span>
+                  </div>
+
+                  {/* Lista de Empresas Afetadas */}
+                  <div>
+                    <h5 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Empresas com Ocorrências Registradas
+                    </h5>
+                    <div className="space-y-2">
+                      {Array.isArray(selectedItem.affectedTenants) && selectedItem.affectedTenants.length > 0 ? (
+                        selectedItem.affectedTenants.map((tenant: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="p-3 bg-[#070D1B] border border-slate-800 rounded-lg flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Building2 size={14} className="text-cyan-400" />
+                              <span className="text-xs font-bold text-white">{tenant.name || "Empresa"}</span>
+                              {tenant.ticketNumber && (
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-blue-300 font-mono">
+                                  #{tenant.ticketNumber}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-slate-500">
+                              {tenant.date ? new Date(tenant.date).toLocaleDateString('pt-BR') : ""}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-3 bg-[#070D1B] border border-slate-800 rounded-lg text-xs text-slate-400">
+                          {selectedItem.tenantName || "Empresa solicitante única"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ABA 3: CHECKLIST TÉCNICO INTERATIVO */}
+              {modalTab === "checklist" && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-white">Sub-tarefas de Desenvolvimento</h4>
+                      <p className="text-[11px] text-slate-400">Marque as etapas conforme forem construídas e testadas</p>
+                    </div>
+                  </div>
+
+                  {/* Input para Nova Sub-tarefa */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newChecklistText}
+                      onChange={(e) => setNewChecklistText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddChecklistTask();
+                        }
+                      }}
+                      placeholder="Adicionar nova sub-tarefa técnica (ex: Criar migration no Prisma)..."
+                      className="flex-1 bg-[#070D1B] border border-slate-800 rounded-lg p-2 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddChecklistTask}
+                      className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0"
+                    >
+                      Adicionar
+                    </button>
+                  </div>
+
+                  {/* Lista de Tarefas */}
+                  <div className="space-y-2">
+                    {Array.isArray(selectedItem.checklist) && selectedItem.checklist.length > 0 ? (
+                      selectedItem.checklist.map((task: any) => (
+                        <div
+                          key={task.id}
+                          onClick={() => handleToggleChecklist(task.id)}
+                          className={`p-3 rounded-lg border flex items-center gap-3 transition-all cursor-pointer ${
+                            task.done
+                              ? "bg-emerald-950/15 border-emerald-500/30 text-emerald-200"
+                              : "bg-[#070D1B] border-slate-800 text-slate-300 hover:border-slate-700"
+                          }`}
+                        >
+                          <div className={`w-4 h-4 rounded flex items-center justify-center border ${task.done ? "bg-emerald-500 border-emerald-500 text-slate-950" : "border-slate-600"}`}>
+                            {task.done && <Check size={12} className="stroke-[3]" />}
+                          </div>
+                          <span className={`text-xs flex-1 ${task.done ? "line-through opacity-70" : "font-medium"}`}>
+                            {task.text}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-6 text-center border border-dashed border-slate-800 rounded-lg text-slate-500 text-xs">
+                        Nenhuma sub-tarefa adicionada ainda.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ABA 4: PARECER TÉCNICO DO ARQUITETO IA */}
+              {modalTab === "ai_plan" && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-[11px] font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles size={13} className="text-purple-400" />
+                      <span>Parecer do Arquiteto de Software Chefe (IA)</span>
+                    </h4>
                     <button
                       onClick={() => handleAnalyzeWithAI(selectedItem)}
                       disabled={analyzingId === selectedItem.id}
-                      className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md shadow-purple-600/20 inline-flex items-center gap-1.5 cursor-pointer"
+                      className="px-2.5 py-1 rounded bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
                     >
-                      <Sparkles size={13} />
-                      <span>Gerar Parecer de Arquitetura com IA</span>
+                      <Sparkles size={11} className={analyzingId === selectedItem.id ? "animate-spin" : ""} />
+                      <span>{analyzingId === selectedItem.id ? "Analisando..." : "Regerar Parecer IA"}</span>
                     </button>
                   </div>
-                )}
-              </div>
 
-              {/* Notas Técnicas / Observações */}
-              {selectedItem.technicalNotes && (
-                <div>
-                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Notas Técnicas Adicionais
-                  </h4>
-                  <div className="p-3 bg-[#070D1B] border border-slate-800 rounded-xl text-xs text-slate-400">
-                    {selectedItem.technicalNotes}
-                  </div>
+                  {selectedItem.aiSummary ? (
+                    <div className="p-4 bg-purple-950/15 border border-purple-500/30 rounded-xl text-xs text-purple-100 whitespace-pre-wrap leading-relaxed font-sans">
+                      {selectedItem.aiSummary}
+                    </div>
+                  ) : (
+                    <div className="p-6 bg-[#070D1B] border border-dashed border-purple-500/30 rounded-xl text-center">
+                      <p className="text-xs text-slate-400 mb-3">
+                        Nenhum parecer técnico gerado ainda para esta iniciativa.
+                      </p>
+                      <button
+                        onClick={() => handleAnalyzeWithAI(selectedItem)}
+                        disabled={analyzingId === selectedItem.id}
+                        className="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md shadow-purple-600/20 inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Sparkles size={13} />
+                        <span>Gerar Parecer de Arquitetura com IA</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

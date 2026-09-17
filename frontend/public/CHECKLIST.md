@@ -1618,32 +1618,45 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
   - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
-- [ ] **[17/09/2026 - 10:35]** ⚡ **[IDE 2] Início: Evolução do Kanban de Engenharia - Padrão CRM Enterprise, Drag & Drop, Criação por Chat IA & Desduplicação Automática (Fase 67)**:
-  - **Status**: 🟡 Em Andamento por IDE 2.
-  - **Kanban Nível CRM Enterprise**: Drag & Drop fluido com `@hello-pangea/dnd` nas 4 colunas, visualização dupla (Kanban e Tabela/Lista interativa com ordenação).
-  - **Modal Enterprise Estilo DealModal**: Raio-X da empresa cliente de origem, atribuição de equipe/responsável com avatar, checklist interativo de sub-tarefas de desenvolvimento e parecer da IA em destaque.
-  - **Criação de Cards Diretamente pelo Chat da IA**: Conversão instantânea de ideias discutidas com a IA em cards no Kanban com 1 clique ("📌 Criar Card no Kanban com Esta Solução") ou por comando no chat.
-  - **Desduplicação Inteligente no Suporte**: IA compara novos chamados com o backlog ativo; se for o mesmo problema (ex: 10 clientes relatando a mesma falha), agrupa no mesmo card, adiciona as empresas e eleva a prioridade para Alta/Crítica.
-  - **Deploy Automático**: Sincronização automática para mover cards concluídos para "Deploy Realizado" no deploy da VPS/Vercel.
-  - **Build & Deploy**: Validação de build com código 0 e sincronização com VPS Hostinger e Vercel.
+- [x] **[17/09/2026 - 10:48]** ⚡ **[IDE 2] Conclusão: Evolução do Kanban de Engenharia - Padrão CRM Enterprise, Drag & Drop, Criação por Chat IA & Desduplicação Automática (Fase 67)**:
+  - **Status**: ✅ Concluído com Sucesso e Homologado.
+  - **Kanban Nível CRM Enterprise com Drag & Drop Nativo**:
+    - Integração de `@hello-pangea/dnd` nas 4 colunas (*Ideias Capturadas*, *Em Análise por IA*, *Em Desenvolvimento*, *Deploy Realizado*) com animação tátil e persistência otimista no backend.
+    - Alternador de visualização fluida entre **Modo Kanban** e **Modo Tabela Detalhada** com ordenação interativa por prioridade, data, empresas impactadas e responsável.
+  - **Modal Enterprise de Iniciativa (Estilo DealModal do CRM)**:
+    - 4 abas estruturadas: *Visão Geral & Time*, *Raio-X dos Clientes*, *Checklist Técnico*, *Parecer IA*.
+    - Atribuição de responsável/equipe técnica com avatar e persistência imediata.
+    - Raio-X de empresas com listagem de clientes impactados e chamados de origem.
+    - Checklist técnico interativo com checkboxes para marcar e input para adicionar novas sub-tarefas de código com barra de progresso.
+  - **Criação Direta de Cards via Chat com a IA**:
+    - Botão interativo **`📌 Criar Card no Kanban com Esta Solução`** abaixo de cada resposta da IA do Arquiteto-Chefe.
+    - Extração estruturada de título, categoria, prioridade, escopo, checklist e arquitetura técnica gravada no Kanban em 1 clique.
+  - **Desduplicação Inteligente no Suporte**:
+    - Ao converter chamados de suporte, a IA compara com o backlog ativo; se múltiplas empresas relatarem a mesma falha, a IA agrupa no mesmo card, incrementa o contador de clientes afetados e eleva a prioridade para Alta ou Crítica.
+  - **Deploy Automático**:
+    - Rota e botão de sincronização de deploy (`/engineering/sync-deploy`) para transicionar frentes em desenvolvimento para *Deploy Realizado*.
+  - **Validação de Build, Homologação & Deploy**:
+    - `npx prisma db push` e `npx prisma generate` executados com código 0 no Supabase.
+    - `npx tsc --noEmit` e `npm run build` aprovados com código 0 (42/42 rotas compiladas no Next.js).
+    - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
-### 🟡 FASE 67: EVOLUÇÃO DO KANBAN DE ENGENHARIA - PADRÃO CRM ENTERPRISE, DRAG & DROP & IA AGÊNTICA [EM ANDAMENTO - IDE 2]
-- [ ] **Kanban Drag & Drop & Visão Dupla (CRM Standard)**:
-  - [ ] Arrastar e soltar nativo com `@hello-pangea/dnd` entre colunas.
-  - [ ] Alternador de visualização: Kanban vs. Tabela/Lista com ordenação por prioridade, data e responsável.
-- [ ] **Modal Enterprise de Iniciativa**:
-  - [ ] Raio-X da empresa cliente, tickets vinculados e extração de ideias.
-  - [ ] Atribuição de equipe/desenvolvedor responsável com avatar corporativo.
-  - [ ] Checklist técnico de tarefas com marcação interativa.
-- [ ] **Criação Direta de Cards via Chat com a IA**:
-  - [ ] Botão e comando de chat para a IA projetar e criar o card no Kanban automaticamente.
-- [ ] **Desduplicação Inteligente no Suporte**:
-  - [ ] IA semântica que identifica múltiplos clientes com o mesmo problema, unifica no mesmo card e eleva a prioridade.
-- [ ] **Deploy Automático**:
-  - [ ] Rotina de deploy que sincroniza e move frentes prontas para "Deploy Realizado".
-- [ ] **Validação de Build & Deploy**:
-  - [ ] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
-  - [ ] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+### ✅ FASE 67: EVOLUÇÃO DO KANBAN DE ENGENHARIA - PADRÃO CRM ENTERPRISE, DRAG & DROP & IA AGÊNTICA [CONCLUÍDO - IDE 2]
+- [x] **Kanban Drag & Drop & Visão Dupla (CRM Standard)**:
+  - [x] Arrastar e soltar nativo com `@hello-pangea/dnd` entre colunas.
+  - [x] Alternador de visualização: Kanban vs. Tabela/Lista com ordenação por prioridade, data e responsável.
+- [x] **Modal Enterprise de Iniciativa**:
+  - [x] Raio-X da empresa cliente, tickets vinculados e extração de ideias.
+  - [x] Atribuição de equipe/desenvolvedor responsável com avatar corporativo.
+  - [x] Checklist técnico de tarefas com marcação interativa e barra de progresso.
+- [x] **Criação Direta de Cards via Chat com a IA**:
+  - [x] Botão e comando de chat para a IA projetar e criar o card no Kanban automaticamente.
+- [x] **Desduplicação Inteligente no Suporte**:
+  - [x] IA semântica que identifica múltiplos clientes com o mesmo problema, unifica no mesmo card e eleva a prioridade.
+- [x] **Deploy Automático**:
+  - [x] Rotina de deploy que sincroniza e move frentes prontas para "Deploy Realizado".
+- [x] **Validação de Build & Deploy**:
+  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
+  - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
 ---
 

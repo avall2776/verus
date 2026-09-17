@@ -20,6 +20,8 @@ const create_engineering_item_dto_1 = require("./dto/create-engineering-item.dto
 const update_engineering_item_dto_1 = require("./dto/update-engineering-item.dto");
 const create_from_ticket_dto_1 = require("./dto/create-from-ticket.dto");
 const chat_engineering_dto_1 = require("./dto/chat-engineering.dto");
+const create_card_from_chat_dto_1 = require("./dto/create-card-from-chat.dto");
+const update_checklist_dto_1 = require("./dto/update-checklist.dto");
 let EngineeringController = class EngineeringController {
     constructor(engineeringService) {
         this.engineeringService = engineeringService;
@@ -46,6 +48,10 @@ let EngineeringController = class EngineeringController {
         this.checkSuperAdmin(req);
         return this.engineeringService.update(id, dto);
     }
+    async updateChecklist(req, id, dto) {
+        this.checkSuperAdmin(req);
+        return this.engineeringService.updateChecklist(id, dto);
+    }
     async delete(req, id) {
         this.checkSuperAdmin(req);
         return this.engineeringService.delete(id);
@@ -66,9 +72,17 @@ let EngineeringController = class EngineeringController {
         this.checkSuperAdmin(req);
         return this.engineeringService.chatWithEngineeringAI(dto);
     }
+    async createCardFromChat(req, dto) {
+        this.checkSuperAdmin(req);
+        return this.engineeringService.createCardFromChat(dto);
+    }
     async clearChatHistory(req) {
         this.checkSuperAdmin(req);
         return this.engineeringService.clearChatHistory();
+    }
+    async syncDeploy(req) {
+        this.checkSuperAdmin(req);
+        return this.engineeringService.syncDeploy();
     }
 };
 exports.EngineeringController = EngineeringController;
@@ -109,6 +123,15 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EngineeringController.prototype, "update", null);
 __decorate([
+    (0, common_1.Patch)('items/:id/checklist'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, update_checklist_dto_1.UpdateChecklistDto]),
+    __metadata("design:returntype", Promise)
+], EngineeringController.prototype, "updateChecklist", null);
+__decorate([
     (0, common_1.Delete)('items/:id'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('id')),
@@ -148,12 +171,27 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EngineeringController.prototype, "chatWithAI", null);
 __decorate([
+    (0, common_1.Post)('chat/create-card'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, create_card_from_chat_dto_1.CreateCardFromChatDto]),
+    __metadata("design:returntype", Promise)
+], EngineeringController.prototype, "createCardFromChat", null);
+__decorate([
     (0, common_1.Delete)('chat/history'),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EngineeringController.prototype, "clearChatHistory", null);
+__decorate([
+    (0, common_1.Post)('sync-deploy'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EngineeringController.prototype, "syncDeploy", null);
 exports.EngineeringController = EngineeringController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('engineering'),
