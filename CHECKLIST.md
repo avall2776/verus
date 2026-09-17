@@ -2022,6 +2022,27 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `npx tsc --noEmit` e `npm run build` com código 0 no backend e frontend.
   - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
+- [x] **[17/09/2026 - 16:05]** ⚡ **[IDE 1] Ajuste Cirúrgico na Tela de Login (`/login`) & Transição para o Preloader do Grande 'V'**:
+  - **Status**: ✅ Concluído com Sucesso, Builds Código 0 e Homologado em Produção.
+  - **Correção Estrita de Cores Monocromáticas Corporativas**:
+    - Remoção completa de qualquer tom de azul neon (`#00d2ff`, `rgba(0,210,255,...)`) e brilhos excessivos.
+    - Fundo azul escuro `#0B1224` unificado no container da página e no WebGL Three.js (`clearColor` e `fog` em `0x0B1224`).
+    - Malha de partículas do Oceano de Dados calibrada em azul corporativo sóbrio (`0x3b82f6` com opacidade suave de 45%).
+    - Cartão do formulário estilizado em `slate-900/90` com bordas sutis em `border-slate-800` e sombras realistas de alta fidelidade (`shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)]`).
+    - Tipografia em branco e `slate-300`/`slate-400` com detalhes em azul corporativo sóbrio (`bg-blue-600 hover:bg-blue-500`).
+  - **Transição Suave (Animação de Saída do Card de Login)**:
+    - O card de login não some de forma seca: ao validar a autenticação, ativa animação fluida de 700ms (`opacity-0 scale-95 -translate-y-6 filter blur-lg pointer-events-none`).
+    - Desmaterialização contínua que revela o ambiente 3D enquanto o preloader do grande 'V' entra suavemente sem corte seco.
+  - **Preloader do Grande 'V' Monocromático & Zero Colisão**:
+    - Monólito 3D da letra "V" posicionado na metade superior da cena (`y: 3.2`, escala `0.85`), com material em `slate-800` escovado, arestas em azul corporativo sóbrio e iluminação key/fill de estúdio.
+    - Área de texto e saudação executiva (`Bem-vindo de volta, [Nome]`) posicionada ergonomicamente na base inferior da tela (`fixed inset-x-0 bottom-8 sm:bottom-12`), garantindo 100% de separação visual e zero colisão.
+    - Linha minimalista dos 15 segundos em gradiente corporativo (`from-blue-700 via-blue-500 to-blue-400`).
+    - Fade-out suave de 1.000ms na transição final para o painel principal.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 (44/44 páginas estáticas geradas).
+    - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
