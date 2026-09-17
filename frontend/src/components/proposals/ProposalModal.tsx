@@ -87,16 +87,25 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
       setGlobalDiscount(proposalToEdit.discountTotal || 0);
 
       // Carregar emitente da proposta se houver
+      const loadedLogo = proposalToEdit.logoUrl || proposalToEdit.issuer?.logoUrl || "";
       if (proposalToEdit.issuer) {
         setIssuerName(proposalToEdit.issuer.name || "");
         setIssuerDocument(proposalToEdit.issuer.document || "");
         setIssuerPhone(proposalToEdit.issuer.phone || "");
         setIssuerEmail(proposalToEdit.issuer.email || "");
         setIssuerAddress(proposalToEdit.issuer.address || "");
-        setIssuerLogoUrl(proposalToEdit.issuer.logoUrl || "");
+        setIssuerLogoUrl(loadedLogo);
+      } else {
+        setIssuerLogoUrl(loadedLogo);
       }
     } else if (!proposalToEdit && isOpen) {
-      // NOVA PROPOSTA: Nasce 100% limpa e zerada, sem dados fictícios
+      // NOVA PROPOSTA: Nasce 100% limpa e zerada, mas pode reaproveitar dados do emitente da empresa
+      let cachedIssuer: Partial<CompanyIssuer> | null = null;
+      try {
+        const raw = localStorage.getItem("versus_proposal_issuer_cache");
+        if (raw) cachedIssuer = JSON.parse(raw);
+      } catch (e) {}
+
       setCode(`PROP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
       setTitle("");
       setClientName("");
@@ -109,12 +118,12 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
       setValidUntil(d.toISOString().split("T")[0]);
       setPaymentMethod("50% Entrada + 50% na Entrega");
       setNotes("");
-      setIssuerName("");
-      setIssuerDocument("");
-      setIssuerPhone("");
-      setIssuerEmail("");
-      setIssuerAddress("");
-      setIssuerLogoUrl("");
+      setIssuerName(cachedIssuer?.name || "");
+      setIssuerDocument(cachedIssuer?.document || "");
+      setIssuerPhone(cachedIssuer?.phone || "");
+      setIssuerEmail(cachedIssuer?.email || "");
+      setIssuerAddress(cachedIssuer?.address || "");
+      setIssuerLogoUrl(cachedIssuer?.logoUrl || "");
       setItems([
         {
           id: `item-${Date.now()}`,
@@ -271,6 +280,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
       updatedAt: new Date().toISOString(),
       notes: notes.trim(),
       publicLink: proposalToEdit?.publicLink || `${typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app")}/p/${(proposalToEdit?.code || code).toLowerCase()}`,
+      logoUrl: issuerLogoUrl || undefined,
       issuer: issuerData
     };
 

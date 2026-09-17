@@ -460,6 +460,7 @@ model Proposal {
   validUntil    DateTime?
   acceptedAt    DateTime?
   notes         String?
+  logoUrl       String?
   items         ProposalItem[]
   contracts     Contract[]
   createdAt     DateTime       @default(now())

@@ -19,6 +19,7 @@ export declare class UpdateProposalDto {
     total?: number;
     notes?: string;
     publicLink?: string;
+    logoUrl?: string;
     issuer?: any;
     items?: CreateProposalItemDto[];
 }

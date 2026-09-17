@@ -48,6 +48,7 @@ export interface Proposal {
   acceptedAt?: string;
   notes?: string;
   publicLink?: string;
+  logoUrl?: string;
   issuer?: CompanyIssuer;
 }
 

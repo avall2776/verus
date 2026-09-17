@@ -27,6 +27,7 @@ export declare class CreateProposalDto {
     total?: number;
     notes?: string;
     publicLink?: string;
+    logoUrl?: string;
     issuer?: any;
     items?: CreateProposalItemDto[];
 }

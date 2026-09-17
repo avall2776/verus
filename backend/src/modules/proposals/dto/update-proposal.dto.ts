@@ -81,6 +81,10 @@ export class UpdateProposalDto {
   @IsOptional()
   publicLink?: string;
 
+  @IsString()
+  @IsOptional()
+  logoUrl?: string;
+
   @IsOptional()
   issuer?: any;
 

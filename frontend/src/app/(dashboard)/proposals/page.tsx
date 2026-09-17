@@ -169,6 +169,7 @@ export default function ProposalsPage() {
       discountTotal: Number(proposalData.discountTotal || 0),
       total: Number(proposalData.total || 0),
       publicLink: proposalData.publicLink || undefined,
+      logoUrl: proposalData.issuer?.logoUrl || proposalData.logoUrl || undefined,
       issuer: proposalData.issuer || undefined,
       items: sanitizedItems,
     };
@@ -200,6 +201,7 @@ export default function ProposalsPage() {
       console.log("[PROPOSALS_API_SUCCESS] Proposta salva com sucesso no Supabase:", res.data);
 
       const savedData = res.data;
+      const savedLogo = savedData.logoUrl || savedData.issuer?.logoUrl || proposalData.issuer?.logoUrl || proposalData.logoUrl || "";
       const savedProposal: Proposal = {
         id: savedData.id || proposalData.id,
         code: savedData.code || proposalData.code,
@@ -219,7 +221,14 @@ export default function ProposalsPage() {
         createdAt: savedData.createdAt || new Date().toISOString(),
         notes: savedData.notes || proposalData.notes,
         publicLink: savedData.publicLink || proposalData.publicLink,
-        issuer: savedData.issuer || proposalData.issuer,
+        logoUrl: savedLogo,
+        issuer: savedData.issuer ? {
+          ...savedData.issuer,
+          logoUrl: savedLogo,
+        } : (proposalData.issuer ? {
+          ...proposalData.issuer,
+          logoUrl: savedLogo,
+        } : undefined),
       };
 
       if (isEditing) {

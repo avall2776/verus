@@ -100,19 +100,20 @@ export function ProposalPreviewModal({
   };
 
   // Dados do emitente
-  const issuer = proposal.issuer || {
-    name: "Nexus Soluções & Tecnologia",
-    document: "45.123.890/0001-22",
-    phone: "(11) 3090-5000",
-    email: "contato@nexustec.com.br",
-    address: "Av. Paulista, 1842, Cj. 72 - Bela Vista, São Paulo - SP",
-    logoUrl: ""
+  const issuer = {
+    name: proposal.issuer?.name || "VERSUS Tecnologia & Soluções",
+    document: proposal.issuer?.document || "",
+    phone: proposal.issuer?.phone || "",
+    email: proposal.issuer?.email || "",
+    address: proposal.issuer?.address || "",
+    logoUrl: proposal.logoUrl || proposal.issuer?.logoUrl || "",
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto print:p-0 print:bg-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto print:p-0 print:m-0 print:bg-white print:static print:overflow-visible">
       <div 
-        className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl bg-[#0B1224] border border-slate-700/80 shadow-2xl text-slate-200 overflow-hidden print:max-w-none print:max-h-none print:border-0 print:bg-white print:text-black"
+        id="proposal-print-area"
+        className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl bg-[#0B1224] border border-slate-700/80 shadow-2xl text-slate-200 overflow-hidden print:max-w-none print:max-h-none print:h-auto print:border-0 print:bg-white print:text-black print:shadow-none print:rounded-none print:static print:overflow-visible print:p-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Barra Superior de Ações */}
@@ -174,13 +175,13 @@ export function ProposalPreviewModal({
         </div>
 
         {/* Espelho do Documento de Proposta */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 print:p-8 print:space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-5 print:p-4 print:space-y-3 print:overflow-visible">
           {/* Header da Proposta Comercial com Logotipo e Dados do Emitente (Sua Marca) */}
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-slate-800 pb-6 print:border-gray-200">
+          <div className="flex flex-row justify-between items-start gap-4 border-b border-slate-800 pb-4 print:border-slate-300 print:pb-3 print-avoid-break">
             {/* Bloco do Emitente (Logotipo + Informações da Empresa Vendedora) */}
-            <div className="space-y-2 max-w-md">
+            <div className="space-y-1.5 max-w-md">
               {issuer.logoUrl ? (
-                <div className="h-14 flex items-center">
+                <div className="h-12 flex items-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={issuer.logoUrl}
@@ -190,22 +191,22 @@ export function ProposalPreviewModal({
                 </div>
               ) : (
                 <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-base print:border-gray-400 print:text-black">
+                  <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-sm print:border-slate-400 print:text-black">
                     {issuer.name.slice(0, 2).toUpperCase()}
                   </div>
-                  <h3 className="text-xl font-bold tracking-tight text-white print:text-black">
+                  <h3 className="text-lg font-bold tracking-tight text-white print:text-black">
                     {issuer.name}
                   </h3>
                 </div>
               )}
 
               {issuer.logoUrl && (
-                <h3 className="text-base font-bold text-white print:text-black">
+                <h3 className="text-sm font-bold text-white print:text-black">
                   {issuer.name}
                 </h3>
               )}
 
-              <div className="text-xs text-slate-400 print:text-gray-600 space-y-0.5">
+              <div className="text-[11px] text-slate-400 print:text-slate-600 space-y-0.5">
                 {issuer.document && (
                   <p>CNPJ/CPF: <strong className="text-slate-300 print:text-black">{issuer.document}</strong></p>
                 )}
@@ -217,7 +218,7 @@ export function ProposalPreviewModal({
                   </p>
                 )}
                 {issuer.address && (
-                  <p className="text-[11px] text-slate-500 print:text-gray-500">
+                  <p className="text-[10px] text-slate-500 print:text-slate-500">
                     {issuer.address}
                   </p>
                 )}
@@ -225,91 +226,91 @@ export function ProposalPreviewModal({
             </div>
 
             {/* Identificação e Validade da Proposta */}
-            <div className="sm:text-right">
-              <span className="text-xs text-slate-400 uppercase tracking-wider print:text-gray-600">
+            <div className="text-right">
+              <span className="text-[10px] text-slate-400 uppercase tracking-wider print:text-slate-600">
                 Proposta Comercial Oficial
               </span>
-              <p className="text-xl font-mono font-extrabold text-white print:text-black">
+              <p className="text-lg font-mono font-extrabold text-white print:text-black">
                 {proposal.code}
               </p>
-              <p className="text-xs text-slate-400 print:text-gray-600 mt-1">
-                Data de Emissão: {new Date(proposal.createdAt).toLocaleDateString("pt-BR")}
+              <p className="text-[11px] text-slate-400 print:text-slate-600 mt-0.5">
+                Data: {new Date(proposal.createdAt).toLocaleDateString("pt-BR")}
               </p>
-              <p className="text-xs text-amber-400 font-semibold print:text-gray-800">
+              <p className="text-[11px] text-amber-400 font-semibold print:text-slate-800">
                 Válida até: {new Date(proposal.validUntil).toLocaleDateString("pt-BR")}
               </p>
             </div>
           </div>
 
           {/* Dados do Cliente / Contratante */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-900/50 border border-slate-800 print:bg-transparent print:border-gray-300">
+          <div className="grid grid-cols-2 gap-4 p-3 rounded-xl bg-slate-900/50 border border-slate-800 print:bg-transparent print:border-slate-300 print:p-2.5 print-avoid-break">
             <div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 print:text-gray-600">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 print:text-slate-600">
                 Destinatário / Contratante
               </span>
-              <h4 className="text-base font-bold text-white print:text-black">
+              <h4 className="text-sm font-bold text-white print:text-black">
                 {proposal.clientName}
               </h4>
               {proposal.clientCompany && (
-                <p className="text-xs text-blue-400 font-medium print:text-gray-700">
+                <p className="text-xs text-blue-400 font-medium print:text-slate-700">
                   {proposal.clientCompany}
                 </p>
               )}
-              <p className="text-xs text-slate-400 print:text-gray-600 mt-1">
-                {proposal.clientEmail} • {proposal.clientPhone}
+              <p className="text-[11px] text-slate-400 print:text-slate-600 mt-0.5">
+                {proposal.clientEmail} {proposal.clientPhone && `• ${proposal.clientPhone}`}
               </p>
             </div>
 
-            <div className="sm:text-right">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 print:text-gray-600">
+            <div className="text-right">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 print:text-slate-600">
                 Consultor Responsável
               </span>
-              <h4 className="text-base font-bold text-white print:text-black">
+              <h4 className="text-sm font-bold text-white print:text-black">
                 {proposal.sellerName}
               </h4>
-              <p className="text-xs text-slate-400 print:text-gray-600">
+              <p className="text-[11px] text-slate-400 print:text-slate-600">
                 Condição: <span className="text-slate-200 font-semibold print:text-black">{proposal.paymentMethod}</span>
               </p>
             </div>
           </div>
 
           {/* Tabela de Itens e Serviços */}
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 print:text-gray-700">
+          <div className="print-avoid-break">
+            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2 print:text-slate-700">
               Detalhamento de Itens & Escopo Fornecido
             </h4>
-            <div className="rounded-xl border border-slate-800 overflow-hidden print:border-gray-300">
+            <div className="rounded-xl border border-slate-800 overflow-hidden print:border-slate-300">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800 print:bg-gray-100 print:text-black">
+                <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800 print:bg-slate-100 print:text-slate-900 print:border-slate-300">
                   <tr>
-                    <th className="p-3">Descrição do Serviço / Produto</th>
-                    <th className="p-3 text-center">Qtd</th>
-                    <th className="p-3 text-right">Valor Unit.</th>
-                    <th className="p-3 text-right">Desc.</th>
-                    <th className="p-3 text-right">Total</th>
+                    <th className="p-2.5">Descrição do Serviço / Produto</th>
+                    <th className="p-2.5 text-center">Qtd</th>
+                    <th className="p-2.5 text-right">Valor Unit.</th>
+                    <th className="p-2.5 text-right">Desc.</th>
+                    <th className="p-2.5 text-right">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 print:divide-gray-200">
+                <tbody className="divide-y divide-slate-800/60 print:divide-slate-200">
                   {proposal.items.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-900/30 print:text-black">
-                      <td className="p-3">
+                    <tr key={item.id} className="hover:bg-slate-900/30 print:text-slate-900">
+                      <td className="p-2.5">
                         <div className="font-semibold text-slate-100 print:text-black">{item.name}</div>
-                        {item.description && (
-                          <div className="text-[11px] text-slate-400 print:text-gray-600 mt-0.5">
+                        {item.description && item.description !== item.name && (
+                          <div className="text-[10px] text-slate-400 print:text-slate-600 mt-0.5">
                             {item.description}
                           </div>
                         )}
                       </td>
-                      <td className="p-3 text-center text-slate-300 print:text-black">
+                      <td className="p-2.5 text-center text-slate-300 print:text-slate-900 font-mono">
                         {item.quantity}
                       </td>
-                      <td className="p-3 text-right text-slate-300 print:text-black">
+                      <td className="p-2.5 text-right text-slate-300 print:text-slate-900 font-mono">
                         R$ {item.unitPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="p-3 text-right text-slate-400 print:text-gray-600">
+                      <td className="p-2.5 text-right text-slate-400 print:text-slate-600 font-mono">
                         {item.discountPercent ? `${item.discountPercent}%` : "-"}
                       </td>
-                      <td className="p-3 text-right font-semibold text-blue-400 print:text-black">
+                      <td className="p-2.5 text-right font-bold text-blue-400 print:text-black font-mono">
                         R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
@@ -320,28 +321,28 @@ export function ProposalPreviewModal({
           </div>
 
           {/* Resumo Financeiro */}
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pt-2">
-            <div className="flex-1 text-xs text-slate-400 space-y-1 print:text-gray-600">
-              <span className="font-semibold uppercase tracking-wider text-slate-300 block mb-1 print:text-black">
+          <div className="flex flex-row justify-between items-start gap-4 pt-1 print-avoid-break">
+            <div className="flex-1 text-[11px] text-slate-400 space-y-1 print:text-slate-600">
+              <span className="font-semibold uppercase tracking-wider text-slate-300 block mb-0.5 print:text-black">
                 Observações, Termos & Garantia
               </span>
-              <p>{proposal.notes || "Proposta válida sob condições gerais acordadas entre as partes."}</p>
+              <p className="leading-relaxed">{proposal.notes || "Proposta válida sob condições gerais acordadas entre as partes."}</p>
             </div>
 
-            <div className="w-full sm:w-64 p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2 text-right print:border-gray-300 print:bg-transparent">
-              <div className="flex justify-between text-xs text-slate-400 print:text-gray-700">
+            <div className="w-56 p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5 text-right print:border-slate-300 print:bg-transparent print:p-2.5">
+              <div className="flex justify-between text-xs text-slate-400 print:text-slate-700">
                 <span>Subtotal:</span>
-                <span>R$ {proposal.subtotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                <span className="font-mono">R$ {proposal.subtotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
               </div>
               {proposal.discountTotal > 0 && (
-                <div className="flex justify-between text-xs text-rose-400 print:text-gray-800">
-                  <span>Desconto Aplicado:</span>
-                  <span>- R$ {proposal.discountTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                <div className="flex justify-between text-xs text-rose-400 print:text-slate-800">
+                  <span>Desconto:</span>
+                  <span className="font-mono">- R$ {proposal.discountTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
                 </div>
               )}
-              <div className="border-t border-slate-800 pt-2 flex justify-between items-center text-sm font-bold text-white print:text-black">
+              <div className="border-t border-slate-800 print:border-slate-300 pt-1.5 flex justify-between items-center text-sm font-bold text-white print:text-black">
                 <span>Total Final:</span>
-                <span className="text-blue-400 text-base font-extrabold print:text-black">
+                <span className="text-blue-400 text-base font-extrabold print:text-black font-mono">
                   R$ {proposal.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </span>
               </div>
@@ -349,15 +350,15 @@ export function ProposalPreviewModal({
           </div>
 
           {/* Rodapé de Aceite e Autenticação Eletrônica */}
-          <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 flex items-center justify-between gap-4 print:border-gray-400">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="w-6 h-6 text-blue-400 print:text-black shrink-0" />
+          <div className="p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 flex items-center justify-between gap-4 print:border-slate-300 print:p-2.5 print-avoid-break">
+            <div className="flex items-center gap-2.5">
+              <ShieldCheck className="w-5 h-5 text-blue-400 print:text-black shrink-0" />
               <div>
-                <span className="text-xs font-semibold text-slate-200 block print:text-black">
+                <span className="text-[11px] font-semibold text-slate-200 block print:text-black">
                   Assinatura Eletrônica & Aceite Digital
                 </span>
-                <span className="text-[11px] text-slate-400 print:text-gray-600">
-                  Documento emitido com autenticação e assinatura digital ICP-Brasil e MP 2.200-2/2001.
+                <span className="text-[10px] text-slate-400 print:text-slate-600">
+                  Documento emitido com autenticação digital e conformidade MP 2.200-2/2001.
                 </span>
               </div>
             </div>

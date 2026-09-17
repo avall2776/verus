@@ -29,6 +29,7 @@ export class ProposalsService {
 
     const rawBaseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://verus-alpha.vercel.app';
     const baseUrl = rawBaseUrl.replace(/\/+$/, '');
+    const logo = p.logoUrl || p.tenant?.logoUrl || '';
 
     return {
       ...p,
@@ -49,16 +50,17 @@ export class ProposalsService {
       paymentTerms: p.paymentTerms,
       validUntil: p.validUntil ? new Date(p.validUntil).toISOString() : null,
       notes: p.notes || '',
+      logoUrl: logo,
       publicLink: `${baseUrl}/p/${(p.code || p.id).toLowerCase()}`,
       items: formattedItems,
-      issuer: p.tenant ? {
-        name: p.tenant.name || '',
-        document: p.tenant.cnpj || '',
-        phone: p.tenant.phone || '',
-        email: p.tenant.email || '',
-        address: p.tenant.address || '',
-        logoUrl: p.tenant.logoUrl || '',
-      } : undefined,
+      issuer: {
+        name: p.tenant?.name || 'VERSUS Soluções',
+        document: p.tenant?.cnpj || '',
+        phone: p.tenant?.phone || '',
+        email: p.tenant?.email || '',
+        address: p.tenant?.address || '',
+        logoUrl: logo,
+      },
     };
   }
 
@@ -191,6 +193,7 @@ export class ProposalsService {
 
     const finalTotal = dto.total !== undefined ? Number(dto.total) : calculatedTotal;
     const code = dto.code || `PROP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const logoUrl = dto.logoUrl || dto.issuer?.logoUrl || null;
 
     const proposal = await this.prisma.proposal.create({
       data: {
@@ -208,6 +211,7 @@ export class ProposalsService {
         paymentTerms: dto.paymentTerms || null,
         paymentMethod: dto.paymentMethod || null,
         notes: dto.notes || null,
+        logoUrl,
         totalValue: new Prisma.Decimal(finalTotal),
         discountTotal: new Prisma.Decimal(Number(dto.discountTotal || 0)),
         status: (dto.status || 'DRAFT').toUpperCase(),
@@ -232,6 +236,13 @@ export class ProposalsService {
         items: true,
       },
     });
+
+    if (logoUrl) {
+      await this.prisma.tenant.update({
+        where: { id: tenantId },
+        data: { logoUrl },
+      }).catch(() => {});
+    }
 
     return this.formatProposal(proposal);
   }
@@ -301,6 +312,16 @@ export class ProposalsService {
       if (dto.paymentTerms !== undefined) updateData.paymentTerms = dto.paymentTerms;
       if (dto.paymentMethod !== undefined) updateData.paymentMethod = dto.paymentMethod;
       if (dto.notes !== undefined) updateData.notes = dto.notes;
+      const logoUrl = dto.logoUrl !== undefined ? dto.logoUrl : (dto.issuer?.logoUrl !== undefined ? dto.issuer.logoUrl : undefined);
+      if (logoUrl !== undefined) {
+        updateData.logoUrl = logoUrl || null;
+        if (logoUrl) {
+          await tx.tenant.update({
+            where: { id: tenantId },
+            data: { logoUrl },
+          }).catch(() => {});
+        }
+      }
       if (dto.status !== undefined) updateData.status = dto.status.toUpperCase();
       if (dto.discountTotal !== undefined) updateData.discountTotal = new Prisma.Decimal(Number(dto.discountTotal));
       updateData.totalValue = totalValue;

@@ -196,7 +196,7 @@ export default function FloatingSupportWidget() {
   };
 
   return (
-    <div ref={containerRef} className="fixed bottom-6 right-6 z-50 select-none">
+    <div id="floating-support-widget" ref={containerRef} className="fixed bottom-6 right-6 z-50 select-none print:hidden">
       {/* ========================================================================= */}
       {/* POPOVER / MODAL EXPANSÍVEL ("SUPORTE VERSUS")                             */}
       {/* ========================================================================= */}

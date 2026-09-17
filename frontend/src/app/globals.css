@@ -39,3 +39,46 @@ body {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
 }
+
+/* ==========================================================================
+   ESTILOS DE IMPRESSÃO CORPORATIVA / GERAÇÃO DE PDF (A4)
+   ========================================================================== */
+@page {
+  size: A4 portrait;
+  margin: 8mm 10mm 8mm 10mm;
+}
+
+@media print {
+  html, body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Ocultação mandatória de elementos não-impressos */
+  aside,
+  nav,
+  header,
+  #floating-support-widget,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Remoção de sombras e fundos pesados */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Prevenção de quebras abruptas de tabela e blocos de totais */
+  tr,
+  table,
+  .print-avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
