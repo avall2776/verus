@@ -15,7 +15,7 @@ conn.on('ready', () => {
     npx prisma db push &&
     npx prisma generate &&
     npm run build && 
-    pm2 restart versus-engine --update-env &&
+    pm2 restart all --update-env &&
     echo "Deploy Backend finalizado!"
   `, (err, stream) => {
     if (err) throw err;
