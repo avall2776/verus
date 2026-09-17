@@ -16,16 +16,48 @@ import {
   Clock, 
   AlertTriangle, 
   RefreshCw,
-  Loader2,
-  Paperclip,
+  Loader2, 
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  Maximize2,
+  FileText,
+  Copy,
+  Check,
+  X,
+  Users,
+  ShieldCheck,
+  HelpCircle,
+  Tag
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import CompanyXRayModal from "@/components/super-admin/CompanyXRayModal";
 
 export const dynamic = "force-dynamic";
+
+// Dicionários Oficiais de Tradução e Estilo (100% PT-BR)
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string }> = {
+  OPEN: { label: "Aberto", bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/30" },
+  IN_PROGRESS: { label: "Em Atendimento", bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/30" },
+  WAITING_CLIENT: { label: "Aguardando Cliente", bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/30" },
+  RESOLVED: { label: "Resolvido", bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/30" },
+  CLOSED: { label: "Fechado", bg: "bg-slate-500/10", text: "text-slate-400", border: "border-slate-500/30" },
+};
+
+const PRIORITY_CONFIG: Record<string, { label: string; color: string; badge: string }> = {
+  LOW: { label: "Baixa", color: "text-slate-400", badge: "bg-slate-800 text-slate-300 border-slate-700" },
+  MEDIUM: { label: "Média", color: "text-blue-400", badge: "bg-blue-900/30 text-blue-400 border-blue-800" },
+  HIGH: { label: "Alta", color: "text-amber-400", badge: "bg-amber-900/30 text-amber-400 border-amber-800" },
+  URGENT: { label: "Urgente", color: "text-rose-400", badge: "bg-rose-900/30 text-rose-400 border-rose-800" },
+};
+
+const CATEGORY_CONFIG: Record<string, string> = {
+  DUVIDA_TECNICA: "Dúvida Técnica",
+  BUG: "Erro / Bug",
+  FINANCEIRO: "Financeiro",
+  SOLICITACAO_RECURSO: "Sugestão de Recurso",
+  OUTROS: "Outros",
+};
 
 function SuperAdminSupportContent() {
   const searchParams = useSearchParams();
@@ -43,13 +75,18 @@ function SuperAdminSupportContent() {
   const [tenantsList, setTenantsList] = useState<any[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState("ALL");
 
-  // Composer
+  // Visualização de Chat (Completo vs Apenas Chat Interno de Equipe)
+  const [activeTab, setActiveTab] = useState<'all' | 'internal'>('all');
+
+  // Composer: Modo de envio ('public', 'internal_note', 'team_chat')
+  const [composerMode, setComposerMode] = useState<'public' | 'internal_note' | 'team_chat'>('public');
   const [messageContent, setMessageContent] = useState("");
-  const [isInternalNote, setIsInternalNote] = useState(false);
   const [sending, setSending] = useState(false);
 
-  // Modal Raio-X da Empresa
+  // Modais
   const [isXRayOpen, setIsXRayOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [copiedDescription, setCopiedDescription] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -119,11 +156,13 @@ function SuperAdminSupportContent() {
     e.preventDefault();
     if (!messageContent.trim() || !selectedTicket || sending) return;
 
+    const isInternal = composerMode === 'internal_note' || composerMode === 'team_chat';
     setSending(true);
+
     try {
       const res = await api.post(`/support/tickets/${selectedTicket.id}/messages`, {
         content: messageContent.trim(),
-        isInternal: isInternalNote,
+        isInternal,
       });
 
       // Atualiza mensagens no ticket ativo
@@ -133,9 +172,15 @@ function SuperAdminSupportContent() {
       }));
 
       setMessageContent("");
-      toast.success(isInternalNote ? "Nota interna registrada!" : "Resposta enviada ao cliente!");
+      if (composerMode === 'team_chat') {
+        toast.success("Mensagem enviada ao Chat da Equipe!");
+      } else if (composerMode === 'internal_note') {
+        toast.success("Nota interna registrada!");
+      } else {
+        toast.success("Resposta enviada ao cliente!");
+      }
 
-      // Recarrega listagem em segundo plano para sincronizar status
+      // Recarrega listagem em segundo plano para sincronizar status e contadores
       fetchTickets();
 
       setTimeout(() => {
@@ -157,7 +202,8 @@ function SuperAdminSupportContent() {
         status: newStatus,
       });
       setSelectedTicket((prev: any) => ({ ...prev, status: res.data.status }));
-      toast.success(`Status alterado para ${newStatus}`);
+      const statusLabel = STATUS_CONFIG[newStatus]?.label || newStatus;
+      toast.success(`Status alterado para ${statusLabel}`);
       fetchTickets();
     } catch (err: any) {
       console.error(err);
@@ -165,8 +211,27 @@ function SuperAdminSupportContent() {
     }
   };
 
+  const handleCopyDescription = () => {
+    if (!selectedTicket?.description) return;
+    navigator.clipboard.writeText(selectedTicket.description);
+    setCopiedDescription(true);
+    toast.success("Texto da dúvida copiado para a área de transferência!");
+    setTimeout(() => setCopiedDescription(false), 2000);
+  };
+
+  // Filtragem de mensagens conforme a aba selecionada
+  const displayedMessages = (selectedTicket?.messages || []).filter((msg: any) => {
+    if (activeTab === 'internal') {
+      return msg.isInternal === true;
+    }
+    return true; // Na aba 'all', exibe tudo
+  });
+
+  const internalMessagesCount = (selectedTicket?.messages || []).filter((m: any) => m.isInternal).length;
+
   return (
-    <div className="h-[calc(100vh-5.5rem)] flex flex-col w-full max-w-[1600px] mx-auto overflow-hidden">
+    <div className="h-[calc(100vh-5.5rem)] flex flex-col w-full max-w-[1600px] mx-auto overflow-hidden text-slate-100">
+      
       {/* Topo do Módulo */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
         <div>
@@ -175,24 +240,25 @@ function SuperAdminSupportContent() {
             Central de Atendimento Omnichannel ao Vivo
           </h1>
           <p className="text-xs text-slate-400">
-            Fila global de chamados multi-empresa com chat em tempo real, notas internas e Raio-X corporativo.
+            Fila corporativa multi-empresa com chat em tempo real, notas técnicas, chat de equipe e Raio-X.
           </p>
         </div>
 
         <button
           onClick={() => fetchTickets()}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B1224] border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B1224] border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
         >
           <RefreshCw size={13} className={loadingList ? "animate-spin text-blue-400" : ""} />
           <span>Atualizar Fila</span>
         </button>
       </div>
 
-      {/* Grid 3-Pane: Fila (280px), Chat (flex-1), Raio-X Lateral (320px) */}
+      {/* Grid 3-Pane: Fila (320px), Chat (flex-1), Raio-X Lateral (320px) */}
       <div className="flex-1 flex overflow-hidden pt-3 gap-3">
         
         {/* COLUNA 1: FILA DE ATENDIMENTO */}
         <div className="w-80 bg-[#0B1224] border border-slate-800 rounded-xl flex flex-col overflow-hidden shrink-0">
+          
           {/* Filtros da Fila */}
           <div className="p-3 border-b border-slate-800 bg-[#070D1B] space-y-2">
             <div className="relative">
@@ -210,19 +276,20 @@ function SuperAdminSupportContent() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-[#0B1224] border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 outline-none"
+                className="bg-[#0B1224] border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 outline-none cursor-pointer"
               >
                 <option value="ALL">Status: Todos</option>
                 <option value="OPEN">Abertos</option>
-                <option value="IN_PROGRESS">Em Andamento</option>
-                <option value="WAITING_CLIENT">Aguardando</option>
+                <option value="IN_PROGRESS">Em Atendimento</option>
+                <option value="WAITING_CLIENT">Aguardando Cliente</option>
                 <option value="RESOLVED">Resolvidos</option>
+                <option value="CLOSED">Fechados</option>
               </select>
 
               <select
                 value={selectedTenantId}
                 onChange={(e) => setSelectedTenantId(e.target.value)}
-                className="bg-[#0B1224] border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 outline-none truncate"
+                className="bg-[#0B1224] border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 outline-none truncate cursor-pointer"
               >
                 <option value="ALL">Empresa: Todas</option>
                 {tenantsList.map((t) => (
@@ -232,7 +299,7 @@ function SuperAdminSupportContent() {
             </div>
           </div>
 
-          {/* Lista de Chamados */}
+          {/* Lista de Chamados com Correção de Layout e Sem Sobreposição */}
           <div className="flex-1 overflow-y-auto divide-y divide-slate-800/60 custom-scrollbar">
             {loadingList ? (
               <div className="p-6 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
@@ -246,6 +313,8 @@ function SuperAdminSupportContent() {
             ) : (
               tickets.map((ticket) => {
                 const isSelected = selectedTicket?.id === ticket.id;
+                const statusCfg = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.OPEN;
+
                 return (
                   <div
                     key={ticket.id}
@@ -256,31 +325,38 @@ function SuperAdminSupportContent() {
                         : "hover:bg-slate-800/30 border-l-4 border-transparent"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-1 mb-1">
+                    {/* Linha 1: Protocolo + Tag de Status Traduzida com shrink-0 */}
+                    <div className="flex items-center justify-between gap-2 mb-1">
                       <span className="font-mono text-[10px] font-bold text-blue-400">
-                        #{ticket.ticketNumber}
+                        #{ticket.ticketNumber || ticket.id.substring(0, 6).toUpperCase()}
                       </span>
-                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border uppercase ${
-                        ticket.status === "OPEN"
-                          ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                          : ticket.status === "RESOLVED"
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                          : "bg-blue-500/10 text-blue-400 border-blue-500/30"
-                      }`}>
-                        {ticket.status}
+                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border uppercase shrink-0 ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
+                        {statusCfg.label}
                       </span>
                     </div>
 
-                    <h4 className="text-xs font-bold text-white line-clamp-1 mb-1">{ticket.subject}</h4>
+                    {/* Linha 2: Título com quebra suave e sem sobrepor tags */}
+                    <h4 
+                      className="text-xs font-bold text-white line-clamp-2 leading-snug mb-1.5 break-words"
+                      title={ticket.subject}
+                    >
+                      {ticket.subject}
+                    </h4>
                     
+                    {/* Linha 3: Empresa Solicitante */}
                     <div className="flex items-center gap-1 text-[11px] text-slate-400 mb-1">
                       <Building2 size={11} className="text-slate-500 shrink-0" />
-                      <span className="truncate font-medium text-slate-300">{ticket.tenant?.name || "Empresa"}</span>
+                      <span className="truncate font-medium text-slate-300">
+                        {ticket.tenant?.name || "Empresa"}
+                      </span>
                     </div>
 
+                    {/* Linha 4: Operador + Contador de Mensagens */}
                     <div className="flex items-center justify-between text-[10px] text-slate-500">
-                      <span>{ticket.user?.name || "Solicitante"}</span>
-                      <span>{ticket._count?.messages || 0} msgs</span>
+                      <span className="truncate max-w-[140px]">
+                        {ticket.user?.name || "Solicitante"}
+                      </span>
+                      <span className="shrink-0">{ticket._count?.messages || 0} msgs</span>
                     </div>
                   </div>
                 );
@@ -289,117 +365,223 @@ function SuperAdminSupportContent() {
           </div>
         </div>
 
-        {/* COLUNA 2: CHAT AO VIVO */}
+        {/* COLUNA 2: CHAT AO VIVO & CHAT INTERNO DA EQUIPE */}
         <div className="flex-1 bg-[#0B1224] border border-slate-800 rounded-xl flex flex-col overflow-hidden">
           {selectedTicket ? (
             <>
-              {/* Header do Chat */}
-              <div className="p-3.5 border-b border-slate-800 bg-[#070D1B] flex items-center justify-between">
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-blue-400">
-                        #{selectedTicket.ticketNumber}
-                      </span>
-                      <h2 className="text-sm font-bold text-white truncate max-w-md">
-                        {selectedTicket.subject}
-                      </h2>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
-                      <span className="font-semibold text-slate-300">{selectedTicket.tenant?.name}</span>
-                      <span>•</span>
-                      <span>Solicitado por: <strong className="text-white">{selectedTicket.user?.name}</strong></span>
-                    </div>
+              {/* Header do Atendimento com Layout Refinado e Sem Sobreposição */}
+              <div className="p-3.5 border-b border-slate-800 bg-[#070D1B] flex flex-wrap lg:flex-nowrap items-center justify-between gap-3">
+                {/* Lado Esquerdo: Identificação do Chamado */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-mono text-xs font-bold text-blue-400 shrink-0">
+                      #{selectedTicket.ticketNumber || selectedTicket.id.substring(0, 6).toUpperCase()}
+                    </span>
+                    <h2 
+                      className="text-sm font-bold text-white truncate max-w-xl"
+                      title={selectedTicket.subject}
+                    >
+                      {selectedTicket.subject}
+                    </h2>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-xs text-slate-400 mt-1 truncate">
+                    <span className="font-semibold text-slate-300 shrink-0">{selectedTicket.tenant?.name}</span>
+                    <span>•</span>
+                    <span className="truncate">Solicitado por: <strong className="text-white">{selectedTicket.user?.name}</strong></span>
+                    {selectedTicket.category && (
+                      <>
+                        <span>•</span>
+                        <span className="text-blue-400 text-[11px]">{CATEGORY_CONFIG[selectedTicket.category] || selectedTicket.category}</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* Seletor de Status */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase hidden sm:inline">Status:</span>
-                  <select
-                    value={selectedTicket.status}
-                    onChange={(e) => handleUpdateStatus(e.target.value)}
-                    className="bg-[#0B1224] border border-slate-800 rounded px-2.5 py-1 text-xs font-bold text-white outline-none focus:border-blue-500"
+                {/* Lado Direito: Ações Rápidas (Ver Dúvida Completa + Seletor de Status Traduzido) */}
+                <div className="flex items-center gap-2.5 shrink-0">
+                  {/* Botão de Expansão / Modal da Dúvida Completa */}
+                  <button
+                    onClick={() => setIsDetailModalOpen(true)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600/15 border border-blue-500/30 text-blue-400 hover:bg-blue-600/25 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                    title="Ler texto completo da solicitação do cliente"
                   >
-                    <option value="OPEN">Aberto</option>
-                    <option value="IN_PROGRESS">Em Andamento</option>
-                    <option value="WAITING_CLIENT">Aguardando Cliente</option>
-                    <option value="RESOLVED">Resolvido</option>
-                    <option value="CLOSED">Fechado</option>
-                  </select>
+                    <FileText size={13} />
+                    <span>Ver Dúvida Completa</span>
+                  </button>
+
+                  {/* Seletor de Status Traduzido */}
+                  <div className="flex items-center gap-1.5 bg-[#0B1224] border border-slate-800 rounded-lg px-2 py-0.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase hidden xl:inline">Status:</span>
+                    <select
+                      value={selectedTicket.status}
+                      onChange={(e) => handleUpdateStatus(e.target.value)}
+                      className="bg-transparent text-xs font-bold text-white outline-none cursor-pointer"
+                    >
+                      <option value="OPEN" className="bg-[#0F172A] text-amber-400">Aberto</option>
+                      <option value="IN_PROGRESS" className="bg-[#0F172A] text-blue-400">Em Atendimento</option>
+                      <option value="WAITING_CLIENT" className="bg-[#0F172A] text-purple-400">Aguardando Cliente</option>
+                      <option value="RESOLVED" className="bg-[#0F172A] text-emerald-400">Resolvido</option>
+                      <option value="CLOSED" className="bg-[#0F172A] text-slate-400">Fechado</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              {/* Área de Mensagens */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-[#070D1B]/40">
-                {selectedTicket.messages?.map((msg: any) => {
-                  const isSuperAdmin = msg.senderRole === "SUPER_ADMIN" || msg.senderRole === "ADMIN" || msg.senderRole === "AGENT";
-                  const isInternal = msg.isInternal;
+              {/* Barra de Abas: Histórico Completo vs Chat Interno da Equipe */}
+              <div className="px-4 py-2 border-b border-slate-800/80 bg-[#0B1224] flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setActiveTab('all')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      activeTab === 'all'
+                        ? 'bg-[#1E293B] text-white border border-slate-700 shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <MessageSquare size={13} className="text-blue-400" />
+                    <span>Atendimento Completo</span>
+                    <span className="text-[10px] bg-slate-800 px-1.5 py-0.2 rounded-full text-slate-400 font-mono">
+                      {selectedTicket.messages?.length || 0}
+                    </span>
+                  </button>
 
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`flex flex-col max-w-[80%] ${
-                        isInternal
-                          ? "mx-auto w-full max-w-xl"
-                          : isSuperAdmin
-                          ? "ml-auto items-end"
-                          : "mr-auto items-start"
-                      }`}
-                    >
-                      {/* NOTA INTERNA */}
-                      {isInternal ? (
-                        <div className="w-full p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1 my-1">
-                          <div className="flex items-center justify-between text-[11px] font-bold text-amber-400">
-                            <span className="flex items-center gap-1">
-                              <Lock size={12} />
-                              <span>NOTA INTERNA (Visível apenas para Super Admin e Equipe)</span>
-                            </span>
-                            <span>{new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
-                          </div>
-                          <p className="text-xs text-amber-100/90 whitespace-pre-wrap leading-relaxed">
-                            {msg.content}
-                          </p>
-                          <span className="text-[10px] text-amber-400/70 block pt-1">
-                            Registrado por: {msg.senderName || "Super Admin"}
-                          </span>
-                        </div>
-                      ) : (
-                        /* MENSAGEM PÚBLICA */
-                        <div
-                          className={`p-3.5 rounded-2xl text-xs space-y-1 shadow-sm leading-relaxed ${
-                            isSuperAdmin
-                              ? "bg-blue-600 text-white rounded-br-none"
-                              : "bg-[#0B1224] border border-slate-800 text-slate-100 rounded-bl-none"
-                          }`}
-                        >
-                          <div className={`flex items-center justify-between gap-3 text-[10px] font-bold ${
-                            isSuperAdmin ? "text-blue-200" : "text-slate-400"
-                          }`}>
-                            <span>{msg.senderName || (isSuperAdmin ? "Suporte VERSUS" : "Cliente")}</span>
-                            <span>{new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
-                          </div>
-                          <p className="whitespace-pre-wrap">{msg.content}</p>
-                        </div>
-                      )}
+                  <button
+                    onClick={() => setActiveTab('internal')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      activeTab === 'internal'
+                        ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Users size={13} className="text-amber-400" />
+                    <span>Chat Interno da Equipe</span>
+                    {internalMessagesCount > 0 && (
+                      <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.2 rounded-full font-mono font-bold">
+                        {internalMessagesCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                <span className="text-[11px] text-slate-500 hidden sm:inline">
+                  {activeTab === 'internal' ? "🔒 Discussão privada da equipe" : "💬 Conversa oficial com o cliente"}
+                </span>
+              </div>
+
+              {/* Área de Mensagens com Card de Abertura Inicial */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-[#070D1B]/40">
+                
+                {/* CARD DE SOLICITAÇÃO ORIGINAL DO CLIENTE */}
+                {selectedTicket.description && (
+                  <div className="w-full p-4 rounded-xl bg-blue-950/20 border border-blue-800/40 space-y-2 mb-4 shadow-sm">
+                    <div className="flex items-center justify-between text-xs font-bold text-blue-400 border-b border-blue-900/40 pb-2">
+                      <span className="flex items-center gap-1.5">
+                        <FileText size={14} />
+                        <span>Dúvida Inicial do Solicitante ({selectedTicket.user?.name || "Cliente"})</span>
+                      </span>
+                      <button
+                        onClick={() => setIsDetailModalOpen(true)}
+                        className="text-[11px] text-blue-400 hover:text-blue-300 underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Maximize2 size={11} />
+                        <span>Abrir Completo</span>
+                      </button>
                     </div>
-                  );
-                })}
+
+                    <p className="text-xs text-slate-200 whitespace-pre-wrap leading-relaxed">
+                      {selectedTicket.description}
+                    </p>
+
+                    <div className="flex items-center justify-between pt-1 text-[10px] text-slate-400 border-t border-blue-950/60">
+                      <span>Aberto em: {new Date(selectedTicket.createdAt).toLocaleString("pt-BR")}</span>
+                      <span className="font-mono text-blue-400">Assunto: {selectedTicket.subject}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mensagens da Conversa */}
+                {displayedMessages.length === 0 ? (
+                  <div className="py-12 text-center text-slate-500 text-xs flex flex-col items-center">
+                    <MessageSquare size={28} className="opacity-30 mb-2" />
+                    <span>
+                      {activeTab === 'internal' 
+                        ? "Nenhuma mensagem interna da equipe neste chamado ainda. Use o campo abaixo para alinhar com os atendentes."
+                        : "Nenhuma resposta enviada ainda. Escreva uma resposta oficial ao cliente abaixo."}
+                    </span>
+                  </div>
+                ) : (
+                  displayedMessages.map((msg: any) => {
+                    const isSuperAdmin = msg.senderRole === "SUPER_ADMIN" || msg.senderRole === "ADMIN" || msg.senderRole === "AGENT";
+                    const isInternal = msg.isInternal;
+
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex flex-col max-w-[85%] ${
+                          isInternal
+                            ? "mx-auto w-full max-w-xl"
+                            : isSuperAdmin
+                            ? "ml-auto items-end"
+                            : "mr-auto items-start"
+                        }`}
+                      >
+                        {/* NOTA INTERNA / CHAT DE EQUIPE */}
+                        {isInternal ? (
+                          <div className="w-full p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-1.5 my-1 shadow-sm">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-amber-400 border-b border-amber-500/20 pb-1">
+                              <span className="flex items-center gap-1.5">
+                                <Users size={13} />
+                                <span>CHAT INTERNO DA EQUIPE • Visível apenas para Operadores</span>
+                              </span>
+                              <span>{new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                            </div>
+                            <p className="text-xs text-amber-100/90 whitespace-pre-wrap leading-relaxed">
+                              {msg.content}
+                            </p>
+                            <div className="flex items-center justify-between text-[10px] text-amber-400/70 pt-0.5">
+                              <span>Enviado por: <strong className="text-amber-300">{msg.senderName || "Operador"}</strong></span>
+                              <span>{new Date(msg.createdAt).toLocaleDateString("pt-BR")}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          /* MENSAGEM PÚBLICA AO CLIENTE */
+                          <div
+                            className={`p-3.5 rounded-2xl text-xs space-y-1 shadow-sm leading-relaxed ${
+                              isSuperAdmin
+                                ? "bg-blue-600 text-white rounded-br-none"
+                                : "bg-[#0B1224] border border-slate-800 text-slate-100 rounded-bl-none"
+                            }`}
+                          >
+                            <div className={`flex items-center justify-between gap-3 text-[10px] font-bold ${
+                              isSuperAdmin ? "text-blue-200" : "text-slate-400"
+                            }`}>
+                              <span>{msg.senderName || (isSuperAdmin ? "Suporte VERSUS" : "Cliente")}</span>
+                              <span>{new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                            </div>
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Composer */}
+              {/* Composer com 3 Modos (Pública, Nota Técnica, Chat de Equipe) */}
               <div className="p-3 border-t border-slate-800 bg-[#070D1B]">
                 <form onSubmit={handleSendMessage} className="space-y-2">
-                  {/* Seletor de Modo (Pública vs Nota Interna) */}
+                  
+                  {/* Seletor de Modo */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => setIsInternalNote(false)}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-semibold transition-colors ${
-                          !isInternalNote
-                            ? "bg-blue-600 text-white"
+                        onClick={() => setComposerMode('public')}
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                          composerMode === 'public'
+                            ? "bg-blue-600 text-white shadow-sm"
                             : "text-slate-400 hover:text-white bg-slate-800/40"
                         }`}
                       >
@@ -409,15 +591,28 @@ function SuperAdminSupportContent() {
 
                       <button
                         type="button"
-                        onClick={() => setIsInternalNote(true)}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-semibold transition-colors ${
-                          isInternalNote
-                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                        onClick={() => setComposerMode('internal_note')}
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                          composerMode === 'internal_note'
+                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm"
                             : "text-slate-400 hover:text-white bg-slate-800/40"
                         }`}
                       >
                         <Lock size={13} />
-                        <span>🔒 Nota Interna (Privada)</span>
+                        <span>🔒 Nota Técnica Privada</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setComposerMode('team_chat')}
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                          composerMode === 'team_chat'
+                            ? "bg-purple-600/20 text-purple-300 border border-purple-500/40 shadow-sm"
+                            : "text-slate-400 hover:text-white bg-slate-800/40"
+                        }`}
+                      >
+                        <Users size={13} />
+                        <span>👥 Chat Interno da Equipe</span>
                       </button>
                     </div>
 
@@ -438,13 +633,17 @@ function SuperAdminSupportContent() {
                         }
                       }}
                       placeholder={
-                        isInternalNote
+                        composerMode === 'team_chat'
+                          ? "Converse com os outros atendentes sobre como resolver este chamado..."
+                          : composerMode === 'internal_note'
                           ? "Escreva uma nota interna técnica sobre este caso..."
                           : "Escreva uma resposta oficial ao cliente..."
                       }
                       rows={2}
                       className={`flex-1 bg-[#0B1224] border rounded-xl p-2.5 text-xs text-white placeholder:text-slate-500 outline-none resize-none ${
-                        isInternalNote
+                        composerMode === 'team_chat'
+                          ? "border-purple-500/40 focus:border-purple-400"
+                          : composerMode === 'internal_note'
                           ? "border-amber-500/40 focus:border-amber-400"
                           : "border-slate-800 focus:border-blue-500"
                       }`}
@@ -453,8 +652,10 @@ function SuperAdminSupportContent() {
                     <button
                       type="submit"
                       disabled={sending || !messageContent.trim()}
-                      className={`p-2.5 rounded-xl font-bold text-white transition-all disabled:opacity-40 shrink-0 ${
-                        isInternalNote
+                      className={`p-2.5 rounded-xl font-bold text-white transition-all disabled:opacity-40 shrink-0 cursor-pointer ${
+                        composerMode === 'team_chat'
+                          ? "bg-purple-600 hover:bg-purple-500"
+                          : composerMode === 'internal_note'
                           ? "bg-amber-600 hover:bg-amber-500"
                           : "bg-blue-600 hover:bg-blue-500"
                       }`}
@@ -486,7 +687,7 @@ function SuperAdminSupportContent() {
               <button
                 onClick={() => setIsXRayOpen(true)}
                 title="Abrir Raio-X Completo"
-                className="flex items-center gap-1 text-[11px] font-bold text-blue-400 hover:text-blue-300 transition-colors"
+                className="flex items-center gap-1 text-[11px] font-bold text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
               >
                 <span>Expandir</span>
                 <ExternalLink size={11} />
@@ -569,6 +770,110 @@ function SuperAdminSupportContent() {
           </div>
         )}
       </div>
+
+      {/* MODAL DE VISUALIZAÇÃO COMPLETA DA DÚVIDA / CHAMADO */}
+      {isDetailModalOpen && selectedTicket && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-[#0F172A] border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            
+            {/* Header do Modal */}
+            <div className="p-4 border-b border-slate-800 bg-[#0B1224] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-blue-600/20 text-blue-400">
+                  <FileText size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-blue-400">
+                      #{selectedTicket.ticketNumber || selectedTicket.id.substring(0, 6).toUpperCase()}
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.2 rounded border uppercase ${
+                      STATUS_CONFIG[selectedTicket.status]?.bg || "bg-blue-500/10"
+                    } ${STATUS_CONFIG[selectedTicket.status]?.text || "text-blue-400"} ${
+                      STATUS_CONFIG[selectedTicket.status]?.border || "border-blue-500/30"
+                    }`}>
+                      {STATUS_CONFIG[selectedTicket.status]?.label || selectedTicket.status}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-bold text-white mt-0.5">{selectedTicket.subject}</h3>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Conteúdo do Modal */}
+            <div className="p-6 overflow-y-auto space-y-4 custom-scrollbar text-xs">
+              
+              {/* Metadados do Chamado */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-[#070D1B] border border-slate-800">
+                <div>
+                  <span className="text-[10px] text-slate-500 block uppercase font-semibold">Empresa</span>
+                  <span className="font-bold text-white truncate block">{selectedTicket.tenant?.name || "Empresa"}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block uppercase font-semibold">Solicitante</span>
+                  <span className="font-bold text-white truncate block">{selectedTicket.user?.name || "Cliente"}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block uppercase font-semibold">Prioridade</span>
+                  <span className={`font-bold block ${PRIORITY_CONFIG[selectedTicket.priority]?.color || "text-blue-400"}`}>
+                    {PRIORITY_CONFIG[selectedTicket.priority]?.label || "Média"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block uppercase font-semibold">Categoria</span>
+                  <span className="font-bold text-white truncate block">
+                    {CATEGORY_CONFIG[selectedTicket.category] || "Dúvida Técnica"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Texto Completo da Dúvida */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <HelpCircle size={14} className="text-blue-400" />
+                    <span>Descrição / Dúvida Completa Enviada</span>
+                  </h4>
+                  <button
+                    onClick={handleCopyDescription}
+                    className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-semibold cursor-pointer transition-colors"
+                  >
+                    {copiedDescription ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                    <span>{copiedDescription ? "Copiado!" : "Copiar Texto"}</span>
+                  </button>
+                </div>
+
+                <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 text-slate-100 text-xs leading-relaxed whitespace-pre-wrap font-normal">
+                  {selectedTicket.description || "Nenhuma descrição fornecida pelo solicitante."}
+                </div>
+              </div>
+
+              {/* Informações Complementares */}
+              <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-800/80">
+                <span>Criado em: {new Date(selectedTicket.createdAt).toLocaleString("pt-BR")}</span>
+                <span>Última atualização: {new Date(selectedTicket.updatedAt).toLocaleString("pt-BR")}</span>
+              </div>
+            </div>
+
+            {/* Rodapé do Modal */}
+            <div className="p-3 border-t border-slate-800 bg-[#0B1224] flex items-center justify-end gap-2">
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal Raio-X Completo */}
       {selectedTicket?.tenant && (
