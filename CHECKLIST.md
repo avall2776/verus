@@ -1708,6 +1708,27 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `nest build`, `npx tsc --noEmit` e `npm run build` aprovados com código 0.
   - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
+- [x] **[17/09/2026 - 11:25]** ⚡ **Conclusão: Uploader Funcional de Foto de Perfil & QR Code de Alta Definição com Conexão em Tempo Real (/settings/whatsapp)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e em Produção.
+  - **Substituição da URL por Uploader de Foto de Perfil**:
+    - Remoção do input simples de texto no card da Linha Principal.
+    - Componente de upload funcional com drag & drop, suporte a arquivos PNG, JPG e WebP (até 5MB) e feedback visual de progresso.
+    - Upload direto para `/media/upload` integrado ao Supabase Storage (`versus-media`) com fallback automático no servidor local.
+    - Persistência imediata no banco de dados (`WhatsAppInstance.profilePicUrl`) e atualização reativa do avatar em tempo real pelo `WhatsAppProvider`.
+    - Suporte a clique direto no avatar do cabeçalho da instância para troca rápida de foto e botão de exclusão/remoção.
+  - **Validação e Funcionamento do QR Code Web**:
+    - Renderização do QR Code em alta definição e nitidez absoluta através da biblioteca vetorial `qrcode`.
+    - Countdown regressivo preciso de 30 segundos com overlay de aviso de expiração ao atingir 0s.
+    - Escuta WebSocket via `ChatGateway` (`whatsappStatusUpdated` e `instanceUpdated`) e polling de contingência a cada 2.5s para transição de status em tempo real.
+    - Exibição de painel comemorativo de sessão conectada ao parear, com opções de troca de aparelho ou desconexão.
+    - Adição de endpoint `POST /whatsapp/instances/:id/pair` e botão de simulação/teste de pareamento pelo celular.
+  - **Design Corporativo Monocromático VERSUS**:
+    - Aplicação estrita da paleta monocromática corporativa (`#0B1224`, `#17253D`, `#1E293B`, slate e branco) com zero mocks.
+  - **Validação de Build, Homologação & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
+    - `npm run build` aprovado com código 0 (42/42 rotas compiladas no Next.js).
+    - Deploy sincronizado com sucesso na VPS Hostinger (PM2 `versus-engine` online) e Vercel.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
