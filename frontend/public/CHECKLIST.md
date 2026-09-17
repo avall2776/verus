@@ -1768,6 +1768,47 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - `npx nest build`, `npx tsc --noEmit` e `npm run build` aprovados com código 0.
     - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
+### 🔄 FASE 70: EVOLUÇÃO DA IA ARQUITETO-CHEFE NA ENGENHARIA DE PRODUTO [EM ANDAMENTO - IDE 2]
+- [/] **Interface Fullscreen / Expandida Estilo ChatGPT / OpenAI**:
+  - [/] Ocultação de métricas e Kanban na aba IA para área imersiva e centralizada (`max-w-4xl`).
+- [/] **Renderização Rica de Markdown (Padrão OpenAI)**:
+  - [/] Componente `MarkdownRenderer` com destaque de código, botão de cópia, tabelas e títulos.
+- [/] **Conversação por Áudio / Voz (Whisper Native)**:
+  - [/] Gravador de áudio no input com timer e endpoint `POST /engineering/chat/transcribe-audio`.
+- [/] **Validação de Build, Homologação & Deploy**:
+  - [/] `npx nest build`, `npx tsc --noEmit` e `npm run build` aprovados com código 0.
+
+- [ ] **[17/09/2026 - 11:46]** 📋 **Demanda Registrada: Redesign e Evolução de Alto Impacto do Preloader & Welcome Experience do Sistema (Fase 71)**:
+  - **Status**: 📋 Registrado no Checklist (Agendado para Execução no Retorno do Almoço - IDE 1).
+  - **Motivação & Feedback do Usuário**:
+    - A tela de carregamento / boas-vindas atual está excessivamente simples e precisa ser elevada a um patamar cinematográfico e tecnológico que cause impacto visual imediato ("efeito WOW") ao usuário.
+  - **Pilares Arquiteturais & Visuais**:
+    - **1. Visual High-Tech & Motor Three.js / Canvas**:
+      - Efeito tridimensional imersivo com ondas de dados quânticas, malha de partículas reativas ou pulso holográfico monocromático corporativo com brilho volumétrico (`#0B1224`, acentos em azul corporativo `#2563EB` e ciano `#00d2ff`).
+    - **2. Indicadores de Telemetria & Progresso Dinâmico**:
+      - Barra de carregamento com gradiente luminescente, percentual dinâmico (0% a 100%) e alternância de mensagens de inicialização de subsistemas empresariais (ex: *"Sincronizando workspaces corporativos..."*, *"Carregando agentes neurais de IA..."*, *"Conectando barramento em tempo real..."*, *"Sessão validada com sucesso"*).
+    - **3. Transição Cinematográfica & Entrada Suave**:
+      - Efeito de dissolução / reveal fluido (fade out / blur scale) para revelar a interface do sistema de forma limpa e premium.
+    - **4. Design System Corporativo & Zero Mocks**:
+      - Manutenção estrita da paleta monocromática corporativa oficial VERSUS, sem cores berrantes ou dispersas, garantindo coesão absoluta com o restante da plataforma.
+  - **Planejamento de Build & Deploy (Pós-Almoço)**:
+    - Validação com `npx tsc --noEmit` e `npm run build` com código 0 em ambas as pontas.
+    - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
+### 📋 FASE 71: REDESIGN E EVOLUÇÃO DE ALTO IMPACTO DO PRELOADER & EXPERIÊNCIA DE BOAS-VINDAS [AGENDADO PÓS-ALMOÇO]
+- [ ] **Concepção Visual & Motor de Efeitos de Alto Impacto**:
+  - [ ] Efeito visual imersivo de carregamento (partículas Three.js dinâmicas, ondas de dados quânticas ou logotipo holográfico pulsante).
+  - [ ] Alinhamento rigoroso à paleta monocromática corporativa VERSUS (`#0B1224`, `#070D1B`, acentos em azul `#2563EB` e ciano `#00d2ff`).
+- [ ] **Indicadores Dinâmicos de Telemetria & Progresso**:
+  - [ ] Barra de progresso com gradiente e contador percentual fluído (0 a 100%).
+  - [ ] Mensagens dinâmicas de inicialização dos subsistemas ("Carregando instâncias...", "Verificando permissões...", "Pronto").
+- [ ] **Transição & Integração na Dashboard / Welcome Experience**:
+  - [ ] Transição cinematográfica suave (dissolve / blur reveal) ao finalizar o carregamento.
+  - [ ] Harmonização com o `WelcomeDashboard.tsx` e fallbacks de rota no Next.js.
+- [ ] **Homologação, Build & Deploy (Pós-Almoço)**:
+  - [ ] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
+  - [ ] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
