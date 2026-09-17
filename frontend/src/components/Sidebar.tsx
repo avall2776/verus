@@ -95,7 +95,6 @@ const NAV_GROUPS = [
     items: [
       { name: "Visão Geral", icon: LayoutDashboard, href: "/dashboard" },
       { name: "Base de Contatos", icon: Users, href: "/contacts" },
-      { name: "Agentes de IA", icon: Bot, href: "/agent" },
       { name: "Automações & Regras", icon: Zap, href: "/settings?tab=automations" },
       { name: "Usuários & Acessos", icon: Users, href: "/settings?tab=users" },
       { name: "Conexões WhatsApp", icon: Smartphone, href: "/settings/whatsapp" },

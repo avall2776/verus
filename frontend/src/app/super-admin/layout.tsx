@@ -14,13 +14,15 @@ import {
   Layers,
   Edit2,
   Users,
-  Cpu
+  Cpu,
+  Bot
 } from "lucide-react";
 import UserProfileModal from "@/components/modals/UserProfileModal";
 
 const ADMIN_MENU = [
   { name: "Métricas Globais", icon: BarChart4, href: "/super-admin" },
   { name: "Empresas (Tenants)", icon: Building2, href: "/super-admin/companies" },
+  { name: "Agentes de IA", icon: Bot, href: "/super-admin/ai-agents" },
   { name: "Central de Atendimento", icon: Headphones, href: "/super-admin/support" },
   { name: "Equipe & Operadores", icon: Users, href: "/super-admin/operators" },
   { name: "Engenharia", icon: Cpu, href: "/super-admin/engineering" },

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import * as THREE from "three";
 
-// ================= COMPONENTE OCEANO DE DADOS + MONÓLITO "V" 3D =================
+// ================= COMPONENTE OCEANO DE DADOS (DATA WAVE) THREE.JS =================
 interface BackgroundSceneProps {
   isBooting: boolean;
 }
@@ -54,7 +54,7 @@ const BackgroundScene = ({ isBooting }: BackgroundSceneProps) => {
       return new THREE.CanvasTexture(canvas);
     };
 
-    // ================= OCEANO DE DADOS (DATA WAVE) =================
+    // Grid de Partículas (Oceano de Dados)
     const SEPARATION = 3, AMOUNTX = 75, AMOUNTY = 75;
     const numParticles = AMOUNTX * AMOUNTY;
     const wavePositions = new Float32Array(numParticles * 3);
@@ -84,74 +84,11 @@ const BackgroundScene = ({ isBooting }: BackgroundSceneProps) => {
     const waveParticles = new THREE.Points(waveGeometry, waveMaterial);
     scene.add(waveParticles);
 
-    // ================= MONÓLITO "V" 3D =================
-    const shape = new THREE.Shape();
-    shape.moveTo(-5.5, 6.5);
-    shape.lineTo(-2.2, 6.5);
-    shape.lineTo(0, -0.8);
-    shape.lineTo(2.2, 6.5);
-    shape.lineTo(5.5, 6.5);
-    shape.lineTo(1.1, -5.5);
-    shape.lineTo(0, -7.5);
-    shape.lineTo(-1.1, -5.5);
-    shape.closePath();
-
-    const extrudeSettings: THREE.ExtrudeGeometryOptions = {
-      steps: 2,
-      depth: 2.2,
-      bevelEnabled: true,
-      bevelThickness: 0.65,
-      bevelSize: 0.45,
-      bevelOffset: 0,
-      bevelSegments: 5,
-    };
-
-    const vGeometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    vGeometry.center();
-
-    const vMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0x0a1322,
-      metalness: 0.92,
-      roughness: 0.16,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.1,
-      reflectivity: 0.95,
-      transmission: 0.05,
-    });
-
-    const vMesh = new THREE.Mesh(vGeometry, vMaterial);
-    vMesh.scale.set(0.01, 0.01, 0.01);
-    vMesh.position.set(0, 4.2, -35); // Começa recolhido no fundo
-    vMesh.visible = false;
-    scene.add(vMesh);
-
-    // Arestas neon ciano luminescentes
-    const vEdges = new THREE.EdgesGeometry(vGeometry, 24);
-    const vEdgeMaterial = new THREE.LineBasicMaterial({
-      color: 0x00d2ff,
-      transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending,
-    });
-    const vEdgeLines = new THREE.LineSegments(vEdges, vEdgeMaterial);
-    vMesh.add(vEdgeLines);
-
-    // ================= ILUMINAÇÃO DE ESTÚDIO =================
+    // Iluminação Ambiente
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0x00d2ff, 2.6);
-    keyLight.position.set(16, 20, 20);
-    scene.add(keyLight);
-
-    const rimLight = new THREE.DirectionalLight(0x2563eb, 2.2);
-    rimLight.position.set(-18, -12, -15);
-    scene.add(rimLight);
-
-    const glintLight = new THREE.PointLight(0x00d2ff, 3.5, 45);
-    scene.add(glintLight);
-
-    // ================= INTERAÇÃO DO MOUSE =================
+    // Interação do Mouse com Parallax
     let mouseX = 0;
     let mouseY = 0;
     let targetX = 0;
@@ -174,23 +111,26 @@ const BackgroundScene = ({ isBooting }: BackgroundSceneProps) => {
 
     window.addEventListener("resize", handleResize);
 
-    // ================= LOOP DE RENDERIZAÇÃO =================
+    // Loop de Renderização
     let count = 0;
     let animId: number;
-    const clock = new THREE.Clock();
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
-      const elapsedTime = clock.getElapsedTime();
 
       mouseX += (targetX - mouseX) * 0.05;
       mouseY += (targetY - mouseY) * 0.05;
 
-      camera.position.x += (mouseX - camera.position.x) * 0.05;
-      camera.position.y += (-mouseY + 15 - camera.position.y) * 0.05;
-      camera.lookAt(0, 2, 0);
+      // Durante o Boot, a câmera executa um sobrevoo suave e contínuo para a frente
+      const targetCamZ = isBootingRef.current ? 26 : 36;
+      const targetCamY = isBootingRef.current ? 12 : 15;
 
-      // Onda Senoidal do Oceano de Dados
+      camera.position.x += (mouseX - camera.position.x) * 0.05;
+      camera.position.y += (-mouseY + targetCamY - camera.position.y) * 0.04;
+      camera.position.z += (targetCamZ - camera.position.z) * 0.03;
+      camera.lookAt(0, 1.5, 0);
+
+      // Animação da Onda Senoidal do Oceano
       const positions = waveParticles.geometry.attributes.position.array as Float32Array;
       let posIdx = 0;
       for (let ix = 0; ix < AMOUNTX; ix++) {
@@ -204,32 +144,6 @@ const BackgroundScene = ({ isBooting }: BackgroundSceneProps) => {
       }
       waveParticles.geometry.attributes.position.needsUpdate = true;
       count += 0.035;
-
-      // COMPORTAMENTO DA LETRA "V"
-      if (isBootingRef.current) {
-        vMesh.visible = true;
-
-        // Efeito de zoom-in / surgimento projetado: Z vem de -35 para +6.5 ("como se fosse sair da tela!")
-        vMesh.position.z += (6.5 - vMesh.position.z) * 0.04;
-        vMesh.scale.x += (1.05 - vMesh.scale.x) * 0.04;
-        vMesh.scale.y += (1.05 - vMesh.scale.y) * 0.04;
-        vMesh.scale.z += (1.05 - vMesh.scale.z) * 0.04;
-
-        // Levitação orgânica e rotação reativa com inércia física
-        vMesh.rotation.y = Math.sin(elapsedTime * 0.75) * 0.16 + (mouseX * 0.025);
-        vMesh.rotation.x = Math.cos(elapsedTime * 0.55) * 0.08 - (mouseY * 0.025);
-        vMesh.rotation.z = Math.sin(elapsedTime * 0.35) * 0.04;
-        vMesh.position.y = 4.2 + Math.sin(elapsedTime * 1.3) * 0.35;
-
-        // Reflexos em tempo real nas facetas
-        glintLight.position.x = Math.sin(elapsedTime * 1.3) * 14;
-        glintLight.position.y = Math.cos(elapsedTime * 1.0) * 8 + 4;
-        glintLight.position.z = Math.cos(elapsedTime * 1.3) * 12 + 8;
-      } else {
-        vMesh.visible = false;
-        vMesh.position.set(0, 4.2, -35);
-        vMesh.scale.set(0.01, 0.01, 0.01);
-      }
 
       renderer.render(scene, camera);
     };
@@ -245,10 +159,6 @@ const BackgroundScene = ({ isBooting }: BackgroundSceneProps) => {
       }
       waveGeometry.dispose();
       waveMaterial.dispose();
-      vGeometry.dispose();
-      vMaterial.dispose();
-      vEdges.dispose();
-      vEdgeMaterial.dispose();
       renderer.dispose();
     };
   }, []);
@@ -275,7 +185,7 @@ const NeonWaveLogo = () => {
   );
 };
 
-// ================= PÁGINA DE LOGIN E BOOT UNIFICADOS =================
+// ================= PÁGINA DE LOGIN E BOOT MINIMALISTA EXECUTIVO (OPÇÃO 3) =================
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -284,13 +194,13 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  // Estados da Montagem Pós-Login
-  const [loginPhase, setLoginPhase] = useState<"form" | "booting">("form");
+  // Transição do Card: 'idle' -> 'evaporating' (dissolução real) -> 'booting'
+  const [cardState, setCardState] = useState<"idle" | "evaporating" | "booting">("idle");
   const [authUserName, setAuthUserName] = useState<string>("");
   const [bootProgress, setBootProgress] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
 
-  // Duração calibrada para 15 segundos de imersão total
+  // 15 segundos calibrados de imersão
   const BOOT_DURATION_MS = 15000;
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -305,7 +215,7 @@ export default function LoginPage() {
       localStorage.setItem("versus_auth_token", data.access_token);
       localStorage.setItem("versus_user", JSON.stringify(data.user));
 
-      // Extrai o primeiro nome do usuário autenticado (ex: "Felipe")
+      // Extrai o primeiro nome real do usuário autenticado (ex: "Felipe")
       const rawName = data.user?.name || "";
       const firstName = rawName.split(" ")[0] || "Felipe";
       setAuthUserName(firstName);
@@ -314,18 +224,23 @@ export default function LoginPage() {
         sessionStorage.removeItem("versus_boot_completed");
       } catch (e) {}
 
-      // Dispara imediatamente o desaparecimento do card de login e início do boot
-      setLoginPhase("booting");
+      // ETAPA 1: O card começa a evaporar (sem corte seco, com animação real de fumaça)
+      setCardState("evaporating");
       setLoading(false);
+
+      // ETAPA 2: Após a evaporação visual do card (850ms), ativa a fase de booting
+      setTimeout(() => {
+        setCardState("booting");
+      }, 850);
     } catch (err: any) {
       setError(err.response?.data?.message || "Erro ao conectar com o servidor.");
       setLoading(false);
     }
   };
 
-  // Temporizador cadenciado dos 15 segundos de Booting
+  // Temporizador cadenciado dos 15 segundos
   useEffect(() => {
-    if (loginPhase !== "booting") return;
+    if (cardState !== "booting") return;
 
     const startTime = Date.now();
     const interval = setInterval(() => {
@@ -340,9 +255,9 @@ export default function LoginPage() {
     }, 40);
 
     return () => clearInterval(interval);
-  }, [loginPhase]);
+  }, [cardState]);
 
-  // Ação de conclusão com fade-out suave
+  // Ação de conclusão com fade-out contínuo
   const handleFinishBoot = () => {
     if (isExiting) return;
     setIsExiting(true);
@@ -351,7 +266,7 @@ export default function LoginPage() {
       sessionStorage.setItem("versus_boot_completed", "true");
     } catch (e) {}
 
-    // Transição de saída contínua (1000ms) antes da troca de rota
+    // Transição de saída de 1000ms antes da troca de rota
     setTimeout(() => {
       try {
         const stored = localStorage.getItem("versus_user");
@@ -367,9 +282,9 @@ export default function LoginPage() {
     }, 1000);
   };
 
-  // Teclado: ESC, Enter ou Espaço avança direto
+  // Teclas de atalho para avançar (ESC, Enter, Espaço)
   useEffect(() => {
-    if (loginPhase !== "booting") return;
+    if (cardState !== "booting") return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
@@ -379,9 +294,9 @@ export default function LoginPage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [loginPhase, isExiting]);
+  }, [cardState, isExiting]);
 
-  // Textos dinâmicos dos estágios da montagem
+  // Textos dos estágios da montagem
   const getStageText = (progress: number) => {
     if (progress < 30) return "Inicializando ecossistema corporativo...";
     if (progress < 65) return "Sincronizando barramento neural e agentes de IA...";
@@ -399,13 +314,13 @@ export default function LoginPage() {
   return (
     <div
       onClick={() => {
-        if (loginPhase === "booting") handleFinishBoot();
+        if (cardState === "booting") handleFinishBoot();
       }}
       className={`flex min-h-screen items-center justify-center relative overflow-hidden bg-[#050814] transition-all duration-1000 ease-in-out select-none ${
         isExiting ? "opacity-0 scale-105 filter blur-2xl pointer-events-none" : "opacity-100 scale-100"
-      } ${loginPhase === "booting" ? "cursor-pointer" : ""}`}
+      } ${cardState === "booting" ? "cursor-pointer" : ""}`}
     >
-      {/* Estilos CSS Inline */}
+      {/* Estilos CSS Inline de Animação e Evaporação */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes float {
           0% { transform: translateY(-4px); }
@@ -431,29 +346,26 @@ export default function LoginPage() {
             box-shadow: none;
           }
         }
-        @keyframes shimmerSlow {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(200%); }
-        }
-        .anim-shimmer-slow {
-          animation: shimmerSlow 2.5s ease-in-out infinite;
-        }
       `}} />
 
-      {/* Cenário 3D Unificado: Oceano de Dados + "V" em Zoom-in */}
-      <BackgroundScene isBooting={loginPhase === "booting"} />
+      {/* Fundo 3D: Oceano de Dados Infinito */}
+      <BackgroundScene isBooting={cardState === "booting"} />
 
-      {/* Glow Orbs idênticos para continuidade visual */}
+      {/* Glow Orbs idênticos para atmosfera corporativa */}
       <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-accent/20 rounded-full blur-[120px] pointer-events-none" />
 
       {/* ========================================================== */}
-      {/* 1. FASE DE FORMULÁRIO DE LOGIN (EVAPORA AO EFETUAR LOGIN)  */}
+      {/* 1. CARD DE LOGIN COM EVAPORAÇÃO VISUAL REAL ("FUMAÇA")      */}
       {/* ========================================================== */}
-      {loginPhase === "form" && (
+      {cardState !== "booting" && (
         <>
           {/* Voltar ao site */}
-          <div className="fixed top-8 left-8 md:left-[5%] z-20">
+          <div
+            className={`fixed top-8 left-8 md:left-[5%] z-20 transition-opacity duration-500 ${
+              cardState === "evaporating" ? "opacity-0" : "opacity-100"
+            }`}
+          >
             <a
               href="#"
               className="flex items-center gap-2 text-text-secondary hover:text-accent transition-colors text-[0.82rem] font-semibold uppercase tracking-[0.15rem]"
@@ -462,10 +374,16 @@ export default function LoginPage() {
             </a>
           </div>
 
-          {/* Card de Vidro com Efeito de Evaporação / Fumaça */}
-          <div className="w-full max-w-[440px] p-6 relative z-10 animate-[hologramBoot_2s_ease-out_forwards,float_7s_ease-in-out_2s_infinite_alternate] opacity-0 transition-all duration-1000 ease-out">
+          {/* Card de Formulário: quando 'evaporating', aplica blur(30px), escala 0.8 e fade suave de 850ms */}
+          <div
+            className={`w-full max-w-[440px] p-6 relative z-10 transition-all duration-[850ms] ease-out ${
+              cardState === "evaporating"
+                ? "opacity-0 scale-[0.82] filter blur-[32px] pointer-events-none -translate-y-6"
+                : "animate-[hologramBoot_2s_ease-out_forwards,float_7s_ease-in-out_2s_infinite_alternate] opacity-0"
+            }`}
+          >
             <div
-              className="bg-[#0B1224]/30 border border-gray-800/50 rounded-[20px] px-10 py-12 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl flex flex-col relative overflow-hidden group"
+              className="bg-[#0B1224]/35 border border-gray-800/50 rounded-[20px] px-10 py-12 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl flex flex-col relative overflow-hidden group"
               onMouseMove={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
@@ -538,7 +456,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-primary text-white font-black py-[0.95rem] rounded-[10px] mt-4 text-[0.88rem] tracking-[0.15rem] uppercase transition-all hover:bg-primary/90 hover:shadow-[0_0_25px_rgba(0,85,255,0.5)] flex items-center justify-center gap-2 disabled:opacity-70"
+                  className="w-full bg-primary text-white font-black py-[0.95rem] rounded-[10px] mt-4 text-[0.88rem] tracking-[0.15rem] uppercase transition-all hover:bg-primary/90 hover:shadow-[0_0_25px_rgba(0,85,255,0.5)] flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer"
                 >
                   {loading ? (
                     <>
@@ -565,57 +483,57 @@ export default function LoginPage() {
       )}
 
       {/* ========================================================== */}
-      {/* 2. FASE DE BOOTING IMERSIVA COM A LETRA "V" 3D EM DESTAQUE */}
+      {/* 2. BOOTING EXECUTIVO MINIMALISTA (SEM COLISÃO, 100% LIMPO) */}
       {/* ========================================================== */}
-      {loginPhase === "booting" && (
-        <div className="fixed inset-0 z-20 flex flex-col items-center justify-between p-8 pointer-events-auto animate-fade-in">
+      {cardState === "booting" && (
+        <div className="fixed inset-0 z-20 flex flex-col items-center justify-between p-8 pointer-events-auto animate-[fadeIn_1s_ease-out_forwards]">
           
-          {/* Topo Sutil */}
+          {/* Topo Discreto */}
           <div className="w-full flex items-center justify-end pt-2 opacity-60 hover:opacity-100 transition-opacity">
             <span className="text-[11px] font-mono tracking-wider text-slate-400">
               Pressione ESC ou clique para entrar
             </span>
           </div>
 
-          {/* ÁREA CENTRAL: Embaixo do Monólito "V" (sem título "VERSUS") */}
-          <div className="w-full my-auto flex flex-col items-center justify-center text-center z-20 pointer-events-none mt-40 sm:mt-52">
+          {/* CENTRO EXATO: Saudação Executiva & Barra Luminescente */}
+          <div className="w-full my-auto flex flex-col items-center justify-center text-center z-20 pointer-events-none space-y-5 max-w-xl mx-auto px-4">
             
-            {/* Saudação com Nome Personalizado (ex: "Bem-vindo de volta, Felipe") */}
+            {/* Saudação com Ponto Luminescente e Nome Real */}
             <div className="space-y-2">
-              <h2 className="text-2xl sm:text-4xl font-black text-white tracking-wide flex items-center justify-center gap-3 drop-shadow-[0_8px_30px_rgba(0,0,0,0.95)]">
-                <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_12px_#00d2ff]" />
+              <h2 className="text-3xl sm:text-5xl font-black text-white tracking-wide flex items-center justify-center gap-3.5 drop-shadow-[0_10px_35px_rgba(0,0,0,0.95)]">
+                <span className="w-3 h-3 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_15px_#00d2ff]" />
                 <span>Bem-vindo de volta, {authUserName || "Felipe"}</span>
               </h2>
 
               {/* Status Dinâmico de Inicialização */}
-              <p className="text-xs sm:text-sm font-mono tracking-wider text-slate-300 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+              <p className="text-sm sm:text-base font-mono tracking-wider text-slate-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">
                 {getStageText(bootProgress)}
               </p>
             </div>
 
             {/* Linha Luminescente Monocromática Minimalista dos 15 Segundos */}
-            <div className="w-56 sm:w-80 h-[2px] bg-slate-800/80 rounded-full overflow-hidden relative shadow-inner mt-6">
+            <div className="w-64 sm:w-96 h-[2.5px] bg-slate-800/80 rounded-full overflow-hidden relative shadow-inner mt-2">
               <div
-                className="h-full bg-gradient-to-r from-blue-600 via-cyan-400 to-emerald-400 transition-all duration-150 shadow-[0_0_12px_#00d2ff]"
+                className="h-full bg-gradient-to-r from-blue-600 via-cyan-400 to-emerald-400 transition-all duration-150 shadow-[0_0_15px_#00d2ff]"
                 style={{ width: `${bootProgress}%` }}
               />
             </div>
 
             {/* Subtexto Técnico dos Subsistemas */}
-            <p className="text-[10px] sm:text-[11px] text-slate-500 font-mono tracking-widest uppercase mt-3">
+            <p className="text-[11px] sm:text-xs text-slate-500 font-mono tracking-widest uppercase">
               {getStageSubtext(bootProgress)}
             </p>
 
           </div>
 
-          {/* RODAPÉ: Acesso Direto com 1 Clique */}
+          {/* RODAPÉ: Botão de Acesso Direto */}
           <div className="w-full flex flex-col items-center pb-4 z-20">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleFinishBoot();
               }}
-              className="group inline-flex items-center gap-2 px-6 py-2 rounded-full bg-[#0B1224]/80 hover:bg-slate-800/90 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-semibold backdrop-blur-xl transition-all shadow-xl hover:shadow-cyan-500/10"
+              className="group inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#0B1224]/80 hover:bg-slate-800/90 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-semibold backdrop-blur-xl transition-all shadow-xl hover:shadow-cyan-500/10 cursor-pointer"
             >
               <span>Acessar Painel Principal</span>
               <ArrowRight className="w-3.5 h-3.5 text-cyan-400 group-hover:translate-x-1 transition-transform" />
