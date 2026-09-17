@@ -2164,6 +2164,57 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - `npm run build` aprovado com código 0 em ambas as pontas (44/44 páginas estáticas geradas).
     - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
 
+- [x] **[17/09/2026 - 17:25]** ⚡ **[IDE 1] Refinamento da Tela de Login & Preloader Pós-Login Monocromático - (Fase 78)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Ajustes na Tela de Login (`/login`)**:
+    - Remoção de cores neon/estridentes e aplicação rigorosa da paleta monocromática corporativa (`#0B1224`, card em slate-900 com bordas refinadas em slate-800, tipografia em branco/slate).
+    - Efeito de transição suave de saída (fade-out e escala sutil) no card de login ao clicar em 'Entrar na Plataforma', evitando cortes secos.
+    - Remoção do botão de topo 'IR PARA O SITE' para foco total no login empresarial.
+  - **Preloader Pós-Login Fluido & Imersivo**:
+    - Restauração completa do preloader corporativo limpo com status dinâmico de carregamento das ferramentas do sistema ("Carregando Operação de Atendimento...", "Carregando Chat da Equipe...", "Carregando Funil Comercial...").
+    - Transição imersiva e automática após 15 segundos ou conclusão de carregamento para o painel principal.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 em ambas as pontas.
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
+
+- [x] **[17/09/2026 - 17:45]** ⚡ **[IDE 1] Auditoria, Sincronização & Estabilização da Mensageria Omnichannel (Meta Cloud API & Evolution/Baileys) com Recibos em Tempo Real - (Fase 79)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Validado pelo Usuário.
+  - **Dual-Driver no Backend (`MessagingService`)**:
+    - Suporte simultâneo para Meta Cloud API Oficial (WhatsApp Cloud API) e Evolution API (WhatsApp Web / Baileys).
+    - Tratamento de telefones brasileiros (sanitização de DDI 55, DDD e dígitos) prevenindo falhas de roteamento.
+    - Captura e mapeamento dos IDs reais de mensagem do provedor (`wamid.xxx` e `key.id`).
+  - **Sincronização de Recibos de Entrega (Webhooks & WebSocket)**:
+    - Webhook Meta com mapeamento em tempo real de statuses (`sent`, `delivered`, `read`, `failed`).
+    - Detecção e registro de erros da Meta em tempo real (ex.: código 131047 para janelas de 24h expiradas).
+    - Webhook Evolution API (`POST /webhooks/evolution/:tenantId`) com processamento de `MESSAGES_UPDATE`, `SEND_MESSAGE` e `MESSAGES_UPSERT`.
+    - Evento WebSocket `messageStatusUpdated` sincronizando reativamente todos os operadores no Inbox.
+  - **Frontend Inbox & Experiência de Balões**:
+    - Injeção da instância ativa (`instanceId`) nos payloads de mensagem de texto, áudio PTT e mídias.
+    - Atualização dinâmica dos ícones de status no balão: relógio (enviando), 1 tique cinza (enviado), 2 tiques cinza (entregue), 2 tiques azuis (lido) e alerta vermelho (não entregue / janela 24h fechada).
+    - Remoção e expurgo da instância legada `PROSPECTOR (WhatsApp Web)`, preservando exclusivamente a linha oficial `Avall Marketing e Vendas ((54) 9628-3090)`.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 em ambas as pontas.
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
+
+---
+
+### 📅 PRÓXIMA SESSÃO: 18/09/2026 - REFINAMENTO TÉCNICO GERAL & EXPERIÊNCIA DE NOTIFICAÇÕES (FASE 80)
+- [ ] **1. Refinamento Técnico Completo & Varredura E2E de Todo o Sistema**:
+  - [ ] Auditoria completa de rotas, componentes e módulos (Inbox, CRM, Metas, Propostas, Contratos, E-mail, Suporte e Chat da Equipe) para assegurar funcionamento fluido sem erros residuais.
+- [ ] **2. Testes & Homologação de Conexão WhatsApp via QR Code**:
+  - [ ] Teste prático do fluxo completo de conexão via QR Code (Baileys/Evolution API) para novas linhas/empresas.
+  - [ ] Validação de recebimento de mensagens, envio livre sem trava de 24h, áudios PTT nativos e sincronização de avatares/nomes de clientes.
+- [ ] **3. Áudio de Notificação Exclusivo do App VERSUS (Toque Próprio + Vibração + Som)**:
+  - [ ] Criação e implementação de arquivo de áudio de notificação exclusivo VERSUS (sonoridade moderna, discreta e corporativa, inspirada na sutileza do WhatsApp).
+  - [ ] Disparo de som ao receber novas mensagens no chat (com controle de permissões de áudio e toggle de volume/mute).
+  - [ ] Ativação de vibração tátil (Vibration API) em dispositivos móveis e navegadores suportados.
+- [ ] **4. Notificações Visuais de Mensagem na Tela (Estilo Lero / Toasts & Transferências)**:
+  - [ ] Exibição de notificação flutuante visual na tela do atendente (Toast / Banner) ao entrar nova mensagem de cliente em tempo real.
+  - [ ] Notificação na tela quando uma conversa for transferida para o atendente (indicando quem transferiu e link rápido para assumir o chat na hora).
+  - [ ] Suporte a Web Push Notifications / Desktop Notifications para alertar o operador mesmo com a aba em segundo plano.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
