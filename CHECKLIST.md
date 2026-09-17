@@ -1504,6 +1504,29 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `npm run build` aprovado com código 0 (frontend e backend).
   - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
+- [x] **[17/09/2026 - 10:05]** ⚡ **[IDE 1] Conclusão: Reestruturação Profunda e Definitiva da Tela de Inbox/Chat (/inbox) - Padrão Nativo WhatsApp Web / Business**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Aprovado.
+  - **Layout de 3 Colunas Autêntico WhatsApp Web**:
+    - **Coluna Esquerda (Lista de Conversas)**:
+      - Header fixo com título "WhatsApp", seletor dinâmico de instâncias/linhas com status de conexão em tempo real, botão "Novo Chat" circular (`Plus`) e menu de opções flutuantes (`MoreVertical`).
+      - Barra de pesquisa idêntica ao WhatsApp com placeholder "Pesquisar ou começar uma nova conversa".
+      - Pílulas horizontais de filtro WhatsApp Web: *Tudo*, *Não lidas* (com badge verde), *Aguardando* (badge âmbar), *Meus* (badge azul) e *Resolvidos*.
+      - Lista de conversas com avatar circular de 48px, indicador de presença, nome do contato em negrito, prévia com reticências e ticks de envio (`CheckCheck` ciano), horário no canto superior direito e badge pílula de mensagens não lidas no verde de status do sistema.
+    - **Coluna Central (Área de Conversa Ativa)**:
+      - Cabeçalho fixo com foto circular do lead, nome, status ("online • Atendimento ativo" ou status da IA), e botões à direita: Busca na Conversa (`Search` com barra deslizante de busca), Menu de Opções (`MoreVertical` com exportar chat, agendar mensagens, alternar modo nota interna) e Dados do Contato (`PanelRight`).
+      - Fundo de Conversa: Textura doodle clássica do WhatsApp com 2.5% de opacidade sobre o fundo escuro `#0B1224`, conferindo profundidade sutil e corporativa.
+      - Balões de Mensagem: Formato característico com cantos arredondados e caudas pontiagudas de origem em SVG (inbound em slate `#1E293B`, outbound corporativo em `#17253D`, notas internas em `#281b0a`).
+      - Pílulas centrais de separação por data ("Hoje", "Ontem", DD/MM/AAAA) discretas e com blur.
+      - Posicionamento de Horário e Ticks: Float-right inline no canto inferior direito interno do balão com horário e duplo check ciano `#53bdeb`.
+      - Barra Inferior de Input Flutuante: Ícone de emoji (`Smile`) e clipe de anexo (`Paperclip`) à esquerda, cápsula arredondada com "Digite uma mensagem" e atalhos `/` para respostas rápidas, e botão dinâmico de ação à direita (microfone para áudio se vazio, avião de papel para envio quando preenchido).
+    - **Coluna Direita (Dados do Contato)**:
+      - Drawer lateral expansível no padrão nativo do WhatsApp Web com perfil circular, telefone, e-mail, tags com colorimetria dinâmica, links para CRM e histórico.
+  - **Rigor na Paleta Monocromática Corporativa**:
+    - Zero verdes berrantes nos balões ou botões da interface; aderência integral ao tema escuro corporativo VERSUS (`#0B1224`, `#17253D`, `#1E293B` e branco).
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
+    - Deploy atualizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
 - [x] **[17/09/2026 - 09:48]** ⚡ **[IDE 2] Conclusão: Gestão de Equipe e Operadores do Super Admin - Métricas, Permissões e Auditoria / Espiar Conversas (Fase 65)**:
   - **Status**: ✅ Concluído com Sucesso e Homologado.
   - **Módulo Administrativo de Operadores (`/super-admin/operators`)**:
