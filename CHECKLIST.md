@@ -1729,6 +1729,28 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - `npm run build` aprovado com código 0 (42/42 rotas compiladas no Next.js).
     - Deploy sincronizado com sucesso na VPS Hostinger (PM2 `versus-engine` online) e Vercel.
 
+- [ ] **[17/09/2026 - 11:38]** ⏸️ **Pausa para Almoço & Demanda Registrada: Refinamento Técnico & Visual da Configuração de Agentes de IA (/settings/ai e /settings/agents) (Fase 69)**:
+  - **Status**: 📋 Registrado no Checklist (Agendado para Execução no Retorno do Almoço).
+  - **Alinhamento do Design System Corporativo (Remoção de Cores Berrantes)**:
+    - Remover quaisquer tons isolados de roxo ou azul vibrante/neon (em badges, seletores de temperatura, botões secundários ou bordas).
+    - Substituição integral pela paleta monocromática corporativa oficial VERSUS: fundo azul escuro `#0B1224`, containers em `slate-800` / `border-slate-800`, textos em `slate-300`/branco e azul corporativo discreto apenas para elementos ativos primários.
+  - **Polimento de UI**:
+    - Alinhamento milimétrico e harmonização dos campos de Prompt, Modelo OpenAI, Upload de Base de Conhecimento (RAG) e slider de Criatividade (Temperature).
+  - **Planejamento de Build & Deploy (Pós-Almoço)**:
+    - Validação com `npx tsc --noEmit` e `npm run build` garantindo código 0 de erros em ambas as pontas.
+    - Atualização imediata do deploy na VPS (PM2 `versus-engine`) e Vercel.
+
+### 📋 FASE 69: REFINAMENTO TÉCNICO & VISUAL DE AGENTES DE IA (/SETTINGS/AI) [AGENDADO PÓS-ALMOÇO]
+- [ ] **Design System Corporativo & Eliminação de Tons Berrantes**:
+  - [ ] Higienização de tons roxos e azuis neon em badges, botões, bordas e seletores.
+  - [ ] Aplicação estrita da paleta monocromática corporativa (`#0B1224`, `slate-800`, textos em `slate-300`/branco).
+- [ ] **Polimento Visual & Alinhamento de Componentes**:
+  - [ ] Alinhamento dos campos de Prompt, Modelo OpenAI e Upload de Base de Conhecimento.
+  - [ ] Slider de Criatividade (Temperature) calibrado no padrão corporativo.
+- [ ] **Homologação, Build & Deploy (Pós-Almoço)**:
+  - [ ] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
+  - [ ] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
