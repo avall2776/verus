@@ -69,6 +69,14 @@ let ChatGateway = ChatGateway_1 = class ChatGateway {
             this.logger.warn('WebSocket server not initialized yet, skipping emitWhatsAppStatusUpdated');
         }
     }
+    emitMessageStatusUpdated(tenantId, statusData) {
+        if (this.server) {
+            this.server.to(tenantId).emit('messageStatusUpdated', statusData);
+        }
+        else {
+            this.logger.warn('WebSocket server not initialized yet, skipping emitMessageStatusUpdated');
+        }
+    }
 };
 exports.ChatGateway = ChatGateway;
 __decorate([

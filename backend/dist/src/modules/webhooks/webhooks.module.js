@@ -11,6 +11,8 @@ const common_1 = require("@nestjs/common");
 const bullmq_1 = require("@nestjs/bullmq");
 const config_1 = require("@nestjs/config");
 const webhooks_controller_1 = require("./webhooks.controller");
+const database_module_1 = require("../../shared/database/database.module");
+const chat_module_1 = require("../chat/chat.module");
 let WebhooksModule = class WebhooksModule {
 };
 exports.WebhooksModule = WebhooksModule;
@@ -18,6 +20,8 @@ exports.WebhooksModule = WebhooksModule = __decorate([
     (0, common_1.Module)({
         imports: [
             config_1.ConfigModule,
+            database_module_1.DatabaseModule,
+            chat_module_1.ChatModule,
             bullmq_1.BullModule.registerQueue({
                 name: 'webhook-ingress',
             }),

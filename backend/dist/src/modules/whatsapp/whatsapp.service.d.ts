@@ -6,6 +6,7 @@ export declare class WhatsappService {
     private readonly logger;
     constructor(prisma: PrismaService, chatGateway: ChatGateway);
     private ensureDefaultInstance;
+    private syncEvolutionInstances;
     getInstances(tenantId: string): Promise<{
         token: string;
         hasToken: boolean;

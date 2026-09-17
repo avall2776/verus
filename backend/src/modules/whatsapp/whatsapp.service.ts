@@ -58,10 +58,109 @@ export class WhatsappService {
   }
 
   /**
+   * Sincroniza instâncias ativas do container Evolution API (Baileys) com o banco de dados do tenant
+   */
+  private async syncEvolutionInstances(tenantId: string) {
+    try {
+      const evolutionUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
+      const apiKey = process.env.EVOLUTION_API_KEY || 'verto123';
+
+      const res = await axios.get(`${evolutionUrl}/instance/fetchInstances`, {
+        headers: { apikey: apiKey },
+        timeout: 4000,
+      });
+
+      const evoList = Array.isArray(res.data) ? res.data : [];
+
+      for (const item of evoList) {
+        const evo = item.instance || item;
+        const instanceName = evo.instanceName;
+        if (!instanceName) continue;
+
+        const isConnected = evo.status === 'open' || evo.connectionStatus === 'open';
+        const rawOwner = evo.owner || '';
+        const phone = rawOwner.replace(/\D/g, '') || null;
+
+        const existing = await this.prisma.whatsAppInstance.findFirst({
+          where: {
+            tenantId,
+            OR: [
+              { name: instanceName },
+              { name: `${instanceName} (WhatsApp Web)` },
+            ],
+          },
+        });
+
+        if (!existing) {
+          await this.prisma.whatsAppInstance.create({
+            data: {
+              tenantId,
+              name: `${instanceName} (WhatsApp Web)`,
+              phoneNumber: phone,
+              profileName: evo.profileName || 'WhatsApp Baileys',
+              profilePicUrl: evo.profilePictureUrl || null,
+              status: isConnected ? 'connected' : 'disconnected',
+              token: evo.apikey || apiKey,
+              phoneNumberId: null,
+              isDefault: false,
+              settings: {
+                provider: 'evolution',
+                instanceName: instanceName,
+                serverUrl: evolutionUrl,
+                antiBanEnabled: true,
+                typingDelayMs: 1200,
+                messageDelayMs: 2500,
+              },
+              lastConnectedAt: isConnected ? new Date() : null,
+              history: {
+                create: {
+                  status: isConnected ? 'connected' : 'created',
+                  details: `Instância Baileys sincronizada da Evolution API [${instanceName}]`,
+                },
+              },
+            },
+          });
+        } else {
+          await this.prisma.whatsAppInstance.update({
+            where: { id: existing.id },
+            data: {
+              status: isConnected ? 'connected' : existing.status,
+              profilePicUrl: evo.profilePictureUrl || existing.profilePicUrl,
+              profileName: evo.profileName || existing.profileName,
+              phoneNumber: phone || existing.phoneNumber,
+              lastConnectedAt: isConnected ? new Date() : existing.lastConnectedAt,
+            },
+          });
+        }
+
+        // Garante webhook configurado no Evolution API
+        try {
+          await axios.post(
+            `${evolutionUrl}/webhook/set/${instanceName}`,
+            {
+              enabled: true,
+              url: `http://localhost:3001/webhooks/evolution/${tenantId}`,
+              webhook_by_events: false,
+              events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'SEND_MESSAGE'],
+            },
+            {
+              headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+              timeout: 4000,
+            },
+          );
+        } catch {}
+      }
+    } catch (err: any) {
+      this.logger.debug(`Sincronização de instâncias Evolution API ignorada: ${err.message}`);
+    }
+  }
+
+  /**
    * Lista todas as instâncias WhatsApp de um workspace/tenant
    */
   async getInstances(tenantId: string) {
     await this.ensureDefaultInstance(tenantId);
+    await this.syncEvolutionInstances(tenantId);
 
     const instances = await this.prisma.whatsAppInstance.findMany({
       where: { tenantId },
@@ -241,14 +340,33 @@ export class WhatsappService {
     }
 
     if (mode === 'qr') {
-      // Geração de QR Code dinâmico no padrão de pareamento WhatsApp Web
-      const simulatedQr = `2@${Date.now()}==,${Buffer.from(id).toString('base64')},${Date.now()}`;
-      
+      let qrCodeToUse = `2@${Date.now()}==,${Buffer.from(id).toString('base64')},${Date.now()}`;
+
+      // Tenta obter QR Code real da Evolution API se a instância estiver configurada nela
+      try {
+        const evolutionUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
+        const apiKey = process.env.EVOLUTION_API_KEY || 'verto123';
+        const instanceName = (instance.settings as any)?.instanceName || instance.name.replace(/\s+/g, '_');
+
+        const evoRes = await axios.get(`${evolutionUrl}/instance/connect/${instanceName}`, {
+          headers: { apikey: apiKey },
+          timeout: 6000,
+        });
+
+        if (evoRes.data?.code) {
+          qrCodeToUse = evoRes.data.code;
+        } else if (evoRes.data?.base64) {
+          qrCodeToUse = evoRes.data.base64;
+        }
+      } catch (evoErr: any) {
+        this.logger.debug(`QR real Evolution API indisponível, usando gerador dinâmico: ${evoErr.message}`);
+      }
+
       const updated = await this.prisma.whatsAppInstance.update({
         where: { id },
         data: {
           status: 'qrcode',
-          qrCode: simulatedQr
+          qrCode: qrCodeToUse
         }
       });
 
@@ -264,7 +382,7 @@ export class WhatsappService {
 
       return {
         status: 'qrcode',
-        qrCode: simulatedQr,
+        qrCode: qrCodeToUse,
         message: 'Aponte a câmera do WhatsApp para o QR Code gerado'
       };
     }

@@ -9,12 +9,23 @@ export declare class ChatService {
     private readonly whatsappService;
     private readonly chatGateway;
     private readonly scheduledQueue;
+    private readonly logger;
     constructor(prisma: PrismaService, messagingService: MessagingService, whatsappService: WhatsappService, chatGateway: ChatGateway, scheduledQueue: Queue);
     getConversationCounts(tenantId: string, userId: string, userRole: string): Promise<{
         waiting: number;
         mine: number;
         resolved: number;
         total: number;
+    }>;
+    getOperatorProductivity(tenantId: string, userId: string): Promise<{
+        todayFinishedCount: number;
+        tmaSeconds: number;
+        firstResponseSeconds: number;
+        todayAvgTma: string;
+        todayFirstResp: string;
+        avgDaily: number;
+        finishedVsAveragePercent: number;
+        dailyGoal: number;
     }>;
     findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string): Promise<({
         contact: {
@@ -439,6 +450,7 @@ export declare class ChatService {
         mediaUrl?: string;
         scheduledAt?: string;
         timezone?: string;
+        instanceId?: string;
     }): Promise<{
         id: string;
         tenantId: string;
@@ -478,6 +490,7 @@ export declare class ChatService {
     sendManualAudioMessage(tenantId: string, conversationId: string, file: Express.Multer.File, payload: {
         content?: string;
         isInternal?: boolean;
+        instanceId?: string;
     }): Promise<{
         id: string;
         tenantId: string;

@@ -24,4 +24,8 @@ export class SendMessageDto {
   @IsString()
   @IsOptional()
   timezone?: string;
+
+  @IsString()
+  @IsOptional()
+  instanceId?: string;
 }

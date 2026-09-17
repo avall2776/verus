@@ -22,11 +22,26 @@ export interface SendMediaPayload {
     filename?: string;
     instanceId?: string;
 }
+export interface SendResult {
+    success: boolean;
+    messageId?: string;
+    provider?: 'evolution' | 'meta' | 'simulated';
+    error?: string;
+    raw?: any;
+}
 export declare class MessagingService {
     private readonly prisma;
     private readonly logger;
     constructor(prisma: PrismaService);
-    sendText(payload: SendMessagePayload): Promise<any>;
-    sendAudio(payload: SendAudioPayload): Promise<any>;
-    sendMedia(payload: SendMediaPayload): Promise<any>;
+    sanitizePhone(phone: string): string;
+    private resolveConnection;
+    sendText(payload: SendMessagePayload): Promise<SendResult>;
+    private sendEvolutionText;
+    private sendMetaText;
+    sendMedia(payload: SendMediaPayload): Promise<SendResult>;
+    private sendEvolutionMedia;
+    private sendMetaMedia;
+    sendAudio(payload: SendAudioPayload): Promise<SendResult>;
+    private sendEvolutionAudio;
+    private sendMetaAudio;
 }

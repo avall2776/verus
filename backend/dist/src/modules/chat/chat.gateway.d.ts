@@ -10,4 +10,10 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
     emitConversationUpdated(tenantId: string, conversationData: any): void;
     emitNewTeamMessage(tenantId: string, messageData: any): void;
     emitWhatsAppStatusUpdated(tenantId: string, instanceData: any): void;
+    emitMessageStatusUpdated(tenantId: string, statusData: {
+        messageId?: string;
+        providerMessageId?: string;
+        status: string;
+        conversationId?: string;
+    }): void;
 }

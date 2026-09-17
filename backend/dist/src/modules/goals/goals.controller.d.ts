@@ -91,9 +91,9 @@ export declare class GoalsController {
         userId: string | null;
         targetType: string;
         targetValue: import("@prisma/client/runtime/library").Decimal;
+        currentValue: import("@prisma/client/runtime/library").Decimal;
         periodStart: Date;
         periodEnd: Date;
-        currentValue: import("@prisma/client/runtime/library").Decimal;
     }>;
     update(tenantId: string, id: string, dto: UpdateGoalDto): Promise<{
         user: {
@@ -110,9 +110,9 @@ export declare class GoalsController {
         userId: string | null;
         targetType: string;
         targetValue: import("@prisma/client/runtime/library").Decimal;
+        currentValue: import("@prisma/client/runtime/library").Decimal;
         periodStart: Date;
         periodEnd: Date;
-        currentValue: import("@prisma/client/runtime/library").Decimal;
     }>;
     delete(tenantId: string, id: string): Promise<{
         success: boolean;

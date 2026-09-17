@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var ChatService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatService = void 0;
 const common_1 = require("@nestjs/common");
@@ -26,13 +27,14 @@ const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
 const chat_gateway_1 = require("./chat.gateway");
 const bullmq_1 = require("@nestjs/bullmq");
 const bullmq_2 = require("bullmq");
-let ChatService = class ChatService {
+let ChatService = ChatService_1 = class ChatService {
     constructor(prisma, messagingService, whatsappService, chatGateway, scheduledQueue) {
         this.prisma = prisma;
         this.messagingService = messagingService;
         this.whatsappService = whatsappService;
         this.chatGateway = chatGateway;
         this.scheduledQueue = scheduledQueue;
+        this.logger = new common_1.Logger(ChatService_1.name);
     }
     async getConversationCounts(tenantId, userId, userRole) {
         const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
@@ -59,6 +61,102 @@ let ChatService = class ChatService {
             }),
         ]);
         return { waiting, mine, resolved, total: waiting + mine + resolved };
+    }
+    async getOperatorProductivity(tenantId, userId) {
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+        const todayResolved = await this.prisma.conversation.findMany({
+            where: {
+                tenantId,
+                assignedTo: userId,
+                status: { in: ['resolved', 'closed', 'RESOLVED', 'CLOSED'] },
+                updatedAt: { gte: startOfToday, lte: endOfToday },
+            },
+            include: {
+                messages: {
+                    select: {
+                        createdAt: true,
+                        direction: true,
+                        isInternal: true,
+                    },
+                    orderBy: { createdAt: 'asc' },
+                },
+            },
+        });
+        const todayFinishedCount = todayResolved.length;
+        let tmaSeconds = 0;
+        let firstResponseSeconds = 0;
+        if (todayFinishedCount > 0) {
+            let totalDurationSeconds = 0;
+            let totalFirstRespSeconds = 0;
+            let firstRespCount = 0;
+            for (const conv of todayResolved) {
+                const durationSec = Math.max(0, Math.round((new Date(conv.updatedAt).getTime() - new Date(conv.createdAt).getTime()) / 1000));
+                totalDurationSeconds += durationSec;
+                const inMsgs = conv.messages.filter(m => m.direction === 'INBOUND' && !m.isInternal);
+                const outMsgs = conv.messages.filter(m => m.direction === 'OUTBOUND' && !m.isInternal);
+                if (inMsgs.length > 0 && outMsgs.length > 0) {
+                    const firstIn = inMsgs[0];
+                    const firstOutAfterIn = outMsgs.find(o => new Date(o.createdAt).getTime() >= new Date(firstIn.createdAt).getTime()) || outMsgs[0];
+                    const respSec = Math.max(0, Math.round((new Date(firstOutAfterIn.createdAt).getTime() - new Date(firstIn.createdAt).getTime()) / 1000));
+                    totalFirstRespSeconds += respSec;
+                    firstRespCount++;
+                }
+                else if (outMsgs.length > 0) {
+                    const respSec = Math.max(0, Math.round((new Date(outMsgs[0].createdAt).getTime() - new Date(conv.createdAt).getTime()) / 1000));
+                    totalFirstRespSeconds += respSec;
+                    firstRespCount++;
+                }
+            }
+            tmaSeconds = Math.round(totalDurationSeconds / todayFinishedCount);
+            firstResponseSeconds = firstRespCount > 0 ? Math.round(totalFirstRespSeconds / firstRespCount) : 0;
+        }
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const pastResolvedCount = await this.prisma.conversation.count({
+            where: {
+                tenantId,
+                assignedTo: userId,
+                status: { in: ['resolved', 'closed', 'RESOLVED', 'CLOSED'] },
+                updatedAt: { gte: thirtyDaysAgo, lt: startOfToday },
+            },
+        });
+        const avgDaily = Math.round(pastResolvedCount / 30);
+        let finishedVsAveragePercent = 0;
+        if (avgDaily > 0) {
+            finishedVsAveragePercent = Math.round(((todayFinishedCount - avgDaily) / avgDaily) * 100);
+        }
+        const userGoal = await this.prisma.goal.findFirst({
+            where: {
+                tenantId,
+                userId,
+            },
+        });
+        const dailyGoal = userGoal?.targetValue ? Math.round(Number(userGoal.targetValue)) : 10;
+        const formatDuration = (sec) => {
+            if (sec <= 0)
+                return '0s';
+            if (sec < 60)
+                return `${sec}s`;
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            if (m < 60) {
+                return s > 0 ? `${m}m ${s}s` : `${m}m`;
+            }
+            const h = Math.floor(sec / 3600);
+            const remM = Math.floor((sec % 3600) / 60);
+            return remM > 0 ? `${h}h ${remM}m` : `${h}h`;
+        };
+        return {
+            todayFinishedCount,
+            tmaSeconds,
+            firstResponseSeconds,
+            todayAvgTma: todayFinishedCount > 0 && tmaSeconds > 0 ? formatDuration(tmaSeconds) : '0 min',
+            todayFirstResp: todayFinishedCount > 0 && firstResponseSeconds > 0 ? formatDuration(firstResponseSeconds) : '0s',
+            avgDaily,
+            finishedVsAveragePercent,
+            dailyGoal,
+        };
     }
     async findAllConversations(tenantId, userId, userRole, tab = 'waiting') {
         const whereClause = { tenantId };
@@ -488,11 +586,13 @@ let ChatService = class ChatService {
         const isInternal = payload.isInternal || false;
         const type = payload.type || 'text';
         const mediaUrl = payload.mediaUrl || null;
-        const msg = await this.prisma.message.create({
+        const initialStatus = isInternal ? 'delivered' : 'pending';
+        const tempMessageId = `manual_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        let msg = await this.prisma.message.create({
             data: {
                 tenantId,
                 conversationId,
-                providerMessageId: `manual_${Date.now()}`,
+                providerMessageId: tempMessageId,
                 contactId: conversation.contactId,
                 content: payload.content,
                 type,
@@ -500,25 +600,72 @@ let ChatService = class ChatService {
                 isInternal,
                 direction: 'OUTBOUND',
                 senderType: 'user',
-                status: 'delivered',
+                status: initialStatus,
             }
         });
         if (!isInternal && conversation.contact?.phone) {
-            if ((type === 'image' || type === 'document') && mediaUrl) {
-                await this.messagingService.sendMedia({
-                    tenantId,
-                    phone: conversation.contact.phone,
-                    type,
-                    mediaUrl,
-                    content: payload.content,
-                    filename: payload.content?.includes('.') ? payload.content : (type === 'document' ? 'documento.pdf' : 'imagem.jpg'),
-                });
+            try {
+                let sendRes = null;
+                if ((type === 'image' || type === 'document') && mediaUrl) {
+                    sendRes = await this.messagingService.sendMedia({
+                        tenantId,
+                        phone: conversation.contact.phone,
+                        type,
+                        mediaUrl,
+                        content: payload.content,
+                        filename: payload.content?.includes('.') ? payload.content : (type === 'document' ? 'documento.pdf' : 'imagem.jpg'),
+                        instanceId: payload.instanceId,
+                    });
+                }
+                else {
+                    sendRes = await this.messagingService.sendText({
+                        tenantId,
+                        phone: conversation.contact.phone,
+                        content: payload.content,
+                        instanceId: payload.instanceId,
+                    });
+                }
+                if (sendRes?.success) {
+                    const finalStatus = 'sent';
+                    msg = await this.prisma.message.update({
+                        where: { id: msg.id },
+                        data: {
+                            providerMessageId: sendRes.messageId || msg.providerMessageId,
+                            status: finalStatus,
+                        },
+                    });
+                    this.chatGateway.emitMessageStatusUpdated(tenantId, {
+                        messageId: msg.id,
+                        providerMessageId: msg.providerMessageId,
+                        status: finalStatus,
+                        conversationId,
+                    });
+                }
+                else {
+                    this.logger.error(`Falha no envio da mensagem ${msg.id} para ${conversation.contact.phone}: ${sendRes?.error}`);
+                    msg = await this.prisma.message.update({
+                        where: { id: msg.id },
+                        data: { status: 'failed' },
+                    });
+                    this.chatGateway.emitMessageStatusUpdated(tenantId, {
+                        messageId: msg.id,
+                        providerMessageId: msg.providerMessageId,
+                        status: 'failed',
+                        conversationId,
+                    });
+                }
             }
-            else {
-                await this.messagingService.sendText({
-                    tenantId,
-                    phone: conversation.contact.phone,
-                    content: payload.content,
+            catch (err) {
+                this.logger.error(`Exceção ao disparar mensagem WhatsApp: ${err.message}`);
+                msg = await this.prisma.message.update({
+                    where: { id: msg.id },
+                    data: { status: 'failed' },
+                });
+                this.chatGateway.emitMessageStatusUpdated(tenantId, {
+                    messageId: msg.id,
+                    providerMessageId: msg.providerMessageId,
+                    status: 'failed',
+                    conversationId,
                 });
             }
         }
@@ -594,11 +741,13 @@ let ChatService = class ChatService {
         const filePath = path.join(uploadDir, filename);
         await fs.promises.writeFile(filePath, finalBuffer);
         const mediaUrl = `/api-backend/media/audio/${filename}`;
-        const msg = await this.prisma.message.create({
+        const initialStatus = isInternal ? 'delivered' : 'pending';
+        const tempMessageId = `audio_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        let msg = await this.prisma.message.create({
             data: {
                 tenantId,
                 conversationId,
-                providerMessageId: `audio_${Date.now()}`,
+                providerMessageId: tempMessageId,
                 contactId: conversation.contactId,
                 content: payload.content || '🎤 Mensagem de voz',
                 type: 'audio',
@@ -606,17 +755,62 @@ let ChatService = class ChatService {
                 isInternal,
                 direction: 'OUTBOUND',
                 senderType: 'user',
-                status: 'delivered',
+                status: initialStatus,
             }
         });
         if (!isInternal && conversation.contact?.phone) {
-            await this.messagingService.sendAudio({
-                tenantId,
-                phone: conversation.contact.phone,
-                audioBuffer: finalBuffer,
-                audioUrl: mediaUrl,
-                mimeType: finalMimeType,
-            });
+            try {
+                const sendRes = await this.messagingService.sendAudio({
+                    tenantId,
+                    phone: conversation.contact.phone,
+                    audioBuffer: finalBuffer,
+                    audioUrl: mediaUrl,
+                    mimeType: finalMimeType,
+                    instanceId: payload.instanceId,
+                });
+                if (sendRes?.success) {
+                    const finalStatus = 'sent';
+                    msg = await this.prisma.message.update({
+                        where: { id: msg.id },
+                        data: {
+                            providerMessageId: sendRes.messageId || msg.providerMessageId,
+                            status: finalStatus,
+                        },
+                    });
+                    this.chatGateway.emitMessageStatusUpdated(tenantId, {
+                        messageId: msg.id,
+                        providerMessageId: msg.providerMessageId,
+                        status: finalStatus,
+                        conversationId,
+                    });
+                }
+                else {
+                    this.logger.error(`Falha no envio de áudio ${msg.id} para ${conversation.contact.phone}: ${sendRes?.error}`);
+                    msg = await this.prisma.message.update({
+                        where: { id: msg.id },
+                        data: { status: 'failed' },
+                    });
+                    this.chatGateway.emitMessageStatusUpdated(tenantId, {
+                        messageId: msg.id,
+                        providerMessageId: msg.providerMessageId,
+                        status: 'failed',
+                        conversationId,
+                    });
+                }
+            }
+            catch (err) {
+                this.logger.error(`Exceção ao disparar áudio WhatsApp: ${err.message}`);
+                msg = await this.prisma.message.update({
+                    where: { id: msg.id },
+                    data: { status: 'failed' },
+                });
+                this.chatGateway.emitMessageStatusUpdated(tenantId, {
+                    messageId: msg.id,
+                    providerMessageId: msg.providerMessageId,
+                    status: 'failed',
+                    conversationId,
+                });
+            }
         }
         if (conversation.status === 'bot_active' && !isInternal) {
             await this.prisma.conversation.update({
@@ -629,7 +823,7 @@ let ChatService = class ChatService {
     }
 };
 exports.ChatService = ChatService;
-exports.ChatService = ChatService = __decorate([
+exports.ChatService = ChatService = ChatService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(4, (0, bullmq_1.InjectQueue)('scheduled-messages')),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,

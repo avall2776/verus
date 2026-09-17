@@ -174,6 +174,7 @@ export class ChatController {
     @UploadedFile() file: Express.Multer.File,
     @Body('isInternal') isInternal?: string | boolean,
     @Body('content') content?: string,
+    @Body('instanceId') instanceId?: string,
   ) {
     if (!file) {
       throw new BadRequestException('Arquivo de áudio obrigatório.');
@@ -181,6 +182,7 @@ export class ChatController {
     return this.chatService.sendManualAudioMessage(tenantId, conversationId, file, {
       isInternal: isInternal === 'true' || isInternal === true,
       content: content || '🎤 Mensagem de voz',
+      instanceId,
     });
   }
 

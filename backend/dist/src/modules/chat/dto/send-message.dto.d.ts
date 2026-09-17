@@ -5,4 +5,5 @@ export declare class SendMessageDto {
     mediaUrl?: string;
     scheduledAt?: string;
     timezone?: string;
+    instanceId?: string;
 }

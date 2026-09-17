@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -15,6 +15,8 @@ import { Queue } from 'bullmq';
 
 @Injectable()
 export class ChatService {
+  private readonly logger = new Logger(ChatService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly messagingService: MessagingService,
@@ -703,6 +705,7 @@ export class ChatService {
       mediaUrl?: string;
       scheduledAt?: string;
       timezone?: string;
+      instanceId?: string;
     }
   ) {
     // Se o payload contiver data/hora de agendamento, encaminha para o fluxo de schedule
@@ -729,13 +732,15 @@ export class ChatService {
     const isInternal = payload.isInternal || false;
     const type = payload.type || 'text';
     const mediaUrl = payload.mediaUrl || null;
+    const initialStatus = isInternal ? 'delivered' : 'pending';
+    const tempMessageId = `manual_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-    // Execução sequencial p/ evitar lock de banco serverless
-    const msg = await this.prisma.message.create({
+    // Criação inicial da mensagem
+    let msg = await this.prisma.message.create({
       data: {
         tenantId,
         conversationId,
-        providerMessageId: `manual_${Date.now()}`,
+        providerMessageId: tempMessageId,
         contactId: conversation.contactId,
         content: payload.content,
         type,
@@ -743,26 +748,72 @@ export class ChatService {
         isInternal,
         direction: 'OUTBOUND',
         senderType: 'user', // Atendente humano
-        status: 'delivered',
+        status: initialStatus,
       }
     });
 
     // Só envia para o WhatsApp/API externa se NÃO for nota interna
     if (!isInternal && conversation.contact?.phone) {
-      if ((type === 'image' || type === 'document') && mediaUrl) {
-        await this.messagingService.sendMedia({
-          tenantId,
-          phone: conversation.contact.phone,
-          type,
-          mediaUrl,
-          content: payload.content,
-          filename: payload.content?.includes('.') ? payload.content : (type === 'document' ? 'documento.pdf' : 'imagem.jpg'),
+      try {
+        let sendRes: any = null;
+        if ((type === 'image' || type === 'document') && mediaUrl) {
+          sendRes = await this.messagingService.sendMedia({
+            tenantId,
+            phone: conversation.contact.phone,
+            type,
+            mediaUrl,
+            content: payload.content,
+            filename: payload.content?.includes('.') ? payload.content : (type === 'document' ? 'documento.pdf' : 'imagem.jpg'),
+            instanceId: payload.instanceId,
+          });
+        } else {
+          sendRes = await this.messagingService.sendText({
+            tenantId,
+            phone: conversation.contact.phone,
+            content: payload.content,
+            instanceId: payload.instanceId,
+          });
+        }
+
+        if (sendRes?.success) {
+          const finalStatus = 'sent';
+          msg = await this.prisma.message.update({
+            where: { id: msg.id },
+            data: {
+              providerMessageId: sendRes.messageId || msg.providerMessageId,
+              status: finalStatus,
+            },
+          });
+          this.chatGateway.emitMessageStatusUpdated(tenantId, {
+            messageId: msg.id,
+            providerMessageId: msg.providerMessageId,
+            status: finalStatus,
+            conversationId,
+          });
+        } else {
+          this.logger.error(`Falha no envio da mensagem ${msg.id} para ${conversation.contact.phone}: ${sendRes?.error}`);
+          msg = await this.prisma.message.update({
+            where: { id: msg.id },
+            data: { status: 'failed' },
+          });
+          this.chatGateway.emitMessageStatusUpdated(tenantId, {
+            messageId: msg.id,
+            providerMessageId: msg.providerMessageId,
+            status: 'failed',
+            conversationId,
+          });
+        }
+      } catch (err: any) {
+        this.logger.error(`Exceção ao disparar mensagem WhatsApp: ${err.message}`);
+        msg = await this.prisma.message.update({
+          where: { id: msg.id },
+          data: { status: 'failed' },
         });
-      } else {
-        await this.messagingService.sendText({
-          tenantId,
-          phone: conversation.contact.phone,
-          content: payload.content,
+        this.chatGateway.emitMessageStatusUpdated(tenantId, {
+          messageId: msg.id,
+          providerMessageId: msg.providerMessageId,
+          status: 'failed',
+          conversationId,
         });
       }
     }
@@ -774,10 +825,10 @@ export class ChatService {
       });
     }
 
-    // Emite o evento via WebSocket para atualizar todos os clientes (outros atendentes na mesma tela)
+    // Emite a mensagem via WebSocket para atualizar todos os atendentes
     this.chatGateway.emitNewMessage(tenantId, msg);
 
-    return msg; // Retorna a mensagem criada
+    return msg;
   }
 
   async sendManualMessageToContact(tenantId: string, contactId: string, payload: any, userId: string) {
@@ -804,7 +855,7 @@ export class ChatService {
     tenantId: string,
     conversationId: string,
     file: Express.Multer.File,
-    payload: { content?: string; isInternal?: boolean }
+    payload: { content?: string; isInternal?: boolean; instanceId?: string }
   ) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
@@ -851,12 +902,14 @@ export class ChatService {
     await fs.promises.writeFile(filePath, finalBuffer);
 
     const mediaUrl = `/api-backend/media/audio/${filename}`;
+    const initialStatus = isInternal ? 'delivered' : 'pending';
+    const tempMessageId = `audio_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-    const msg = await this.prisma.message.create({
+    let msg = await this.prisma.message.create({
       data: {
         tenantId,
         conversationId,
-        providerMessageId: `audio_${Date.now()}`,
+        providerMessageId: tempMessageId,
         contactId: conversation.contactId,
         content: payload.content || '🎤 Mensagem de voz',
         type: 'audio',
@@ -864,18 +917,62 @@ export class ChatService {
         isInternal,
         direction: 'OUTBOUND',
         senderType: 'user',
-        status: 'delivered',
+        status: initialStatus,
       }
     });
 
     if (!isInternal && conversation.contact?.phone) {
-      await this.messagingService.sendAudio({
-        tenantId,
-        phone: conversation.contact.phone,
-        audioBuffer: finalBuffer,
-        audioUrl: mediaUrl,
-        mimeType: finalMimeType,
-      });
+      try {
+        const sendRes = await this.messagingService.sendAudio({
+          tenantId,
+          phone: conversation.contact.phone,
+          audioBuffer: finalBuffer,
+          audioUrl: mediaUrl,
+          mimeType: finalMimeType,
+          instanceId: payload.instanceId,
+        });
+
+        if (sendRes?.success) {
+          const finalStatus = 'sent';
+          msg = await this.prisma.message.update({
+            where: { id: msg.id },
+            data: {
+              providerMessageId: sendRes.messageId || msg.providerMessageId,
+              status: finalStatus,
+            },
+          });
+          this.chatGateway.emitMessageStatusUpdated(tenantId, {
+            messageId: msg.id,
+            providerMessageId: msg.providerMessageId,
+            status: finalStatus,
+            conversationId,
+          });
+        } else {
+          this.logger.error(`Falha no envio de áudio ${msg.id} para ${conversation.contact.phone}: ${sendRes?.error}`);
+          msg = await this.prisma.message.update({
+            where: { id: msg.id },
+            data: { status: 'failed' },
+          });
+          this.chatGateway.emitMessageStatusUpdated(tenantId, {
+            messageId: msg.id,
+            providerMessageId: msg.providerMessageId,
+            status: 'failed',
+            conversationId,
+          });
+        }
+      } catch (err: any) {
+        this.logger.error(`Exceção ao disparar áudio WhatsApp: ${err.message}`);
+        msg = await this.prisma.message.update({
+          where: { id: msg.id },
+          data: { status: 'failed' },
+        });
+        this.chatGateway.emitMessageStatusUpdated(tenantId, {
+          messageId: msg.id,
+          providerMessageId: msg.providerMessageId,
+          status: 'failed',
+          conversationId,
+        });
+      }
     }
 
     if (conversation.status === 'bot_active' && !isInternal) {

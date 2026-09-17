@@ -31,6 +31,9 @@ let ChatController = class ChatController {
     async getConversationCounts(tenantId, req) {
         return this.chatService.getConversationCounts(tenantId, req.user.id, req.user.role);
     }
+    async getOperatorProductivity(tenantId, req) {
+        return this.chatService.getOperatorProductivity(tenantId, req.user.id);
+    }
     async getAllScheduledMessages(tenantId) {
         return this.chatService.getAllScheduledMessages(tenantId);
     }
@@ -82,13 +85,14 @@ let ChatController = class ChatController {
             throw error;
         }
     }
-    async sendAudioMessage(tenantId, conversationId, file, isInternal, content) {
+    async sendAudioMessage(tenantId, conversationId, file, isInternal, content, instanceId) {
         if (!file) {
             throw new common_1.BadRequestException('Arquivo de áudio obrigatório.');
         }
         return this.chatService.sendManualAudioMessage(tenantId, conversationId, file, {
             isInternal: isInternal === 'true' || isInternal === true,
             content: content || '🎤 Mensagem de voz',
+            instanceId,
         });
     }
     async scheduleMessage(tenantId, conversationId, payload) {
@@ -135,6 +139,14 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "getConversationCounts", null);
+__decorate([
+    (0, common_1.Get)('operator-productivity'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "getOperatorProductivity", null);
 __decorate([
     (0, common_1.Get)('scheduled/all'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
@@ -266,8 +278,9 @@ __decorate([
     __param(2, (0, common_1.UploadedFile)()),
     __param(3, (0, common_1.Body)('isInternal')),
     __param(4, (0, common_1.Body)('content')),
+    __param(5, (0, common_1.Body)('instanceId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object, Object, String]),
+    __metadata("design:paramtypes", [String, String, Object, Object, String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "sendAudioMessage", null);
 __decorate([

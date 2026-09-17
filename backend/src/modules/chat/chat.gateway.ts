@@ -72,5 +72,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.warn('WebSocket server not initialized yet, skipping emitWhatsAppStatusUpdated');
     }
   }
+
+  public emitMessageStatusUpdated(tenantId: string, statusData: { messageId?: string; providerMessageId?: string; status: string; conversationId?: string }) {
+    if (this.server) {
+      this.server.to(tenantId).emit('messageStatusUpdated', statusData);
+    } else {
+      this.logger.warn('WebSocket server not initialized yet, skipping emitMessageStatusUpdated');
+    }
+  }
 }
 

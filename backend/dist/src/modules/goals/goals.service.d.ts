@@ -93,9 +93,9 @@ export declare class GoalsService {
         userId: string | null;
         targetType: string;
         targetValue: Prisma.Decimal;
+        currentValue: Prisma.Decimal;
         periodStart: Date;
         periodEnd: Date;
-        currentValue: Prisma.Decimal;
     }>;
     update(tenantId: string, id: string, dto: UpdateGoalDto): Promise<{
         user: {
@@ -112,9 +112,9 @@ export declare class GoalsService {
         userId: string | null;
         targetType: string;
         targetValue: Prisma.Decimal;
+        currentValue: Prisma.Decimal;
         periodStart: Date;
         periodEnd: Date;
-        currentValue: Prisma.Decimal;
     }>;
     delete(tenantId: string, id: string): Promise<{
         success: boolean;

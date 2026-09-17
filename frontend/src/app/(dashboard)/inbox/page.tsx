@@ -9,7 +9,8 @@ import {
   BookUser, CalendarClock, PhoneCall, Zap, Eye, ShieldCheck, PhoneForwarded, UserCheck,
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, Trash2, Play, Pause,
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
-  BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin
+  BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
+  Clock, AlertCircle
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -548,6 +549,9 @@ function InboxContent() {
         formData.append('type', 'audio');
         formData.append('content', '🎤 Mensagem de voz');
         formData.append('isInternal', String(isInternalMode));
+        if (activeInstance?.id) {
+          formData.append('instanceId', activeInstance.id);
+        }
 
         // Envia via FormData para o backend processar, converter se necessário e disparar na ponta final do WhatsApp
         const { data } = await api.post(`/conversations/${activeChat}/messages/audio`, formData);
@@ -939,12 +943,28 @@ function InboxContent() {
       });
     };
 
+    const handleMessageStatusUpdated = (data: { messageId?: string; providerMessageId?: string; status: string; conversationId?: string }) => {
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (
+            (data.messageId && m.id === data.messageId) ||
+            (data.providerMessageId && m.providerMessageId === data.providerMessageId)
+          ) {
+            return { ...m, status: data.status };
+          }
+          return m;
+        })
+      );
+    };
+
     socket.on('newMessage', handleNewMessage);
     socket.on('conversationUpdated', handleConversationUpdated);
+    socket.on('messageStatusUpdated', handleMessageStatusUpdated);
 
     return () => {
       socket.off('newMessage', handleNewMessage);
       socket.off('conversationUpdated', handleConversationUpdated);
+      socket.off('messageStatusUpdated', handleMessageStatusUpdated);
     };
   }, [socket, activeChat, activeTab, activeFilterTab]);
 
@@ -1066,7 +1086,8 @@ function InboxContent() {
       const payload: any = { 
         content: content || (fileToUpload ? fileToUpload.name : ''),
         isInternal: isInternalMode,
-        type
+        type,
+        ...(activeInstance?.id ? { instanceId: activeInstance.id } : {})
       };
       
       if (mediaUrl) {
@@ -2265,7 +2286,25 @@ function InboxContent() {
                             }`}>
                               <span>{new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                               {isMe && !msg.isInternal && (
-                                <CheckCheck size={14} className="text-[#53bdeb] shrink-0" />
+                                <span title={
+                                  msg.status === 'read' ? 'Lida' :
+                                  msg.status === 'delivered' ? 'Entregue' :
+                                  msg.status === 'sent' ? 'Enviada' :
+                                  msg.status === 'failed' || msg.status === 'error' ? 'Não entregue' :
+                                  'Enviando...'
+                                } className="inline-flex items-center">
+                                  {msg.status === 'read' ? (
+                                    <CheckCheck size={14} className="text-[#53bdeb] shrink-0" />
+                                  ) : msg.status === 'delivered' ? (
+                                    <CheckCheck size={14} className="text-slate-400 shrink-0" />
+                                  ) : msg.status === 'sent' ? (
+                                    <Check size={14} className="text-slate-400 shrink-0" />
+                                  ) : msg.status === 'failed' || msg.status === 'error' ? (
+                                    <AlertCircle size={13} className="text-rose-400 shrink-0" />
+                                  ) : (
+                                    <Clock size={12} className="text-slate-400 shrink-0" />
+                                  )}
+                                </span>
                               )}
                             </span>
                           </div>

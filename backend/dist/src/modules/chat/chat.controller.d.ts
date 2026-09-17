@@ -59,6 +59,16 @@ export declare class ChatController {
         resolved: number;
         total: number;
     }>;
+    getOperatorProductivity(tenantId: string, req: any): Promise<{
+        todayFinishedCount: number;
+        tmaSeconds: number;
+        firstResponseSeconds: number;
+        todayAvgTma: string;
+        todayFirstResp: string;
+        avgDaily: number;
+        finishedVsAveragePercent: number;
+        dailyGoal: number;
+    }>;
     getAllScheduledMessages(tenantId: string): Promise<({
         contact: {
             id: string;
@@ -501,7 +511,7 @@ export declare class ChatController {
         scheduledAt: Date | null;
         conversationId: string;
     }>;
-    sendAudioMessage(tenantId: string, conversationId: string, file: Express.Multer.File, isInternal?: string | boolean, content?: string): Promise<{
+    sendAudioMessage(tenantId: string, conversationId: string, file: Express.Multer.File, isInternal?: string | boolean, content?: string, instanceId?: string): Promise<{
         id: string;
         tenantId: string;
         createdAt: Date;
