@@ -642,3 +642,41 @@ model TicketMessage {
   @@index([senderId])
 }
 
+// ------------------------------------------------------
+// ENGENHARIA DE PRODUTO & INOVAÇÃO (SUPER ADMIN)
+// ------------------------------------------------------
+
+model EngineeringItem {
+  id             String    @id @default(uuid())
+  title          String
+  description    String    @db.Text
+  stage          String    @default("CAPTURED") // CAPTURED, AI_ANALYSIS, IN_DEVELOPMENT, DEPLOYED
+  priority       String    @default("MEDIUM")   // LOW, MEDIUM, HIGH, CRITICAL
+  category       String    @default("FEATURE")  // FEATURE, API, EXTENSION, PERFORMANCE, BUG_FIX, ARCHITECTURE
+  sourceType     String    @default("MANUAL")   // MANUAL, SUPPORT_TICKET, AI_PROPOSAL
+  sourceTicketId String?
+  tenantName     String?
+  aiSummary      String?   @db.Text
+  technicalNotes String?   @db.Text
+  tags           Json?     // ["api", "crm", "performance"]
+  estimatedHours Int?
+  assignedTo     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([stage])
+  @@index([priority])
+  @@index([category])
+  @@index([sourceTicketId])
+}
+
+model EngineeringChatMessage {
+  id        String   @id @default(uuid())
+  role      String   // user, assistant, system
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+

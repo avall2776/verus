@@ -1,0 +1,167 @@
+import { ConfigService } from '@nestjs/config';
+import { CreateEngineeringItemDto } from './dto/create-engineering-item.dto';
+import { UpdateEngineeringItemDto } from './dto/update-engineering-item.dto';
+import { CreateFromTicketDto } from './dto/create-from-ticket.dto';
+import { ChatEngineeringDto } from './dto/chat-engineering.dto';
+export declare class EngineeringService {
+    private readonly configService;
+    private readonly logger;
+    private readonly prisma;
+    private readonly openai;
+    constructor(configService: ConfigService);
+    getBacklog(filters?: {
+        stage?: string;
+        category?: string;
+        priority?: string;
+        search?: string;
+    }): Promise<{
+        items: {
+            id: string;
+            tags: import("@prisma/client/runtime/library").JsonValue | null;
+            createdAt: Date;
+            updatedAt: Date;
+            assignedTo: string | null;
+            title: string;
+            description: string;
+            stage: string;
+            category: string;
+            priority: string;
+            sourceType: string;
+            sourceTicketId: string | null;
+            tenantName: string | null;
+            aiSummary: string | null;
+            technicalNotes: string | null;
+            estimatedHours: number | null;
+        }[];
+        stats: {
+            total: number;
+            captured: number;
+            aiAnalysis: number;
+            inDevelopment: number;
+            deployed: number;
+        };
+    }>;
+    findById(id: string): Promise<{
+        id: string;
+        tags: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+        assignedTo: string | null;
+        title: string;
+        description: string;
+        stage: string;
+        category: string;
+        priority: string;
+        sourceType: string;
+        sourceTicketId: string | null;
+        tenantName: string | null;
+        aiSummary: string | null;
+        technicalNotes: string | null;
+        estimatedHours: number | null;
+    }>;
+    create(dto: CreateEngineeringItemDto): Promise<{
+        id: string;
+        tags: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+        assignedTo: string | null;
+        title: string;
+        description: string;
+        stage: string;
+        category: string;
+        priority: string;
+        sourceType: string;
+        sourceTicketId: string | null;
+        tenantName: string | null;
+        aiSummary: string | null;
+        technicalNotes: string | null;
+        estimatedHours: number | null;
+    }>;
+    update(id: string, dto: UpdateEngineeringItemDto): Promise<{
+        id: string;
+        tags: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+        assignedTo: string | null;
+        title: string;
+        description: string;
+        stage: string;
+        category: string;
+        priority: string;
+        sourceType: string;
+        sourceTicketId: string | null;
+        tenantName: string | null;
+        aiSummary: string | null;
+        technicalNotes: string | null;
+        estimatedHours: number | null;
+    }>;
+    delete(id: string): Promise<{
+        id: string;
+        tags: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+        assignedTo: string | null;
+        title: string;
+        description: string;
+        stage: string;
+        category: string;
+        priority: string;
+        sourceType: string;
+        sourceTicketId: string | null;
+        tenantName: string | null;
+        aiSummary: string | null;
+        technicalNotes: string | null;
+        estimatedHours: number | null;
+    }>;
+    createFromTicket(dto: CreateFromTicketDto): Promise<{
+        id: string;
+        tags: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+        assignedTo: string | null;
+        title: string;
+        description: string;
+        stage: string;
+        category: string;
+        priority: string;
+        sourceType: string;
+        sourceTicketId: string | null;
+        tenantName: string | null;
+        aiSummary: string | null;
+        technicalNotes: string | null;
+        estimatedHours: number | null;
+    }>;
+    analyzeItemWithAI(id: string): Promise<{
+        id: string;
+        tags: import("@prisma/client/runtime/library").JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+        assignedTo: string | null;
+        title: string;
+        description: string;
+        stage: string;
+        category: string;
+        priority: string;
+        sourceType: string;
+        sourceTicketId: string | null;
+        tenantName: string | null;
+        aiSummary: string | null;
+        technicalNotes: string | null;
+        estimatedHours: number | null;
+    }>;
+    chatWithEngineeringAI(dto: ChatEngineeringDto): Promise<{
+        reply: string;
+        id: string;
+        createdAt: Date;
+    }>;
+    getChatHistory(): Promise<{
+        id: string;
+        createdAt: Date;
+        content: string;
+        role: string;
+    }[]>;
+    clearChatHistory(): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+}

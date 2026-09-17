@@ -27,7 +27,8 @@ import {
   Users,
   ShieldCheck,
   HelpCircle,
-  Tag
+  Tag,
+  Cpu
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -88,6 +89,7 @@ function SuperAdminSupportContent() {
   const [isXRayOpen, setIsXRayOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [copiedDescription, setCopiedDescription] = useState(false);
+  const [sendingToEngineering, setSendingToEngineering] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -195,6 +197,22 @@ function SuperAdminSupportContent() {
     }
   };
 
+  const handleSendToEngineering = async () => {
+    if (!selectedTicket || sendingToEngineering) return;
+    setSendingToEngineering(true);
+    try {
+      await api.post('/engineering/items/from-ticket', {
+        ticketId: selectedTicket.id,
+      });
+      toast.success("Demanda enviada com sucesso para o Backlog de Engenharia de Produto!");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Erro ao enviar chamado para a Engenharia.");
+    } finally {
+      setSendingToEngineering(false);
+    }
+  };
+
   const handleUpdateStatus = async (newStatus: string) => {
     if (!selectedTicket) return;
 
@@ -204,7 +222,18 @@ function SuperAdminSupportContent() {
       });
       setSelectedTicket((prev: any) => ({ ...prev, status: res.data.status }));
       const statusLabel = STATUS_CONFIG[newStatus]?.label || newStatus;
-      toast.success(`Status alterado para ${statusLabel}`);
+      
+      if (newStatus === 'RESOLVED') {
+        toast.success(`Chamado marcado como Resolvido! Deseja converter em melhoria técnica?`, {
+          action: {
+            label: "Enviar p/ Engenharia",
+            onClick: () => handleSendToEngineering(),
+          },
+          duration: 7000,
+        });
+      } else {
+        toast.success(`Status alterado para ${statusLabel}`);
+      }
       fetchTickets();
     } catch (err: any) {
       console.error(err);
@@ -400,8 +429,8 @@ function SuperAdminSupportContent() {
                   </div>
                 </div>
 
-                {/* Lado Direito: Ações Rápidas (Ver Dúvida Completa + Seletor de Status Traduzido) */}
-                <div className="flex items-center gap-2.5 shrink-0">
+                {/* Lado Direito: Ações Rápidas (Ver Dúvida Completa + Enviar para Engenharia + Seletor de Status Traduzido) */}
+                <div className="flex items-center gap-2 shrink-0">
                   {/* Botão de Expansão / Modal da Dúvida Completa */}
                   <button
                     onClick={() => setIsDetailModalOpen(true)}
@@ -409,7 +438,22 @@ function SuperAdminSupportContent() {
                     title="Ler texto completo da solicitação do cliente"
                   >
                     <FileText size={13} />
-                    <span>Ver Dúvida Completa</span>
+                    <span>Ver Dúvida</span>
+                  </button>
+
+                  {/* Botão Enviar para Engenharia */}
+                  <button
+                    onClick={handleSendToEngineering}
+                    disabled={sendingToEngineering}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-sm ${
+                      selectedTicket.status === 'RESOLVED'
+                        ? 'bg-cyan-600/20 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-600/30 ring-1 ring-cyan-500/20'
+                        : 'bg-slate-800/80 border border-slate-700 text-slate-300 hover:bg-slate-700/80 hover:text-white'
+                    }`}
+                    title="Transformar este chamado em item no backlog da Engenharia de Produto"
+                  >
+                    <Cpu size={13} className={selectedTicket.status === 'RESOLVED' ? "text-cyan-400" : "text-slate-400"} />
+                    <span>{sendingToEngineering ? "Enviando..." : "Enviar p/ Engenharia"}</span>
                   </button>
 
                   {/* Seletor de Status Traduzido */}

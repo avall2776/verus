@@ -13,7 +13,8 @@ import {
   ShieldAlert,
   Layers,
   Edit2,
-  Users
+  Users,
+  Cpu
 } from "lucide-react";
 import UserProfileModal from "@/components/modals/UserProfileModal";
 
@@ -22,6 +23,7 @@ const ADMIN_MENU = [
   { name: "Empresas (Tenants)", icon: Building2, href: "/super-admin/companies" },
   { name: "Central de Atendimento", icon: Headphones, href: "/super-admin/support" },
   { name: "Equipe & Operadores", icon: Users, href: "/super-admin/operators" },
+  { name: "Engenharia", icon: Cpu, href: "/super-admin/engineering" },
   { name: "Planos e Permissões", icon: ShieldCheck, href: "/super-admin/planos" },
 ];
 

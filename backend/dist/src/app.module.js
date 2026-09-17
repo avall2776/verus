@@ -37,6 +37,8 @@ const tenants_module_1 = require("./modules/tenants/tenants.module");
 const workspaces_module_1 = require("./modules/workspaces/workspaces.module");
 const notifications_module_1 = require("./modules/notifications/notifications.module");
 const search_module_1 = require("./modules/search/search.module");
+const operators_module_1 = require("./modules/operators/operators.module");
+const engineering_module_1 = require("./modules/engineering/engineering.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -72,6 +74,8 @@ exports.AppModule = AppModule = __decorate([
             workspaces_module_1.WorkspacesModule,
             notifications_module_1.NotificationsModule,
             search_module_1.SearchModule,
+            operators_module_1.OperatorsModule,
+            engineering_module_1.EngineeringModule,
         ],
         controllers: [],
         providers: [],
