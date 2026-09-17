@@ -1977,7 +1977,50 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] Proteção e redirecionamento da rota legada `/agent`.
 - [x] **Homologação, Build & Deploy**:
   - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 em ambas as pontas.
-  - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`).
+- [x] **[17/09/2026 - 15:58]** ⚡ **[IDE 1] Conclusão: Gestão de Operadores & Ações Administrativas no Raio-X da Empresa (`/super-admin/companies`) (Fase 72)**:
+  - **Status**: ✅ Concluído com Sucesso, Builds Código 0 e Homologado.
+  - **Ações Administrativas por Usuário na Tabela**:
+    - Adicionada coluna de "Ações" alinhada à direita na tabela de Operadores & Usuários Cadastrados no modal de Raio-X (`CompanyXRayModal.tsx`).
+    - Ícones discretos e ergonômicos com tooltips: Editar Dados (`Edit2`), Redefinir Senha (`KeyRound`) e Excluir Usuário (`Trash2`).
+    - Adicionada coluna de "Status" com badges sóbrios (Ativo / Bloqueado) e identificador visual de papel (`ADMIN` / `AGENT`).
+  - **Edição Rápida de Dados**:
+    - Modal corporativo permitindo alteração de Nome Completo, E-mail de Acesso, Nível de Acesso (ROLE: `ADMIN` / `AGENT`) e Status da Conta (Ativo / Bloqueado).
+    - Endpoint NestJS dedicado `PATCH /tenants/:tenantId/users/:userId` com validação de unicidade de e-mail e salvamento direto no PostgreSQL/Supabase.
+  - **Redefinição de Senha & Disparo SMTP Real**:
+    - Modal de redefinição permitindo digitar nova senha temporária ou gerar senha aleatória forte em 1 clique (`Versus@XXXXXX`).
+    - Checkbox para envio automático via SMTP real (Gmail/Hostinger/Resend) com template executivo de segurança do VERSUS.
+    - Endpoint NestJS `POST /tenants/:tenantId/users/:userId/reset-password` criptografando via `bcrypt` e disparando e-mail pelo `EmailsService`.
+    - Caixa de exibição da senha provisória com botão de cópia rápida (`navigator.clipboard`) e feedback visual de envio.
+  - **Exclusão Segura de Usuário**:
+    - Pop-up de confirmação prévia com aviso de segurança para evitar exclusões acidentais.
+    - Endpoint NestJS `DELETE /tenants/:tenantId/users/:userId` com rotina de integridade referencial: desvincula tickets de suporte abertos (`assignedToId`, `userId`), mensagens e negociações de CRM (`Deal.assignedTo`) antes da exclusão definitiva no banco.
+  - **Design System Monocromático & Zero Mocks**:
+    - Paleta oficial corporativa do VERSUS: `#0B1224`, `#070D1B`, `slate-800` e tipografia branca/slate-300.
+    - Todas as operações persistem diretamente no banco e atualizam a tabela em tempo real sem fechar o modal principal.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 em ambas as pontas.
+    - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
+### 🟢 FASE 72: GESTÃO DE OPERADORES & AÇÕES ADMINISTRATIVAS NO RAIO-X DA EMPRESA [CONCLUÍDA - IDE 1]
+- [x] **Coluna de Ações na Tabela de Operadores**:
+  - [x] Ícones de Editar, Redefinir Senha e Excluir Usuário em cada linha da tabela.
+  - [x] Coluna de Status (Ativo / Bloqueado) e badges de perfil (`ADMIN` / `AGENT`).
+- [x] **Modal de Edição de Dados**:
+  - [x] Alteração de nome, e-mail, ROLE e status do usuário do tenant.
+  - [x] Rota `PATCH /tenants/:tenantId/users/:userId` protegida por `checkSuperAdmin`.
+- [x] **Modal de Redefinição de Senha & Envio SMTP**:
+  - [x] Definição manual ou gerador automático de senha forte provisória.
+  - [x] Disparo de e-mail com credenciais via SMTP real do Gmail pelo `EmailsService`.
+  - [x] Rota `POST /tenants/:tenantId/users/:userId/reset-password`.
+  - [x] Cópia instantânea da senha temporária para a área de transferência.
+- [x] **Exclusão Segura com Pop-up de Confirmação**:
+  - [x] Diálogo de confirmação preventiva contra cliques acidentais.
+  - [x] Limpeza segura de chaves estrangeiras (tickets, deals, mensagens, departamentos).
+  - [x] Rota `DELETE /tenants/:tenantId/users/:userId`.
+- [x] **Homologação, Build & Deploy**:
+  - [x] `npx tsc --noEmit` e `npm run build` com código 0 no backend e frontend.
+  - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
 ---
 

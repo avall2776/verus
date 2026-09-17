@@ -42,6 +42,16 @@ export declare class EmailsService {
         sent: boolean;
         error?: string;
     }>;
+    sendUserPasswordResetEmail(params: {
+        tenantId: string;
+        recipientEmail: string;
+        recipientName: string;
+        newPassword?: string;
+        loginUrl?: string;
+    }): Promise<{
+        sent: boolean;
+        error?: string;
+    }>;
     testConnection(tenantId: string, dto: EmailSettingsDto): Promise<{
         success: boolean;
         error: string;

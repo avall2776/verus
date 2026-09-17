@@ -12,10 +12,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TenantsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
+const emails_service_1 = require("../emails/emails.service");
 const bcrypt = require("bcrypt");
 let TenantsService = class TenantsService {
-    constructor(prisma) {
+    constructor(prisma, emailsService) {
         this.prisma = prisma;
+        this.emailsService = emailsService;
     }
     async findAll(query) {
         const page = Math.max(1, parseInt(query.page || '1', 10));
@@ -167,6 +169,7 @@ let TenantsService = class TenantsService {
                         name: true,
                         email: true,
                         role: true,
+                        isActive: true,
                         avatarUrl: true,
                         isOnline: true,
                         createdAt: true,
@@ -654,10 +657,160 @@ let TenantsService = class TenantsService {
             tenant: updated,
         };
     }
+    async updateTenantUser(tenantId, userId, dto) {
+        const user = await this.prisma.user.findFirst({
+            where: { id: userId, tenantId },
+        });
+        if (!user) {
+            throw new common_1.NotFoundException('Usuário não encontrado nesta empresa.');
+        }
+        const data = {};
+        if (dto.name !== undefined) {
+            const name = dto.name?.trim();
+            if (!name) {
+                throw new common_1.BadRequestException('O nome do usuário não pode ficar vazio.');
+            }
+            data.name = name;
+        }
+        if (dto.email !== undefined) {
+            const email = dto.email?.trim().toLowerCase();
+            if (!email || !email.includes('@')) {
+                throw new common_1.BadRequestException('E-mail informado é inválido.');
+            }
+            const existing = await this.prisma.user.findFirst({
+                where: { email, id: { not: userId } },
+            });
+            if (existing) {
+                throw new common_1.BadRequestException('Este e-mail já está sendo utilizado por outro usuário no sistema.');
+            }
+            data.email = email;
+        }
+        if (dto.role !== undefined) {
+            const role = dto.role.toUpperCase();
+            if (role !== 'ADMIN' && role !== 'AGENT') {
+                throw new common_1.BadRequestException('Papel inválido. Escolha ADMIN ou AGENT.');
+            }
+            data.role = role;
+        }
+        if (dto.isActive !== undefined) {
+            data.isActive = Boolean(dto.isActive);
+        }
+        const updated = await this.prisma.user.update({
+            where: { id: userId },
+            data,
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                isActive: true,
+                avatarUrl: true,
+                isOnline: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+        return {
+            message: `Usuário '${updated.name}' atualizado com sucesso!`,
+            user: updated,
+        };
+    }
+    async resetTenantUserPassword(tenantId, userId, dto) {
+        const user = await this.prisma.user.findFirst({
+            where: { id: userId, tenantId },
+        });
+        if (!user) {
+            throw new common_1.NotFoundException('Usuário não encontrado nesta empresa.');
+        }
+        const plainPassword = dto.newPassword && dto.newPassword.trim().length >= 6
+            ? dto.newPassword.trim()
+            : `Versus@${Math.floor(100000 + Math.random() * 900000)}`;
+        const hashedPassword = await bcrypt.hash(plainPassword, 10);
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { password: hashedPassword },
+        });
+        let emailSent = false;
+        let emailError;
+        if (dto.sendEmail) {
+            try {
+                const sendRes = await this.emailsService.sendUserPasswordResetEmail({
+                    tenantId,
+                    recipientEmail: user.email,
+                    recipientName: user.name,
+                    newPassword: plainPassword,
+                });
+                emailSent = sendRes.sent;
+                emailError = sendRes.error;
+            }
+            catch (err) {
+                emailError = err.message;
+            }
+        }
+        return {
+            message: `Senha do usuário '${user.name}' redefinida com sucesso!`,
+            temporaryPassword: plainPassword,
+            emailSent,
+            emailError,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            },
+        };
+    }
+    async deleteTenantUser(tenantId, userId) {
+        const user = await this.prisma.user.findFirst({
+            where: { id: userId, tenantId },
+        });
+        if (!user) {
+            throw new common_1.NotFoundException('Usuário não encontrado nesta empresa.');
+        }
+        if (user.isSuperAdmin || user.role === 'SUPER_ADMIN') {
+            throw new common_1.BadRequestException('Usuários com permissão de Super Admin não podem ser excluídos por este painel.');
+        }
+        await this.prisma.deal.updateMany({
+            where: { assignedTo: userId },
+            data: { assignedTo: null },
+        });
+        await this.prisma.userDepartment.deleteMany({
+            where: { userId },
+        });
+        await this.prisma.goal.updateMany({
+            where: { userId },
+            data: { userId: null },
+        });
+        await this.prisma.supportTicket.updateMany({
+            where: { userId },
+            data: { userId: null },
+        });
+        await this.prisma.supportTicket.updateMany({
+            where: { assignedToId: userId },
+            data: { assignedToId: null },
+        });
+        await this.prisma.ticketMessage.updateMany({
+            where: { senderId: userId },
+            data: { senderId: null },
+        });
+        await this.prisma.teamMessage.deleteMany({
+            where: {
+                OR: [{ senderId: userId }, { receiverId: userId }],
+            },
+        });
+        await this.prisma.user.delete({
+            where: { id: userId },
+        });
+        return {
+            success: true,
+            message: `Usuário '${user.name}' (${user.email}) removido permanentemente com sucesso do banco de dados.`,
+        };
+    }
 };
 exports.TenantsService = TenantsService;
 exports.TenantsService = TenantsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        emails_service_1.EmailsService])
 ], TenantsService);
 //# sourceMappingURL=tenants.service.js.map

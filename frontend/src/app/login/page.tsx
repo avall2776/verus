@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import * as THREE from "three";
 
-// ================= COMPONENTE OCEANO DE DADOS (DATA WAVE) THREE.JS =================
+// ================= COMPONENTE OCEANO DE DADOS & MONÓLITO 3D "V" THREE.JS =================
 interface BackgroundSceneProps {
   isBooting: boolean;
 }
@@ -26,17 +26,19 @@ const BackgroundScene = ({ isBooting }: BackgroundSceneProps) => {
     const height = window.innerHeight;
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x050814, 0.025);
+    // Fundo e neblina estritamente corporativos em azul escuro #0B1224
+    scene.fog = new THREE.FogExp2(0x0b1224, 0.022);
 
     const camera = new THREE.PerspectiveCamera(65, width / height, 0.1, 1000);
-    camera.position.set(0, 15, 36);
-    camera.lookAt(0, 2, 0);
+    camera.position.set(0, 14, 34);
+    camera.lookAt(0, 1.5, 0);
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.1;
+    renderer.setClearColor(0x0b1224, 1);
     container.appendChild(renderer.domElement);
 
     // Textura circular suave para as partículas
@@ -54,7 +56,7 @@ const BackgroundScene = ({ isBooting }: BackgroundSceneProps) => {
       return new THREE.CanvasTexture(canvas);
     };
 
-    // Grid de Partículas (Oceano de Dados)
+    // Grid de Partículas (Oceano de Dados em Azul Corporativo Sóbrio)
     const SEPARATION = 3, AMOUNTX = 75, AMOUNTY = 75;
     const numParticles = AMOUNTX * AMOUNTY;
     const wavePositions = new Float32Array(numParticles * 3);
@@ -72,21 +74,82 @@ const BackgroundScene = ({ isBooting }: BackgroundSceneProps) => {
     const waveGeometry = new THREE.BufferGeometry();
     waveGeometry.setAttribute("position", new THREE.BufferAttribute(wavePositions, 3));
 
+    // Material das partículas: azul corporativo sóbrio (blue-500/600), sem brilho neon
     const waveMaterial = new THREE.PointsMaterial({
-      color: 0x00d2ff,
-      size: 0.28,
+      color: 0x3b82f6,
+      size: 0.22,
       map: createCircleTexture(),
-      alphaTest: 0.5,
+      alphaTest: 0.4,
       transparent: true,
-      opacity: 0.65
+      opacity: 0.45
     });
 
     const waveParticles = new THREE.Points(waveGeometry, waveMaterial);
     scene.add(waveParticles);
 
-    // Iluminação Ambiente
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    // ================= MONÓLITO 3D DA LETRA "V" =================
+    const shape = new THREE.Shape();
+    shape.moveTo(-2.8, 4.6);
+    shape.lineTo(-1.4, 4.6);
+    shape.lineTo(0, -1.2);
+    shape.lineTo(1.4, 4.6);
+    shape.lineTo(2.8, 4.6);
+    shape.lineTo(0.8, -4.6);
+    shape.lineTo(-0.8, -4.6);
+    shape.closePath();
+
+    const extrudeSettings: THREE.ExtrudeGeometryOptions = {
+      steps: 2,
+      depth: 1.6,
+      bevelEnabled: true,
+      bevelThickness: 0.45,
+      bevelSize: 0.35,
+      bevelOffset: 0,
+      bevelSegments: 5,
+    };
+
+    const vGeometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    vGeometry.center();
+
+    // Material corporativo em slate-800 escovado com reflexos e iluminação física
+    const vMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x1e293b,
+      metalness: 0.65,
+      roughness: 0.25,
+      clearcoat: 0.85,
+      clearcoatRoughness: 0.15,
+      reflectivity: 0.8,
+    });
+
+    const vMesh = new THREE.Mesh(vGeometry, vMaterial);
+
+    // Arestas luminescentes em azul corporativo sóbrio
+    const edgesGeom = new THREE.EdgesGeometry(vGeometry, 22);
+    const edgesMat = new THREE.LineBasicMaterial({
+      color: 0x3b82f6,
+      transparent: true,
+      opacity: 0.65,
+    });
+    const vEdges = new THREE.LineSegments(edgesGeom, edgesMat);
+    vMesh.add(vEdges);
+
+    // Inicialmente recolhido e invisível durante a exibição do formulário
+    vMesh.position.set(0, 3.4, -30);
+    vMesh.scale.set(0.001, 0.001, 0.001);
+    vMesh.visible = false;
+    scene.add(vMesh);
+
+    // ================= ILUMINAÇÃO EQUILIBRADA =================
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
     scene.add(ambientLight);
+
+    const keyLight = new THREE.DirectionalLight(0xdbeafe, 2.4);
+    keyLight.position.set(5, 14, 18);
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x3b82f6, 1.4);
+    fillLight.position.set(-6, -2, 12);
+    scene.add(fillLight);
 
     // Interação do Mouse com Parallax
     let mouseX = 0;
@@ -97,8 +160,8 @@ const BackgroundScene = ({ isBooting }: BackgroundSceneProps) => {
     const windowHalfY = window.innerHeight / 2;
 
     const onPointerMove = (e: MouseEvent) => {
-      targetX = (e.clientX - windowHalfX) * 0.07;
-      targetY = (e.clientY - windowHalfY) * 0.07;
+      targetX = (e.clientX - windowHalfX) * 0.06;
+      targetY = (e.clientY - windowHalfY) * 0.06;
     };
 
     window.addEventListener("mousemove", onPointerMove);
@@ -121,14 +184,37 @@ const BackgroundScene = ({ isBooting }: BackgroundSceneProps) => {
       mouseX += (targetX - mouseX) * 0.05;
       mouseY += (targetY - mouseY) * 0.05;
 
-      // Durante o Boot, a câmera executa um sobrevoo suave e contínuo para a frente
-      const targetCamZ = isBootingRef.current ? 26 : 36;
-      const targetCamY = isBootingRef.current ? 12 : 15;
+      const isBoot = isBootingRef.current;
+
+      // Câmera interpola suavemente
+      const targetCamZ = isBoot ? 25 : 34;
+      const targetCamY = isBoot ? 10 : 14;
 
       camera.position.x += (mouseX - camera.position.x) * 0.05;
       camera.position.y += (-mouseY + targetCamY - camera.position.y) * 0.04;
       camera.position.z += (targetCamZ - camera.position.z) * 0.03;
       camera.lookAt(0, 1.5, 0);
+
+      // Animação do Monólito 3D "V" no Preloader
+      if (isBoot) {
+        vMesh.visible = true;
+        // Avanço suave para o primeiro plano (posição Z = 5.5, Y = 3.2 na metade superior)
+        vMesh.position.z += (5.5 - vMesh.position.z) * 0.045;
+        vMesh.position.y = 3.2 + Math.sin(count * 1.5) * 0.15;
+
+        // Escala cresce suavemente até 0.85
+        const currentScale = vMesh.scale.x;
+        const nextScale = currentScale + (0.85 - currentScale) * 0.05;
+        vMesh.scale.set(nextScale, nextScale, nextScale);
+
+        // Parallax reativo suave ao mouse
+        vMesh.rotation.y = mouseX * 0.2;
+        vMesh.rotation.x = 0.05 + (-mouseY * 0.12);
+      } else {
+        vMesh.visible = false;
+        vMesh.scale.set(0.001, 0.001, 0.001);
+        vMesh.position.set(0, 3.4, -30);
+      }
 
       // Animação da Onda Senoidal do Oceano
       const positions = waveParticles.geometry.attributes.position.array as Float32Array;
@@ -137,13 +223,13 @@ const BackgroundScene = ({ isBooting }: BackgroundSceneProps) => {
         for (let iy = 0; iy < AMOUNTY; iy++) {
           positions[posIdx + 1] =
             -4 +
-            (Math.sin((ix + count) * 0.3) * 2) +
-            (Math.sin((iy + count) * 0.4) * 2);
+            (Math.sin((ix + count) * 0.3) * 1.8) +
+            (Math.sin((iy + count) * 0.4) * 1.8);
           posIdx += 3;
         }
       }
       waveParticles.geometry.attributes.position.needsUpdate = true;
-      count += 0.035;
+      count += 0.032;
 
       renderer.render(scene, camera);
     };
@@ -159,6 +245,10 @@ const BackgroundScene = ({ isBooting }: BackgroundSceneProps) => {
       }
       waveGeometry.dispose();
       waveMaterial.dispose();
+      vGeometry.dispose();
+      vMaterial.dispose();
+      edgesGeom.dispose();
+      edgesMat.dispose();
       renderer.dispose();
     };
   }, []);
@@ -166,26 +256,7 @@ const BackgroundScene = ({ isBooting }: BackgroundSceneProps) => {
   return <div ref={mountRef} className="fixed inset-0 z-0 pointer-events-none" />;
 };
 
-const NeonWaveLogo = () => {
-  const letters = "LOGOTIPO".split("");
-
-  return (
-    <div className="flex justify-center cursor-crosshair py-2 mb-2">
-      <h1 className="text-4xl md:text-[2.5rem] font-black tracking-[0.15em] text-white flex">
-        {letters.map((char, i) => (
-          <span
-            key={i}
-            className="transition-all duration-300 ease-out inline-block hover:scale-125 hover:-translate-y-2 hover:text-accent hover:drop-shadow-[0_0_25px_rgba(0,210,255,1)] cursor-pointer"
-          >
-            {char}
-          </span>
-        ))}
-      </h1>
-    </div>
-  );
-};
-
-// ================= PÁGINA DE LOGIN E BOOT MINIMALISTA EXECUTIVO (OPÇÃO 3) =================
+// ================= PÁGINA DE LOGIN E PRELOADER CORPORATIVO MONOCROMÁTICO =================
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -194,13 +265,13 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  // Transição do Card: 'idle' -> 'evaporating' (dissolução real) -> 'booting'
+  // Transição do Card: 'idle' -> 'evaporating' (desmaterialização suave de 700ms) -> 'booting'
   const [cardState, setCardState] = useState<"idle" | "evaporating" | "booting">("idle");
   const [authUserName, setAuthUserName] = useState<string>("");
   const [bootProgress, setBootProgress] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
 
-  // 15 segundos calibrados de imersão
+  // 15 segundos calibrados de imersão corporativa
   const BOOT_DURATION_MS = 15000;
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -224,14 +295,14 @@ export default function LoginPage() {
         sessionStorage.removeItem("versus_boot_completed");
       } catch (e) {}
 
-      // ETAPA 1: O card começa a evaporar (sem corte seco, com animação real de fumaça)
+      // ETAPA 1: O card de login transiciona suavemente (fade-out + scale-down + slide-up)
       setCardState("evaporating");
       setLoading(false);
 
-      // ETAPA 2: Após a evaporação visual do card (850ms), ativa a fase de booting
+      // ETAPA 2: Após a desmaterialização fluida (700ms), ativa a imersão contínua com o preloader
       setTimeout(() => {
         setCardState("booting");
-      }, 850);
+      }, 700);
     } catch (err: any) {
       setError(err.response?.data?.message || "Erro ao conectar com o servidor.");
       setLoading(false);
@@ -257,7 +328,7 @@ export default function LoginPage() {
     return () => clearInterval(interval);
   }, [cardState]);
 
-  // Ação de conclusão com fade-out contínuo
+  // Ação de conclusão com fade-out contínuo de 1000ms
   const handleFinishBoot = () => {
     if (isExiting) return;
     setIsExiting(true);
@@ -266,7 +337,6 @@ export default function LoginPage() {
       sessionStorage.setItem("versus_boot_completed", "true");
     } catch (e) {}
 
-    // Transição de saída de 1000ms antes da troca de rota
     setTimeout(() => {
       try {
         const stored = localStorage.getItem("versus_user");
@@ -296,7 +366,7 @@ export default function LoginPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [cardState, isExiting]);
 
-  // Textos dos estágios da montagem
+  // Textos dos estágios de inicialização
   const getStageText = (progress: number) => {
     if (progress < 30) return "Inicializando ecossistema corporativo...";
     if (progress < 65) return "Sincronizando barramento neural e agentes de IA...";
@@ -316,47 +386,15 @@ export default function LoginPage() {
       onClick={() => {
         if (cardState === "booting") handleFinishBoot();
       }}
-      className={`flex min-h-screen items-center justify-center relative overflow-hidden bg-[#050814] transition-all duration-1000 ease-in-out select-none ${
-        isExiting ? "opacity-0 scale-105 filter blur-2xl pointer-events-none" : "opacity-100 scale-100"
+      className={`flex min-h-screen items-center justify-center relative overflow-hidden bg-[#0B1224] transition-all duration-1000 ease-in-out select-none ${
+        isExiting ? "opacity-0 scale-105 filter blur-xl pointer-events-none" : "opacity-100 scale-100"
       } ${cardState === "booting" ? "cursor-pointer" : ""}`}
     >
-      {/* Estilos CSS Inline de Animação e Evaporação */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes float {
-          0% { transform: translateY(-4px); }
-          100% { transform: translateY(6px); }
-        }
-        @keyframes hologramBoot {
-          0% { 
-            opacity: 0; 
-            filter: blur(20px) brightness(200%); 
-            transform: scale(0.9) translateY(40px);
-            box-shadow: inset 0 0 100px rgba(0,210,255,0.8);
-          }
-          60% {
-            opacity: 0.8;
-            filter: blur(5px) brightness(150%);
-            transform: scale(1.02) translateY(-5px);
-            box-shadow: inset 0 0 20px rgba(0,210,255,0.4);
-          }
-          100% { 
-            opacity: 1; 
-            filter: blur(0px) brightness(100%);
-            transform: scale(1) translateY(0);
-            box-shadow: none;
-          }
-        }
-      `}} />
-
-      {/* Fundo 3D: Oceano de Dados Infinito */}
+      {/* Fundo 3D: Oceano de Dados & Monólito 3D da Letra "V" */}
       <BackgroundScene isBooting={cardState === "booting"} />
 
-      {/* Glow Orbs idênticos para atmosfera corporativa */}
-      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-accent/20 rounded-full blur-[120px] pointer-events-none" />
-
       {/* ========================================================== */}
-      {/* 1. CARD DE LOGIN COM EVAPORAÇÃO VISUAL REAL ("FUMAÇA")      */}
+      {/* 1. CARD DE LOGIN COM DESMATERIALIZAÇÃO SUAVE (700MS)       */}
       {/* ========================================================== */}
       {cardState !== "booting" && (
         <>
@@ -368,48 +406,39 @@ export default function LoginPage() {
           >
             <a
               href="#"
-              className="flex items-center gap-2 text-text-secondary hover:text-accent transition-colors text-[0.82rem] font-semibold uppercase tracking-[0.15rem]"
+              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-xs font-semibold uppercase tracking-wider"
             >
               &larr; IR PARA O SITE
             </a>
           </div>
 
-          {/* Card de Formulário: quando 'evaporating', aplica blur(30px), escala 0.8 e fade suave de 850ms */}
+          {/* Card do Formulário: Desmaterialização fluida em fade-out + scale-down + slide-up suave */}
           <div
-            className={`w-full max-w-[440px] p-6 relative z-10 transition-all duration-[850ms] ease-out ${
+            className={`w-full max-w-[440px] p-6 relative z-10 transition-all duration-700 ease-out ${
               cardState === "evaporating"
-                ? "opacity-0 scale-[0.82] filter blur-[32px] pointer-events-none -translate-y-6"
-                : "animate-[hologramBoot_2s_ease-out_forwards,float_7s_ease-in-out_2s_infinite_alternate] opacity-0"
+                ? "opacity-0 scale-95 -translate-y-6 filter blur-lg pointer-events-none"
+                : "opacity-100 scale-100 translate-y-0"
             }`}
           >
-            <div
-              className="bg-[#0B1224]/35 border border-gray-800/50 rounded-[20px] px-10 py-12 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl flex flex-col relative overflow-hidden group"
-              onMouseMove={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-                e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-              }}
-            >
-              <div
-                className="pointer-events-none absolute -inset-px rounded-[20px] opacity-0 transition duration-500 group-hover:opacity-100"
-                style={{
-                  background: `radial-gradient(400px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(0, 210, 255, 0.12), transparent 40%)`
-                }}
-              />
-
-              <div className="mb-10 text-center flex flex-col items-center relative z-10">
-                <div className="bg-background/50 border border-accent/40 text-accent text-[0.65rem] uppercase tracking-[0.2em] font-bold py-1 px-4 rounded-full mb-6 shadow-[0_0_15px_rgba(0,210,255,0.15)]">
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl px-8 py-10 sm:px-10 sm:py-12 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] backdrop-blur-xl flex flex-col relative">
+              
+              {/* Cabeçalho Corporativo Limpo */}
+              <div className="mb-8 text-center flex flex-col items-center">
+                <div className="bg-slate-800/60 border border-slate-700/60 text-slate-300 text-[0.68rem] uppercase tracking-[0.2em] font-semibold py-1 px-4 rounded-full mb-5">
                   SEJA BEM-VINDO
                 </div>
 
-                <NeonWaveLogo />
+                <h1 className="text-3xl sm:text-4xl font-black tracking-[0.22em] text-white">
+                  VERSUS
+                </h1>
 
-                <p className="text-text-secondary text-[0.85rem] mt-2">
-                  A evolução do atendimento e conversão em tempo real.
+                <p className="text-slate-400 text-sm mt-2">
+                  Inteligência em Vendas & Atendimento Omnichannel
                 </p>
               </div>
 
-              <form onSubmit={handleLogin} className="w-full flex flex-col gap-5 text-left relative z-10">
+              {/* Formulário de Autenticação */}
+              <form onSubmit={handleLogin} className="w-full flex flex-col gap-5 text-left">
                 {error && (
                   <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
                     {error}
@@ -417,21 +446,21 @@ export default function LoginPage() {
                 )}
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[0.75rem] font-bold text-accent uppercase tracking-[0.12rem]">
+                  <label className="text-[0.75rem] font-semibold text-slate-300 uppercase tracking-wider">
                     E-MAIL CORPORATIVO
                   </label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-background/60 border border-gray-800/40 text-text-primary rounded-[10px] px-4 py-[0.85rem] text-[0.95rem] outline-none transition-all focus:border-accent focus:shadow-[0_0_15px_rgba(0,210,255,0.25)] focus:bg-background/90 placeholder:text-gray-600"
+                    className="w-full bg-slate-950/70 border border-slate-800 text-white rounded-xl px-4 py-3.5 text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 focus:bg-slate-950 placeholder:text-slate-600"
                     placeholder="admin@verto.com"
                     required
                   />
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[0.75rem] font-bold text-accent uppercase tracking-[0.12rem]">
+                  <label className="text-[0.75rem] font-semibold text-slate-300 uppercase tracking-wider">
                     CHAVE DE ACESSO / SENHA
                   </label>
                   <div className="relative">
@@ -439,14 +468,14 @@ export default function LoginPage() {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-background/60 border border-gray-800/40 text-text-primary rounded-[10px] pl-4 pr-12 py-[0.85rem] text-[0.95rem] outline-none transition-all focus:border-accent focus:shadow-[0_0_15px_rgba(0,210,255,0.25)] focus:bg-background/90 placeholder:text-gray-600"
+                      className="w-full bg-slate-950/70 border border-slate-800 text-white rounded-xl pl-4 pr-12 py-3.5 text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 focus:bg-slate-950 placeholder:text-slate-600"
                       placeholder="••••••••••••"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-text-primary transition-colors"
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
@@ -456,7 +485,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-primary text-white font-black py-[0.95rem] rounded-[10px] mt-4 text-[0.88rem] tracking-[0.15rem] uppercase transition-all hover:bg-primary/90 hover:shadow-[0_0_25px_rgba(0,85,255,0.5)] flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer"
+                  className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3.5 rounded-xl mt-4 text-[0.88rem] tracking-wider uppercase transition-all shadow-lg shadow-blue-950/30 flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                 >
                   {loading ? (
                     <>
@@ -471,9 +500,9 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <div className="flex justify-between items-center text-[0.75rem] text-text-secondary mt-8 relative z-10">
+              <div className="flex justify-between items-center text-xs text-slate-500 mt-8">
                 <span>Painel Restrito</span>
-                <a href="#" className="hover:text-accent transition-colors">
+                <a href="#" className="hover:text-slate-300 transition-colors">
                   Recuperar Chave
                 </a>
               </div>
@@ -483,61 +512,61 @@ export default function LoginPage() {
       )}
 
       {/* ========================================================== */}
-      {/* 2. BOOTING EXECUTIVO MINIMALISTA (SEM COLISÃO, 100% LIMPO) */}
+      {/* 2. PRELOADER DO GRANDE "V" CORPORATIVO & SAUDAÇÃO LIMPA     */}
       {/* ========================================================== */}
       {cardState === "booting" && (
-        <div className="fixed inset-0 z-20 flex flex-col items-center justify-between p-8 pointer-events-auto animate-[fadeIn_1s_ease-out_forwards]">
+        <div className="fixed inset-0 z-20 flex flex-col items-center justify-between p-8 pointer-events-auto animate-[fadeIn_0.8s_ease-out_forwards]">
           
-          {/* Topo Discreto */}
+          {/* Topo Sutil */}
           <div className="w-full flex items-center justify-end pt-2 opacity-60 hover:opacity-100 transition-opacity">
             <span className="text-[11px] font-mono tracking-wider text-slate-400">
               Pressione ESC ou clique para entrar
             </span>
           </div>
 
-          {/* CENTRO EXATO: Saudação Executiva & Barra Luminescente */}
-          <div className="w-full my-auto flex flex-col items-center justify-center text-center z-20 pointer-events-none space-y-5 max-w-xl mx-auto px-4">
+          {/* ÁREA INFERIOR: Posicionada ergonomicamente abaixo do grande 'V' 3D (Sem Nenhuma Colisão) */}
+          <div className="fixed inset-x-0 bottom-8 sm:bottom-12 flex flex-col items-center justify-center text-center z-20 px-4 space-y-4 pointer-events-none max-w-xl mx-auto">
             
-            {/* Saudação com Ponto Luminescente e Nome Real */}
-            <div className="space-y-2">
-              <h2 className="text-3xl sm:text-5xl font-black text-white tracking-wide flex items-center justify-center gap-3.5 drop-shadow-[0_10px_35px_rgba(0,0,0,0.95)]">
-                <span className="w-3 h-3 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_15px_#00d2ff]" />
+            {/* Saudação com Ponto Luminescente em Azul Corporativo Sóbrio */}
+            <div className="space-y-1.5">
+              <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-wide flex items-center justify-center gap-3 drop-shadow-[0_8px_25px_rgba(0,0,0,0.9)]">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_10px_#3b82f6]" />
                 <span>Bem-vindo de volta, {authUserName || "Felipe"}</span>
               </h2>
 
               {/* Status Dinâmico de Inicialização */}
-              <p className="text-sm sm:text-base font-mono tracking-wider text-slate-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">
+              <p className="text-xs sm:text-sm font-mono tracking-wider text-slate-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
                 {getStageText(bootProgress)}
               </p>
             </div>
 
             {/* Linha Luminescente Monocromática Minimalista dos 15 Segundos */}
-            <div className="w-64 sm:w-96 h-[2.5px] bg-slate-800/80 rounded-full overflow-hidden relative shadow-inner mt-2">
+            <div className="w-64 sm:w-80 h-[2.5px] bg-slate-800/90 rounded-full overflow-hidden relative shadow-inner">
               <div
-                className="h-full bg-gradient-to-r from-blue-600 via-cyan-400 to-emerald-400 transition-all duration-150 shadow-[0_0_15px_#00d2ff]"
+                className="h-full bg-gradient-to-r from-blue-700 via-blue-500 to-blue-400 transition-all duration-150"
                 style={{ width: `${bootProgress}%` }}
               />
             </div>
 
             {/* Subtexto Técnico dos Subsistemas */}
-            <p className="text-[11px] sm:text-xs text-slate-500 font-mono tracking-widest uppercase">
+            <p className="text-[11px] text-slate-400 font-mono tracking-widest uppercase">
               {getStageSubtext(bootProgress)}
             </p>
 
-          </div>
+            {/* Botão de Acesso Direto */}
+            <div className="pointer-events-auto pt-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleFinishBoot();
+                }}
+                className="group inline-flex items-center gap-2 px-5 py-2 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-medium backdrop-blur-xl transition-all shadow-lg cursor-pointer"
+              >
+                <span>Acessar Painel Principal</span>
+                <ArrowRight className="w-3.5 h-3.5 text-blue-400 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
 
-          {/* RODAPÉ: Botão de Acesso Direto */}
-          <div className="w-full flex flex-col items-center pb-4 z-20">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleFinishBoot();
-              }}
-              className="group inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#0B1224]/80 hover:bg-slate-800/90 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-semibold backdrop-blur-xl transition-all shadow-xl hover:shadow-cyan-500/10 cursor-pointer"
-            >
-              <span>Acessar Painel Principal</span>
-              <ArrowRight className="w-3.5 h-3.5 text-cyan-400 group-hover:translate-x-1 transition-transform" />
-            </button>
           </div>
 
         </div>

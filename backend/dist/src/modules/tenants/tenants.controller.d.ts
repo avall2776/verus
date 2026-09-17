@@ -273,6 +273,7 @@ export declare class TenantsController {
             email: string;
             avatarUrl: string;
             createdAt: Date;
+            isActive: boolean;
             role: string;
             isOnline: boolean;
         }[];
@@ -368,5 +369,43 @@ export declare class TenantsController {
             role: string;
         };
         temporaryPassword: string;
+    }>;
+    updateTenantUser(req: any, tenantId: string, userId: string, body: {
+        name?: string;
+        email?: string;
+        role?: string;
+        isActive?: boolean;
+    }): Promise<{
+        message: string;
+        user: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
+            role: string;
+            isOnline: boolean;
+        };
+    }>;
+    resetTenantUserPassword(req: any, tenantId: string, userId: string, body: {
+        newPassword?: string;
+        sendEmail?: boolean;
+    }): Promise<{
+        message: string;
+        temporaryPassword: string;
+        emailSent: boolean;
+        emailError: string;
+        user: {
+            id: string;
+            name: string;
+            email: string;
+            role: string;
+        };
+    }>;
+    deleteTenantUser(req: any, tenantId: string, userId: string): Promise<{
+        success: boolean;
+        message: string;
     }>;
 }

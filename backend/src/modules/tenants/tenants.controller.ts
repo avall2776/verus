@@ -4,6 +4,7 @@ import {
   Patch,
   Put,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -129,4 +130,37 @@ export class TenantsController {
     this.checkSuperAdmin(req);
     return this.tenantsService.resetAdminPassword(id, body?.newPassword);
   }
+
+  @Patch(':tenantId/users/:userId')
+  async updateTenantUser(
+    @Request() req,
+    @Param('tenantId') tenantId: string,
+    @Param('userId') userId: string,
+    @Body() body: { name?: string; email?: string; role?: string; isActive?: boolean }
+  ) {
+    this.checkSuperAdmin(req);
+    return this.tenantsService.updateTenantUser(tenantId, userId, body);
+  }
+
+  @Post(':tenantId/users/:userId/reset-password')
+  async resetTenantUserPassword(
+    @Request() req,
+    @Param('tenantId') tenantId: string,
+    @Param('userId') userId: string,
+    @Body() body: { newPassword?: string; sendEmail?: boolean }
+  ) {
+    this.checkSuperAdmin(req);
+    return this.tenantsService.resetTenantUserPassword(tenantId, userId, body);
+  }
+
+  @Delete(':tenantId/users/:userId')
+  async deleteTenantUser(
+    @Request() req,
+    @Param('tenantId') tenantId: string,
+    @Param('userId') userId: string
+  ) {
+    this.checkSuperAdmin(req);
+    return this.tenantsService.deleteTenantUser(tenantId, userId);
+  }
 }
+

@@ -84,6 +84,18 @@ let TenantsController = class TenantsController {
         this.checkSuperAdmin(req);
         return this.tenantsService.resetAdminPassword(id, body?.newPassword);
     }
+    async updateTenantUser(req, tenantId, userId, body) {
+        this.checkSuperAdmin(req);
+        return this.tenantsService.updateTenantUser(tenantId, userId, body);
+    }
+    async resetTenantUserPassword(req, tenantId, userId, body) {
+        this.checkSuperAdmin(req);
+        return this.tenantsService.resetTenantUserPassword(tenantId, userId, body);
+    }
+    async deleteTenantUser(req, tenantId, userId) {
+        this.checkSuperAdmin(req);
+        return this.tenantsService.deleteTenantUser(tenantId, userId);
+    }
 };
 exports.TenantsController = TenantsController;
 __decorate([
@@ -192,6 +204,35 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, reset_admin_password_dto_1.ResetAdminPasswordDto]),
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "resetAdminPassword", null);
+__decorate([
+    (0, common_1.Patch)(':tenantId/users/:userId'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('tenantId')),
+    __param(2, (0, common_1.Param)('userId')),
+    __param(3, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, Object]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "updateTenantUser", null);
+__decorate([
+    (0, common_1.Post)(':tenantId/users/:userId/reset-password'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('tenantId')),
+    __param(2, (0, common_1.Param)('userId')),
+    __param(3, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, Object]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "resetTenantUserPassword", null);
+__decorate([
+    (0, common_1.Delete)(':tenantId/users/:userId'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('tenantId')),
+    __param(2, (0, common_1.Param)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "deleteTenantUser", null);
 exports.TenantsController = TenantsController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('tenants'),

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
+import { EmailsService } from '../emails/emails.service';
 import { QueryTenantsDto } from './dto/query-tenants.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { CreatePlanDto } from './dto/create-plan.dto';
@@ -7,7 +8,10 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class TenantsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailsService: EmailsService,
+  ) {}
 
   async findAll(query: QueryTenantsDto) {
     const page = Math.max(1, parseInt(query.page || '1', 10));
@@ -187,6 +191,7 @@ export class TenantsService {
             name: true,
             email: true,
             role: true,
+            isActive: true,
             avatarUrl: true,
             isOnline: true,
             createdAt: true,
@@ -696,4 +701,210 @@ export class TenantsService {
       tenant: updated,
     };
   }
+
+  /**
+   * Atualiza dados de um usuário/operador pertencente a um tenant específico (Super Admin).
+   */
+  async updateTenantUser(
+    tenantId: string,
+    userId: string,
+    dto: { name?: string; email?: string; role?: string; isActive?: boolean }
+  ) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, tenantId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado nesta empresa.');
+    }
+
+    const data: any = {};
+
+    if (dto.name !== undefined) {
+      const name = dto.name?.trim();
+      if (!name) {
+        throw new BadRequestException('O nome do usuário não pode ficar vazio.');
+      }
+      data.name = name;
+    }
+
+    if (dto.email !== undefined) {
+      const email = dto.email?.trim().toLowerCase();
+      if (!email || !email.includes('@')) {
+        throw new BadRequestException('E-mail informado é inválido.');
+      }
+
+      const existing = await this.prisma.user.findFirst({
+        where: { email, id: { not: userId } },
+      });
+
+      if (existing) {
+        throw new BadRequestException('Este e-mail já está sendo utilizado por outro usuário no sistema.');
+      }
+
+      data.email = email;
+    }
+
+    if (dto.role !== undefined) {
+      const role = dto.role.toUpperCase();
+      if (role !== 'ADMIN' && role !== 'AGENT') {
+        throw new BadRequestException('Papel inválido. Escolha ADMIN ou AGENT.');
+      }
+      data.role = role;
+    }
+
+    if (dto.isActive !== undefined) {
+      data.isActive = Boolean(dto.isActive);
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        avatarUrl: true,
+        isOnline: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return {
+      message: `Usuário '${updated.name}' atualizado com sucesso!`,
+      user: updated,
+    };
+  }
+
+  /**
+   * Redefine a senha de um operador do tenant e opcionalmente dispara e-mail via SMTP real.
+   */
+  async resetTenantUserPassword(
+    tenantId: string,
+    userId: string,
+    dto: { newPassword?: string; sendEmail?: boolean }
+  ) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, tenantId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado nesta empresa.');
+    }
+
+    const plainPassword =
+      dto.newPassword && dto.newPassword.trim().length >= 6
+        ? dto.newPassword.trim()
+        : `Versus@${Math.floor(100000 + Math.random() * 900000)}`;
+
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    let emailSent = false;
+    let emailError: string | undefined;
+
+    if (dto.sendEmail) {
+      try {
+        const sendRes = await this.emailsService.sendUserPasswordResetEmail({
+          tenantId,
+          recipientEmail: user.email,
+          recipientName: user.name,
+          newPassword: plainPassword,
+        });
+        emailSent = sendRes.sent;
+        emailError = sendRes.error;
+      } catch (err: any) {
+        emailError = err.message;
+      }
+    }
+
+    return {
+      message: `Senha do usuário '${user.name}' redefinida com sucesso!`,
+      temporaryPassword: plainPassword,
+      emailSent,
+      emailError,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    };
+  }
+
+  /**
+   * Exclui com segurança um usuário do tenant no banco de dados (Prisma/Supabase).
+   * Desassocia dependências de tickets e CRM antes da remoção definitiva.
+   */
+  async deleteTenantUser(tenantId: string, userId: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, tenantId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado nesta empresa.');
+    }
+
+    if (user.isSuperAdmin || user.role === 'SUPER_ADMIN') {
+      throw new BadRequestException('Usuários com permissão de Super Admin não podem ser excluídos por este painel.');
+    }
+
+    // 1. Desvincular leads / deals
+    await this.prisma.deal.updateMany({
+      where: { assignedTo: userId },
+      data: { assignedTo: null },
+    });
+
+    // 2. Limpar associações de departamentos
+    await this.prisma.userDepartment.deleteMany({
+      where: { userId },
+    });
+
+    // 3. Desvincular metas
+    await this.prisma.goal.updateMany({
+      where: { userId },
+      data: { userId: null },
+    });
+
+    // 4. Desvincular chamados de suporte (criador e responsável)
+    await this.prisma.supportTicket.updateMany({
+      where: { userId },
+      data: { userId: null },
+    });
+    await this.prisma.supportTicket.updateMany({
+      where: { assignedToId: userId },
+      data: { assignedToId: null },
+    });
+
+    // 5. Desvincular mensagens de chamados
+    await this.prisma.ticketMessage.updateMany({
+      where: { senderId: userId },
+      data: { senderId: null },
+    });
+
+    // 6. Remover mensagens internas da equipe
+    await this.prisma.teamMessage.deleteMany({
+      where: {
+        OR: [{ senderId: userId }, { receiverId: userId }],
+      },
+    });
+
+    // 7. Remoção definitiva do usuário
+    await this.prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return {
+      success: true,
+      message: `Usuário '${user.name}' (${user.email}) removido permanentemente com sucesso do banco de dados.`,
+    };
+  }
 }
+

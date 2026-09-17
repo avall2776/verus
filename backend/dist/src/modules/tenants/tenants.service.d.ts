@@ -1,10 +1,12 @@
 import { PrismaService } from '../../shared/database/prisma.service';
+import { EmailsService } from '../emails/emails.service';
 import { QueryTenantsDto } from './dto/query-tenants.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { CreatePlanDto } from './dto/create-plan.dto';
 export declare class TenantsService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly emailsService;
+    constructor(prisma: PrismaService, emailsService: EmailsService);
     findAll(query: QueryTenantsDto): Promise<{
         data: {
             id: string;
@@ -121,6 +123,7 @@ export declare class TenantsService {
             email: string;
             avatarUrl: string;
             createdAt: Date;
+            isActive: boolean;
             role: string;
             isOnline: boolean;
         }[];
@@ -340,5 +343,43 @@ export declare class TenantsService {
             emailSettings: import("@prisma/client/runtime/library").JsonValue | null;
             planId: string;
         };
+    }>;
+    updateTenantUser(tenantId: string, userId: string, dto: {
+        name?: string;
+        email?: string;
+        role?: string;
+        isActive?: boolean;
+    }): Promise<{
+        message: string;
+        user: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
+            role: string;
+            isOnline: boolean;
+        };
+    }>;
+    resetTenantUserPassword(tenantId: string, userId: string, dto: {
+        newPassword?: string;
+        sendEmail?: boolean;
+    }): Promise<{
+        message: string;
+        temporaryPassword: string;
+        emailSent: boolean;
+        emailError: string;
+        user: {
+            id: string;
+            name: string;
+            email: string;
+            role: string;
+        };
+    }>;
+    deleteTenantUser(tenantId: string, userId: string): Promise<{
+        success: boolean;
+        message: string;
     }>;
 }

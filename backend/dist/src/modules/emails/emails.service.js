@@ -290,6 +290,99 @@ let EmailsService = EmailsService_1 = class EmailsService {
             return { sent: false, error: err.message };
         }
     }
+    async sendUserPasswordResetEmail(params) {
+        try {
+            const { transporter, fromAddress } = await this.getTransporter(params.tenantId);
+            if (!transporter) {
+                this.logger.warn(`[RESET_PASSWORD_EMAIL] Tenant ${params.tenantId} não possui transporter de e-mail configurado.`);
+                return { sent: false, error: 'Servidor SMTP não configurado para o tenant ou ambiente.' };
+            }
+            const tenant = await this.prisma.tenant.findUnique({
+                where: { id: params.tenantId },
+                select: { name: true },
+            });
+            const companyName = tenant?.name || 'VERSUS';
+            const loginUrl = params.loginUrl || process.env.FRONTEND_URL || 'https://versus-plum.vercel.app/login';
+            const subject = `Redefinição de Senha de Acesso - ${companyName}`;
+            const html = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { margin: 0; padding: 0; background-color: #070D1B; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #E2E8F0; }
+    .container { max-width: 580px; margin: 30px auto; background-color: #0B1224; border: 1px solid #1E293B; border-radius: 16px; overflow: hidden; }
+    .header { background: #070D1B; padding: 28px; text-align: center; border-bottom: 1px solid #1E293B; }
+    .logo { font-size: 22px; font-weight: 900; letter-spacing: 2px; color: #FFFFFF; }
+    .logo-badge { color: #3B82F6; }
+    .content { padding: 32px 28px; }
+    h1 { font-size: 20px; font-weight: 800; color: #FFFFFF; margin-top: 0; margin-bottom: 12px; }
+    p { font-size: 14px; line-height: 1.6; color: #94A3B8; margin-bottom: 16px; }
+    .card { background-color: #070D1B; border: 1px solid #1E293B; border-radius: 12px; padding: 20px; margin: 24px 0; }
+    .card-row { margin-bottom: 10px; font-size: 13px; }
+    .card-row:last-child { margin-bottom: 0; }
+    .card-label { color: #64748B; font-weight: 600; display: inline-block; width: 140px; }
+    .card-val { color: #F1F5F9; font-weight: 700; }
+    .btn-container { text-align: center; margin: 32px 0 24px; }
+    .btn { background-color: #2563EB; color: #FFFFFF !important; font-size: 14px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 10px; display: inline-block; }
+    .security-note { font-size: 12px; color: #94A3B8; background: #0F172A; border-left: 3px solid #3B82F6; padding: 12px; border-radius: 6px; margin-top: 20px; }
+    .footer { padding: 20px; text-align: center; border-top: 1px solid #1E293B; font-size: 11px; color: #475569; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">VERSUS <span class="logo-badge">SECURITY</span></div>
+    </div>
+    <div class="content">
+      <h1>Olá, ${params.recipientName}!</h1>
+      <p>Uma nova senha temporária de acesso à plataforma VERSUS foi configurada pela administração para a empresa <strong>${companyName}</strong>.</p>
+      
+      <div class="card">
+        <div class="card-row">
+          <span class="card-label">Empresa:</span>
+          <span class="card-val">${companyName}</span>
+        </div>
+        <div class="card-row">
+          <span class="card-label">E-mail de Login:</span>
+          <span class="card-val">${params.recipientEmail}</span>
+        </div>
+        ${params.newPassword ? `
+        <div class="card-row">
+          <span class="card-label">Nova Senha:</span>
+          <span class="card-val" style="font-family: monospace; letter-spacing: 1.5px; color: #60A5FA; font-size: 15px;">${params.newPassword}</span>
+        </div>` : ''}
+      </div>
+
+      <div class="btn-container">
+        <a href="${loginUrl}" class="btn" target="_blank">Acessar Painel VERSUS</a>
+      </div>
+
+      <div class="security-note">
+        <strong>Atenção à Segurança:</strong> Por motivos de segurança operacional, recomendamos que você altere esta senha provisória imediatamente após efetuar o login.
+      </div>
+    </div>
+    <div class="footer">
+      Este comunicado de segurança é confidencial e foi enviado para ${params.recipientEmail}. © ${new Date().getFullYear()} VERSUS.
+    </div>
+  </div>
+</body>
+</html>
+      `;
+            await transporter.sendMail({
+                from: fromAddress,
+                to: params.recipientEmail,
+                subject,
+                html,
+            });
+            this.logger.log(`[RESET_PASSWORD_SUCCESS] Senha redefinida e e-mail enviado para ${params.recipientEmail} via ${fromAddress}`);
+            return { sent: true };
+        }
+        catch (err) {
+            this.logger.error(`[RESET_PASSWORD_ERROR] Falha ao enviar e-mail de redefinição para ${params.recipientEmail}: ${err.message}`);
+            return { sent: false, error: err.message };
+        }
+    }
     async testConnection(tenantId, dto) {
         const effectiveId = await this.getEffectiveTenantId(tenantId);
         let passToUse = dto.smtpPass;

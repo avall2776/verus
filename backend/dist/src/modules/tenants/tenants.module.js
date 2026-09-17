@@ -11,12 +11,13 @@ const common_1 = require("@nestjs/common");
 const tenants_service_1 = require("./tenants.service");
 const tenants_controller_1 = require("./tenants.controller");
 const database_module_1 = require("../../shared/database/database.module");
+const emails_module_1 = require("../emails/emails.module");
 let TenantsModule = class TenantsModule {
 };
 exports.TenantsModule = TenantsModule;
 exports.TenantsModule = TenantsModule = __decorate([
     (0, common_1.Module)({
-        imports: [database_module_1.DatabaseModule],
+        imports: [database_module_1.DatabaseModule, emails_module_1.EmailsModule],
         controllers: [tenants_controller_1.TenantsController],
         providers: [tenants_service_1.TenantsService],
         exports: [tenants_service_1.TenantsService],
