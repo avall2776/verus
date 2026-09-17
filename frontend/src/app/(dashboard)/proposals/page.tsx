@@ -347,8 +347,10 @@ export default function ProposalsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header com Título e Botão de Criação */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Interface Operacional de Gestão - Ocultada 100% durante impressão/PDF de proposta */}
+      <div className="space-y-6 print:hidden">
+        {/* Top Header com Título e Botão de Criação */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shadow-sm">
@@ -778,6 +780,7 @@ export default function ProposalsPage() {
             </table>
           </div>
         )}
+      </div>
       </div>
 
       {/* Modal de Criação ou Edição Dinâmica */}

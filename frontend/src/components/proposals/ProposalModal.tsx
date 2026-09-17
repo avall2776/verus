@@ -139,28 +139,78 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
     }
   }, [proposalToEdit, isOpen]);
 
+  // Função para comprimir e otimizar logotipos corporativos em Canvas mantendo nitidez e peso levíssimo (< 80KB)
+  const optimizeLogoImage = (dataUrl: string, maxWidth = 550, maxHeight = 240): Promise<string> => {
+    return new Promise((resolve) => {
+      if (!dataUrl || !dataUrl.startsWith("data:image/") || dataUrl.includes("image/svg+xml")) {
+        return resolve(dataUrl);
+      }
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width <= maxWidth && height <= maxHeight && dataUrl.length < 100000) {
+          return resolve(dataUrl);
+        }
+        const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(dataUrl);
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const isPng = dataUrl.startsWith("data:image/png");
+        const format = isPng ? "image/png" : "image/jpeg";
+        const optimized = canvas.toDataURL(format, 0.9);
+        resolve(optimized);
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  };
+
   if (!isOpen) return null;
 
-  // Upload do Logotipo da Empresa Emitente
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload do Logotipo da Empresa Emitente com Otimização Automática
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Por favor, selecione um arquivo de imagem válido (PNG, JPG, SVG).");
+      toast.error("Por favor, selecione um arquivo de imagem válido (PNG, JPG, SVG, WebP).");
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("A imagem deve ter no máximo 2MB.");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 10MB.");
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      setIssuerLogoUrl(result);
-      toast.success("Logotipo da empresa carregado com sucesso!");
+    reader.onload = async (event) => {
+      const raw = event.target?.result as string;
+      if (!raw) return;
+
+      if (file.type === "image/svg+xml") {
+        setIssuerLogoUrl(raw);
+        toast.success("Logotipo vetorial carregado com sucesso!");
+        return;
+      }
+
+      try {
+        const optimized = await optimizeLogoImage(raw, 550, 240);
+        setIssuerLogoUrl(optimized);
+        toast.success("Logotipo da empresa carregado e otimizado!");
+      } catch (err) {
+        setIssuerLogoUrl(raw);
+        toast.success("Logotipo da empresa carregado com sucesso!");
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -241,13 +291,22 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
 
     setIsSubmitting(true);
 
+    let processedLogo = issuerLogoUrl;
+    if (processedLogo && processedLogo.startsWith("data:image/") && processedLogo.length > 120000) {
+      try {
+        processedLogo = await optimizeLogoImage(processedLogo, 550, 240);
+      } catch (e) {
+        // Fallback silencioso
+      }
+    }
+
     const issuerData: CompanyIssuer = {
       name: issuerName.trim() || "Empresa Emitente",
       document: issuerDocument.trim(),
       phone: issuerPhone.trim(),
       email: issuerEmail.trim(),
       address: issuerAddress.trim(),
-      logoUrl: issuerLogoUrl
+      logoUrl: processedLogo
     };
 
     // Cache local dos dados do emitente para conveniência
@@ -280,7 +339,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
       updatedAt: new Date().toISOString(),
       notes: notes.trim(),
       publicLink: proposalToEdit?.publicLink || `${typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app")}/p/${(proposalToEdit?.code || code).toLowerCase()}`,
-      logoUrl: issuerLogoUrl || undefined,
+      logoUrl: processedLogo || undefined,
       issuer: issuerData
     };
 

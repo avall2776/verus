@@ -4,7 +4,7 @@ import GlobalSearchBar from "@/components/search/GlobalSearchBar";
 
 export default function Topbar() {
   return (
-    <header className="h-16 border-b border-gray-800 bg-panel/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-20 w-full">
+    <header className="h-16 border-b border-gray-800 bg-panel/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-20 w-full print:hidden">
       {/* Mobile Menu Button & Busca Global Reativa */}
       <div className="flex items-center gap-4 w-full md:w-auto">
         <button className="md:hidden text-text-secondary hover:text-white transition-colors">

@@ -4,6 +4,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { SentryInterceptor } from './shared/interceptors/sentry.interceptor';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   // Inicializa o Sentry o mais cedo possível
@@ -19,7 +20,11 @@ async function bootstrap() {
   });
 
   const logger = new Logger('Bootstrap');
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+  
+  // Suporte a payloads maiores (propostas comerciais, logotipos corporativos e anexos)
+  app.use(json({ limit: '25mb' }));
+  app.use(urlencoded({ limit: '25mb', extended: true }));
   
   // Habilita validação global (descarta campos não declarados no DTO)
   app.useGlobalPipes(new ValidationPipe({

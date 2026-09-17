@@ -51,29 +51,78 @@ body {
 @media print {
   html, body {
     background-color: #ffffff !important;
+    background: #ffffff !important;
     color: #0f172a !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
   }
 
-  /* Ocultação mandatória de elementos não-impressos */
+  /* Ocultação mandatória de elementos do sistema e navegação */
   aside,
   nav,
   header,
+  footer,
   #floating-support-widget,
   .print\:hidden {
     display: none !important;
   }
 
-  /* Remoção de sombras e fundos pesados */
+  /* Remove restrições de overflow e altura de todos os contêineres pais */
+  div, main {
+    overflow: visible !important;
+  }
+
+  /* Reset global de sombras e fundos desnecessários */
   * {
     box-shadow: none !important;
     text-shadow: none !important;
   }
 
-  /* Prevenção de quebras abruptas de tabela e blocos de totais */
+  /* Garante que o backdrop do modal não ocupe tela fixa no print */
+  .fixed.inset-0:has(#proposal-print-area) {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+
+  /* Documento da Proposta no Modo de Impressão */
+  #proposal-print-area {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* Força renderização nítida de cores corporativas em impressão */
+  #proposal-print-area * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Prevenção de quebras abruptas em tabelas e blocos críticos */
   tr,
   table,
   .print-avoid-break {
@@ -81,4 +130,5 @@ body {
     break-inside: avoid !important;
   }
 }
+
 

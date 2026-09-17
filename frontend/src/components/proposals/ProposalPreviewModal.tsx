@@ -110,10 +110,10 @@ export function ProposalPreviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto print:p-0 print:m-0 print:bg-white print:static print:overflow-visible">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto print:p-0 print:m-0 print:bg-white print:static print:overflow-visible print:block print:w-full print:h-auto">
       <div 
         id="proposal-print-area"
-        className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl bg-[#0B1224] border border-slate-700/80 shadow-2xl text-slate-200 overflow-hidden print:max-w-none print:max-h-none print:h-auto print:border-0 print:bg-white print:text-black print:shadow-none print:rounded-none print:static print:overflow-visible print:p-0"
+        className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl bg-[#0B1224] border border-slate-700/80 shadow-2xl text-slate-200 overflow-hidden print:w-full print:max-w-none print:max-h-none print:h-auto print:border-0 print:bg-white print:text-black print:shadow-none print:rounded-none print:static print:overflow-visible print:p-0 print:block"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Barra Superior de Ações */}
@@ -175,7 +175,7 @@ export function ProposalPreviewModal({
         </div>
 
         {/* Espelho do Documento de Proposta */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-5 print:p-4 print:space-y-3 print:overflow-visible">
+        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-5 print:p-0 print:space-y-3 print:overflow-visible print:block">
           {/* Header da Proposta Comercial com Logotipo e Dados do Emitente (Sua Marca) */}
           <div className="flex flex-row justify-between items-start gap-4 border-b border-slate-800 pb-4 print:border-slate-300 print:pb-3 print-avoid-break">
             {/* Bloco do Emitente (Logotipo + Informações da Empresa Vendedora) */}
