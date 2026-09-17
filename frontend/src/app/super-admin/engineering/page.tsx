@@ -38,11 +38,16 @@ import {
   CheckSquare,
   Square,
   ArrowUpDown,
-  Users
+  Users,
+  Mic,
+  MicOff,
+  StopCircle,
+  ArrowUp
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 
 export const dynamic = "force-dynamic";
 
@@ -116,6 +121,15 @@ export default function EngineeringDashboard() {
   const [chatLoading, setChatLoading] = useState(false);
   const [creatingCardFromMessageId, setCreatingCardFromMessageId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Áudio e Gravação com Whisper
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Carregar Backlog
   const fetchBacklog = useCallback(async () => {
@@ -449,6 +463,143 @@ export default function EngineeringDashboard() {
     }
   };
 
+  // Copiar Conteúdo da Mensagem da IA
+  const handleCopyMessage = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Resposta copiada para a área de transferência!");
+  };
+
+  // Iniciar Gravação de Áudio via Navegador
+  const startRecording = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast.error("Seu navegador não possui suporte para gravação de áudio.");
+        return;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
+
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.start(200);
+      setIsRecording(true);
+      setRecordingDuration(0);
+
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration((prev) => prev + 1);
+      }, 1000);
+      toast.info("Gravando áudio... Fale sua demanda para o Arquiteto IA.");
+    } catch (err: any) {
+      console.error("Erro ao iniciar microfone:", err);
+      toast.error("Permissão de microfone negada ou microfone indisponível.");
+    }
+  };
+
+  // Parar Gravação e Transcrever com OpenAI Whisper
+  const stopRecordingAndSend = async () => {
+    if (!mediaRecorderRef.current || !isRecording) return;
+
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+
+    const recorder = mediaRecorderRef.current;
+
+    recorder.onstop = async () => {
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach((track) => track.stop());
+        audioStreamRef.current = null;
+      }
+
+      const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      audioChunksRef.current = [];
+      setIsRecording(false);
+      setRecordingDuration(0);
+
+      if (audioBlob.size < 500) {
+        toast.warning("Gravação muito curta ou vazia.");
+        return;
+      }
+
+      setIsTranscribing(true);
+      const loadingToastId = toast.loading("Transcrevendo áudio via OpenAI Whisper...");
+
+      try {
+        const formData = new FormData();
+        formData.append("file", audioBlob, "audio.webm");
+
+        const res = await api.post("/engineering/chat/transcribe-audio", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        const text = res.data?.text?.trim();
+        if (!text) {
+          toast.dismiss(loadingToastId);
+          toast.warning("Nenhuma fala detectada no áudio.");
+          return;
+        }
+
+        toast.dismiss(loadingToastId);
+        toast.success(`Transcrito: "${text.slice(0, 50)}..."`);
+        await handleSendChatMessage(text);
+      } catch (err: any) {
+        console.error("Erro ao transcrever áudio:", err);
+        toast.dismiss(loadingToastId);
+        toast.error(err.response?.data?.message || "Erro ao transcrever áudio com Whisper.");
+      } finally {
+        setIsTranscribing(false);
+      }
+    };
+
+    recorder.stop();
+  };
+
+  // Cancelar Gravação de Áudio
+  const cancelRecording = () => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      audioStreamRef.current = null;
+    }
+    audioChunksRef.current = [];
+    setIsRecording(false);
+    setRecordingDuration(0);
+    toast.info("Gravação de áudio cancelada.");
+  };
+
+  // Formatador de Tempo de Áudio (mm:ss)
+  const formatRecordingTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
+  // Limpeza de Streams de Áudio
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
   // Itens ordenados para a visualização em Tabela
   const sortedTableItems = [...items].sort((a, b) => {
     if (tableSortField === "priority") {
@@ -522,80 +673,102 @@ export default function EngineeringDashboard() {
             </button>
           </div>
 
-          {/* Sincronização Automática de Deploy */}
-          <button
-            onClick={handleSyncDeploy}
-            disabled={syncingDeploy}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/15 hover:bg-emerald-600/25 border border-emerald-500/30 text-emerald-400 rounded-lg text-xs font-bold transition-all cursor-pointer"
-            title="Mover tarefas em desenvolvimento para 'Deploy Realizado'"
-          >
-            <Rocket size={14} className={syncingDeploy ? "animate-spin" : ""} />
-            <span className="hidden sm:inline">Sincronizar Deploy</span>
-          </button>
+          {/* Controles Exclusivos da Aba Kanban / IA */}
+          {activeTab === "kanban" ? (
+            <>
+              {/* Sincronização Automática de Deploy */}
+              <button
+                onClick={handleSyncDeploy}
+                disabled={syncingDeploy}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/15 hover:bg-emerald-600/25 border border-emerald-500/30 text-emerald-400 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                title="Mover tarefas em desenvolvimento para 'Deploy Realizado'"
+              >
+                <Rocket size={14} className={syncingDeploy ? "animate-spin" : ""} />
+                <span className="hidden sm:inline">Sincronizar Deploy</span>
+              </button>
 
-          {/* Botão Nova Iniciativa */}
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
-          >
-            <Plus size={15} />
-            <span>Nova Frente</span>
-          </button>
+              {/* Botão Nova Iniciativa */}
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-2 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
+              >
+                <Plus size={15} />
+                <span>Nova Frente</span>
+              </button>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-300 border border-purple-500/30">
+                <Sparkles size={12} className="text-purple-400" />
+                <span>OpenAI GPT-4o & Whisper</span>
+              </span>
+              <button
+                onClick={handleClearChat}
+                className="text-xs text-slate-400 hover:text-rose-400 px-2.5 py-1.5 rounded-lg border border-slate-800 hover:border-rose-500/30 hover:bg-rose-500/10 transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Limpar histórico de conversa"
+              >
+                <Trash2 size={13} />
+                <span className="hidden sm:inline">Limpar Chat</span>
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
-      {/* MÉTRICAS DE TOPO (KPIs) */}
-      <section className="px-4 md:px-6 py-3 border-b border-slate-800/80 bg-[#091020] grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0">
-        <div className="bg-[#0B1224] border border-slate-800 rounded-lg p-2.5 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Iniciativas</p>
-            <p className="text-lg font-black text-white">{stats.total}</p>
+      {/* MÉTRICAS DE TOPO (KPIs) - Visíveis apenas no Pipeline & Backlog */}
+      {activeTab === "kanban" && (
+        <section className="px-4 md:px-6 py-3 border-b border-slate-800/80 bg-[#091020] grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0">
+          <div className="bg-[#0B1224] border border-slate-800 rounded-lg p-2.5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Iniciativas</p>
+              <p className="text-lg font-black text-white">{stats.total}</p>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-slate-800/60 border border-slate-700 flex items-center justify-center text-slate-300">
+              <Layers size={16} />
+            </div>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-slate-800/60 border border-slate-700 flex items-center justify-center text-slate-300">
-            <Layers size={16} />
-          </div>
-        </div>
 
-        <div className="bg-[#0B1224] border border-amber-500/20 rounded-lg p-2.5 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] text-amber-400 uppercase font-bold tracking-wider">Capturadas</p>
-            <p className="text-lg font-black text-amber-300">{stats.captured}</p>
+          <div className="bg-[#0B1224] border border-amber-500/20 rounded-lg p-2.5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-amber-400 uppercase font-bold tracking-wider">Capturadas</p>
+              <p className="text-lg font-black text-amber-300">{stats.captured}</p>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <Inbox size={16} />
+            </div>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-            <Inbox size={16} />
-          </div>
-        </div>
 
-        <div className="bg-[#0B1224] border border-purple-500/20 rounded-lg p-2.5 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] text-purple-400 uppercase font-bold tracking-wider">Em Análise IA</p>
-            <p className="text-lg font-black text-purple-300">{stats.aiAnalysis}</p>
+          <div className="bg-[#0B1224] border border-purple-500/20 rounded-lg p-2.5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-purple-400 uppercase font-bold tracking-wider">Em Análise IA</p>
+              <p className="text-lg font-black text-purple-300">{stats.aiAnalysis}</p>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+              <Sparkles size={16} />
+            </div>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
-            <Sparkles size={16} />
-          </div>
-        </div>
 
-        <div className="bg-[#0B1224] border border-blue-500/20 rounded-lg p-2.5 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] text-blue-400 uppercase font-bold tracking-wider">Em Desenvolvimento</p>
-            <p className="text-lg font-black text-blue-300">{stats.inDevelopment}</p>
+          <div className="bg-[#0B1224] border border-blue-500/20 rounded-lg p-2.5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-blue-400 uppercase font-bold tracking-wider">Em Desenvolvimento</p>
+              <p className="text-lg font-black text-blue-300">{stats.inDevelopment}</p>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              <Code size={16} />
+            </div>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
-            <Code size={16} />
-          </div>
-        </div>
 
-        <div className="bg-[#0B1224] border border-emerald-500/20 rounded-lg p-2.5 flex items-center justify-between col-span-2 md:col-span-1">
-          <div>
-            <p className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">Deploy Realizado</p>
-            <p className="text-lg font-black text-emerald-300">{stats.deployed}</p>
+          <div className="bg-[#0B1224] border border-emerald-500/20 rounded-lg p-2.5 flex items-center justify-between col-span-2 md:col-span-1">
+            <div>
+              <p className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">Deploy Realizado</p>
+              <p className="text-lg font-black text-emerald-300">{stats.deployed}</p>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <Rocket size={16} />
+            </div>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-            <Rocket size={16} />
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* CONTEÚDO PRINCIPAL: TAB 1 (KANBAN/TABELA) OU TAB 2 (AI CHAT) */}
       {activeTab === "kanban" ? (
@@ -1013,178 +1186,364 @@ export default function EngineeringDashboard() {
           )}
         </div>
       ) : (
-        /* TAB 2: CHAT DEDICADO COM A IA COM CRIAÇÃO DE CARDS NO KANBAN */
+        /* TAB 2: CHAT DEDICADO COM A IA (FULLSCREEN CHATGPT / OPENAI STYLE) */
         <div className="flex-1 flex flex-col min-h-0 bg-[#070D1B] overflow-hidden">
-          {/* BARRA SUPERIOR DO CHAT */}
-          <div className="p-3 md:px-6 bg-[#0B1224] border-b border-slate-800 flex items-center justify-between shrink-0">
+          {/* SUB-HEADER ELEGANTE DO AGENTE IA */}
+          <div className="px-4 md:px-6 py-2.5 bg-[#0B1224]/80 backdrop-blur border-b border-slate-800 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                <Bot size={18} />
+              <div className="relative">
+                <div className="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-300 shadow-sm">
+                  <Bot size={18} />
+                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-[#0B1224]" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xs md:text-sm font-bold text-white">
+                  <h3 className="text-xs md:text-sm font-bold text-white tracking-wide">
                     Engenheiro de Software Chefe (VERSUS AI Architect)
                   </h3>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">
-                    Agente de Criação Ativo
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
+                    Agente Agêntico Ativo
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Converse para projetar novas ferramentas, arquitetar APIs e clique em "Criar Card no Kanban" para abrir a demanda automaticamente
+                  Arquitetura de microsserviços, geração de código e criação direta de cards no Kanban
                 </p>
               </div>
             </div>
 
-            <button
-              onClick={handleClearChat}
-              className="text-xs text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-all flex items-center gap-1.5 cursor-pointer"
-              title="Limpar histórico de conversa"
-            >
-              <Trash2 size={13} />
-              <span className="hidden sm:inline">Limpar Chat</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleClearChat}
+                className="text-xs text-slate-400 hover:text-rose-400 px-2.5 py-1.5 rounded-lg border border-slate-800 hover:border-rose-500/30 hover:bg-rose-500/10 transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Limpar histórico de conversa"
+              >
+                <Trash2 size={13} />
+                <span className="hidden sm:inline">Limpar Chat</span>
+              </button>
+            </div>
           </div>
 
-          {/* QUICK PROMPTS */}
-          <div className="p-2 md:px-6 bg-[#091020] border-b border-slate-800/80 flex items-center gap-2 overflow-x-auto shrink-0">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1">
-              <Zap size={11} className="text-amber-400" /> Prompts Rápidos:
-            </span>
-            <button
-              onClick={() => handleSendChatMessage("Quero criar uma nova integração com gateway de pagamento Pix para gerar cobranças automáticas no CRM. Como arquitetar isso?")}
-              className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0F172A] border border-slate-800 hover:border-purple-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
-            >
-              💳 Nova API de Cobrança Pix
-            </button>
-            <button
-              onClick={() => handleSendChatMessage("Analise o backlog atual de feedbacks capturados do suporte e me dê as 3 prioridades críticas de arquitetura.")}
-              className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0F172A] border border-slate-800 hover:border-purple-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
-            >
-              💡 Priorizar Backlog de Feedbacks
-            </button>
-            <button
-              onClick={() => handleSendChatMessage("Projete a arquitetura de uma nova API RESTful e Webhook para integração de novos canais de mensageria no VERSUS.")}
-              className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0F172A] border border-slate-800 hover:border-cyan-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
-            >
-              🔌 Arquitetar Nova API & Webhook
-            </button>
-          </div>
-
-          {/* STREAM DE MENSAGENS COM BOTÃO DE CRIAÇÃO NO KANBAN */}
-          <div className="flex-1 overflow-y-auto p-4 md:px-6 space-y-4">
-            {chatMessages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-8 max-w-md mx-auto">
-                <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 mb-4 shadow-lg shadow-purple-500/10">
-                  <Cpu size={28} />
-                </div>
-                <h4 className="text-sm font-bold text-white mb-1">
-                  Assistente de Engenharia & Inovação Agêntica
-                </h4>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                  Diga a ideia de ferramenta ou melhoria que deseja construir. A IA projetará o código e permitirá você criar o card no Kanban com 1 clique!
-                </p>
-                <div className="text-[11px] text-slate-500 bg-[#0B1224] p-3 rounded-lg border border-slate-800 text-left w-full space-y-1">
-                  <p className="font-semibold text-slate-400">Exemplos práticos:</p>
-                  <p>• "IA, como criar uma extensão para discador VoIP no WhatsApp?"</p>
-                  <p>• "Quero otimizar o tempo de resposta das mensagens usando cache Redis."</p>
-                </div>
-              </div>
-            ) : (
-              chatMessages.map((msg, index) => {
-                const isAI = msg.role === "assistant";
-                const isCreating = creatingCardFromMessageId === msg.id;
-
-                return (
-                  <div
-                    key={index}
-                    className={`flex items-start gap-3 max-w-4xl ${isAI ? "mr-auto" : "ml-auto flex-row-reverse"}`}
-                  >
-                    <div
-                      className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs ${
-                        isAI
-                          ? "bg-purple-600/20 border border-purple-500/40 text-purple-300"
-                          : "bg-blue-600 text-white"
-                      }`}
-                    >
-                      {isAI ? <Bot size={15} /> : <User size={15} />}
-                    </div>
-
-                    <div className="flex flex-col gap-2 max-w-2xl">
-                      <div
-                        className={`p-3.5 rounded-2xl text-xs leading-relaxed border shadow-sm ${
-                          isAI
-                            ? "bg-[#0B1224] border-slate-800 text-slate-200"
-                            : "bg-blue-600 text-white border-blue-500"
-                        }`}
-                      >
-                        <div className="whitespace-pre-wrap font-sans font-normal selection:bg-cyan-500/30">
-                          {msg.content}
-                        </div>
-                        <div className={`text-[9px] mt-1 text-right ${isAI ? "text-slate-500" : "text-blue-200"}`}>
-                          {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
-                        </div>
-                      </div>
-
-                      {/* BOTÃO DE CRIAÇÃO NO KANBAN COM ESTA SOLUÇÃO */}
-                      {isAI && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleCreateCardFromChat(msg.content, msg.id || index.toString())}
-                            disabled={isCreating}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/40 text-cyan-300 text-xs font-bold transition-all shadow-sm cursor-pointer"
-                          >
-                            <Plus size={13} className={isCreating ? "animate-spin" : "text-cyan-400"} />
-                            <span>{isCreating ? "Criando Card..." : "📌 Criar Card no Kanban com Esta Solução"}</span>
-                          </button>
-                        </div>
-                      )}
+          {/* STREAM DE MENSAGENS ESTILO OPENAI / CHATGPT */}
+          <div className="flex-1 overflow-y-auto min-h-0 p-4 md:py-6 md:px-6 custom-scrollbar">
+            <div className="max-w-4xl mx-auto w-full space-y-6">
+              {chatMessages.length === 0 ? (
+                /* ESTADO INICIAL / BOAS-VINDAS ESTILO CHATGPT */
+                <div className="py-8 md:py-12 flex flex-col items-center justify-center text-center">
+                  <div className="relative mb-5">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-cyan-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300 shadow-xl shadow-purple-500/10">
+                      <Sparkles size={32} className="text-purple-400" />
                     </div>
                   </div>
-                );
-              })
-            )}
 
-            {chatLoading && (
-              <div className="flex items-start gap-3 max-w-4xl mr-auto">
-                <div className="w-7 h-7 rounded-lg bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-300 shrink-0">
-                  <Bot size={15} />
+                  <h2 className="text-lg md:text-xl font-black text-white tracking-tight mb-2">
+                    Como posso ajudar na engenharia do VERSUS hoje?
+                  </h2>
+                  <p className="text-xs md:text-sm text-slate-400 max-w-xl leading-relaxed mb-8">
+                    Converse com o Engenheiro Chefe para desenhar novas ferramentas, planejar integrações de APIs ou desmembrar chamados de suporte em tarefas técnicas. Quando estiver pronto, gere o Card no Kanban com 1 clique!
+                  </p>
+
+                  {/* CARDS DE SUGESTÃO DE PROMPTS ESTILO OPENAI */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full text-left">
+                    <button
+                      onClick={() => handleSendChatMessage("Quero criar uma nova integração com gateway de pagamento Pix para gerar cobranças automáticas no CRM. Como arquitetar isso no backend NestJS e frontend Next.js?")}
+                      className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800 hover:border-cyan-500/50 hover:bg-[#0E172E] transition-all group cursor-pointer text-left flex flex-col gap-1.5 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-cyan-400 group-hover:text-cyan-300">
+                          💳 Nova API de Cobrança Pix
+                        </span>
+                        <ChevronRight size={14} className="text-slate-600 group-hover:text-cyan-400 group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                      <p className="text-[11px] text-slate-400 line-clamp-2">
+                        Como arquitetar cobranças automáticas, conciliação e webhooks no NestJS e Next.js?
+                      </p>
+                    </button>
+
+                    <button
+                      onClick={() => handleSendChatMessage("Analise o backlog atual de feedbacks capturados do suporte e me dê as 3 prioridades críticas de arquitetura para a plataforma.")}
+                      className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800 hover:border-purple-500/50 hover:bg-[#0E172E] transition-all group cursor-pointer text-left flex flex-col gap-1.5 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-purple-400 group-hover:text-purple-300">
+                          💡 Priorizar Backlog de Feedbacks
+                        </span>
+                        <ChevronRight size={14} className="text-slate-600 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                      <p className="text-[11px] text-slate-400 line-clamp-2">
+                        Analise os chamados do suporte e aponte as 3 melhorias prioritárias para o produto.
+                      </p>
+                    </button>
+
+                    <button
+                      onClick={() => handleSendChatMessage("Projete a arquitetura de uma nova API RESTful e Webhook para integração de novos canais de mensageria no VERSUS.")}
+                      className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800 hover:border-blue-500/50 hover:bg-[#0E172E] transition-all group cursor-pointer text-left flex flex-col gap-1.5 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-blue-400 group-hover:text-blue-300">
+                          🔌 Arquitetar Nova API & Webhook
+                        </span>
+                        <ChevronRight size={14} className="text-slate-600 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                      <p className="text-[11px] text-slate-400 line-clamp-2">
+                        Projete contratos RESTful, segurança com HMAC e processamento assíncrono via Redis.
+                      </p>
+                    </button>
+
+                    <button
+                      onClick={() => handleSendChatMessage("Como otimizar a performance de entrega e renderização do feed de mensagens no Live Chat utilizando cache Redis e Socket.io?")}
+                      className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800 hover:border-amber-500/50 hover:bg-[#0E172E] transition-all group cursor-pointer text-left flex flex-col gap-1.5 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-amber-400 group-hover:text-amber-300">
+                          ⚡ Otimização & Cache Redis
+                        </span>
+                        <ChevronRight size={14} className="text-slate-600 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                      <p className="text-[11px] text-slate-400 line-clamp-2">
+                        Estratégia para reduzir latência e consumo de banco de dados no Live Chat de alta densidade.
+                      </p>
+                    </button>
+                  </div>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-[#0B1224] border border-slate-800 text-slate-400 text-xs flex items-center gap-2">
-                  <RefreshCw size={12} className="animate-spin text-purple-400" />
-                  <span>O Engenheiro Chefe está arquitetando a solução...</span>
+              ) : (
+                <>
+                  {/* BARRA DE SUGESTÕES RÁPIDAS QUANDO JÁ EXISTEM MENSAGENS */}
+                  <div className="flex items-center gap-2 pb-2 overflow-x-auto border-b border-slate-800/60 custom-scrollbar">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1">
+                      <Zap size={11} className="text-amber-400" /> Sugestões:
+                    </span>
+                    <button
+                      onClick={() => handleSendChatMessage("Quero criar uma nova integração com gateway de pagamento Pix para gerar cobranças automáticas no CRM. Como arquitetar isso?")}
+                      className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0B1224] border border-slate-800 hover:border-cyan-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
+                    >
+                      💳 Nova API Pix
+                    </button>
+                    <button
+                      onClick={() => handleSendChatMessage("Analise o backlog atual de feedbacks capturados do suporte e me dê as 3 prioridades críticas de arquitetura.")}
+                      className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0B1224] border border-slate-800 hover:border-purple-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
+                    >
+                      💡 Priorizar Backlog
+                    </button>
+                    <button
+                      onClick={() => handleSendChatMessage("Projete a arquitetura de uma nova API RESTful e Webhook para integração de novos canais de mensageria no VERSUS.")}
+                      className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0B1224] border border-slate-800 hover:border-blue-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
+                    >
+                      🔌 Arquitetar API & Webhook
+                    </button>
+                  </div>
+
+                  {/* LISTA DE MENSAGENS */}
+                  {chatMessages.map((msg, index) => {
+                    const isAI = msg.role === "assistant";
+                    const isCreating = creatingCardFromMessageId === (msg.id || index.toString());
+
+                    return (
+                      <div
+                        key={index}
+                        className={`flex gap-3.5 ${isAI ? "items-start" : "items-start justify-end"}`}
+                      >
+                        {/* Avatar IA */}
+                        {isAI && (
+                          <div className="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-300 shrink-0 mt-1 shadow-sm">
+                            <Bot size={16} />
+                          </div>
+                        )}
+
+                        {/* Conteúdo da Mensagem */}
+                        <div className={`flex flex-col gap-2 ${isAI ? "flex-1 min-w-0" : "max-w-2xl"}`}>
+                          {/* Nome e Hora */}
+                          <div className={`flex items-center gap-2 text-[11px] ${isAI ? "text-purple-300" : "justify-end text-slate-400"}`}>
+                            <span className="font-bold">{isAI ? "VERSUS AI Architect" : "Você"}</span>
+                            {isAI && (
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold">
+                                Engenheiro Chefe
+                              </span>
+                            )}
+                            <span className="text-slate-500 text-[10px]">
+                              {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+                            </span>
+                          </div>
+
+                          {/* Caixa de Mensagem */}
+                          <div
+                            className={`p-4 md:p-5 rounded-2xl text-xs md:text-sm leading-relaxed border shadow-md ${
+                              isAI
+                                ? "bg-[#0B1224] border-slate-800 text-slate-200"
+                                : "bg-blue-600 text-white border-blue-500/80 rounded-tr-sm ml-auto"
+                            }`}
+                          >
+                            {isAI ? (
+                              <MarkdownRenderer content={msg.content} />
+                            ) : (
+                              <div className="whitespace-pre-wrap font-sans font-normal selection:bg-cyan-500/30">
+                                {msg.content}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* AÇÕES DA MENSAGEM (APENAS PARA RESPOSTAS DA IA) */}
+                          {isAI && (
+                            <div className="flex items-center gap-2.5 pt-1">
+                              {/* Botão de Criação de Card no Kanban com esta Solução */}
+                              <button
+                                onClick={() => handleCreateCardFromChat(msg.content, msg.id || index.toString())}
+                                disabled={isCreating}
+                                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/40 text-cyan-300 text-xs font-bold transition-all shadow-sm cursor-pointer"
+                              >
+                                <Plus size={13} className={isCreating ? "animate-spin" : "text-cyan-400"} />
+                                <span>{isCreating ? "Criando Card..." : "📌 Criar Card no Kanban com Esta Solução"}</span>
+                              </button>
+
+                              {/* Copiar Resposta Completa */}
+                              <button
+                                onClick={() => handleCopyMessage(msg.content)}
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0B1224] hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white text-xs transition-all cursor-pointer"
+                                title="Copiar resposta completa"
+                              >
+                                <Copy size={13} />
+                                <span className="hidden sm:inline">Copiar</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Avatar Usuário */}
+                        {!isAI && (
+                          <div className="w-8 h-8 rounded-xl bg-blue-600 border border-blue-500 flex items-center justify-center text-white shrink-0 mt-1 shadow-sm">
+                            <User size={16} />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+
+              {/* FEEDBACK DE CARREGAMENTO / RACIOCÍNIO */}
+              {chatLoading && (
+                <div className="flex items-start gap-3.5">
+                  <div className="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-300 shrink-0 shadow-sm">
+                    <Bot size={16} />
+                  </div>
+                  <div className="p-4 rounded-2xl bg-[#0B1224] border border-slate-800 text-slate-300 text-xs flex items-center gap-3 shadow-md">
+                    <RefreshCw size={14} className="animate-spin text-purple-400" />
+                    <div className="space-y-0.5">
+                      <p className="font-semibold text-white">O Engenheiro Chefe está raciocinando...</p>
+                      <p className="text-[11px] text-slate-400">Analisando arquitetura, banco de dados e gerando plano técnico com snippets de código.</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
+              )}
+
+              <div ref={chatEndRef} />
+            </div>
           </div>
 
-          {/* INPUT DO CHAT */}
-          <div className="p-3 md:px-6 bg-[#0B1224] border-t border-slate-800 shrink-0">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendChatMessage();
-              }}
-              className="flex items-center gap-2 bg-[#070D1B] border border-slate-800 focus-within:border-purple-500/50 rounded-xl px-3 py-1.5 transition-all"
-            >
-              <Terminal size={16} className="text-slate-500 shrink-0" />
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Pergunte ao Engenheiro Chefe (arquitetura, sugestão de código, análise de backlog)..."
-                className="bg-transparent text-xs text-white placeholder-slate-500 outline-none w-full py-1.5"
-                disabled={chatLoading}
-              />
-              <button
-                type="submit"
-                disabled={chatLoading || !chatInput.trim()}
-                className="p-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white transition-all disabled:opacity-30 cursor-pointer shrink-0"
-              >
-                <Send size={14} />
-              </button>
-            </form>
+          {/* BARRA DE INPUT ESTILO CHATGPT / OPENAI CAPSULE */}
+          <div className="p-4 md:px-6 bg-gradient-to-t from-[#070D1B] via-[#070D1B] to-transparent shrink-0">
+            <div className="max-w-4xl mx-auto w-full">
+              {/* BARRA DE GRAVAÇÃO DE ÁUDIO ATIVA */}
+              {isRecording ? (
+                <div className="bg-[#0B1224] border border-rose-500/50 rounded-2xl p-3 px-4 shadow-xl flex items-center justify-between gap-4 animate-in fade-in">
+                  <div className="flex items-center gap-3">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                    </span>
+                    <div>
+                      <p className="text-xs font-bold text-rose-300 flex items-center gap-2">
+                        <span>Gravando áudio com Whisper...</span>
+                        <span className="font-mono text-white bg-rose-950/60 px-2 py-0.5 rounded border border-rose-800/40">
+                          {formatRecordingTime(recordingDuration)}
+                        </span>
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        Fale sua ideia ou dúvida técnica com naturalidade
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={cancelRecording}
+                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Trash2 size={13} className="text-rose-400" />
+                      <span>Cancelar</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={stopRecordingAndSend}
+                      className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Check size={14} />
+                      <span>Enviar Áudio</span>
+                    </button>
+                  </div>
+                </div>
+              ) : isTranscribing ? (
+                <div className="bg-[#0B1224] border border-cyan-500/40 rounded-2xl p-3 px-4 shadow-xl flex items-center gap-3">
+                  <RefreshCw size={16} className="animate-spin text-cyan-400" />
+                  <div>
+                    <p className="text-xs font-bold text-cyan-300">Processando áudio com OpenAI Whisper...</p>
+                    <p className="text-[11px] text-slate-400">Convertendo sua fala em texto técnico de alta precisão</p>
+                  </div>
+                </div>
+              ) : (
+                /* CAPSULA DE TEXTO PADRÃO CHATGPT */
+                <div className="bg-[#0B1224] border border-slate-800 focus-within:border-purple-500/60 rounded-2xl p-3 shadow-xl transition-all">
+                  <textarea
+                    rows={2}
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendChatMessage();
+                      }
+                    }}
+                    placeholder="Converse com o Engenheiro Chefe (arquitetura, sugestão de código, análise de backlog)..."
+                    className="bg-transparent text-xs md:text-sm text-white placeholder-slate-500 outline-none w-full resize-none leading-relaxed font-sans"
+                    disabled={chatLoading}
+                  />
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 mt-1">
+                    <span className="text-[10px] text-slate-500 hidden sm:inline">
+                      Pressione <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[9px]">Enter</kbd> para enviar ou <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[9px]">Shift+Enter</kbd> para nova linha
+                    </span>
+
+                    <div className="flex items-center gap-2 ml-auto">
+                      {/* Botão de Gravação de Áudio */}
+                      <button
+                        type="button"
+                        onClick={startRecording}
+                        disabled={chatLoading}
+                        className="p-2 rounded-xl text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/30 transition-all cursor-pointer disabled:opacity-40"
+                        title="Falar por áudio (OpenAI Whisper)"
+                      >
+                        <Mic size={17} />
+                      </button>
+
+                      {/* Botão Enviar Mensagem */}
+                      <button
+                        type="button"
+                        onClick={() => handleSendChatMessage()}
+                        disabled={chatLoading || !chatInput.trim()}
+                        className="p-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-all disabled:opacity-30 cursor-pointer flex items-center gap-1.5 shadow-md shadow-purple-600/20"
+                      >
+                        <Send size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-[10px] text-slate-500 text-center mt-2">
+                O VERSUS AI Architect utiliza inteligência artificial com raciocínio de engenharia e transcrição de áudio Whisper.
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -1626,8 +1985,8 @@ export default function EngineeringDashboard() {
                   </div>
 
                   {selectedItem.aiSummary ? (
-                    <div className="p-4 bg-purple-950/15 border border-purple-500/30 rounded-xl text-xs text-purple-100 whitespace-pre-wrap leading-relaxed font-sans">
-                      {selectedItem.aiSummary}
+                    <div className="p-4 bg-[#0B1224] border border-purple-500/30 rounded-xl text-xs text-purple-100 leading-relaxed shadow-md">
+                      <MarkdownRenderer content={selectedItem.aiSummary} />
                     </div>
                   ) : (
                     <div className="p-6 bg-[#070D1B] border border-dashed border-purple-500/30 rounded-xl text-center">

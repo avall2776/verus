@@ -10,7 +10,11 @@ import {
   UseGuards,
   Request,
   ForbiddenException,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { EngineeringService } from './engineering.service';
 import { CreateEngineeringItemDto } from './dto/create-engineering-item.dto';
@@ -110,6 +114,19 @@ export class EngineeringController {
   async createCardFromChat(@Request() req, @Body() dto: CreateCardFromChatDto) {
     this.checkSuperAdmin(req);
     return this.engineeringService.createCardFromChat(dto);
+  }
+
+  @Post('chat/transcribe-audio')
+  @UseInterceptors(FileInterceptor('file'))
+  async transcribeAudio(
+    @Request() req,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    this.checkSuperAdmin(req);
+    if (!file) {
+      throw new BadRequestException('Arquivo de áudio não enviado.');
+    }
+    return this.engineeringService.transcribeAudio(file);
   }
 
   @Delete('chat/history')

@@ -143,12 +143,14 @@ function parseChecklistMarkdown(markdown: string) {
 
     // Processa Roadmap
     if (currentSection === 'roadmap') {
-      const matchRoadmap = line.match(/^-\s+\[( |x)\]\s+\*\*([^*:]+)(?::\*\*|\*\*:\s*|\*\*)\s*(.+)$/i);
+      const matchRoadmap = line.match(/^-\s+\[( |x)\]\s+\*\*(.+?)\*\*(?::)?\s*(.*)$/i);
       if (matchRoadmap) {
+        const title = matchRoadmap[2].replace(/:$/, '').trim();
+        const inlineDesc = matchRoadmap[3].trim();
         roadmapItems.push({
           checked: matchRoadmap[1].toLowerCase() === 'x',
-          title: matchRoadmap[2].trim(),
-          description: matchRoadmap[3].trim()
+          title,
+          description: inlineDesc || 'Módulo estratégico de expansão planejado para os próximos ciclos.'
         });
       }
       continue;

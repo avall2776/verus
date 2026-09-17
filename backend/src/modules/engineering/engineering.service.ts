@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
+import OpenAI, { toFile } from 'openai';
 import { PrismaClient } from '@prisma/client';
 import { CreateEngineeringItemDto } from './dto/create-engineering-item.dto';
 import { UpdateEngineeringItemDto } from './dto/update-engineering-item.dto';
@@ -641,5 +641,25 @@ Recomendo verificar a configuração de \`OPENAI_API_KEY\` no servidor. Enquanto
   async clearChatHistory() {
     await this.prisma.engineeringChatMessage.deleteMany({});
     return { success: true, message: 'Histórico do chat de engenharia limpo com sucesso.' };
+  }
+
+  /**
+   * Transcreve áudio gravado no navegador usando OpenAI Whisper-1
+   */
+  async transcribeAudio(file: Express.Multer.File) {
+    try {
+      const audioFile = await toFile(file.buffer, file.originalname || 'audio.webm', {
+        type: file.mimetype || 'audio/webm',
+      });
+      const response = await this.openai.audio.transcriptions.create({
+        file: audioFile,
+        model: 'whisper-1',
+        language: 'pt',
+      });
+      return { text: response.text };
+    } catch (error: any) {
+      this.logger.error(`Erro ao transcrever áudio com Whisper: ${error.message}`);
+      throw new BadRequestException(`Falha ao transcrever áudio: ${error.message}`);
+    }
   }
 }

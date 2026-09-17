@@ -544,6 +544,23 @@ Recomendo verificar a configuração de \`OPENAI_API_KEY\` no servidor. Enquanto
         await this.prisma.engineeringChatMessage.deleteMany({});
         return { success: true, message: 'Histórico do chat de engenharia limpo com sucesso.' };
     }
+    async transcribeAudio(file) {
+        try {
+            const audioFile = await (0, openai_1.toFile)(file.buffer, file.originalname || 'audio.webm', {
+                type: file.mimetype || 'audio/webm',
+            });
+            const response = await this.openai.audio.transcriptions.create({
+                file: audioFile,
+                model: 'whisper-1',
+                language: 'pt',
+            });
+            return { text: response.text };
+        }
+        catch (error) {
+            this.logger.error(`Erro ao transcrever áudio com Whisper: ${error.message}`);
+            throw new common_1.BadRequestException(`Falha ao transcrever áudio: ${error.message}`);
+        }
+    }
 };
 exports.EngineeringService = EngineeringService;
 exports.EngineeringService = EngineeringService = EngineeringService_1 = __decorate([

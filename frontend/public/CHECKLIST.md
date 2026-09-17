@@ -1751,32 +1751,37 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [ ] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
   - [ ] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
-- [/] **[17/09/2026 - 11:42]** 🚀 **[IDE 2] Início da Tarefa: Evolução da IA Arquiteto-Chefe na Engenharia de Produto - Interface Fullscreen Estilo OpenAI, Markdown Formatado e Conversação por Áudio/Voz (Fase 70)**:
-  - **Status**: 🔄 Em Andamento pelo Agente IDE 2.
+- [x] **[17/09/2026 - 11:55]** ⚡ **[IDE 2] Conclusão: Evolução da IA Arquiteto-Chefe na Engenharia de Produto - Interface Fullscreen Estilo OpenAI, Markdown Formatado e Conversação por Áudio/Voz (Fase 70)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Aprovado.
   - **Interface Fullscreen / Expandida Estilo ChatGPT / OpenAI**:
-    - Ao alternar para a aba "IA Arquiteto-Chefe", ocultar automaticamente as métricas de topo e elementos de Kanban que espremiam a tela, proporcionando área 100% dedicada e imersiva de chat.
-    - Layout centralizado moderno (`max-w-4xl`), espaçoso, com mensagens do usuário e respostas da IA organizadas com clareza executiva.
+    - Ao alternar para a aba "IA Arquiteto-Chefe", as métricas superiores do Kanban (Total, Capturadas, Em Análise, etc.) e os botões de ação do Kanban são automaticamente ocultados, liberando 100% da altura da tela para a conversa.
+    - Layout centralizado moderno (`max-w-4xl`), espaçoso, com mensagens do usuário e respostas da IA organizadas com clareza executiva e elegância monocromática.
+    - Tela inicial inspirada no ChatGPT com cartões interativos de prompts técnicos de arquitetura ("Nova API de Cobrança Pix", "Priorizar Backlog de Feedbacks", "Arquitetar Nova API & Webhook", "Otimização & Cache Redis").
   - **Renderização Rica de Markdown (Padrão OpenAI)**:
-    - Integração de `react-markdown` e `remark-gfm` com componentes customizados para blocos de código com destaque e botão de "Copiar Código", títulos formatados, tópicos estilizados, negrito e tabelas, eliminando a exibição de markdown cru (`**texto**`).
-  - **Conversação por Áudio / Voz (Whisper Native)**:
-    - Botão de gravação de áudio no input com timer regressivo/progressivo e indicador visual de gravação.
-    - Endpoint `POST /engineering/chat/transcribe-audio` com transcrição oficial via OpenAI Whisper (`whisper-1`) em português.
-    - Envio autônomo do áudio transcrito diretamente para o Engenheiro-Chefe.
+    - Criação e integração do componente `MarkdownRenderer` com `react-markdown` e `remark-gfm`.
+    - Suporte a títulos customizados, listas com marcadores estilizados, negrito de alto contraste, citações técnicas e blocos de código com destaque, tag de linguagem e botão interativo de **"Copiar Código"** com feedback visual imediato.
+    - Aplicação do `MarkdownRenderer` tanto no fluxo do chat quanto na aba de Parecer de Arquitetura dentro do modal de detalhes da iniciativa.
+  - **Conversação por Áudio / Voz (OpenAI Whisper Nativo)**:
+    - Gravação de áudio no navegador via `MediaRecorder` com feedback visual dinâmico (onda pulsante vermelha, cronômetro de duração, botões de Cancelar e Enviar).
+    - Endpoint backend `POST /engineering/chat/transcribe-audio` com processamento em tempo real via OpenAI Whisper (`whisper-1`) em português (`pt`).
+    - Transmissão automática do texto transcrito diretamente para o raciocínio do Engenheiro-Chefe.
   - **Preservação de Ações Agênticas**:
-    - Manutenção do botão interativo **`📌 Criar Card no Kanban com Esta Solução`** abaixo de cada resposta técnica da IA.
+    - Manutenção do botão interativo **`📌 Criar Card no Kanban com Esta Solução`** abaixo de cada resposta técnica da IA, convertendo propostas em cards de backlog em 1 clique.
   - **Validação de Build, Homologação & Deploy**:
-    - `npx nest build`, `npx tsc --noEmit` e `npm run build` aprovados com código 0.
+    - `npx nest build` aprovado com código 0 (Backend NestJS).
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend Next.js).
+    - `npm run build` aprovado com código 0 (42/42 rotas compiladas com sucesso).
     - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
-### 🔄 FASE 70: EVOLUÇÃO DA IA ARQUITETO-CHEFE NA ENGENHARIA DE PRODUTO [EM ANDAMENTO - IDE 2]
-- [/] **Interface Fullscreen / Expandida Estilo ChatGPT / OpenAI**:
-  - [/] Ocultação de métricas e Kanban na aba IA para área imersiva e centralizada (`max-w-4xl`).
-- [/] **Renderização Rica de Markdown (Padrão OpenAI)**:
-  - [/] Componente `MarkdownRenderer` com destaque de código, botão de cópia, tabelas e títulos.
-- [/] **Conversação por Áudio / Voz (Whisper Native)**:
-  - [/] Gravador de áudio no input com timer e endpoint `POST /engineering/chat/transcribe-audio`.
-- [/] **Validação de Build, Homologação & Deploy**:
-  - [/] `npx nest build`, `npx tsc --noEmit` e `npm run build` aprovados com código 0.
+### ✅ FASE 70: EVOLUÇÃO DA IA ARQUITETO-CHEFE NA ENGENHARIA DE PRODUTO [CONCLUÍDO - IDE 2]
+- [x] **Interface Fullscreen / Expandida Estilo ChatGPT / OpenAI**:
+  - [x] Ocultação de métricas e Kanban na aba IA para área imersiva e centralizada (`max-w-4xl`).
+- [x] **Renderização Rica de Markdown (Padrão OpenAI)**:
+  - [x] Componente `MarkdownRenderer` com destaque de código, botão de cópia, tabelas e títulos.
+- [x] **Conversação por Áudio / Voz (Whisper Native)**:
+  - [x] Gravador de áudio no input com timer e endpoint `POST /engineering/chat/transcribe-audio`.
+- [x] **Validação de Build, Homologação & Deploy**:
+  - [x] `npx nest build`, `npx tsc --noEmit` e `npm run build` aprovados com código 0.
 
 - [ ] **[17/09/2026 - 11:46]** 📋 **Demanda Registrada: Redesign e Evolução de Alto Impacto do Preloader & Welcome Experience do Sistema (Fase 71)**:
   - **Status**: 📋 Registrado no Checklist (Agendado para Execução no Retorno do Almoço - IDE 1).
@@ -1828,41 +1833,18 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
 *Esta seção armazena ideias arquiteturais avançadas e expansões de escopo para longo prazo.*
 
-- [ ] **Suite ERP & Gestão Empresarial Integrada de Ponta a Ponta ("VERSUS ERP & Backoffice Suite" - Padrão Omie / Tecnologia VERSUS):**
+- [ ] **Suite ERP & Gestão Empresarial Integrada (Padrão Omie / Tecnologia VERSUS):** Ecossistema corporativo completo de gestão integrada em tempo real estilo Omie com 6 módulos estratégicos: CRM Inteligente, Vendas e NF-e de Produtos, Finanças e Conciliação Bancária, Estoque e Produção (PCP), Painel do Contador e Serviços com NFS-e.
   - **Visão Geral**: Expansão do ecossistema VERSUS para além do CRM e Atendimento Omnichannel, incorporando uma suíte completa de gestão empresarial integrada em tempo real, inspirada no modelo Omie com arquitetura corporativa moderna, IA nativa e design system monocromático (#0B1224, slate, branco).
-  - **1. CRM Inteligente & Vendas Preditivas:**
-    - Acompanhamento unificado do ciclo de vida dos clientes, histórico omnichannel (WhatsApp, E-mail, reuniões), compras, vendas e previsibilidade de receita com pontuação e qualificação preditiva por IA.
-  - **2. Vendas e Emissão de NF-e (Produtos):**
-    - Gestão completa de pedidos comerciais, propostas e orçamentos com faturamento automático em 1 clique.
-    - Emissão integrada de NF-e (Nota Fiscal Eletrônica de Produto - Modelo 55) e NFC-e (Nota Fiscal de Consumidor Eletrônica - Modelo 65).
-    - Motor de cálculo tributário automático (ICMS, IPI, PIS, COFINS, Substituição Tributária e DIFAL) integrado a provedores fiscais (Focus NFe / PlugNotas / Nuvem Fiscal / SEFAZ direta).
-  - **3. Finanças, Tesouraria & Conciliação Bancária:**
-    - Painel financeiro executivo com contas a pagar, contas a receber, gestão de fluxo de caixa previsto vs. realizado e DRE em tempo real.
-    - Conciliação bancária automatizada via importação de extratos OFX e conexão bancária via Open Finance.
-    - Emissão integrada de boletos bancários e cobranças via PIX com baixa automática no sistema.
-  - **4. Gestão de Estoque & Produção (PCP):**
-    - Controle dinâmico de estoque com múltiplos armazéns e filiais, rastreamento por lote, grade e validade.
-    - Ponto de pedido automatizado com alertas preditivos de ressuprimento gerados por IA.
-    - Controle básico de produção e manufatura (BOM - Bill of Materials / Ficha Técnica) com baixa automática de matérias-primas e insumos na conclusão de ordens de serviço/venda.
-  - **5. Painel do Contador (Portal Colaborativo da Contabilidade):**
-    - Acesso restrito e exclusivo para o contador credenciado da empresa acessar balancetes, relatórios contábeis, livros fiscais e exportações SPED (Fiscal e Contribuições).
-    - Download em lote de todos os arquivos XML das notas fiscais emitidas e recebidas do período com 1 clique.
-  - **6. Serviços e Emissão de NFS-e (Notas Fiscais de Serviços):**
-    - Gestão de ordens de serviço, contratos de prestação recorrente de serviços (mensalidades / planos) e faturamento programado.
-    - Emissão automatizada de NFS-e integrada com as APIs dos padrões das principais prefeituras brasileiras (ABRASF, Ginfes, Betha, etc.).
-    - Envio automático de recibos, notas fiscais e cobranças para o cliente final via WhatsApp e E-mail corporativo.
-- [ ] **Módulo de Faturamento, Assinaturas & Gateway de Pagamentos Automatizados (Stripe / Asaas):**
-  - **Segurança & Tokenização (Zero PCI-DSS Direct Storage):**
-    - Proibição absoluta de armazenamento de dados sensíveis de cartões de crédito (número, CVV, data de validade) no banco de dados da aplicação.
-    - Utilização estrita da tokenização nativa do gateway (Stripe Elements / Customer Tokens ou Asaas CreditCardToken).
-  - **Automação via Webhooks (Backend NestJS):**
-    - Endpoint seguro `POST /billing/webhook` (ou `/api/billing/webhook`) com validação criptográfica de assinatura de payload.
-    - Ativação e liberação imediata de planos e módulos com transição da assinatura para `ACTIVE` mediante confirmação do pagamento (`payment_intent.succeeded` / `PAYMENT_RECEIVED`).
-    - Tratamento automático de falhas de cobrança, estornos e cancelamentos.
-  - **Gestão de Inadimplência e Tolerância (Dunning Management & Grace Period):**
-    - Implementação de Grace Period de tolerância de 7 dias úteis para contas com faturas pendentes ou falha no cartão de crédito.
-    - Disparo automático de régua de cobrança e notificações preventivas via E-mail corporativo e WhatsApp (`MessagingService`).
-    - Bloqueio preventivo e restrição de acesso ao tenant aplicado exclusivamente após o esgotamento do prazo de tolerância.
+  - **1. CRM Inteligente & Vendas Preditivas:** Acompanhamento unificado do ciclo de vida dos clientes, histórico omnichannel (WhatsApp, E-mail, reuniões), compras, vendas e previsibilidade de receita com pontuação e qualificação preditiva por IA.
+  - **2. Vendas e Emissão de NF-e (Produtos):** Gestão completa de pedidos comerciais, propostas e orçamentos com faturamento automático em 1 clique. Emissão integrada de NF-e (Modelo 55) e NFC-e (Modelo 65) com motor de cálculo tributário automático (ICMS, IPI, PIS, COFINS, ST e DIFAL) integrado a provedores fiscais (Focus NFe / PlugNotas / Nuvem Fiscal / SEFAZ direta).
+  - **3. Finanças, Tesouraria & Conciliação Bancária:** Painel financeiro executivo com contas a pagar, contas a receber, fluxo de caixa previsto vs. realizado e DRE em tempo real. Conciliação bancária automatizada via importação de extratos OFX e Open Finance, com emissão de boletos e PIX integrado.
+  - **4. Gestão de Estoque & Produção (PCP):** Controle dinâmico de estoque com múltiplos armazéns e filiais, rastreamento por lote, grade e validade. Ponto de pedido automatizado com alertas preditivos de IA e ficha técnica (BOM) com baixa automática de insumos.
+  - **5. Painel do Contador (Portal Colaborativo da Contabilidade):** Acesso restrito e exclusivo para o contador credenciado acessar balancetes, relatórios contábeis, livros fiscais, exportações SPED e download em lote de arquivos XML em 1 clique.
+  - **6. Serviços e Emissão de NFS-e (Notas Fiscais de Serviços):** Gestão de ordens de serviço, contratos de prestação recorrente de serviços (mensalidades / planos) e faturamento programado com emissão de NFS-e integrada às prefeituras (padrão ABRASF) e disparo via WhatsApp.
+- [ ] **Módulo de Faturamento e Assinaturas Automatizadas (Stripe / Asaas):** Cobrança recorrente automatizada com tokenização segura (Zero PCI-DSS Direct Storage), webhooks NestJS para liberação instantânea de planos/módulos e gestão de inadimplência preventiva (Dunning & Grace Period de 7 dias úteis).
+  - **Segurança & Tokenização (Zero PCI-DSS Direct Storage):** Proibição absoluta de armazenamento de dados sensíveis de cartões de crédito no banco de dados da aplicação, utilizando estritamente a tokenização nativa do gateway (Stripe Elements / Asaas CreditCardToken).
+  - **Automação via Webhooks (Backend NestJS):** Endpoint seguro POST /billing/webhook com validação criptográfica de assinatura de payload para ativação imediata de módulos e tratamento automático de falhas e estornos.
+  - **Gestão de Inadimplência e Tolerância (Dunning Management & Grace Period):** Grace Period de 7 dias úteis para contas com faturas pendentes, régua de cobrança automática via E-mail e WhatsApp, e bloqueio preventivo apenas após esgotamento da tolerância.
 - [ ] **Onboarding Self-Service (Múltiplos Tenants & Sublogins):** Plataforma pública de cadastro. Novas empresas se cadastram via Stripe, geram banco isolado automaticamente, e o ADMIN gerencia "Sublogins" (Atendentes) com permissões limitadas (Apenas tela Inbox e CRM).
 - [ ] **Voice AI Agent:** Robô de voz inteligente capaz de realizar ligações ativas (pré-venda/pós-venda) e receber ligações (receptivo) sem delay, integrado à base do CRM e OpenAI (Bland AI / Vapi).
 - [ ] **Integração VoIP Nativa (WebRTC):** Permitir que o atendente humano realize chamadas de áudio e vídeo direto pelo navegador na tela de Inbox (Twilio/Vonage), com gravação e transcrição automática vinculada ao card do lead no CRM.

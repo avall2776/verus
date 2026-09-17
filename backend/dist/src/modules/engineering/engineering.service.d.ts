@@ -256,4 +256,7 @@ export declare class EngineeringService {
         success: boolean;
         message: string;
     }>;
+    transcribeAudio(file: Express.Multer.File): Promise<{
+        text: string;
+    }>;
 }

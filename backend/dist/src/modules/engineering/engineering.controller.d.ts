@@ -240,6 +240,9 @@ export declare class EngineeringController {
         affectedTenants: import("@prisma/client/runtime/library").JsonValue | null;
         affectedCount: number;
     }>;
+    transcribeAudio(req: any, file: Express.Multer.File): Promise<{
+        text: string;
+    }>;
     clearChatHistory(req: any): Promise<{
         success: boolean;
         message: string;
