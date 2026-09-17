@@ -29,8 +29,15 @@ let AgentController = class AgentController {
     async updateConfig(tenantId, body) {
         return this.agentService.updateConfig(tenantId, body);
     }
-    async testPlayground(body) {
-        const result = await this.aiService.processConversation(body.messages, body.config);
+    async testPlayground(tenantId, body) {
+        const rawTemp = body.config?.aiTemperature !== undefined ? Number(body.config.aiTemperature) : 0.7;
+        const safeTemp = isNaN(rawTemp) ? 0.7 : Math.min(Math.max(rawTemp, 0), 1.5);
+        const configWithTenant = {
+            ...body.config,
+            id: tenantId,
+            aiTemperature: safeTemp,
+        };
+        const result = await this.aiService.processConversation(body.messages, configWithTenant);
         return result;
     }
 };
@@ -52,9 +59,10 @@ __decorate([
 ], AgentController.prototype, "updateConfig", null);
 __decorate([
     (0, common_1.Post)('playground'),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AgentController.prototype, "testPlayground", null);
 exports.AgentController = AgentController = __decorate([

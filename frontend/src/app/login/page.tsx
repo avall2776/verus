@@ -178,6 +178,10 @@ export default function LoginPage() {
       localStorage.setItem("versus_auth_token", data.access_token);
       localStorage.setItem("versus_user", JSON.stringify(data.user));
       
+      try {
+        sessionStorage.removeItem("versus_boot_completed");
+      } catch (e) {}
+      
       if (data.user?.isSuperAdmin || data.user?.role === 'SUPER_ADMIN') {
         router.push("/super-admin/companies");
       } else {

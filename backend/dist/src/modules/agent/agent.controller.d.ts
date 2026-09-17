@@ -18,7 +18,7 @@ export declare class AgentController {
         aiKnowledgeBase: string;
         aiTemperature: number;
     }>;
-    testPlayground(body: {
+    testPlayground(tenantId: string, body: {
         messages: {
             role: 'user' | 'assistant';
             content: string;

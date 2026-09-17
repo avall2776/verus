@@ -27,10 +27,19 @@ export class AgentController {
 
   @Post('playground')
   async testPlayground(
+    @CurrentTenant() tenantId: string,
     @Body() body: { messages: { role: 'user' | 'assistant', content: string }[], config: any }
   ) {
-    // Process using AiService directly, without saving anything or linking to CRM
-    const result = await this.aiService.processConversation(body.messages, body.config);
+    // Process using AiService directly, with tenantId for RAG search and sanitized temperature
+    const rawTemp = body.config?.aiTemperature !== undefined ? Number(body.config.aiTemperature) : 0.7;
+    const safeTemp = isNaN(rawTemp) ? 0.7 : Math.min(Math.max(rawTemp, 0), 1.5);
+
+    const configWithTenant = {
+      ...body.config,
+      id: tenantId,
+      aiTemperature: safeTemp,
+    };
+    const result = await this.aiService.processConversation(body.messages, configWithTenant);
     return result;
   }
 }

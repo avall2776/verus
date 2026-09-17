@@ -149,10 +149,11 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
   const [userRole, setUserRole] = useState<string>("Atendente");
   const [companyName, setCompanyName] = useState<string>("VERSUS");
   const [showPreloader, setShowPreloader] = useState<boolean>(false);
+  const [forcePlayPreloader, setForcePlayPreloader] = useState<boolean>(false);
 
   useEffect(() => {
     try {
-      const alreadyBooted = sessionStorage.getItem("versus_boot_played");
+      const alreadyBooted = sessionStorage.getItem("versus_boot_completed");
       if (!alreadyBooted) {
         setShowPreloader(true);
       }
@@ -173,11 +174,12 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
     }
   }, []);
 
-  const handlePreloaderComplete = () => {
+  const handlePreloaderComplete = (targetHref?: string) => {
     try {
-      sessionStorage.setItem("versus_boot_played", "true");
+      sessionStorage.setItem("versus_boot_completed", "true");
     } catch (e) {}
     setShowPreloader(false);
+    setForcePlayPreloader(false);
   };
 
   const quickModules = [
@@ -220,7 +222,8 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
       {/* Preloader de Alto Impacto com Three.js */}
       {showPreloader && (
         <VersusPreloader
-          durationMs={2800}
+          durationMs={4500}
+          forcePlay={forcePlayPreloader}
           onComplete={handlePreloaderComplete}
         />
       )}

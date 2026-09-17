@@ -30,14 +30,17 @@ let AgentService = class AgentService {
         return tenant;
     }
     async updateConfig(tenantId, data) {
+        const rawTemp = data.aiTemperature !== undefined ? parseFloat(String(data.aiTemperature)) : 0.7;
+        const safeTemp = isNaN(rawTemp) ? 0.7 : Math.min(Math.max(rawTemp, 0), 1.5);
+        const safeModel = (data.aiModel === 'gpt-4o' || data.aiModel === 'gpt-4o-mini') ? data.aiModel : 'gpt-4o-mini';
         return this.prisma.tenant.update({
             where: { id: tenantId },
             data: {
                 aiName: data.aiName,
-                aiModel: data.aiModel,
+                aiModel: safeModel,
                 aiPrompt: data.aiPrompt,
                 aiKnowledgeBase: data.aiKnowledgeBase,
-                aiTemperature: parseFloat(data.aiTemperature),
+                aiTemperature: safeTemp,
             },
             select: {
                 aiName: true,

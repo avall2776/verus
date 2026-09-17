@@ -55,21 +55,26 @@ DIRETRIZES ESTRITAS DE COMPORTAMENTO:
                 { role: 'system', content: systemMessage },
                 ...history
             ];
+            const rawTemp = tenantConfig?.aiTemperature !== undefined ? Number(tenantConfig.aiTemperature) : 0.7;
+            const safeTemp = isNaN(rawTemp) ? 0.7 : Math.min(Math.max(rawTemp, 0), 1.5);
+            const targetModel = (tenantConfig?.aiModel === 'gpt-4o' || tenantConfig?.aiModel === 'gpt-4o-mini')
+                ? tenantConfig.aiModel
+                : 'gpt-4o-mini';
             const completion = await this.openai.beta.chat.completions.parse({
-                model: tenantConfig?.aiModel || 'gpt-4o-mini',
+                model: targetModel,
                 messages: messages,
                 response_format: (0, zod_1.zodResponseFormat)(response_schema_1.AiResponseSchema, 'atendimento_result'),
-                temperature: tenantConfig?.aiTemperature !== undefined ? tenantConfig.aiTemperature : 0.7,
+                temperature: safeTemp,
             });
-            const parsedResponse = completion.choices[0].message.parsed;
+            const parsedResponse = completion.choices[0]?.message?.parsed;
             if (!parsedResponse) {
                 throw new Error('A OpenAI retornou uma resposta nula na estrutura.');
             }
             return parsedResponse;
         }
         catch (error) {
-            this.logger.error(`Erro Crítico OpenAI: ${error.message}`);
-            throw new common_1.InternalServerErrorException('Falha no motor de IA.');
+            this.logger.error(`Erro Crítico OpenAI: ${error?.message || error}`, error?.stack);
+            throw new common_1.InternalServerErrorException(error?.message || 'Falha no motor de IA.');
         }
     }
 };
