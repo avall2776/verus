@@ -2097,7 +2097,17 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Build & Deploy**:
     - `npx tsc --noEmit` aprovado com código 0 em ambas as pontas.
     - `npm run build` aprovado com código 0 (44/44 páginas estáticas e dinâmicas geradas).
-    - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
+- [x] **[17/09/2026 - 16:45]** ⚡ **[IDE 1] Ajuste Cirúrgico no Cabeçalho Superior (Topbar): Remoção do Indicador 'IA Vitor Online' & Refinamento de Espaçamento - (Fase 74)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Remoção do Componente 'IA Vitor Online'**:
+    - Removido o badge/indicador com dot pulsante verde `"IA Vitor Online"` do cabeçalho superior (`frontend/src/components/Topbar.tsx`), mantendo o canto superior direito focado exclusivamente na central de notificações interativa.
+  - **Ajuste de Espaçamento & Alinhamento**:
+    - Reorganização do alinhamento horizontal com centralização e espaçamento perfeito entre a busca global (`GlobalSearchBar`), botão de menu mobile e sino de notificações (`NotificationsPopover`).
+    - Enquadramento estrito na paleta monocromática corporativa VERSUS (`#0B1224/80`, borda `slate-800`).
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 (44/44 páginas estáticas geradas).
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
 
 ---
 
