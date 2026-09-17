@@ -19,14 +19,26 @@ import {
   LayoutDashboard,
   ChevronRight,
   BarChart3,
-  FileText,
-  Layers
+  FileText
 } from "lucide-react";
 
 interface VersusPreloaderProps {
   onComplete?: (targetHref?: string) => void;
   durationMs?: number;
   forcePlay?: boolean;
+}
+
+interface PreloaderMenuItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge: string;
+  highlight?: boolean;
+}
+
+interface PreloaderCategory {
+  category: string;
+  items: PreloaderMenuItem[];
 }
 
 const BOOT_STAGES = [
@@ -37,7 +49,7 @@ const BOOT_STAGES = [
   { percent: 100, label: "Construção do sistema concluída com êxito! Pronto para operação.", tag: "SISTEMA · PRONTO", color: "text-emerald-400" }
 ];
 
-const PRELOADER_MENU_CATEGORIES = [
+const PRELOADER_MENU_CATEGORIES: PreloaderCategory[] = [
   {
     category: "PRINCIPAL",
     items: [
@@ -77,7 +89,7 @@ const PRELOADER_MENU_CATEGORIES = [
 
 export default function VersusPreloader({
   onComplete,
-  durationMs = 4500, // Duração cadenciada para permitir leitura completa das mensagens
+  durationMs = 4500, // Tempo cadenciado para visualização de todas as etapas
   forcePlay = false
 }: VersusPreloaderProps) {
   const router = useRouter();
@@ -90,7 +102,7 @@ export default function VersusPreloader({
   const [isFinished, setIsFinished] = useState(false);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
 
-  // ================= EFEITO 3D THREE.JS DE ALTO IMPACTO =================
+  // ================= 1. MOTOR 3D THREE.JS: MONÓLITO "V" + PARALLAX =================
   useEffect(() => {
     if (!mountRef.current) return;
 
@@ -98,118 +110,178 @@ export default function VersusPreloader({
     const width = container.clientWidth || window.innerWidth;
     const height = container.clientHeight || window.innerHeight;
 
+    // Cena e Névoa Atmosférica
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x050814, 0.02);
+    scene.fog = new THREE.FogExp2(0x050814, 0.015);
 
-    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(0, 0, 38);
+    // Câmera de Estúdio
+    const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
+    camera.position.set(0, 0, 32);
 
+    // Renderer com Antialias e Alpha
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
     container.appendChild(renderer.domElement);
 
-    // Textura suave para partículas
-    const canvas = document.createElement("canvas");
-    canvas.width = 64;
-    canvas.height = 64;
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 30);
-      gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
-      gradient.addColorStop(0.3, "rgba(0, 210, 255, 0.85)");
-      gradient.addColorStop(0.8, "rgba(37, 99, 235, 0.35)");
-      gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 64, 64);
-    }
-    const particleTexture = new THREE.CanvasTexture(canvas);
+    // ================= CONSTRUÇÃO DA LETRA "V" 3D =================
+    // Polígono vetorial tipográfico moderno, com linhas afiadas e proporção clássica
+    const shape = new THREE.Shape();
+    // Braço esquerdo externo para topo esquerdo
+    shape.moveTo(-5.5, 6.5);
+    // Braço esquerdo interno
+    shape.lineTo(-2.2, 6.5);
+    // Vale central interno
+    shape.lineTo(0, -0.8);
+    // Braço direito interno
+    shape.lineTo(2.2, 6.5);
+    // Braço direito externo
+    shape.lineTo(5.5, 6.5);
+    // Base direita externa
+    shape.lineTo(1.1, -5.5);
+    // Vértice inferior
+    shape.lineTo(0, -7.5);
+    // Base esquerda externa
+    shape.lineTo(-1.1, -5.5);
+    shape.closePath();
 
-    // Campo de Partículas Quânticas Esféricas / Vortex
-    const particleCount = 1400;
+    // Extrusão 3D com chanfros geométricos polidos
+    const extrudeSettings: THREE.ExtrudeGeometryOptions = {
+      steps: 2,
+      depth: 2.2,
+      bevelEnabled: true,
+      bevelThickness: 0.6,
+      bevelSize: 0.45,
+      bevelOffset: 0,
+      bevelSegments: 4,
+    };
+
+    const vGeometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    vGeometry.center(); // Centraliza o pivô no exato baricentro do V
+
+    // Material Metálico Escuro Estilo Titânio/Obsidiana (Referência Igloo Inc)
+    const vMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x0a1322,
+      metalness: 0.9,
+      roughness: 0.16,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.1,
+      reflectivity: 0.95,
+      transmission: 0.05,
+    });
+
+    const vMesh = new THREE.Mesh(vGeometry, vMaterial);
+    scene.add(vMesh);
+
+    // Linhas de borda luminosas (Edges neon ciano de alta precisão)
+    const vEdges = new THREE.EdgesGeometry(vGeometry, 24);
+    const vEdgeMaterial = new THREE.LineBasicMaterial({
+      color: 0x00d2ff,
+      transparent: true,
+      opacity: 0.75,
+      blending: THREE.AdditiveBlending,
+    });
+    const vEdgeLines = new THREE.LineSegments(vEdges, vEdgeMaterial);
+    vMesh.add(vEdgeLines);
+
+    // ================= ILUMINAÇÃO DE ESTÚDIO CINEMATOGRÁFICA =================
+    // Luz ambiente suave
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+
+    // Key Light Direcional (Ciano Neon)
+    const keyLight = new THREE.DirectionalLight(0x00d2ff, 2.8);
+    keyLight.position.set(16, 20, 20);
+    scene.add(keyLight);
+
+    // Rim Light Oposta (Azul Corporativo Escuro)
+    const rimLight = new THREE.DirectionalLight(0x2563eb, 2.2);
+    rimLight.position.set(-18, -12, -15);
+    scene.add(rimLight);
+
+    // Feixe Pontual Orbitante (Cria os reflexos dinâmicos nos chanfros do V)
+    const glintLight = new THREE.PointLight(0x00d2ff, 3.5, 45);
+    scene.add(glintLight);
+
+    // ================= MICRO-PARTÍCULAS ESTELARES (PROFUNDIDADE 3D) =================
+    const particleCount = 700;
     const particlePositions = new Float32Array(particleCount * 3);
 
     for (let i = 0; i < particleCount; i++) {
-      const radius = 12 + Math.random() * 26;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-
-      particlePositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-      particlePositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-      particlePositions[i * 3 + 2] = radius * Math.cos(phi);
+      particlePositions[i * 3] = (Math.random() - 0.5) * 80;
+      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 60;
+      particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 50;
     }
 
     const particleGeometry = new THREE.BufferGeometry();
     particleGeometry.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
 
+    // Textura circular suave para as partículas
+    const pCanvas = document.createElement("canvas");
+    pCanvas.width = 32;
+    pCanvas.height = 32;
+    const pCtx = pCanvas.getContext("2d");
+    if (pCtx) {
+      const grad = pCtx.createRadialGradient(16, 16, 0, 16, 16, 14);
+      grad.addColorStop(0, "rgba(0, 210, 255, 1)");
+      grad.addColorStop(0.5, "rgba(37, 99, 235, 0.4)");
+      grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      pCtx.fillStyle = grad;
+      pCtx.fillRect(0, 0, 32, 32);
+    }
+    const pTexture = new THREE.CanvasTexture(pCanvas);
+
     const particleMaterial = new THREE.PointsMaterial({
-      size: 0.65,
-      map: particleTexture,
+      size: 0.55,
+      map: pTexture,
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.65,
       depthWrite: false,
-      blending: THREE.AdditiveBlending
+      blending: THREE.AdditiveBlending,
     });
 
     const particles = new THREE.Points(particleGeometry, particleMaterial);
     scene.add(particles);
 
-    // Anéis Holográficos Orbitais (Giroscópio Cibernético)
-    const ringGroup = new THREE.Group();
-    scene.add(ringGroup);
+    // ================= INTERAÇÃO DE MOUSE (PARALLAX 3D COM INÉRCIA) =================
+    const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
 
-    const createHoloRing = (radius: number, color: number) => {
-      const geom = new THREE.RingGeometry(radius - 0.05, radius + 0.05, 64);
-      const edges = new THREE.EdgesGeometry(geom);
-      const mat = new THREE.LineBasicMaterial({
-        color,
-        transparent: true,
-        opacity: 0.5,
-        blending: THREE.AdditiveBlending
-      });
-      return new THREE.LineSegments(edges, mat);
+    const handleMouseMove = (e: MouseEvent) => {
+      // Normaliza coordenadas de -1 a +1
+      mouse.targetX = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.targetY = -(e.clientY / window.innerHeight) * 2 + 1;
     };
 
-    const ring1 = createHoloRing(10, 0x00d2ff);
-    const ring2 = createHoloRing(14, 0x2563eb);
-    const ring3 = createHoloRing(18, 0x38bdf8);
+    window.addEventListener("mousemove", handleMouseMove);
 
-    ringGroup.add(ring1);
-    ringGroup.add(ring2);
-    ringGroup.add(ring3);
-
-    // Núcleo Central de Pulso (Icosaedro Wireframe)
-    const coreGeometry = new THREE.IcosahedronGeometry(3.5, 1);
-    const coreWireframe = new THREE.WireframeGeometry(coreGeometry);
-    const coreMaterial = new THREE.LineBasicMaterial({
-      color: 0x00d2ff,
-      transparent: true,
-      opacity: 0.35,
-      blending: THREE.AdditiveBlending
-    });
-    const coreMesh = new THREE.LineSegments(coreWireframe, coreMaterial);
-    ringGroup.add(coreMesh);
-
-    // Loop de Animação
+    // ================= LOOP DE RENDERIZAÇÃO =================
     let animId: number;
-    let clock = new THREE.Clock();
+    const clock = new THREE.Clock();
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
       const elapsedTime = clock.getElapsedTime();
 
-      particles.rotation.y = elapsedTime * 0.08;
-      particles.rotation.x = Math.sin(elapsedTime * 0.05) * 0.12;
+      // Interpolação suave (lerp) para amortecimento de inércia
+      mouse.x += (mouse.targetX - mouse.x) * 0.05;
+      mouse.y += (mouse.targetY - mouse.y) * 0.05;
 
-      ring1.rotation.x = elapsedTime * 0.45;
-      ring1.rotation.y = elapsedTime * 0.3;
-      ring2.rotation.y = -elapsedTime * 0.35;
-      ring2.rotation.z = elapsedTime * 0.25;
-      ring3.rotation.x = -elapsedTime * 0.2;
-      ring3.rotation.z = -elapsedTime * 0.4;
+      // Animação da Letra "V": Respiração gravitacional + inclinação pelo mouse
+      vMesh.rotation.y = Math.sin(elapsedTime * 0.8) * 0.22 + mouse.x * 0.55;
+      vMesh.rotation.x = Math.cos(elapsedTime * 0.6) * 0.12 - mouse.y * 0.35;
+      vMesh.rotation.z = Math.sin(elapsedTime * 0.4) * 0.06;
+      vMesh.position.y = 1.2 + Math.sin(elapsedTime * 1.6) * 0.5; // Levitação orgânica
 
-      const scale = 1 + Math.sin(elapsedTime * 3) * 0.06;
-      coreMesh.scale.set(scale, scale, scale);
+      // Órbita da luz de reflexo nos chanfros
+      glintLight.position.x = Math.sin(elapsedTime * 1.4) * 14;
+      glintLight.position.y = Math.cos(elapsedTime * 1.1) * 9;
+      glintLight.position.z = Math.cos(elapsedTime * 1.4) * 12 + 8;
+
+      // Rotação sutil do campo de partículas
+      particles.rotation.y = elapsedTime * 0.04;
+      particles.rotation.x = elapsedTime * 0.02;
 
       renderer.render(scene, camera);
     };
@@ -228,19 +300,24 @@ export default function VersusPreloader({
     window.addEventListener("resize", handleResize);
 
     return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animId);
       if (container && renderer.domElement) {
         container.removeChild(renderer.domElement);
       }
+      vGeometry.dispose();
+      vMaterial.dispose();
+      vEdges.dispose();
+      vEdgeMaterial.dispose();
       particleGeometry.dispose();
       particleMaterial.dispose();
-      particleTexture.dispose();
+      pTexture.dispose();
       renderer.dispose();
     };
   }, []);
 
-  // ================= PROGRESSÃO DA TELEMETRIA DE CONSTRUÇÃO =================
+  // ================= 2. CONTADOR CADENCIADO (0% A 100%) =================
   useEffect(() => {
     const startTime = Date.now();
     const interval = setInterval(() => {
@@ -267,7 +344,7 @@ export default function VersusPreloader({
     return () => clearInterval(interval);
   }, [durationMs]);
 
-  // ================= AÇÃO DE ESCOLHA DO USUÁRIO =================
+  // ================= 3. AÇÃO DE ESCOLHA DO USUÁRIO =================
   const handleSelectModule = (targetHref: string) => {
     setSelectedModule(targetHref);
     try {
@@ -305,34 +382,41 @@ export default function VersusPreloader({
           50% { filter: drop-shadow(0 0 55px rgba(0, 210, 255, 0.85)); opacity: 1; }
         }
         @keyframes slideInLeftCascade {
-          0% { opacity: 0; transform: translateX(-30px); }
+          0% { opacity: 0; transform: translateX(-35px); }
           100% { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes guideBounce {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(-6px); }
         }
         .anim-pulse-glow {
           animation: pulseGlow 3s ease-in-out infinite;
         }
         .anim-scanline {
-          animation: scanline 4s linear infinite;
+          animation: scanline 5s linear infinite;
         }
         .anim-menu-cascade {
           animation: slideInLeftCascade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        .anim-guide-bounce {
+          animation: guideBounce 1.5s ease-in-out infinite;
+        }
       `}} />
 
-      {/* Canvas 3D Three.js de Fundo */}
+      {/* Canvas 3D Three.js do "V" Monolítico de Fundo */}
       <div ref={mountRef} className="absolute inset-0 z-0 pointer-events-none" />
 
-      {/* Iluminação Volumétrica */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-blue-600/15 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[130px] pointer-events-none" />
+      {/* Iluminação Volumétrica Central */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] bg-blue-600/15 rounded-full blur-[160px] pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none" />
 
-      {/* Linha de Varredura Scanline */}
+      {/* Linha de Varredura Scanline Estilo Cyberpunk */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20 z-0">
         <div className="w-full h-24 bg-gradient-to-b from-transparent via-cyan-400/20 to-transparent anim-scanline" />
       </div>
 
       {/* ========================================================== */}
-      {/* 1. SIDEBAR / MENU ESQUERDO REVELADO DE FORMA SINCRONIZADA */}
+      {/* 1. SIDEBAR ESQUERDA REVELADA DE FORMA SINCRONIZADA        */}
       {/* ========================================================== */}
       <div
         className={`w-80 sm:w-96 h-full bg-[#0B1224]/95 border-r border-slate-800 backdrop-blur-2xl z-20 flex flex-col justify-between p-5 transition-all duration-700 ease-out shrink-0 shadow-2xl relative ${
@@ -341,14 +425,14 @@ export default function VersusPreloader({
             : "-translate-x-full opacity-0 pointer-events-none"
         }`}
       >
-        {/* Glow sutil na borda lateral */}
-        <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-cyan-500/50 via-blue-500/30 to-transparent pointer-events-none" />
+        {/* Fio de Luz Neon na Divisória */}
+        <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-cyan-500/60 via-blue-500/30 to-transparent pointer-events-none" />
 
-        {/* Topo da Sidebar de Inicialização */}
         <div className="space-y-4">
+          {/* Header da Sidebar de Entrada */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+              <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(0,210,255,0.2)]">
                 <Cpu className="w-4 h-4" />
               </div>
               <div>
@@ -370,7 +454,7 @@ export default function VersusPreloader({
             Selecione uma categoria ou clique na <strong className="text-cyan-400 font-semibold">Visão Geral</strong> para iniciar a operação:
           </p>
 
-          {/* Listagem de Categorias e Submenus */}
+          {/* Categorias e Submenus com Efeito Cascata */}
           <div className="space-y-4 max-h-[calc(100vh-220px)] overflow-y-auto pr-1 custom-scrollbar">
             {PRELOADER_MENU_CATEGORIES.map((cat, catIdx) => (
               <div
@@ -386,7 +470,7 @@ export default function VersusPreloader({
                 <div className="space-y-1">
                   {cat.items.map((item) => {
                     const Icon = item.icon;
-                    const isHighlight = 'highlight' in item ? Boolean((item as any).highlight) : false;
+                    const isHighlight = item.highlight;
                     const isSelected = selectedModule === item.href;
 
                     return (
@@ -447,40 +531,40 @@ export default function VersusPreloader({
       {/* ========================================================== */}
       {/* 2. ÁREA CENTRAL: COCKPIT DE BOOT & TELEMETRIA              */}
       {/* ========================================================== */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center justify-between p-6 relative z-10 overflow-y-auto">
         
-        {/* Botão Superior Discreto para Pular Direto para Visão Geral */}
-        <div className="absolute top-6 right-6 z-20">
+        {/* Topbar do Cockpit com Botão Discreto de Acesso Direto */}
+        <div className="w-full flex items-center justify-between max-w-2xl pt-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0B1224]/80 border border-slate-800 text-slate-400 text-xs font-mono">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+            <span>Mova o mouse para interagir com o V</span>
+          </div>
+
           <button
             onClick={() => handleSelectModule("/dashboard")}
-            className="px-3.5 py-1.5 rounded-full bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60 text-xs font-semibold backdrop-blur-md transition-all shadow-md flex items-center gap-1.5 group"
+            className="px-3.5 py-1.5 rounded-full bg-slate-900/70 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 text-xs font-semibold backdrop-blur-md transition-all shadow-md flex items-center gap-1.5 group"
           >
             <span>Ir para Visão Geral</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform text-cyan-400" />
           </button>
         </div>
 
-        <div className="w-full max-w-xl flex flex-col items-center text-center">
-          
-          {/* Badge Corporativo de Inicialização */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#0B1224]/90 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-bold tracking-widest uppercase mb-6 shadow-[0_0_20px_rgba(0,210,255,0.2)] backdrop-blur-md">
-            <span className={`w-2 h-2 rounded-full ${isSystemBuilt ? "bg-emerald-400" : "bg-cyan-400 animate-ping"}`} />
-            <Cpu className="w-3.5 h-3.5" />
-            <span>VERSUS ENTERPRISE CORE v2.4</span>
-          </div>
-
-          {/* Logotipo Central com Efeito Holográfico e Glow */}
-          <div className="mb-6 flex flex-col items-center">
-            <h1 className="text-5xl sm:text-7xl font-black text-white tracking-[0.25em] pl-3 anim-pulse-glow leading-none">
+        {/* Espaçador para o V 3D brilhar no centro */}
+        <div className="w-full my-auto flex flex-col items-center pointer-events-none">
+          {/* Marca Tipográfica Logo abaixo do V 3D */}
+          <div className="mt-28 flex flex-col items-center">
+            <h1 className="text-4xl sm:text-6xl font-black text-white tracking-[0.28em] pl-3 anim-pulse-glow leading-none drop-shadow-[0_10px_35px_rgba(0,0,0,0.8)]">
               VERSUS
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 font-semibold tracking-[0.3em] uppercase mt-3 text-cyan-200/80">
+            <p className="text-xs sm:text-sm text-slate-400 font-semibold tracking-[0.3em] uppercase mt-2.5 text-cyan-200/80">
               Inteligência em Vendas & Atendimento Omnichannel
             </p>
           </div>
+        </div>
 
-          {/* Bloco de Telemetria e Barra de Progresso */}
-          <div className="w-full bg-[#0B1224]/85 border border-slate-800/90 rounded-2xl p-5 sm:p-6 shadow-2xl backdrop-blur-xl">
+        {/* Card Inferior de Telemetria e Instrução Intuitiva */}
+        <div className="w-full max-w-xl pb-2">
+          <div className="w-full bg-[#0B1224]/90 border border-slate-800/90 rounded-2xl p-5 shadow-2xl backdrop-blur-xl">
             
             {/* Header da Telemetria: Status e Porcentagem */}
             <div className="flex items-center justify-between mb-3 text-xs">
@@ -526,15 +610,18 @@ export default function VersusPreloader({
               </span>
             </div>
 
-            {/* Chamada para Ação Quando o Sistema Estiver Construído */}
+            {/* AÇÃO INTUITIVA QUANDO O SISTEMA FOR CONSTRUÍDO */}
             {isSystemBuilt && (
-              <div className="mt-5 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 animate-fade-in">
-                <p className="text-xs text-slate-300 text-left">
-                  👈 <span className="text-cyan-400 font-bold">Escolha um módulo no menu lateral</span> ou entre diretamente na Visão Geral:
-                </p>
+              <div className="mt-4 pt-4 border-t border-slate-800/90 flex flex-col sm:flex-row items-center justify-between gap-3 animate-fade-in">
+                <div className="flex items-center gap-2 text-xs text-slate-300 text-left">
+                  <span className="anim-guide-bounce text-cyan-400 font-black text-sm">👈</span>
+                  <span>
+                    <strong className="text-cyan-400 font-bold">Escolha um módulo no menu à esquerda</strong> ou acesse direto:
+                  </span>
+                </div>
                 <button
                   onClick={() => handleSelectModule("/dashboard")}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-lg hover:shadow-blue-500/25 shrink-0 group"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-lg hover:shadow-blue-500/25 shrink-0 group"
                 >
                   <LayoutDashboard className="w-3.5 h-3.5" />
                   <span>Acessar Visão Geral</span>
@@ -546,7 +633,7 @@ export default function VersusPreloader({
           </div>
 
           {/* Rodapé da Telemetria */}
-          <div className="flex items-center justify-between w-full mt-6 px-2 text-[11px] text-slate-500 font-mono">
+          <div className="flex items-center justify-between w-full mt-3 px-2 text-[11px] text-slate-500 font-mono">
             <span>HOST: VERSUS-CLOUD</span>
             <span className="flex items-center gap-1.5 text-slate-400">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -556,6 +643,7 @@ export default function VersusPreloader({
           </div>
 
         </div>
+
       </div>
 
     </div>

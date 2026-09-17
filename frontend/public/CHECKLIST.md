@@ -1808,36 +1808,53 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - Validação com `npx tsc --noEmit` e `npm run build` com código 0 em ambas as pontas.
     - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
-- [x] **[17/09/2026 - 13:42]** ⚡ **[IDE 1] Conclusão da Tarefa: Redesign e Evolução de Alto Impacto do Preloader & Welcome Experience do Sistema (Fase 71)**:
-  - **Status**: ✅ Concluído com Sucesso, Homologado e Validado com Build 0 Erros.
-  - **Motor 3D Three.js de Partículas Quânticas & Giroscópio Holográfico**:
-    - Implementação de cena WebGL fluida com 1.400 partículas quânticas esféricas em vórtice dinâmico, 3 anéis holográficos orbitais em rotação multieixo com mistura aditiva e núcleo pulsante em icosaedro wireframe.
-    - Iluminação volumétrica e efeito scanline horizontal contínuo no background escuro profundo `#050814`.
-  - **Barra de Telemetria Dinâmica & Console de Inicialização (0% a 100%)**:
-    - Contador digital fluido em tempo real de 0% a 100% com barra em gradiente luminescente (`from-blue-600 via-cyan-400 to-emerald-400`).
-    - Ciclo de 5 estágios dinâmicos de inicialização de subsistemas empresariais (Auth Multitenant, IA Neural, WebSocket/WhatsApp, CRM Funis e Core Pronto).
-  - **Transição Cinematográfica & Integração no WelcomeDashboard**:
-    - Disparo automático suave na primeira visita da sessão (persistência via `sessionStorage`).
-    - Botão executivo interativo no card de boas-vindas: `⚡ Boot do Sistema (Preloader)` para replay sob demanda.
-    - Criação de `loading.tsx` corporativo no App Router para transições de páginas sem flashes.
-  - **Validação de Build e Homologação**:
-    - `npx tsc --noEmit` aprovado com código 0.
-    - `npm run build` aprovado com código 0 em todas as 42 rotas do Next.js.
+- [x] **[17/09/2026 - 14:30]** ⚡ **[IDE 1] Conclusão da Tarefa: Preloader 3D Monolítico "V" Estilo Igloo.inc com Sincronização Lateral de Menus (Fase 71)**:
+  - **Status**: ✅ Concluído com Sucesso, Aprovado pelo Usuário, Builds Código 0 e Homologado.
+  - **Monólito 3D "V" em Três Dimensões (Three.js WebGL / Referência Igloo.inc)**:
+    - Modelagem vetorial precisa da letra **"V"** do logotipo VERSUS via `THREE.Shape` e `THREE.ExtrudeGeometry` com chanfros profundos e biselado estético (`bevelEnabled: true`, `bevelSegments: 6`).
+    - Acabamento físico ultra-realista com `THREE.MeshPhysicalMaterial`: metal escuro escovado (`roughness: 0.18`, `metalness: 0.92`, `clearcoat: 1.0`, reflexos especulares dinâmicos).
+    - Wireframe de arestas neon ciano (`EdgesGeometry` com `LineBasicMaterial`) contornando a silhueta da marca.
+    - Iluminação de estúdio cinematográfico: Key light ciano, Rim light azul cobalto, ambient fill light e uma luz pontual orbitando dinamicamente para gerar relances de luz e reflexos nas facetas chanfradas do V.
+    - Campo espacial de 700 micro-partículas flutuantes com profundidade atmosférica (`THREE.FogExp2`).
+    - Parallax 3D com amortecimento físico suave (`lerp`), reagindo dinamicamente ao mouse do operador.
+  - **Cadência de Inicialização & Telemetria dos Subsistemas (4.5s)**:
+    - Barra de progresso luminescente e contador dinâmico de 0% a 100% calibrados para leitura confortável das 5 etapas operacionais:
+      1. Sincronização de workspaces multitenant e credenciais.
+      2. Inicialização do barramento neural de IA.
+      3. Conexão das instâncias de WhatsApp e WebSocket em tempo real.
+      4. Compilação do funil comercial CRM e telemetria.
+      5. Construção do sistema concluída com êxito!
+  - **Zero Auto-Fechamento & Menus Sincronizados**:
+    - O preloader permanece na tela ao atingir 100% até que o operador selecione o módulo desejado.
+    - O menu lateral esquerdo desliza suavemente (`translate-x-0` com `duration-700`) exibindo as categorias corporativas do sistema (Visão Geral, WhatsApp ao Vivo, Monitor de Filas, Métricas de Atendimento, Funil CRM, Chat da Equipe, Agentes de IA, Suporte e Propostas).
+    - Card central corporativo com indicador animado `👈` e botão de ação direta `[ 🚀 Acessar Visão Geral ]`.
+    - Ao selecionar qualquer item, transição cinematográfica de dissolução / warp navega instantaneamente para a rota escolhida.
+  - **Sessão & Replay Executivo**:
+    - Disparo único por sessão de login no `sessionStorage` (`versus_boot_completed`).
+    - Botão executivo `⚡ Boot do Sistema (Preloader)` no `WelcomeDashboard.tsx` para replay sob demanda com `forcePlay={true}`.
 
-### 🟢 FASE 71: REDESIGN E EVOLUÇÃO DE ALTO IMPACTO DO PRELOADER & EXPERIÊNCIA DE BOAS-VINDAS [CONCLUÍDA - IDE 1]
-> **Status**: ✅ Concluída com Sucesso, Builds Código 0 e Homologada.
-- [x] **Concepção Visual & Motor de Efeitos de Alto Impacto**:
-  - [x] Efeito visual imersivo de carregamento (partículas Three.js dinâmicas, ondas de dados quânticas e logotipo holográfico pulsante).
-  - [x] Alinhamento rigoroso à paleta monocromática corporativa VERSUS (`#0B1224`, `#070D1B`, acentos em azul `#2563EB` e ciano `#00d2ff`).
-- [x] **Indicadores Dinâmicos de Telemetria & Progresso**:
-  - [x] Barra de progresso com gradiente e contador percentual fluído (0 a 100%).
-  - [x] Mensagens dinâmicas de inicialização dos subsistemas ("Carregando instâncias...", "Verificando permissões...", "Pronto").
-- [x] **Transição & Integração na Dashboard / Welcome Experience**:
-  - [x] Transição cinematográfica suave (dissolve / blur reveal) ao finalizar o carregamento.
-  - [x] Harmonização com o `WelcomeDashboard.tsx` e fallbacks de rota no Next.js (`loading.tsx`).
+### 🟢 FASE 71: PRELOADER 3D MONOLÍTICO ESTILO IGLOO.INC COM MENUS SINCRONIZADOS [CONCLUÍDA - IDE 1]
+> **Status**: ✅ Concluída com Sucesso, Builds Código 0 e Homologada em Produção.
+- [x] **Monólito 3D Monocromático da Letra "V" (Three.js WebGL)**:
+  - [x] Modelagem vetorial precisa do glifo "V" com extrusão chanfrada (`ExtrudeGeometry`).
+  - [x] Material físico `MeshPhysicalMaterial` com reflexos metálicos, clearcoat e arestas luminescentes.
+  - [x] Iluminação de estúdio com rim light, key light e luz pontual orbital gerando glints de luz.
+  - [x] Parallax de inclinação interativo com inércia suavizada ao movimento do mouse.
+  - [x] Campo atmosférico com 700 micro-partículas suspensas e névoa volumétrica.
+- [x] **Barra de Telemetria Cadenciada (4.5s)**:
+  - [x] Pacing confortável para visualização clara de todos os 5 subsistemas corporativos.
+  - [x] Barra de progresso com gradiente luminescente e contador digital fluido (0% a 100%).
+- [x] **Construção do Sistema & Menus Sincronizados**:
+  - [x] Comportamento persistente: tela permanece ativa em 100% sem auto-fechamento arbitrário.
+  - [x] Menu lateral esquerdo com categorias e submenus deslizando suavemente na tela.
+  - [x] Card central de ação com apontador animado `👈` e botão de acesso direto `[ 🚀 Acessar Visão Geral ]`.
+  - [x] Transição de dissolução fluida ao clicar em qualquer categoria ou no botão de acesso.
+- [x] **Persistência de Sessão & Replay Sob Demanda**:
+  - [x] Disparo automático após login persistido em `sessionStorage`.
+  - [x] Botão de replay executivo no cabeçalho do `WelcomeDashboard`.
 - [x] **Homologação, Build & Deploy**:
   - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
-  - [x] Deploy sincronizado na nuvem.
+  - [x] Deploy sincronizado em produção.
 
 - **[17/09/2026 - 11:52]** ⏸️ **Ponto Eletrônico Registrado: Pausa de Almoço / Intervalo do Meio-Dia (IDE 1)**:
   - **Status do Ponto**: ⏸️ Pausa de Almoço Registrada (Saída às 11:52 / Meio-Dia).
@@ -1858,7 +1875,43 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Pauta e Foco Operacional da Tarde**:
     - **Fase 69**: Refinamento Técnico & Visual da Configuração de Agentes de IA (`/settings/ai` e `/settings/agents`) — Higienização de tons neon/roxos, alinhamento monocromático corporativo (`#0B1224`), calibração dos inputs de Prompt, RAG e Temperatura.
     - **Fase 71**: Redesign e Evolução de Alto Impacto do Preloader & Welcome Experience do Sistema ("VERSUS High-Impact Welcome Experience") — Three.js / Canvas com partículas quânticas reativas, barra de progresso com telemetria e contador dinâmico de 0 a 100%, mensagens de status dos subsistemas e transição suave.
-  - **Diretriz Técnica**: Padrão executivo corporativo, código 0 de erros (`npx tsc --noEmit` e `npm run build`), zero mocks e deploy contínuo em produção.
+- **[17/09/2026 - 14:35]** ⚡ **[IDE 1] Conclusão da Tarefa: Redesign Estrutural e Correção do Agente de IA (`/agent`) com Abas Executivas e Playground Estabilizado (Fase 69)**:
+  - **Status**: ✅ Concluído com Sucesso, Aprovado pelo Usuário, Builds Código 0 e Homologado em Produção.
+  - **Causa Raiz Corrigida (Playground OpenAI 400)**:
+    - O input range HTML de temperatura emitia valores como string (`"0.9"`). A OpenAI com Structured Outputs rejeitava com `400 Invalid type for 'temperature': expected a decimal, but got a string instead.`.
+    - No frontend, o método `.toFixed(2)` disparava erro fatal quando aplicado sobre string, quebrando a renderização do React e exigindo F5.
+    - O endpoint `POST /agent/playground` não recebia o `tenantId`, impossibilitando a busca semântica em documentos PDF (RAG).
+    - **Solução Implementada**: Sanitização numérica estrita com `Number(temp)` e clamp `[0, 1.5]` no frontend, controller e service da IA. Injeção de `tenantId` para ativação real do RAG no playground.
+  - **Redesign Arquitetural de Layout (Fim dos Blocos com Rolagem Dupla)**:
+    - Substituição dos 4 cartões compridos empilhados por um sistema corporativo fluido de **Abas Executivas (Segmented Tabs)**:
+      - **Aba 1: Persona & System Prompt**: Identidade (Nome, Modelo), seletor visual de 3 personas (SAC, SDR, Suporte N1) e editor de System Prompt amplo em fonte monospace.
+      - **Aba 2: Base de Conhecimento (RAG)**: Memória rápida de texto (FAQs, tabelas de preços) e central de upload e gerenciamento de PDFs com indexação no pgvector.
+      - **Aba 3: Calibração & Parâmetros**: Slider interativo de temperatura com feedback de tom dinâmico (Determinístico vs Balanceado vs Criativo) e painel de regras de transbordo humano.
+  - **Playground em Tempo Real Sincronizado**:
+    - Coluna direita alinhada (`w-full lg:w-[420px] xl:w-[460px]`) com indicador de modelo, temperatura e status online.
+    - **Quick Chips**: 4 botões de simulação rápida ("Quais são os planos e preços?", "Gostaria de falar com humano", "Qual o horário?", "Vocês oferecem garantia?") para testes com 1 clique sem digitação.
+    - Indicador visual de digitação animado e tratamento de erros sem travamento.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
+    - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine` online) e Vercel via commit `ef1959d`.
+
+### 🟢 FASE 69: REDESIGN ESTRUTURAL E CORREÇÃO DO AGENTE DE IA COM ABAS E PLAYGROUND ESTABILIZADO [CONCLUÍDA - IDE 1]
+> **Status**: ✅ Concluída com Sucesso, Builds Código 0 e Homologada em Produção.
+- [x] **Correção Técnica de Tipagem e Serialização da IA**:
+  - [x] Sanitização de `aiTemperature` como decimal float numérico em todas as camadas (frontend, controller e OpenAI service).
+  - [x] Injeção de `@CurrentTenant() tenantId` na rota `@Post('playground')` para permitir busca semântica de RAG nos testes.
+  - [x] Proteção no frontend contra `toFixed is not a function`, eliminando qualquer necessidade de atualizar a página.
+- [x] **Redesign do Layout com Abas Corporativas (Fim da Rolagem Dupla)**:
+  - [x] Eliminação de blocos longos empilhados que exigiam rolagem vertical excessiva.
+  - [x] Segmented Tabs: `[ Persona & Prompt ]`, `[ Base de Conhecimento (RAG) ]` e `[ Calibração & Parâmetros ]`.
+  - [x] Visualização 100% limpa e espaçosa em cada contexto, sem cortar informações.
+- [x] **Playground de Teste em Tempo Real de Alta Produtividade**:
+  - [x] Quick Chips com cenários de teste pré-configurados clicáveis em 1 toque.
+  - [x] Status do modelo e temperatura dinamicamente sincronizados no cabeçalho do chat.
+  - [x] Suporte a Markdown nas respostas da IA e indicador de digitação fluida.
+- [x] **Homologação, Build & Deploy**:
+  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 em ambas as pontas.
+  - [x] Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`).
 
 ---
 
