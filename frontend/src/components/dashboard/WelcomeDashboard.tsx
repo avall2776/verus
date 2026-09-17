@@ -20,6 +20,7 @@ import {
   Cpu
 } from "lucide-react";
 import * as THREE from "three";
+import VersusPreloader from "@/components/ui/VersusPreloader";
 
 interface WelcomeDashboardProps {
   onViewMetrics?: () => void;
@@ -80,12 +81,13 @@ const WelcomeParticlesBackground = () => {
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
     const material = new THREE.PointsMaterial({
-      color: 0x2563EB, // VERSUS Corporate Blue
-      size: 0.22,
+      color: 0x00d2ff, // VERSUS Cyan Glow Accent
+      size: 0.3,
       map: circleTexture,
       transparent: true,
-      opacity: 0.4,
+      opacity: 0.55,
       depthWrite: false,
+      blending: THREE.AdditiveBlending,
     });
 
     const particles = new THREE.Points(geometry, material);
@@ -146,8 +148,16 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
   const [userName, setUserName] = useState<string>("Operador");
   const [userRole, setUserRole] = useState<string>("Atendente");
   const [companyName, setCompanyName] = useState<string>("VERSUS");
+  const [showPreloader, setShowPreloader] = useState<boolean>(false);
 
   useEffect(() => {
+    try {
+      const alreadyBooted = sessionStorage.getItem("versus_boot_played");
+      if (!alreadyBooted) {
+        setShowPreloader(true);
+      }
+    } catch (e) {}
+
     try {
       const stored = localStorage.getItem("versus_user");
       if (stored) {
@@ -162,6 +172,13 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
       console.error(e);
     }
   }, []);
+
+  const handlePreloaderComplete = () => {
+    try {
+      sessionStorage.setItem("versus_boot_played", "true");
+    } catch (e) {}
+    setShowPreloader(false);
+  };
 
   const quickModules = [
     {
@@ -200,6 +217,14 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
 
   return (
     <div className="relative w-full flex flex-col items-center justify-center min-h-[calc(100vh-140px)] py-8 px-4 overflow-hidden">
+      {/* Preloader de Alto Impacto com Three.js */}
+      {showPreloader && (
+        <VersusPreloader
+          durationMs={2800}
+          onComplete={handlePreloaderComplete}
+        />
+      )}
+
       {/* Estilos e Animações em Cascata de Alta Fidelidade */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes cascadeSlideUp {
@@ -284,18 +309,27 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
               </p>
             </div>
 
-            {/* Alternância para Métricas de Hoje */}
-            {hasMetrics && onViewMetrics && (
-              <div className="shrink-0">
+            {/* Ações de Topo: Boot e Métricas */}
+            <div className="shrink-0 flex flex-wrap md:flex-col gap-2.5">
+              <button
+                onClick={() => setShowPreloader(true)}
+                className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:border-cyan-400 text-xs font-bold transition-all shadow-md group"
+                title="Executar animação cinematográfica de boot do sistema"
+              >
+                <Sparkles className="w-4 h-4 text-cyan-400 group-hover:rotate-12 transition-transform" />
+                <span>Boot do Sistema (Preloader)</span>
+              </button>
+
+              {hasMetrics && onViewMetrics && (
                 <button
                   onClick={onViewMetrics}
-                  className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-[#070D1B] hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-blue-500/40 text-xs font-bold transition-all shadow-md group"
+                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-[#070D1B] hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-blue-500/40 text-xs font-bold transition-all shadow-md group"
                 >
                   <BarChart3 className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
                   <span>Ver Métricas do Dia</span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
