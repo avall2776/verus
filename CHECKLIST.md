@@ -1928,14 +1928,18 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `CreateProposalDto` e `UpdateProposalDto` aceitando `logoUrl` e payload de `issuer`.
   - [x] Persistência bidirecional no `ProposalsService` (proposta e fallback do tenant).
   - [x] Envio correto do DataURL/URL no `ProposalModal.tsx` e tela `/proposals`.
-- [x] **Refinamento de Impressão A4 (@media print)**:
-  - [x] Regra `@page` em `globals.css` eliminando cabeçalhos e rodapés nativos do navegador.
-  - [x] Ocultação do widget flutuante de suporte e botões de ação no documento impresso.
-  - [x] Remoção de sombras de container e controle de quebra de página (`page-break-inside: avoid`).
-  - [x] Encaixe limpo de todo o conteúdo em página única A4 com tipografia nítida.
+  - [x] **Resolução do erro `request entity too large` (HTTP 413)**:
+    - [x] Configuração de `json({ limit: '25mb' })` e `urlencoded({ limit: '25mb' })` no NestJS (`backend/src/main.ts`).
+    - [x] Otimizador client-side com HTML5 Canvas no `ProposalModal.tsx` que redimensiona imagens para dimensões de alta definição (550x240px) gerando DataURLs leves (~35KB a 65KB), preservando transparência PNG e eliminando peso no banco.
+- [x] **Refinamento de Impressão A4 e Isolamento Total do Documento**:
+  - [x] Regra `@page` em `globals.css` eliminando cabeçalhos e rodapés nativos do navegador (URLs, títulos e datas).
+  - [x] **Eliminação do "Print da Tela do Dashboard"**: Adicionado wrapper `print:hidden` ao redor de todo o painel operacional de `/proposals` (cards de métricas, filtros de status, campo de busca e tabela), além de `Topbar` e `FloatingSupportWidget`.
+  - [x] Na impressão, **apenas o espelho do documento oficial da proposta do cliente** é renderizado.
+  - [x] Remoção de sombras de container, desobstrução de overflow dos layouts pais e controle de quebra (`page-break-inside: avoid`).
+  - [x] Encaixe limpo de todo o conteúdo em página única A4 com tipografia nítida e logotipo corporativo nítido.
 - [x] **Homologação, Build & Deploy**:
-  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0.
-  - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`).
+  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
+  - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine` online) e Vercel via commits `ca45ace`, `f828dac` e `5e8fc84`.
 
 ---
 
