@@ -35,6 +35,12 @@ export class SupportController {
     });
   }
 
+  @Get('notices')
+  async getNotices(@Request() req) {
+    const tenantId = req.user.tenantId;
+    return this.supportService.getNotices(tenantId);
+  }
+
   @Get('tickets/:id')
   async findOne(@Request() req, @Param('id') id: string) {
     const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');

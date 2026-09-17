@@ -258,4 +258,20 @@ export declare class SupportService {
         ticketNumber: number;
         assignedToId: string | null;
     }>;
+    getNotices(tenantId: string): Promise<{
+        systemStatus: {
+            id: string;
+            name: string;
+            status: string;
+            label: string;
+            indicator: string;
+        }[];
+        announcements: {
+            id: string;
+            title: string;
+            badge: string;
+            date: string;
+            description: string;
+        }[];
+    }>;
 }

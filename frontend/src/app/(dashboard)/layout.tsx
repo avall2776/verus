@@ -1,5 +1,6 @@
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
+import FloatingSupportWidget from "@/components/support/FloatingSupportWidget";
 import { SocketProvider } from "@/components/ui/SocketProvider";
 import { Toaster } from "react-hot-toast";
 
@@ -23,6 +24,7 @@ export default function DashboardLayout({
             {children}
           </div>
         </main>
+        <FloatingSupportWidget />
         <Toaster />
       </div>
     </SocketProvider>

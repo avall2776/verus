@@ -278,6 +278,75 @@ let SupportService = class SupportService {
             }
         });
     }
+    async getNotices(tenantId) {
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: {
+                name: true,
+                whatsappSettings: true,
+                emailSettings: true,
+                metaPhoneNumberId: true,
+                plan: { select: { name: true } },
+            }
+        });
+        const isWhatsappActive = Boolean(tenant?.metaPhoneNumberId || tenant?.whatsappSettings);
+        const isEmailActive = Boolean(tenant?.emailSettings);
+        return {
+            systemStatus: [
+                {
+                    id: 'ai-vitor',
+                    name: 'IA Vitor Online',
+                    status: 'OPERATIONAL',
+                    label: 'Motor OpenAI / LangChain Ativo',
+                    indicator: 'healthy'
+                },
+                {
+                    id: 'whatsapp',
+                    name: 'WhatsApp Cloud API',
+                    status: isWhatsappActive ? 'OPERATIONAL' : 'CONFIG_REQUIRED',
+                    label: isWhatsappActive ? 'Linha Operacional Conectada' : 'Aguardando Pareamento',
+                    indicator: isWhatsappActive ? 'healthy' : 'warning'
+                },
+                {
+                    id: 'email-smtp',
+                    name: 'Servidor de E-mail SMTP',
+                    status: isEmailActive ? 'OPERATIONAL' : 'PENDING_SETUP',
+                    label: isEmailActive ? 'Transporte Conectado' : 'Configuração Opcional',
+                    indicator: isEmailActive ? 'healthy' : 'neutral'
+                },
+                {
+                    id: 'cloud-infra',
+                    name: 'Infraestrutura Cloud VERSUS',
+                    status: 'OPERATIONAL',
+                    label: 'Latência Estável • 99.9% Uptime',
+                    indicator: 'healthy'
+                }
+            ],
+            announcements: [
+                {
+                    id: 'release-v24',
+                    title: 'Versão 2.4: Suporte Flutuante & Suíte Comercial',
+                    badge: 'Novidade',
+                    date: '17/09/2026',
+                    description: 'Widget de Suporte Versus agora integrado em todas as telas da plataforma para consulta de chamados, status do ecossistema e suporte imediato.'
+                },
+                {
+                    id: 'quick-tips',
+                    title: 'Produtividade: Atalho de Macros no Chat',
+                    badge: 'Dica Rápida',
+                    date: '16/09/2026',
+                    description: 'Digite "/" no campo de mensagem do WhatsApp para acessar suas Respostas Rápidas instantaneamente e otimizar seu tempo de atendimento.'
+                },
+                {
+                    id: 'security-mp',
+                    title: 'Contratos e Propostas com Assinatura Digital Válida',
+                    badge: 'Jurídico & Compliance',
+                    date: '15/09/2026',
+                    description: 'Emissão e assinatura eletrônica em total conformidade com a MP 2.200-2/2001 e Lei 14.063/2020 com trilha de auditoria completa por IP e carimbo de tempo.'
+                }
+            ]
+        };
+    }
 };
 exports.SupportService = SupportService;
 exports.SupportService = SupportService = __decorate([

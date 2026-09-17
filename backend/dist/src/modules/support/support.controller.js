@@ -36,6 +36,10 @@ let SupportController = class SupportController {
             targetTenantId: query.tenantId
         });
     }
+    async getNotices(req) {
+        const tenantId = req.user.tenantId;
+        return this.supportService.getNotices(tenantId);
+    }
     async findOne(req, id) {
         const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
         const tenantId = req.user.tenantId;
@@ -75,6 +79,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], SupportController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('notices'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SupportController.prototype, "getNotices", null);
 __decorate([
     (0, common_1.Get)('tickets/:id'),
     __param(0, (0, common_1.Request)()),

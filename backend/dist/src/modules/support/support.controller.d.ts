@@ -71,6 +71,22 @@ export declare class SupportController {
             closed: number;
         };
     }>;
+    getNotices(req: any): Promise<{
+        systemStatus: {
+            id: string;
+            name: string;
+            status: string;
+            label: string;
+            indicator: string;
+        }[];
+        announcements: {
+            id: string;
+            title: string;
+            badge: string;
+            date: string;
+            description: string;
+        }[];
+    }>;
     findOne(req: any, id: string): Promise<{
         contact: {
             id: string;
