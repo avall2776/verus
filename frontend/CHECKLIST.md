@@ -2058,7 +2058,46 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Build & Deploy**:
     - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
     - `npm run build` aprovado com código 0 (44/44 páginas estáticas e dinâmicas geradas).
-    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+- [x] **[17/09/2026 - 16:30]** ⚡ **[IDE 1] Refinamento Visual e Clareza Executiva da Matriz de Planos & Permissões (`/super-admin/plans`) - (Fase 73)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Clareza Absoluta de Estados (Ligado / Desligado)**:
+    - **Itens Ativos**: Destaque nítido com borda lateral esquerda em azul corporativo (`border-l-4 border-l-blue-500`), badge "LIGADO" com fundo sutil e switch com corpo azul e botão deslizante branco com microícone de check.
+    - **Itens Inativos / Desativados**: Opacidade reduzida (`opacity-45 hover:opacity-75`), borda esquerda slate escura, ícones e textos em slate suave apagado e switch desativado, eliminando qualquer ambiguidade visual.
+    - **Ações em Lote por Card**: Botões rápidos de "Ativar Todos" e "Desativar" no topo de cada card para agilidade operacional do Super Admin.
+  - **Polimento Estético & Layout Fluido**:
+    - Remoção de caixas presas e barras de rolagem internas (`overflow-y-auto` eliminado): os 10 módulos do sistema agora fluem naturalmente no card do plano.
+    - Espaçamentos e paddings reorganizados com cartões em grid responsivo de 3 colunas (`grid-cols-1 lg:grid-cols-3`).
+    - Alinhamento elegante e edição inline de Preço Mensal (R$), Limite de Operadores/Usuários e Cota Mensal de Mensagens IA.
+  - **Padrão Monocromático VERSUS**:
+    - Fundo oficial `#0B1224`, cards internos em `#070D1B`, bordas refinadas em `slate-800` e tipografia nítida em branco e `slate-300`/`slate-400`.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 (44/44 páginas estáticas geradas).
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
+
+- [x] **[17/09/2026 - 16:35]** ⚡ **[IDE 1] Ajuste de Fluxo de Login & Preloader Minimalista Automático de 15 Segundos**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Animação de Saída do Card de Formulário (Fade-Out Suave)**:
+    - Ao clicar em "Entrar na Plataforma" com credenciais válidas, o card executa animação fluida de saída de 700ms (`opacity-0 scale-95 filter blur-md duration-700 ease-out`), liberando o espaço visual imediatamente para a tela de transição.
+  - **Remoção do Logo 'V' e Botões do Preloader**:
+    - Eliminados por completo o logotipo tridimensional 'V', a logomarca centralizada e o botão/link de acesso manual.
+    - Tela minimalista e despoluída mantendo estritamente:
+      - Saudação executiva personalizada: `Bem-vindo de volta, [Nome]`.
+      - Barra de status centralizada luminescente em azul corporativo sóbrio (`from-blue-700 via-blue-500 to-blue-400`).
+      - Texto de status dinâmico em fonte mono nítida alternando as ferramentas carregadas no sistema:
+        - *"Carregando Operação de Atendimento..."*
+        - *"Carregando Chat da Equipe..."*
+        - *"Carregando Funil Comercial & CRM..."*
+        - *"Sincronizando Módulos de Inteligência Artificial..."*
+        - *"Carregando Painel Executivo & Métricas..."*
+        - *"Ambiente pronto para operação!"*
+  - **Duração e Transição Automática de 15 Segundos**:
+    - O preloader permanece ativo exatamente pelos 15 segundos calibrados exibindo a cadência das ferramentas.
+    - Ao atingir 100%, dispara automaticamente o fade-out cinematográfico contínuo de 1.000ms (`opacity-0 scale-105 filter blur-xl duration-1000 ease-in-out`), redirecionando para o Dashboard principal sem exigir qualquer clique ou intervenção manual do usuário.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 em ambas as pontas.
+    - `npm run build` aprovado com código 0 (44/44 páginas estáticas e dinâmicas geradas).
+    - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
 
 ---
 
