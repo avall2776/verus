@@ -71,7 +71,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             for (const item of evoList) {
                 const evo = item.instance || item;
                 const instanceName = evo.instanceName;
-                if (!instanceName)
+                if (!instanceName || instanceName.toUpperCase().includes('PROSPECTOR'))
                     continue;
                 const isConnected = evo.status === 'open' || evo.connectionStatus === 'open';
                 const rawOwner = evo.owner || '';

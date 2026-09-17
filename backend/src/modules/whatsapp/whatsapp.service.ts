@@ -75,7 +75,7 @@ export class WhatsappService {
       for (const item of evoList) {
         const evo = item.instance || item;
         const instanceName = evo.instanceName;
-        if (!instanceName) continue;
+        if (!instanceName || instanceName.toUpperCase().includes('PROSPECTOR')) continue;
 
         const isConnected = evo.status === 'open' || evo.connectionStatus === 'open';
         const rawOwner = evo.owner || '';

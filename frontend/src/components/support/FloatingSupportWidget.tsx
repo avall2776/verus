@@ -79,6 +79,129 @@ export default function FloatingSupportWidget() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Posição Flutuante Arrastável (Draggable) & Persistência
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
+  const dragJustEndedRef = useRef(false);
+  const startPointerRef = useRef({ x: 0, y: 0 });
+  const startPosRef = useRef({ x: 0, y: 0 });
+  const hasMovedRef = useRef(false);
+
+  // Carrega posição salva no localStorage ou calcula padrão inferior direito
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("versus_floating_support_pos");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.x === "number" && typeof parsed.y === "number") {
+          const maxX = window.innerWidth - 64;
+          const maxY = window.innerHeight - 64;
+          const clampedX = Math.max(16, Math.min(parsed.x, maxX));
+          const clampedY = Math.max(16, Math.min(parsed.y, maxY));
+          setPosition({ x: clampedX, y: clampedY });
+          return;
+        }
+      }
+      // Posição inicial padrão: canto inferior direito
+      setPosition({
+        x: Math.max(16, window.innerWidth - 72),
+        y: Math.max(16, window.innerHeight - 80),
+      });
+    } catch (e) {
+      console.error("Erro ao carregar posição do widget de suporte:", e);
+    }
+  }, []);
+
+  // Ajusta a posição ao redimensionar a janela garantindo que permaneça visível
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition(prev => {
+        if (!prev) return prev;
+        const maxX = window.innerWidth - 64;
+        const maxY = window.innerHeight - 64;
+        const clampedX = Math.max(16, Math.min(prev.x, maxX));
+        const clampedY = Math.max(16, Math.min(prev.y, maxY));
+        if (clampedX !== prev.x || clampedY !== prev.y) {
+          return { x: clampedX, y: clampedY };
+        }
+        return prev;
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Gerenciamento de Drag and Drop via Pointer Events
+  const handlePointerDown = (e: React.PointerEvent) => {
+    // Permite apenas clique com o botão principal do mouse ou touch
+    if (e.button !== 0) return;
+
+    startPointerRef.current = { x: e.clientX, y: e.clientY };
+    const currentX = position ? position.x : (window.innerWidth - 72);
+    const currentY = position ? position.y : (window.innerHeight - 80);
+    startPosRef.current = { x: currentX, y: currentY };
+    hasMovedRef.current = false;
+    isDraggingRef.current = true;
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      if (!isDraggingRef.current) return;
+      const dx = moveEvent.clientX - startPointerRef.current.x;
+      const dy = moveEvent.clientY - startPointerRef.current.y;
+
+      if (!hasMovedRef.current && Math.hypot(dx, dy) > 4) {
+        hasMovedRef.current = true;
+        setIsDragging(true);
+      }
+
+      if (hasMovedRef.current) {
+        const maxX = window.innerWidth - 64;
+        const maxY = window.innerHeight - 64;
+        const newX = Math.max(16, Math.min(startPosRef.current.x + dx, maxX));
+        const newY = Math.max(16, Math.min(startPosRef.current.y + dy, maxY));
+        setPosition({ x: newX, y: newY });
+      }
+    };
+
+    const onPointerUp = () => {
+      isDraggingRef.current = false;
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+
+      if (hasMovedRef.current) {
+        setIsDragging(false);
+        dragJustEndedRef.current = true;
+        setTimeout(() => {
+          dragJustEndedRef.current = false;
+        }, 120);
+
+        // Salva a posição solta no localStorage
+        setPosition(finalPos => {
+          if (finalPos) {
+            try {
+              localStorage.setItem("versus_floating_support_pos", JSON.stringify(finalPos));
+            } catch (err) {
+              console.error("Erro ao salvar posição no localStorage:", err);
+            }
+          }
+          return finalPos;
+        });
+      } else {
+        setIsDragging(false);
+      }
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+  };
+
+  const handleToggleOpen = () => {
+    if (dragJustEndedRef.current) return;
+    setIsOpen(prev => !prev);
+  };
+
   // Busca de chamados do usuário logado
   const fetchMyTickets = useCallback(async () => {
     setLoadingTickets(true);
@@ -195,14 +318,32 @@ export default function FloatingSupportWidget() {
     }
   };
 
+  const openDownwards = position ? position.y < 380 : false;
+  const alignLeft = position ? position.x < 360 : false;
+
   return (
-    <div id="floating-support-widget" ref={containerRef} className="fixed bottom-6 right-6 z-50 select-none print:hidden">
+    <div 
+      id="floating-support-widget" 
+      ref={containerRef} 
+      style={
+        position
+          ? { left: `${position.x}px`, top: `${position.y}px`, bottom: "auto", right: "auto" }
+          : undefined
+      }
+      className={`fixed z-50 select-none print:hidden ${
+        !position ? "bottom-6 right-6" : ""
+      }`}
+    >
       {/* ========================================================================= */}
       {/* POPOVER / MODAL EXPANSÍVEL ("SUPORTE VERSUS")                             */}
       {/* ========================================================================= */}
       {isOpen && (
         <div 
-          className="fixed sm:absolute bottom-16 right-0 w-[calc(100vw-2rem)] sm:w-[400px] bg-[#0B1224]/95 backdrop-blur-2xl border border-slate-800/90 rounded-2xl shadow-2xl shadow-black/80 flex flex-col max-h-[580px] overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-200"
+          className={`fixed sm:absolute w-[calc(100vw-2rem)] sm:w-[400px] bg-[#0B1224]/95 backdrop-blur-2xl border border-slate-800/90 rounded-2xl shadow-2xl shadow-black/80 flex flex-col max-h-[580px] overflow-hidden animate-in fade-in duration-200 z-50 ${
+            openDownwards ? "top-14 slide-in-from-top-3" : "bottom-14 slide-in-from-bottom-3"
+          } ${
+            alignLeft ? "left-0" : "right-0"
+          }`}
           style={{ maxHeight: "calc(100vh - 120px)" }}
         >
           {/* Header Superior do Widget */}
@@ -555,27 +696,36 @@ export default function FloatingSupportWidget() {
       )}
 
       {/* ========================================================================= */}
-      {/* BOTÃO FLUTUANTE (FLOATING TRIGGER)                                        */}
+      {/* BOTÃO FLUTUANTE (FLOATING TRIGGER & DRAGGABLE HANDLE)                     */}
       {/* ========================================================================= */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onPointerDown={handlePointerDown}
+        onClick={handleToggleOpen}
         aria-label="Abrir Suporte Versus"
-        title="Suporte Versus (Ajuda e Chamados)"
-        className={`group relative flex items-center justify-center w-12 h-12 rounded-2xl shadow-xl transition-all duration-200 active:scale-95 ${
+        title={
+          isDragging 
+            ? "Solte para fixar a posição" 
+            : "Suporte Versus (Clique para abrir, segure e arraste para mover)"
+        }
+        className={`group relative flex items-center justify-center w-12 h-12 rounded-2xl shadow-xl transition-all duration-150 touch-none select-none ${
+          isDragging 
+            ? "cursor-grabbing scale-105 shadow-2xl border-blue-500/60 ring-2 ring-blue-500/30 bg-[#11192e] text-white" 
+            : "cursor-grab active:cursor-grabbing active:scale-95"
+        } ${
           isOpen
             ? "bg-slate-800 text-white border border-slate-700 shadow-slate-900/50"
             : "bg-[#0B1224] hover:bg-[#11192e] text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 shadow-black/80"
         }`}
       >
         {isOpen ? (
-          <X size={20} className="transition-transform rotate-0 group-hover:rotate-90 duration-200" />
+          <X size={20} className="transition-transform rotate-0 group-hover:rotate-90 duration-200 pointer-events-none" />
         ) : (
-          <LifeBuoy size={20} className="transition-transform group-hover:scale-110 duration-200 text-blue-400" />
+          <LifeBuoy size={20} className="transition-transform group-hover:scale-110 duration-200 text-blue-400 pointer-events-none" />
         )}
 
         {/* Indicador de Status Online (Dot Verde Pulsante) */}
         {!isOpen && (
-          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 pointer-events-none">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-[#0B1224]" />
           </span>
@@ -583,7 +733,7 @@ export default function FloatingSupportWidget() {
 
         {/* Badge Numérico caso haja chamados ativos */}
         {!isOpen && openCount > 0 && (
-          <span className="absolute -bottom-1 -left-1 px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-blue-600 text-white border-2 border-[#0B1224] shadow-sm">
+          <span className="absolute -bottom-1 -left-1 px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-blue-600 text-white border-2 border-[#0B1224] shadow-sm pointer-events-none">
             {openCount}
           </span>
         )}
