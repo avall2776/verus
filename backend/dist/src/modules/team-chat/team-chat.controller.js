@@ -33,11 +33,23 @@ let TeamChatController = class TeamChatController {
     async createChannel(tenantId, body) {
         return this.teamChatService.createChannel(tenantId, body);
     }
+    async deleteChannel(tenantId, channelId, req) {
+        return this.teamChatService.deleteChannel(tenantId, req?.user?.id, req?.user?.role, channelId);
+    }
     async getMessages(tenantId, channelId, receiverId, req) {
         return this.teamChatService.getMessages(tenantId, req.user.id, channelId, receiverId);
     }
     async sendMessage(tenantId, req, body) {
         return this.teamChatService.sendMessage(tenantId, req.user.id, body);
+    }
+    async deleteMessage(tenantId, messageId, req) {
+        return this.teamChatService.deleteMessage(tenantId, req?.user?.id, req?.user?.role, messageId);
+    }
+    async clearHistory(tenantId, channelId, receiverId, req) {
+        return this.teamChatService.clearHistory(tenantId, req?.user?.id, req?.user?.role, {
+            channelId,
+            receiverId,
+        });
     }
 };
 exports.TeamChatController = TeamChatController;
@@ -72,6 +84,15 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TeamChatController.prototype, "createChannel", null);
 __decorate([
+    (0, common_1.Delete)('channels/:id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], TeamChatController.prototype, "deleteChannel", null);
+__decorate([
     (0, common_1.Get)('messages'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('channelId')),
@@ -90,6 +111,25 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], TeamChatController.prototype, "sendMessage", null);
+__decorate([
+    (0, common_1.Delete)('messages/:id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], TeamChatController.prototype, "deleteMessage", null);
+__decorate([
+    (0, common_1.Delete)('history'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('channelId')),
+    __param(2, (0, common_1.Query)('receiverId')),
+    __param(3, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Object]),
+    __metadata("design:returntype", Promise)
+], TeamChatController.prototype, "clearHistory", null);
 exports.TeamChatController = TeamChatController = __decorate([
     (0, common_1.Controller)('team-chat'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

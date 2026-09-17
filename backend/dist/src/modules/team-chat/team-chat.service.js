@@ -158,6 +158,80 @@ let TeamChatService = class TeamChatService {
         this.chatGateway.emitNewTeamMessage(tenantId, message);
         return message;
     }
+    async deleteMessage(tenantId, userId, userRole, messageId) {
+        const message = await this.prisma.teamMessage.findFirst({
+            where: { id: messageId, tenantId }
+        });
+        if (!message) {
+            throw new common_1.NotFoundException('Mensagem não encontrada.');
+        }
+        const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+        if (message.senderId !== userId && !isAdmin) {
+            throw new common_1.ForbiddenException('Você não tem permissão para excluir esta mensagem.');
+        }
+        await this.prisma.teamMessage.delete({
+            where: { id: messageId }
+        });
+        this.chatGateway.emitTeamMessageDeleted(tenantId, {
+            messageId,
+            channelId: message.channelId,
+            senderId: message.senderId,
+            receiverId: message.receiverId
+        });
+        return { success: true, messageId };
+    }
+    async clearHistory(tenantId, userId, userRole, params) {
+        if (!params.channelId && !params.receiverId) {
+            throw new common_1.BadRequestException('Informe channelId ou receiverId para limpar o histórico.');
+        }
+        if (params.channelId) {
+            const channel = await this.prisma.teamChannel.findFirst({
+                where: { id: params.channelId, tenantId }
+            });
+            if (!channel)
+                throw new common_1.NotFoundException('Canal não encontrado.');
+            await this.prisma.teamMessage.deleteMany({
+                where: { tenantId, channelId: params.channelId }
+            });
+            this.chatGateway.emitTeamHistoryCleared(tenantId, {
+                channelId: params.channelId
+            });
+            return { success: true, channelId: params.channelId };
+        }
+        if (params.receiverId) {
+            await this.prisma.teamMessage.deleteMany({
+                where: {
+                    tenantId,
+                    channelId: null,
+                    OR: [
+                        { senderId: userId, receiverId: params.receiverId },
+                        { senderId: params.receiverId, receiverId: userId }
+                    ]
+                }
+            });
+            this.chatGateway.emitTeamHistoryCleared(tenantId, {
+                user1Id: userId,
+                user2Id: params.receiverId
+            });
+            return { success: true, receiverId: params.receiverId };
+        }
+    }
+    async deleteChannel(tenantId, userId, userRole, channelId) {
+        const channel = await this.prisma.teamChannel.findFirst({
+            where: { id: channelId, tenantId }
+        });
+        if (!channel)
+            throw new common_1.NotFoundException('Canal não encontrado.');
+        const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+        if (!isAdmin) {
+            throw new common_1.ForbiddenException('Apenas administradores podem excluir canais da equipe.');
+        }
+        await this.prisma.teamChannel.delete({
+            where: { id: channelId }
+        });
+        this.chatGateway.emitTeamChannelDeleted(tenantId, channelId);
+        return { success: true, channelId };
+    }
 };
 exports.TeamChatService = TeamChatService;
 exports.TeamChatService = TeamChatService = __decorate([

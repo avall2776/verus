@@ -2125,6 +2125,26 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - `npm run build` aprovado com código 0 em ambas as pontas.
     - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
 
+- [x] **[17/09/2026 - 17:15]** ⚡ **[IDE 1] Auditoria & Correção Estrutural do Módulo de Chat Interno da Equipe (`/chat-interno`) - (Fase 76)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Abertura & Seleção Instantânea de Conversas**:
+    - Fluxo de clique aprimorado na listagem de colaboradores e canais/equipes sem atraso perceptível nem travamentos.
+    - Reset imediato do histórico anterior e ativação de skeleton leve enquanto busca as mensagens, prevenindo qualquer confusão visual.
+    - Proteção contra race conditions via `activeChatIdRef` garantindo que cliques rápidos sempre carreguem a conversa correta.
+    - Foco automático no input de digitação (`textareaRef.current?.focus()`) imediatamente após selecionar o diálogo.
+    - Suporte responsivo com navegação fluida em telas mobile (botão voltar ao painel de listagem).
+  - **Funcionalidades de Exclusão (Mensagens, Conversas e Canais)**:
+    - **Exclusão de Mensagem Individual**: Botão de lixeira (`Trash2`) com hover reativo visível para o remetente da mensagem ou administradores (`ADMIN`/`SUPER_ADMIN`). Modal com confirmação e exclusão real via `DELETE /team-chat/messages/:id`.
+    - **Limpeza de Histórico de Conversa**: Menu de opções no cabeçalho do chat (`MoreVertical`) com ação "Limpar Histórico". Modal de confirmação seguro e exclusão de mensagens no backend via `DELETE /team-chat/history` por `channelId` ou `receiverId`.
+    - **Exclusão de Canais de Equipe**: Opção restrita a administradores para excluir canal de equipe definitivamente via `DELETE /team-chat/channels/:id`, com cascade automático de mensagens no banco de dados.
+    - **Sincronização Real-time via WebSocket**: Novos eventos no `ChatGateway` (`teamMessageDeleted`, `teamHistoryCleared`, `teamChannelDeleted`) garantindo atualização instantânea na tela de todos os participantes conectados no tenant.
+  - **Padrão Monocromático VERSUS & Zero Mocks**:
+    - Paleta corporativa rigorosa `#0B1224`, `#0F172A`, `#1E293B`, bordas refinadas em `slate-800`/`slate-700` e tipografia em branco/slate. Totalmente livre de mocks.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 em ambas as pontas (44/44 páginas estáticas geradas).
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)

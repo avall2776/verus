@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Query, Param, UseGuards, Request } from '@nestjs/common';
 import { TeamChatService } from './team-chat.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
@@ -31,6 +31,15 @@ export class TeamChatController {
     return this.teamChatService.createChannel(tenantId, body);
   }
 
+  @Delete('channels/:id')
+  async deleteChannel(
+    @CurrentTenant() tenantId: string,
+    @Param('id') channelId: string,
+    @Request() req: any,
+  ) {
+    return this.teamChatService.deleteChannel(tenantId, req?.user?.id, req?.user?.role, channelId);
+  }
+
   @Get('messages')
   async getMessages(
     @CurrentTenant() tenantId: string,
@@ -48,5 +57,27 @@ export class TeamChatController {
     @Body() body: { channelId?: string; receiverId?: string; content: string; mediaUrl?: string }
   ) {
     return this.teamChatService.sendMessage(tenantId, req.user.id, body);
+  }
+
+  @Delete('messages/:id')
+  async deleteMessage(
+    @CurrentTenant() tenantId: string,
+    @Param('id') messageId: string,
+    @Request() req: any,
+  ) {
+    return this.teamChatService.deleteMessage(tenantId, req?.user?.id, req?.user?.role, messageId);
+  }
+
+  @Delete('history')
+  async clearHistory(
+    @CurrentTenant() tenantId: string,
+    @Query('channelId') channelId: string,
+    @Query('receiverId') receiverId: string,
+    @Request() req: any,
+  ) {
+    return this.teamChatService.clearHistory(tenantId, req?.user?.id, req?.user?.role, {
+      channelId,
+      receiverId,
+    });
   }
 }

@@ -2097,7 +2097,53 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Build & Deploy**:
     - `npx tsc --noEmit` aprovado com código 0 em ambas as pontas.
     - `npm run build` aprovado com código 0 (44/44 páginas estáticas e dinâmicas geradas).
-    - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
+- [x] **[17/09/2026 - 16:45]** ⚡ **[IDE 1] Ajuste Cirúrgico no Cabeçalho Superior (Topbar): Remoção do Indicador 'IA Vitor Online' & Refinamento de Espaçamento - (Fase 74)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Remoção do Componente 'IA Vitor Online'**:
+    - Removido o badge/indicador com dot pulsante verde `"IA Vitor Online"` do cabeçalho superior (`frontend/src/components/Topbar.tsx`), mantendo o canto superior direito focado exclusivamente na central de notificações interativa.
+  - **Ajuste de Espaçamento & Alinhamento**:
+    - Reorganização do alinhamento horizontal com centralização e espaçamento perfeito entre a busca global (`GlobalSearchBar`), botão de menu mobile e sino de notificações (`NotificationsPopover`).
+    - Enquadramento estrito na paleta monocromática corporativa VERSUS (`#0B1224/80`, borda `slate-800`).
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 (44/44 páginas estáticas geradas).
+- [x] **[17/09/2026 - 16:55]** ⚡ **[IDE 1] Eliminação de Mocks & Integração com Banco de Dados Real no Painel de Produtividade do Operador (`/inbox`) - (Fase 75)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Eliminação Integral de Mocks no Card de Produtividade**:
+    - Removidos todos os valores estáticos fictícios (como "14 finalizados hoje", 18% vs média, 6m 40s TMA e 1m 15s resposta).
+  - **Integração Real com Prisma/Supabase (`GET /conversations/operator-productivity`)**:
+    - Conexão do painel aos dados reais do operador logado: contagem de conversas finalizadas com status `resolved` ou `closed` atribuídas ao usuário no dia atual (`startOfToday` a `endOfToday`).
+    - Se não houver atendimentos concluídos no dia, exibe `0` com feedback descritivo e anel de progresso em repouso.
+    - Cálculo real de TMA (Tempo Médio de Atendimento) baseado na duração entre abertura e resolução dos atendimentos do dia.
+    - Cálculo real do tempo de 1ª Resposta computado entre a primeira mensagem recebida (`INBOUND`) e a primeira resposta enviada (`OUTBOUND`).
+    - Comparativo dinâmico de performance com a média diária histórica calculada nos últimos 30 dias de operação do atendente.
+    - Reatividade em tempo real: atualização automática a cada 10s e invalidação imediata do cache ao clicar em "Finalizar Atendimento" (`handleRelease`).
+  - **Padrão Monocromático VERSUS**:
+    - Card em `#0B1224`, containers internos em `#070D1B`, anel com gradiente corporativo azul (`#2563EB` a `#3B82F6`), bordas refinadas em `slate-800` e tipografia nítida sem cores verdes ou roxas estridentes.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 em ambas as pontas.
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
+
+- [x] **[17/09/2026 - 17:15]** ⚡ **[IDE 1] Auditoria & Correção Estrutural do Módulo de Chat Interno da Equipe (`/chat-interno`) - (Fase 76)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Abertura & Seleção Instantânea de Conversas**:
+    - Fluxo de clique aprimorado na listagem de colaboradores e canais/equipes sem atraso perceptível nem travamentos.
+    - Reset imediato do histórico anterior e ativação de skeleton leve enquanto busca as mensagens, prevenindo qualquer confusão visual.
+    - Proteção contra race conditions via `activeChatIdRef` garantindo que cliques rápidos sempre carreguem a conversa correta.
+    - Foco automático no input de digitação (`textareaRef.current?.focus()`) imediatamente após selecionar o diálogo.
+    - Suporte responsivo com navegação fluida em telas mobile (botão voltar ao painel de listagem).
+  - **Funcionalidades de Exclusão (Mensagens, Conversas e Canais)**:
+    - **Exclusão de Mensagem Individual**: Botão de lixeira (`Trash2`) com hover reativo visível para o remetente da mensagem ou administradores (`ADMIN`/`SUPER_ADMIN`). Modal com confirmação e exclusão real via `DELETE /team-chat/messages/:id`.
+    - **Limpeza de Histórico de Conversa**: Menu de opções no cabeçalho do chat (`MoreVertical`) com ação "Limpar Histórico". Modal de confirmação seguro e exclusão de mensagens no backend via `DELETE /team-chat/history` por `channelId` ou `receiverId`.
+    - **Exclusão de Canais de Equipe**: Opção restrita a administradores para excluir canal de equipe definitivamente via `DELETE /team-chat/channels/:id`, com cascade automático de mensagens no banco de dados.
+    - **Sincronização Real-time via WebSocket**: Novos eventos no `ChatGateway` (`teamMessageDeleted`, `teamHistoryCleared`, `teamChannelDeleted`) garantindo atualização instantânea na tela de todos os participantes conectados no tenant.
+  - **Padrão Monocromático VERSUS & Zero Mocks**:
+    - Paleta corporativa rigorosa `#0B1224`, `#0F172A`, `#1E293B`, bordas refinadas em `slate-800`/`slate-700` e tipografia em branco/slate. Totalmente livre de mocks.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 em ambas as pontas (44/44 páginas estáticas geradas).
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
 
 ---
 

@@ -64,6 +64,30 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  public emitTeamMessageDeleted(tenantId: string, payload: { messageId: string; channelId?: string | null; senderId?: string; receiverId?: string | null }) {
+    if (this.server) {
+      this.server.to(tenantId).emit('teamMessageDeleted', payload);
+    } else {
+      this.logger.warn('WebSocket server not initialized yet, skipping emitTeamMessageDeleted');
+    }
+  }
+
+  public emitTeamHistoryCleared(tenantId: string, payload: { channelId?: string; user1Id?: string; user2Id?: string }) {
+    if (this.server) {
+      this.server.to(tenantId).emit('teamHistoryCleared', payload);
+    } else {
+      this.logger.warn('WebSocket server not initialized yet, skipping emitTeamHistoryCleared');
+    }
+  }
+
+  public emitTeamChannelDeleted(tenantId: string, channelId: string) {
+    if (this.server) {
+      this.server.to(tenantId).emit('teamChannelDeleted', { channelId });
+    } else {
+      this.logger.warn('WebSocket server not initialized yet, skipping emitTeamChannelDeleted');
+    }
+  }
+
   public emitWhatsAppStatusUpdated(tenantId: string, instanceData: any) {
     if (this.server) {
       this.server.to(tenantId).emit('whatsappStatusUpdated', instanceData);

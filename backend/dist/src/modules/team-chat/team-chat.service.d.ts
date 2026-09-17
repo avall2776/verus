@@ -119,4 +119,24 @@ export declare class TeamChatService {
         channelId: string | null;
         receiverId: string | null;
     }>;
+    deleteMessage(tenantId: string, userId: string, userRole: string, messageId: string): Promise<{
+        success: boolean;
+        messageId: string;
+    }>;
+    clearHistory(tenantId: string, userId: string, userRole: string, params: {
+        channelId?: string;
+        receiverId?: string;
+    }): Promise<{
+        success: boolean;
+        channelId: string;
+        receiverId?: undefined;
+    } | {
+        success: boolean;
+        receiverId: string;
+        channelId?: undefined;
+    }>;
+    deleteChannel(tenantId: string, userId: string, userRole: string, channelId: string): Promise<{
+        success: boolean;
+        channelId: string;
+    }>;
 }

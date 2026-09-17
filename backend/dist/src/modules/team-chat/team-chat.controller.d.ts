@@ -72,6 +72,10 @@ export declare class TeamChatController {
         description: string | null;
         isPrivate: boolean;
     }>;
+    deleteChannel(tenantId: string, channelId: string, req: any): Promise<{
+        success: boolean;
+        channelId: string;
+    }>;
     getMessages(tenantId: string, channelId?: string, receiverId?: string, req?: any): Promise<({
         sender: {
             id: string;
@@ -116,5 +120,18 @@ export declare class TeamChatController {
         senderId: string;
         channelId: string | null;
         receiverId: string | null;
+    }>;
+    deleteMessage(tenantId: string, messageId: string, req: any): Promise<{
+        success: boolean;
+        messageId: string;
+    }>;
+    clearHistory(tenantId: string, channelId: string, receiverId: string, req: any): Promise<{
+        success: boolean;
+        channelId: string;
+        receiverId?: undefined;
+    } | {
+        success: boolean;
+        receiverId: string;
+        channelId?: undefined;
     }>;
 }

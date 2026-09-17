@@ -60,6 +60,30 @@ let ChatGateway = ChatGateway_1 = class ChatGateway {
             this.logger.warn('WebSocket server not initialized yet, skipping emitNewTeamMessage');
         }
     }
+    emitTeamMessageDeleted(tenantId, payload) {
+        if (this.server) {
+            this.server.to(tenantId).emit('teamMessageDeleted', payload);
+        }
+        else {
+            this.logger.warn('WebSocket server not initialized yet, skipping emitTeamMessageDeleted');
+        }
+    }
+    emitTeamHistoryCleared(tenantId, payload) {
+        if (this.server) {
+            this.server.to(tenantId).emit('teamHistoryCleared', payload);
+        }
+        else {
+            this.logger.warn('WebSocket server not initialized yet, skipping emitTeamHistoryCleared');
+        }
+    }
+    emitTeamChannelDeleted(tenantId, channelId) {
+        if (this.server) {
+            this.server.to(tenantId).emit('teamChannelDeleted', { channelId });
+        }
+        else {
+            this.logger.warn('WebSocket server not initialized yet, skipping emitTeamChannelDeleted');
+        }
+    }
     emitWhatsAppStatusUpdated(tenantId, instanceData) {
         if (this.server) {
             this.server.to(tenantId).emit('whatsappStatusUpdated', instanceData);
