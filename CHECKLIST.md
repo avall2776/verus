@@ -1773,6 +1773,18 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
 *Esta seção armazena ideias arquiteturais avançadas e expansões de escopo para longo prazo.*
 
+- [ ] **Módulo de Faturamento, Assinaturas & Gateway de Pagamentos Automatizados (Stripe / Asaas):**
+  - **Segurança & Tokenização (Zero PCI-DSS Direct Storage):**
+    - Proibição absoluta de armazenamento de dados sensíveis de cartões de crédito (número, CVV, data de validade) no banco de dados da aplicação.
+    - Utilização estrita da tokenização nativa do gateway (Stripe Elements / Customer Tokens ou Asaas CreditCardToken).
+  - **Automação via Webhooks (Backend NestJS):**
+    - Endpoint seguro `POST /billing/webhook` (ou `/api/billing/webhook`) com validação criptográfica de assinatura de payload.
+    - Ativação e liberação imediata de planos e módulos com transição da assinatura para `ACTIVE` mediante confirmação do pagamento (`payment_intent.succeeded` / `PAYMENT_RECEIVED`).
+    - Tratamento automático de falhas de cobrança, estornos e cancelamentos.
+  - **Gestão de Inadimplência e Tolerância (Dunning Management & Grace Period):**
+    - Implementação de Grace Period de tolerância de 7 dias úteis para contas com faturas pendentes ou falha no cartão de crédito.
+    - Disparo automático de régua de cobrança e notificações preventivas via E-mail corporativo e WhatsApp (`MessagingService`).
+    - Bloqueio preventivo e restrição de acesso ao tenant aplicado exclusivamente após o esgotamento do prazo de tolerância.
 - [ ] **Onboarding Self-Service (Múltiplos Tenants & Sublogins):** Plataforma pública de cadastro. Novas empresas se cadastram via Stripe, geram banco isolado automaticamente, e o ADMIN gerencia "Sublogins" (Atendentes) com permissões limitadas (Apenas tela Inbox e CRM).
 - [ ] **Voice AI Agent:** Robô de voz inteligente capaz de realizar ligações ativas (pré-venda/pós-venda) e receber ligações (receptivo) sem delay, integrado à base do CRM e OpenAI (Bland AI / Vapi).
 - [ ] **Integração VoIP Nativa (WebRTC):** Permitir que o atendente humano realize chamadas de áudio e vídeo direto pelo navegador na tela de Inbox (Twilio/Vonage), com gravação e transcrição automática vinculada ao card do lead no CRM.
