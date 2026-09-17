@@ -2145,6 +2145,25 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - `npm run build` aprovado com código 0 em ambas as pontas (44/44 páginas estáticas geradas).
     - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
 
+- [x] **[17/09/2026 - 17:35]** ⚡ **[IDE 1] Transformação do Widget Flutuante de Suporte em Elemento Arrastável (Draggable) com Persistência - (Fase 77)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Arrastar e Soltar Fluido (Draggable via Pointer Events)**:
+    - O botão flutuante de suporte global (`FloatingSupportWidget.tsx`) agora pode ser clicado e arrastado livremente pela tela com total fluidez em mouse, touch e caneta stylus.
+    - Discriminação inteligente entre clique e arrasto (threshold de 4px): arrastar reposiciona sem disparar abertura/fechamento do popover de chamado.
+    - Limitadores de segurança de tela (clamping): o elemento nunca se perde ou foge para fora dos limites da janela (`window.innerWidth` e `window.innerHeight`).
+  - **Persistência de Posição no Navegador (LocalStorage)**:
+    - Ao soltar o widget, a posição final `{ x, y }` é gravada automaticamente na chave `versus_floating_support_pos`.
+    - Ao navegar ou recarregar a aplicação, a preferência do operador é preservada instantaneamente.
+    - Redimensionamento de janela adaptativo: reposicionamento automático caso a janela seja redimensionada para um tamanho menor.
+  - **Abertura Inteligente do Popover / Modal**:
+    - O modal se adapta dinamicamente à posição atual do widget na tela: se o usuário posicionar o widget no topo, o modal abre para baixo (`top-14`); se estiver na parte inferior, abre para cima (`bottom-14`); alinhando à esquerda ou direita conforme o espaço disponível.
+  - **Padrão Monocromático VERSUS**:
+    - Design corporativo estrito `#0B1224`, `#070D1B`, `slate-800`, estado de arrasto tátil com `cursor-grab`/`cursor-grabbing`, anel discreto azul e sombras profundas.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 em ambas as pontas (44/44 páginas estáticas geradas).
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
