@@ -137,6 +137,7 @@ function InboxContent() {
   const [mutedContactIds, setMutedContactIds] = useState<string[]>([]);
   const [expandedTranscriptions, setExpandedTranscriptions] = useState<{ [key: string]: boolean }>({});
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
+  const [showLeftHeaderMenu, setShowLeftHeaderMenu] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   // Carrega contatos silenciados e mensagens agendadas salvos no localStorage
@@ -712,10 +713,12 @@ function InboxContent() {
     staleTime: 30000,
   });
 
+  const queryTab = (activeFilterTab === 'unread' || activeFilterTab === 'all') ? 'all' : activeFilterTab;
+
   const { data: initialContacts, isLoading, error: fetchErrorQuery, refetch: refetchConversations } = useQuery({
-    queryKey: ['conversations', activeTab],
+    queryKey: ['conversations', activeFilterTab],
     queryFn: async () => {
-      const { data } = await api.get(`/conversations?tab=${activeTab}`);
+      const { data } = await api.get(`/conversations?tab=${queryTab}`);
       return data.map((conv: any) => {
         const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
         const rawAvatar = conv.contact?.avatarUrl;
@@ -873,7 +876,7 @@ function InboxContent() {
     const handleConversationUpdated = (data: any) => {
       console.log('Conversation Updated via WebSocket:', data);
       // Recarrega a lista silenciosamente mantendo unread
-      api.get(`/conversations?tab=${activeTab}`).then((res) => {
+      api.get(`/conversations?tab=${queryTab}`).then((res) => {
         const mapped = res.data.map((conv: any) => {
           const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
           return {
@@ -907,7 +910,7 @@ function InboxContent() {
       socket.off('newMessage', handleNewMessage);
       socket.off('conversationUpdated', handleConversationUpdated);
     };
-  }, [socket, activeChat, activeTab]);
+  }, [socket, activeChat, activeTab, activeFilterTab]);
 
   // Derivar contato ativo
   const activeContactData = contacts.find(c => c.id === activeChat);
@@ -920,6 +923,7 @@ function InboxContent() {
       setIsPeeking(false);
       setShowTakeoverModal(false);
       setSelectedQueueChat(null);
+      setActiveFilterTab('mine');
       setActiveTab('mine');
       setActiveChat(targetId);
       setContacts(prev => prev.map(c => c.id === targetId ? { ...c, status: 'human_takeover', isAi: false, assignedTo: 'me' } : c));
@@ -945,6 +949,7 @@ function InboxContent() {
     try {
       setIsReopening(true);
       await api.patch(`/conversations/${activeChat}/reopen`);
+      setActiveFilterTab('waiting');
       setActiveTab('waiting');
       refetchConversations();
     } catch (error: any) {
@@ -1106,11 +1111,11 @@ function InboxContent() {
 
   // Filtro de busca e abas sobre os contatos da lista (Padrão WhatsApp Web)
   const filteredContacts = contacts.filter(c => {
-    if (activeFilterTab === 'unread' && !(c.unread > 0)) return false;
-    if (activeFilterTab === 'waiting' && !(c.status === 'waiting' || c.status === 'bot_active')) return false;
-    if (activeFilterTab === 'mine' && !(c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress')) return false;
+    if (activeFilterTab === 'unread' && !((c.unread || 0) > 0 || c.hasNewMessage)) return false;
+    if (activeFilterTab === 'waiting' && !(c.status === 'waiting' || c.status === 'bot_active' || (!c.assignedTo && c.status !== 'resolved' && c.status !== 'closed'))) return false;
+    if (activeFilterTab === 'mine' && !(c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress' || !!c.assignedTo)) return false;
     if (activeFilterTab === 'resolved' && !(c.status === 'resolved' || c.status === 'closed')) return false;
-    if (onlyUnread && !(c.unread > 0)) return false;
+    if (onlyUnread && !((c.unread || 0) > 0 || c.hasNewMessage)) return false;
 
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -1122,9 +1127,9 @@ function InboxContent() {
   });
 
   // Calcular total de contatos com mensagens não lidas e contadores de abas
-  const unreadCount = contacts.filter(c => (c.unread || 0) > 0).length;
-  const waitingCount = tabCounts?.waiting ?? contacts.filter(c => c.status === 'waiting' || c.status === 'bot_active').length;
-  const mineCount = tabCounts?.mine ?? contacts.filter(c => c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress').length;
+  const unreadCount = contacts.filter(c => (c.unread || 0) > 0 || c.hasNewMessage).length;
+  const waitingCount = tabCounts?.waiting ?? contacts.filter(c => c.status === 'waiting' || c.status === 'bot_active' || (!c.assignedTo && c.status !== 'resolved' && c.status !== 'closed')).length;
+  const mineCount = tabCounts?.mine ?? contacts.filter(c => c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress' || !!c.assignedTo).length;
   const resolvedCount = tabCounts?.resolved ?? contacts.filter(c => c.status === 'resolved' || c.status === 'closed').length;
 
   const isResolved = activeContactData?.status === 'resolved' || activeContactData?.status === 'closed';
@@ -1162,136 +1167,186 @@ function InboxContent() {
       <div className="w-[360px] sm:w-[380px] flex-shrink-0 bg-[#0F172A] border-r border-slate-800/80 flex flex-col overflow-hidden z-10">
         
         {/* Header Superior WhatsApp */}
-        <div className="px-4 py-3 bg-[#0B1224] border-b border-slate-800/80 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-white tracking-tight">WhatsApp</h1>
-            {/* Status da Conexão da Instância */}
-            {(() => {
-              const effectiveStatus = activeInstance ? activeInstance.status : (waStatus?.status || 'disconnected');
-              const isWaConnected = effectiveStatus === 'connected';
-              const isWaConnecting = effectiveStatus === 'connecting' || effectiveStatus === 'qrcode';
+        {/* Header Superior WhatsApp (Foto de Perfil da Linha Principal & Status) */}
+        <div className="px-3.5 py-3 bg-[#0B1224] border-b border-slate-800/80 flex items-center justify-between">
+          {(() => {
+            const effectiveStatus = activeInstance ? activeInstance.status : (waStatus?.status || 'disconnected');
+            const isWaConnected = effectiveStatus === 'connected';
+            const isWaConnecting = effectiveStatus === 'connecting' || effectiveStatus === 'qrcode';
+            const instancePic = activeInstance?.profilePicUrl || waStatus?.profilePicUrl;
+            const instanceName = activeInstance?.name || waStatus?.instanceName || 'Linha Principal';
 
-              return (
-                <div 
-                  onClick={() => setShowInstanceDropdown(prev => !prev)}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/60 cursor-pointer hover:bg-slate-700/60 transition-colors ml-1"
-                  title="Clique para alternar linha / instância WhatsApp"
-                >
-                  <div className={`w-2 h-2 rounded-full ${
-                    isWaConnected ? 'bg-emerald-400 animate-pulse' : isWaConnecting ? 'bg-amber-400' : 'bg-rose-400'
+            return (
+              <div 
+                onClick={() => setShowInstanceDropdown(prev => !prev)}
+                className="flex items-center gap-2.5 cursor-pointer group p-1 -ml-1 rounded-xl hover:bg-slate-800/50 transition-all min-w-0"
+                title="Clique para alternar linha / instância WhatsApp"
+              >
+                {/* Foto de Perfil Circular da Instância (Linha Principal) */}
+                <div className="relative shrink-0">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-[#17253D] border border-slate-700/80 flex items-center justify-center text-white font-bold text-xs shadow-md">
+                    {instancePic ? (
+                      <img 
+                        src={instancePic} 
+                        alt={instanceName} 
+                        className="w-full h-full object-cover rounded-full"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <span className="text-xs text-blue-300 font-bold uppercase">
+                        {instanceName.substring(0, 2).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  {/* Status de Presença */}
+                  <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#0B1224] ${
+                    isWaConnected ? 'bg-emerald-400 animate-pulse' : isWaConnecting ? 'bg-amber-400' : 'bg-rose-500'
                   }`} />
-                  <span className="text-[10px] text-slate-300 font-medium truncate max-w-[100px]">
-                    {activeInstance?.name || 'Linha 1'}
-                  </span>
-                  <ChevronDown size={10} className={`text-slate-400 transition-transform ${showInstanceDropdown ? 'rotate-180' : ''}`} />
                 </div>
-              );
-            })()}
-          </div>
+
+                {/* Identificação da Linha */}
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[13px] font-bold text-white tracking-tight truncate max-w-[130px] group-hover:text-blue-300 transition-colors">
+                      {instanceName}
+                    </span>
+                    <ChevronDown size={12} className={`text-slate-400 transition-transform ${showInstanceDropdown ? 'rotate-180 text-white' : ''}`} />
+                  </div>
+                  <span className="text-[10px] text-slate-400 leading-tight truncate">
+                    {isWaConnected ? (activeInstance?.phoneNumber || 'Conectado') : 'Desconectado'}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Ações Rápidas do Topo: Novo Chat & Menu de Opções */}
-          <div className="flex items-center gap-1.5">
-            {/* Botão Novo Chat (estilo WhatsApp Web - botão arredondado) */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Botão Novo Chat */}
             <button
               type="button"
               onClick={() => setShowContactsModal(true)}
-              className="w-9 h-9 rounded-xl bg-white hover:bg-slate-200 text-slate-950 flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+              className="w-8 h-8 rounded-xl bg-white hover:bg-slate-200 text-slate-950 flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
               title="Nova conversa / Contatos"
             >
-              <Plus size={18} className="stroke-[2.5]" />
+              <Plus size={17} className="stroke-[2.5]" />
             </button>
 
-            {/* Menu de Opções Flutuantes */}
+            {/* Menu de Opções Flutuantes do Painel Lateral */}
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setShowChatOptionsMenu(prev => !prev)}
-                className={`p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer ${
-                  showChatOptionsMenu ? 'text-white bg-slate-800/80' : ''
+                onClick={() => setShowLeftHeaderMenu(prev => !prev)}
+                className={`p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer ${
+                  showLeftHeaderMenu ? 'text-white bg-slate-800/80' : ''
                 }`}
                 title="Mais opções"
               >
                 <MoreVertical size={18} />
               </button>
 
-              {showChatOptionsMenu && (
-                <div 
-                  onClick={(e) => e.stopPropagation()}
-                  className="absolute top-full right-0 mt-2 w-56 bg-[#0B1224] border border-slate-700/90 rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.8)] py-1.5 z-50 animate-in fade-in zoom-in-95 text-xs text-slate-200 divide-y divide-slate-800/80"
-                >
-                  <div className="py-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowChatOptionsMenu(false);
-                        setShowGlobalScheduleCenter(true);
-                      }}
-                      className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
-                    >
-                      <CalendarClock size={15} className="text-cyan-400" />
-                      <span>Mensagens Agendadas</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowChatOptionsMenu(false);
-                        setShowVoipDialer(true);
-                      }}
-                      className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
-                    >
-                      <PhoneCall size={15} className="text-emerald-400" />
-                      <span>Discador Telefônico</span>
-                    </button>
+              {showLeftHeaderMenu && (
+                <>
+                  {/* Backdrop para fechar ao clicar fora */}
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowLeftHeaderMenu(false)} 
+                  />
+                  <div 
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute top-full right-0 mt-2 w-56 bg-[#0F172A] border border-slate-700/90 rounded-2xl shadow-[0_20px_45px_rgba(0,0,0,0.85)] py-1.5 z-50 animate-in fade-in zoom-in-95 text-xs text-slate-200 divide-y divide-slate-800/80"
+                  >
+                    <div className="py-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowLeftHeaderMenu(false);
+                          setShowGlobalScheduleCenter(true);
+                        }}
+                        className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                      >
+                        <CalendarClock size={15} className="text-cyan-400" />
+                        <span>Mensagens Agendadas</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowLeftHeaderMenu(false);
+                          setShowVoipDialer(true);
+                        }}
+                        className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                      >
+                        <PhoneCall size={15} className="text-emerald-400" />
+                        <span>Discador Telefônico</span>
+                      </button>
+                    </div>
+                    <div className="py-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowLeftHeaderMenu(false);
+                          refetchConversations();
+                          toast.success("Lista de conversas atualizada");
+                        }}
+                        className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                      >
+                        <RefreshCw size={14} className="text-blue-400" />
+                        <span>Atualizar conversas</span>
+                      </button>
+                    </div>
                   </div>
-                  <div className="py-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowChatOptionsMenu(false);
-                        refetchConversations();
-                        toast.success("Lista de conversas atualizada");
-                      }}
-                      className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
-                    >
-                      <RefreshCw size={14} className="text-blue-400" />
-                      <span>Atualizar conversas</span>
-                    </button>
-                  </div>
-                </div>
+                </>
               )}
             </div>
           </div>
         </div>
 
-        {/* Dropdown de Instâncias Flutuante */}
+        {/* Dropdown de Instâncias Flutuante com Fotos de Perfil */}
         {showInstanceDropdown && (
-          <div className="bg-[#0B1224] border-b border-slate-800/80 p-2 z-30 animate-in fade-in slide-in-from-top-1">
-            <div className="px-2 py-1 text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center justify-between mb-1">
-              <span>Linhas / Instâncias WhatsApp</span>
-              <a href="/settings/whatsapp" className="text-cyan-400 hover:underline text-[10px]">Configurar</a>
+          <>
+            <div 
+              className="fixed inset-0 z-20" 
+              onClick={() => setShowInstanceDropdown(false)} 
+            />
+            <div className="bg-[#0F172A] border-b border-slate-800/80 p-2.5 z-30 animate-in fade-in slide-in-from-top-1 relative shadow-2xl">
+              <div className="px-2 py-1 text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center justify-between mb-1.5">
+                <span>Linhas / Instâncias WhatsApp</span>
+                <a href="/settings/whatsapp" className="text-cyan-400 hover:underline text-[10px]">Configurar</a>
+              </div>
+              <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
+                {instances && instances.length > 0 ? (
+                  instances.map((inst) => (
+                    <div
+                      key={inst.id}
+                      onClick={() => {
+                        setActiveInstance(inst);
+                        setShowInstanceDropdown(false);
+                      }}
+                      className={`px-3 py-2 rounded-xl flex items-center justify-between hover:bg-slate-800/80 cursor-pointer transition-colors text-xs ${
+                        activeInstance?.id === inst.id ? 'bg-blue-600/20 text-white font-semibold border border-blue-500/30' : 'text-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-800 border border-slate-700/60 shrink-0 flex items-center justify-center text-[10px] font-bold text-white">
+                          {inst.profilePicUrl ? (
+                            <img src={inst.profilePicUrl} alt={inst.name} className="w-full h-full object-cover" />
+                          ) : (
+                            inst.name.substring(0, 2).toUpperCase()
+                          )}
+                        </div>
+                        <span className="truncate">{inst.name}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono shrink-0 ml-2">{inst.phoneNumber || 'Ativa'}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-2 text-xs text-slate-500 text-center">Nenhuma instância cadastrada</div>
+                )}
+              </div>
             </div>
-            <div className="max-h-36 overflow-y-auto flex flex-col gap-1">
-              {instances && instances.length > 0 ? (
-                instances.map((inst) => (
-                  <div
-                    key={inst.id}
-                    onClick={() => {
-                      setActiveInstance(inst);
-                      setShowInstanceDropdown(false);
-                    }}
-                    className={`px-3 py-1.5 rounded-lg flex items-center justify-between hover:bg-slate-800/80 cursor-pointer transition-colors text-xs ${
-                      activeInstance?.id === inst.id ? 'bg-blue-600/20 text-white font-semibold' : 'text-slate-300'
-                    }`}
-                  >
-                    <span className="truncate">{inst.name}</span>
-                    <span className="text-[10px] text-slate-500 font-mono">{inst.phoneNumber || 'Ativa'}</span>
-                  </div>
-                ))
-              ) : (
-                <div className="p-2 text-xs text-slate-500 text-center">Nenhuma instância cadastrada</div>
-              )}
-            </div>
-          </div>
+          </>
         )}
 
         {/* Barra de Busca WhatsApp */}
@@ -1354,6 +1409,7 @@ function InboxContent() {
             type="button"
             onClick={() => {
               setActiveFilterTab('waiting');
+              setActiveTab('waiting');
               setOnlyUnread(false);
             }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
@@ -1374,6 +1430,7 @@ function InboxContent() {
             type="button"
             onClick={() => {
               setActiveFilterTab('mine');
+              setActiveTab('mine');
               setOnlyUnread(false);
             }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
@@ -1394,6 +1451,7 @@ function InboxContent() {
             type="button"
             onClick={() => {
               setActiveFilterTab('resolved');
+              setActiveTab('resolved');
               setOnlyUnread(false);
             }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
@@ -1655,18 +1713,23 @@ function InboxContent() {
                 {/* Avatar WhatsApp com indicador de status */}
                 <div className="relative shrink-0">
                   <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700/60 flex items-center justify-center text-white font-bold shrink-0 relative overflow-hidden shadow-inner">
-                    {activeContactData.avatarUrl ? (
-                      <img 
-                        src={activeContactData.avatarUrl} 
-                        alt={activeContactData.name} 
-                        className="w-full h-full object-cover rounded-full"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLElement).style.display = 'none';
-                          const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
-                          if (fallback) fallback.classList.remove('hidden');
-                        }}
-                      />
-                    ) : null}
+                    {(() => {
+                      const isSelfOrMainLine = activeContactData.name?.includes('(você)') || (activeContactData.phone && activeInstance?.phoneNumber && activeContactData.phone.replace(/\D/g, '') === activeInstance.phoneNumber.replace(/\D/g, ''));
+                      const contactPhoto = activeContactData.avatarUrl || (isSelfOrMainLine ? (activeInstance?.profilePicUrl || waStatus?.profilePicUrl) : null);
+
+                      return contactPhoto ? (
+                        <img 
+                          src={contactPhoto} 
+                          alt={activeContactData.name} 
+                          className="w-full h-full object-cover rounded-full"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = 'none';
+                            const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                            if (fallback) fallback.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null;
+                    })()}
                     <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
                       {getContactInitials(activeContactData.name)}
                     </span>
@@ -1751,12 +1814,17 @@ function InboxContent() {
                     <MoreVertical size={19} />
                   </button>
 
-                  {/* Dropdown de Opções Superiores do Chat */}
+                  {/* Dropdown de Opções Superiores do Chat com Backdrop Isolado */}
                   {showChatOptionsMenu && (
-                    <div 
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute top-full right-0 mt-2 w-72 bg-[#0B1224] border border-slate-700/90 rounded-2xl shadow-[0_20px_45px_rgba(0,0,0,0.8)] py-2 z-50 animate-in fade-in zoom-in-95 text-xs divide-y divide-slate-800/80"
-                    >
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setShowChatOptionsMenu(false)} 
+                      />
+                      <div 
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute top-full right-0 mt-2 w-72 bg-[#0F172A] border border-slate-700/90 rounded-2xl shadow-[0_25px_50px_rgba(0,0,0,0.9)] py-2 z-50 animate-in fade-in zoom-in-95 text-xs divide-y divide-slate-800/80"
+                      >
                       <div className="py-1">
                         <button
                           type="button"
@@ -1883,8 +1951,9 @@ function InboxContent() {
                         </button>
                       </div>
                     </div>
-                  )}
-                </div>
+                  </>
+                )}
+              </div>
 
                 {/* Ícone 3: Dados do Contato (WhatsApp Web) */}
                 <button

@@ -56,7 +56,18 @@ export class ChatService {
     const whereClause: any = { tenantId };
     const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
 
-    if (tab === 'resolved') {
+    if (tab === 'all' || tab === 'unread') {
+      // Traz todas as conversas do tenant sem restringir status
+      if (!isMaster && userRole === 'AGENT') {
+        const userDepts = await this.prisma.userDepartment.findMany({ where: { userId }});
+        const deptIds = userDepts.map(d => d.departmentId);
+        whereClause.OR = [
+          { assignedTo: userId },
+          { departmentId: { in: deptIds } },
+          { departmentId: null }
+        ];
+      }
+    } else if (tab === 'resolved') {
       whereClause.status = { in: ['resolved', 'closed'] };
     } else if (tab === 'mine') {
       whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
