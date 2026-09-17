@@ -1504,32 +1504,41 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `npm run build` aprovado com código 0 (frontend e backend).
   - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
-- **[17/09/2026 - 09:37]** ⚡ **[IDE 2] Ativação de Tarefa & Início de Desenvolvimento: Fase 65 (Gestão de Equipe e Operadores do Super Admin - Métricas, Permissões e Auditoria / Espiar Conversas)**:
-  - **Status**: ⚡ Em Desenvolvimento Ativo (Exclusividade IDE 2).
-  - **Escopo**:
-    1. **Nova Seção de Operadores no Super Admin (`/super-admin/operators`)**: Interface administrativa moderna em design monocromático (#0B1224, slate e branco) com listagem completa da equipe, cargos, status de atividade e avatar.
-    2. **Cadastro e Edição de Operador (+ Novo Operador)**: Formulário com Nome, E-mail, Perfil/Função (ex: Atendente de Suporte, Analista Pleno, Gerente de Suporte) e matriz de permissões granulares por módulo. Disparo de e-mail de ativação/credenciais via SMTP real.
-    3. **Painel Analítico de Produtividade**: Métricas diárias consolidadas por atendente (atendimentos realizados no dia, tempo médio de resposta, chamados fechados e taxa de resolução).
-    4. **Recurso de Auditoria "Espiar Conversa" (Monitoramento em Tempo Real)**: Modal discreto de auditoria para o Super Admin visualizar em tempo real o histórico e o chat em andamento daquele operador com o cliente final, com leitura de logs e governança.
-    5. **Isolamento de Privilégios (Security Boundary)**: Proteção de escopo para operadores cadastrados com acesso restrito a suporte/atendimento, impedindo qualquer acesso a funções administrativas globais (planos, exclusão de tenants).
-    6. **Build e Deploy Obrigatórios**: Validação com `npx tsc --noEmit` e `npm run build` (código 0) e deploy sincronizado na VPS (PM2) e Vercel.
+- [x] **[17/09/2026 - 09:48]** ⚡ **[IDE 2] Conclusão: Gestão de Equipe e Operadores do Super Admin - Métricas, Permissões e Auditoria / Espiar Conversas (Fase 65)**:
+  - **Status**: ✅ Concluído com Sucesso e Homologado.
+  - **Módulo Administrativo de Operadores (`/super-admin/operators`)**:
+    - Tela completa no padrão monocromático (#0B1224, #070D1B, slate e branco) integrada ao menu global do Super Admin (`ADMIN_MENU`).
+    - Tabela de colaboradores com status de conexão em tempo real (online/offline), avatar, e-mail, cargo/nível e ações de governança.
+  - **Cadastro & Edição de Operadores com Permissões Granulares**:
+    - Modal corporativo de cadastro e edição de operadores com Nome, E-mail, Cargo/Nível (Atendente Nível 1, Analista Nível 2, Gerente de Atendimento) e matriz de permissões.
+    - Geração de senha provisória e disparo real via SMTP (`sendUserInvitationEmail`), com opção de cópia imediata no painel.
+  - **Painel Analítico de Produtividade Diária (KPIs)**:
+    - 4 cards de topo em tempo real: Total de Operadores, Volume de Atendimentos Hoje, Chamados Fechados no Dia e Tempo Médio de Resposta (TMR) Global e Individual.
+  - **Auditoria Operacional "Espiar Conversa" (Live Chat Spy)**:
+    - Modal de inspeção discreta de governança em tempo real. O Super Admin visualiza o histórico completo do chamado e mensagens ao vivo entre o atendente e o cliente de forma 100% invisível (sem notificar as pontas).
+    - Opção de governança para intervir e assumir o chamado diretamente na Central Omnichannel.
+  - **Isolamento de Privilégios (Security Boundary)**:
+    - Operadores criados estritamente com `role: "AGENT"` e `isSuperAdmin: false`, com bloqueio absoluto (HTTP 403) para alteração de planos e exclusão de tenants mestres.
+  - **Validação de Build, Homologação & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
+    - `npm run build` aprovado com código 0 em ambas as pontas (41/41 rotas compiladas no Next.js).
+    - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
-### 🟡 FASE 65: GESTÃO DE EQUIPE E OPERADORES DO SUPER ADMIN (MÉTRICAS, PERMISSÕES E AUDITORIA / ESPIAR CONVERSAS) [EM DESENVOLVIMENTO - IDE 2]
-> **Status**: ⚡ Em Desenvolvimento Ativo (Exclusividade IDE 2).
-- [ ] **Módulo Administrativo de Operadores (`/super-admin/operators`)**:
-  - [ ] Interface monocromática corporativa com listagem de colaboradores, avatares, cargos e status.
-- [ ] **Cadastro & Edição de Operadores com Permissões Granulares**:
-  - [ ] Modal de cadastro de operadores com Nome, E-mail, Função e seleção de permissões por módulo.
-  - [ ] Disparo de e-mail de ativação de conta / credenciais via serviço de e-mail real.
-- [ ] **Painel de Métricas de Produtividade Diária**:
-  - [ ] Total de atendimentos no dia, tempo médio de resposta (TMR) e chamados finalizados.
-- [ ] **Auditoria Operacional "Espiar Conversa" em Tempo Real**:
-  - [ ] Ação de monitoramento discreto para abrir e acompanhar chats em andamento do operador com o cliente.
-- [ ] **Isolamento de Privilégios (Security Boundary)**:
-  - [ ] Garantia de acesso estritamente delimitado sem poderes de exclusão de tenants ou alteração de planos.
-- [ ] **Validação de Build, Homologação & Deploy**:
-  - [ ] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
-  - [ ] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+### ✅ FASE 65: GESTÃO DE EQUIPE E OPERADORES DO SUPER ADMIN (MÉTRICAS, PERMISSÕES E AUDITORIA / ESPIAR CONVERSAS) [CONCLUÍDO - IDE 2]
+- [x] **Módulo Administrativo de Operadores (`/super-admin/operators`)**:
+  - [x] Interface monocromática corporativa com listagem de colaboradores, avatares, cargos e status.
+- [x] **Cadastro & Edição de Operadores com Permissões Granulares**:
+  - [x] Modal de cadastro de operadores com Nome, E-mail, Função e seleção de permissões por módulo.
+  - [x] Disparo de e-mail de ativação de conta / credenciais via serviço de e-mail real.
+- [x] **Painel de Métricas de Produtividade Diária**:
+  - [x] Total de atendimentos no dia, tempo médio de resposta (TMR) e chamados finalizados.
+- [x] **Auditoria Operacional "Espiar Conversa" em Tempo Real**:
+  - [x] Ação de monitoramento discreto para abrir e acompanhar chats em andamento do operador com o cliente.
+- [x] **Isolamento de Privilégios (Security Boundary)**:
+  - [x] Garantia de acesso estritamente delimitado sem poderes de exclusão de tenants ou alteração de planos.
+- [x] **Validação de Build, Homologação & Deploy**:
+  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
+  - [x] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
 ---
 
