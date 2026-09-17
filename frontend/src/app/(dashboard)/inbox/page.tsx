@@ -9,7 +9,7 @@ import {
   BookUser, CalendarClock, PhoneCall, Zap, Eye, ShieldCheck, PhoneForwarded, UserCheck,
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, Trash2, Play, Pause,
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
-  BellOff, History, UserPlus, FileDown
+  BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -94,6 +94,10 @@ function InboxContent() {
   const [onlyUnread, setOnlyUnread] = useState(false);
   const [taggingContactId, setTaggingContactId] = useState<string | null>(null);
   const [customTagInput, setCustomTagInput] = useState('');
+  const [activeFilterTab, setActiveFilterTab] = useState<'all' | 'unread' | 'waiting' | 'mine' | 'resolved'>('all');
+  const [showSearchInChat, setShowSearchInChat] = useState(false);
+  const [chatSearchQuery, setChatSearchQuery] = useState('');
+  const [showContactInfo, setShowContactInfo] = useState(true);
 
   // Estados de Gravação de Áudio via MediaRecorder
   const [isRecording, setIsRecording] = useState(false);
@@ -1100,9 +1104,14 @@ function InboxContent() {
     });
   };
 
-  // Filtro de busca e não lidas sobre os contatos da fila atual
+  // Filtro de busca e abas sobre os contatos da lista (Padrão WhatsApp Web)
   const filteredContacts = contacts.filter(c => {
+    if (activeFilterTab === 'unread' && !(c.unread > 0)) return false;
+    if (activeFilterTab === 'waiting' && !(c.status === 'waiting' || c.status === 'bot_active')) return false;
+    if (activeFilterTab === 'mine' && !(c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress')) return false;
+    if (activeFilterTab === 'resolved' && !(c.status === 'resolved' || c.status === 'closed')) return false;
     if (onlyUnread && !(c.unread > 0)) return false;
+
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -1149,12 +1158,14 @@ function InboxContent() {
   return (
     <div className="flex h-full w-full bg-[#0B1224] overflow-hidden">
       
-      {/* 1. PAINEL ESQUERDO: Lista de Conversas */}
-      <div className="w-[340px] flex-shrink-0 bg-[#0F172A] border-r border-gray-800 flex flex-col overflow-hidden z-10">
-        {/* Header Lista */}
-        <div className="p-4 border-b border-gray-800 flex flex-col gap-3">
-          {/* BOX DE INSTÂNCIA (PADRÃO LERO NO TOPO DA COLUNA LATERAL) */}
-          <div className="bg-[#162038] border border-gray-700/60 rounded-xl p-2.5 flex items-center justify-between shadow-sm relative">
+      {/* 1. PAINEL ESQUERDO: Lista de Conversas (Padrão Estrutural WhatsApp Web) */}
+      <div className="w-[360px] sm:w-[380px] flex-shrink-0 bg-[#0F172A] border-r border-slate-800/80 flex flex-col overflow-hidden z-10">
+        
+        {/* Header Superior WhatsApp */}
+        <div className="px-4 py-3 bg-[#0B1224] border-b border-slate-800/80 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-white tracking-tight">WhatsApp</h1>
+            {/* Status da Conexão da Instância */}
             {(() => {
               const effectiveStatus = activeInstance ? activeInstance.status : (waStatus?.status || 'disconnected');
               const isWaConnected = effectiveStatus === 'connected';
@@ -1163,607 +1174,359 @@ function InboxContent() {
               return (
                 <div 
                   onClick={() => setShowInstanceDropdown(prev => !prev)}
-                  className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer group"
-                  title="Alternar instância do WhatsApp"
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/60 cursor-pointer hover:bg-slate-700/60 transition-colors ml-1"
+                  title="Clique para alternar linha / instância WhatsApp"
                 >
-                  <div className="relative flex items-center justify-center shrink-0">
-                    {activeInstance?.profilePicUrl ? (
-                      <img 
-                        src={activeInstance.profilePicUrl} 
-                        alt={activeInstance.name} 
-                        className="w-7 h-7 rounded-full object-cover border border-gray-600"
-                      />
-                    ) : (
-                      <div className={`w-2.5 h-2.5 rounded-full ${
-                        isWaConnected ? 'bg-emerald-400' : isWaConnecting ? 'bg-amber-400' : 'bg-red-400'
-                      }`}></div>
-                    )}
-                    {isWaConnected && (
-                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping absolute"></div>
-                    )}
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-bold text-white truncate leading-tight group-hover:text-accent transition-colors flex items-center gap-1">
-                      {activeInstance?.name || 'Linha Principal'}
-                      <ChevronDown size={11} className={`text-gray-400 transition-transform ${showInstanceDropdown ? 'rotate-180' : ''}`} />
-                    </span>
-                    <span className={`text-[10px] font-medium leading-tight ${
-                      isWaConnected ? 'text-emerald-400' : isWaConnecting ? 'text-amber-400' : 'text-rose-400'
-                    }`}>
-                      {isWaConnected ? 'Conectado' : isWaConnecting ? 'Conectando...' : 'Desconectado'}
-                    </span>
-                  </div>
+                  <div className={`w-2 h-2 rounded-full ${
+                    isWaConnected ? 'bg-emerald-400 animate-pulse' : isWaConnecting ? 'bg-amber-400' : 'bg-rose-400'
+                  }`} />
+                  <span className="text-[10px] text-slate-300 font-medium truncate max-w-[100px]">
+                    {activeInstance?.name || 'Linha 1'}
+                  </span>
+                  <ChevronDown size={10} className={`text-slate-400 transition-transform ${showInstanceDropdown ? 'rotate-180' : ''}`} />
                 </div>
               );
             })()}
-
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsRefreshingConnection(true);
-                  refreshWaStatus?.().finally(() => {
-                    setTimeout(() => setIsRefreshingConnection(false), 600);
-                  });
-                  refetchConversations();
-                }}
-                title="Atualizar status da conexão"
-                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/60 transition-colors cursor-pointer"
-              >
-                <RefreshCw size={13} className={isRefreshingConnection ? "animate-spin text-blue-400" : ""} />
-              </button>
-            </div>
-
-            {/* Dropdown de Instâncias */}
-            {showInstanceDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#0F172A] border border-gray-700/80 rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.6)] py-1.5 z-50 animate-in fade-in zoom-in-95">
-                <div className="px-3 py-1 text-[10px] uppercase font-bold text-gray-400 tracking-wider flex items-center justify-between border-b border-gray-800/80 mb-1">
-                  <span>Instâncias WhatsApp</span>
-                  <span className="text-gray-500 font-normal">{instances?.length || 0} ativa(s)</span>
-                </div>
-                
-                <div className="max-h-48 overflow-y-auto">
-                  {instances && instances.length > 0 ? (
-                    instances.map((inst) => (
-                      <div
-                        key={inst.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveInstance(inst);
-                          setShowInstanceDropdown(false);
-                        }}
-                        className={`px-3 py-2 flex items-center justify-between hover:bg-gray-800/70 cursor-pointer transition-colors ${
-                          activeInstance?.id === inst.id ? 'bg-primary/15 border-l-2 border-primary' : ''
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className={`w-2 h-2 rounded-full shrink-0 ${
-                            inst.status === 'connected' ? 'bg-emerald-400' : (inst.status === 'connecting' || inst.status === 'qrcode') ? 'bg-amber-400' : 'bg-gray-500'
-                          }`} />
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-semibold text-white truncate">{inst.name}</span>
-                            <span className="text-[10px] text-gray-400 truncate">{inst.phoneNumber || 'Sem número'}</span>
-                          </div>
-                        </div>
-                        {inst.isDefault && (
-                          <span className="text-[9px] bg-blue-950/60 border border-blue-800/40 text-blue-300 px-1.5 py-0.2 rounded font-medium">
-                            Padrão
-                          </span>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="px-3 py-2 text-xs text-gray-400 text-center">
-                      Nenhuma instância cadastrada
-                    </div>
-                  )}
-                </div>
-
-                <div className="pt-1 mt-1 border-t border-gray-800/80 px-2">
-                  <a
-                    href="/settings/whatsapp"
-                    className="flex items-center gap-2 text-xs text-accent hover:text-accent/80 font-medium px-2 py-1.5 rounded-lg hover:bg-accent/10 transition-colors"
-                  >
-                    <Plus size={13} />
-                    <span>Gerenciar / Nova Instância</span>
-                  </a>
-                </div>
-              </div>
-            )}
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-white tracking-tight">Atendimentos</h2>
-              <span className="text-[10px] text-gray-400 bg-gray-800/80 px-2 py-0.5 rounded-full border border-gray-700/60 font-medium">
-                {filteredContacts.length}
-              </span>
-            </div>
-            
-            {/* Atalhos Rápidos no Topo: Novo Chat / Agenda e Agendamento */}
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setShowContactsModal(true)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-white bg-primary hover:bg-primary/90 px-2.5 py-1.5 rounded-lg transition-all shadow-[0_0_12px_rgba(0,102,255,0.3)] cursor-pointer hover:scale-105 active:scale-95"
-                title="Agenda de Contatos / Iniciar Novo Chat"
-              >
-                <UserPlus size={13} />
-                <span>Novo Chat</span>
-              </button>
-              
-              <button 
-                type="button"
-                onClick={() => setShowGlobalScheduleCenter(true)}
-                title="Central Global de Agendamentos"
-                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                  Object.values(scheduledMessagesByChat).flat().length > 0
-                    ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/25 shadow-[0_0_8px_rgba(6,182,212,0.25)]'
-                    : 'bg-[#1E293B] border-gray-700/60 text-gray-400 hover:text-blue-400 hover:border-blue-500/50 hover:bg-[#0B1224]'
-                }`}
-              >
-                <CalendarClock size={15} />
-              </button>
-
-              <button 
-                type="button"
-                onClick={() => setOnlyUnread(prev => !prev)}
-                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                  onlyUnread 
-                    ? 'bg-rose-600/30 border-rose-500 text-rose-400 shadow-[0_0_10px_rgba(225,29,72,0.3)]' 
-                    : 'bg-[#1E293B] border-gray-700/60 text-gray-400 hover:text-white hover:bg-gray-800'
-                }`}
-                title="Filtrar não lidas"
-              >
-                <Filter size={15} />
-              </button>
-            </div>
-          </div>
-          
-          {/* Barra de Busca + 4 Botões de Ferramentas Rápidas */}
+          {/* Ações Rápidas do Topo: Novo Chat & Menu de Opções */}
           <div className="flex items-center gap-1.5">
-            <div className="relative flex-1 min-w-0">
-              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input 
-                type="text" 
-                placeholder="Buscar contatos..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#1E293B] border border-gray-700/50 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-text-primary outline-none focus:border-accent/50 focus:bg-[#0B1224] transition-all"
-              />
-            </div>
+            {/* Botão Novo Chat (estilo WhatsApp Web - botão arredondado) */}
+            <button
+              type="button"
+              onClick={() => setShowContactsModal(true)}
+              className="w-9 h-9 rounded-xl bg-white hover:bg-slate-200 text-slate-950 flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+              title="Nova conversa / Contatos"
+            >
+              <Plus size={18} className="stroke-[2.5]" />
+            </button>
 
-            {/* 4 Atalhos: Agenda, Agendamento, Menu Rápido, Discador VoIP */}
-            <div className="flex items-center gap-1 shrink-0">
-              <button 
+            {/* Menu de Opções Flutuantes */}
+            <div className="relative">
+              <button
                 type="button"
-                onClick={() => setShowContactsModal(true)}
-                title="Agenda de Contatos"
-                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/50 text-gray-400 hover:text-white hover:border-accent/50 hover:bg-[#0B1224] transition-all cursor-pointer group"
-              >
-                <BookUser size={14} className="group-hover:text-cyan-400" />
-              </button>
-              <button 
-                type="button"
-                onClick={() => setShowGlobalScheduleCenter(true)}
-                title="Central Global de Agendamentos"
-                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/50 text-gray-400 hover:text-blue-400 hover:border-blue-500/50 hover:bg-[#0B1224] transition-all cursor-pointer group"
-              >
-                <CalendarClock size={14} className="group-hover:text-blue-400" />
-              </button>
-              <button 
-                type="button"
-                onClick={() => setShowQuickReplies(prev => !prev)}
-                title="Menu Rápido (Notas internas / Favoritas)"
-                className="p-1.5 rounded-lg bg-[#1E293B] border border-gray-700/50 text-gray-400 hover:text-amber-400 hover:border-amber-500/50 hover:bg-[#0B1224] transition-all cursor-pointer group"
-              >
-                <Zap size={14} className="group-hover:text-amber-400" />
-              </button>
-              <button 
-                type="button"
-                onClick={() => setShowVoipDialer(prev => !prev)}
-                title="Discador VoIP Flutuante"
-                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                  showVoipDialer 
-                    ? 'bg-emerald-600/30 border-emerald-500 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]' 
-                    : 'bg-[#1E293B] border-gray-700/50 text-gray-400 hover:text-emerald-400 hover:border-emerald-500/50 hover:bg-[#0B1224]'
+                onClick={() => setShowChatOptionsMenu(prev => !prev)}
+                className={`p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer ${
+                  showChatOptionsMenu ? 'text-white bg-slate-800/80' : ''
                 }`}
+                title="Mais opções"
               >
-                <PhoneCall size={14} />
+                <MoreVertical size={18} />
               </button>
+
+              {showChatOptionsMenu && (
+                <div 
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute top-full right-0 mt-2 w-56 bg-[#0B1224] border border-slate-700/90 rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.8)] py-1.5 z-50 animate-in fade-in zoom-in-95 text-xs text-slate-200 divide-y divide-slate-800/80"
+                >
+                  <div className="py-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowChatOptionsMenu(false);
+                        setShowGlobalScheduleCenter(true);
+                      }}
+                      className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                    >
+                      <CalendarClock size={15} className="text-cyan-400" />
+                      <span>Mensagens Agendadas</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowChatOptionsMenu(false);
+                        setShowVoipDialer(true);
+                      }}
+                      className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                    >
+                      <PhoneCall size={15} className="text-emerald-400" />
+                      <span>Discador Telefônico</span>
+                    </button>
+                  </div>
+                  <div className="py-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowChatOptionsMenu(false);
+                        refetchConversations();
+                        toast.success("Lista de conversas atualizada");
+                      }}
+                      className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                    >
+                      <RefreshCw size={14} className="text-blue-400" />
+                      <span>Atualizar conversas</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-          
-          {/* 4 Abas Segmentadas com Badges de Pílula (Padrão Lero Pro) */}
-          <div className="grid grid-cols-4 gap-1 bg-[#1E293B] p-1 rounded-xl border border-gray-700/60 mt-1 shadow-inner">
-            <button 
-              onClick={() => {
-                setOnlyUnread(false);
-                handleTabChange('waiting');
-              }}
-              className={`text-[10px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
-                activeTab === 'waiting' && !onlyUnread 
-                  ? 'font-bold bg-[#0B1224] text-white shadow-[0_2px_8px_rgba(0,0,0,0.4)] border border-gray-700/60' 
-                  : 'font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800/40'
-              }`}
-              title="Fila de Espera / IA"
-            >
-              <span className="truncate leading-none">Aguardando</span>
-              {waitingCount > 0 ? (
-                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold leading-none ${
-                  activeTab === 'waiting' && !onlyUnread ? 'bg-amber-400 text-slate-950' : 'bg-gray-800 text-amber-400 border border-amber-500/30'
-                }`}>
-                  {waitingCount}
-                </span>
-              ) : (
-                <span className="text-[9px] text-gray-600 leading-none">0</span>
-              )}
-            </button>
-
-            <button 
-              onClick={() => {
-                setOnlyUnread(false);
-                handleTabChange('mine');
-              }}
-              className={`text-[10px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
-                activeTab === 'mine' && !onlyUnread 
-                  ? 'font-bold bg-[#0B1224] text-white shadow-[0_2px_8px_rgba(0,0,0,0.4)] border border-gray-700/60' 
-                  : 'font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800/40'
-              }`}
-              title="Atendimentos atribuídos a mim"
-            >
-              <span className="truncate leading-none">Meus</span>
-              {mineCount > 0 ? (
-                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold leading-none ${
-                  activeTab === 'mine' && !onlyUnread ? 'bg-blue-500 text-white' : 'bg-gray-800 text-blue-400 border border-blue-500/30'
-                }`}>
-                  {mineCount}
-                </span>
-              ) : (
-                <span className="text-[9px] text-gray-600 leading-none">0</span>
-              )}
-            </button>
-
-            <button 
-              onClick={() => {
-                setOnlyUnread(prev => !prev);
-              }}
-              className={`text-[10px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
-                onlyUnread 
-                  ? 'font-bold bg-rose-600 text-white shadow-[0_0_12px_rgba(225,29,72,0.4)]' 
-                  : 'font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800/40'
-              }`}
-              title="Mensagens não lidas"
-            >
-              <span className="truncate leading-none">Não lidas</span>
-              <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold leading-none ${
-                onlyUnread ? 'bg-white text-rose-600' : (unreadCount > 0 ? 'bg-rose-500 text-white animate-pulse' : 'bg-gray-800 text-gray-500 border border-gray-700/60')
-              }`}>
-                {unreadCount}
-              </span>
-            </button>
-
-            <button 
-              onClick={() => {
-                setOnlyUnread(false);
-                handleTabChange('resolved');
-              }}
-              className={`text-[10px] py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
-                activeTab === 'resolved' && !onlyUnread 
-                  ? 'font-bold bg-[#0B1224] text-white shadow-[0_2px_8px_rgba(0,0,0,0.4)] border border-gray-700/60' 
-                  : 'font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800/40'
-              }`}
-              title="Atendimentos finalizados"
-            >
-              <span className="truncate leading-none">Resolvidos</span>
-              {resolvedCount > 0 ? (
-                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold leading-none ${
-                  activeTab === 'resolved' && !onlyUnread ? 'bg-emerald-400 text-slate-950' : 'bg-gray-800 text-emerald-400 border border-emerald-500/30'
-                }`}>
-                  {resolvedCount}
-                </span>
-              ) : (
-                <span className="text-[9px] text-gray-600 leading-none">0</span>
-              )}
-            </button>
           </div>
         </div>
 
-        {/* Lista de Contatos */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
+        {/* Dropdown de Instâncias Flutuante */}
+        {showInstanceDropdown && (
+          <div className="bg-[#0B1224] border-b border-slate-800/80 p-2 z-30 animate-in fade-in slide-in-from-top-1">
+            <div className="px-2 py-1 text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center justify-between mb-1">
+              <span>Linhas / Instâncias WhatsApp</span>
+              <a href="/settings/whatsapp" className="text-cyan-400 hover:underline text-[10px]">Configurar</a>
+            </div>
+            <div className="max-h-36 overflow-y-auto flex flex-col gap-1">
+              {instances && instances.length > 0 ? (
+                instances.map((inst) => (
+                  <div
+                    key={inst.id}
+                    onClick={() => {
+                      setActiveInstance(inst);
+                      setShowInstanceDropdown(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg flex items-center justify-between hover:bg-slate-800/80 cursor-pointer transition-colors text-xs ${
+                      activeInstance?.id === inst.id ? 'bg-blue-600/20 text-white font-semibold' : 'text-slate-300'
+                    }`}
+                  >
+                    <span className="truncate">{inst.name}</span>
+                    <span className="text-[10px] text-slate-500 font-mono">{inst.phoneNumber || 'Ativa'}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="p-2 text-xs text-slate-500 text-center">Nenhuma instância cadastrada</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Barra de Busca WhatsApp */}
+        <div className="px-3 pt-2.5 pb-1.5 bg-[#0F172A]">
+          <div className="bg-[#111A2E] border border-slate-700/60 rounded-lg px-3 py-2 flex items-center gap-2 focus-within:border-slate-500 focus-within:bg-[#0B1224] transition-all">
+            <Search size={15} className="text-slate-400 shrink-0" />
+            <input 
+              type="text" 
+              placeholder="Pesquisar ou começar uma nova conversa" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-transparent text-xs text-white placeholder:text-slate-400 outline-none"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-white">
+                <X size={13} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Pílulas de Filtro (Padrão Exato WhatsApp Web - Imagem 2) */}
+        <div className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-800/60 bg-[#0F172A] shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveFilterTab('all');
+              setOnlyUnread(false);
+            }}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+              activeFilterTab === 'all'
+                ? 'bg-[#1E293B] text-white border border-slate-700/80 shadow-sm'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            Tudo
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveFilterTab('unread');
+              setOnlyUnread(true);
+            }}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+              activeFilterTab === 'unread'
+                ? 'bg-[#1E293B] text-white border border-slate-700/80 shadow-sm'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <span>Não lidas</span>
+            {unreadCount > 0 && (
+              <span className="w-4 h-4 rounded-full bg-emerald-500 text-slate-950 font-bold text-[10px] flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveFilterTab('waiting');
+              setOnlyUnread(false);
+            }}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+              activeFilterTab === 'waiting'
+                ? 'bg-[#1E293B] text-white border border-slate-700/80 shadow-sm'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <span>Aguardando</span>
+            {waitingCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-400/20 text-amber-400 border border-amber-400/30 text-[10px] font-bold">
+                {waitingCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveFilterTab('mine');
+              setOnlyUnread(false);
+            }}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+              activeFilterTab === 'mine'
+                ? 'bg-[#1E293B] text-white border border-slate-700/80 shadow-sm'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <span>Meus</span>
+            {mineCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-bold">
+                {mineCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveFilterTab('resolved');
+              setOnlyUnread(false);
+            }}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+              activeFilterTab === 'resolved'
+                ? 'bg-[#1E293B] text-white border border-slate-700/80 shadow-sm'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            Resolvidos
+          </button>
+        </div>
+
+        {/* Lista de Contatos WhatsApp */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden relative scrollbar-thin">
           {fetchError && (
-            <div className="absolute top-0 left-0 w-full p-3 bg-red-500/20 border-b border-red-500/50 text-red-400 text-xs text-center z-10 font-bold backdrop-blur-md">
-              ERRO F5: {fetchError}. O navegador bloqueou o carregamento!
+            <div className="p-3 bg-red-500/20 border-b border-red-500/50 text-red-400 text-xs text-center font-bold">
+              Erro ao sincronizar conversas: {fetchError}
             </div>
           )}
           
           {isLoading && contacts.length === 0 ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="p-4 border-b border-[#162038] flex items-start gap-3 animate-pulse">
-                <div className="w-10 h-10 rounded-full bg-gray-800/80 shrink-0"></div>
+            Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="p-3.5 border-b border-slate-800/40 flex items-center gap-3 animate-pulse">
+                <div className="w-12 h-12 rounded-full bg-slate-800 shrink-0" />
                 <div className="flex-1">
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="h-3 w-20 bg-gray-800/80 rounded"></div>
-                    <div className="h-2 w-8 bg-gray-800/50 rounded"></div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <div className="h-3.5 w-24 bg-slate-800 rounded" />
+                    <div className="h-2.5 w-10 bg-slate-800/60 rounded" />
                   </div>
-                  <div className="h-2 w-32 bg-gray-800/50 rounded"></div>
+                  <div className="h-3 w-40 bg-slate-800/50 rounded" />
                 </div>
               </div>
             ))
           ) : filteredContacts.length === 0 ? (
-            <div className="p-6 text-center text-sm text-gray-500 flex flex-col items-center justify-center h-40">
-              <span className="block mb-2">
-                {onlyUnread ? 'Nenhum chat com mensagens não lidas' : 'Nenhum chat nesta fila'}
-              </span>
+            <div className="p-8 text-center text-sm text-slate-500 flex flex-col items-center justify-center h-48">
+              <span>Nenhuma conversa encontrada</span>
             </div>
           ) : (
             filteredContacts.map((contact) => (
-            <div 
-              key={contact.id} 
-              onClick={() => {
-                const isQueueOrBot = contact.status === 'waiting' || contact.status === 'bot_active' || !contact.assignedTo;
-                if (isQueueOrBot && activeTab !== 'mine') {
-                  setSelectedQueueChat(contact);
-                  setShowTakeoverModal(true);
-                  return;
-                }
-                setIsPeeking(false);
-                setActiveChat(contact.id);
-                // Limpa a notificação de piscar quando o usuário clica
-                setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, hasNewMessage: false, unread: 0 } : c));
-              }}
-              className={`p-3 border-b border-gray-800/40 cursor-pointer transition-all hover:bg-gray-800/60 flex flex-col gap-1.5 relative group
-                ${activeChat === contact.id ? 'bg-[#1E293B] border-l-2 border-l-accent' : 'border-l-2 border-l-transparent'}
-                ${contact.hasNewMessage ? 'bg-primary/5 animate-pulse' : ''}
-              `}
-            >
-              <div className="flex items-start gap-3 w-full">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white font-bold shrink-0 relative text-xs overflow-hidden">
-                  {contact.avatarUrl ? (
-                    <img 
-                      src={contact.avatarUrl} 
-                      alt={contact.name} 
-                      className="w-full h-full object-cover rounded-full"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLElement).style.display = 'none';
-                        const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
-                        if (fallback) fallback.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
-                  <span className={`avatar-initials ${contact.avatarUrl ? "hidden" : ""}`}>
-                    {getContactInitials(contact.name)}
-                  </span>
-                  {contact.status === 'resolved' || contact.status === 'closed' ? (
-                    <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(16,185,129,0.8)] z-10">
-                      <Lock size={9} className="text-white" />
-                    </div>
-                  ) : contact.isAi ? (
-                    <div className="absolute -bottom-1 -right-1 bg-accent rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(0,210,255,0.8)] z-10">
-                      <Bot size={9} className="text-background" />
-                    </div>
-                  ) : (
-                    <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5 border-2 border-[#0F172A] shadow-[0_0_5px_rgba(34,197,94,0.8)] z-10">
-                      <User size={9} className="text-white" />
-                    </div>
-                  )}
+              <div
+                key={contact.id}
+                onClick={() => {
+                  const isQueueOrBot = contact.status === 'waiting' || contact.status === 'bot_active' || !contact.assignedTo;
+                  if (isQueueOrBot && activeFilterTab === 'waiting') {
+                    setSelectedQueueChat(contact);
+                    setShowTakeoverModal(true);
+                    return;
+                  }
+                  setIsPeeking(false);
+                  setActiveChat(contact.id);
+                  setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, hasNewMessage: false, unread: 0 } : c));
+                }}
+                className={`flex items-center gap-3.5 px-3.5 py-3 cursor-pointer transition-colors relative group border-b border-slate-800/40 ${
+                  activeChat === contact.id ? 'bg-[#1E293B]' : 'hover:bg-slate-800/40'
+                }`}
+              >
+                {/* Avatar Circular 48x48 */}
+                <div className="relative shrink-0">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-800 border border-slate-700/60 flex items-center justify-center text-white font-bold text-sm shadow-inner">
+                    {contact.avatarUrl ? (
+                      <img 
+                        src={contact.avatarUrl} 
+                        alt={contact.name} 
+                        className="w-full h-full object-cover rounded-full"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = 'none';
+                          const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                          if (fallback) fallback.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <span className={`avatar-initials ${contact.avatarUrl ? "hidden" : ""}`}>
+                      {getContactInitials(contact.name)}
+                    </span>
+                  </div>
+                  {/* Status Indicator */}
+                  <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#0B1224] shadow-sm" />
                 </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center mb-0.5">
-                    <h3 className={`text-xs truncate ${contact.unread > 0 ? 'font-black text-white' : (activeChat === contact.id ? 'font-bold text-white' : 'font-medium text-gray-200')}`}>
+
+                {/* Conteúdo do Card de Conversa (2 Linhas - Padrão WhatsApp Web) */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
+                  {/* Linha 1: Nome + Horário */}
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className={`text-[0.93rem] truncate ${
+                      contact.unread > 0 ? 'font-bold text-white' : (activeChat === contact.id ? 'font-semibold text-white' : 'font-medium text-slate-200')
+                    }`}>
                       {contact.name}
                     </h3>
-                    <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                      <span className={`text-[0.65rem] ${contact.unread > 0 ? 'text-emerald-400 font-extrabold' : 'text-gray-400'}`}>
-                        {contact.time}
-                      </span>
+                    <span className={`text-[11px] whitespace-nowrap shrink-0 ${
+                      contact.unread > 0 ? 'text-emerald-400 font-semibold' : 'text-slate-400'
+                    }`}>
+                      {contact.time || ''}
+                    </span>
+                  </div>
 
-                      {/* Botão de Menu Contextual (Três Pontos no Hover) */}
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setContextMenuContactId(contextMenuContactId === contact.id ? null : contact.id);
-                          }}
-                          className={`p-1 rounded-md text-gray-400 hover:text-white hover:bg-gray-700/80 transition-all cursor-pointer ${
-                            contextMenuContactId === contact.id ? 'opacity-100 bg-gray-700/80 text-white' : 'opacity-0 group-hover:opacity-100'
-                          }`}
-                          title="Ações rápidas da conversa"
-                        >
-                          <MoreVertical size={13} />
-                        </button>
+                  {/* Linha 2: Preview da Mensagem com Ticks + Badge de Não Lidas */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1 min-w-0 flex-1">
+                      {contact.lastMessageDirection === 'OUTBOUND' && (
+                        <CheckCheck size={14} className="text-cyan-400 shrink-0 inline-block" />
+                      )}
+                      <p className={`text-xs truncate ${
+                        contact.unread > 0 ? 'text-slate-200 font-medium' : 'text-slate-400'
+                      }`}>
+                        {contact.lastMessage || 'Nenhuma mensagem recente'}
+                      </p>
+                    </div>
 
-                        {/* Menu Contextual Dropdown */}
-                        {contextMenuContactId === contact.id && (
-                          <div 
-                            onClick={(e) => e.stopPropagation()}
-                            className="absolute top-full right-0 mt-1 w-52 bg-[#0F172A] border border-gray-700/90 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 text-xs text-gray-200"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => handleToggleRead(contact.id)}
-                              className="w-full px-3 py-2 text-left hover:bg-gray-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
-                            >
-                              <CheckCheck size={14} className="text-emerald-400" />
-                              <span>{contact.unread > 0 ? "Marcar como lida" : "Marcar como não lida"}</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleToggleMute(contact.id)}
-                              className="w-full px-3 py-2 text-left hover:bg-gray-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
-                            >
-                              {mutedContactIds.includes(contact.id) ? (
-                                <>
-                                  <Volume2 size={14} className="text-blue-400" />
-                                  <span>Reativar notificações</span>
-                                </>
-                              ) : (
-                                <>
-                                  <BellOff size={14} className="text-amber-400" />
-                                  <span>Silenciar notificações</span>
-                                </>
-                              )}
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setContextMenuContactId(null);
-                                setTaggingContactId(contact.id);
-                              }}
-                              className="w-full px-3 py-2 text-left hover:bg-gray-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
-                            >
-                              <Tag size={14} className="text-cyan-400" />
-                              <span>Adicionar / Ver etiquetas</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setContextMenuContactId(null);
-                                setActiveChat(contact.id);
-                                loadDepartmentsAndShowTransfer();
-                              }}
-                              className="w-full px-3 py-2 text-left hover:bg-gray-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
-                            >
-                              <ArrowRightLeft size={14} className="text-purple-400" />
-                              <span>Transferir atendimento</span>
-                            </button>
-
-                            <div className="h-px bg-gray-800 my-1" />
-
-                            <button
-                              type="button"
-                              onClick={() => handleIgnoreOrResolve(contact.id)}
-                              className="w-full px-3 py-2 text-left hover:bg-rose-950/40 text-rose-300 flex items-center gap-2.5 transition-colors cursor-pointer"
-                            >
-                              <Trash2 size={14} className="text-rose-400" />
-                              <span>Ignorar / Finalizar</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {contact.unread > 0 && (
+                        <span className="min-w-[1.25rem] h-5 px-1.5 bg-emerald-500 text-slate-950 font-black text-[11px] rounded-full flex items-center justify-center shadow-[0_0_8px_rgba(16,185,129,0.5)]">
+                          {contact.unread}
+                        </span>
+                      )}
+                      {contact.status === 'bot_active' && (
+                        <span className="text-[10px] text-cyan-400 px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30 font-semibold">
+                          IA
+                        </span>
+                      )}
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-1.5 text-[0.7rem] text-gray-400 mb-1 flex-wrap">
-                    <Phone size={10} className="text-gray-500 shrink-0" />
-                    <span className="truncate">{contact.phone || 'Sem telefone'}</span>
-                    {mutedContactIds.includes(contact.id) && (
-                      <span title="Notificações silenciadas">
-                        <BellOff size={11} className="text-amber-400/80 shrink-0 ml-0.5" />
-                      </span>
-                    )}
-                    {(scheduledMessagesByChat[contact.id]?.length || 0) > 0 && (
-                      <span 
-                        className="inline-flex items-center gap-1 text-[9px] font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-700/60 px-1.5 py-0.5 rounded-md shadow-sm shrink-0"
-                        title={`${scheduledMessagesByChat[contact.id].length} mensagem(ns) programada(s)`}
-                      >
-                        <CalendarClock size={10} className="text-cyan-400" />
-                        <span>Agendada ({scheduledMessagesByChat[contact.id].length})</span>
-                      </span>
-                    )}
-                    {(contact.status === 'resolved' || contact.status === 'closed') && (
-                      <span className="ml-auto text-[0.65rem] text-emerald-400 font-medium bg-emerald-950/60 border border-emerald-800/40 px-1.5 py-0.2 rounded shrink-0">
-                        Encerrado
-                      </span>
-                    )}
-                  </div>
-                  <p className={`text-xs truncate pr-2 ${contact.unread > 0 ? 'font-bold text-gray-100' : 'text-gray-400'}`}>
-                    {contact.lastMsg}
-                  </p>
-                </div>
-
-                {contact.unread > 0 && (
-                  <div className="min-w-[1.25rem] h-5 px-1.5 bg-emerald-500 text-slate-950 text-[10px] font-black flex items-center justify-center rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)] shrink-0 self-center">
-                    {contact.unread}
-                  </div>
-                )}
-              </div>
-
-              {/* Linha de Tags e Botão sutil "+ Etiqueta" */}
-              <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-gray-800/40 mt-0.5">
-                {contact.tags && contact.tags.length > 0 && contact.tags.map((t: string, idx: number) => (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center text-[10px] font-medium bg-blue-950/60 text-blue-300 border border-blue-800/40 px-1.5 py-0.2 rounded"
-                  >
-                    {t}
-                  </span>
-                ))}
-
-                {/* Botão Sutil + Etiqueta */}
-                <div className="relative">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setTaggingContactId(taggingContactId === contact.id ? null : contact.id);
-                    }}
-                    className="text-[10px] text-gray-400 hover:text-blue-400 bg-gray-800/80 hover:bg-gray-700/80 px-1.5 py-0.5 rounded border border-gray-700/60 transition-colors flex items-center gap-0.5 cursor-pointer"
-                    title="Adicionar etiqueta ao contato"
-                  >
-                    <Plus size={10} />
-                    <span>Etiqueta</span>
-                  </button>
-
-                  {/* Popover de Tags Rápidas */}
-                  {taggingContactId === contact.id && (
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute top-full left-0 mt-1 z-30 w-48 bg-[#162038] border border-gray-700 rounded-xl p-2.5 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
-                    >
-                      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
-                        Adicionar Etiqueta
-                      </div>
-                      <div className="flex flex-col gap-1 mb-2">
-                        {SUGGESTED_TAGS.map((stag) => (
-                          <button
-                            key={stag}
-                            onClick={(e) => handleQuickAddTag(e, contact.id, stag)}
-                            className="text-left text-xs px-2 py-1 rounded hover:bg-blue-600/20 hover:text-blue-300 text-gray-300 transition-colors"
-                          >
-                            + {stag}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-1 pt-1.5 border-t border-gray-700">
-                        <input
-                          type="text"
-                          placeholder="Outra etiqueta..."
-                          value={customTagInput}
-                          onChange={(e) => setCustomTagInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              handleQuickAddTag(e as any, contact.id, customTagInput);
-                            }
-                          }}
-                          className="w-full bg-[#0B1224] border border-gray-700 rounded px-2 py-1 text-xs text-white placeholder:text-gray-500 outline-none focus:border-blue-500"
-                        />
-                        <button
-                          onClick={(e) => handleQuickAddTag(e, contact.id, customTagInput)}
-                          className="px-2 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shrink-0"
-                        >
-                          OK
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
-            </div>
-          )))}
+            )))}
         </div>
       </div>
 
       {/* 2. PAINEL CENTRAL: Janela de Chat (Estrutura WhatsApp Corporativo VERSUS) */}
-      <div className="flex-1 bg-[#080D1A] flex flex-col overflow-hidden relative border-r border-slate-800/80">
+      <div className="flex-1 bg-[#0B1224] flex flex-col overflow-hidden relative border-r border-slate-800/80">
         
-        {/* Textura/Papel de Parede Sutil Autêntico WhatsApp adaptado ao Dark Mode Corporativo */}
+        {/* Textura/Papel de Parede Sutil Autêntico WhatsApp adaptado ao Dark Mode Corporativo (2.5% de opacidade) */}
         <div 
-          className="absolute inset-0 opacity-[0.035] pointer-events-none" 
+          className="absolute inset-0 opacity-[0.025] pointer-events-none" 
           style={{ 
             backgroundImage: WHATSAPP_WALLPAPER_BG, 
             backgroundRepeat: 'repeat', 
@@ -1883,8 +1646,12 @@ function InboxContent() {
         ) : (
           <>
             {/* Chat Header (Padrão Estrutural WhatsApp - Design Monocromático VERSUS) */}
-            <div className="h-16 px-4 border-b border-slate-800/90 flex items-center justify-between bg-[#0B1224] z-20 shadow-sm">
-              <div className="flex items-center gap-3 min-w-0">
+            <div className="h-16 px-4 border-b border-slate-800/80 flex items-center justify-between bg-[#0B1224] z-20 shadow-sm">
+              <div 
+                className="flex items-center gap-3 min-w-0 cursor-pointer group"
+                onClick={() => setShowContactInfo(prev => !prev)}
+                title="Clique para ver dados do contato"
+              >
                 {/* Avatar WhatsApp com indicador de status */}
                 <div className="relative shrink-0">
                   <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700/60 flex items-center justify-center text-white font-bold shrink-0 relative overflow-hidden shadow-inner">
@@ -1910,77 +1677,65 @@ function InboxContent() {
                 
                 {/* Título e Subtítulo WhatsApp */}
                 <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-white truncate max-w-[200px] sm:max-w-xs">{activeContactData.name}</h2>
+                  <h2 className="text-sm font-bold text-white truncate max-w-[200px] sm:max-w-xs group-hover:text-blue-300 transition-colors">
+                    {activeContactData.name}
+                  </h2>
                   {activeContactData.isAi ? (
                     <div className="flex items-center gap-1.5 text-xs text-cyan-400 font-medium">
                       <BrainCircuit size={12} className="animate-pulse" />
                       <span>IA Vitor conversando...</span>
                     </div>
                   ) : (activeContactData.status === 'human_takeover' || activeContactData.status === 'open') ? (
-                    <span className="text-xs text-blue-400 font-medium">Atendimento ativo</span>
+                    <span className="text-xs text-emerald-400 font-medium">online • Atendimento ativo</span>
                   ) : activeContactData.status === 'waiting' ? (
                     <span className="text-xs text-amber-400 font-medium">Aguardando atendimento</span>
                   ) : (
-                    <span className="text-xs text-slate-400 font-medium">{activeContactData.phone || 'Online'}</span>
+                    <span className="text-xs text-slate-400 font-medium">{activeContactData.phone || 'online'}</span>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+
+              {/* Ações Alinhadas à Direita (Padrão WhatsApp Web) */}
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                 {isResolved ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-300 text-xs font-semibold px-2.5 py-1 bg-slate-800/80 border border-slate-700/80 rounded-xl flex items-center gap-1.5">
-                      <Lock size={12} className="text-slate-400" />
+                  <div className="flex items-center gap-1.5 mr-1">
+                    <span className="text-slate-300 text-[11px] font-semibold px-2 py-0.5 bg-slate-800/80 border border-slate-700/80 rounded-lg flex items-center gap-1">
+                      <Lock size={11} className="text-slate-400" />
                       Finalizado
                     </span>
                     <button 
                       onClick={handleReopen} 
                       disabled={isReopening}
-                      className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.25)] flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
                     >
-                      <ArrowRightLeft size={13} />
-                      {isReopening ? 'Reabrindo...' : 'Reabrir Atendimento'}
+                      <ArrowRightLeft size={11} />
+                      {isReopening ? '...' : 'Reabrir'}
                     </button>
                   </div>
                 ) : (activeContactData.status === 'bot_active' || activeContactData.status === 'waiting' || activeContactData.status === 'open') ? (
-                  <button onClick={() => handleTakeover()} className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.35)] cursor-pointer flex items-center gap-1.5">
-                    <UserCheck size={14} />
-                    Assumir Conversa
+                  <button onClick={() => handleTakeover()} className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold px-3 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer mr-1">
+                    <UserCheck size={12} />
+                    Assumir
                   </button>
                 ) : activeContactData.status === 'human_takeover' ? (
-                  <button onClick={handleRelease} className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-1.5">
-                    Finalizar Atendimento
+                  <button onClick={handleRelease} className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-[11px] font-bold px-3 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer mr-1">
+                    Finalizar
                   </button>
                 ) : null}
-                
-                {(activeContactData.status === 'human_takeover' || activeContactData.status === 'open') && (
-                  <button onClick={loadDepartmentsAndShowTransfer} title="Transferir" className="text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 p-2 rounded-xl border border-slate-700/60 transition-colors">
-                    <ArrowRightLeft size={16} />
-                  </button>
-                )}
 
-                {/* Botão de Acesso Rápido a Mensagens Agendadas com Badge Dinâmico */}
+                {/* Ícone 1: Busca na Conversa (WhatsApp Web) */}
                 <button
                   type="button"
-                  onClick={() => setShowScheduledDrawer(true)}
-                  className={`relative p-2 rounded-xl transition-all cursor-pointer ${
-                    (activeChat && (scheduledMessagesByChat[activeChat]?.length || 0) > 0)
-                      ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/25 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  onClick={() => setShowSearchInChat(prev => !prev)}
+                  className={`p-2 rounded-full transition-colors cursor-pointer ${
+                    showSearchInChat ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                   }`}
-                  title={
-                    activeChat && (scheduledMessagesByChat[activeChat]?.length || 0) > 0
-                      ? `${scheduledMessagesByChat[activeChat].length} mensagem(ns) agendada(s) para este contato`
-                      : "Ver mensagens agendadas"
-                  }
+                  title="Pesquisar na conversa"
                 >
-                  <CalendarClock size={18} />
-                  {activeChat && (scheduledMessagesByChat[activeChat]?.length || 0) > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-1 bg-cyan-500 text-slate-950 font-black text-[9px] rounded-full flex items-center justify-center shadow-[0_0_8px_rgba(6,182,212,0.8)] animate-pulse">
-                      {scheduledMessagesByChat[activeChat].length}
-                    </span>
-                  )}
+                  <Search size={19} />
                 </button>
-                
+
+                {/* Ícone 2: Menu Mais Opções (WhatsApp Web) */}
                 <div className="relative">
                   <button 
                     type="button"
@@ -1988,12 +1743,12 @@ function InboxContent() {
                       e.stopPropagation();
                       setShowChatOptionsMenu(prev => !prev);
                     }}
-                    className={`text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-800 cursor-pointer ${
-                      showChatOptionsMenu ? 'bg-gray-800 text-white' : ''
+                    className={`p-2 rounded-full transition-colors cursor-pointer ${
+                      showChatOptionsMenu ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                     }`}
                     title="Mais opções do chat"
                   >
-                    <MoreVertical size={20} />
+                    <MoreVertical size={19} />
                   </button>
 
                   {/* Dropdown de Opções Superiores do Chat */}
@@ -2086,11 +1841,11 @@ function InboxContent() {
                           type="button"
                           onClick={() => {
                             setShowChatOptionsMenu(false);
-                            setIsInternalMode(true);
+                            setIsInternalMode(prev => !prev);
                             setTimeout(() => {
                               textareaRef.current?.focus();
                             }, 100);
-                            toast.success("Modo de Nota Interna ativado!");
+                            toast.success(!isInternalMode ? "Modo Nota Interna ativado!" : "Modo WhatsApp ativado!");
                           }}
                           className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
                         >
@@ -2098,7 +1853,9 @@ function InboxContent() {
                             <Lock size={16} />
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-white group-hover:text-yellow-300 transition-colors">Nota Interna (Equipe)</span>
+                            <span className="font-semibold text-white group-hover:text-yellow-300 transition-colors">
+                              {isInternalMode ? "Desativar Nota Interna" : "Nota Interna (Equipe)"}
+                            </span>
                             <span className="text-[11px] text-slate-300 leading-tight">Anotação privada invisível ao cliente</span>
                           </div>
                         </button>
@@ -2128,8 +1885,50 @@ function InboxContent() {
                     </div>
                   )}
                 </div>
+
+                {/* Ícone 3: Dados do Contato (WhatsApp Web) */}
+                <button
+                  type="button"
+                  onClick={() => setShowContactInfo(prev => !prev)}
+                  className={`p-2 rounded-full transition-colors cursor-pointer ${
+                    showContactInfo ? 'bg-slate-800 text-blue-400' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                  title="Dados do contato"
+                >
+                  <PanelRight size={19} />
+                </button>
               </div>
             </div>
+
+            {/* Barra de Busca na Conversa (WhatsApp Web) */}
+            {showSearchInChat && (
+              <div className="bg-[#0B1224] border-b border-slate-800/80 px-4 py-2.5 flex items-center gap-3 z-20 animate-in slide-in-from-top-1 duration-150">
+                <Search size={16} className="text-slate-400 shrink-0" />
+                <input
+                  type="text"
+                  value={chatSearchQuery}
+                  onChange={(e) => setChatSearchQuery(e.target.value)}
+                  placeholder="Pesquisar nesta conversa..."
+                  className="flex-1 bg-[#1E293B] border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-400 outline-none focus:border-blue-500/80"
+                  autoFocus
+                />
+                {chatSearchQuery && (
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    {messages.filter(m => m.content?.toLowerCase().includes(chatSearchQuery.toLowerCase())).length} encontrada(s)
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSearchInChat(false);
+                    setChatSearchQuery('');
+                  }}
+                  className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
 
             {/* Banner de Modo Espiar */}
             {isPeeking && (
@@ -2189,40 +1988,40 @@ function InboxContent() {
                       )}
 
                       {/* Balão de Mensagem WhatsApp */}
-                      <div className={`flex flex-col gap-1 max-w-[85%] sm:max-w-[72%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5`}>
-                        <div className={`text-sm shadow-sm relative transition-all ${
+                      <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5`}>
+                        <div className={`text-sm shadow-sm relative transition-all pt-1.5 pb-1.5 px-3 min-w-[85px] ${
                           msg.isInternal
-                            ? 'bg-[#22180A] text-amber-100 rounded-2xl rounded-tr-none border border-amber-500/40 p-2.5 px-3.5 shadow-md'
+                            ? 'bg-[#281b0a] text-amber-100 rounded-lg rounded-tr-none border border-amber-500/30'
                             : isMe
-                              ? 'bg-[#17253D] text-slate-100 rounded-2xl rounded-tr-none border border-blue-900/40 p-2.5 px-3.5 shadow-md'
-                              : 'bg-[#0F172A] text-slate-100 rounded-2xl rounded-tl-none border border-slate-800/80 p-2.5 px-3.5 shadow-sm'
+                              ? 'bg-[#17253D] text-slate-100 rounded-lg rounded-tr-none border border-blue-900/30'
+                              : 'bg-[#1E293B] text-slate-100 rounded-lg rounded-tl-none border border-slate-700/40'
                         }`}>
                           {/* Cauda SVG do Balão WhatsApp */}
                           {msg.isInternal ? (
-                            <svg className="absolute -top-[1px] -right-2 text-[#22180A] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
-                              <path fill="currentColor" d="M0 0h6c1.1 0 1.9.9 1.4 1.9l-5.6 9.8c-.8 1.4-2.8.8-2.8-.8V0z" />
+                            <svg className="absolute -top-[0.5px] -right-2 text-[#281b0a] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
+                              <path fill="currentColor" d="M0 0h6.5c1.1 0 1.8.9 1.3 1.9l-5.2 9.8c-.7 1.4-2.6.8-2.6-.8V0z" />
                             </svg>
                           ) : isMe ? (
-                            <svg className="absolute -top-[1px] -right-2 text-[#17253D] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
-                              <path fill="currentColor" d="M0 0h6c1.1 0 1.9.9 1.4 1.9l-5.6 9.8c-.8 1.4-2.8.8-2.8-.8V0z" />
+                            <svg className="absolute -top-[0.5px] -right-2 text-[#17253D] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
+                              <path fill="currentColor" d="M0 0h6.5c1.1 0 1.8.9 1.3 1.9l-5.2 9.8c-.7 1.4-2.6.8-2.6-.8V0z" />
                             </svg>
                           ) : (
-                            <svg className="absolute -top-[1px] -left-2 text-[#0F172A] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
-                              <path fill="currentColor" d="M9 0H3C1.9 0 1.1.9 1.6 1.9l5.6 9.8c.8 1.4 2.8.8 2.8-.8V0z" />
+                            <svg className="absolute -top-[0.5px] -left-2 text-[#1E293B] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
+                              <path fill="currentColor" d="M9 0H2.5C1.4 0 .7.9 1.2 1.9l5.2 9.8c.7 1.4 2.6.8 2.6-.8V0z" />
                             </svg>
                           )}
 
                           {/* Identificador de Nota Interna */}
                           {msg.isInternal && (
-                            <div className="flex items-center gap-1.5 text-amber-400 font-bold mb-1.5 pb-1 border-b border-amber-500/20 text-[10px] uppercase tracking-wider">
-                              <Lock size={11} />
+                            <div className="flex items-center gap-1.5 text-amber-400 font-bold mb-1 pb-0.5 border-b border-amber-500/20 text-[10px] uppercase tracking-wider">
+                              <Lock size={10} />
                               <span>Nota Interna (Equipe)</span>
                             </div>
                           )}
 
                           {/* Pill de IA Vitor */}
                           {isAi && !msg.isInternal && (
-                            <div className="inline-flex items-center gap-1.5 bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1.5 shadow-sm">
+                            <div className="inline-flex items-center gap-1 bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1 shadow-sm">
                               <Bot size={11} className="text-cyan-400 animate-pulse" />
                               <span>IA VITOR</span>
                             </div>
@@ -2340,21 +2139,20 @@ function InboxContent() {
                             </div>
                           )}
 
-                          {/* Conteúdo de Texto */}
-                          {msg.content && msg.type !== 'audio' && msg.type !== 'document' && (
-                            <div className="whitespace-pre-wrap leading-relaxed text-[0.92rem]">
-                              {msg.content}
-                            </div>
-                          )}
-
-                          {/* Horário e Ticks WhatsApp Monocromáticos (Float-Right) */}
-                          <div className={`flex items-center justify-end gap-1 float-right ml-3 mt-1.5 text-[11px] select-none ${
-                            msg.isInternal ? 'text-amber-400/80' : isMe ? 'text-slate-400' : 'text-slate-400'
-                          }`}>
-                            <span>{new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                            {isMe && !msg.isInternal && (
-                              <CheckCheck size={14} className="text-cyan-400 inline-block shrink-0 -mr-0.5" />
+                          {/* Conteúdo de Texto com Horário e Ticks Inline WhatsApp */}
+                          <div className="text-[0.92rem] leading-relaxed break-words relative">
+                            {msg.content && msg.type !== 'audio' && msg.type !== 'document' && (
+                              <span className="whitespace-pre-wrap select-text">{msg.content}</span>
                             )}
+                            {/* Horário e Ticks WhatsApp (Float-Right Inline) */}
+                            <span className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 select-none text-[11px] ${
+                              msg.isInternal ? 'text-amber-400/80' : 'text-slate-400'
+                            }`}>
+                              <span>{new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              {isMe && !msg.isInternal && (
+                                <CheckCheck size={14} className="text-[#53bdeb] shrink-0" />
+                              )}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -2432,104 +2230,32 @@ function InboxContent() {
                   </div>
                 ) : (
                   <>
-                    {/* Barra de Formatação Rica WhatsApp & Alternador de Modo */}
-                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-800/40 bg-[#080D1A]/70">
-                      <div className="flex items-center gap-1">
-                        {/* Respostas Rápidas / Macros */}
+                    {/* Indicador Sutil de Modo Nota Interna */}
+                    {isInternalMode && (
+                      <div className="bg-amber-950/40 border-b border-amber-500/30 px-4 py-1.5 flex items-center justify-between text-amber-300 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <Lock size={12} className="text-amber-400" />
+                          <span className="font-semibold text-[11px]">Modo Nota Interna (Privado - visível apenas para a equipe)</span>
+                        </div>
                         <button
-                          type="button"
-                          onClick={() => setShowQuickReplies(prev => !prev)}
-                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-                            showQuickReplies 
-                              ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' 
-                              : 'text-slate-400 hover:text-blue-400 hover:bg-slate-800/60'
-                          }`}
-                          title="Respostas Rápidas (ou digite /)"
-                        >
-                          <Zap size={13} className="text-blue-400" />
-                          <span className="text-[11px]">Respostas</span>
-                        </button>
-
-                        {/* Divisor */}
-                        <div className="w-[1px] h-3.5 bg-slate-800 mx-1" />
-
-                        {/* Negrito *texto* */}
-                        <button
-                          type="button"
-                          onClick={() => handleInsertFormatting('*')}
-                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
-                          title="Negrito WhatsApp (*texto*)"
-                        >
-                          <Bold size={13} />
-                        </button>
-
-                        {/* Itálico _texto_ */}
-                        <button
-                          type="button"
-                          onClick={() => handleInsertFormatting('_')}
-                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
-                          title="Itálico WhatsApp (_texto_)"
-                        >
-                          <Italic size={13} />
-                        </button>
-
-                        {/* Tachado ~texto~ */}
-                        <button
-                          type="button"
-                          onClick={() => handleInsertFormatting('~')}
-                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
-                          title="Tachado WhatsApp (~texto~)"
-                        >
-                          <Strikethrough size={13} />
-                        </button>
-
-                        {/* Código/Mono ```texto``` */}
-                        <button
-                          type="button"
-                          onClick={() => handleInsertFormatting('```')}
-                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
-                          title="Monoespaçado WhatsApp (```texto```)"
-                        >
-                          <Code size={13} />
-                        </button>
-                      </div>
-
-                      {/* Alternador Modo WhatsApp vs Nota Interna */}
-                      <div className="flex items-center gap-1 bg-[#0F172A] p-0.5 rounded-lg border border-slate-800">
-                        <button 
                           type="button"
                           onClick={() => setIsInternalMode(false)}
-                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
-                            !isInternalMode 
-                              ? 'bg-blue-600 text-white shadow-sm' 
-                              : 'text-slate-400 hover:text-slate-300'
-                          }`}
+                          className="text-amber-400 hover:text-white text-[11px] underline cursor-pointer"
                         >
-                          WhatsApp
-                        </button>
-                        <button 
-                          type="button"
-                          onClick={() => setIsInternalMode(true)}
-                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md transition-all flex items-center gap-1 cursor-pointer ${
-                            isInternalMode 
-                              ? 'bg-amber-500 text-slate-950 font-black shadow-sm' 
-                              : 'text-slate-400 hover:text-slate-300'
-                          }`}
-                        >
-                          <Lock size={10} /> Nota Interna
+                          Voltar para WhatsApp
                         </button>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Caixa de Entrada Estrutura WhatsApp (Emoji + Clip + Cápsula + Botão Redondo) */}
-                    <div className="p-2.5 px-3 flex items-end gap-2 relative">
+                    {/* Barra de Input Flutuante Nativa Padrão WhatsApp Web */}
+                    <div className="p-2.5 px-3 flex items-center gap-2 relative bg-[#0B1224]">
                       {isRecording ? (
                         /* Painel de Gravação de Áudio WhatsApp */
-                        <div className="flex-1 bg-[#11192A] border border-rose-500/40 rounded-2xl px-4 py-2 flex items-center justify-between animate-in fade-in duration-200 min-h-[46px]">
+                        <div className="flex-1 bg-[#11192A] border border-rose-500/40 rounded-xl px-4 py-2 flex items-center justify-between animate-in fade-in duration-200 min-h-[44px]">
                           <div className="flex items-center gap-3">
                             <div className="relative flex items-center justify-center">
-                              <div className="w-3.5 h-3.5 rounded-full bg-rose-500" />
-                              <div className="w-3.5 h-3.5 rounded-full bg-rose-500 animate-ping absolute" />
+                              <div className="w-3 h-3 rounded-full bg-rose-500" />
+                              <div className="w-3 h-3 rounded-full bg-rose-500 animate-ping absolute" />
                             </div>
                             <div className="flex flex-col">
                               <span className="text-xs font-bold text-rose-300">Gravando áudio...</span>
@@ -2552,7 +2278,7 @@ function InboxContent() {
                               type="button"
                               onClick={cancelRecording}
                               disabled={isSendingAudio}
-                              className="p-2 rounded-xl bg-slate-800/80 hover:bg-rose-900/60 text-slate-400 hover:text-rose-300 transition-colors cursor-pointer"
+                              className="p-2 rounded-lg bg-slate-800/80 hover:bg-rose-900/60 text-slate-400 hover:text-rose-300 transition-colors cursor-pointer"
                               title="Descartar gravação"
                             >
                               <Trash2 size={16} />
@@ -2562,7 +2288,7 @@ function InboxContent() {
                               type="button"
                               onClick={stopAndSendAudio}
                               disabled={isSendingAudio}
-                              className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-[0_0_12px_rgba(37,99,235,0.4)] flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                               title="Enviar áudio gravado"
                             >
                               <Send size={14} />
@@ -2572,17 +2298,17 @@ function InboxContent() {
                         </div>
                       ) : (
                         <>
-                          {/* Botão Emoji WhatsApp (Lado Esquerdo do Input) */}
-                          <div className="relative mb-0.5">
+                          {/* 1. Botão Emoji WhatsApp (Lado Esquerdo) */}
+                          <div className="relative">
                             <button
                               type="button"
                               onClick={() => setShowEmojiPicker(prev => !prev)}
-                              className={`p-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer ${
+                              className={`p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors cursor-pointer ${
                                 showEmojiPicker ? 'text-amber-400 bg-slate-800/80' : ''
                               }`}
-                              title="Emojis WhatsApp"
+                              title="Emojis"
                             >
-                              <Smile size={21} />
+                              <Smile size={22} />
                             </button>
 
                             {showEmojiPicker && (
@@ -2613,15 +2339,15 @@ function InboxContent() {
                             )}
                           </div>
 
-                          {/* Botão Clipes/Anexo WhatsApp (Lado Esquerdo do Input) */}
-                          <div className="relative mb-0.5">
+                          {/* 2. Botão Clipes/Anexo WhatsApp (Lado Esquerdo) */}
+                          <div className="relative">
                             <button 
                               type="button"
                               onClick={() => setShowAttachments(!showAttachments)}
-                              className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
-                              title="Anexar documento ou imagem"
+                              className="p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors cursor-pointer"
+                              title="Anexar arquivo"
                             >
-                              <Paperclip size={21} />
+                              <Paperclip size={22} />
                             </button>
                             
                             {showAttachments && (
@@ -2648,17 +2374,17 @@ function InboxContent() {
                             )}
                           </div>
 
-                          {/* Cápsula de Texto (WhatsApp Input Capsule) */}
-                          <div className={`flex-1 bg-[#11192A] border rounded-2xl px-4 py-2 min-h-[46px] max-h-36 flex items-center transition-all shadow-inner relative ${
+                          {/* 3. Cápsula de Texto WhatsApp com Cantos Arredondados */}
+                          <div className={`flex-1 bg-[#1E293B] border rounded-lg px-4 py-2.5 min-h-[44px] max-h-36 flex items-center transition-all shadow-inner relative ${
                             isInternalMode 
                               ? 'border-amber-500/50 bg-amber-950/15 focus-within:border-amber-500' 
-                              : 'border-slate-700/70 focus-within:border-blue-500/80 focus-within:ring-1 focus-within:ring-blue-500/30'
+                              : 'border-slate-700/60 focus-within:border-blue-500/80 focus-within:ring-1 focus-within:ring-blue-500/20'
                           }`}>
                             <textarea 
                               ref={textareaRef}
-                              placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem ou / para respostas rápidas..."} 
-                              className={`flex-1 bg-transparent text-[0.93rem] resize-none outline-none py-1 max-h-32 
-                                ${isInternalMode ? 'text-amber-100 placeholder:text-amber-500/50' : 'text-slate-100 placeholder:text-slate-500'}
+                              placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem"} 
+                              className={`flex-1 bg-transparent text-[0.93rem] resize-none outline-none py-0.5 max-h-32 
+                                ${isInternalMode ? 'text-amber-100 placeholder:text-amber-500/50' : 'text-slate-100 placeholder:text-slate-400'}
                               `}
                               rows={1}
                               value={inputText}
@@ -2706,27 +2432,27 @@ function InboxContent() {
                             )}
                           </div>
 
-                          {/* Botão de Ação Circular WhatsApp (Mic se vazio / Enviar se com texto) */}
-                          <div className="mb-0.5">
+                          {/* 4. Botão de Ação WhatsApp (Microfone se vazio / Avião de Papel Enviar se com texto) */}
+                          <div className="shrink-0">
                             {(!inputText.trim() && !selectedFile) ? (
                               <button 
                                 type="button"
                                 onClick={startRecording}
                                 title="Gravar mensagem de voz"
-                                className="w-11 h-11 rounded-full bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/60 flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
+                                className="p-2.5 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors cursor-pointer"
                               >
-                                <Mic size={19} />
+                                <Mic size={22} />
                               </button>
                             ) : (
                               <button 
                                 type="button"
                                 onClick={handleSendMessage} 
                                 disabled={isUploadingMedia}
-                                title={isUploadingMedia ? "Enviando arquivo..." : "Enviar mensagem"}
-                                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 disabled:opacity-50
+                                title={isUploadingMedia ? "Enviando..." : "Enviar mensagem"}
+                                className={`p-2.5 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 disabled:opacity-50
                                   ${isInternalMode 
-                                    ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-[0_0_15px_rgba(217,119,6,0.45)]' 
-                                    : 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.45)]'
+                                    ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-[0_0_12px_rgba(217,119,6,0.4)]' 
+                                    : 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]'
                                   }
                                 `}
                               >
@@ -2749,40 +2475,54 @@ function InboxContent() {
         )}
       </div>
 
-      {/* 3. PAINEL DIREITO: Contexto do Lead */}
-      <div className="w-[320px] flex-shrink-0 bg-[#0F172A] flex flex-col overflow-y-auto border-l border-gray-800/80">
-        <div className="p-5 flex flex-col items-center border-b border-gray-800 relative bg-gradient-to-b from-[#162038]/50 to-transparent">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-black text-2xl shadow-[0_0_25px_rgba(0,210,255,0.25)] mb-3 overflow-hidden relative border-2 border-accent/40">
-            {activeContactData?.avatarUrl ? (
-              <img 
-                src={activeContactData.avatarUrl} 
-                alt={activeContactData.name} 
-                className="w-full h-full object-cover rounded-full"
-                onError={(e) => {
-                  (e.currentTarget as HTMLElement).style.display = 'none';
-                  const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
-                  if (fallback) fallback.classList.remove('hidden');
-                }}
-              />
-            ) : null}
-            <span className={`avatar-initials ${activeContactData?.avatarUrl ? "hidden" : ""}`}>
-              {getContactInitials(activeContactData?.name)}
-            </span>
-            <div className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#0F172A] shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+      {/* 3. PAINEL DIREITO: Dados do Contato (Padrão WhatsApp Web) */}
+      {showContactInfo && activeContactData && (
+        <div className="w-[320px] sm:w-[350px] flex-shrink-0 bg-[#0B1224] flex flex-col overflow-y-auto border-l border-slate-800/80 animate-in slide-in-from-right-2 duration-150 z-20">
+          {/* Header do Painel Direito */}
+          <div className="h-16 px-4 border-b border-slate-800/80 flex items-center justify-between bg-[#0B1224] shrink-0">
+            <div className="flex items-center gap-3">
+              <button 
+                type="button" 
+                onClick={() => setShowContactInfo(false)} 
+                className="p-1.5 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors cursor-pointer"
+                title="Fechar"
+              >
+                <X size={18} />
+              </button>
+              <h3 className="text-sm font-bold text-white">Dados do contato</h3>
+            </div>
           </div>
 
-          <h2 className="text-base font-bold text-white text-center leading-snug">
-            {activeContactData ? activeContactData.name : 'Nenhum lead selecionado'}
-          </h2>
-          {activeContactData && (
+          {/* Cartão de Perfil Circular */}
+          <div className="p-6 flex flex-col items-center border-b border-slate-800/80 relative bg-gradient-to-b from-[#17253D]/40 to-transparent">
+            <div className="w-24 h-24 rounded-full bg-slate-800 border-2 border-slate-700/80 flex items-center justify-center text-white font-black text-2xl shadow-xl mb-3 overflow-hidden relative">
+              {activeContactData.avatarUrl ? (
+                <img 
+                  src={activeContactData.avatarUrl} 
+                  alt={activeContactData.name} 
+                  className="w-full h-full object-cover rounded-full"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = 'none';
+                    const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                    if (fallback) fallback.classList.remove('hidden');
+                  }}
+                />
+              ) : null}
+              <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
+                {getContactInitials(activeContactData.name)}
+              </span>
+              <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#0B1224] shadow-sm" />
+            </div>
+
+            <h2 className="text-base font-bold text-white text-center leading-snug">
+              {activeContactData.name}
+            </h2>
             <div className="flex items-center gap-1.5 mt-1">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <p className="text-[11px] text-gray-400 font-medium">WhatsApp Cloud API</p>
+              <p className="text-[11px] text-slate-400 font-medium">WhatsApp Cloud API</p>
             </div>
-          )}
 
-          {/* Atalhos Rápidos: Ligar VoIP, Ver no CRM, Copiar */}
-          {activeContactData && (
+            {/* Atalhos Rápidos: Ligar VoIP, Ver no CRM, Copiar */}
             <div className="flex items-center gap-2 mt-4 w-full justify-center">
               <button
                 type="button"
@@ -2792,7 +2532,7 @@ function InboxContent() {
                     setShowVoipDialer(true);
                   }
                 }}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-emerald-600/30 border border-gray-700/60 hover:border-emerald-500/50 text-gray-300 hover:text-emerald-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-emerald-600/20 border border-slate-700/70 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
                 title="Iniciar chamada VoIP"
               >
                 <PhoneCall size={13} className="text-emerald-400" />
@@ -2801,7 +2541,7 @@ function InboxContent() {
 
               <a
                 href="/crm"
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-blue-600/30 border border-gray-700/60 hover:border-blue-500/50 text-gray-300 hover:text-blue-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-blue-600/20 border border-slate-700/70 hover:border-blue-500/50 text-slate-300 hover:text-blue-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
                 title="Visualizar no CRM"
               >
                 <TrendingUp size={13} className="text-blue-400" />
@@ -2811,28 +2551,26 @@ function InboxContent() {
               <button
                 type="button"
                 onClick={() => handleCopyText(activeContactData.phone || activeContactData.name, 'lead-all')}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-purple-600/30 border border-gray-700/60 hover:border-purple-500/50 text-gray-300 hover:text-purple-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-purple-600/20 border border-slate-700/70 hover:border-purple-500/50 text-slate-300 hover:text-purple-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
                 title="Copiar dados do contato"
               >
                 {copiedField === 'lead-all' ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} className="text-purple-400" />}
                 <span>{copiedField === 'lead-all' ? 'Copiado' : 'Copiar'}</span>
               </button>
             </div>
-          )}
-        </div>
+          </div>
 
-        {activeContactData && (
           <div className="p-5 flex flex-col gap-5">
             {/* Informações de Contato */}
             <div className="flex flex-col gap-2.5">
-              <h3 className="text-[10px] uppercase tracking-widest font-bold text-gray-500 flex items-center justify-between">
+              <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-400 flex items-center justify-between">
                 <span>Informações de Contato</span>
-                <span className="text-[9px] text-accent font-normal lowercase">id: {activeContactData.contactId?.substring(0, 8) || '---'}</span>
+                <span className="text-[9px] text-blue-400 font-normal lowercase">id: {activeContactData.contactId?.substring(0, 8) || '---'}</span>
               </h3>
 
               {/* Telefone */}
-              <div className="flex items-center justify-between p-2.5 bg-[#162038]/60 border border-gray-800/80 rounded-xl group hover:border-gray-700 transition-colors">
-                <div className="flex items-center gap-2.5 text-xs text-gray-300 min-w-0">
+              <div className="flex items-center justify-between p-2.5 bg-[#1E293B]/70 border border-slate-800/80 rounded-xl group hover:border-slate-700 transition-colors">
+                <div className="flex items-center gap-2.5 text-xs text-slate-300 min-w-0">
                   <div className="p-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800/40 text-emerald-400">
                     <Phone size={13} />
                   </div>
@@ -2842,7 +2580,7 @@ function InboxContent() {
                   <button
                     type="button"
                     onClick={() => handleCopyText(activeContactData.phone, 'phone')}
-                    className="text-gray-500 hover:text-white p-1 transition-colors"
+                    className="text-slate-500 hover:text-white p-1 transition-colors"
                     title="Copiar telefone"
                   >
                     {copiedField === 'phone' ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} />}
@@ -2851,8 +2589,8 @@ function InboxContent() {
               </div>
 
               {/* E-mail */}
-              <div className="flex items-center justify-between p-2.5 bg-[#162038]/60 border border-gray-800/80 rounded-xl group hover:border-gray-700 transition-colors">
-                <div className="flex items-center gap-2.5 text-xs text-gray-300 min-w-0">
+              <div className="flex items-center justify-between p-2.5 bg-[#1E293B]/70 border border-slate-800/80 rounded-xl group hover:border-slate-700 transition-colors">
+                <div className="flex items-center gap-2.5 text-xs text-slate-300 min-w-0">
                   <div className="p-1.5 rounded-lg bg-blue-950/60 border border-blue-800/40 text-blue-400">
                     <Mail size={13} />
                   </div>
@@ -2862,7 +2600,7 @@ function InboxContent() {
                   <button
                     type="button"
                     onClick={() => handleCopyText(activeContactData.email, 'email')}
-                    className="text-gray-500 hover:text-white p-1 transition-colors"
+                    className="text-slate-500 hover:text-white p-1 transition-colors"
                     title="Copiar e-mail"
                   >
                     {copiedField === 'email' ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} />}
@@ -2874,11 +2612,11 @@ function InboxContent() {
             {/* Tags com Cores Dinâmicas */}
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
-                <h3 className="text-[10px] uppercase tracking-widest font-bold text-gray-500 flex items-center gap-1.5">
-                  <Tag size={11} className="text-accent" />
+                <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-400 flex items-center gap-1.5">
+                  <Tag size={11} className="text-blue-400" />
                   <span>Etiquetas & Segmentos</span>
                 </h3>
-                <span className="text-[10px] text-gray-400 font-bold">{activeContactData.tags?.length || 0}</span>
+                <span className="text-[10px] text-slate-400 font-bold">{activeContactData.tags?.length || 0}</span>
               </div>
 
               {/* Tags Atuais */}
@@ -2896,7 +2634,7 @@ function InboxContent() {
                         <button 
                           type="button"
                           onClick={() => handleRemoveTag(activeContactData.contactId, tag)} 
-                          className="ml-1 text-gray-400 hover:text-rose-400 transition-colors cursor-pointer"
+                          className="ml-1 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
                           title="Remover etiqueta"
                         >
                           <X size={11} />
@@ -2905,7 +2643,7 @@ function InboxContent() {
                     );
                   })
                 ) : (
-                  <span className="text-xs text-gray-500 italic">Nenhuma etiqueta atribuída</span>
+                  <span className="text-xs text-slate-500 italic">Nenhuma etiqueta atribuída</span>
                 )}
               </div>
 
@@ -2919,12 +2657,12 @@ function InboxContent() {
                     if (e.key === 'Enter') handleAddTag(activeContactData.contactId);
                   }}
                   placeholder="Criar nova etiqueta..." 
-                  className="flex-1 bg-[#1E293B] border border-gray-700/80 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-accent/60 transition-all placeholder:text-gray-500"
+                  className="flex-1 bg-[#1E293B] border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-blue-500/60 transition-all placeholder:text-slate-500"
                 />
                 <button 
                   type="button"
                   onClick={() => handleAddTag(activeContactData.contactId)} 
-                  className="bg-accent/20 hover:bg-accent/30 text-accent border border-accent/40 text-xs px-3 rounded-lg font-bold transition-colors cursor-pointer"
+                  className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/40 text-xs px-3 rounded-lg font-bold transition-colors cursor-pointer"
                 >
                   <Plus size={14} />
                 </button>
@@ -2932,13 +2670,13 @@ function InboxContent() {
 
               {/* Sugestões Rápidas de Etiquetas */}
               <div className="flex items-center gap-1 flex-wrap pt-1">
-                <span className="text-[9px] uppercase font-bold text-gray-500 mr-1">Rápidas:</span>
+                <span className="text-[9px] uppercase font-bold text-slate-500 mr-1">Rápidas:</span>
                 {SUGGESTED_TAGS.map((stag) => (
                   <button
                     key={stag}
                     type="button"
                     onClick={(e) => handleQuickAddTag(e, activeContactData.contactId, stag)}
-                    className="text-[10px] text-gray-400 hover:text-white bg-gray-800/60 hover:bg-gray-700/60 px-2 py-0.5 rounded-md border border-gray-700/50 transition-colors cursor-pointer"
+                    className="text-[10px] text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-700/60 px-2 py-0.5 rounded-md border border-slate-700/50 transition-colors cursor-pointer"
                   >
                     +{stag}
                   </button>
@@ -2947,14 +2685,14 @@ function InboxContent() {
             </div>
 
             {/* Atendimento & Status Operacional */}
-            <div className="bg-[#11192A] border border-gray-800/80 rounded-2xl p-4 flex flex-col gap-3 shadow-inner">
-              <h3 className="text-[10px] uppercase tracking-widest font-bold text-gray-500">Status Operacional</h3>
+            <div className="bg-[#11192A] border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-3 shadow-inner">
+              <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Status Operacional</h3>
               
               <div className={`w-full text-center py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 border ${
                 activeContactData.status === 'bot_active' 
                   ? 'bg-cyan-950/40 text-cyan-300 border-cyan-700/50 shadow-[0_0_15px_rgba(6,182,212,0.15)]' 
                   : activeContactData.status === 'resolved' || activeContactData.status === 'closed'
-                  ? 'bg-gray-800/80 text-gray-400 border-gray-700/60'
+                  ? 'bg-slate-800/80 text-slate-400 border-slate-700/60'
                   : 'bg-emerald-950/40 text-emerald-300 border-emerald-700/50 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
               }`}>
                 {activeContactData.status === 'bot_active' ? (
@@ -2964,7 +2702,7 @@ function InboxContent() {
                   </>
                 ) : activeContactData.status === 'resolved' || activeContactData.status === 'closed' ? (
                   <>
-                    <Lock size={14} className="text-gray-400" />
+                    <Lock size={14} className="text-slate-400" />
                     <span>Ticket Finalizado</span>
                   </>
                 ) : (
@@ -2976,20 +2714,20 @@ function InboxContent() {
               </div>
 
               {/* Informações Complementares */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800/80 text-[11px]">
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80 text-[11px]">
                 <div className="flex flex-col">
-                  <span className="text-[10px] text-gray-500">Última Interação</span>
-                  <span className="text-gray-300 font-semibold">{activeContactData.time || 'Hoje'}</span>
+                  <span className="text-[10px] text-slate-500">Última Interação</span>
+                  <span className="text-slate-300 font-semibold">{activeContactData.time || 'Hoje'}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] text-gray-500">Atribuído a</span>
-                  <span className="text-gray-300 font-semibold">{currentUserName}</span>
+                  <span className="text-[10px] text-slate-500">Atribuído a</span>
+                  <span className="text-slate-300 font-semibold">{currentUserName}</span>
                 </div>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* MODAL DE TRANSFERENCIA */}
       {showTransferModal && (

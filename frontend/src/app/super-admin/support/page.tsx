@@ -75,11 +75,12 @@ function SuperAdminSupportContent() {
   const [tenantsList, setTenantsList] = useState<any[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState("ALL");
 
-  // Visualização de Chat (Completo vs Apenas Chat Interno de Equipe)
-  const [activeTab, setActiveTab] = useState<'all' | 'internal'>('all');
-
-  // Composer: Modo de envio ('public', 'internal_note', 'team_chat')
-  const [composerMode, setComposerMode] = useState<'public' | 'internal_note' | 'team_chat'>('public');
+  // Sincronização Bidirecional de Canais de Envio (Topo e Rodapé)
+  // 'public' = Atendimento Completo (Resposta oficial ao cliente)
+  // 'internal_note' = Nota Técnica Privada (Confidencial equipe)
+  // 'team_chat' = Chat Interno da Equipe (Alinhamento confidencial entre operadores)
+  type ChannelMode = 'public' | 'internal_note' | 'team_chat';
+  const [channelMode, setChannelMode] = useState<ChannelMode>('public');
   const [messageContent, setMessageContent] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -156,7 +157,7 @@ function SuperAdminSupportContent() {
     e.preventDefault();
     if (!messageContent.trim() || !selectedTicket || sending) return;
 
-    const isInternal = composerMode === 'internal_note' || composerMode === 'team_chat';
+    const isInternal = channelMode === 'internal_note' || channelMode === 'team_chat';
     setSending(true);
 
     try {
@@ -172,9 +173,9 @@ function SuperAdminSupportContent() {
       }));
 
       setMessageContent("");
-      if (composerMode === 'team_chat') {
+      if (channelMode === 'team_chat') {
         toast.success("Mensagem enviada ao Chat da Equipe!");
-      } else if (composerMode === 'internal_note') {
+      } else if (channelMode === 'internal_note') {
         toast.success("Nota interna registrada!");
       } else {
         toast.success("Resposta enviada ao cliente!");
@@ -219,14 +220,15 @@ function SuperAdminSupportContent() {
     setTimeout(() => setCopiedDescription(false), 2000);
   };
 
-  // Filtragem de mensagens conforme a aba selecionada
+  // Filtragem de mensagens conforme o canal selecionado
   const displayedMessages = (selectedTicket?.messages || []).filter((msg: any) => {
-    if (activeTab === 'internal') {
+    if (channelMode === 'team_chat' || channelMode === 'internal_note') {
       return msg.isInternal === true;
     }
-    return true; // Na aba 'all', exibe tudo
+    return true; // No modo 'public' (Atendimento Completo), exibe todo o histórico
   });
 
+  const totalMessagesCount = selectedTicket?.messages?.length || 0;
   const internalMessagesCount = (selectedTicket?.messages || []).filter((m: any) => m.isInternal).length;
 
   return (
@@ -428,44 +430,71 @@ function SuperAdminSupportContent() {
                 </div>
               </div>
 
-              {/* Barra de Abas: Histórico Completo vs Chat Interno da Equipe */}
+              {/* Barra de Abas Superiores com Sincronização Bidirecional */}
               <div className="px-4 py-2 border-b border-slate-800/80 bg-[#0B1224] flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {/* Aba 1: Atendimento Completo */}
                   <button
-                    onClick={() => setActiveTab('all')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                      activeTab === 'all'
-                        ? 'bg-[#1E293B] text-white border border-slate-700 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200'
+                    type="button"
+                    onClick={() => setChannelMode('public')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      channelMode === 'public'
+                        ? 'bg-blue-600/20 text-blue-300 border border-blue-500/40 shadow-sm ring-1 ring-blue-500/20'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                     }`}
                   >
-                    <MessageSquare size={13} className="text-blue-400" />
+                    <MessageSquare size={13} className={channelMode === 'public' ? "text-blue-400" : "text-slate-400"} />
                     <span>Atendimento Completo</span>
-                    <span className="text-[10px] bg-slate-800 px-1.5 py-0.2 rounded-full text-slate-400 font-mono">
-                      {selectedTicket.messages?.length || 0}
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                      channelMode === 'public' ? 'bg-blue-500/30 text-blue-200' : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {totalMessagesCount}
                     </span>
                   </button>
 
+                  {/* Aba 2: Nota Técnica Privada */}
                   <button
-                    onClick={() => setActiveTab('internal')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                      activeTab === 'internal'
-                        ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200'
+                    type="button"
+                    onClick={() => setChannelMode('internal_note')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      channelMode === 'internal_note'
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm ring-1 ring-amber-500/30'
+                        : 'text-slate-400 hover:text-amber-300 hover:bg-slate-800/40'
                     }`}
                   >
-                    <Users size={13} className="text-amber-400" />
-                    <span>Chat Interno da Equipe</span>
+                    <Lock size={13} className={channelMode === 'internal_note' ? "text-amber-400" : "text-slate-400"} />
+                    <span>Nota Técnica Privada</span>
                     {internalMessagesCount > 0 && (
                       <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.2 rounded-full font-mono font-bold">
                         {internalMessagesCount}
                       </span>
                     )}
                   </button>
+
+                  {/* Aba 3: Chat Interno da Equipe */}
+                  <button
+                    type="button"
+                    onClick={() => setChannelMode('team_chat')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      channelMode === 'team_chat'
+                        ? 'bg-purple-600/20 text-purple-300 border border-purple-500/50 shadow-sm ring-1 ring-purple-500/30'
+                        : 'text-slate-400 hover:text-purple-300 hover:bg-slate-800/40'
+                    }`}
+                  >
+                    <Users size={13} className={channelMode === 'team_chat' ? "text-purple-400" : "text-slate-400"} />
+                    <span>Chat Interno da Equipe</span>
+                    {internalMessagesCount > 0 && (
+                      <span className="text-[10px] bg-purple-500/20 text-purple-400 px-1.5 py-0.2 rounded-full font-mono font-bold">
+                        {internalMessagesCount}
+                      </span>
+                    )}
+                  </button>
                 </div>
 
-                <span className="text-[11px] text-slate-500 hidden sm:inline">
-                  {activeTab === 'internal' ? "🔒 Discussão privada da equipe" : "💬 Conversa oficial com o cliente"}
+                <span className="text-[11px] text-slate-400 font-medium hidden md:inline">
+                  {channelMode === 'public' && "💬 Canal Aberto com o Cliente"}
+                  {channelMode === 'internal_note' && "🔒 Nota de Auditoria Confidencial"}
+                  {channelMode === 'team_chat' && "👥 Discussão Privada entre Operadores"}
                 </span>
               </div>
 
@@ -505,8 +534,10 @@ function SuperAdminSupportContent() {
                   <div className="py-12 text-center text-slate-500 text-xs flex flex-col items-center">
                     <MessageSquare size={28} className="opacity-30 mb-2" />
                     <span>
-                      {activeTab === 'internal' 
+                      {channelMode === 'team_chat'
                         ? "Nenhuma mensagem interna da equipe neste chamado ainda. Use o campo abaixo para alinhar com os atendentes."
+                        : channelMode === 'internal_note'
+                        ? "Nenhuma nota técnica registrada ainda. Use o campo abaixo para registrar anotações confidenciais."
                         : "Nenhuma resposta enviada ainda. Escreva uma resposta oficial ao cliente abaixo."}
                     </span>
                   </div>
@@ -569,20 +600,20 @@ function SuperAdminSupportContent() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Composer com 3 Modos (Pública, Nota Técnica, Chat de Equipe) */}
-              <div className="p-3 border-t border-slate-800 bg-[#070D1B]">
-                <form onSubmit={handleSendMessage} className="space-y-2">
+              {/* Composer com Sincronização Bidirecional & Blindagem Contra Envio Acidental */}
+              <div className="p-3.5 border-t border-slate-800 bg-[#070D1B]">
+                <form onSubmit={handleSendMessage} className="space-y-2.5">
                   
-                  {/* Seletor de Modo */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
+                  {/* Seletor de Modo Inferior (Sincronizado Bidirecionalmente com o Topo) */}
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <button
                         type="button"
-                        onClick={() => setComposerMode('public')}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                          composerMode === 'public'
-                            ? "bg-blue-600 text-white shadow-sm"
-                            : "text-slate-400 hover:text-white bg-slate-800/40"
+                        onClick={() => setChannelMode('public')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          channelMode === 'public'
+                            ? "bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/40"
+                            : "text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800"
                         }`}
                       >
                         <MessageSquare size={13} />
@@ -591,11 +622,11 @@ function SuperAdminSupportContent() {
 
                       <button
                         type="button"
-                        onClick={() => setComposerMode('internal_note')}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                          composerMode === 'internal_note'
-                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm"
-                            : "text-slate-400 hover:text-white bg-slate-800/40"
+                        onClick={() => setChannelMode('internal_note')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          channelMode === 'internal_note'
+                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm ring-1 ring-amber-500/30"
+                            : "text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800"
                         }`}
                       >
                         <Lock size={13} />
@@ -604,11 +635,11 @@ function SuperAdminSupportContent() {
 
                       <button
                         type="button"
-                        onClick={() => setComposerMode('team_chat')}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                          composerMode === 'team_chat'
-                            ? "bg-purple-600/20 text-purple-300 border border-purple-500/40 shadow-sm"
-                            : "text-slate-400 hover:text-white bg-slate-800/40"
+                        onClick={() => setChannelMode('team_chat')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          channelMode === 'team_chat'
+                            ? "bg-purple-600/20 text-purple-300 border border-purple-500/50 shadow-sm ring-1 ring-purple-500/30"
+                            : "text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800"
                         }`}
                       >
                         <Users size={13} />
@@ -617,11 +648,54 @@ function SuperAdminSupportContent() {
                     </div>
 
                     <span className="text-[10px] text-slate-500 hidden sm:inline">
-                      Shift + Enter para pular linha
+                      Shift + Enter para nova linha • Enter para enviar
                     </span>
                   </div>
 
-                  {/* Input Textarea */}
+                  {/* BANNER DE BLINDAGEM VISUAL CONTRA ENVIO ACIDENTAL */}
+                  {channelMode === 'public' ? (
+                    <div className="flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-blue-950/20 border border-blue-800/40 text-[11px] text-blue-300">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare size={14} className="text-blue-400 shrink-0" />
+                        <span>
+                          <strong className="text-blue-200 uppercase font-semibold text-[10px]">Canal Externo:</strong> A mensagem digitada abaixo será enviada e visualizada diretamente pelo cliente solicitante.
+                        </span>
+                      </div>
+                      <span className="text-[10px] bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30 uppercase font-mono font-bold shrink-0 hidden sm:inline">
+                        Público
+                      </span>
+                    </div>
+                  ) : channelMode === 'internal_note' ? (
+                    <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#0B1224] border border-amber-500/50 text-[11px] text-amber-300 shadow-md ring-1 ring-amber-500/20">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck size={16} className="text-amber-400 shrink-0" />
+                        <div>
+                          <span className="font-bold text-amber-400 uppercase tracking-wide">🛡️ Blindagem Ativa • Nota Técnica:</span>{" "}
+                          <span className="text-slate-200">Registro restrito à auditoria interna. </span>
+                          <strong className="text-amber-300 underline underline-offset-2">Esta mensagem NÃO será enviada ao cliente final.</strong>
+                        </div>
+                      </div>
+                      <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded border border-amber-500/40 uppercase font-mono font-bold shrink-0">
+                        🔒 100% Confidencial
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#0B1224] border border-purple-500/50 text-[11px] text-purple-300 shadow-md ring-1 ring-purple-500/20">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck size={16} className="text-purple-400 shrink-0" />
+                        <div>
+                          <span className="font-bold text-purple-400 uppercase tracking-wide">🛡️ Blindagem Ativa • Chat da Equipe:</span>{" "}
+                          <span className="text-slate-200">Canal exclusivo de alinhamento entre operadores. </span>
+                          <strong className="text-purple-300 underline underline-offset-2">Esta mensagem NÃO será visualizada pelo cliente final.</strong>
+                        </div>
+                      </div>
+                      <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded border border-purple-500/40 uppercase font-mono font-bold shrink-0">
+                        👥 Apenas Operadores
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Input Textarea & Botão de Envio com Bloqueio e Rótulo Contextual */}
                   <div className="flex items-end gap-2">
                     <textarea
                       value={messageContent}
@@ -633,18 +707,18 @@ function SuperAdminSupportContent() {
                         }
                       }}
                       placeholder={
-                        composerMode === 'team_chat'
-                          ? "Converse com os outros atendentes sobre como resolver este chamado..."
-                          : composerMode === 'internal_note'
-                          ? "Escreva uma nota interna técnica sobre este caso..."
-                          : "Escreva uma resposta oficial ao cliente..."
+                        channelMode === 'team_chat'
+                          ? "👥 [Chat Interno] Converse com outros atendentes e administradores... (Oculto para o cliente)"
+                          : channelMode === 'internal_note'
+                          ? "🔒 [Nota Técnica] Registre anotação de auditoria técnica... (Oculto para o cliente)"
+                          : "💬 [Resposta Oficial] Escreva a mensagem que será enviada diretamente ao cliente..."
                       }
                       rows={2}
-                      className={`flex-1 bg-[#0B1224] border rounded-xl p-2.5 text-xs text-white placeholder:text-slate-500 outline-none resize-none ${
-                        composerMode === 'team_chat'
-                          ? "border-purple-500/40 focus:border-purple-400"
-                          : composerMode === 'internal_note'
-                          ? "border-amber-500/40 focus:border-amber-400"
+                      className={`flex-1 bg-[#0B1224] border rounded-xl p-2.5 text-xs text-white placeholder:text-slate-500 outline-none resize-none transition-all ${
+                        channelMode === 'team_chat'
+                          ? "border-purple-500/50 focus:border-purple-400 ring-1 ring-purple-500/20"
+                          : channelMode === 'internal_note'
+                          ? "border-amber-500/50 focus:border-amber-400 ring-1 ring-amber-500/20"
                           : "border-slate-800 focus:border-blue-500"
                       }`}
                     />
@@ -652,15 +726,32 @@ function SuperAdminSupportContent() {
                     <button
                       type="submit"
                       disabled={sending || !messageContent.trim()}
-                      className={`p-2.5 rounded-xl font-bold text-white transition-all disabled:opacity-40 shrink-0 cursor-pointer ${
-                        composerMode === 'team_chat'
-                          ? "bg-purple-600 hover:bg-purple-500"
-                          : composerMode === 'internal_note'
-                          ? "bg-amber-600 hover:bg-amber-500"
-                          : "bg-blue-600 hover:bg-blue-500"
+                      className={`px-3.5 py-2.5 rounded-xl font-bold text-xs text-white transition-all disabled:opacity-40 shrink-0 cursor-pointer flex items-center gap-1.5 shadow-sm ${
+                        channelMode === 'team_chat'
+                          ? "bg-purple-600 hover:bg-purple-500 shadow-purple-900/30"
+                          : channelMode === 'internal_note'
+                          ? "bg-amber-600 hover:bg-amber-500 shadow-amber-900/30"
+                          : "bg-blue-600 hover:bg-blue-500 shadow-blue-900/30"
                       }`}
                     >
-                      {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                      {sending ? (
+                        <Loader2 size={15} className="animate-spin" />
+                      ) : channelMode === 'team_chat' ? (
+                        <>
+                          <Users size={14} />
+                          <span>Enviar à Equipe</span>
+                        </>
+                      ) : channelMode === 'internal_note' ? (
+                        <>
+                          <Lock size={14} />
+                          <span>Salvar Nota</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send size={14} />
+                          <span>Enviar ao Cliente</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>

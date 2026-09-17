@@ -1433,20 +1433,21 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `npm run build` aprovado com código 0 em ambas as pontas (40/40 rotas geradas).
   - [x] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
-- [x] **[17/09/2026 - 09:25]** ⚡ **[IDE 2] Conclusão: Refinamento da Central de Atendimento & Suporte Super Admin (Fase 63)**:
+- [x] **[17/09/2026 - 09:35]** ⚡ **[IDE 2] Refinamento Crítico de UX & Segurança: Sincronização Bidirecional & Blindagem Contra Envio Acidental (Fase 63)**:
   - **Status**: ✅ Concluído com Sucesso e Homologado.
-  - **Correção de Layout (Sobreposição de Textos)**:
-    - Reestruturação flexível dos cards de chamados e cabeçalho de chat com separação estrita de colunas (`items-start justify-between gap-3`, `min-w-0 pr-4`, `line-clamp-2 break-words` e badges com `shrink-0 flex items-center`). Zero sobreposição entre título e tags.
-  - **Modal / Visualização Completa da Dúvida**:
-    - Adicionado card de destaque com resumo da solicitação e botão `Abrir Completo`, além de botão direto no header de ações.
-    - Implementação do modal `TicketDetailModal` corporativo com metadados estruturados (número do chamado, solicitante, categoria, status, prioridade, data de abertura), container com scroll e botão de cópia de texto em um clique.
-  - **Tradução 100% PT-BR**:
-    - Dicionários `STATUS_CONFIG`, `PRIORITY_CONFIG` e `CATEGORY_CONFIG` mapeando todos os termos em português (`OPEN` -> "Aberto", `IN_PROGRESS` -> "Em Atendimento", `WAITING_CLIENT` -> "Aguardando Cliente", `RESOLVED` -> "Resolvido", `CLOSED` -> "Fechado", etc.).
-    - Badges, filtros de busca, modais e seletores de transição de status 100% em português brasileiro.
-  - **Chat Interno da Equipe no Atendimento**:
-    - Alternador de visualização no thread de atendimento: `[Atendimento Completo]` vs `[Chat Interno da Equipe]` com badge numérico em tempo real.
-    - Seletor de canal no composer com 3 modos distintos: `💬 Resposta Pública ao Cliente`, `🔒 Nota Técnica Privada` e `👥 Chat Interno da Equipe` com destaque visual amber/warning para conversas e alinhamentos de equipe confidenciais.
-  - **Validação de Build, Homologação & Deploy**:
+  - **Sincronização Bidirecional de Estados (Topo e Rodapé)**:
+    - Unificação dos canais em um modelo de estado único compartilhado (`ChannelMode = 'public' | 'internal_note' | 'team_chat'`) tanto na Central do Super Admin (`/super-admin/support`) quanto na Central Tenant/Usuário (`/support`).
+    - Ao clicar em qualquer opção no topo (ex: *Chat Interno da Equipe* ou *Nota Técnica Privada*), o seletor inferior acompanha instantaneamente e altera o modo do composer, ajustando badges, placeholders e bloqueando o canal externo.
+    - Ao clicar em qualquer opção no seletor inferior (rodapé), o indicador superior acompanha em tempo real com realce visual e contadores dinâmicos.
+  - **Blindagem Contra Envio Acidental**:
+    - Banner visual de segurança proeminente posicionado diretamente acima da caixa de digitação:
+      * *Modo Público*: Aviso informativo do canal externo e envio direto ao cliente.
+      * *Modo Nota Técnica Privada*: Banner de alerta âmbar/slate com ícone `ShieldCheck` e aviso categórico: `🛡️ BLINDAGEM ATIVA • NOTA TÉCNICA: Registro restrito à auditoria interna. Esta mensagem NÃO será enviada nem exibida ao cliente final.`
+      * *Modo Chat Interno da Equipe*: Banner de alerta púrpura/slate com `ShieldCheck` e aviso: `🛡️ BLINDAGEM ATIVA • CHAT DA EQUIPE: Canal exclusivo de alinhamento entre operadores. Esta mensagem NÃO será visualizada pelo cliente final.`
+    - Anéis luminosos de foco (ring) e bordas no textarea correspondentes ao modo ativo.
+    - Botão de envio adaptativo com rótulos explícitos e contextuais: `"Enviar ao Cliente"`, `"Salvar Nota"` e `"Enviar à Equipe"`.
+  - **Padrão Monocromático VERSUS**: Design corporativo mantido com paleta dark `#0B1224`, `#070D1B`, `#0F172A`, slate e zero mocks.
+  - **Validação & Deploy**:
     - `npx tsc --noEmit` aprovado com código 0 (frontend e backend).
     - `npm run build` aprovado com código 0 em ambas as pontas (40/40 rotas geradas).
     - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
@@ -1460,6 +1461,10 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] Tradução das tags de status ('Aberto', 'Resolvido', 'Em Atendimento', etc.) e prioridades.
 - [x] **Chat Interno da Equipe no Atendimento**:
   - [x] Integração de aba/modo de Chat Interno entre membros da equipe dentro da central de suporte.
+- [x] **Sincronização Bidirecional de Estados (Topo e Rodapé)**:
+  - [x] Topo e rodapé 100% integrados via estado único (`public`, `internal_note`, `team_chat`), mudando mutuamente de forma reativa.
+- [x] **Blindagem Visual Contra Envio Acidental**:
+  - [x] Banners de segurança com `ShieldCheck`, ring de alerta e botão de envio dinâmico ("Salvar Nota", "Enviar à Equipe", "Enviar ao Cliente").
 - [x] **Padrão Monocromático & Zero Mocks**:
   - [x] Identidade visual VERSUS de alta densidade.
 - [x] **Validação de Build, Homologação & Deploy**:

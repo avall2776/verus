@@ -710,6 +710,44 @@ export default function SupportPage() {
                     </div>
                   )}
 
+                  {/* Barra de Abas Superiores com Sincronização Bidirecional */}
+                  <div className="py-2 px-1 border-b border-slate-800 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setIsInternalNote(false)}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          !isInternalNote
+                            ? 'bg-blue-600/20 text-blue-300 border border-blue-500/40 shadow-sm ring-1 ring-blue-500/20'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                        }`}
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>Atendimento Completo</span>
+                        <span className="text-[10px] bg-slate-800 px-1.5 py-0.2 rounded-full text-slate-400 font-mono">
+                          {selectedTicket.messages?.length || 0}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsInternalNote(true)}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          isInternalNote
+                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm ring-1 ring-amber-500/30'
+                            : 'text-slate-400 hover:text-amber-300 hover:bg-slate-800/40'
+                        }`}
+                      >
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Nota Técnica Privada</span>
+                      </button>
+                    </div>
+
+                    <span className="text-[10px] text-slate-400 hidden sm:inline">
+                      {isInternalNote ? "🔒 Modo Confidencial Ativo" : "💬 Canal Oficial com o Solicitante"}
+                    </span>
+                  </div>
+
                   {/* Mensagens do Chamado (Timeline) */}
                   <div className="flex-1 overflow-y-auto space-y-3 py-4 pr-1">
                     {loadingDetails ? (
@@ -750,44 +788,110 @@ export default function SupportPage() {
                     )}
                   </div>
 
-                  {/* Caixa de Resposta */}
+                  {/* Caixa de Resposta com Sincronização & Blindagem Contra Envio Acidental */}
                   <form onSubmit={handleSendReply} className="border-t border-slate-800 pt-3 space-y-2.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <label className="text-[11px] text-slate-400 font-semibold">
-                        Sua Resposta:
-                      </label>
-                      <label className="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer hover:text-white">
-                        <input 
-                          type="checkbox"
-                          checked={isInternalNote}
-                          onChange={(e) => setIsInternalNote(e.target.checked)}
-                          className="w-3.5 h-3.5 accent-amber-500 rounded cursor-pointer"
-                        />
-                        <span>Registrar como Nota Interna (oculta para o cliente)</span>
-                      </label>
+                    {/* Seletor Inferior */}
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setIsInternalNote(false)}
+                          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                            !isInternalNote
+                              ? "bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/40"
+                              : "text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800"
+                          }`}
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>💬 Resposta Pública ao Solicitante</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setIsInternalNote(true)}
+                          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                            isInternalNote
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm ring-1 ring-amber-500/30"
+                              : "text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800"
+                          }`}
+                        >
+                          <Lock className="w-3.5 h-3.5" />
+                          <span>🔒 Nota Técnica Privada</span>
+                        </button>
+                      </div>
+
+                      <span className="text-[10px] text-slate-500 hidden sm:inline">
+                        Shift + Enter para pular linha
+                      </span>
                     </div>
+
+                    {/* BANNER DE BLINDAGEM VISUAL CONTRA ENVIO ACIDENTAL */}
+                    {isInternalNote ? (
+                      <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#0B1224] border border-amber-500/50 text-[11px] text-amber-300 shadow-md ring-1 ring-amber-500/20">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                          <div>
+                            <span className="font-bold text-amber-400 uppercase tracking-wide">🛡️ Blindagem Ativa • Nota Técnica:</span>{" "}
+                            <span className="text-slate-200">Registro restrito à auditoria e equipe técnica. </span>
+                            <strong className="text-amber-300 underline underline-offset-2">Esta mensagem NÃO será enviada ao cliente final.</strong>
+                          </div>
+                        </div>
+                        <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/40 uppercase font-mono font-bold shrink-0">
+                          🔒 100% Confidencial
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-blue-950/20 border border-blue-800/40 text-[11px] text-blue-300">
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                          <span>
+                            <strong className="text-blue-200 uppercase font-semibold text-[10px]">Canal Externo:</strong> A mensagem digitada abaixo será enviada e visualizada diretamente pelo solicitante.
+                          </span>
+                        </div>
+                        <span className="text-[10px] bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30 uppercase font-mono font-bold shrink-0 hidden sm:inline">
+                          Público
+                        </span>
+                      </div>
+                    )}
 
                     <div className="flex items-end gap-2">
                       <textarea 
                         rows={2}
                         value={replyContent}
                         onChange={(e) => setReplyContent(e.target.value)}
-                        placeholder={isInternalNote ? "Escreva uma observação interna para a equipe..." : "Escreva sua mensagem oficial para o solicitante..."}
-                        className={`flex-1 p-2.5 rounded-xl text-xs outline-none transition-colors resize-none text-white placeholder-slate-500 ${
+                        placeholder={
+                          isInternalNote 
+                            ? "🔒 [Nota Técnica] Registre anotação de auditoria técnica... (Oculto para o cliente)" 
+                            : "💬 [Resposta Oficial] Escreva a mensagem que será enviada diretamente ao solicitante..."
+                        }
+                        className={`flex-1 p-2.5 rounded-xl text-xs outline-none transition-all resize-none text-white placeholder-slate-500 ${
                           isInternalNote
-                            ? "bg-[#070D1B] border border-amber-500/40 focus:border-amber-500"
+                            ? "bg-[#070D1B] border border-amber-500/50 focus:border-amber-400 ring-1 ring-amber-500/20"
                             : "bg-[#070D1B] border border-slate-700 focus:border-blue-500"
                         }`}
                       />
                       <button
                         type="submit"
                         disabled={isSendingReply || !replyContent.trim()}
-                        className={`p-3 rounded-xl text-white font-bold transition-all disabled:opacity-50 shrink-0 ${
-                          isInternalNote ? "bg-amber-600 hover:bg-amber-500" : "bg-blue-600 hover:bg-blue-500"
+                        className={`px-3.5 py-2.5 rounded-xl font-bold text-xs text-white transition-all disabled:opacity-40 shrink-0 cursor-pointer flex items-center gap-1.5 shadow-sm ${
+                          isInternalNote 
+                            ? "bg-amber-600 hover:bg-amber-500 shadow-amber-900/30" 
+                            : "bg-blue-600 hover:bg-blue-500 shadow-blue-900/30"
                         }`}
-                        title="Enviar"
                       >
-                        <Send className="w-4 h-4" />
+                        {isSendingReply ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : isInternalNote ? (
+                          <>
+                            <Lock className="w-3.5 h-3.5" />
+                            <span>Salvar Nota</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-3.5 h-3.5" />
+                            <span>Enviar</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </form>
