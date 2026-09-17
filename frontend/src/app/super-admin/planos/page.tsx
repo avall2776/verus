@@ -12,7 +12,6 @@ import {
   Bot, 
   MessageSquare, 
   RefreshCw, 
-  DollarSign,
   CheckCircle2,
   X,
   Kanban,
@@ -119,7 +118,7 @@ export default function SuperAdminPlansPage() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  // Modal / Inline de Criação de Plano
+  // Modal / Formulário de Criação de Plano
   const [isCreating, setIsCreating] = useState(false);
   const [newPlanName, setNewPlanName] = useState("");
   const [newPlanPrice, setNewPlanPrice] = useState("299.00");
@@ -491,148 +490,198 @@ export default function SuperAdminPlansPage() {
         </div>
       ) : plans.length === 0 ? (
         <div className="text-center py-16 bg-[#0B1224] border border-slate-800 rounded-2xl text-slate-400 text-xs">
-          Nenhum plano cadastrado no sistema. Clique em &quot;Criar Novo Plano&quot; para começar.
+          Nenhum plano cadastrado. Clique em "Criar Novo Plano" acima para iniciar.
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {plans.map((plan) => {
+            const isSaving = savingId === plan.id;
             const activeCount = ALL_SYSTEM_MODULES.filter(m => getPlanModuleStatus(plan, m.key)).length;
 
             return (
               <div 
-                key={plan.id} 
-                className="bg-[#0B1224] border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-xl transition-all hover:border-slate-700 relative"
+                key={plan.id}
+                className="flex flex-col rounded-2xl bg-[#0B1224] border border-slate-800 hover:border-slate-700/80 transition-all shadow-xl overflow-hidden"
               >
-                <div>
-                  {/* Header do Card */}
-                  <div className="border-b border-slate-800 pb-4 mb-4 flex items-start justify-between">
-                    <div>
-                      <h2 className="text-base font-bold text-white tracking-wide">{plan.name}</h2>
-                      <div className="flex items-baseline gap-1 mt-1">
-                        <span className="text-xl font-black text-blue-400">R$ {Number(plan.price).toFixed(2)}</span>
-                        <span className="text-[10px] text-slate-400">/mês</span>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                      {plan.maxUsers} {plan.maxUsers === 1 ? "usuário" : "usuários"}
-                    </span>
-                  </div>
-
-                  {/* Módulos do Sistema (10 Módulos) */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
-                        Módulos Liberados ({activeCount}/10)
-                      </h3>
-                      <div className="flex items-center gap-1.5 text-[10px]">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleAllModules(plan.id, true)}
-                          className="text-blue-400 hover:text-blue-300 font-semibold"
-                        >
-                          Todos
-                        </button>
-                        <span className="text-slate-600">|</span>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleAllModules(plan.id, false)}
-                          className="text-slate-400 hover:text-white font-semibold"
-                        >
-                          Nenhum
-                        </button>
-                      </div>
+                {/* Header do Card do Plano */}
+                <div className="p-5 border-b border-slate-800/80 bg-[#070D1B]/70 space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-blue-400 block mb-1">
+                        Nível de Assinatura
+                      </span>
+                      <input
+                        type="text"
+                        value={plan.name}
+                        onChange={(e) => handleUpdateLimit(plan.id, "name", e.target.value)}
+                        className="text-base font-bold text-white bg-transparent border-b border-transparent hover:border-slate-700 focus:border-blue-500 focus:bg-[#0B1224] rounded px-1.5 py-0.5 outline-none transition-colors w-full"
+                        title="Clique para editar o nome do plano"
+                      />
                     </div>
 
-                    <div className="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
-                      {ALL_SYSTEM_MODULES.map((mod) => {
-                        const IconComponent = getModuleIcon(mod.key);
-                        const isEnabled = getPlanModuleStatus(plan, mod.key);
-
-                        return (
-                          <div 
-                            key={mod.key} 
-                            onClick={() => handleToggleModule(plan.id, mod.key)}
-                            className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer select-none transition-all ${
-                              isEnabled 
-                                ? "bg-[#070D1B] border-slate-800 hover:border-slate-700" 
-                                : "bg-[#070D1B]/40 border-slate-900/60 opacity-60 hover:opacity-100"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 min-w-0 pr-2">
-                              <IconComponent size={14} className={isEnabled ? "text-blue-400 shrink-0" : "text-slate-500 shrink-0"} />
-                              <div className="min-w-0">
-                                <span className={`text-xs font-medium block truncate ${isEnabled ? "text-slate-200" : "text-slate-500"}`}>
-                                  {mod.name}
-                                </span>
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleToggleModule(plan.id, mod.key);
-                              }}
-                              className={`w-8 h-4.5 rounded-full relative transition-colors shrink-0 ${
-                                isEnabled ? "bg-blue-600" : "bg-slate-800"
-                              }`}
-                            >
-                              <div 
-                                className={`w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-all ${
-                                  isEnabled ? "left-4" : "left-0.5"
-                                }`} 
-                              />
-                            </button>
-                          </div>
-                        );
-                      })}
+                    <div className="text-right shrink-0">
+                      <span className="text-[10px] text-slate-400 font-semibold block mb-0.5">Mensalidade</span>
+                      <div className="flex items-center justify-end gap-1 bg-[#0B1224] px-2.5 py-1 rounded-lg border border-slate-800">
+                        <span className="text-xs font-bold text-slate-400">R$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={plan.price}
+                          onChange={(e) => handleUpdateLimit(plan.id, "price", e.target.value)}
+                          className="w-20 text-sm font-extrabold text-white bg-transparent outline-none text-right"
+                          title="Valor da mensalidade"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Limites Numéricos */}
-                  <div className="space-y-3 border-t border-slate-800 pt-4 mt-4">
-                    <h3 className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
-                      Limites de Consumo
-                    </h3>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 block">Máx. Usuários</label>
+                  {/* Limites Operacionais & Cotas */}
+                  <div className="grid grid-cols-2 gap-2.5 pt-1">
+                    <div className="p-2.5 rounded-xl bg-[#0B1224] border border-slate-800/90 flex flex-col gap-1">
+                      <div className="flex items-center justify-between text-slate-400">
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Operadores</span>
+                        <Users size={12} className="text-blue-400" />
+                      </div>
+                      <div className="flex items-baseline gap-1">
                         <input
                           type="number"
                           value={plan.maxUsers}
-                          onChange={(e) => handleUpdateLimit(plan.id, "maxUsers", parseInt(e.target.value, 10) || 1)}
-                          className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded px-2.5 py-1.5 text-xs text-white outline-none"
+                          onChange={(e) => handleUpdateLimit(plan.id, "maxUsers", e.target.value)}
+                          className="w-full text-sm font-bold text-white bg-transparent outline-none border-b border-transparent focus:border-blue-500"
                         />
+                        <span className="text-[10px] text-slate-500">usuários</span>
                       </div>
+                    </div>
 
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-400 block">Cota Mensagens IA</label>
+                    <div className="p-2.5 rounded-xl bg-[#0B1224] border border-slate-800/90 flex flex-col gap-1">
+                      <div className="flex items-center justify-between text-slate-400">
+                        <span className="text-[10px] font-bold uppercase tracking-wider">Cota IA</span>
+                        <Bot size={12} className="text-blue-400" />
+                      </div>
+                      <div className="flex items-baseline gap-1">
                         <input
                           type="number"
                           value={plan.maxAIMsgs}
-                          onChange={(e) => handleUpdateLimit(plan.id, "maxAIMsgs", parseInt(e.target.value, 10) || 0)}
-                          className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded px-2.5 py-1.5 text-xs text-white outline-none"
+                          onChange={(e) => handleUpdateLimit(plan.id, "maxAIMsgs", e.target.value)}
+                          className="w-full text-sm font-bold text-white bg-transparent outline-none border-b border-transparent focus:border-blue-500"
                         />
+                        <span className="text-[10px] text-slate-500">msgs/mês</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Ação Salvar Card */}
-                <div className="pt-5 mt-4 border-t border-slate-800 flex justify-end">
+                {/* Seção de Módulos (Sem Scroll Interno, Contraste Máximo) */}
+                <div className="p-5 space-y-3.5 flex-1">
+                  <div className="flex items-center justify-between pb-1 border-b border-slate-800/60">
+                    <span className="text-[11px] font-bold text-slate-300">
+                      Módulos Habilitados:
+                      <span className="ml-1.5 text-blue-400 font-extrabold">{activeCount} / 10</span>
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleAllModules(plan.id, true)}
+                        className="text-[10px] text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                      >
+                        Ativar Todos
+                      </button>
+                      <span className="text-slate-700 text-[10px]">•</span>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleAllModules(plan.id, false)}
+                        className="text-[10px] text-slate-500 hover:text-slate-300 font-semibold transition-colors"
+                      >
+                        Desativar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {ALL_SYSTEM_MODULES.map((mod) => {
+                      const IconComp = getModuleIcon(mod.key);
+                      const isActive = getPlanModuleStatus(plan, mod.key);
+
+                      return (
+                        <div
+                          key={mod.key}
+                          onClick={() => handleToggleModule(plan.id, mod.key)}
+                          className={`group cursor-pointer select-none rounded-xl p-3 border transition-all duration-150 flex items-center justify-between gap-3 ${
+                            isActive
+                              ? "bg-[#070D1B] border-slate-700/80 border-l-4 border-l-blue-500 shadow-sm"
+                              : "bg-[#070D1B]/40 border-slate-800/40 border-l-4 border-l-slate-800 opacity-45 hover:opacity-75"
+                          }`}
+                        >
+                          <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                            <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 transition-colors ${
+                              isActive 
+                                ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" 
+                                : "bg-slate-800/50 text-slate-500 border border-slate-800/40"
+                            }`}>
+                              <IconComp size={15} />
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs font-semibold leading-tight block truncate ${
+                                  isActive ? "text-white" : "text-slate-400"
+                                }`}>
+                                  {mod.name}
+                                </span>
+                              </div>
+                              <p className={`text-[10px] leading-relaxed mt-0.5 line-clamp-1 ${
+                                isActive ? "text-slate-400" : "text-slate-600"
+                              }`}>
+                                {mod.desc}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Toggle Switch Visual Corporativo */}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`text-[9px] font-bold uppercase tracking-wider hidden sm:inline-block px-1.5 py-0.5 rounded ${
+                              isActive
+                                ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+                                : "bg-slate-800 text-slate-500 border border-slate-800"
+                            }`}>
+                              {isActive ? "Ligado" : "Desligado"}
+                            </span>
+
+                            <div className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out flex items-center ${
+                              isActive ? "bg-blue-600 justify-end" : "bg-slate-800 justify-start"
+                            }`}>
+                              <div className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200 flex items-center justify-center ${
+                                isActive ? "text-blue-600" : "text-slate-400"
+                              }`}>
+                                {isActive && <Check size={10} strokeWidth={3} />}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Botão de Ação Salvar */}
+                <div className="p-4 bg-[#070D1B]/80 border-t border-slate-800 flex items-center justify-between gap-3">
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    {isSaving ? "Persistindo matriz..." : "Modificações salvas localmente"}
+                  </span>
+
                   <button
                     type="button"
-                    disabled={savingId === plan.id}
                     onClick={() => handleSavePlan(plan)}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors shadow-sm disabled:opacity-50"
+                    disabled={isSaving}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-xs font-bold text-white shadow-md hover:shadow-blue-600/20 transition-all disabled:opacity-50"
                   >
-                    {savingId === plan.id ? (
+                    {isSaving ? (
                       <Loader2 size={13} className="animate-spin" />
                     ) : (
                       <Save size={13} />
                     )}
-                    <span>Salvar Configurações</span>
+                    <span>{isSaving ? "Salvando..." : "Salvar Matriz"}</span>
                   </button>
                 </div>
               </div>
@@ -640,7 +689,6 @@ export default function SuperAdminPlansPage() {
           })}
         </div>
       )}
-
     </div>
   );
 }

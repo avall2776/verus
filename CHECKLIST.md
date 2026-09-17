@@ -2058,7 +2058,22 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Build & Deploy**:
     - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
     - `npm run build` aprovado com código 0 (44/44 páginas estáticas e dinâmicas geradas).
-    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+- [x] **[17/09/2026 - 16:30]** ⚡ **[IDE 1] Refinamento Visual e Clareza Executiva da Matriz de Planos & Permissões (`/super-admin/plans`) - (Fase 73)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Clareza Absoluta de Estados (Ligado / Desligado)**:
+    - **Itens Ativos**: Destaque nítido com borda lateral esquerda em azul corporativo (`border-l-4 border-l-blue-500`), badge "LIGADO" com fundo sutil e switch com corpo azul e botão deslizante branco com microícone de check.
+    - **Itens Inativos / Desativados**: Opacidade reduzida (`opacity-45 hover:opacity-75`), borda esquerda slate escura, ícones e textos em slate suave apagado e switch desativado, eliminando qualquer ambiguidade visual.
+    - **Ações em Lote por Card**: Botões rápidos de "Ativar Todos" e "Desativar" no topo de cada card para agilidade operacional do Super Admin.
+  - **Polimento Estético & Layout Fluido**:
+    - Remoção de caixas presas e barras de rolagem internas (`overflow-y-auto` eliminado): os 10 módulos do sistema agora fluem naturalmente no card do plano.
+    - Espaçamentos e paddings reorganizados com cartões em grid responsivo de 3 colunas (`grid-cols-1 lg:grid-cols-3`).
+    - Alinhamento elegante e edição inline de Preço Mensal (R$), Limite de Operadores/Usuários e Cota Mensal de Mensagens IA.
+  - **Padrão Monocromático VERSUS**:
+    - Fundo oficial `#0B1224`, cards internos em `#070D1B`, bordas refinadas em `slate-800` e tipografia nítida em branco e `slate-300`/`slate-400`.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 (44/44 páginas estáticas geradas).
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
 
 ---
 
