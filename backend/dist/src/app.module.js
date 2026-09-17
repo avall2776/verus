@@ -35,6 +35,8 @@ const emails_module_1 = require("./modules/emails/emails.module");
 const support_module_1 = require("./modules/support/support.module");
 const tenants_module_1 = require("./modules/tenants/tenants.module");
 const workspaces_module_1 = require("./modules/workspaces/workspaces.module");
+const notifications_module_1 = require("./modules/notifications/notifications.module");
+const search_module_1 = require("./modules/search/search.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -68,6 +70,8 @@ exports.AppModule = AppModule = __decorate([
             support_module_1.SupportModule,
             tenants_module_1.TenantsModule,
             workspaces_module_1.WorkspacesModule,
+            notifications_module_1.NotificationsModule,
+            search_module_1.SearchModule,
         ],
         controllers: [],
         providers: [],

@@ -1460,6 +1460,38 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [ ] `npm run build` aprovado com código 0 em ambas as pontas.
   - [ ] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
+- [x] **[17/09/2026 - 09:15]** ⚡ **[IDE 1] Conclusão: Refinamento Estrutural do Módulo WhatsApp (`/inbox`) - Padrão WhatsApp em Cores Corporativas (Fase 64)**:
+  - **Status**: ✅ Concluído com Sucesso e Homologado.
+  - **Estrutura & Layout Idênticos ao WhatsApp**:
+    - **Textura de Fundo Autêntica**: Papel de parede sutil em SVG de doodle WhatsApp integrado como background tile na área de conversa (`opacity-[0.035]`).
+    - **Balões de Mensagem com Caudas SVG**: Formatação de balões com caudas angulares autênticas (SVG tail) no canto superior direito para mensagens enviadas e superior esquerdo para recebidas.
+    - **Ticks de Leitura e Status WhatsApp**: Posicionamento inline no rodapé direito de cada balão ao lado do horário, com duplo check em ciano corporativo (`CheckCheck` em `#22D3EE`) para mensagens entregues/lidas.
+    - **Pílula de Separação de Datas**: Marcador centralizado flutuante agrupando mensagens por dia ("Hoje", "Ontem" ou data DD/MM/AAAA) com visual fosco e discreto.
+    - **Cabeçalho de Contato WhatsApp**: Avatar circular com dot de status de presença (online), título e subtítulo com status em tempo real.
+    - **Caixa de Entrada em Cápsula (WhatsApp Web Capsule)**: Barra inferior reestruturada com botões de emoji e anexo à esquerda, cápsula de texto com bordas arredondadas e foco reativo no centro, e botão circular flutuante à direita (alternando entre gravação de voz e envio instantâneo).
+  - **Design Monocromático VERSUS**:
+    - Eliminação completa de verdes berrantes nos balões de chat e botões principais de ação.
+    - Cores corporativas: Azul escuro (`#0B1224`, `#070D1B`), Deep Navy (`#17253D` para balões enviados), Slate escuro (`#0F172A` para recebidos), notas internas em tom âmbar sóbrio (`#22180A`) e toques em ciano e azul elétrico.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` e `npm run build` aprovados com código 0 em ambas as pontas (Frontend e Backend).
+    - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
+### ✅ FASE 64: REFINAMENTO ESTRUTURAL DO MÓDULO WHATSAPP (/INBOX) - PADRÃO WHATSAPP EM CORES CORPORATIVAS [CONCLUÍDO - IDE 1]
+- [x] **Layout & Estrutura Padrão WhatsApp**:
+  - [x] Papel de parede sutil de fundo estilo WhatsApp (SVG doodle tile).
+  - [x] Balões com caudas SVG e formato de canto autêntico (outgoing/incoming).
+  - [x] Ticks de status inline à direita do timestamp (`CheckCheck` ciano corporativo).
+  - [x] Pílulas centrais de agrupamento por data ("Hoje", "Ontem", DD/MM/AAAA).
+  - [x] Cabeçalho de contato com avatar, dot de status e ações rápidas.
+  - [x] Caixa de input em formato cápsula com barra de ferramentas e botão circular flutuante (Mic / Send).
+- [x] **Padrão Monocromático Corporativo**:
+  - [x] Total ausência de verdes berrantes nas cores estruturais.
+  - [x] Paleta oficial VERSUS: `#0B1224`, `#070D1B`, `#17253D`, Slate e Branco.
+- [x] **Validação & Deploy**:
+  - [x] `npx tsc --noEmit` aprovado com código 0.
+  - [x] `npm run build` aprovado com código 0 (frontend e backend).
+  - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)

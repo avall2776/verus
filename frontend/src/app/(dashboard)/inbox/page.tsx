@@ -8,7 +8,7 @@ import {
   RefreshCw, TrendingUp, Calendar, MessageSquare, CheckCircle2, Plus, Sparkles,
   BookUser, CalendarClock, PhoneCall, Zap, Eye, ShieldCheck, PhoneForwarded, UserCheck,
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, Trash2, Play, Pause,
-  Volume2, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
+  Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
@@ -47,6 +47,19 @@ function getTagColor(tag: string) {
   }
   const index = Math.abs(hash) % TAG_COLOR_PALETTES.length;
   return TAG_COLOR_PALETTES[index];
+}
+
+const WHATSAPP_WALLPAPER_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360' viewBox='0 0 360 360' fill='none' stroke='%23ffffff' stroke-width='1.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M30 40c0-5.5 4.5-10 10-10h30c5.5 0 10 4.5 10 10v20c0 5.5-4.5 10-10 10H40l-15 15V40z'/%3E%3Ccircle cx='180' cy='60' r='14'/%3E%3Cpath d='M180 52v8l5 3'/%3E%3Cpath d='M315 35l12 24h-24z'/%3E%3Cpath d='M60 180c-5-8-15-8-20 0-5 8 0 16 10 24 10-8 15-16 10-24z'/%3E%3Cpath d='M150 170h35v18c0 9-9 18-18 18s-18-9-18-18v-18z'/%3E%3Cpath d='M185 174c4 0 9 3 9 9s-5 9-9 9'/%3E%3Cpath d='M290 160c-9 0-16 7-16 16v22c0 9 7 16 16 16s16-7 16-16v-22c0-9-7-16-16-16z'/%3E%3Cpath d='M274 182h32'/%3E%3Cpath d='M40 310l25-8-8 25-6-10z'/%3E%3Ccircle cx='160' cy='310' r='13'/%3E%3Cpath d='M155 306l4 4 7-7'/%3E%3Cpath d='M280 290c0-5 4-9 9-9h18c5 0 9 4 9 9v14l-9-5h-18c-5 0-9-4-9-9z'/%3E%3Cpath d='M335 180c0-4 3-7 7-7h12c4 0 7 3 7 7v10l-7-3h-12c-4 0-7-3-7-7z'/%3E%3Cpath d='M100 80l10 10M110 80l-10 10'/%3E%3Cpath d='M230 110l3 7 7 3-7 3-3 7-3-7-7-3 7-3z'/%3E%3Cpath d='M70 250l3 5 5 3-5 3-3 5-3-5-5-3 5-3z'/%3E%3Cpath d='M220 250c0-5 4-8 8-8s8 3 8 8c0 8-16 16-16 16s-16-8-16-16c0-5 4-8 8-8s8 3 8 8z'/%3E%3Cpath d='M335 315c-3 0-6 3-6 6s3 6 6 6 6-3 6-6-3-6-6-6z'/%3E%3Cpath d='M120 345h40'/%3E%3C/svg%3E")`;
+
+function getWhatsAppDateLabel(dateInput?: string | number | Date): string {
+  if (!dateInput) return 'Hoje';
+  const date = new Date(dateInput);
+  const now = new Date();
+  if (date.toDateString() === now.toDateString()) return 'Hoje';
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return 'Ontem';
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 function InboxContent() {
@@ -1745,11 +1758,18 @@ function InboxContent() {
         </div>
       </div>
 
-      {/* 2. PAINEL CENTRAL: Janela de Chat */}
-      <div className="flex-1 bg-background flex flex-col overflow-hidden relative border-r border-gray-800">
+      {/* 2. PAINEL CENTRAL: Janela de Chat (Estrutura WhatsApp Corporativo VERSUS) */}
+      <div className="flex-1 bg-[#080D1A] flex flex-col overflow-hidden relative border-r border-slate-800/80">
         
-        {/* Pattern de Fundo Super Sutil via CSS puro */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+        {/* Textura/Papel de Parede Sutil Autêntico WhatsApp adaptado ao Dark Mode Corporativo */}
+        <div 
+          className="absolute inset-0 opacity-[0.035] pointer-events-none" 
+          style={{ 
+            backgroundImage: WHATSAPP_WALLPAPER_BG, 
+            backgroundRepeat: 'repeat', 
+            backgroundSize: '400px 400px' 
+          }} 
+        />
 
         {!activeChat || !activeContactData ? (
           /* WIDGET "SEU DIA" NO ESTADO VAZIO DO PAINEL CENTRAL (PADRÃO LERO) */
@@ -1862,65 +1882,78 @@ function InboxContent() {
           </div>
         ) : (
           <>
-            {/* Chat Header */}
-            <div className="h-16 px-4 border-b border-gray-800 flex items-center justify-between bg-[#0F172A] z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-700 to-gray-800 flex items-center justify-center text-white font-bold shrink-0 relative overflow-hidden">
-                  {activeContactData.avatarUrl ? (
-                    <img 
-                      src={activeContactData.avatarUrl} 
-                      alt={activeContactData.name} 
-                      className="w-full h-full object-cover rounded-full"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLElement).style.display = 'none';
-                        const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
-                        if (fallback) fallback.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
-                  <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
-                    {getContactInitials(activeContactData.name)}
-                  </span>
+            {/* Chat Header (Padrão Estrutural WhatsApp - Design Monocromático VERSUS) */}
+            <div className="h-16 px-4 border-b border-slate-800/90 flex items-center justify-between bg-[#0B1224] z-20 shadow-sm">
+              <div className="flex items-center gap-3 min-w-0">
+                {/* Avatar WhatsApp com indicador de status */}
+                <div className="relative shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700/60 flex items-center justify-center text-white font-bold shrink-0 relative overflow-hidden shadow-inner">
+                    {activeContactData.avatarUrl ? (
+                      <img 
+                        src={activeContactData.avatarUrl} 
+                        alt={activeContactData.name} 
+                        className="w-full h-full object-cover rounded-full"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = 'none';
+                          const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                          if (fallback) fallback.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
+                      {getContactInitials(activeContactData.name)}
+                    </span>
+                  </div>
+                  {/* Status Indicator */}
+                  <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#0B1224]" />
                 </div>
-                <div>
-                  <h2 className="text-sm font-bold text-white">{activeContactData.name}</h2>
-                  {activeContactData.isAi && (
-                    <div className="flex items-center gap-1.5 text-xs text-accent">
+                
+                {/* Título e Subtítulo WhatsApp */}
+                <div className="min-w-0">
+                  <h2 className="text-sm font-bold text-white truncate max-w-[200px] sm:max-w-xs">{activeContactData.name}</h2>
+                  {activeContactData.isAi ? (
+                    <div className="flex items-center gap-1.5 text-xs text-cyan-400 font-medium">
                       <BrainCircuit size={12} className="animate-pulse" />
                       <span>IA Vitor conversando...</span>
                     </div>
+                  ) : (activeContactData.status === 'human_takeover' || activeContactData.status === 'open') ? (
+                    <span className="text-xs text-blue-400 font-medium">Atendimento ativo</span>
+                  ) : activeContactData.status === 'waiting' ? (
+                    <span className="text-xs text-amber-400 font-medium">Aguardando atendimento</span>
+                  ) : (
+                    <span className="text-xs text-slate-400 font-medium">{activeContactData.phone || 'Online'}</span>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                 {isResolved ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-emerald-400 text-xs font-semibold px-2.5 py-1 bg-emerald-950/60 border border-emerald-800/40 rounded-lg flex items-center gap-1.5">
-                      <Lock size={12} />
+                    <span className="text-slate-300 text-xs font-semibold px-2.5 py-1 bg-slate-800/80 border border-slate-700/80 rounded-xl flex items-center gap-1.5">
+                      <Lock size={12} className="text-slate-400" />
                       Finalizado
                     </span>
                     <button 
                       onClick={handleReopen} 
                       disabled={isReopening}
-                      className="bg-primary hover:bg-primary/90 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-all shadow-[0_0_15px_rgba(0,85,255,0.25)] flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.25)] flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
                       <ArrowRightLeft size={13} />
                       {isReopening ? 'Reabrindo...' : 'Reabrir Atendimento'}
                     </button>
                   </div>
                 ) : (activeContactData.status === 'bot_active' || activeContactData.status === 'waiting' || activeContactData.status === 'open') ? (
-                  <button onClick={() => handleTakeover()} className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-pointer flex items-center gap-1.5">
+                  <button onClick={() => handleTakeover()} className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.35)] cursor-pointer flex items-center gap-1.5">
                     <UserCheck size={14} />
                     Assumir Conversa
                   </button>
                 ) : activeContactData.status === 'human_takeover' ? (
-                  <button onClick={handleRelease} className="bg-green-600 hover:bg-green-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(34,197,94,0.3)] cursor-pointer">
+                  <button onClick={handleRelease} className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-1.5">
                     Finalizar Atendimento
                   </button>
                 ) : null}
                 
                 {(activeContactData.status === 'human_takeover' || activeContactData.status === 'open') && (
-                  <button onClick={loadDepartmentsAndShowTransfer} title="Transferir" className="text-gray-400 hover:text-white bg-gray-800 p-2 rounded-lg hover:bg-gray-700 transition-colors">
+                  <button onClick={loadDepartmentsAndShowTransfer} title="Transferir" className="text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 p-2 rounded-xl border border-slate-700/60 transition-colors">
                     <ArrowRightLeft size={16} />
                   </button>
                 )}
@@ -2107,7 +2140,7 @@ function InboxContent() {
                 </div>
                 <button 
                   onClick={() => handleTakeover(activeChat!)}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-[0_0_10px_rgba(16,185,129,0.3)] cursor-pointer shrink-0 ml-3"
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-[0_0_10px_rgba(37,99,235,0.3)] cursor-pointer shrink-0 ml-3"
                 >
                   <UserCheck size={13} />
                   Assumir atendimento
@@ -2115,21 +2148,20 @@ function InboxContent() {
               </div>
             )}
 
-            {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 z-10">
-              
+            {/* Chat Messages (Padrão Estrutural WhatsApp com Ticks Inline e Balões Corporativos) */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-2.5 z-10 scrollbar-thin">
               {messages.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-gray-500 gap-2">
-                  <Bot size={40} className="text-gray-700" />
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-2">
+                  <Bot size={40} className="text-slate-600" />
                   {isResolved ? (
                     <>
-                      <p>Atendimento Finalizado</p>
-                      <p className="text-xs">O cliente pode reabrir o ticket enviando uma nova mensagem.</p>
+                      <p className="text-sm font-semibold text-slate-300">Atendimento Finalizado</p>
+                      <p className="text-xs text-slate-500">O cliente pode reabrir o ticket enviando uma nova mensagem.</p>
                     </>
                   ) : (
                     <>
-                      <p>Aguardando mensagens ao vivo...</p>
-                      <p className="text-xs">Rode o script de simulação no backend!</p>
+                      <p className="text-sm font-semibold text-slate-300">Aguardando mensagens ao vivo...</p>
+                      <p className="text-xs text-slate-500">Rode o script de simulação no backend!</p>
                     </>
                   )}
                 </div>
@@ -2138,214 +2170,261 @@ function InboxContent() {
                   const isAi = msg.senderType === 'system';
                   const isMe = msg.direction === 'OUTBOUND';
                   const audioKey = msg.id || `audio-${i}`;
+                  
+                  // Separador de Data WhatsApp
+                  const prevMsg = i > 0 ? messages[i - 1] : null;
+                  const currentDateLabel = getWhatsAppDateLabel(msg.createdAt);
+                  const prevDateLabel = prevMsg ? getWhatsAppDateLabel(prevMsg.createdAt) : null;
+                  const showDateDivider = i === 0 || currentDateLabel !== prevDateLabel;
 
                   return (
-                    <div key={i} className={`flex flex-col gap-1 max-w-[78%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
-                      <div className={`text-sm shadow-sm relative transition-all ${
-                        msg.isInternal
-                          ? 'bg-amber-500/10 text-amber-100 rounded-2xl rounded-tr-none border border-amber-500/40 p-3.5 shadow-[0_2px_12px_rgba(245,158,11,0.08)]'
-                          : isMe 
-                            ? 'bg-[#005c4b]/95 text-emerald-50 rounded-2xl rounded-tr-none border border-emerald-600/30 p-3.5 shadow-md' 
-                            : 'bg-[#1E293B] text-gray-100 rounded-2xl rounded-tl-none border border-gray-700/60 p-3.5 shadow-sm'
-                      }`}>
-                        {/* Identificador de Nota Interna */}
-                        {msg.isInternal && (
-                          <div className="flex items-center gap-1.5 text-amber-400 font-bold mb-2 pb-1.5 border-b border-amber-500/20 text-[10px] uppercase tracking-wider">
-                            <Lock size={11} />
-                            <span>Nota Interna (Equipe)</span>
+                    <div key={i} className="flex flex-col">
+                      {/* Pílula de Data Centralizada (WhatsApp Date Divider) */}
+                      {showDateDivider && (
+                        <div className="flex justify-center my-2">
+                          <div className="bg-[#111A2E]/95 text-slate-300 text-[11px] font-medium px-3.5 py-1 rounded-lg shadow-sm border border-slate-800/80 backdrop-blur-sm uppercase tracking-wide">
+                            {currentDateLabel}
                           </div>
-                        )}
+                        </div>
+                      )}
 
-                        {/* Pill de IA Vitor */}
-                        {isAi && !msg.isInternal && (
-                          <div className="inline-flex items-center gap-1.5 bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1.5 shadow-sm">
-                            <Bot size={11} className="text-cyan-400 animate-pulse" />
-                            <span>IA VITOR</span>
-                          </div>
-                        )}
-                        
-                        {/* Renderização de Mídia */}
-                        {msg.mediaUrl && (
-                          <div className="mb-2">
-                            {msg.type === 'image' && (
-                              <div 
-                                onClick={() => setLightboxImage({ url: msg.mediaUrl!, title: msg.content || 'Imagem' })}
-                                className="relative group cursor-pointer overflow-hidden rounded-xl border border-white/10 shadow-md inline-block max-w-full"
-                                title="Clique para expandir em tela cheia"
-                              >
-                                <img 
-                                  src={msg.mediaUrl} 
-                                  alt={msg.content || "Anexo"} 
-                                  className="rounded-xl max-h-64 sm:max-h-72 object-cover transition-transform duration-300 group-hover:scale-[1.02]" 
-                                />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                                  <div className="p-2.5 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-xl flex items-center gap-1.5 text-xs font-semibold transform translate-y-1 group-hover:translate-y-0 transition-transform duration-200">
-                                    <ZoomIn size={16} className="text-accent" />
-                                    <span>Expandir</span>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Mini-player de Áudio Customizado + Botão de Transcrição */}
-                            {msg.type === 'audio' && (
-                              <div className="flex flex-col gap-1.5 my-1 w-64">
-                                <div className="flex items-center gap-3 bg-black/30 p-2.5 rounded-xl border border-white/10 shadow-inner">
-                                  <button
-                                    type="button"
-                                    onClick={() => togglePlayAudio(audioKey, msg.mediaUrl)}
-                                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0 ${
-                                      playingAudioId === audioKey
-                                        ? 'bg-amber-400 text-black'
-                                        : isMe ? 'bg-emerald-400 text-slate-950 hover:bg-emerald-300' : 'bg-blue-500 text-white hover:bg-blue-400'
-                                    }`}
-                                  >
-                                    {playingAudioId === audioKey ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
-                                  </button>
-                                  <div className="flex-1 flex flex-col gap-1 min-w-0">
-                                    <div className="flex items-center justify-between text-[11px] font-semibold text-gray-300">
-                                      <span className="flex items-center gap-1">
-                                        <Volume2 size={12} className="text-accent" /> Mensagem de voz
-                                      </span>
-                                      <span className="text-[10px] text-gray-400 font-mono">
-                                        {playingAudioId === audioKey ? 'Tocando...' : 'Áudio'}
-                                      </span>
-                                    </div>
-                                    {/* Ondas Sonoras Visuais */}
-                                    <div className="flex items-center gap-0.5 h-3">
-                                      {[40, 70, 100, 60, 80, 45, 90, 55, 75, 95, 50, 85, 65, 40].map((height, hIdx) => (
-                                        <div
-                                          key={hIdx}
-                                          style={{ height: `${height}%` }}
-                                          className={`w-1 rounded-full transition-all ${
-                                            playingAudioId === audioKey
-                                              ? 'bg-emerald-400 animate-pulse'
-                                              : 'bg-gray-500/60'
-                                          }`}
-                                        />
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Botão de Expansão "Ver transcrição" diretamente abaixo do player */}
-                                <div className="px-1 flex flex-col gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setExpandedTranscriptions(prev => ({
-                                        ...prev,
-                                        [audioKey]: !prev[audioKey]
-                                      }));
-                                    }}
-                                    className="flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer self-start"
-                                  >
-                                    <FileText size={12} className="shrink-0" />
-                                    <span>{expandedTranscriptions[audioKey] ? 'Ocultar transcrição' : 'Ver transcrição'}</span>
-                                  </button>
-
-                                  {expandedTranscriptions[audioKey] && (
-                                    <div className="bg-black/40 rounded-xl p-2.5 text-xs text-gray-200 border border-cyan-500/30 animate-in fade-in slide-in-from-top-1 shadow-inner">
-                                      <div className="flex items-center gap-1 text-[10px] text-cyan-400 font-bold uppercase tracking-wider mb-1">
-                                        <Sparkles size={11} />
-                                        <span>Transcrição Automática (IA)</span>
-                                      </div>
-                                      <p className="italic text-gray-300 leading-relaxed text-[11px]">
-                                        "{msg.audioTranscription || 'Mensagem de áudio recebida. Transcrição automática: Olá! Gostaria de confirmar as informações sobre o atendimento e agendamento da reunião.'}"
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            {msg.type === 'document' && (
-                              <div className="flex items-center gap-2.5 p-2.5 bg-black/25 rounded-xl border border-white/10 hover:bg-black/35 transition-colors">
-                                <FileText size={18} className="text-accent shrink-0" />
-                                <span className="text-xs truncate font-medium text-gray-200">{msg.content || 'Documento anexo'}</span>
-                                <a 
-                                  href={msg.mediaUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="ml-auto text-accent hover:text-white p-1"
-                                >
-                                  <ExternalLink size={13} />
-                                </a>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* Conteúdo de Texto */}
-                        {msg.content && msg.type !== 'audio' && msg.type !== 'document' && (
-                          <div className="whitespace-pre-wrap leading-relaxed text-[0.92rem]">
-                            {msg.content}
-                          </div>
-                        )}
-
-                        {/* Horário e Checks de Leitura Alinhados no Rodapé da Bolha */}
-                        <div className={`flex items-center justify-end gap-1.5 mt-1.5 -mb-0.5 text-[10px] font-medium ${
-                          isMe ? 'text-emerald-200/80' : 'text-gray-400'
+                      {/* Balão de Mensagem WhatsApp */}
+                      <div className={`flex flex-col gap-1 max-w-[85%] sm:max-w-[72%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5`}>
+                        <div className={`text-sm shadow-sm relative transition-all ${
+                          msg.isInternal
+                            ? 'bg-[#22180A] text-amber-100 rounded-2xl rounded-tr-none border border-amber-500/40 p-2.5 px-3.5 shadow-md'
+                            : isMe
+                              ? 'bg-[#17253D] text-slate-100 rounded-2xl rounded-tr-none border border-blue-900/40 p-2.5 px-3.5 shadow-md'
+                              : 'bg-[#0F172A] text-slate-100 rounded-2xl rounded-tl-none border border-slate-800/80 p-2.5 px-3.5 shadow-sm'
                         }`}>
-                          <span>{new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          {isMe && !msg.isInternal && (
-                            <CheckCheck size={13} className="text-emerald-300 ml-0.5" />
+                          {/* Cauda SVG do Balão WhatsApp */}
+                          {msg.isInternal ? (
+                            <svg className="absolute -top-[1px] -right-2 text-[#22180A] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
+                              <path fill="currentColor" d="M0 0h6c1.1 0 1.9.9 1.4 1.9l-5.6 9.8c-.8 1.4-2.8.8-2.8-.8V0z" />
+                            </svg>
+                          ) : isMe ? (
+                            <svg className="absolute -top-[1px] -right-2 text-[#17253D] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
+                              <path fill="currentColor" d="M0 0h6c1.1 0 1.9.9 1.4 1.9l-5.6 9.8c-.8 1.4-2.8.8-2.8-.8V0z" />
+                            </svg>
+                          ) : (
+                            <svg className="absolute -top-[1px] -left-2 text-[#0F172A] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
+                              <path fill="currentColor" d="M9 0H3C1.9 0 1.1.9 1.6 1.9l5.6 9.8c.8 1.4 2.8.8 2.8-.8V0z" />
+                            </svg>
                           )}
+
+                          {/* Identificador de Nota Interna */}
+                          {msg.isInternal && (
+                            <div className="flex items-center gap-1.5 text-amber-400 font-bold mb-1.5 pb-1 border-b border-amber-500/20 text-[10px] uppercase tracking-wider">
+                              <Lock size={11} />
+                              <span>Nota Interna (Equipe)</span>
+                            </div>
+                          )}
+
+                          {/* Pill de IA Vitor */}
+                          {isAi && !msg.isInternal && (
+                            <div className="inline-flex items-center gap-1.5 bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1.5 shadow-sm">
+                              <Bot size={11} className="text-cyan-400 animate-pulse" />
+                              <span>IA VITOR</span>
+                            </div>
+                          )}
+
+                          {/* Renderização de Mídia */}
+                          {msg.mediaUrl && (
+                            <div className="mb-2">
+                              {msg.type === 'image' && (
+                                <div 
+                                  onClick={() => setLightboxImage({ url: msg.mediaUrl!, title: msg.content || 'Imagem' })}
+                                  className="relative group cursor-pointer overflow-hidden rounded-xl border border-white/10 shadow-md inline-block max-w-full"
+                                  title="Clique para expandir em tela cheia"
+                                >
+                                  <img 
+                                    src={msg.mediaUrl} 
+                                    alt={msg.content || "Anexo"} 
+                                    className="rounded-xl max-h-64 sm:max-h-72 object-cover transition-transform duration-300 group-hover:scale-[1.02]" 
+                                  />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                    <div className="p-2.5 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-xl flex items-center gap-1.5 text-xs font-semibold transform translate-y-1 group-hover:translate-y-0 transition-transform duration-200">
+                                      <ZoomIn size={16} className="text-cyan-400" />
+                                      <span>Expandir</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Mini-player de Áudio Customizado Monocromático + Transcrição */}
+                              {msg.type === 'audio' && (
+                                <div className="flex flex-col gap-1.5 my-1 w-64">
+                                  <div className="flex items-center gap-3 bg-black/30 p-2.5 rounded-xl border border-white/10 shadow-inner">
+                                    <button
+                                      type="button"
+                                      onClick={() => togglePlayAudio(audioKey, msg.mediaUrl)}
+                                      className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0 ${
+                                        playingAudioId === audioKey
+                                          ? 'bg-cyan-400 text-slate-950 font-bold'
+                                          : isMe ? 'bg-cyan-500 text-slate-950 hover:bg-cyan-400' : 'bg-blue-600 text-white hover:bg-blue-500'
+                                      }`}
+                                    >
+                                      {playingAudioId === audioKey ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+                                    </button>
+                                    <div className="flex-1 flex flex-col gap-1 min-w-0">
+                                      <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+                                        <span className="flex items-center gap-1">
+                                          <Volume2 size={12} className="text-cyan-400" /> Mensagem de voz
+                                        </span>
+                                        <span className="text-[10px] text-slate-400 font-mono">
+                                          {playingAudioId === audioKey ? 'Tocando...' : 'Áudio'}
+                                        </span>
+                                      </div>
+                                      {/* Ondas Sonoras Visuais */}
+                                      <div className="flex items-center gap-0.5 h-3">
+                                        {[40, 70, 100, 60, 80, 45, 90, 55, 75, 95, 50, 85, 65, 40].map((height, hIdx) => (
+                                          <div
+                                            key={hIdx}
+                                            style={{ height: `${height}%` }}
+                                            className={`w-1 rounded-full transition-all ${
+                                              playingAudioId === audioKey
+                                                ? 'bg-cyan-400 animate-pulse'
+                                                : 'bg-slate-500/50'
+                                            }`}
+                                          />
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Botão de Expansão "Ver transcrição" */}
+                                  <div className="px-1 flex flex-col gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setExpandedTranscriptions(prev => ({
+                                          ...prev,
+                                          [audioKey]: !prev[audioKey]
+                                        }));
+                                      }}
+                                      className="flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer self-start"
+                                    >
+                                      <FileText size={12} className="shrink-0" />
+                                      <span>{expandedTranscriptions[audioKey] ? 'Ocultar transcrição' : 'Ver transcrição'}</span>
+                                    </button>
+
+                                    {expandedTranscriptions[audioKey] && (
+                                      <div className="bg-black/40 rounded-xl p-2.5 text-xs text-slate-200 border border-cyan-500/30 animate-in fade-in slide-in-from-top-1 shadow-inner">
+                                        <div className="flex items-center gap-1 text-[10px] text-cyan-400 font-bold uppercase tracking-wider mb-1">
+                                          <Sparkles size={11} />
+                                          <span>Transcrição Automática (IA)</span>
+                                        </div>
+                                        <p className="italic text-slate-300 leading-relaxed text-[11px]">
+                                          "{msg.audioTranscription || 'Mensagem de áudio recebida. Transcrição automática: Olá! Gostaria de confirmar as informações sobre o atendimento e agendamento da reunião.'}"
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {msg.type === 'document' && (
+                                <div className="flex items-center gap-2.5 p-2.5 bg-black/25 rounded-xl border border-white/10 hover:bg-black/35 transition-colors">
+                                  <FileText size={18} className="text-blue-400 shrink-0" />
+                                  <span className="text-xs truncate font-medium text-slate-200">{msg.content || 'Documento anexo'}</span>
+                                  <a 
+                                    href={msg.mediaUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="ml-auto text-blue-400 hover:text-white p-1"
+                                  >
+                                    <ExternalLink size={13} />
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Conteúdo de Texto */}
+                          {msg.content && msg.type !== 'audio' && msg.type !== 'document' && (
+                            <div className="whitespace-pre-wrap leading-relaxed text-[0.92rem]">
+                              {msg.content}
+                            </div>
+                          )}
+
+                          {/* Horário e Ticks WhatsApp Monocromáticos (Float-Right) */}
+                          <div className={`flex items-center justify-end gap-1 float-right ml-3 mt-1.5 text-[11px] select-none ${
+                            msg.isInternal ? 'text-amber-400/80' : isMe ? 'text-slate-400' : 'text-slate-400'
+                          }`}>
+                            <span>{new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            {isMe && !msg.isInternal && (
+                              <CheckCheck size={14} className="text-cyan-400 inline-block shrink-0 -mr-0.5" />
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
                   );
                 })
               )}
-
             </div>
 
-            {/* Chat Input Area ou Modo Leitura para Resolvidos */}
+            {/* Chat Input Area (Estrutura e Formato Idênticos ao WhatsApp) */}
             {isResolved ? (
-              <div className="p-4 border-t border-gray-800 bg-[#0F172A] z-10 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="p-4 border-t border-slate-800/90 bg-[#0B1224] z-20 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700/80 flex items-center justify-center text-slate-300 shrink-0">
                     <Lock size={18} />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-gray-200">Atendimento Finalizado</h4>
-                    <p className="text-xs text-gray-400">Este atendimento foi finalizado. Reabra o ticket para responder.</p>
+                    <h4 className="text-xs font-bold text-white">Atendimento Finalizado</h4>
+                    <p className="text-xs text-slate-400">Este atendimento foi finalizado. Reabra o ticket para enviar novas mensagens.</p>
                   </div>
                 </div>
                 <button
                   onClick={handleReopen}
                   disabled={isReopening}
-                  className="px-4 py-2 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-lg transition-all shadow-md flex items-center gap-2 shrink-0 cursor-pointer disabled:opacity-50 w-full sm:w-auto justify-center"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-md flex items-center gap-2 shrink-0 cursor-pointer disabled:opacity-50 w-full sm:w-auto justify-center"
                 >
                   <ArrowRightLeft size={14} />
                   {isReopening ? 'Reabrindo...' : 'Reabrir Atendimento'}
                 </button>
               </div>
             ) : (
-              <div className="p-3 border-t border-gray-800 bg-[#0F172A] z-10 flex flex-col gap-2">
+              <div className="border-t border-slate-800/90 bg-[#0B1224] z-20 flex flex-col">
                 
                 {/* File Preview */}
                 {selectedFile && (
-                  <div className="bg-[#1E293B] border border-gray-700 rounded-lg p-2 flex items-center justify-between shadow-sm">
-                    <div className="flex items-center gap-2 text-sm text-gray-300">
-                      <FileText size={16} className="text-accent" />
-                      <span className="truncate max-w-[200px]">{selectedFile.name}</span>
+                  <div className="mx-3 mt-2.5 p-2.5 px-3 rounded-xl bg-[#0F172A] border border-blue-500/40 flex items-center justify-between shadow-lg">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="w-9 h-9 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                        {selectedFile.type.startsWith('image/') ? <ImageIcon size={18} /> : <FileText size={18} />}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-semibold text-white truncate max-w-[280px] sm:max-w-md">{selectedFile.name}</span>
+                        <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                          <span>{(selectedFile.size / 1024).toFixed(1)} KB</span>
+                          <span>•</span>
+                          <span className="text-blue-400 font-medium">{selectedFile.type.startsWith('image/') ? 'Foto / Imagem' : 'Documento'}</span>
+                        </span>
+                      </div>
                     </div>
-                    <button onClick={() => setSelectedFile(null)} className="text-gray-500 hover:text-red-400 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedFile(null)}
+                      disabled={isUploadingMedia}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      title="Descartar anexo"
+                    >
                       <X size={16} />
                     </button>
                   </div>
                 )}
-                
+
                 {isPeeking ? (
-                  <div className="p-4 bg-[#0F172A] border border-amber-500/30 rounded-xl flex items-center justify-between shadow-lg">
+                  <div className="p-4 bg-[#0F172A] border-t border-amber-500/30 flex items-center justify-between shadow-lg">
                     <div className="flex items-center gap-2.5 text-xs text-amber-300">
                       <Lock size={15} className="text-amber-400 shrink-0" />
                       <span>Modo somente-leitura (Espiando). Envio bloqueado para não interferir no fluxo do bot ou fila.</span>
                     </div>
                     <button
                       onClick={() => handleTakeover(activeChat!)}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] flex items-center gap-1.5 cursor-pointer shrink-0 ml-3"
+                      className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.35)] flex items-center gap-1.5 cursor-pointer shrink-0 ml-3"
                     >
                       <UserCheck size={14} />
                       Atribuir atendimento para mim
@@ -2353,56 +2432,32 @@ function InboxContent() {
                   </div>
                 ) : (
                   <>
-                    {/* Toolbar de Formatação Rica WhatsApp & Ações */}
-                    <div className="flex items-center justify-between px-1 pb-1.5 pt-0.5">
+                    {/* Barra de Formatação Rica WhatsApp & Alternador de Modo */}
+                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-800/40 bg-[#080D1A]/70">
                       <div className="flex items-center gap-1">
-                        {/* Seletor de Emojis */}
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => setShowEmojiPicker(prev => !prev)}
-                            className={`p-1.5 rounded-lg text-gray-400 hover:text-amber-400 hover:bg-gray-800/80 transition-colors cursor-pointer ${showEmojiPicker ? 'text-amber-400 bg-gray-800/80' : ''}`}
-                            title="Inserir Emoji"
-                          >
-                            <Smile size={16} />
-                          </button>
-
-                          {showEmojiPicker && (
-                            <div className="absolute bottom-9 left-0 w-72 bg-[#1E293B] border border-gray-700/80 shadow-[0_10px_30px_rgba(0,0,0,0.7)] rounded-xl p-3 z-50 animate-in fade-in zoom-in-95">
-                              <div className="flex items-center justify-between pb-2 border-b border-gray-700/60 mb-2">
-                                <span className="text-[11px] font-bold text-gray-300 uppercase tracking-wider">Emojis Frequentes</span>
-                                <button
-                                  type="button"
-                                  onClick={() => setShowEmojiPicker(false)}
-                                  className="text-gray-400 hover:text-white p-0.5"
-                                >
-                                  <X size={13} />
-                                </button>
-                              </div>
-                              <div className="grid grid-cols-8 gap-1.5 max-h-48 overflow-y-auto">
-                                {COMMON_EMOJIS.map((emoji, idx) => (
-                                  <button
-                                    key={idx}
-                                    type="button"
-                                    onClick={() => handleInsertEmoji(emoji)}
-                                    className="w-7 h-7 flex items-center justify-center text-base hover:bg-gray-700/80 rounded-lg transition-transform hover:scale-110 active:scale-95 cursor-pointer"
-                                  >
-                                    {emoji}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                        {/* Respostas Rápidas / Macros */}
+                        <button
+                          type="button"
+                          onClick={() => setShowQuickReplies(prev => !prev)}
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                            showQuickReplies 
+                              ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' 
+                              : 'text-slate-400 hover:text-blue-400 hover:bg-slate-800/60'
+                          }`}
+                          title="Respostas Rápidas (ou digite /)"
+                        >
+                          <Zap size={13} className="text-blue-400" />
+                          <span className="text-[11px]">Respostas</span>
+                        </button>
 
                         {/* Divisor */}
-                        <div className="w-[1px] h-3.5 bg-gray-700/80 mx-1" />
+                        <div className="w-[1px] h-3.5 bg-slate-800 mx-1" />
 
                         {/* Negrito *texto* */}
                         <button
                           type="button"
                           onClick={() => handleInsertFormatting('*')}
-                          className="px-1.5 py-1 rounded text-xs font-bold text-gray-400 hover:text-white hover:bg-gray-800/80 transition-colors cursor-pointer"
+                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
                           title="Negrito WhatsApp (*texto*)"
                         >
                           <Bold size={13} />
@@ -2412,7 +2467,7 @@ function InboxContent() {
                         <button
                           type="button"
                           onClick={() => handleInsertFormatting('_')}
-                          className="px-1.5 py-1 rounded text-xs italic text-gray-400 hover:text-white hover:bg-gray-800/80 transition-colors cursor-pointer"
+                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
                           title="Itálico WhatsApp (_texto_)"
                         >
                           <Italic size={13} />
@@ -2422,7 +2477,7 @@ function InboxContent() {
                         <button
                           type="button"
                           onClick={() => handleInsertFormatting('~')}
-                          className="px-1.5 py-1 rounded text-xs line-through text-gray-400 hover:text-white hover:bg-gray-800/80 transition-colors cursor-pointer"
+                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
                           title="Tachado WhatsApp (~texto~)"
                         >
                           <Strikethrough size={13} />
@@ -2432,99 +2487,55 @@ function InboxContent() {
                         <button
                           type="button"
                           onClick={() => handleInsertFormatting('```')}
-                          className="px-1.5 py-1 rounded text-xs font-mono text-gray-400 hover:text-white hover:bg-gray-800/80 transition-colors cursor-pointer"
+                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
                           title="Monoespaçado WhatsApp (```texto```)"
                         >
                           <Code size={13} />
                         </button>
-
-                        {/* Divisor */}
-                        <div className="w-[1px] h-3.5 bg-gray-700/80 mx-1" />
-
-                        {/* Respostas Rápidas / Macros */}
-                        <button
-                          type="button"
-                          onClick={() => setShowQuickReplies(prev => !prev)}
-                          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-                            showQuickReplies 
-                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
-                              : 'text-gray-400 hover:text-amber-400 hover:bg-gray-800/80'
-                          }`}
-                          title="Respostas Rápidas (ou digite /)"
-                        >
-                          <Zap size={13} />
-                          <span className="text-[10px]">Respostas</span>
-                        </button>
                       </div>
 
-                      {/* Modo Externo vs Interno */}
-                      <div className="flex items-center gap-2">
+                      {/* Alternador Modo WhatsApp vs Nota Interna */}
+                      <div className="flex items-center gap-1 bg-[#0F172A] p-0.5 rounded-lg border border-slate-800">
                         <button 
                           type="button"
                           onClick={() => setIsInternalMode(false)}
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded transition-all cursor-pointer ${!isInternalMode ? 'bg-primary/20 text-blue-300 border border-primary/40' : 'text-gray-500 hover:text-gray-400'}`}
+                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                            !isInternalMode 
+                              ? 'bg-blue-600 text-white shadow-sm' 
+                              : 'text-slate-400 hover:text-slate-300'
+                          }`}
                         >
                           WhatsApp
                         </button>
                         <button 
                           type="button"
                           onClick={() => setIsInternalMode(true)}
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded transition-all flex items-center gap-1 cursor-pointer ${isInternalMode ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'text-gray-500 hover:text-gray-400'}`}
+                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md transition-all flex items-center gap-1 cursor-pointer ${
+                            isInternalMode 
+                              ? 'bg-amber-500 text-slate-950 font-black shadow-sm' 
+                              : 'text-slate-400 hover:text-slate-300'
+                          }`}
                         >
-                          <Lock size={9} /> Nota Interna
+                          <Lock size={10} /> Nota Interna
                         </button>
                       </div>
                     </div>
 
-                    {/* Pré-visualização do Anexo Selecionado */}
-                    {selectedFile && (
-                      <div className="mb-2 p-2.5 px-3 rounded-xl bg-[#1E293B] border border-accent/40 flex items-center justify-between animate-in slide-in-from-bottom-1 shadow-lg">
-                        <div className="flex items-center gap-3 overflow-hidden">
-                          <div className="w-9 h-9 rounded-lg bg-accent/20 text-accent flex items-center justify-center shrink-0">
-                            {selectedFile.type.startsWith('image/') ? <ImageIcon size={18} /> : <FileText size={18} />}
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-semibold text-white truncate max-w-[280px] sm:max-w-md">{selectedFile.name}</span>
-                            <span className="text-[11px] text-gray-400 flex items-center gap-1.5">
-                              <span>{(selectedFile.size / 1024).toFixed(1)} KB</span>
-                              <span>•</span>
-                              <span className="text-accent/90">{selectedFile.type.startsWith('image/') ? 'Foto / Imagem' : 'Documento'}</span>
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedFile(null)}
-                          disabled={isUploadingMedia}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                          title="Descartar anexo"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    )}
-
-                    <div className={`border rounded-xl p-1.5 flex items-end gap-2 transition-colors shadow-sm relative min-h-[52px]
-                      ${isInternalMode 
-                        ? 'bg-amber-500/10 border-amber-500/40 focus-within:border-amber-500' 
-                        : isRecording
-                          ? 'bg-rose-950/20 border-rose-500/40'
-                          : 'bg-[#1E293B] border-gray-700 focus-within:border-gray-500'
-                      }
-                    `}>
+                    {/* Caixa de Entrada Estrutura WhatsApp (Emoji + Clip + Cápsula + Botão Redondo) */}
+                    <div className="p-2.5 px-3 flex items-end gap-2 relative">
                       {isRecording ? (
-                        /* Painel de Gravação de Áudio Ativo */
-                        <div className="flex-1 flex items-center justify-between px-3 py-2 animate-in fade-in duration-200">
+                        /* Painel de Gravação de Áudio WhatsApp */
+                        <div className="flex-1 bg-[#11192A] border border-rose-500/40 rounded-2xl px-4 py-2 flex items-center justify-between animate-in fade-in duration-200 min-h-[46px]">
                           <div className="flex items-center gap-3">
                             <div className="relative flex items-center justify-center">
-                              <div className="w-3.5 h-3.5 rounded-full bg-rose-500"></div>
-                              <div className="w-3.5 h-3.5 rounded-full bg-rose-500 animate-ping absolute"></div>
+                              <div className="w-3.5 h-3.5 rounded-full bg-rose-500" />
+                              <div className="w-3.5 h-3.5 rounded-full bg-rose-500 animate-ping absolute" />
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-xs font-bold text-rose-300">Gravando áudio de voz...</span>
+                              <span className="text-xs font-bold text-rose-300">Gravando áudio...</span>
                               <span className="text-[12px] font-mono text-white font-bold">{formatTimer(recordingTime)}</span>
                             </div>
-                            {/* Ondas Sonoras Dinâmicas */}
+                            {/* Ondas Sonoras */}
                             <div className="flex items-center gap-1 h-5 ml-4">
                               {[45, 80, 50, 100, 65, 90, 70, 95, 45, 85, 60, 95].map((h, idx) => (
                                 <div
@@ -2541,7 +2552,7 @@ function InboxContent() {
                               type="button"
                               onClick={cancelRecording}
                               disabled={isSendingAudio}
-                              className="p-2 rounded-lg bg-gray-800/80 hover:bg-rose-900/60 text-gray-400 hover:text-rose-300 transition-colors cursor-pointer"
+                              className="p-2 rounded-xl bg-slate-800/80 hover:bg-rose-900/60 text-slate-400 hover:text-rose-300 transition-colors cursor-pointer"
                               title="Descartar gravação"
                             >
                               <Trash2 size={16} />
@@ -2551,7 +2562,7 @@ function InboxContent() {
                               type="button"
                               onClick={stopAndSendAudio}
                               disabled={isSendingAudio}
-                              className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-[0_0_12px_rgba(16,185,129,0.4)] flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-[0_0_12px_rgba(37,99,235,0.4)] flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                               title="Enviar áudio gravado"
                             >
                               <Send size={14} />
@@ -2561,24 +2572,66 @@ function InboxContent() {
                         </div>
                       ) : (
                         <>
-                          {/* Popover de Anexos */}
-                          <div className="relative">
+                          {/* Botão Emoji WhatsApp (Lado Esquerdo do Input) */}
+                          <div className="relative mb-0.5">
+                            <button
+                              type="button"
+                              onClick={() => setShowEmojiPicker(prev => !prev)}
+                              className={`p-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer ${
+                                showEmojiPicker ? 'text-amber-400 bg-slate-800/80' : ''
+                              }`}
+                              title="Emojis WhatsApp"
+                            >
+                              <Smile size={21} />
+                            </button>
+
+                            {showEmojiPicker && (
+                              <div className="absolute bottom-12 left-0 w-72 bg-[#0F172A] border border-slate-700/80 shadow-[0_15px_35px_rgba(0,0,0,0.8)] rounded-2xl p-3 z-50 animate-in fade-in zoom-in-95">
+                                <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2">
+                                  <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Emojis Frequentes</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowEmojiPicker(false)}
+                                    className="text-slate-400 hover:text-white p-0.5"
+                                  >
+                                    <X size={13} />
+                                  </button>
+                                </div>
+                                <div className="grid grid-cols-8 gap-1.5 max-h-48 overflow-y-auto">
+                                  {COMMON_EMOJIS.map((emoji, idx) => (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => handleInsertEmoji(emoji)}
+                                      className="w-7 h-7 flex items-center justify-center text-base hover:bg-slate-800 rounded-lg transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                                    >
+                                      {emoji}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Botão Clipes/Anexo WhatsApp (Lado Esquerdo do Input) */}
+                          <div className="relative mb-0.5">
                             <button 
                               type="button"
                               onClick={() => setShowAttachments(!showAttachments)}
-                              className={`p-2 transition-colors rounded-lg ${isInternalMode ? 'text-amber-400 hover:bg-amber-500/20' : 'text-gray-400 hover:text-accent hover:bg-gray-800/80'}`}
+                              className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
+                              title="Anexar documento ou imagem"
                             >
-                              <Paperclip size={22} />
+                              <Paperclip size={21} />
                             </button>
                             
                             {showAttachments && (
-                              <div className="absolute bottom-12 left-0 bg-[#1E293B] border border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-xl p-2 flex flex-col gap-1 w-48 z-50 animate-in slide-in-from-bottom-2">
-                                <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg cursor-pointer transition-colors">
+                              <div className="absolute bottom-12 left-0 bg-[#0F172A] border border-slate-700/90 shadow-[0_15px_35px_rgba(0,0,0,0.8)] rounded-2xl p-2 flex flex-col gap-1 w-52 z-50 animate-in slide-in-from-bottom-2">
+                                <label className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl cursor-pointer transition-colors">
                                   <ImageIcon size={16} className="text-blue-400" /> Foto / Vídeo
                                   <input type="file" className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
                                 </label>
-                                <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg cursor-pointer transition-colors">
-                                  <FileText size={16} className="text-purple-400" /> Documento
+                                <label className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl cursor-pointer transition-colors">
+                                  <FileText size={16} className="text-cyan-400" /> Documento
                                   <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileSelect} />
                                 </label>
                                 <button 
@@ -2587,97 +2640,104 @@ function InboxContent() {
                                     setShowAttachments(false);
                                     startRecording();
                                   }}
-                                  className="flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors text-left w-full cursor-pointer"
+                                  className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors text-left w-full cursor-pointer"
                                 >
-                                  <Mic size={16} className="text-green-400" /> Gravar Áudio
+                                  <Mic size={16} className="text-blue-400" /> Gravar Áudio
                                 </button>
                               </div>
                             )}
                           </div>
 
-                          <textarea 
-                            ref={textareaRef}
-                            placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem ou digite / para respostas rápidas..."} 
-                            className={`flex-1 bg-transparent text-[0.95rem] resize-none outline-none py-2.5 max-h-32 
-                              ${isInternalMode ? 'text-amber-100 placeholder:text-amber-500/50' : 'text-white placeholder:text-gray-500'}
-                            `}
-                            rows={1}
-                            value={inputText}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setInputText(val);
-                              
-                              // UX de Resposta Rápida
-                              if (val.startsWith('/')) {
-                                setShowQuickReplies(true);
-                                setQuickReplyFilter(val.substring(1).toLowerCase());
-                              } else {
-                                setShowQuickReplies(false);
-                              }
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                // Se o popover estiver aberto, não envia ainda
-                                if (!showQuickReplies) {
-                                  handleSendMessage();
-                                }
-                              }
-                            }}
-                          />
-                          
-                          {/* Popover de Respostas Rápidas */}
-                          {showQuickReplies && quickReplies.length > 0 && (
-                            <div className="absolute bottom-14 left-12 w-[300px] bg-[#1E293B] border border-gray-700 shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
-                              <div className="px-3 py-2 bg-gray-800/50 text-xs font-bold text-gray-400 border-b border-gray-700">Respostas Rápidas</div>
-                              <div className="max-h-48 overflow-y-auto">
-                                {quickReplies.filter(qr => qr.shortcut.toLowerCase().includes(quickReplyFilter)).map(qr => (
-                                  <div 
-                                    key={qr.id}
-                                    onClick={() => {
-                                      setInputText(qr.content);
-                                      setShowQuickReplies(false);
-                                    }}
-                                    className="px-3 py-2 border-b border-gray-800/50 hover:bg-gray-800 cursor-pointer transition-colors"
-                                  >
-                                    <div className="text-accent text-xs font-bold mb-0.5">{qr.shortcut}</div>
-                                    <div className="text-gray-300 text-xs line-clamp-1">{qr.content}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Botão Dinâmico: Microfone (se vazio) ou Enviar (se preenchido) */}
-                          {(!inputText.trim() && !selectedFile) ? (
-                            <button 
-                              type="button"
-                              onClick={startRecording}
-                              title="Gravar mensagem de voz"
-                              className="p-2.5 rounded-lg text-gray-400 hover:text-emerald-400 hover:bg-emerald-950/40 border border-transparent hover:border-emerald-500/40 transition-all cursor-pointer flex items-center justify-center shrink-0 mb-0.5"
-                            >
-                              <Mic size={20} />
-                            </button>
-                          ) : (
-                            <button 
-                              type="button"
-                              onClick={handleSendMessage} 
-                              disabled={isUploadingMedia}
-                              title={isUploadingMedia ? "Enviando arquivo..." : "Enviar mensagem"}
-                              className={`p-3 rounded-lg transition-colors shadow-md flex items-center justify-center shrink-0 disabled:opacity-50 cursor-pointer
-                                ${isInternalMode 
-                                  ? 'bg-amber-500 hover:bg-amber-600 text-amber-950' 
-                                  : 'bg-accent text-[#0B1224] hover:bg-accent/90'
-                                }
+                          {/* Cápsula de Texto (WhatsApp Input Capsule) */}
+                          <div className={`flex-1 bg-[#11192A] border rounded-2xl px-4 py-2 min-h-[46px] max-h-36 flex items-center transition-all shadow-inner relative ${
+                            isInternalMode 
+                              ? 'border-amber-500/50 bg-amber-950/15 focus-within:border-amber-500' 
+                              : 'border-slate-700/70 focus-within:border-blue-500/80 focus-within:ring-1 focus-within:ring-blue-500/30'
+                          }`}>
+                            <textarea 
+                              ref={textareaRef}
+                              placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem ou / para respostas rápidas..."} 
+                              className={`flex-1 bg-transparent text-[0.93rem] resize-none outline-none py-1 max-h-32 
+                                ${isInternalMode ? 'text-amber-100 placeholder:text-amber-500/50' : 'text-slate-100 placeholder:text-slate-500'}
                               `}
-                            >
-                              {isUploadingMedia ? (
-                                <RefreshCw size={18} className="animate-spin text-current" />
-                              ) : (
-                                <Send size={18} className={!isInternalMode ? "ml-1" : ""} />
-                              )}
-                            </button>
-                          )}
+                              rows={1}
+                              value={inputText}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setInputText(val);
+                                
+                                if (val.startsWith('/')) {
+                                  setShowQuickReplies(true);
+                                  setQuickReplyFilter(val.substring(1).toLowerCase());
+                                } else {
+                                  setShowQuickReplies(false);
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  if (!showQuickReplies) {
+                                    handleSendMessage();
+                                  }
+                                }
+                              }}
+                            />
+                            
+                            {/* Popover de Respostas Rápidas */}
+                            {showQuickReplies && quickReplies.length > 0 && (
+                              <div className="absolute bottom-full left-0 mb-3 w-[320px] bg-[#0F172A] border border-slate-700 shadow-[0_15px_35px_rgba(0,0,0,0.8)] rounded-2xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
+                                <div className="px-3 py-2 bg-slate-800/70 text-xs font-bold text-slate-300 border-b border-slate-700">Respostas Rápidas</div>
+                                <div className="max-h-48 overflow-y-auto">
+                                  {quickReplies.filter(qr => qr.shortcut.toLowerCase().includes(quickReplyFilter)).map(qr => (
+                                    <div 
+                                      key={qr.id}
+                                      onClick={() => {
+                                        setInputText(qr.content);
+                                        setShowQuickReplies(false);
+                                      }}
+                                      className="px-3 py-2 border-b border-slate-800/50 hover:bg-slate-800 cursor-pointer transition-colors"
+                                    >
+                                      <div className="text-blue-400 text-xs font-bold mb-0.5">{qr.shortcut}</div>
+                                      <div className="text-slate-300 text-xs line-clamp-1">{qr.content}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Botão de Ação Circular WhatsApp (Mic se vazio / Enviar se com texto) */}
+                          <div className="mb-0.5">
+                            {(!inputText.trim() && !selectedFile) ? (
+                              <button 
+                                type="button"
+                                onClick={startRecording}
+                                title="Gravar mensagem de voz"
+                                className="w-11 h-11 rounded-full bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700/60 flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
+                              >
+                                <Mic size={19} />
+                              </button>
+                            ) : (
+                              <button 
+                                type="button"
+                                onClick={handleSendMessage} 
+                                disabled={isUploadingMedia}
+                                title={isUploadingMedia ? "Enviando arquivo..." : "Enviar mensagem"}
+                                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 disabled:opacity-50
+                                  ${isInternalMode 
+                                    ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-[0_0_15px_rgba(217,119,6,0.45)]' 
+                                    : 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.45)]'
+                                  }
+                                `}
+                              >
+                                {isUploadingMedia ? (
+                                  <RefreshCw size={18} className="animate-spin text-white" />
+                                ) : (
+                                  <Send size={18} className="ml-0.5" />
+                                )}
+                              </button>
+                            )}
+                          </div>
                         </>
                       )}
                     </div>
