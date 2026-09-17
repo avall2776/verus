@@ -379,18 +379,8 @@ export default function VersusPreloader({
         </span>
       </div>
 
-      {/* CENTRO: Logomarca VERSUS + Frase de Efeito + Montagem Elegante */}
-      <div className="w-full my-auto flex flex-col items-center justify-center text-center z-10 pointer-events-none mt-36 sm:mt-44">
-        
-        {/* Logomarca VERSUS */}
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-[0.32em] pl-4 anim-pulse-glow leading-none drop-shadow-[0_12px_40px_rgba(0,0,0,0.95)] font-sans">
-          VERSUS
-        </h1>
-
-        {/* Frase de Efeito Oficial */}
-        <p className="text-xs sm:text-sm font-semibold tracking-[0.26em] uppercase text-slate-300 mt-4 max-w-xl leading-relaxed drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]">
-          Inteligência em Vendas &amp; Atendimento Omnichannel
-        </p>
+      {/* CENTRO: Destaque Exclusivo no Monólito "V" 3D + Mensagem de Boas-Vindas */}
+      <div className="w-full my-auto flex flex-col items-center justify-center text-center z-10 pointer-events-none mt-40 sm:mt-52">
 
         {/* Mensagem de Boas-Vindas Elegante & Montagem do Sistema */}
         <div className="mt-8 flex flex-col items-center space-y-3">

@@ -1808,46 +1808,43 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - Validação com `npx tsc --noEmit` e `npm run build` com código 0 em ambas as pontas.
     - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
-- [x] **[17/09/2026 - 15:05]** ⚡ **[IDE 1] Conclusão: Unificação do Oceano de Dados (Data Wave) & Transição Perfeita Login-Preloader (Fase 71)**:
-  - **Status**: ✅ Concluído com Sucesso, Aprovado, Código 0 de Erros e Homologado.
-  - **Fundo Idêntico à Tela de Login (Oceano de Dados / Data Wave Three.js)**:
-    - Substituição das micro-partículas estáticas espaciais pelo autêntico **Oceano de Dados (Data Wave)** da tela de login: malha senoidal tridimensional de 5.625 partículas circulares em ciano neon (`0x00d2ff`), com ondulação contínua e dinâmica (`sin(ix + count) + sin(iy + count)`).
-    - Câmera e névoa volumétrica sincronizadas (`THREE.FogExp2(0x050814, 0.025)`) e esferas de iluminação volumétrica idênticas (`top-1/4 -left-32` e `bottom-1/4 -right-32`), garantindo continuidade visual absoluta.
-    - O grande monólito "V" 3D levita com rotação orgânica e parallax reativo ao mouse diretamente acima do oceano cibernético de dados.
-  - **Transição Suave da Tela de Login para o Preloader ("Sistema Sendo Montado")**:
-    - Adicionada transição suave de dissolução no card de login (`loginSuccess` com `opacity-0 scale-90 blur-2xl transition-all duration-700`), permitindo que a tela de login se desfaça elegantemente dentro do próprio oceano de partículas para revelar o preloader sem corte seco.
-    - Cadência de montagem visual no preloader dividida em 3 estágios de inicialização corporativa:
-      1. *"Inicializando ecossistema corporativo..."*
-      2. *"Sincronizando barramento neural e workspaces..."*
-      3. *"Ambiente pronto para operação."*
-  - **Tempo de Carregamento Confortável (6 Segundos)**:
-    - Duração expandida para **6.000ms (6 segundos)**, proporcionando uma experiência de contemplação e montagem de sistema refinada e tecnológica, sem pressa.
-  - **Fade-Out Suave & Desaparecimento Perfeito (1.000ms)**:
-    - Transição de saída contínua acelerada por GPU (`opacity-0 scale-105 filter blur-md transition-all duration-1000 ease-in-out`).
-    - Fechamento automático ou imediato ao clicar em qualquer ponto da tela, pressionar `ESC`/`Enter`/`Espaço` ou no botão discreto *"Acessar Painel Principal"*.
+- [x] **[17/09/2026 - 15:20]** ⚡ **[IDE 1] Conclusão: Unificação Cinematográfica do Login & Preloader 3D com Evaporação do Card e Destaque Exclusivo no V (Fase 71)**:
+  - **Status**: ✅ Concluído com Sucesso, Aprovado pelo Usuário, Código 0 de Erros e Homologado.
+  - **Arquitetura Unificada na Mesma Tela (`/login`)**:
+    - O preloader e o login foram unificados diretamente dentro da mesma página (`/login`), eliminando qualquer salto de rota ou corte de WebGL antes da hora.
+  - **Evaporação do Card de Login ("Vira Fumaça")**:
+    - Ao validar as credenciais, apenas o card de vidro com o formulário se dissolve suavemente (`opacity-0 scale-75 blur-3xl transition-all duration-1000 ease-out`), evaporando da tela como fumaça enquanto o Oceano de Dados (Data Wave) continua ondulando ininterruptamente ao fundo.
+  - **Surgimento Projetado da Letra "V" 3D ("Como se Fosse Sair da Tela")**:
+    - A grande letra "V" 3D avança em zoom-in tridimensional projetado do fundo (`z: -35`) diretamente para o primeiro plano (`z: 6.5`), levitando com reflexos metálicos em titânio e arestas neon ciano sobre as ondas.
+    - Removido totalmente o nome "VERSUS" da cena de boot para dar **destaque exclusivo e imponente à letra V 3D**, atendendo rigorosamente à instrução artística do usuário.
+  - **Saudação Personalizada & Estágios de Montagem (15 Segundos de Imersão)**:
+    - Exibição de *"Bem-vindo de volta, [Nome do Usuário]"* (puxando o primeiro nome real do operador autenticado, ex: "Bem-vindo de volta, Felipe").
+    - Subtítulo dinâmico de montagem empresarial: *"Inicializando ecossistema corporativo..."* -> *"Sincronizando barramento neural e agentes de IA..."* -> *"Compilando canais de atendimento e telemetria..."* -> *"Ambiente pronto para operação!"*.
+    - Barra de progresso luminescente minimalista calibrada para **15 segundos**, com botão de avanço rápido `[ Acessar Painel Principal ]` e atalhos por teclado (`ESC`, `Enter`, `Espaço`).
+  - **Transição Suave de Saída (Fade-Out de 1000ms)**:
+    - Dissolução contínua revelando o `/dashboard` pronto e operante.
   - **Build e Deploy**:
     - `npx tsc --noEmit` aprovado com código 0.
     - `npm run build` aprovado com código 0 em todas as 43 rotas do Next.js.
 
 ### 🟢 FASE 71: PRELOADER 3D MINIMALISTA IMERSIVO & BOAS-VINDAS FLUIDAS [CONCLUÍDA - IDE 1]
 > **Status**: ✅ Concluída com Sucesso, Builds Código 0 e Homologada em Produção.
-- [x] **Fundo Idêntico à Tela de Login (Oceano de Dados Three.js)**:
-  - [x] Malha ondulante de partículas em ciano neon com mesma fórmula matemática e textura circular.
-  - [x] Névoa atmosférica e esferas de iluminação idênticas para continuidade visual 100%.
-  - [x] Monólito "V" 3D levitando com reflexos especulares em tempo real sobre o oceano de dados.
-- [x] **Transição Perfeita entre Login e Preloader**:
-  - [x] Dissolução suave do card de login com blur/escala ao autenticar.
-  - [x] Fluxo contínuo "como se o sistema estivesse sendo montado".
-- [x] **Tempo de Carregamento Calibrado (6 Segundos)**:
-  - [x] Duração ampliada para 6s com 3 estágios visuais de montagem empresarial.
-- [x] **Transição Suave & Fade-Out de Alta Performance**:
-  - [x] Animação de fade-out de 1000ms com interpolação suave de opacidade e blur.
-  - [x] Acionamento automático temporizado ou por clique em qualquer lugar da tela.
-- [x] **Design System Monocromático**:
-  - [x] Paleta executiva (#050814, #0B1224, slate, branco).
-- [x] **Homologação, Build & Deploy**:
-  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0.
-  - [x] Deploy sincronizado em produção.
+- [x] **Arquitetura Unificada no Login (`/login`)**:
+  - [x] Preloader e tela de login construídos juntos no mesmo canvas Three.js.
+  - [x] Card de formulário que evapora / vira fumaça com blur e fade-out.
+  - [x] Continuidade ininterrupta do Oceano de Dados (Data Wave) no fundo.
+- [x] **Destaque Exclusivo na Letra "V" 3D**:
+  - [x] Efeito de surgimento projetado ("como se fosse sair da tela") do fundo para o primeiro plano.
+  - [x] Remoção do nome "VERSUS" para foco e destaque total no glifo V 3D.
+  - [x] Levitação orgânica, reflexos especulares em tempo real e arestas neon ciano.
+- [x] **Saudação Personalizada & 15 Segundos de Imersão**:
+  - [x] "Bem-vindo de volta, [Nome do Usuário]" puxando dados reais de autenticação.
+  - [x] Pacing de 15 segundos com estágios graduais de montagem do ecossistema.
+  - [x] Opção discreta de avanço com 1 clique (`[ Acessar Painel Principal ]` ou teclas).
+- [x] **Fade-Out Suave & Deploy na Nuvem**:
+  - [x] Transição aveludada de 1.000ms para entrega no dashboard.
+  - [x] `npx tsc --noEmit` e `npm run build` com código 0 de erros.
+  - [x] Deploy sincronizado na nuvem (VPS PM2 `versus-engine` e Vercel).
 
 - **[17/09/2026 - 11:52]** ⏸️ **Ponto Eletrônico Registrado: Pausa de Almoço / Intervalo do Meio-Dia (IDE 1)**:
   - **Status do Ponto**: ⏸️ Pausa de Almoço Registrada (Saída às 11:52 / Meio-Dia).
@@ -1905,6 +1902,40 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **Homologação, Build & Deploy**:
   - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 em ambas as pontas.
   - [x] Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`).
+
+- [x] **[17/09/2026 - 15:10]** ⚡ **[IDE 1] Conclusão: Persistência do Upload da Logo e Refinamento de Impressão A4 das Propostas Comerciais (`/proposals`) (Fase 70)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Persistência do Logotipo do Emitente (Prisma / Supabase)**:
+    - Campo `logoUrl String?` adicionado ao model `Proposal` no schema Prisma (`schema.prisma`) e sincronizado com o Supabase (`npx prisma db push`).
+    - DTOs atualizados (`CreateProposalDto`, `UpdateProposalDto`) aceitando `logoUrl` e estrutura de `issuer`.
+    - `ProposalsService` ajustado para persistir `logoUrl` diretamente na proposta e espelhar como fallback nas configurações da organização (`tenant.logoUrl`).
+    - `formatProposal` garantindo retorno consistente de `logoUrl` e `issuer.logoUrl`.
+    - Modal de Edição (`ProposalModal.tsx`) e página `/proposals` ajustados para carregar a logo salva, armazenar cache no `localStorage` (`versus_proposal_issuer_cache`) e enviar o payload completo sem perdas.
+  - **Refinamento da Folha de Estilo de Impressão (`@media print`) e Ajuste A4**:
+    - `@page { size: A4 portrait; margin: 8mm 10mm 8mm 10mm; }` configurado em `globals.css` para eliminar cabeçalhos e rodapés gerados pelo navegador (URLs, títulos e datas).
+    - Remoção estrita de artefatos de tela no print: widget flutuante de suporte (`#floating-support-widget` com `print:hidden`), botões de ação e sombras excessivas de container (`box-shadow: none !important`).
+    - Contêiner do documento no modal de visualização (`ProposalPreviewModal.tsx`) configurado com `print:static print:overflow-visible print:border-0 print:shadow-none print:p-0` e quebra interna evitada (`page-break-inside: avoid`).
+    - Ajuste de espaçamentos verticais e tipografia corporativa nítida para encaixe exato em 1 página A4.
+    - Suporte a logos em formato Data URL (base64) e links externos nos previews e página pública de proposta (`/p/[code]`).
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` e `npm run build` validados com código 0 (frontend e backend).
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine` online) e Vercel via commit `ca45ace`.
+
+### 🟢 FASE 70: PERSISTÊNCIA DA LOGO E REFINAMENTO DE IMPRESSÃO A4 EM PROPOSTAS COMERCIAIS (/PROPOSALS) [CONCLUÍDA - IDE 1]
+> **Status**: ✅ Concluída com Sucesso, Builds Código 0 e Homologada em Produção.
+- [x] **Persistência do Logotipo no Banco de Dados**:
+  - [x] Coluna `logoUrl` no modelo `Proposal` e migração no Supabase concluída via Prisma.
+  - [x] `CreateProposalDto` e `UpdateProposalDto` aceitando `logoUrl` e payload de `issuer`.
+  - [x] Persistência bidirecional no `ProposalsService` (proposta e fallback do tenant).
+  - [x] Envio correto do DataURL/URL no `ProposalModal.tsx` e tela `/proposals`.
+- [x] **Refinamento de Impressão A4 (@media print)**:
+  - [x] Regra `@page` em `globals.css` eliminando cabeçalhos e rodapés nativos do navegador.
+  - [x] Ocultação do widget flutuante de suporte e botões de ação no documento impresso.
+  - [x] Remoção de sombras de container e controle de quebra de página (`page-break-inside: avoid`).
+  - [x] Encaixe limpo de todo o conteúdo em página única A4 com tipografia nítida.
+- [x] **Homologação, Build & Deploy**:
+  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0.
+  - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`).
 
 ---
 
