@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function SettingsAgentsPage() {
+export default function SettingsAIPage() {
   redirect("/agent");
 }
