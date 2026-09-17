@@ -1349,21 +1349,21 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Foco do Dia**: Fase 61 (Widget Flutuante de Suporte "Suporte Versus" - Padrão Lero) e Fase 62 (Busca no Chat Interno & Central de Notificações Global).
   - **Diretriz Geral**: Padrão Top SaaS mundial, design corporativo monocromático VERSUS, zero mocks, interatividade total com modais, código 0 e finalização estritamente condicionada ao OK explícito do usuário.
 
-- **[17/09/2026 - Manhã]** ⚡ **Agendamento para Execução: Widget Flutuante de Suporte ("Suporte Versus" - Padrão Lero) (Fase 61)**:
-  - **Status**: ⏳ Em Execução / Pauta Prioritária do Dia (17/09/2026).
+- **[17/09/2026 - 08:00]** ⚡ **[IDE 1] Ativação de Tarefa & Início de Desenvolvimento: Fase 61 (Widget Flutuante de Suporte "Suporte Versus" - Padrão Lero)**:
+  - **Status**: ⚡ Em Desenvolvimento Ativo (Exclusividade IDE 1).
+  - **Divisão de Trabalho**: A **IDE 1** assume com autoridade exclusiva o desenvolvimento de ponta a ponta da **Fase 61 (Widget Flutuante de Suporte "Suporte Versus" - Padrão Lero)**, prevenindo que a **IDE 2** atue na mesma tarefa. A IDE 2 fica direcionada para a **Fase 62 (Busca no Chat Interno & Central de Notificações Global)** ou demandas subsequentes.
   - **Escopo**:
-    1. **Botão Flutuante (Floating Trigger)**: Ícone flutuante discreto e corporativo de suporte fixado no canto inferior da tela (acima da barra lateral ou rodapé), visível em todas as páginas do painel do cliente com indicador de status e avisos.
+    1. **Botão Flutuante Global (Floating Trigger)**: Ícone corporativo discreto de suporte fixado no canto inferior da tela (acima do rodapé/lateral), presente em todas as páginas do painel do cliente, com indicador visual de status e avisos.
     2. **Popover / Modal de Suporte do Cliente**:
-       - Header: Título "Suporte Versus", abas rápidas entre "Suporte" (chamados ativos) e "Avisos" (notificações e atualizações do sistema).
-       - Seção de Chamados Recentes ("Ver meus chamados"): Listagem compacta dos chamados abertos pelo cliente (protocolo ex: #HD-0801, status e última resposta).
-       - Botão destacado: "Abrir solicitação de suporte" (dispara modal de criação de ticket integrado ao `SupportModule`).
-       - Botão de acesso: "Ir para a Central de Ajuda" (redireciona para a rota `/support` com a base de conhecimento e troubleshooting).
-    3. **Integração Real com o Backend**: Consumo dos endpoints de `SupportTicket` e avisos do tenant logado em tempo real, exibindo contadores corretos.
-    4. **Padrão Monocromático & Zero Mocks**: Estritamente alinhado ao design system corporativo do VERSUS (azul escuro, slate e branco, sem gradientes berrantes).
-    5. **Build e Deploy Obrigatórios**: `npx tsc --noEmit` e `npm run build` (código 0) e deploy imediato na VPS (PM2) e Vercel.
+       - Header: "Suporte Versus" com abas rápidas entre "Suporte" (chamados ativos) e "Avisos" (notificações e atualizações do sistema).
+       - Chamados Recentes: Seção "Ver meus chamados" com listagem compacta de tickets abertos (protocolo ex: #HD-0801, status e última resposta).
+       - Ação Primária: Botão destacado "Abrir solicitação de suporte" integrado ao modal de criação do `SupportModule`.
+       - Acesso Completo: Botão "Ir para a Central de Ajuda" direcionando para a rota `/support`.
+    3. **Backend & Governança**: Consumo estrito dos endpoints de `SupportTicket` e avisos do tenant em tempo real. Design monocromático oficial VERSUS (azul escuro `#0B1224`, slate e branco).
+    4. **Builds & Deploy**: Validação com código 0 (`npx tsc --noEmit` e `npm run build`) e deploy na VPS Hostinger (PM2) e Vercel.
 
-### 🟡 FASE 61: WIDGET FLUTUANTE DE SUPORTE ("SUPORTE VERSUS" - PADRÃO LERO)
-> **Status**: ⏳ Em Execução / Pauta Prioritária do Dia (17/09/2026).
+### 🟡 FASE 61: WIDGET FLUTUANTE DE SUPORTE ("SUPORTE VERSUS" - PADRÃO LERO) [EM DESENVOLVIMENTO - IDE 1]
+> **Status**: ⚡ Em Desenvolvimento Ativo (Exclusividade IDE 1).
 - [ ] **Botão Flutuante (Floating Trigger)**:
   - [ ] Ícone discreto e corporativo de suporte fixado no canto inferior da tela.
   - [ ] Indicador/badge de status e avisos pendentes.
