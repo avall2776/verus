@@ -52,6 +52,119 @@ export class ChatService {
     return { waiting, mine, resolved, total: waiting + mine + resolved };
   }
 
+  async getOperatorProductivity(tenantId: string, userId: string) {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    // 1. Buscar atendimentos atribuídos ao operador resolvidos/fechados hoje
+    const todayResolved = await this.prisma.conversation.findMany({
+      where: {
+        tenantId,
+        assignedTo: userId,
+        status: { in: ['resolved', 'closed', 'RESOLVED', 'CLOSED'] },
+        updatedAt: { gte: startOfToday, lte: endOfToday },
+      },
+      include: {
+        messages: {
+          select: {
+            createdAt: true,
+            direction: true,
+            isInternal: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    const todayFinishedCount = todayResolved.length;
+
+    // 2. Cálculo do Tempo Médio de Atendimento (TMA) e 1ª Resposta
+    let tmaSeconds = 0;
+    let firstResponseSeconds = 0;
+
+    if (todayFinishedCount > 0) {
+      let totalDurationSeconds = 0;
+      let totalFirstRespSeconds = 0;
+      let firstRespCount = 0;
+
+      for (const conv of todayResolved) {
+        // Duração total: da criação à resolução
+        const durationSec = Math.max(0, Math.round((new Date(conv.updatedAt).getTime() - new Date(conv.createdAt).getTime()) / 1000));
+        totalDurationSeconds += durationSec;
+
+        // 1ª Resposta: tempo entre o 1º INBOUND do cliente e o 1º OUTBOUND do atendente
+        const inMsgs = conv.messages.filter(m => m.direction === 'INBOUND' && !m.isInternal);
+        const outMsgs = conv.messages.filter(m => m.direction === 'OUTBOUND' && !m.isInternal);
+
+        if (inMsgs.length > 0 && outMsgs.length > 0) {
+          const firstIn = inMsgs[0];
+          const firstOutAfterIn = outMsgs.find(o => new Date(o.createdAt).getTime() >= new Date(firstIn.createdAt).getTime()) || outMsgs[0];
+          const respSec = Math.max(0, Math.round((new Date(firstOutAfterIn.createdAt).getTime() - new Date(firstIn.createdAt).getTime()) / 1000));
+          totalFirstRespSeconds += respSec;
+          firstRespCount++;
+        } else if (outMsgs.length > 0) {
+          const respSec = Math.max(0, Math.round((new Date(outMsgs[0].createdAt).getTime() - new Date(conv.createdAt).getTime()) / 1000));
+          totalFirstRespSeconds += respSec;
+          firstRespCount++;
+        }
+      }
+
+      tmaSeconds = Math.round(totalDurationSeconds / todayFinishedCount);
+      firstResponseSeconds = firstRespCount > 0 ? Math.round(totalFirstRespSeconds / firstRespCount) : 0;
+    }
+
+    // 3. Média diária histórica nos últimos 30 dias do operador
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const pastResolvedCount = await this.prisma.conversation.count({
+      where: {
+        tenantId,
+        assignedTo: userId,
+        status: { in: ['resolved', 'closed', 'RESOLVED', 'CLOSED'] },
+        updatedAt: { gte: thirtyDaysAgo, lt: startOfToday },
+      },
+    });
+
+    const avgDaily = Math.round(pastResolvedCount / 30);
+    let finishedVsAveragePercent = 0;
+    if (avgDaily > 0) {
+      finishedVsAveragePercent = Math.round(((todayFinishedCount - avgDaily) / avgDaily) * 100);
+    }
+
+    // 4. Meta diária configurada ou fallback padrão
+    const userGoal = await this.prisma.goal.findFirst({
+      where: {
+        tenantId,
+        userId,
+      },
+    });
+    const dailyGoal = userGoal?.targetValue ? Math.round(Number(userGoal.targetValue)) : 10;
+
+    const formatDuration = (sec: number): string => {
+      if (sec <= 0) return '0s';
+      if (sec < 60) return `${sec}s`;
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      if (m < 60) {
+        return s > 0 ? `${m}m ${s}s` : `${m}m`;
+      }
+      const h = Math.floor(sec / 3600);
+      const remM = Math.floor((sec % 3600) / 60);
+      return remM > 0 ? `${h}h ${remM}m` : `${h}h`;
+    };
+
+    return {
+      todayFinishedCount,
+      tmaSeconds,
+      firstResponseSeconds,
+      todayAvgTma: todayFinishedCount > 0 && tmaSeconds > 0 ? formatDuration(tmaSeconds) : '0 min',
+      todayFirstResp: todayFinishedCount > 0 && firstResponseSeconds > 0 ? formatDuration(firstResponseSeconds) : '0s',
+      avgDaily,
+      finishedVsAveragePercent,
+      dailyGoal,
+    };
+  }
+
   async findAllConversations(tenantId: string, userId: string, userRole: string, tab: string = 'waiting') {
     const whereClause: any = { tenantId };
     const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';

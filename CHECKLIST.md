@@ -2107,6 +2107,22 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Build & Deploy**:
     - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
     - `npm run build` aprovado com código 0 (44/44 páginas estáticas geradas).
+- [x] **[17/09/2026 - 16:55]** ⚡ **[IDE 1] Eliminação de Mocks & Integração com Banco de Dados Real no Painel de Produtividade do Operador (`/inbox`) - (Fase 75)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Eliminação Integral de Mocks no Card de Produtividade**:
+    - Removidos todos os valores estáticos fictícios (como "14 finalizados hoje", 18% vs média, 6m 40s TMA e 1m 15s resposta).
+  - **Integração Real com Prisma/Supabase (`GET /conversations/operator-productivity`)**:
+    - Conexão do painel aos dados reais do operador logado: contagem de conversas finalizadas com status `resolved` ou `closed` atribuídas ao usuário no dia atual (`startOfToday` a `endOfToday`).
+    - Se não houver atendimentos concluídos no dia, exibe `0` com feedback descritivo e anel de progresso em repouso.
+    - Cálculo real de TMA (Tempo Médio de Atendimento) baseado na duração entre abertura e resolução dos atendimentos do dia.
+    - Cálculo real do tempo de 1ª Resposta computado entre a primeira mensagem recebida (`INBOUND`) e a primeira resposta enviada (`OUTBOUND`).
+    - Comparativo dinâmico de performance com a média diária histórica calculada nos últimos 30 dias de operação do atendente.
+    - Reatividade em tempo real: atualização automática a cada 10s e invalidação imediata do cache ao clicar em "Finalizar Atendimento" (`handleRelease`).
+  - **Padrão Monocromático VERSUS**:
+    - Card em `#0B1224`, containers internos em `#070D1B`, anel com gradiente corporativo azul (`#2563EB` a `#3B82F6`), bordas refinadas em `slate-800` e tipografia nítida sem cores verdes ou roxas estridentes.
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0 (Frontend e Backend).
+    - `npm run build` aprovado com código 0 em ambas as pontas.
     - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`) e Vercel via GitHub `main`.
 
 ---

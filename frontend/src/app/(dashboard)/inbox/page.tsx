@@ -712,6 +712,21 @@ function InboxContent() {
     refetchOnWindowFocus: false,
   });
 
+  const { data: productivityData, refetch: refetchProductivity } = useQuery({
+    queryKey: ['operatorProductivity'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/conversations/operator-productivity');
+        return data;
+      } catch (e) {
+        return null;
+      }
+    },
+    refetchInterval: 10000,
+    retry: false,
+    refetchOnWindowFocus: true,
+  });
+
   const { data: directoryContacts = [] } = useQuery({
     queryKey: ['directoryContacts'],
     queryFn: async () => {
@@ -960,6 +975,8 @@ function InboxContent() {
       await api.patch(`/conversations/${activeChat}/release`);
       setActiveChat(null); // Deseleciona o chat
       refetchConversations();
+      refetchCounts();
+      refetchProductivity();
     } catch (error) {
       console.error("Erro ao finalizar", error);
     }
@@ -1174,12 +1191,12 @@ function InboxContent() {
     return 'Operador';
   })();
 
-  const todayFinishedCount = 14;
-  const dailyGoal = 18;
-  const finishedVsAveragePercent = 18;
-  const avgDaily = 12;
-  const todayAvgTma = "6m 40s";
-  const todayFirstResp = "1m 15s";
+  const todayFinishedCount = productivityData?.todayFinishedCount ?? 0;
+  const dailyGoal = productivityData?.dailyGoal ?? 10;
+  const finishedVsAveragePercent = productivityData?.finishedVsAveragePercent ?? 0;
+  const avgDaily = productivityData?.avgDaily ?? 0;
+  const todayAvgTma = productivityData?.todayAvgTma ?? "0 min";
+  const todayFirstResp = productivityData?.todayFirstResp ?? "0s";
 
   return (
     <div className="flex h-full w-full bg-[#0B1224] overflow-hidden">
@@ -1628,11 +1645,11 @@ function InboxContent() {
               </div>
             </div>
 
-            {/* Centro: Card circular de produtividade com progresso e estatísticas */}
+            {/* Centro: Card circular de produtividade com progresso e estatísticas reais */}
             <div className="flex flex-col items-center justify-center max-w-lg mx-auto w-full my-auto text-center">
-              <div className="w-full bg-[#0F172A] border border-gray-800/80 rounded-2xl p-8 shadow-2xl relative overflow-hidden backdrop-blur-md">
+              <div className="w-full bg-[#0B1224] border border-slate-800 rounded-2xl p-8 shadow-2xl relative overflow-hidden backdrop-blur-md">
                 <div className="absolute -top-12 -right-12 w-36 h-36 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
-                <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-blue-600/5 rounded-full blur-2xl pointer-events-none"></div>
 
                 {/* Título e Saudação */}
                 <div className="mb-6">
@@ -1676,8 +1693,8 @@ function InboxContent() {
                       />
                       <defs>
                         <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#3B82F6" />
-                          <stop offset="100%" stopColor="#10B981" />
+                          <stop offset="0%" stopColor="#2563EB" />
+                          <stop offset="100%" stopColor="#3B82F6" />
                         </linearGradient>
                       </defs>
                     </svg>
@@ -1694,19 +1711,27 @@ function InboxContent() {
                   </div>
 
                   {/* Comparação com a média */}
-                  <div className="mt-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-                    <TrendingUp size={14} />
-                    <span>+{finishedVsAveragePercent}% vs sua média diária ({avgDaily} atendimentos)</span>
+                  <div className="mt-4 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#070D1B] border border-slate-800 text-xs font-semibold">
+                    <TrendingUp size={14} className={todayFinishedCount >= avgDaily && todayFinishedCount > 0 ? "text-emerald-400" : "text-blue-400"} />
+                    {todayFinishedCount === 0 ? (
+                      <span className="text-slate-400">
+                        Nenhum atendimento finalizado hoje {avgDaily > 0 ? `(Média: ${avgDaily}/dia)` : `(Meta: ${dailyGoal})`}
+                      </span>
+                    ) : (
+                      <span className="text-slate-300">
+                        {finishedVsAveragePercent >= 0 ? `+${finishedVsAveragePercent}%` : `${finishedVsAveragePercent}%`} vs sua média diária ({avgDaily} atendimentos)
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 {/* Badges de Apoio */}
-                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-800/80 text-left text-xs">
-                  <div className="bg-[#11192A] p-3 rounded-xl border border-gray-800/60">
+                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-800 text-left text-xs">
+                  <div className="bg-[#070D1B] p-3.5 rounded-xl border border-slate-800">
                     <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">TMA Médio Hoje</span>
                     <span className="text-base font-bold text-white">{todayAvgTma}</span>
                   </div>
-                  <div className="bg-[#11192A] p-3 rounded-xl border border-gray-800/60">
+                  <div className="bg-[#070D1B] p-3.5 rounded-xl border border-slate-800">
                     <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">1ª Resposta Média</span>
                     <span className="text-base font-bold text-white">{todayFirstResp}</span>
                   </div>
@@ -1714,7 +1739,7 @@ function InboxContent() {
               </div>
 
               {/* Texto Auxiliar no Rodapé */}
-              <div className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-400 bg-[#0F172A]/80 px-5 py-2.5 rounded-xl border border-gray-800/60">
+              <div className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-400 bg-[#0B1224] px-5 py-2.5 rounded-xl border border-slate-800">
                 <MessageSquare size={15} className="text-blue-400 shrink-0" />
                 <span>Nada selecionado ainda. Escolha uma conversa para continuar.</span>
               </div>

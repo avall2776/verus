@@ -30,6 +30,14 @@ export class ChatController {
     return this.chatService.getConversationCounts(tenantId, req.user.id, req.user.role);
   }
 
+  @Get('operator-productivity')
+  async getOperatorProductivity(
+    @CurrentTenant() tenantId: string,
+    @Request() req: any,
+  ) {
+    return this.chatService.getOperatorProductivity(tenantId, req.user.id);
+  }
+
   @Get('scheduled/all')
   async getAllScheduledMessages(
     @CurrentTenant() tenantId: string,
