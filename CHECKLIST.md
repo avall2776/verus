@@ -1906,6 +1906,40 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 em ambas as pontas.
   - [x] Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine`).
 
+- [x] **[17/09/2026 - 15:10]** ⚡ **[IDE 1] Conclusão: Persistência do Upload da Logo e Refinamento de Impressão A4 das Propostas Comerciais (`/proposals`) (Fase 70)**:
+  - **Status**: ✅ Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Persistência do Logotipo do Emitente (Prisma / Supabase)**:
+    - Campo `logoUrl String?` adicionado ao model `Proposal` no schema Prisma (`schema.prisma`) e sincronizado com o Supabase (`npx prisma db push`).
+    - DTOs atualizados (`CreateProposalDto`, `UpdateProposalDto`) aceitando `logoUrl` e estrutura de `issuer`.
+    - `ProposalsService` ajustado para persistir `logoUrl` diretamente na proposta e espelhar como fallback nas configurações da organização (`tenant.logoUrl`).
+    - `formatProposal` garantindo retorno consistente de `logoUrl` e `issuer.logoUrl`.
+    - Modal de Edição (`ProposalModal.tsx`) e página `/proposals` ajustados para carregar a logo salva, armazenar cache no `localStorage` (`versus_proposal_issuer_cache`) e enviar o payload completo sem perdas.
+  - **Refinamento da Folha de Estilo de Impressão (`@media print`) e Ajuste A4**:
+    - `@page { size: A4 portrait; margin: 8mm 10mm 8mm 10mm; }` configurado em `globals.css` para eliminar cabeçalhos e rodapés gerados pelo navegador (URLs, títulos e datas).
+    - Remoção estrita de artefatos de tela no print: widget flutuante de suporte (`#floating-support-widget` com `print:hidden`), botões de ação e sombras excessivas de container (`box-shadow: none !important`).
+    - Contêiner do documento no modal de visualização (`ProposalPreviewModal.tsx`) configurado com `print:static print:overflow-visible print:border-0 print:shadow-none print:p-0` e quebra interna evitada (`page-break-inside: avoid`).
+    - Ajuste de espaçamentos verticais e tipografia corporativa nítida para encaixe exato em 1 página A4.
+    - Suporte a logos em formato Data URL (base64) e links externos nos previews e página pública de proposta (`/p/[code]`).
+  - **Build & Deploy**:
+    - `npx tsc --noEmit` e `npm run build` validados com código 0 (frontend e backend).
+    - Deploy sincronizado em produção na VPS Hostinger (PM2 `versus-engine` online) e Vercel via commit `ca45ace`.
+
+### 🟢 FASE 70: PERSISTÊNCIA DA LOGO E REFINAMENTO DE IMPRESSÃO A4 EM PROPOSTAS COMERCIAIS (/PROPOSALS) [CONCLUÍDA - IDE 1]
+> **Status**: ✅ Concluída com Sucesso, Builds Código 0 e Homologada em Produção.
+- [x] **Persistência do Logotipo no Banco de Dados**:
+  - [x] Coluna `logoUrl` no modelo `Proposal` e migração no Supabase concluída via Prisma.
+  - [x] `CreateProposalDto` e `UpdateProposalDto` aceitando `logoUrl` e payload de `issuer`.
+  - [x] Persistência bidirecional no `ProposalsService` (proposta e fallback do tenant).
+  - [x] Envio correto do DataURL/URL no `ProposalModal.tsx` e tela `/proposals`.
+- [x] **Refinamento de Impressão A4 (@media print)**:
+  - [x] Regra `@page` em `globals.css` eliminando cabeçalhos e rodapés nativos do navegador.
+  - [x] Ocultação do widget flutuante de suporte e botões de ação no documento impresso.
+  - [x] Remoção de sombras de container e controle de quebra de página (`page-break-inside: avoid`).
+  - [x] Encaixe limpo de todo o conteúdo em página única A4 com tipografia nítida.
+- [x] **Homologação, Build & Deploy**:
+  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0.
+  - [x] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`).
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
