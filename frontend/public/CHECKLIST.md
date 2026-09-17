@@ -1540,6 +1540,27 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
   - [x] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
+- [ ] **[17/09/2026 - 09:58]** ⚡ **[IDE 2] Início: Engenharia de Produto (/super-admin/engineering) - Pipeline de Feedbacks, Backlog Automatizado & Assistente IA de Engenharia (Fase 66)**:
+  - **Status**: 🟡 Em Andamento por IDE 2.
+  - **Nova Aba no Menu Global (`/super-admin/engineering`)**: Adição de "Engenharia" no menu lateral do Super Admin com ícone técnico (`Cpu`/`Layers`) e identidade monocromática VERSUS (#0B1224, slate e branco).
+  - **Pipeline de Feedbacks e Ideias (Backlog Automatizado)**: Kanban/gestão de melhorias em colunas (*Ideias Capturadas*, *Em Análise por IA*, *Em Desenvolvimento*, *Deploy Realizado*), captura rápida de chamados resolvidos do suporte para engenharia, e criação manual de iniciativas técnicas.
+  - **Chat Dedicado com IA (Assistente de Engenharia OpenAI)**: Seção de IA Engenheiro-Chefe conectada à `OPENAI_API_KEY`, auxiliando no backlog, sugestão de código, arquitetura de APIs e evolução do sistema.
+  - **Build & Deploy**: Validação completa com `npx tsc --noEmit`, `npm run build`, push no Git e atualização na VPS Hostinger (PM2).
+
+### 🟡 FASE 66: ENGENHARIA DE PRODUTO (/SUPER-ADMIN/ENGINEERING) - PIPELINE DE FEEDBACKS & IA ENGENHEIRO-CHEFE [EM ANDAMENTO - IDE 2]
+- [ ] **Nova Aba no Menu Global (`/super-admin/engineering`)**:
+  - [ ] Ícone técnico no menu lateral e layout monocromático escuro VERSUS.
+- [ ] **Pipeline de Feedbacks e Ideias (Backlog Automatizado)**:
+  - [ ] Kanban de melhorias com 4 fases: Ideias Capturadas, Em Análise por IA, Em Desenvolvimento, Deploy Realizado.
+  - [ ] Integração de captura rápida em `/super-admin/support` ao resolver chamados ("Enviar para Engenharia").
+  - [ ] Criação e edição manual de itens de backlog com tags, impacto e prioridade.
+- [ ] **Chat Dedicado com IA (Assistente de Engenharia OpenAI)**:
+  - [ ] Assistente Engenheiro de Software Chefe integrado com a API OpenAI configurada no ambiente.
+  - [ ] Contexto analítico alimentado pelas conversas e pelo backlog técnico.
+- [ ] **Validação de Build & Deploy**:
+  - [ ] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
+  - [ ] Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
