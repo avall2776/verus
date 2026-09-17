@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './shared/database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { QueueModule } from './modules/queues/queue.module';
@@ -33,6 +34,7 @@ import { EngineeringModule } from './modules/engineering/engineering.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
     StorageModule,
     AuthModule,
