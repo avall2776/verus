@@ -1809,11 +1809,48 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [ ] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
   - [ ] Deploy na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
+- **[17/09/2026 - 11:52]** ⏸️ **Ponto Eletrônico Registrado: Pausa de Almoço / Intervalo do Meio-Dia (IDE 1)**:
+  - **Status do Ponto**: ⏸️ Pausa de Almoço Registrada (Saída às 11:52 / Meio-Dia).
+  - **Balanço da Manhã (IDE 1)**:
+    - ✅ Concluída: **Fase 61** (Widget Flutuante de Suporte "Suporte Versus" - Padrão Lero) com builds 0 erros e deploy na nuvem.
+    - ✅ Concluído: Refinamento Estrutural e Visual do Inbox WhatsApp (`/inbox`) em padrão corporativo monocromático.
+    - ✅ Concluído: Correção cirúrgica de Filtros, Popover de Opções e Foto de Perfil da Instância no Inbox.
+    - ✅ Concluído: Auto-Scroll instantâneo na última mensagem e painel de dados lateral recolhido por padrão.
+    - ✅ Concluído: Uploader de Foto de Perfil na Conexão WhatsApp e Validação do pareamento por QR Code.
+    - 📋 Especificada: Integração do Módulo de Faturamento e Assinaturas Automatizadas (Stripe / Asaas).
+    - 📋 Registrada e Agendada para a Tarde: **Fase 69** (Refinamento Técnico & Visual de Agentes de IA `/settings/ai`).
+    - 📋 Registrada e Agendada para a Tarde: **Fase 71** (Redesign e Evolução de Alto Impacto do Preloader & Welcome Experience).
+    - 🚀 Registrada no Roadmap: **Suite ERP & Gestão Empresarial Integrada de Ponta a Ponta** (Padrão Omie com Tecnologia VERSUS).
+  - **Retorno Previsto**: 13:00 para execução das tarefas agendadas da tarde.
+
 ---
 
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
 *Esta seção armazena ideias arquiteturais avançadas e expansões de escopo para longo prazo.*
 
+- [ ] **Suite ERP & Gestão Empresarial Integrada de Ponta a Ponta ("VERSUS ERP & Backoffice Suite" - Padrão Omie / Tecnologia VERSUS):**
+  - **Visão Geral**: Expansão do ecossistema VERSUS para além do CRM e Atendimento Omnichannel, incorporando uma suíte completa de gestão empresarial integrada em tempo real, inspirada no modelo Omie com arquitetura corporativa moderna, IA nativa e design system monocromático (#0B1224, slate, branco).
+  - **1. CRM Inteligente & Vendas Preditivas:**
+    - Acompanhamento unificado do ciclo de vida dos clientes, histórico omnichannel (WhatsApp, E-mail, reuniões), compras, vendas e previsibilidade de receita com pontuação e qualificação preditiva por IA.
+  - **2. Vendas e Emissão de NF-e (Produtos):**
+    - Gestão completa de pedidos comerciais, propostas e orçamentos com faturamento automático em 1 clique.
+    - Emissão integrada de NF-e (Nota Fiscal Eletrônica de Produto - Modelo 55) e NFC-e (Nota Fiscal de Consumidor Eletrônica - Modelo 65).
+    - Motor de cálculo tributário automático (ICMS, IPI, PIS, COFINS, Substituição Tributária e DIFAL) integrado a provedores fiscais (Focus NFe / PlugNotas / Nuvem Fiscal / SEFAZ direta).
+  - **3. Finanças, Tesouraria & Conciliação Bancária:**
+    - Painel financeiro executivo com contas a pagar, contas a receber, gestão de fluxo de caixa previsto vs. realizado e DRE em tempo real.
+    - Conciliação bancária automatizada via importação de extratos OFX e conexão bancária via Open Finance.
+    - Emissão integrada de boletos bancários e cobranças via PIX com baixa automática no sistema.
+  - **4. Gestão de Estoque & Produção (PCP):**
+    - Controle dinâmico de estoque com múltiplos armazéns e filiais, rastreamento por lote, grade e validade.
+    - Ponto de pedido automatizado com alertas preditivos de ressuprimento gerados por IA.
+    - Controle básico de produção e manufatura (BOM - Bill of Materials / Ficha Técnica) com baixa automática de matérias-primas e insumos na conclusão de ordens de serviço/venda.
+  - **5. Painel do Contador (Portal Colaborativo da Contabilidade):**
+    - Acesso restrito e exclusivo para o contador credenciado da empresa acessar balancetes, relatórios contábeis, livros fiscais e exportações SPED (Fiscal e Contribuições).
+    - Download em lote de todos os arquivos XML das notas fiscais emitidas e recebidas do período com 1 clique.
+  - **6. Serviços e Emissão de NFS-e (Notas Fiscais de Serviços):**
+    - Gestão de ordens de serviço, contratos de prestação recorrente de serviços (mensalidades / planos) e faturamento programado.
+    - Emissão automatizada de NFS-e integrada com as APIs dos padrões das principais prefeituras brasileiras (ABRASF, Ginfes, Betha, etc.).
+    - Envio automático de recibos, notas fiscais e cobranças para o cliente final via WhatsApp e E-mail corporativo.
 - [ ] **Módulo de Faturamento, Assinaturas & Gateway de Pagamentos Automatizados (Stripe / Asaas):**
   - **Segurança & Tokenização (Zero PCI-DSS Direct Storage):**
     - Proibição absoluta de armazenamento de dados sensíveis de cartões de crédito (número, CVV, data de validade) no banco de dados da aplicação.
