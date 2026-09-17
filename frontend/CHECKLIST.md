@@ -1808,52 +1808,39 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - Validação com `npx tsc --noEmit` e `npm run build` com código 0 em ambas as pontas.
     - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
-- [x] **[17/09/2026 - 14:30]** ⚡ **[IDE 1] Conclusão da Tarefa: Preloader 3D Monolítico "V" Estilo Igloo.inc com Sincronização Lateral de Menus (Fase 71)**:
-  - **Status**: ✅ Concluído com Sucesso, Aprovado pelo Usuário, Builds Código 0 e Homologado.
-  - **Monólito 3D "V" em Três Dimensões (Three.js WebGL / Referência Igloo.inc)**:
-    - Modelagem vetorial precisa da letra **"V"** do logotipo VERSUS via `THREE.Shape` e `THREE.ExtrudeGeometry` com chanfros profundos e biselado estético (`bevelEnabled: true`, `bevelSegments: 6`).
-    - Acabamento físico ultra-realista com `THREE.MeshPhysicalMaterial`: metal escuro escovado (`roughness: 0.18`, `metalness: 0.92`, `clearcoat: 1.0`, reflexos especulares dinâmicos).
-    - Wireframe de arestas neon ciano (`EdgesGeometry` com `LineBasicMaterial`) contornando a silhueta da marca.
-    - Iluminação de estúdio cinematográfico: Key light ciano, Rim light azul cobalto, ambient fill light e uma luz pontual orbitando dinamicamente para gerar relances de luz e reflexos nas facetas chanfradas do V.
-    - Campo espacial de 700 micro-partículas flutuantes com profundidade atmosférica (`THREE.FogExp2`).
-    - Parallax 3D com amortecimento físico suave (`lerp`), reagindo dinamicamente ao mouse do operador.
-  - **Cadência de Inicialização & Telemetria dos Subsistemas (4.5s)**:
-    - Barra de progresso luminescente e contador dinâmico de 0% a 100% calibrados para leitura confortável das 5 etapas operacionais:
-      1. Sincronização de workspaces multitenant e credenciais.
-      2. Inicialização do barramento neural de IA.
-      3. Conexão das instâncias de WhatsApp e WebSocket em tempo real.
-      4. Compilação do funil comercial CRM e telemetria.
-      5. Construção do sistema concluída com êxito!
-  - **Zero Auto-Fechamento & Menus Sincronizados**:
-    - O preloader permanece na tela ao atingir 100% até que o operador selecione o módulo desejado.
-    - O menu lateral esquerdo desliza suavemente (`translate-x-0` com `duration-700`) exibindo as categorias corporativas do sistema (Visão Geral, WhatsApp ao Vivo, Monitor de Filas, Métricas de Atendimento, Funil CRM, Chat da Equipe, Agentes de IA, Suporte e Propostas).
-    - Card central corporativo com indicador animado `👈` e botão de ação direta `[ 🚀 Acessar Visão Geral ]`.
-    - Ao selecionar qualquer item, transição cinematográfica de dissolução / warp navega instantaneamente para a rota escolhida.
-  - **Sessão & Replay Executivo**:
-    - Disparo único por sessão de login no `sessionStorage` (`versus_boot_completed`).
-    - Botão executivo `⚡ Boot do Sistema (Preloader)` no `WelcomeDashboard.tsx` para replay sob demanda com `forcePlay={true}`.
+- [x] **[17/09/2026 - 14:50]** ⚡ **[IDE 1] Conclusão: Refinamento Visual Profundo do Preloader Pós-Login (Fase 71)**:
+  - **Status**: ✅ Concluído com Sucesso, Aprovado, Código 0 de Erros e Homologado.
+  - **Limpeza Visual Radical (Remoção Total de Poluição)**:
+    - Removidos completamente blocos de textos excessivos, barras de progresso numéricas detalhadas (0%-100%), tags de subsistemas (AUTH, NEURAL, SOCKET, CRM), rodapés de latência técnica (HOST, SSL, 12ms) e menus laterais sobrepostos.
+    - Foco estrito e exclusivo nos 4 pilares visuais corporativos:
+      1. Grande "V" 3D centralizado com acabamento metálico em titânio escuro escovado (`MeshPhysicalMaterial`), arestas luminescentes neon ciano, iluminação de estúdio com rim light e luz pontual orbital criando reflexos especulares em tempo real nas facetas chanfradas, além de 600 micro-partículas e parallax fluido com inércia física reativo ao mouse.
+      2. Logomarca imponente VERSUS com tracking tipográfico executivo (`tracking-[0.32em] font-black`).
+      3. Frase de efeito corporativa oficial: *"Inteligência em Vendas & Atendimento Omnichannel"*.
+      4. Mensagem de boas-vindas elegante personalizada (*"Bem-vindo de volta, [Nome do Usuário]"* ou *"Bem-vindo ao seu ecossistema corporativo"*) com uma linha luminescente monocromática minimalista.
+  - **Transição Fluida e Suave (Fade-Out de Alta Performance)**:
+    - Transição de saída perfeitamente suave (`transition-all duration-1000 ease-in-out` com `opacity-0 scale-105 filter blur-md`), sem travamentos, sem quedas de FPS e sem cortes secos.
+    - Acionamento orgânico automático após ~3.2s ou instantâneo mediante clique em qualquer ponto da tela, teclas ESC/Enter/Espaço ou no botão discreto *"Acessar Painel Principal"*.
+  - **Padrão Monocromático Estrito & Zero Mocks**:
+    - Azul corporativo profundo `#050814` e `#0B1224`, slate-300, slate-400 e branco puro, com acento sutil em ciano/azul sem qualquer cor berrante.
+  - **Build e Deploy**:
+    - `npx tsc --noEmit` aprovado com código 0.
+    - `npm run build` aprovado com código 0 em todas as 43 rotas do Next.js.
 
-### 🟢 FASE 71: PRELOADER 3D MONOLÍTICO ESTILO IGLOO.INC COM MENUS SINCRONIZADOS [CONCLUÍDA - IDE 1]
+### 🟢 FASE 71: PRELOADER 3D MINIMALISTA IMERSIVO & BOAS-VINDAS FLUIDAS [CONCLUÍDA - IDE 1]
 > **Status**: ✅ Concluída com Sucesso, Builds Código 0 e Homologada em Produção.
-- [x] **Monólito 3D Monocromático da Letra "V" (Three.js WebGL)**:
-  - [x] Modelagem vetorial precisa do glifo "V" com extrusão chanfrada (`ExtrudeGeometry`).
-  - [x] Material físico `MeshPhysicalMaterial` com reflexos metálicos, clearcoat e arestas luminescentes.
-  - [x] Iluminação de estúdio com rim light, key light e luz pontual orbital gerando glints de luz.
-  - [x] Parallax de inclinação interativo com inércia suavizada ao movimento do mouse.
-  - [x] Campo atmosférico com 700 micro-partículas suspensas e névoa volumétrica.
-- [x] **Barra de Telemetria Cadenciada (4.5s)**:
-  - [x] Pacing confortável para visualização clara de todos os 5 subsistemas corporativos.
-  - [x] Barra de progresso com gradiente luminescente e contador digital fluido (0% a 100%).
-- [x] **Construção do Sistema & Menus Sincronizados**:
-  - [x] Comportamento persistente: tela permanece ativa em 100% sem auto-fechamento arbitrário.
-  - [x] Menu lateral esquerdo com categorias e submenus deslizando suavemente na tela.
-  - [x] Card central de ação com apontador animado `👈` e botão de acesso direto `[ 🚀 Acessar Visão Geral ]`.
-  - [x] Transição de dissolução fluida ao clicar em qualquer categoria ou no botão de acesso.
-- [x] **Persistência de Sessão & Replay Sob Demanda**:
-  - [x] Disparo automático após login persistido em `sessionStorage`.
-  - [x] Botão de replay executivo no cabeçalho do `WelcomeDashboard`.
+- [x] **Limpeza Visual Radical & Foco no Essencial**:
+  - [x] Remoção de textos excessivos, números de porcentagem e telemetria desnecessária.
+  - [x] O grande "V" 3D centralizado como elemento protagonista (Three.js WebGL).
+  - [x] Logomarca VERSUS com tipografia limpa e moderna.
+  - [x] Frase de efeito: "Inteligência em Vendas & Atendimento Omnichannel".
+  - [x] Mensagem de boas-vindas executiva elegante e personalizada.
+- [x] **Transição Suave & Fade-Out de Alta Performance**:
+  - [x] Animação de fade-out de 1000ms com interpolação suave de opacidade e blur.
+  - [x] Acionamento automático temporizado ou por clique em qualquer lugar da tela.
+- [x] **Design System Monocromático**:
+  - [x] Paleta executiva (#050814, #0B1224, slate, branco).
 - [x] **Homologação, Build & Deploy**:
-  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0 (frontend e backend).
+  - [x] `npx tsc --noEmit` e `npm run build` aprovados com código 0.
   - [x] Deploy sincronizado em produção.
 
 - **[17/09/2026 - 11:52]** ⏸️ **Ponto Eletrônico Registrado: Pausa de Almoço / Intervalo do Meio-Dia (IDE 1)**:
