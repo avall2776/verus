@@ -164,6 +164,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,11 +183,15 @@ export default function LoginPage() {
         sessionStorage.removeItem("versus_boot_completed");
       } catch (e) {}
       
-      if (data.user?.isSuperAdmin || data.user?.role === 'SUPER_ADMIN') {
-        router.push("/super-admin/companies");
-      } else {
-        router.push("/dashboard");
-      }
+      // Ativa a transição suave de saída para o preloader
+      setLoginSuccess(true);
+      setTimeout(() => {
+        if (data.user?.isSuperAdmin || data.user?.role === 'SUPER_ADMIN') {
+          router.push("/super-admin/companies");
+        } else {
+          router.push("/dashboard");
+        }
+      }, 550);
     } catch (err: any) {
       setError(err.response?.data?.message || "Erro ao conectar com o servidor.");
       setLoading(false);
@@ -209,8 +214,12 @@ export default function LoginPage() {
         </a>
       </div>
 
-      {/* Container Principal com Animação de Entrada Holográfica e Float contínuo */}
-      <div className="w-full max-w-[440px] p-6 relative z-10 animate-[hologramBoot_2s_ease-out_forwards,float_7s_ease-in-out_2s_infinite_alternate] opacity-0">
+      {/* Container Principal com Animação de Entrada Holográfica, Float contínuo e Saída Fluida */}
+      <div className={`w-full max-w-[440px] p-6 relative z-10 transition-all duration-700 ease-out ${
+        loginSuccess
+          ? "opacity-0 scale-90 filter blur-2xl pointer-events-none"
+          : "animate-[hologramBoot_2s_ease-out_forwards,float_7s_ease-in-out_2s_infinite_alternate] opacity-0"
+      }`}>
         <style dangerouslySetInnerHTML={{__html: `
           @keyframes float {
             0% { transform: translateY(-4px); }

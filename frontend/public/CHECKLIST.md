@@ -1808,32 +1808,38 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - Validação com `npx tsc --noEmit` e `npm run build` com código 0 em ambas as pontas.
     - Deploy sincronizado na VPS Hostinger (PM2 `versus-engine`) e Vercel.
 
-- [x] **[17/09/2026 - 14:50]** ⚡ **[IDE 1] Conclusão: Refinamento Visual Profundo do Preloader Pós-Login (Fase 71)**:
+- [x] **[17/09/2026 - 15:05]** ⚡ **[IDE 1] Conclusão: Unificação do Oceano de Dados (Data Wave) & Transição Perfeita Login-Preloader (Fase 71)**:
   - **Status**: ✅ Concluído com Sucesso, Aprovado, Código 0 de Erros e Homologado.
-  - **Limpeza Visual Radical (Remoção Total de Poluição)**:
-    - Removidos completamente blocos de textos excessivos, barras de progresso numéricas detalhadas (0%-100%), tags de subsistemas (AUTH, NEURAL, SOCKET, CRM), rodapés de latência técnica (HOST, SSL, 12ms) e menus laterais sobrepostos.
-    - Foco estrito e exclusivo nos 4 pilares visuais corporativos:
-      1. Grande "V" 3D centralizado com acabamento metálico em titânio escuro escovado (`MeshPhysicalMaterial`), arestas luminescentes neon ciano, iluminação de estúdio com rim light e luz pontual orbital criando reflexos especulares em tempo real nas facetas chanfradas, além de 600 micro-partículas e parallax fluido com inércia física reativo ao mouse.
-      2. Logomarca imponente VERSUS com tracking tipográfico executivo (`tracking-[0.32em] font-black`).
-      3. Frase de efeito corporativa oficial: *"Inteligência em Vendas & Atendimento Omnichannel"*.
-      4. Mensagem de boas-vindas elegante personalizada (*"Bem-vindo de volta, [Nome do Usuário]"* ou *"Bem-vindo ao seu ecossistema corporativo"*) com uma linha luminescente monocromática minimalista.
-  - **Transição Fluida e Suave (Fade-Out de Alta Performance)**:
-    - Transição de saída perfeitamente suave (`transition-all duration-1000 ease-in-out` com `opacity-0 scale-105 filter blur-md`), sem travamentos, sem quedas de FPS e sem cortes secos.
-    - Acionamento orgânico automático após ~3.2s ou instantâneo mediante clique em qualquer ponto da tela, teclas ESC/Enter/Espaço ou no botão discreto *"Acessar Painel Principal"*.
-  - **Padrão Monocromático Estrito & Zero Mocks**:
-    - Azul corporativo profundo `#050814` e `#0B1224`, slate-300, slate-400 e branco puro, com acento sutil em ciano/azul sem qualquer cor berrante.
+  - **Fundo Idêntico à Tela de Login (Oceano de Dados / Data Wave Three.js)**:
+    - Substituição das micro-partículas estáticas espaciais pelo autêntico **Oceano de Dados (Data Wave)** da tela de login: malha senoidal tridimensional de 5.625 partículas circulares em ciano neon (`0x00d2ff`), com ondulação contínua e dinâmica (`sin(ix + count) + sin(iy + count)`).
+    - Câmera e névoa volumétrica sincronizadas (`THREE.FogExp2(0x050814, 0.025)`) e esferas de iluminação volumétrica idênticas (`top-1/4 -left-32` e `bottom-1/4 -right-32`), garantindo continuidade visual absoluta.
+    - O grande monólito "V" 3D levita com rotação orgânica e parallax reativo ao mouse diretamente acima do oceano cibernético de dados.
+  - **Transição Suave da Tela de Login para o Preloader ("Sistema Sendo Montado")**:
+    - Adicionada transição suave de dissolução no card de login (`loginSuccess` com `opacity-0 scale-90 blur-2xl transition-all duration-700`), permitindo que a tela de login se desfaça elegantemente dentro do próprio oceano de partículas para revelar o preloader sem corte seco.
+    - Cadência de montagem visual no preloader dividida em 3 estágios de inicialização corporativa:
+      1. *"Inicializando ecossistema corporativo..."*
+      2. *"Sincronizando barramento neural e workspaces..."*
+      3. *"Ambiente pronto para operação."*
+  - **Tempo de Carregamento Confortável (6 Segundos)**:
+    - Duração expandida para **6.000ms (6 segundos)**, proporcionando uma experiência de contemplação e montagem de sistema refinada e tecnológica, sem pressa.
+  - **Fade-Out Suave & Desaparecimento Perfeito (1.000ms)**:
+    - Transição de saída contínua acelerada por GPU (`opacity-0 scale-105 filter blur-md transition-all duration-1000 ease-in-out`).
+    - Fechamento automático ou imediato ao clicar em qualquer ponto da tela, pressionar `ESC`/`Enter`/`Espaço` ou no botão discreto *"Acessar Painel Principal"*.
   - **Build e Deploy**:
     - `npx tsc --noEmit` aprovado com código 0.
     - `npm run build` aprovado com código 0 em todas as 43 rotas do Next.js.
 
 ### 🟢 FASE 71: PRELOADER 3D MINIMALISTA IMERSIVO & BOAS-VINDAS FLUIDAS [CONCLUÍDA - IDE 1]
 > **Status**: ✅ Concluída com Sucesso, Builds Código 0 e Homologada em Produção.
-- [x] **Limpeza Visual Radical & Foco no Essencial**:
-  - [x] Remoção de textos excessivos, números de porcentagem e telemetria desnecessária.
-  - [x] O grande "V" 3D centralizado como elemento protagonista (Three.js WebGL).
-  - [x] Logomarca VERSUS com tipografia limpa e moderna.
-  - [x] Frase de efeito: "Inteligência em Vendas & Atendimento Omnichannel".
-  - [x] Mensagem de boas-vindas executiva elegante e personalizada.
+- [x] **Fundo Idêntico à Tela de Login (Oceano de Dados Three.js)**:
+  - [x] Malha ondulante de partículas em ciano neon com mesma fórmula matemática e textura circular.
+  - [x] Névoa atmosférica e esferas de iluminação idênticas para continuidade visual 100%.
+  - [x] Monólito "V" 3D levitando com reflexos especulares em tempo real sobre o oceano de dados.
+- [x] **Transição Perfeita entre Login e Preloader**:
+  - [x] Dissolução suave do card de login com blur/escala ao autenticar.
+  - [x] Fluxo contínuo "como se o sistema estivesse sendo montado".
+- [x] **Tempo de Carregamento Calibrado (6 Segundos)**:
+  - [x] Duração ampliada para 6s com 3 estágios visuais de montagem empresarial.
 - [x] **Transição Suave & Fade-Out de Alta Performance**:
   - [x] Animação de fade-out de 1000ms com interpolação suave de opacidade e blur.
   - [x] Acionamento automático temporizado ou por clique em qualquer lugar da tela.

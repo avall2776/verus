@@ -222,7 +222,7 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
       {/* Preloader de Alto Impacto com Three.js */}
       {showPreloader && (
         <VersusPreloader
-          durationMs={3200}
+          durationMs={6000}
           userName={userName}
           forcePlay={forcePlayPreloader}
           onComplete={handlePreloaderComplete}
