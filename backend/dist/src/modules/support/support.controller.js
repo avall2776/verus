@@ -69,6 +69,11 @@ let SupportController = class SupportController {
         const tenantId = req.user.tenantId;
         return this.supportService.assign(id, tenantId, body?.assignedToId ?? null, isSuperAdmin);
     }
+    async getAiCopilotSuggestion(req, id) {
+        const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
+        const tenantId = req.user.tenantId;
+        return this.supportService.generateCopilotSuggestion(id, tenantId, isSuperAdmin);
+    }
 };
 exports.SupportController = SupportController;
 __decorate([
@@ -129,6 +134,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, Object]),
     __metadata("design:returntype", Promise)
 ], SupportController.prototype, "assign", null);
+__decorate([
+    (0, common_1.Post)('tickets/:id/ai-copilot-suggest'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], SupportController.prototype, "getAiCopilotSuggestion", null);
 exports.SupportController = SupportController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('support'),

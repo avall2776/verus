@@ -91,4 +91,14 @@ export class SupportController {
     const tenantId = req.user.tenantId;
     return this.supportService.assign(id, tenantId, body?.assignedToId ?? null, isSuperAdmin);
   }
+
+  @Post('tickets/:id/ai-copilot-suggest')
+  async getAiCopilotSuggestion(
+    @Request() req,
+    @Param('id') id: string
+  ) {
+    const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
+    const tenantId = req.user.tenantId;
+    return this.supportService.generateCopilotSuggestion(id, tenantId, isSuperAdmin);
+  }
 }

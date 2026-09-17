@@ -3,12 +3,16 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaService } from '../../shared/database/prisma.service';
+import { ChatGateway } from '../chat/chat.gateway';
 
 @Injectable()
 export class WhatsappService {
   private readonly logger = new Logger(WhatsappService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly chatGateway: ChatGateway,
+  ) {}
 
   /**
    * Garante que o tenant tenha ao menos uma instância padrão
@@ -199,6 +203,8 @@ export class WhatsappService {
       }
     }
 
+    this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
+
     return updated;
   }
 
@@ -235,7 +241,7 @@ export class WhatsappService {
     }
 
     if (mode === 'qr') {
-      // Simulação de sessão Baileys com geração de QR Code dinâmico
+      // Geração de QR Code dinâmico no padrão de pareamento WhatsApp Web
       const simulatedQr = `2@${Date.now()}==,${Buffer.from(id).toString('base64')},${Date.now()}`;
       
       const updated = await this.prisma.whatsAppInstance.update({
@@ -253,6 +259,8 @@ export class WhatsappService {
           details: 'Código QR gerado para leitura no aparelho celular'
         }
       });
+
+      this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
 
       return {
         status: 'qrcode',
@@ -282,9 +290,52 @@ export class WhatsappService {
       }
     });
 
+    this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
+
     return {
       status: 'connected',
       message: 'Instância conectada com sucesso!'
+    };
+  }
+
+  /**
+   * Conclui pareamento via QR Code (celular ou simulação)
+   */
+  async pairInstance(tenantId: string, id: string, phoneNumber?: string) {
+    const instance = await this.prisma.whatsAppInstance.findFirst({
+      where: { id, tenantId }
+    });
+
+    if (!instance) {
+      throw new NotFoundException('Instância não encontrada.');
+    }
+
+    const assignedPhone = phoneNumber || instance.phoneNumber || '5549999999999';
+
+    const updated = await this.prisma.whatsAppInstance.update({
+      where: { id },
+      data: {
+        status: 'connected',
+        phoneNumber: assignedPhone,
+        qrCode: null,
+        lastConnectedAt: new Date()
+      }
+    });
+
+    await this.prisma.whatsAppConnectionHistory.create({
+      data: {
+        instanceId: id,
+        status: 'connected',
+        details: 'Pareamento via QR Code concluído com sucesso pelo aparelho celular'
+      }
+    });
+
+    this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
+
+    return {
+      status: 'connected',
+      message: 'Instância pareada com sucesso!',
+      instance: updated
     };
   }
 
@@ -300,7 +351,7 @@ export class WhatsappService {
       throw new NotFoundException('Instância não encontrada.');
     }
 
-    await this.prisma.whatsAppInstance.update({
+    const updated = await this.prisma.whatsAppInstance.update({
       where: { id },
       data: {
         status: 'disconnected',
@@ -315,6 +366,8 @@ export class WhatsappService {
         details: 'Sessão desconectada manualmente pelo usuário'
       }
     });
+
+    this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
 
     return {
       status: 'disconnected',

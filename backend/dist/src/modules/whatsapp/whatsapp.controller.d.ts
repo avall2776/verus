@@ -104,6 +104,29 @@ export declare class WhatsappController {
         status: string;
         message: string;
     }>;
+    pairInstance(tenantId: string, id: string, body?: {
+        phoneNumber?: string;
+    }): Promise<{
+        status: string;
+        message: string;
+        instance: {
+            id: string;
+            name: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: string;
+            token: string | null;
+            settings: import("@prisma/client/runtime/library").JsonValue | null;
+            phoneNumber: string | null;
+            profilePicUrl: string | null;
+            profileName: string | null;
+            qrCode: string | null;
+            phoneNumberId: string | null;
+            isDefault: boolean;
+            lastConnectedAt: Date | null;
+        };
+    }>;
     getConfig(tenantId: string): Promise<{
         metaToken: string;
         hasToken: boolean;

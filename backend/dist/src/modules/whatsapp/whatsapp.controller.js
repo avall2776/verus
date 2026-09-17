@@ -42,6 +42,9 @@ let WhatsappController = class WhatsappController {
     async disconnectInstance(tenantId, id) {
         return this.whatsappService.disconnectInstance(tenantId, id);
     }
+    async pairInstance(tenantId, id, body) {
+        return this.whatsappService.pairInstance(tenantId, id, body?.phoneNumber);
+    }
     async getConfig(tenantId) {
         return this.whatsappService.getConfig(tenantId);
     }
@@ -107,6 +110,15 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], WhatsappController.prototype, "disconnectInstance", null);
+__decorate([
+    (0, common_1.Post)('instances/:id/pair'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], WhatsappController.prototype, "pairInstance", null);
 __decorate([
     (0, common_1.Get)('config'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

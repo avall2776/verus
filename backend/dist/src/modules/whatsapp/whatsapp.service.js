@@ -16,9 +16,11 @@ const axios_1 = require("axios");
 const fs = require("fs");
 const path = require("path");
 const prisma_service_1 = require("../../shared/database/prisma.service");
+const chat_gateway_1 = require("../chat/chat.gateway");
 let WhatsappService = WhatsappService_1 = class WhatsappService {
-    constructor(prisma) {
+    constructor(prisma, chatGateway) {
         this.prisma = prisma;
+        this.chatGateway = chatGateway;
         this.logger = new common_1.Logger(WhatsappService_1.name);
     }
     async ensureDefaultInstance(tenantId) {
@@ -184,6 +186,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                 });
             }
         }
+        this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
         return updated;
     }
     async deleteInstance(tenantId, id) {
@@ -222,6 +225,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                     details: 'Código QR gerado para leitura no aparelho celular'
                 }
             });
+            this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
             return {
                 status: 'qrcode',
                 qrCode: simulatedQr,
@@ -245,9 +249,41 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                 details: 'Conexão restabelecida com a Graph API do WhatsApp'
             }
         });
+        this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
         return {
             status: 'connected',
             message: 'Instância conectada com sucesso!'
+        };
+    }
+    async pairInstance(tenantId, id, phoneNumber) {
+        const instance = await this.prisma.whatsAppInstance.findFirst({
+            where: { id, tenantId }
+        });
+        if (!instance) {
+            throw new common_1.NotFoundException('Instância não encontrada.');
+        }
+        const assignedPhone = phoneNumber || instance.phoneNumber || '5549999999999';
+        const updated = await this.prisma.whatsAppInstance.update({
+            where: { id },
+            data: {
+                status: 'connected',
+                phoneNumber: assignedPhone,
+                qrCode: null,
+                lastConnectedAt: new Date()
+            }
+        });
+        await this.prisma.whatsAppConnectionHistory.create({
+            data: {
+                instanceId: id,
+                status: 'connected',
+                details: 'Pareamento via QR Code concluído com sucesso pelo aparelho celular'
+            }
+        });
+        this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
+        return {
+            status: 'connected',
+            message: 'Instância pareada com sucesso!',
+            instance: updated
         };
     }
     async disconnectInstance(tenantId, id) {
@@ -257,7 +293,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
         if (!instance) {
             throw new common_1.NotFoundException('Instância não encontrada.');
         }
-        await this.prisma.whatsAppInstance.update({
+        const updated = await this.prisma.whatsAppInstance.update({
             where: { id },
             data: {
                 status: 'disconnected',
@@ -271,6 +307,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                 details: 'Sessão desconectada manualmente pelo usuário'
             }
         });
+        this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
         return {
             status: 'disconnected',
             message: 'Instância desconectada com sucesso.'
@@ -428,6 +465,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
 exports.WhatsappService = WhatsappService;
 exports.WhatsappService = WhatsappService = WhatsappService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        chat_gateway_1.ChatGateway])
 ], WhatsappService);
 //# sourceMappingURL=whatsapp.service.js.map

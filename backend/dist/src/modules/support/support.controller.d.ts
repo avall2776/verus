@@ -277,4 +277,5 @@ export declare class SupportController {
         ticketNumber: number;
         assignedToId: string | null;
     }>;
+    getAiCopilotSuggestion(req: any, id: string): Promise<any>;
 }

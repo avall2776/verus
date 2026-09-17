@@ -1,9 +1,13 @@
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { CreateTicketMessageDto } from './dto/create-ticket-message.dto';
 export declare class SupportService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly configService;
+    private readonly logger;
+    private readonly openai;
+    constructor(prisma: PrismaService, configService: ConfigService);
     findAll(tenantId: string, filters: {
         status?: string;
         priority?: string;
@@ -274,4 +278,5 @@ export declare class SupportService {
             description: string;
         }[];
     }>;
+    generateCopilotSuggestion(ticketId: string, tenantId: string, isSuperAdmin?: boolean): Promise<any>;
 }

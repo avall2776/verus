@@ -1,8 +1,10 @@
 import { PrismaService } from '../../shared/database/prisma.service';
+import { ChatGateway } from '../chat/chat.gateway';
 export declare class WhatsappService {
     private readonly prisma;
+    private readonly chatGateway;
     private readonly logger;
-    constructor(prisma: PrismaService);
+    constructor(prisma: PrismaService, chatGateway: ChatGateway);
     private ensureDefaultInstance;
     getInstances(tenantId: string): Promise<{
         token: string;
@@ -99,6 +101,27 @@ export declare class WhatsappService {
         status: string;
         message: string;
         qrCode?: undefined;
+    }>;
+    pairInstance(tenantId: string, id: string, phoneNumber?: string): Promise<{
+        status: string;
+        message: string;
+        instance: {
+            id: string;
+            name: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: string;
+            token: string | null;
+            settings: import("@prisma/client/runtime/library").JsonValue | null;
+            phoneNumber: string | null;
+            profilePicUrl: string | null;
+            profileName: string | null;
+            qrCode: string | null;
+            phoneNumberId: string | null;
+            isDefault: boolean;
+            lastConnectedAt: Date | null;
+        };
     }>;
     disconnectInstance(tenantId: string, id: string): Promise<{
         status: string;

@@ -67,6 +67,15 @@ export class WhatsappController {
     return this.whatsappService.disconnectInstance(tenantId, id);
   }
 
+  @Post('instances/:id/pair')
+  async pairInstance(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body() body?: { phoneNumber?: string }
+  ) {
+    return this.whatsappService.pairInstance(tenantId, id, body?.phoneNumber);
+  }
+
   // -------------------------------------------------------------
   // ROTAS LEGADAS (RETROCOMPATIBILIDADE)
   // -------------------------------------------------------------

@@ -39,8 +39,20 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       setIsConnected(true);
       console.log('📡 [WebSockets] Conectado ao Servidor em Tempo Real!', socketInstance.id);
       
-      // Simulação: Entrar na sala do Tenant 123
-      socketInstance.emit('joinTenant', 'tenant_123');
+      let tenantId = 'tenant_123';
+      try {
+        const userStr = localStorage.getItem('versus_user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          if (user.tenantId) tenantId = user.tenantId;
+        }
+        if (!tenantId || tenantId === 'tenant_123') {
+          const savedTenant = localStorage.getItem('tenantId');
+          if (savedTenant) tenantId = savedTenant;
+        }
+      } catch (e) {}
+
+      socketInstance.emit('joinTenant', tenantId);
     });
 
     socketInstance.on('disconnect', () => {
