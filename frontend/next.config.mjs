@@ -1,6 +1,47 @@
 import { withSentryConfig } from "@sentry/nextjs";
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Desativação total de Source Maps no navegador do cliente em produção
+  productionBrowserSourceMaps: false,
+
+  // Remoção de logs em produção para não expor telemetria interna
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+  },
+
+  webpack: (config, { isServer, dev }) => {
+    if (!dev) {
+      // Impede geração de devtools / source maps
+      config.devtool = false;
+
+      // Ofuscação e otimização do pipeline de minificação do lado cliente
+      if (!isServer && config.optimization && config.optimization.minimizer) {
+        config.optimization.minimizer.forEach((minimizer) => {
+          if (minimizer.constructor && minimizer.constructor.name === 'TerserPlugin') {
+            minimizer.options.terserOptions = {
+              ...minimizer.options.terserOptions,
+              compress: {
+                ...minimizer.options.terserOptions?.compress,
+                drop_debugger: true,
+                dead_code: true,
+                passes: 2,
+              },
+              mangle: {
+                toplevel: true,
+                safari10: true,
+              },
+              format: {
+                comments: false, // Remove comentários de código e licenças no bundle final
+              },
+            };
+          }
+        });
+      }
+    }
+    return config;
+  },
+
   async rewrites() {
     return [
       {
@@ -16,42 +57,19 @@ const nextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
-
   org: process.env.SENTRY_ORG || "avall",
   project: process.env.SENTRY_PROJECT || "javascript-nextjs",
 
-  // Não quebrar o build do Vercel caso o token de autenticação não esteja configurado
+  // Não quebrar o build caso o token de autenticação não esteja configurado
   dryRun: !process.env.SENTRY_AUTH_TOKEN,
   silent: true,
 
-  // For all available options, see:
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+  // Não fazer upload de source maps ampliados
+  widenClientFileUpload: false,
 
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
-  widenClientFileUpload: true,
-
-  // Automatically annotate React components to show their full name in breadcrumbs and session replay
-  reactComponentAnnotation: {
-    enabled: true,
-  },
-
-  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
-  // This can increase your server load as well as your hosting bill.
-  // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
-  // side errors will fail.
-  tunnelRoute: "/monitoring",
-
-  // Hides source maps from generated client bundles
+  // Oculta source maps dos bundles de clientes gerados
   hideSourceMaps: true,
 
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
+  // Remove logs de Sentry para reduzir bundle e evitar exposição
   disableLogger: true,
-
-  // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
-  // See the following for more information:
-  // https://docs.sentry.io/product/crons/
-  // https://vercel.com/docs/cron-jobs
-  automaticVercelMonitors: true,
 });

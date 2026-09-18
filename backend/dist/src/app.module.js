@@ -9,6 +9,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
+const bot_detector_middleware_1 = require("./shared/middlewares/bot-detector.middleware");
+const rate_limiter_middleware_1 = require("./shared/middlewares/rate-limiter.middleware");
 const database_module_1 = require("./shared/database/database.module");
 const auth_module_1 = require("./modules/auth/auth.module");
 const queue_module_1 = require("./modules/queues/queue.module");
@@ -42,6 +44,11 @@ const operators_module_1 = require("./modules/operators/operators.module");
 const engineering_module_1 = require("./modules/engineering/engineering.module");
 const voip_module_1 = require("./modules/voip/voip.module");
 let AppModule = class AppModule {
+    configure(consumer) {
+        consumer
+            .apply(bot_detector_middleware_1.BotDetectorMiddleware, rate_limiter_middleware_1.RateLimiterMiddleware)
+            .forRoutes('*');
+    }
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([

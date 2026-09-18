@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Toaster } from "sonner";
 import { SocketProvider } from "@/components/ui/SocketProvider";
 import { WhatsAppProvider } from "@/components/ui/WhatsAppProvider";
+import SecurityShieldProvider from "@/components/security/SecurityShieldProvider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -24,8 +25,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <SocketProvider>
         <WhatsAppProvider>
-          {children}
-          <Toaster position="top-right" theme="dark" />
+          <SecurityShieldProvider>
+            {children}
+            <Toaster position="top-right" theme="dark" />
+          </SecurityShieldProvider>
         </WhatsAppProvider>
       </SocketProvider>
     </QueryClientProvider>

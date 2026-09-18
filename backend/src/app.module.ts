@@ -1,5 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { BotDetectorMiddleware } from './shared/middlewares/bot-detector.middleware';
+import { RateLimiterMiddleware } from './shared/middlewares/rate-limiter.middleware';
 import { DatabaseModule } from './shared/database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { QueueModule } from './modules/queues/queue.module';
@@ -72,5 +74,11 @@ import { VoipModule } from './modules/voip/voip.module';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(BotDetectorMiddleware, RateLimiterMiddleware)
+      .forRoutes('*');
+  }
+}
 
