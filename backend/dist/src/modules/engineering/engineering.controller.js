@@ -16,6 +16,7 @@ exports.EngineeringController = void 0;
 const common_1 = require("@nestjs/common");
 const platform_express_1 = require("@nestjs/platform-express");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const super_admin_guard_1 = require("../../shared/guards/super-admin.guard");
 const engineering_service_1 = require("./engineering.service");
 const create_engineering_item_dto_1 = require("./dto/create-engineering-item.dto");
 const update_engineering_item_dto_1 = require("./dto/update-engineering-item.dto");
@@ -321,7 +322,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EngineeringController.prototype, "integrateProductToProduction", null);
 exports.EngineeringController = EngineeringController = __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Controller)('engineering'),
     __metadata("design:paramtypes", [engineering_service_1.EngineeringService])
 ], EngineeringController);

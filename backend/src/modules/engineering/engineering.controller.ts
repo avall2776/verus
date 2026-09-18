@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { SuperAdminGuard } from '../../shared/guards/super-admin.guard';
 import { EngineeringService } from './engineering.service';
 import { CreateEngineeringItemDto } from './dto/create-engineering-item.dto';
 import { UpdateEngineeringItemDto } from './dto/update-engineering-item.dto';
@@ -26,7 +27,7 @@ import { UpdateChecklistDto } from './dto/update-checklist.dto';
 import { ProductChatDto } from './dto/product-chat.dto';
 import { UpdateProductStatusDto } from './dto/update-product-status.dto';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, SuperAdminGuard)
 @Controller('engineering')
 export class EngineeringController {
   constructor(private readonly engineeringService: EngineeringService) {}

@@ -23,7 +23,7 @@ export class WebhookProcessor extends WorkerHost {
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
-    const { tenantId, webhookData } = job.data;
+    const { tenantId, webhookData, evolutionMetadata } = job.data;
     // Parse Meta API Payload
     const entry = webhookData.entry?.[0];
     const change = entry?.changes?.[0];
@@ -92,8 +92,10 @@ export class WebhookProcessor extends WorkerHost {
     
     // 3. Upsert do Contact
     const phone = remoteJid;
-    const cleanName = (pushName && !pushName.includes('@lid'))
-      ? pushName
+    const rawPushName = pushName || evolutionMetadata?.pushName;
+    const isGenericPushName = !rawPushName || rawPushName === 'Cliente WhatsApp' || rawPushName.includes('@lid') || rawPushName.startsWith('WhatsApp');
+    const cleanName = !isGenericPushName
+      ? rawPushName
       : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${remoteJid})`);
 
     const contact = await this.prisma.contact.upsert({
@@ -108,14 +110,20 @@ export class WebhookProcessor extends WorkerHost {
         phone,
         name: cleanName,
         source: 'WhatsApp',
+        avatarUrl: (evolutionMetadata?.profilePictureUrl && !evolutionMetadata.profilePictureUrl.includes('unsplash.com')) ? evolutionMetadata.profilePictureUrl : null,
       },
-      update: (pushName && !pushName.includes('@lid')) ? { name: pushName } : {}
+      update: !isGenericPushName ? { name: rawPushName } : {}
     });
 
-    if (!contact.avatarUrl) {
-      const avatarUrl = await this.whatsappService.syncContactAvatar(tenantId, contact.id);
-      if (avatarUrl) {
-        contact.avatarUrl = avatarUrl;
+    // Se o contato ainda tiver nome genérico ou não tiver foto, sincroniza metadados completos
+    const isGenericContact = !contact.name || contact.name === 'Cliente WhatsApp' || contact.name.includes('@lid') || contact.name.startsWith('WhatsApp');
+    if (!contact.avatarUrl || isGenericContact) {
+      try {
+        const synced = await this.whatsappService.syncContactMetadata(tenantId, contact.id);
+        if (synced?.avatarUrl) contact.avatarUrl = synced.avatarUrl;
+        if (synced?.name) contact.name = synced.name;
+      } catch (err: any) {
+        this.logger.warn(`Erro na sincronização de perfil do contato ${contact.id}: ${err.message}`);
       }
     }
 
@@ -212,7 +220,7 @@ export class WebhookProcessor extends WorkerHost {
     // -> EMISSÃO EM TEMPO REAL PARA O FRONT-END <-
     this.chatGateway.emitNewMessage(tenantId, {
       ...savedMessage,
-      contact: { phone: contact.phone, name: contact.name }
+      contact: { phone: contact.phone, name: contact.name, avatarUrl: contact.avatarUrl }
     });
 
     // 6. Integração com Fase 4: Despachar para fila de IA APENAS se o bot estiver ativo e DENTRO do horário comercial!
@@ -237,7 +245,7 @@ export class WebhookProcessor extends WorkerHost {
         
         this.chatGateway.emitNewMessage(tenantId, {
           ...fallbackMessage,
-          contact: { phone: contact.phone, name: contact.name }
+          contact: { phone: contact.phone, name: contact.name, avatarUrl: contact.avatarUrl }
         });
 
         return { status: 'out_of_business_hours' };

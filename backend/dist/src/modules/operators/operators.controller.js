@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.OperatorsController = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const super_admin_guard_1 = require("../../shared/guards/super-admin.guard");
 const operators_service_1 = require("./operators.service");
 const create_operator_dto_1 = require("./dto/create-operator.dto");
 const update_operator_dto_1 = require("./dto/update-operator.dto");
@@ -92,7 +93,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], OperatorsController.prototype, "delete", null);
 exports.OperatorsController = OperatorsController = __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Controller)('operators'),
     __metadata("design:paramtypes", [operators_service_1.OperatorsService])
 ], OperatorsController);

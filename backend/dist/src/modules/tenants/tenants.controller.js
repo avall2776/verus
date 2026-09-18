@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TenantsController = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const super_admin_guard_1 = require("../../shared/guards/super-admin.guard");
 const tenants_service_1 = require("./tenants.service");
 const query_tenants_dto_1 = require("./dto/query-tenants.dto");
 const update_tenant_status_dto_1 = require("./dto/update-tenant-status.dto");
@@ -49,7 +50,6 @@ let TenantsController = class TenantsController {
         throw new common_1.ForbiddenException('Acesso restrito exclusivamente ao Super Administrador.');
     }
     async getStats(req) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.getStats();
     }
     async getMyTenant(req) {
@@ -61,60 +61,48 @@ let TenantsController = class TenantsController {
         return this.tenantsService.updateMyTenant(tenantId, body);
     }
     async findAll(req, query) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.findAll(query);
     }
     async create(req, body) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.create(body);
     }
     async getPlans(req) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.getPlans();
     }
     async createPlan(req, body) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.createPlan(body);
     }
     async updatePlan(req, id, body) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.updatePlan(id, body);
     }
     async findOne(req, id) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.findOne(id);
     }
     async update(req, id, body) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.update(id, body);
     }
     async updatePut(req, id, body) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.update(id, body);
     }
     async updateStatus(req, id, body) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.updateStatus(id, body.isActive);
     }
     async resetAdminPassword(req, id, body) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.resetAdminPassword(id, body?.newPassword);
     }
     async updateTenantUser(req, tenantId, userId, body) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.updateTenantUser(tenantId, userId, body);
     }
     async resetTenantUserPassword(req, tenantId, userId, body) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.resetTenantUserPassword(tenantId, userId, body);
     }
     async deleteTenantUser(req, tenantId, userId) {
-        await this.checkSuperAdmin(req);
         return this.tenantsService.deleteTenantUser(tenantId, userId);
     }
 };
 exports.TenantsController = TenantsController;
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Get)('stats/overview'),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
@@ -137,6 +125,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "updateMyTenant", null);
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Get)(),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Query)()),
@@ -145,6 +134,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "findAll", null);
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Post)(),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
@@ -153,6 +143,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "create", null);
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Get)('plans/list'),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
@@ -160,6 +151,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "getPlans", null);
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Post)('plans'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
@@ -168,6 +160,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "createPlan", null);
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Patch)('plans/:id'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('id')),
@@ -177,6 +170,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "updatePlan", null);
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('id')),
@@ -185,6 +179,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "findOne", null);
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Patch)(':id'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('id')),
@@ -194,6 +189,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "update", null);
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('id')),
@@ -203,6 +199,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "updatePut", null);
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Patch)(':id/status'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('id')),
@@ -212,6 +209,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "updateStatus", null);
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Post)(':id/reset-admin-password'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('id')),
@@ -221,6 +219,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "resetAdminPassword", null);
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Patch)(':tenantId/users/:userId'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('tenantId')),
@@ -231,6 +230,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "updateTenantUser", null);
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Post)(':tenantId/users/:userId/reset-password'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('tenantId')),
@@ -241,6 +241,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "resetTenantUserPassword", null);
 __decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Delete)(':tenantId/users/:userId'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Param)('tenantId')),

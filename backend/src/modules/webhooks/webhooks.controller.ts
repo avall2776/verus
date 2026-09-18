@@ -368,7 +368,7 @@ export class WebhooksController {
         messageObj?.extendedTextMessage?.text ||
         '';
 
-      const candidateName = data.pushName || data.verifiedBizName;
+      const candidateName = data.pushName || data.verifiedBizName || data.verifiedName;
       const contactDisplayName = candidateName && !candidateName.includes('@lid')
         ? candidateName
         : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : remoteJid);
@@ -407,6 +407,12 @@ export class WebhooksController {
         {
           tenantId,
           webhookData: normalizedPayload,
+          evolutionMetadata: {
+            instanceName: payload.instance || payload.data?.instance,
+            pushName: candidateName,
+            remoteJid: key.remoteJid,
+            profilePictureUrl: data.profilePictureUrl || null,
+          },
         },
         {
           attempts: 3,
@@ -436,6 +442,10 @@ export class WebhooksController {
                 ...(profilePictureUrl ? { avatarUrl: profilePictureUrl } : {}),
               },
             });
+            const updated = await this.prisma.contact.findFirst({ where: { tenantId, phone } });
+            if (updated) {
+              this.chatGateway.emitContactUpdated(tenantId, updated);
+            }
           } catch (e) {}
         }
       }

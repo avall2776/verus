@@ -394,16 +394,40 @@ function InboxContent() {
     }
   };
 
+  const formatPhoneNumber = (phone?: string) => {
+    if (!phone || phone.includes('@lid')) return '';
+    const clean = phone.replace(/\D/g, '');
+    if (clean.length === 13 && clean.startsWith('55')) {
+      return `+55 (${clean.slice(2, 4)}) ${clean.slice(4, 9)}-${clean.slice(9)}`;
+    } else if (clean.length === 12 && clean.startsWith('55')) {
+      return `+55 (${clean.slice(2, 4)}) ${clean.slice(4, 8)}-${clean.slice(8)}`;
+    } else if (clean.length > 8) {
+      return `+${clean}`;
+    }
+    return phone;
+  };
+
   const formatContactDisplayName = (name?: string, phone?: string) => {
-    if (!name || name.includes('@lid')) {
-      if (phone && !phone.includes('@lid')) return phone;
+    const isGeneric = !name || name === 'Cliente WhatsApp' || name.includes('@lid') || name.startsWith('WhatsApp');
+    if (isGeneric) {
+      if (phone && !phone.includes('@lid')) {
+        const formatted = formatPhoneNumber(phone);
+        if (formatted) return formatted;
+      }
       return 'Cliente WhatsApp';
     }
     return name;
   };
 
-  const getContactInitials = (name?: string) => {
-    if (!name || name.includes('@lid')) return 'WA';
+  const getContactInitials = (name?: string, phone?: string) => {
+    const isGeneric = !name || name === 'Cliente WhatsApp' || name.includes('@lid') || name.startsWith('WhatsApp');
+    if (isGeneric) {
+      if (phone && !phone.includes('@lid')) {
+        const clean = phone.replace(/\D/g, '');
+        if (clean.length >= 2) return clean.slice(-2);
+      }
+      return 'WA';
+    }
     const parts = name.trim().split(/\s+/).filter(Boolean);
     if (parts.length === 0) return 'WA';
     if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();

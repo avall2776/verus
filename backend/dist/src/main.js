@@ -7,6 +7,7 @@ const Sentry = require("@sentry/node");
 const profiling_node_1 = require("@sentry/profiling-node");
 const sentry_interceptor_1 = require("./shared/interceptors/sentry.interceptor");
 const express_1 = require("express");
+const helmet_1 = require("helmet");
 async function bootstrap() {
     Sentry.init({
         dsn: process.env.SENTRY_DSN,
@@ -18,6 +19,10 @@ async function bootstrap() {
     });
     const logger = new common_1.Logger('Bootstrap');
     const app = await core_1.NestFactory.create(app_module_1.AppModule, { bodyParser: false });
+    app.use((0, helmet_1.default)({
+        crossOriginResourcePolicy: false,
+        contentSecurityPolicy: false,
+    }));
     app.use((0, express_1.json)({ limit: '25mb' }));
     app.use((0, express_1.urlencoded)({ limit: '25mb', extended: true }));
     app.useGlobalPipes(new common_1.ValidationPipe({

@@ -665,35 +665,135 @@ export class WhatsappService {
   }
 
   /**
-   * Busca a foto de perfil real do contato direto na API oficial do WhatsApp (Meta Graph API).
-   * Se a API do WhatsApp retornar a foto real, salva e retorna a URL.
-   * Caso contrário, retorna null para que o frontend caia no componente de iniciais nativo (ex: FC).
+   * Consulta os metadados do contato (nome real de exibição e foto de perfil)
+   * suportando tanto Evolution API (Baileys / QR Code) quanto Meta Cloud API.
    */
-  async fetchContactProfilePicture(tenantId: string, phone: string): Promise<string | null> {
+  async fetchContactProfile(tenantId: string, phone: string): Promise<{ name?: string | null; avatarUrl?: string | null }> {
     const cleanPhone = phone.replace(/\D/g, '');
+    let resolvedName: string | null = null;
+    let resolvedAvatar: string | null = null;
 
+    // 1. Tentar obter via Evolution API (Baileys) se houver instância conectada ou configurada
     try {
-      const instance = await this.prisma.whatsAppInstance.findFirst({
-        where: {
-          tenantId,
-          status: 'connected',
-          token: { not: null },
-          phoneNumberId: { not: null }
-        },
+      const evoConfig = this.getEvolutionConfig();
+      const instances = await this.prisma.whatsAppInstance.findMany({
+        where: { tenantId },
         orderBy: { isDefault: 'desc' }
       });
 
-      let token = instance?.token;
-      if (!token) {
-        const tenant = await this.prisma.tenant.findUnique({
-          where: { id: tenantId },
-          select: { metaToken: true }
-        });
-        token = tenant?.metaToken || null;
+      const connectedInst = instances.find(i => i.status === 'connected') || instances[0];
+      let instanceName: string | null = null;
+
+      if (connectedInst) {
+        const set = (connectedInst.settings as any) || {};
+        instanceName = set.instanceName || connectedInst.name || this.getSanitizedInstanceName(tenantId, connectedInst.id);
       }
 
-      if (token) {
+      if (instanceName) {
+        const headers = { apikey: evoConfig.apiKey, 'Content-Type': 'application/json' };
+        const queryNumber = phone.includes('@') ? phone : cleanPhone;
+
+        // 1.1 Consulta Foto de Perfil via Evolution API
         try {
+          const picRes = await axios.post(
+            `${evoConfig.serverUrl}/chat/fetchProfilePictureUrl/${instanceName}`,
+            { number: queryNumber },
+            { headers, timeout: 5000 }
+          );
+          if (picRes.data?.profilePictureUrl) {
+            resolvedAvatar = picRes.data.profilePictureUrl;
+          }
+        } catch (picErr) {
+          // Ignora erro específico de foto
+        }
+
+        // 1.2 Consulta Perfil (Nome e Foto) via Evolution API
+        try {
+          const profRes = await axios.post(
+            `${evoConfig.serverUrl}/chat/fetchProfile/${instanceName}`,
+            { number: queryNumber },
+            { headers, timeout: 5000 }
+          );
+          if (profRes.data?.name && !profRes.data.name.includes('@lid')) {
+            resolvedName = profRes.data.name;
+          }
+          if (!resolvedAvatar && profRes.data?.picture) {
+            resolvedAvatar = profRes.data.picture;
+          }
+        } catch (profErr) {
+          // Ignora erro
+        }
+
+        // 1.3 Se ainda não encontrou nome ou foto, busca nos contatos salvos da instância
+        if (!resolvedName || !resolvedAvatar) {
+          try {
+            const contactsRes = await axios.post(
+              `${evoConfig.serverUrl}/chat/findContacts/${instanceName}`,
+              { where: { id: phone.includes('@') ? phone : `${cleanPhone}@s.whatsapp.net` } },
+              { headers, timeout: 4000 }
+            );
+            const found = Array.isArray(contactsRes.data) ? contactsRes.data[0] : contactsRes.data;
+            if (found) {
+              if (!resolvedName && (found.pushName || found.name || found.verifiedName)) {
+                resolvedName = found.pushName || found.name || found.verifiedName;
+              }
+              if (!resolvedAvatar && (found.profilePictureUrl || found.picture)) {
+                resolvedAvatar = found.profilePictureUrl || found.picture;
+              }
+            }
+          } catch (contactErr) {}
+        }
+
+        // 1.4 Se for @lid e ainda não tiver nome ou foto, verifica outras instâncias Evolution ativas no servidor (ex: PROSPECTOR)
+        if (phone.includes('@lid') && (!resolvedName || !resolvedAvatar)) {
+          try {
+            const allInstRes = await axios.get(`${evoConfig.serverUrl}/instance/fetchInstances`, { headers, timeout: 3000 }).catch(() => null);
+            const allInstances = Array.isArray(allInstRes?.data) ? allInstRes.data : [];
+            for (const other of allInstances) {
+              const otherName = other.name || other.instanceName;
+              if (otherName && otherName !== instanceName && (other.connectionStatus === 'open' || other.status === 'open')) {
+                if (!resolvedAvatar) {
+                  const pRes = await axios.post(`${evoConfig.serverUrl}/chat/fetchProfilePictureUrl/${otherName}`, { number: queryNumber }, { headers, timeout: 3000 }).catch(() => null);
+                  if (pRes?.data?.profilePictureUrl) resolvedAvatar = pRes.data.profilePictureUrl;
+                }
+                if (!resolvedName) {
+                  const cRes = await axios.post(`${evoConfig.serverUrl}/chat/findContacts/${otherName}`, { where: { id: queryNumber } }, { headers, timeout: 3000 }).catch(() => null);
+                  const f = Array.isArray(cRes?.data) ? cRes.data[0] : null;
+                  if (f?.pushName || f?.name) resolvedName = f.pushName || f.name;
+                }
+                if (resolvedName && resolvedAvatar) break;
+              }
+            }
+          } catch (e) {}
+        }
+      }
+    } catch (evoErr: any) {
+      this.logger.debug(`Evolution profile fetch skipped or failed: ${evoErr.message}`);
+    }
+
+    // 2. Se for conexão Meta Graph API (oficial) e ainda não tiver avatar
+    if (!resolvedAvatar && cleanPhone) {
+      try {
+        const instance = await this.prisma.whatsAppInstance.findFirst({
+          where: {
+            tenantId,
+            status: 'connected',
+            token: { not: null },
+            phoneNumberId: { not: null }
+          },
+          orderBy: { isDefault: 'desc' }
+        });
+
+        let token = instance?.token;
+        if (!token) {
+          const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { metaToken: true }
+          });
+          token = tenant?.metaToken || null;
+        }
+
+        if (token) {
           const res = await axios.get(
             `https://graph.facebook.com/v19.0/${cleanPhone}`,
             {
@@ -703,32 +803,30 @@ export class WhatsappService {
             }
           );
           if (res.data?.profile_picture_url) {
-            return res.data.profile_picture_url;
+            resolvedAvatar = res.data.profile_picture_url;
           }
-        } catch (metaErr) {
-          // Sem foto pública ou permissão restrita da Meta para este número
         }
-      }
-    } catch (e) {
-      // Ignora erro
+      } catch (metaErr) {}
     }
 
-    // Retorna explicitamente null para exibir as iniciais reais
-    return null;
+    return {
+      name: resolvedName && !resolvedName.includes('@lid') ? resolvedName : null,
+      avatarUrl: resolvedAvatar && !resolvedAvatar.includes('unsplash.com') ? resolvedAvatar : null
+    };
   }
 
   /**
-   * Sincroniza e atualiza o avatar do contato no banco de dados se a API do WhatsApp retornar foto real.
-   * Remove fotos fictícias e mantém null caso o contato não tenha foto real no WhatsApp.
+   * Sincroniza metadados do contato (nome real e avatar) com a API do WhatsApp (Evolution/Meta).
+   * Persiste no banco de dados e emite atualização em tempo real para os clientes conectados via WebSocket.
    */
-  async syncContactAvatar(tenantId: string, contactId: string): Promise<string | null> {
+  async syncContactMetadata(tenantId: string, contactId: string): Promise<{ name: string | null; avatarUrl: string | null } | null> {
     const contact = await this.prisma.contact.findFirst({
       where: { id: contactId, tenantId }
     });
 
     if (!contact || !contact.phone) return null;
 
-    // Se já tinha URL do Unsplash ou foto fictícia antiga, limpa para null
+    // Limpa fotos fictícias antigas
     if (contact.avatarUrl && contact.avatarUrl.includes('unsplash.com')) {
       await this.prisma.contact.update({
         where: { id: contactId },
@@ -737,18 +835,52 @@ export class WhatsappService {
       contact.avatarUrl = null;
     }
 
-    if (contact.avatarUrl) return contact.avatarUrl;
+    const isGenericName = !contact.name || contact.name === 'Cliente WhatsApp' || contact.name.includes('@lid') || contact.name.startsWith('WhatsApp');
+    const needsAvatar = !contact.avatarUrl;
 
-    const avatarUrl = await this.fetchContactProfilePicture(tenantId, contact.phone);
-    if (avatarUrl) {
-      await this.prisma.contact.update({
-        where: { id: contactId },
-        data: { avatarUrl }
-      });
-      return avatarUrl;
+    if (!isGenericName && !needsAvatar) {
+      return { name: contact.name, avatarUrl: contact.avatarUrl };
     }
 
-    return null;
+    const profile = await this.fetchContactProfile(tenantId, contact.phone);
+    const updateData: any = {};
+
+    if (profile.name && isGenericName) {
+      updateData.name = profile.name;
+    }
+    if (profile.avatarUrl && needsAvatar) {
+      updateData.avatarUrl = profile.avatarUrl;
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      const updated = await this.prisma.contact.update({
+        where: { id: contactId },
+        data: updateData
+      });
+
+      this.logger.log(`Metadados do contato [${contact.phone}] sincronizados: Nome='${updated.name}', Avatar=${!!updated.avatarUrl}`);
+      this.chatGateway.emitContactUpdated(tenantId, updated);
+
+      return { name: updated.name, avatarUrl: updated.avatarUrl };
+    }
+
+    return { name: contact.name, avatarUrl: contact.avatarUrl };
+  }
+
+  /**
+   * Busca a foto de perfil real do contato (Evolution API ou Meta API).
+   */
+  async fetchContactProfilePicture(tenantId: string, phone: string): Promise<string | null> {
+    const profile = await this.fetchContactProfile(tenantId, phone);
+    return profile.avatarUrl || null;
+  }
+
+  /**
+   * Sincroniza e atualiza o avatar do contato no banco de dados se a API do WhatsApp retornar foto real.
+   */
+  async syncContactAvatar(tenantId: string, contactId: string): Promise<string | null> {
+    const result = await this.syncContactMetadata(tenantId, contactId);
+    return result?.avatarUrl || null;
   }
 
   /**

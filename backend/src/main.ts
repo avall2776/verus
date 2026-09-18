@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { SentryInterceptor } from './shared/interceptors/sentry.interceptor';
 import { json, urlencoded } from 'express';
+import helmet from 'helmet';
 
 async function bootstrap() {
   // Inicializa o Sentry o mais cedo possível
@@ -21,6 +22,12 @@ async function bootstrap() {
 
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule, { bodyParser: false });
+  
+  // Hardening de segurança HTTP com Helmet (protege contra Clickjacking, Sniffing e injeções)
+  app.use(helmet({
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: false,
+  }));
   
   // Suporte a payloads maiores (propostas comerciais, logotipos corporativos e anexos)
   app.use(json({ limit: '25mb' }));
