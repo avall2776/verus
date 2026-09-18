@@ -45,8 +45,11 @@ let AnalyticsController = class AnalyticsController {
     async getAiCosts(tenantId, startDate, endDate) {
         return this.analyticsService.getAiCosts(tenantId, startDate, endDate);
     }
-    async getCsat(tenantId, startDate, endDate) {
-        return this.analyticsService.getCsat(tenantId, startDate, endDate);
+    async getCsat(tenantId, startDate, endDate, agentName, search) {
+        return this.analyticsService.getCsat(tenantId, startDate, endDate, agentName, search);
+    }
+    async createCsat(tenantId, body) {
+        return this.analyticsService.createCsatSurvey(tenantId, body);
     }
     async getFunnel(tenantId, startDate, endDate) {
         return this.analyticsService.getFunnel(tenantId, startDate, endDate);
@@ -115,10 +118,20 @@ __decorate([
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('startDate')),
     __param(2, (0, common_1.Query)('endDate')),
+    __param(3, (0, common_1.Query)('agentName')),
+    __param(4, (0, common_1.Query)('search')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getCsat", null);
+__decorate([
+    (0, common_1.Post)('csat'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "createCsat", null);
 __decorate([
     (0, common_1.Get)('funnel'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

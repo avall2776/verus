@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { 
   BarChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, PieChart, Pie, Cell, ComposedChart, Legend 
@@ -188,7 +188,7 @@ export default function AtendimentoAnalyticsDashboard() {
   const [reportsSubTab, setReportsSubTab] = useState<'atendimentos' | 'motivos' | 'etiquetas' | 'setores' | 'transferencias' | 'satisfacao' | 'ignorados'>('atendimentos');
 
   // Filters
-  const [period, setPeriod] = useState<'7d' | '15d' | '30d' | '90d' | 'custom'>('7d');
+  const [period, setPeriod] = useState<'today' | '7d' | '15d' | '30d' | '90d' | 'custom'>('7d');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -229,6 +229,7 @@ export default function AtendimentoAnalyticsDashboard() {
   // CSAT Surveys Filters & Search State
   const [surveySearch, setSurveySearch] = useState('');
   const [surveyAgentFilter, setSurveyAgentFilter] = useState('all');
+  const [isCsatLoading, setIsCsatLoading] = useState(false);
 
   const parseTimeToSeconds = (str: string) => {
     if (!str) return 0;
@@ -357,109 +358,34 @@ export default function AtendimentoAnalyticsDashboard() {
     ];
   }, [chartsData]);
 
-  // Lista de Pesquisas (Padrão Lero)
-  const allSurveys = useMemo(() => {
-    const baseFeedbacks = csatData?.recentFeedbacks || [];
+  interface CsatSurveyItem {
+    id: string;
+    contactName: string;
+    phone: string;
+    agentName: string;
+    rating: number;
+    comment: string;
+    createdAt: string;
+  }
 
-    const defaultList = [
-      {
-        id: 'srv-1',
-        contactName: 'Rodrigo Silva',
-        phone: '(11) 98765-4321',
-        agentName: 'Lucas Atendente',
-        rating: 5,
-        comment: 'Atendimento extremamente rápido e sanou todas as dúvidas sobre o plano.',
-        createdAt: '11/09/2026 14:32',
-      },
-      {
-        id: 'srv-2',
-        contactName: 'Mariana Costa',
-        phone: '(21) 99123-8877',
-        agentName: 'Camila Suporte',
-        rating: 5,
-        comment: 'A resposta automática da IA me direcionou direto para a pessoa certa, nota 10!',
-        createdAt: '11/09/2026 11:20',
-      },
-      {
-        id: 'srv-3',
-        contactName: 'Felipe Alcantara',
-        phone: '(31) 98455-9012',
-        agentName: 'Lucas Atendente',
-        rating: 4,
-        comment: 'Muito bom o suporte via WhatsApp, tirou minhas dúvidas sobre a fatura.',
-        createdAt: '10/09/2026 17:45',
-      },
-      {
-        id: 'srv-4',
-        contactName: 'Juliana Mendes',
-        phone: '(41) 97654-3210',
-        agentName: 'Camila Suporte',
-        rating: 5,
-        comment: 'Excelente presteza e agilidade na resolução.',
-        createdAt: '10/09/2026 15:10',
-      },
-      {
-        id: 'srv-5',
-        contactName: 'Carlos Eduardo Santos',
-        phone: '(11) 97111-2233',
-        agentName: 'Admin Versus',
-        rating: 5,
-        comment: 'Configurou nossa integração em minutos. Equipe nota mil!',
-        createdAt: '09/09/2026 18:02',
-      },
-      {
-        id: 'srv-6',
-        contactName: 'Beatriz Vasconcelos',
-        phone: '(19) 98234-5678',
-        agentName: 'Lucas Atendente',
-        rating: 4,
-        comment: 'Atendimento muito ágil e cordial.',
-        createdAt: '09/09/2026 13:15',
-      },
-      {
-        id: 'srv-7',
-        contactName: 'Renato Oliveira',
-        phone: '(85) 99456-1122',
-        agentName: 'Camila Suporte',
-        rating: 5,
-        comment: 'Muito rápido e direto ao ponto!',
-        createdAt: '08/09/2026 16:50',
-      },
-      {
-        id: 'srv-8',
-        contactName: 'Larissa Moura',
-        phone: '(61) 98877-6655',
-        agentName: 'Admin Versus',
-        rating: 3,
-        comment: 'Demorou um pouco na fila inicial, mas depois foi tudo bem explicado.',
-        createdAt: '08/09/2026 10:30',
-      },
-    ];
-
-    let combined = [...defaultList];
-    if (baseFeedbacks.length > 0) {
-      baseFeedbacks.forEach((fb: any, idx: number) => {
-        if (!combined.some((c) => c.id === fb.id)) {
-          combined.unshift({
-            id: fb.id || `srv-extra-${idx}`,
-            contactName: fb.contactName || 'Cliente',
-            phone: fb.phone || '(11) 99000-1122',
-            agentName: fb.agentName || 'Lucas Atendente',
-            rating: fb.rating || 5,
-            comment: fb.comment || 'Atendimento concluído com sucesso.',
-            createdAt: fb.createdAt
-              ? new Date(fb.createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
-              : 'Hoje 10:00',
-          });
-        }
-      });
-    }
-
-    return combined;
+  // Lista de Pesquisas Reais (100% integradas ao banco Supabase - Zero Mocks)
+  const allSurveys = useMemo<CsatSurveyItem[]>(() => {
+    const raw = csatData?.surveys || csatData?.recentFeedbacks || [];
+    return raw.map((s: any): CsatSurveyItem => ({
+      id: String(s.id || ''),
+      contactName: String(s.contactName || 'Cliente WhatsApp'),
+      phone: String(s.phone || '-'),
+      agentName: String(s.agentName || 'Atendente'),
+      rating: Number(s.rating) || 5,
+      comment: String(s.comment || 'Atendimento concluído com sucesso.'),
+      createdAt: s.createdAt
+        ? new Date(s.createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+        : '-',
+    }));
   }, [csatData]);
 
-  const filteredSurveys = useMemo(() => {
-    return allSurveys.filter((s) => {
+  const filteredSurveys = useMemo<CsatSurveyItem[]>(() => {
+    return allSurveys.filter((s: CsatSurveyItem) => {
       const matchesSearch =
         !surveySearch.trim() ||
         s.contactName.toLowerCase().includes(surveySearch.toLowerCase()) ||
@@ -480,7 +406,7 @@ export default function AtendimentoAnalyticsDashboard() {
     }
 
     const headers = ["ID", "Contato", "Telefone", "Colaborador", "Nota", "Comentário", "Data"];
-    const rows = filteredSurveys.map((s) => [
+    const rows = filteredSurveys.map((s: CsatSurveyItem) => [
       s.id,
       `"${s.contactName.replace(/"/g, '""')}"`,
       `"${s.phone}"`,
@@ -490,7 +416,7 @@ export default function AtendimentoAnalyticsDashboard() {
       `"${s.createdAt}"`,
     ]);
 
-    const csvContent = "\uFEFF" + [headers.join(";"), ...rows.map((r) => r.join(";"))].join("\r\n");
+    const csvContent = "\uFEFF" + [headers.join(";"), ...rows.map((r: (string | number)[]) => r.join(";"))].join("\r\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -529,7 +455,9 @@ export default function AtendimentoAnalyticsDashboard() {
     const end = new Date();
     let start = new Date();
 
-    if (period === '7d') start.setDate(end.getDate() - 7);
+    if (period === 'today') {
+      start = new Date();
+    } else if (period === '7d') start.setDate(end.getDate() - 7);
     else if (period === '15d') start.setDate(end.getDate() - 15);
     else if (period === '30d') start.setDate(end.getDate() - 30);
     else if (period === '90d') start.setDate(end.getDate() - 90);
@@ -612,6 +540,38 @@ export default function AtendimentoAnalyticsDashboard() {
       setIsRefreshing(false);
     }
   };
+
+  // Re-fetch dinâmico e reativo de CSAT ao alterar filtros
+  const fetchCsatData = useCallback(async (agent = surveyAgentFilter, search = surveySearch) => {
+    try {
+      setIsCsatLoading(true);
+      const params = new URLSearchParams({
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+      });
+      if (agent && agent !== 'all') {
+        params.append('agentName', agent);
+      }
+      if (search && search.trim()) {
+        params.append('search', search.trim());
+      }
+      const res = await api.get(`/analytics/csat?${params.toString()}`);
+      setCsatData(res.data);
+    } catch (err) {
+      console.error("Erro ao recarregar CSAT:", err);
+    } finally {
+      setIsCsatLoading(false);
+    }
+  }, [dateRange]);
+
+  useEffect(() => {
+    if (activeTab === 'csat') {
+      const timer = setTimeout(() => {
+        fetchCsatData(surveyAgentFilter, surveySearch);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, surveyAgentFilter, surveySearch, fetchCsatData]);
 
   const fetchDetailedTickets = async () => {
     try {
@@ -849,7 +809,7 @@ export default function AtendimentoAnalyticsDashboard() {
 
             {/* Quick Period Buttons */}
             <div className="flex items-center gap-1 bg-[#11192A] p-1 rounded-lg border border-slate-800">
-              {(['7d', '15d', '30d', '90d'] as const).map((p) => (
+              {(['today', '7d', '15d', '30d', '90d'] as const).map((p) => (
                 <button
                   key={p}
                   onClick={() => {
@@ -860,7 +820,7 @@ export default function AtendimentoAnalyticsDashboard() {
                     period === p ? 'bg-slate-700 text-white font-semibold' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  {p === '7d' ? '7 dias' : p === '15d' ? '15 dias' : p === '30d' ? '30 dias' : '90 dias'}
+                  {p === 'today' ? 'Hoje' : p === '7d' ? '7 dias' : p === '15d' ? '15 dias' : p === '30d' ? '30 dias' : '90 dias'}
                 </button>
               ))}
 
@@ -1802,7 +1762,7 @@ export default function AtendimentoAnalyticsDashboard() {
               </button>
             </div>
 
-            {/* 2. 4 CARDS KPI */}
+            {/* 2. 4 CARDS KPI (DADOS 100% REAIS DO SUPABASE) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Card 1: Média Geral */}
               <div className="bg-[#0B1224] p-5 rounded-xl border border-slate-800/80 flex flex-col justify-between shadow-sm">
@@ -1813,14 +1773,31 @@ export default function AtendimentoAnalyticsDashboard() {
                   </div>
                 </div>
                 <div className="my-3 flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white">{csatData?.csatScore?.toFixed(1) || '4.8'}</span>
+                  <span className="text-3xl font-black text-white">
+                    {csatData?.csatScore !== undefined && csatData?.csatScore !== null
+                      ? csatData.csatScore.toFixed(1)
+                      : '0.0'}
+                  </span>
                   <span className="text-slate-500 font-bold text-sm">/ 5.0</span>
                 </div>
                 <div className="flex items-center gap-1 text-amber-400">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={13} fill="currentColor" />
+                    <Star
+                      key={i}
+                      size={13}
+                      fill={i < Math.round(csatData?.csatScore || 0) ? "currentColor" : "none"}
+                      className={i < Math.round(csatData?.csatScore || 0) ? "text-amber-400" : "text-slate-600"}
+                    />
                   ))}
-                  <span className="text-[11px] text-slate-400 ml-1.5 font-medium">Classificação Excelente</span>
+                  <span className="text-[11px] text-slate-400 ml-1.5 font-medium">
+                    {csatData?.csatScore >= 4.5
+                      ? 'Classificação Excelente'
+                      : csatData?.csatScore >= 3.5
+                      ? 'Classificação Boa'
+                      : csatData?.csatScore > 0
+                      ? 'Classificação Regular'
+                      : 'Sem avaliações no período'}
+                  </span>
                 </div>
               </div>
 
@@ -1834,11 +1811,11 @@ export default function AtendimentoAnalyticsDashboard() {
                 </div>
                 <div className="my-3">
                   <span className="text-3xl font-black text-blue-400">
-                    {Math.max(Math.round((csatData?.totalSurveys || 24) * 1.38), 24)}
+                    {csatData?.totalSurveys ?? 0}
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                  Enviadas via WhatsApp após encerramento
+                  Disparadas via WhatsApp após encerramento
                 </span>
               </div>
 
@@ -1851,7 +1828,9 @@ export default function AtendimentoAnalyticsDashboard() {
                   </div>
                 </div>
                 <div className="my-3">
-                  <span className="text-3xl font-black text-emerald-400">{csatData?.totalSurveys || 24}</span>
+                  <span className="text-3xl font-black text-emerald-400">
+                    {csatData?.responsesCount ?? (csatData?.totalSurveys ?? 0)}
+                  </span>
                 </div>
                 <span className="text-[11px] text-slate-400 flex items-center gap-1">
                   Avaliações preenchidas pelos clientes
@@ -1868,11 +1847,11 @@ export default function AtendimentoAnalyticsDashboard() {
                 </div>
                 <div className="my-3">
                   <span className="text-3xl font-black text-cyan-400">
-                    {Math.round(((csatData?.totalSurveys || 24) / Math.max(Math.round((csatData?.totalSurveys || 24) * 1.38), 1)) * 100)}%
+                    {csatData?.responseRate !== undefined ? `${csatData.responseRate}%` : '0%'}
                   </span>
                 </div>
                 <span className="text-[11px] text-emerald-400/90 font-medium flex items-center gap-1">
-                  Alto engajamento no canal receptivo
+                  {csatData?.responseRate > 50 ? 'Alto engajamento no canal receptivo' : 'Taxa de resposta operacional'}
                 </span>
               </div>
             </div>

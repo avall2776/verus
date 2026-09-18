@@ -101,23 +101,63 @@ export declare class AnalyticsService {
             contactName: string;
         }[];
     }>;
-    getCsat(tenantId: string, startDate?: string, endDate?: string): Promise<{
+    getCsat(tenantId: string, startDate?: string, endDate?: string, agentName?: string, search?: string): Promise<{
         csatScore: number;
         totalSurveys: number;
+        responsesCount: number;
+        responseRate: number;
         positivePercent: number;
         distribution: {
             stars: number;
             count: number;
             percent: number;
         }[];
-        recentFeedbacks: {
+        surveys: {
             id: string;
             contactName: string;
+            phone: string;
             agentName: string;
             rating: number;
             comment: string;
+            channel: string;
             createdAt: string;
         }[];
+        recentFeedbacks: {
+            id: string;
+            contactName: string;
+            phone: string;
+            agentName: string;
+            rating: number;
+            comment: string;
+            channel: string;
+            createdAt: string;
+        }[];
+    }>;
+    private ensureInitialCsatSeed;
+    createCsatSurvey(tenantId: string, data: {
+        contactName: string;
+        phone: string;
+        agentName: string;
+        rating: number;
+        comment?: string;
+        conversationId?: string;
+        contactId?: string;
+        userId?: string;
+    }): Promise<{
+        id: string;
+        phone: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        contactId: string | null;
+        status: string;
+        conversationId: string | null;
+        channel: string;
+        userId: string | null;
+        contactName: string;
+        agentName: string;
+        rating: number;
+        comment: string | null;
     }>;
     getChannels(tenantId: string, startDate?: string, endDate?: string): Promise<{
         channels: {

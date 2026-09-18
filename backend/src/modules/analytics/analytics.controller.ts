@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
@@ -72,9 +72,19 @@ export class AnalyticsController {
   async getCsat(
     @CurrentTenant() tenantId: string,
     @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string
+    @Query('endDate') endDate?: string,
+    @Query('agentName') agentName?: string,
+    @Query('search') search?: string,
   ) {
-    return this.analyticsService.getCsat(tenantId, startDate, endDate);
+    return this.analyticsService.getCsat(tenantId, startDate, endDate, agentName, search);
+  }
+
+  @Post('csat')
+  async createCsat(
+    @CurrentTenant() tenantId: string,
+    @Body() body: any,
+  ) {
+    return this.analyticsService.createCsatSurvey(tenantId, body);
   }
 
   @Get('funnel')
