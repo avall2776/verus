@@ -296,7 +296,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             const textBody = messageObj?.conversation ||
                 messageObj?.extendedTextMessage?.text ||
                 '';
-            const candidateName = data.pushName || data.verifiedBizName;
+            const candidateName = data.pushName || data.verifiedBizName || data.verifiedName;
             const contactDisplayName = candidateName && !candidateName.includes('@lid')
                 ? candidateName
                 : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : remoteJid);
@@ -331,6 +331,12 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             await this.ingressQueue.add('process-meta-message', {
                 tenantId,
                 webhookData: normalizedPayload,
+                evolutionMetadata: {
+                    instanceName: payload.instance || payload.data?.instance,
+                    pushName: candidateName,
+                    remoteJid: key.remoteJid,
+                    profilePictureUrl: data.profilePictureUrl || null,
+                },
             }, {
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
@@ -354,6 +360,10 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                                 ...(profilePictureUrl ? { avatarUrl: profilePictureUrl } : {}),
                             },
                         });
+                        const updated = await this.prisma.contact.findFirst({ where: { tenantId, phone } });
+                        if (updated) {
+                            this.chatGateway.emitContactUpdated(tenantId, updated);
+                        }
                     }
                     catch (e) { }
                 }

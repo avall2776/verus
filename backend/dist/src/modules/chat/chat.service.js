@@ -211,6 +211,10 @@ let ChatService = ChatService_1 = class ChatService {
                 if (!av || av === 'null' || av === 'undefined' || av.includes('unsplash.com')) {
                     conv.contact.avatarUrl = null;
                 }
+                const isGenericName = !conv.contact.name || conv.contact.name === 'Cliente WhatsApp' || conv.contact.name.includes('@lid') || conv.contact.name.startsWith('WhatsApp');
+                if (!conv.contact.avatarUrl || isGenericName) {
+                    this.whatsappService.syncContactMetadata(tenantId, conv.contact.id).catch(() => { });
+                }
             }
         }
         return conversations;

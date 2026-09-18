@@ -549,46 +549,127 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             settings: data.whatsappSettings
         });
     }
-    async fetchContactProfilePicture(tenantId, phone) {
+    async fetchContactProfile(tenantId, phone) {
         const cleanPhone = phone.replace(/\D/g, '');
+        let resolvedName = null;
+        let resolvedAvatar = null;
         try {
-            const instance = await this.prisma.whatsAppInstance.findFirst({
-                where: {
-                    tenantId,
-                    status: 'connected',
-                    token: { not: null },
-                    phoneNumberId: { not: null }
-                },
+            const evoConfig = this.getEvolutionConfig();
+            const instances = await this.prisma.whatsAppInstance.findMany({
+                where: { tenantId },
                 orderBy: { isDefault: 'desc' }
             });
-            let token = instance?.token;
-            if (!token) {
-                const tenant = await this.prisma.tenant.findUnique({
-                    where: { id: tenantId },
-                    select: { metaToken: true }
-                });
-                token = tenant?.metaToken || null;
+            const connectedInst = instances.find(i => i.status === 'connected') || instances[0];
+            let instanceName = null;
+            if (connectedInst) {
+                const set = connectedInst.settings || {};
+                instanceName = set.instanceName || connectedInst.name || this.getSanitizedInstanceName(tenantId, connectedInst.id);
             }
-            if (token) {
+            if (instanceName) {
+                const headers = { apikey: evoConfig.apiKey, 'Content-Type': 'application/json' };
+                const queryNumber = phone.includes('@') ? phone : cleanPhone;
                 try {
+                    const picRes = await axios_1.default.post(`${evoConfig.serverUrl}/chat/fetchProfilePictureUrl/${instanceName}`, { number: queryNumber }, { headers, timeout: 5000 });
+                    if (picRes.data?.profilePictureUrl) {
+                        resolvedAvatar = picRes.data.profilePictureUrl;
+                    }
+                }
+                catch (picErr) {
+                }
+                try {
+                    const profRes = await axios_1.default.post(`${evoConfig.serverUrl}/chat/fetchProfile/${instanceName}`, { number: queryNumber }, { headers, timeout: 5000 });
+                    if (profRes.data?.name && !profRes.data.name.includes('@lid')) {
+                        resolvedName = profRes.data.name;
+                    }
+                    if (!resolvedAvatar && profRes.data?.picture) {
+                        resolvedAvatar = profRes.data.picture;
+                    }
+                }
+                catch (profErr) {
+                }
+                if (!resolvedName || !resolvedAvatar) {
+                    try {
+                        const contactsRes = await axios_1.default.post(`${evoConfig.serverUrl}/chat/findContacts/${instanceName}`, { where: { id: phone.includes('@') ? phone : `${cleanPhone}@s.whatsapp.net` } }, { headers, timeout: 4000 });
+                        const found = Array.isArray(contactsRes.data) ? contactsRes.data[0] : contactsRes.data;
+                        if (found) {
+                            if (!resolvedName && (found.pushName || found.name || found.verifiedName)) {
+                                resolvedName = found.pushName || found.name || found.verifiedName;
+                            }
+                            if (!resolvedAvatar && (found.profilePictureUrl || found.picture)) {
+                                resolvedAvatar = found.profilePictureUrl || found.picture;
+                            }
+                        }
+                    }
+                    catch (contactErr) { }
+                }
+                if (phone.includes('@lid') && (!resolvedName || !resolvedAvatar)) {
+                    try {
+                        const allInstRes = await axios_1.default.get(`${evoConfig.serverUrl}/instance/fetchInstances`, { headers, timeout: 3000 }).catch(() => null);
+                        const allInstances = Array.isArray(allInstRes?.data) ? allInstRes.data : [];
+                        for (const other of allInstances) {
+                            const otherName = other.name || other.instanceName;
+                            if (otherName && otherName !== instanceName && (other.connectionStatus === 'open' || other.status === 'open')) {
+                                if (!resolvedAvatar) {
+                                    const pRes = await axios_1.default.post(`${evoConfig.serverUrl}/chat/fetchProfilePictureUrl/${otherName}`, { number: queryNumber }, { headers, timeout: 3000 }).catch(() => null);
+                                    if (pRes?.data?.profilePictureUrl)
+                                        resolvedAvatar = pRes.data.profilePictureUrl;
+                                }
+                                if (!resolvedName) {
+                                    const cRes = await axios_1.default.post(`${evoConfig.serverUrl}/chat/findContacts/${otherName}`, { where: { id: queryNumber } }, { headers, timeout: 3000 }).catch(() => null);
+                                    const f = Array.isArray(cRes?.data) ? cRes.data[0] : null;
+                                    if (f?.pushName || f?.name)
+                                        resolvedName = f.pushName || f.name;
+                                }
+                                if (resolvedName && resolvedAvatar)
+                                    break;
+                            }
+                        }
+                    }
+                    catch (e) { }
+                }
+            }
+        }
+        catch (evoErr) {
+            this.logger.debug(`Evolution profile fetch skipped or failed: ${evoErr.message}`);
+        }
+        if (!resolvedAvatar && cleanPhone) {
+            try {
+                const instance = await this.prisma.whatsAppInstance.findFirst({
+                    where: {
+                        tenantId,
+                        status: 'connected',
+                        token: { not: null },
+                        phoneNumberId: { not: null }
+                    },
+                    orderBy: { isDefault: 'desc' }
+                });
+                let token = instance?.token;
+                if (!token) {
+                    const tenant = await this.prisma.tenant.findUnique({
+                        where: { id: tenantId },
+                        select: { metaToken: true }
+                    });
+                    token = tenant?.metaToken || null;
+                }
+                if (token) {
                     const res = await axios_1.default.get(`https://graph.facebook.com/v19.0/${cleanPhone}`, {
                         headers: { Authorization: `Bearer ${token}` },
                         params: { fields: 'profile_picture_url' },
                         timeout: 4000
                     });
                     if (res.data?.profile_picture_url) {
-                        return res.data.profile_picture_url;
+                        resolvedAvatar = res.data.profile_picture_url;
                     }
                 }
-                catch (metaErr) {
-                }
             }
+            catch (metaErr) { }
         }
-        catch (e) {
-        }
-        return null;
+        return {
+            name: resolvedName && !resolvedName.includes('@lid') ? resolvedName : null,
+            avatarUrl: resolvedAvatar && !resolvedAvatar.includes('unsplash.com') ? resolvedAvatar : null
+        };
     }
-    async syncContactAvatar(tenantId, contactId) {
+    async syncContactMetadata(tenantId, contactId) {
         const contact = await this.prisma.contact.findFirst({
             where: { id: contactId, tenantId }
         });
@@ -601,17 +682,37 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             });
             contact.avatarUrl = null;
         }
-        if (contact.avatarUrl)
-            return contact.avatarUrl;
-        const avatarUrl = await this.fetchContactProfilePicture(tenantId, contact.phone);
-        if (avatarUrl) {
-            await this.prisma.contact.update({
-                where: { id: contactId },
-                data: { avatarUrl }
-            });
-            return avatarUrl;
+        const isGenericName = !contact.name || contact.name === 'Cliente WhatsApp' || contact.name.includes('@lid') || contact.name.startsWith('WhatsApp');
+        const needsAvatar = !contact.avatarUrl;
+        if (!isGenericName && !needsAvatar) {
+            return { name: contact.name, avatarUrl: contact.avatarUrl };
         }
-        return null;
+        const profile = await this.fetchContactProfile(tenantId, contact.phone);
+        const updateData = {};
+        if (profile.name && isGenericName) {
+            updateData.name = profile.name;
+        }
+        if (profile.avatarUrl && needsAvatar) {
+            updateData.avatarUrl = profile.avatarUrl;
+        }
+        if (Object.keys(updateData).length > 0) {
+            const updated = await this.prisma.contact.update({
+                where: { id: contactId },
+                data: updateData
+            });
+            this.logger.log(`Metadados do contato [${contact.phone}] sincronizados: Nome='${updated.name}', Avatar=${!!updated.avatarUrl}`);
+            this.chatGateway.emitContactUpdated(tenantId, updated);
+            return { name: updated.name, avatarUrl: updated.avatarUrl };
+        }
+        return { name: contact.name, avatarUrl: contact.avatarUrl };
+    }
+    async fetchContactProfilePicture(tenantId, phone) {
+        const profile = await this.fetchContactProfile(tenantId, phone);
+        return profile.avatarUrl || null;
+    }
+    async syncContactAvatar(tenantId, contactId) {
+        const result = await this.syncContactMetadata(tenantId, contactId);
+        return result?.avatarUrl || null;
     }
     async downloadAndSaveMedia(tenantId, mediaId, mimeType = 'audio/ogg') {
         try {

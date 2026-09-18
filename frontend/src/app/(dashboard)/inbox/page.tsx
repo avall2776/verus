@@ -935,6 +935,15 @@ function InboxContent() {
         contact.lastMsg = data.content;
         contact.time = new Date(data.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
+        if (data.contact) {
+          if (data.contact.avatarUrl && (!contact.avatarUrl || contact.avatarUrl !== data.contact.avatarUrl)) {
+            contact.avatarUrl = data.contact.avatarUrl;
+          }
+          if (data.contact.name && data.contact.name !== 'Cliente WhatsApp' && !data.contact.name.includes('@lid')) {
+            contact.name = data.contact.name;
+          }
+        }
+
         // Efeito Visual de Pulsar para novas mensagens
         if (data.direction === 'INBOUND' && activeChat !== data.conversationId) {
           contact.hasNewMessage = true;
@@ -947,17 +956,38 @@ function InboxContent() {
 
     const handleConversationUpdated = (data: any) => {
       console.log('Conversation Updated via WebSocket:', data);
+      if (data?.contact) {
+        setContacts((prev) =>
+          prev.map((c) => {
+            if (c.contactId === data.contact.id || c.id === data.id || (data.contact.phone && c.phone === data.contact.phone)) {
+              const rawAvatar = data.contact.avatarUrl;
+              const cleanAvatar = (rawAvatar && rawAvatar !== 'null' && rawAvatar !== 'undefined' && !rawAvatar.includes('unsplash.com')) ? rawAvatar : c.avatarUrl;
+              const newName = (data.contact.name && data.contact.name !== 'Cliente WhatsApp' && !data.contact.name.includes('@lid')) ? data.contact.name : c.name;
+              return {
+                ...c,
+                name: newName,
+                avatarUrl: cleanAvatar,
+                phone: data.contact.phone || c.phone,
+              };
+            }
+            return c;
+          })
+        );
+      }
+
       // Recarrega a lista silenciosamente mantendo unread
       api.get(`/conversations?tab=${queryTab}`).then((res) => {
         const mapped = res.data.map((conv: any) => {
           const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
+          const rawAvatar = conv.contact?.avatarUrl;
+          const cleanAvatar = (rawAvatar && rawAvatar !== 'null' && rawAvatar !== 'undefined' && !rawAvatar.includes('unsplash.com')) ? rawAvatar : null;
           return {
             id: conv.id,
             contactId: conv.contact?.id || '',
             name: formatContactDisplayName(conv.contact?.name, conv.contact?.phone),
             phone: conv.contact?.phone || '',
             email: conv.contact?.email || '',
-            avatarUrl: conv.contact?.avatarUrl || null,
+            avatarUrl: cleanAvatar,
             tags: conv.contact?.tags || [],
             lastMsg: lastMsg,
             time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -972,7 +1002,28 @@ function InboxContent() {
               return { ...newC, unread: old?.unread || 0, hasNewMessage: old?.hasNewMessage || false };
            });
         });
-      });
+      }).catch(() => {});
+    };
+
+    const handleContactUpdated = (contactData: any) => {
+      console.log('Contact Updated via WebSocket:', contactData);
+      if (!contactData) return;
+      setContacts((prev) =>
+        prev.map((c) => {
+          if (c.contactId === contactData.id || c.id === contactData.id || (contactData.phone && c.phone === contactData.phone)) {
+            const rawAvatar = contactData.avatarUrl;
+            const cleanAvatar = (rawAvatar && rawAvatar !== 'null' && rawAvatar !== 'undefined' && !rawAvatar.includes('unsplash.com')) ? rawAvatar : c.avatarUrl;
+            const newName = (contactData.name && contactData.name !== 'Cliente WhatsApp' && !contactData.name.includes('@lid')) ? contactData.name : c.name;
+            return {
+              ...c,
+              name: newName,
+              avatarUrl: cleanAvatar,
+              phone: contactData.phone || c.phone,
+            };
+          }
+          return c;
+        })
+      );
     };
 
     const handleMessageStatusUpdated = (data: { messageId?: string; providerMessageId?: string; status: string; conversationId?: string }) => {
@@ -991,11 +1042,13 @@ function InboxContent() {
 
     socket.on('newMessage', handleNewMessage);
     socket.on('conversationUpdated', handleConversationUpdated);
+    socket.on('contactUpdated', handleContactUpdated);
     socket.on('messageStatusUpdated', handleMessageStatusUpdated);
 
     return () => {
       socket.off('newMessage', handleNewMessage);
       socket.off('conversationUpdated', handleConversationUpdated);
+      socket.off('contactUpdated', handleContactUpdated);
       socket.off('messageStatusUpdated', handleMessageStatusUpdated);
     };
   }, [socket, activeChat, activeTab, activeFilterTab]);
@@ -1615,7 +1668,7 @@ function InboxContent() {
                       />
                     ) : null}
                     <span className={`avatar-initials ${contact.avatarUrl ? "hidden" : ""}`}>
-                      {getContactInitials(contact.name)}
+                      {getContactInitials(contact.name, contact.phone)}
                     </span>
                   </div>
                   {/* Status Indicator */}
@@ -1830,7 +1883,7 @@ function InboxContent() {
                       ) : null;
                     })()}
                     <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
-                      {getContactInitials(activeContactData.name)}
+                      {getContactInitials(activeContactData.name, activeContactData.phone)}
                     </span>
                   </div>
                   {/* Status Indicator */}
@@ -2697,13 +2750,13 @@ function InboxContent() {
                 />
               ) : null}
               <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
-                {getContactInitials(activeContactData.name)}
+                {getContactInitials(activeContactData.name, activeContactData.phone)}
               </span>
               <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#0B1224] shadow-sm" />
             </div>
 
             <h2 className="text-base font-bold text-white text-center leading-snug">
-              {activeContactData.name}
+              {formatContactDisplayName(activeContactData.name, activeContactData.phone)}
             </h2>
             <div className="flex items-center gap-1.5 mt-1">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -2992,12 +3045,26 @@ function InboxContent() {
             {/* Informações do Lead */}
             <div className="p-6 space-y-4">
               <div className="p-3.5 rounded-xl bg-[#1E293B]/70 border border-slate-700/50 flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-slate-700 to-slate-800 border border-slate-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                  {getContactInitials(selectedQueueChat.name)}
+                <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-slate-700 to-slate-800 border border-slate-600 flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden relative">
+                  {selectedQueueChat.avatarUrl ? (
+                    <img 
+                      src={selectedQueueChat.avatarUrl} 
+                      alt={selectedQueueChat.name} 
+                      className="w-full h-full object-cover rounded-full"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = 'none';
+                        const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                        if (fallback) fallback.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <span className={`avatar-initials ${selectedQueueChat.avatarUrl ? "hidden" : ""}`}>
+                    {getContactInitials(selectedQueueChat.name, selectedQueueChat.phone)}
+                  </span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
-                    <h3 className="text-sm font-bold text-white truncate">{selectedQueueChat.name}</h3>
+                    <h3 className="text-sm font-bold text-white truncate">{formatContactDisplayName(selectedQueueChat.name, selectedQueueChat.phone)}</h3>
                     <span className="text-[10px] text-amber-400 font-medium bg-amber-950/60 border border-amber-800/40 px-2 py-0.5 rounded-full">
                       {selectedQueueChat.isAi ? 'IA Ativa' : 'Fila de Espera'}
                     </span>
@@ -3133,11 +3200,11 @@ function InboxContent() {
                           />
                         ) : null}
                         <span className={`avatar-initials ${c.avatarUrl ? "hidden" : ""}`}>
-                          {getContactInitials(c.name)}
+                          {getContactInitials(c.name, c.phone)}
                         </span>
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">{c.name}</h4>
+                        <h4 className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">{formatContactDisplayName(c.name, c.phone)}</h4>
                         <p className="text-[11px] text-slate-400">{c.phone || 'Sem telefone'}</p>
                       </div>
                     </div>

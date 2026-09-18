@@ -34,7 +34,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         this.logger = new common_1.Logger(WebhookProcessor_1.name);
     }
     async process(job) {
-        const { tenantId, webhookData } = job.data;
+        const { tenantId, webhookData, evolutionMetadata } = job.data;
         const entry = webhookData.entry?.[0];
         const change = entry?.changes?.[0];
         const value = change?.value;
@@ -95,8 +95,10 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             content = '[Mídia Recebida]';
         }
         const phone = remoteJid;
-        const cleanName = (pushName && !pushName.includes('@lid'))
-            ? pushName
+        const rawPushName = pushName || evolutionMetadata?.pushName;
+        const isGenericPushName = !rawPushName || rawPushName === 'Cliente WhatsApp' || rawPushName.includes('@lid') || rawPushName.startsWith('WhatsApp');
+        const cleanName = !isGenericPushName
+            ? rawPushName
             : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${remoteJid})`);
         const contact = await this.prisma.contact.upsert({
             where: {
@@ -110,13 +112,21 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 phone,
                 name: cleanName,
                 source: 'WhatsApp',
+                avatarUrl: (evolutionMetadata?.profilePictureUrl && !evolutionMetadata.profilePictureUrl.includes('unsplash.com')) ? evolutionMetadata.profilePictureUrl : null,
             },
-            update: (pushName && !pushName.includes('@lid')) ? { name: pushName } : {}
+            update: !isGenericPushName ? { name: rawPushName } : {}
         });
-        if (!contact.avatarUrl) {
-            const avatarUrl = await this.whatsappService.syncContactAvatar(tenantId, contact.id);
-            if (avatarUrl) {
-                contact.avatarUrl = avatarUrl;
+        const isGenericContact = !contact.name || contact.name === 'Cliente WhatsApp' || contact.name.includes('@lid') || contact.name.startsWith('WhatsApp');
+        if (!contact.avatarUrl || isGenericContact) {
+            try {
+                const synced = await this.whatsappService.syncContactMetadata(tenantId, contact.id);
+                if (synced?.avatarUrl)
+                    contact.avatarUrl = synced.avatarUrl;
+                if (synced?.name)
+                    contact.name = synced.name;
+            }
+            catch (err) {
+                this.logger.warn(`Erro na sincronização de perfil do contato ${contact.id}: ${err.message}`);
             }
         }
         const currentDay = new Date().getDay();
@@ -189,7 +199,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         });
         this.chatGateway.emitNewMessage(tenantId, {
             ...savedMessage,
-            contact: { phone: contact.phone, name: contact.name }
+            contact: { phone: contact.phone, name: contact.name, avatarUrl: contact.avatarUrl }
         });
         if (conversation.status === 'bot_active') {
             if (!isWithinBusinessHours) {
@@ -209,7 +219,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 });
                 this.chatGateway.emitNewMessage(tenantId, {
                     ...fallbackMessage,
-                    contact: { phone: contact.phone, name: contact.name }
+                    contact: { phone: contact.phone, name: contact.name, avatarUrl: contact.avatarUrl }
                 });
                 return { status: 'out_of_business_hours' };
             }

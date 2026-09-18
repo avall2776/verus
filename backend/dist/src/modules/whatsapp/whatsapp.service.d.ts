@@ -162,6 +162,14 @@ export declare class WhatsappService {
         isDefault: boolean;
         lastConnectedAt: Date | null;
     }>;
+    fetchContactProfile(tenantId: string, phone: string): Promise<{
+        name?: string | null;
+        avatarUrl?: string | null;
+    }>;
+    syncContactMetadata(tenantId: string, contactId: string): Promise<{
+        name: string | null;
+        avatarUrl: string | null;
+    } | null>;
     fetchContactProfilePicture(tenantId: string, phone: string): Promise<string | null>;
     syncContactAvatar(tenantId: string, contactId: string): Promise<string | null>;
     downloadAndSaveMedia(tenantId: string, mediaId: string, mimeType?: string): Promise<string | null>;
