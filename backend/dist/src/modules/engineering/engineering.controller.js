@@ -23,6 +23,8 @@ const create_from_ticket_dto_1 = require("./dto/create-from-ticket.dto");
 const chat_engineering_dto_1 = require("./dto/chat-engineering.dto");
 const create_card_from_chat_dto_1 = require("./dto/create-card-from-chat.dto");
 const update_checklist_dto_1 = require("./dto/update-checklist.dto");
+const product_chat_dto_1 = require("./dto/product-chat.dto");
+const update_product_status_dto_1 = require("./dto/update-product-status.dto");
 let EngineeringController = class EngineeringController {
     constructor(engineeringService) {
         this.engineeringService = engineeringService;
@@ -91,6 +93,42 @@ let EngineeringController = class EngineeringController {
     async syncDeploy(req) {
         this.checkSuperAdmin(req);
         return this.engineeringService.syncDeploy();
+    }
+    async getProducts(req) {
+        this.checkSuperAdmin(req);
+        return this.engineeringService.getProducts();
+    }
+    async getProductById(req, id) {
+        this.checkSuperAdmin(req);
+        return this.engineeringService.getProductById(id);
+    }
+    async updateProductStatus(req, id, dto) {
+        this.checkSuperAdmin(req);
+        return this.engineeringService.updateProductStatus(id, dto.status);
+    }
+    async chatWithProductAI(req, id, dto) {
+        this.checkSuperAdmin(req);
+        return this.engineeringService.chatWithProductAI(id, dto);
+    }
+    async getProductChatHistory(req, id) {
+        this.checkSuperAdmin(req);
+        return this.engineeringService.getProductChatHistory(id);
+    }
+    async runSandboxTest(req, id) {
+        this.checkSuperAdmin(req);
+        return this.engineeringService.runSandboxTest(id);
+    }
+    async getProductLogs(req, id) {
+        this.checkSuperAdmin(req);
+        return this.engineeringService.getProductLogs(id);
+    }
+    async clearProductLogs(req, id) {
+        this.checkSuperAdmin(req);
+        return this.engineeringService.clearProductLogs(id);
+    }
+    async integrateProductToProduction(req, id) {
+        this.checkSuperAdmin(req);
+        return this.engineeringService.integrateProductToProduction(id);
     }
 };
 exports.EngineeringController = EngineeringController;
@@ -209,6 +247,79 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EngineeringController.prototype, "syncDeploy", null);
+__decorate([
+    (0, common_1.Get)('products'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EngineeringController.prototype, "getProducts", null);
+__decorate([
+    (0, common_1.Get)('products/:id'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], EngineeringController.prototype, "getProductById", null);
+__decorate([
+    (0, common_1.Patch)('products/:id/status'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, update_product_status_dto_1.UpdateProductStatusDto]),
+    __metadata("design:returntype", Promise)
+], EngineeringController.prototype, "updateProductStatus", null);
+__decorate([
+    (0, common_1.Post)('products/:id/chat'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, product_chat_dto_1.ProductChatDto]),
+    __metadata("design:returntype", Promise)
+], EngineeringController.prototype, "chatWithProductAI", null);
+__decorate([
+    (0, common_1.Get)('products/:id/chat-history'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], EngineeringController.prototype, "getProductChatHistory", null);
+__decorate([
+    (0, common_1.Post)('products/:id/test'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], EngineeringController.prototype, "runSandboxTest", null);
+__decorate([
+    (0, common_1.Get)('products/:id/logs'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], EngineeringController.prototype, "getProductLogs", null);
+__decorate([
+    (0, common_1.Post)('products/:id/clear-logs'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], EngineeringController.prototype, "clearProductLogs", null);
+__decorate([
+    (0, common_1.Post)('products/:id/integrate'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], EngineeringController.prototype, "integrateProductToProduction", null);
 exports.EngineeringController = EngineeringController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('engineering'),

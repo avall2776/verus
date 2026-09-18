@@ -5,11 +5,52 @@ import { CreateFromTicketDto } from './dto/create-from-ticket.dto';
 import { ChatEngineeringDto } from './dto/chat-engineering.dto';
 import { CreateCardFromChatDto } from './dto/create-card-from-chat.dto';
 import { UpdateChecklistDto } from './dto/update-checklist.dto';
+import { ProductChatDto } from './dto/product-chat.dto';
+export interface ProductTask {
+    id: string;
+    text: string;
+    done: boolean;
+}
+export interface ProductLog {
+    timestamp: string;
+    level: 'INFO' | 'SUCCESS' | 'WARN' | 'ERROR' | 'TELEMETRY';
+    message: string;
+    details?: any;
+}
+export interface ProductChatMessage {
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
+    createdAt: string;
+}
+export interface EngineeringProduct {
+    id: string;
+    name: string;
+    tagline: string;
+    category: string;
+    status: 'EM_PLANEJAMENTO' | 'EM_DESENVOLVIMENTO' | 'EM_HOMOLOGACAO' | 'EM_PRODUCAO';
+    isolationLevel: string;
+    engine: string;
+    ports: string;
+    targetLatency: string;
+    lastTestRun?: string;
+    lastTestStatus?: 'PASS' | 'WARN' | 'FAIL';
+    stabilityScore: number;
+    isIntegrated: boolean;
+    integratedAt?: string;
+    description: string;
+    architectureDetails: string[];
+    tasks: ProductTask[];
+    chatHistory: ProductChatMessage[];
+    logs: ProductLog[];
+}
 export declare class EngineeringService {
     private readonly configService;
     private readonly logger;
     private readonly prisma;
     private readonly openai;
+    private productsStore;
+    private readonly productsFilePath;
     constructor(configService: ConfigService);
     getBacklog(filters?: {
         stage?: string;
@@ -258,5 +299,34 @@ export declare class EngineeringService {
     }>;
     transcribeAudio(file: Express.Multer.File): Promise<{
         text: string;
+    }>;
+    private initProductsStore;
+    private saveProductsStore;
+    getProducts(): Promise<EngineeringProduct[]>;
+    getProductById(id: string): Promise<EngineeringProduct>;
+    updateProductStatus(id: string, status: string): Promise<EngineeringProduct>;
+    chatWithProductAI(id: string, dto: ProductChatDto): Promise<{
+        reply: string;
+        chatHistory: ProductChatMessage[];
+    }>;
+    getProductChatHistory(id: string): Promise<ProductChatMessage[]>;
+    runSandboxTest(id: string): Promise<{
+        success: boolean;
+        productId: string;
+        productName: string;
+        latencyMs: number;
+        stabilityScore: number;
+        status: string;
+        logs: ProductLog[];
+    }>;
+    getProductLogs(id: string): Promise<ProductLog[]>;
+    clearProductLogs(id: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    integrateProductToProduction(id: string): Promise<{
+        success: boolean;
+        message: string;
+        product: EngineeringProduct;
     }>;
 }

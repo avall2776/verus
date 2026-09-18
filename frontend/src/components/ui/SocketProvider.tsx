@@ -76,8 +76,39 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     return () => window.removeEventListener('click', handleFirstInteraction);
   }, []);
 
-  // Dispara áudio exclusivo VERSUS (Chime harmônico via Web Audio API corporativa)
+  // Dispara áudio de notificação profissional (Arquivos Acústicos Reais + Fallback Sintetizado)
   const playNotificationSound = useCallback((isHighPriority = false) => {
+    try {
+      if (typeof window === 'undefined') return;
+
+      // 1. Tenta reproduzir arquivo de áudio acústico de alta qualidade
+      const preset = localStorage.getItem('versus_sound_preset') || 'glass';
+      let soundPath = '/sounds/notification.wav';
+
+      if (isHighPriority) {
+        soundPath = '/sounds/transfer.wav';
+      } else if (preset === 'pop') {
+        soundPath = '/sounds/notification-pop.wav';
+      } else {
+        soundPath = '/sounds/notification-glass.wav';
+      }
+
+      const audio = new Audio(soundPath);
+      audio.volume = isHighPriority ? 0.75 : 0.65;
+      
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((playErr) => {
+          // Fallback resiliente via Web Audio API caso o navegador bloqueie áudio externo
+          playSynthesizedFallback(isHighPriority);
+        });
+      }
+    } catch (e) {
+      playSynthesizedFallback(isHighPriority);
+    }
+  }, []);
+
+  const playSynthesizedFallback = (isHighPriority = false) => {
     try {
       if (typeof window === 'undefined') return;
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -88,63 +119,41 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       const ctx = audioContextRef.current;
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
+      if (ctx.state === 'suspended') ctx.resume();
 
       const now = ctx.currentTime;
-
       if (!isHighPriority) {
-        // Som Suave Corporativo VERSUS: Dois tons harmônicos ascendentes (D5 587Hz -> A5 880Hz)
-        const osc1 = ctx.createOscillator();
-        const osc2 = ctx.createOscillator();
+        const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(587.33, now);
-        osc1.frequency.exponentialRampToValueAtTime(880, now + 0.12);
-
-        osc2.type = 'triangle';
-        osc2.frequency.setValueAtTime(880, now + 0.08);
-
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1046.5, now); // C6
+        osc.frequency.exponentialRampToValueAtTime(1318.5, now + 0.1); // E6
         gain.gain.setValueAtTime(0.001, now);
-        gain.gain.linearRampToValueAtTime(0.12, now + 0.04);
+        gain.gain.linearRampToValueAtTime(0.12, now + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
-
-        osc1.connect(gain);
-        osc2.connect(gain);
+        osc.connect(gain);
         gain.connect(ctx.destination);
-
-        osc1.start(now);
-        osc2.start(now + 0.06);
-        osc1.stop(now + 0.35);
-        osc2.stop(now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
       } else {
-        // Som de Alta Prioridade (Transferência / Handoff): Três tons vívidos (C5 -> E5 -> G5)
-        const notes = [523.25, 659.25, 783.99];
+        const notes = [698.46, 880.0, 1046.5];
         notes.forEach((freq, idx) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
-          const startTime = now + idx * 0.09;
-
+          const st = now + idx * 0.09;
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, startTime);
-
-          gain.gain.setValueAtTime(0.001, startTime);
-          gain.gain.linearRampToValueAtTime(0.18, startTime + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.28);
-
+          osc.frequency.setValueAtTime(freq, st);
+          gain.gain.setValueAtTime(0.001, st);
+          gain.gain.linearRampToValueAtTime(0.15, st + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, st + 0.3);
           osc.connect(gain);
           gain.connect(ctx.destination);
-
-          osc.start(startTime);
-          osc.stop(startTime + 0.28);
+          osc.start(st);
+          osc.stop(st + 0.3);
         });
       }
-    } catch (e) {
-      console.warn('[Audio] Chime indisponível:', e);
-    }
-  }, []);
+    } catch (err) {}
+  };
 
   // Vibração Tátil (Mobile & dispositivos compatíveis)
   const triggerVibration = useCallback((isHighPriority = false) => {

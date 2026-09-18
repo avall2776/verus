@@ -5,6 +5,8 @@ import { CreateFromTicketDto } from './dto/create-from-ticket.dto';
 import { ChatEngineeringDto } from './dto/chat-engineering.dto';
 import { CreateCardFromChatDto } from './dto/create-card-from-chat.dto';
 import { UpdateChecklistDto } from './dto/update-checklist.dto';
+import { ProductChatDto } from './dto/product-chat.dto';
+import { UpdateProductStatusDto } from './dto/update-product-status.dto';
 export declare class EngineeringController {
     private readonly engineeringService;
     constructor(engineeringService: EngineeringService);
@@ -251,5 +253,32 @@ export declare class EngineeringController {
         success: boolean;
         count: number;
         message: string;
+    }>;
+    getProducts(req: any): Promise<import("./engineering.service").EngineeringProduct[]>;
+    getProductById(req: any, id: string): Promise<import("./engineering.service").EngineeringProduct>;
+    updateProductStatus(req: any, id: string, dto: UpdateProductStatusDto): Promise<import("./engineering.service").EngineeringProduct>;
+    chatWithProductAI(req: any, id: string, dto: ProductChatDto): Promise<{
+        reply: string;
+        chatHistory: import("./engineering.service").ProductChatMessage[];
+    }>;
+    getProductChatHistory(req: any, id: string): Promise<import("./engineering.service").ProductChatMessage[]>;
+    runSandboxTest(req: any, id: string): Promise<{
+        success: boolean;
+        productId: string;
+        productName: string;
+        latencyMs: number;
+        stabilityScore: number;
+        status: string;
+        logs: import("./engineering.service").ProductLog[];
+    }>;
+    getProductLogs(req: any, id: string): Promise<import("./engineering.service").ProductLog[]>;
+    clearProductLogs(req: any, id: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    integrateProductToProduction(req: any, id: string): Promise<{
+        success: boolean;
+        message: string;
+        product: import("./engineering.service").EngineeringProduct;
     }>;
 }

@@ -42,12 +42,18 @@ import {
   Mic,
   MicOff,
   StopCircle,
-  ArrowUp
+  ArrowUp,
+  PhoneCall,
+  CreditCard,
+  Briefcase,
+  Play,
+  Activity
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
+import ProductSandboxModal from "@/components/super-admin/ProductSandboxModal";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +82,7 @@ const PRIORITIES: Record<string, { label: string; color: string; badge: string }
 };
 
 export default function EngineeringDashboard() {
-  const [activeTab, setActiveTab] = useState<"kanban" | "ai_chat">("kanban");
+  const [activeTab, setActiveTab] = useState<"kanban" | "ai_chat" | "products">("kanban");
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [items, setItems] = useState<any[]>([]);
   const [stats, setStats] = useState({
@@ -179,6 +185,77 @@ export default function EngineeringDashboard() {
       fetchChatHistory();
     }
   }, [activeTab]);
+
+  // Estados para Produtos & Sandboxes em Desenvolvimento
+  const [products, setProducts] = useState<any[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [productSearch, setProductSearch] = useState("");
+  const [productStatusFilter, setProductStatusFilter] = useState("ALL");
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [quickTestingId, setQuickTestingId] = useState<string | null>(null);
+
+  // Carregar Produtos em R&D
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoadingProducts(true);
+      const res = await api.get("/engineering/products");
+      setProducts(res.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao carregar módulos em desenvolvimento.");
+    } finally {
+      setLoadingProducts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "products") {
+      fetchProducts();
+    }
+  }, [activeTab, fetchProducts]);
+
+  const handleQuickTest = async (prodId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setQuickTestingId(prodId);
+    try {
+      const res = await api.post(`/engineering/products/${prodId}/test`);
+      toast.success(`Diagnóstico de '${res.data.productName}' concluído com ${res.data.stabilityScore}% de estabilidade!`);
+      fetchProducts();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao executar teste rápido de sandbox.");
+    } finally {
+      setQuickTestingId(null);
+    }
+  };
+
+  const handleOpenProductSandbox = (prod: any) => {
+    setSelectedProduct(prod);
+    setIsProductModalOpen(true);
+  };
+
+  const handleProductUpdated = (updated: any) => {
+    setSelectedProduct(updated);
+    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+  };
+
+  const filteredProducts = products.filter((p) => {
+    if (productStatusFilter !== "ALL" && p.status !== productStatusFilter) {
+      return false;
+    }
+    if (productSearch.trim()) {
+      const q = productSearch.toLowerCase();
+      const matchName = p.name?.toLowerCase().includes(q);
+      const matchTagline = p.tagline?.toLowerCase().includes(q);
+      const matchCategory = p.category?.toLowerCase().includes(q);
+      const matchEngine = p.engine?.toLowerCase().includes(q);
+      if (!matchName && !matchTagline && !matchCategory && !matchEngine) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   // DRAG AND DROP NATIVO (@hello-pangea/dnd)
   const handleDragEnd = async (result: DropResult) => {
@@ -661,6 +738,21 @@ export default function EngineeringDashboard() {
             </button>
 
             <button
+              onClick={() => setActiveTab("products")}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                activeTab === "products"
+                  ? "bg-cyan-600/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <Cpu size={14} className="text-cyan-400" />
+              <span>Produtos & Módulos</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono">
+                {products.length || 5}
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab("ai_chat")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                 activeTab === "ai_chat"
@@ -673,7 +765,7 @@ export default function EngineeringDashboard() {
             </button>
           </div>
 
-          {/* Controles Exclusivos da Aba Kanban / IA */}
+          {/* Controles Exclusivos da Aba Kanban / Produtos / IA */}
           {activeTab === "kanban" ? (
             <>
               {/* Sincronização Automática de Deploy */}
@@ -696,6 +788,22 @@ export default function EngineeringDashboard() {
                 <span>Nova Frente</span>
               </button>
             </>
+          ) : activeTab === "products" ? (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                <ShieldCheck size={12} className="text-emerald-400" />
+                <span>Zero Mocks • Sandboxes Isoladas</span>
+              </span>
+              <button
+                onClick={fetchProducts}
+                disabled={loadingProducts}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0B1224] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                title="Atualizar telemetria dos produtos"
+              >
+                <RefreshCw size={13} className={loadingProducts ? "animate-spin" : ""} />
+                <span className="hidden sm:inline">Recarregar</span>
+              </button>
+            </div>
           ) : (
             <div className="flex items-center gap-2">
               <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-300 border border-purple-500/30">
@@ -770,7 +878,70 @@ export default function EngineeringDashboard() {
         </section>
       )}
 
-      {/* CONTEÚDO PRINCIPAL: TAB 1 (KANBAN/TABELA) OU TAB 2 (AI CHAT) */}
+      {/* MÉTRICAS DE TOPO (KPIs) - Produtos e Módulos em R&D */}
+      {activeTab === "products" && (
+        <section className="px-4 md:px-6 py-3 border-b border-slate-800/80 bg-[#091020] grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0">
+          <div className="bg-[#0B1224] border border-slate-800 rounded-lg p-2.5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total em R&D</p>
+              <p className="text-lg font-black text-white">{products.length}</p>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-slate-800/60 border border-slate-700 flex items-center justify-center text-slate-300">
+              <Cpu size={16} />
+            </div>
+          </div>
+
+          <div className="bg-[#0B1224] border border-amber-500/20 rounded-lg p-2.5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-amber-400 uppercase font-bold tracking-wider">Em Planejamento</p>
+              <p className="text-lg font-black text-amber-300">
+                {products.filter((p) => p.status === "EM_PLANEJAMENTO").length}
+              </p>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <Clock size={16} />
+            </div>
+          </div>
+
+          <div className="bg-[#0B1224] border border-blue-500/20 rounded-lg p-2.5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-blue-400 uppercase font-bold tracking-wider">Em Desenvolvimento</p>
+              <p className="text-lg font-black text-blue-300">
+                {products.filter((p) => p.status === "EM_DESENVOLVIMENTO").length}
+              </p>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              <Code size={16} />
+            </div>
+          </div>
+
+          <div className="bg-[#0B1224] border border-purple-500/20 rounded-lg p-2.5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-purple-400 uppercase font-bold tracking-wider">Em Homologação</p>
+              <p className="text-lg font-black text-purple-300">
+                {products.filter((p) => p.status === "EM_HOMOLOGACAO").length}
+              </p>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+              <Activity size={16} />
+            </div>
+          </div>
+
+          <div className="bg-[#0B1224] border border-emerald-500/20 rounded-lg p-2.5 flex items-center justify-between col-span-2 md:col-span-1">
+            <div>
+              <p className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">Em Produção</p>
+              <p className="text-lg font-black text-emerald-300">
+                {products.filter((p) => p.status === "EM_PRODUCAO").length}
+              </p>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <Rocket size={16} />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* CONTEÚDO PRINCIPAL: TAB 1 (KANBAN/TABELA) OU TAB 2 (PRODUTOS) OU TAB 3 (AI CHAT) */}
       {activeTab === "kanban" ? (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* BARRA DE FILTROS & VISÃO DUPLA (KANBAN VS TABELA) */}
@@ -1185,8 +1356,231 @@ export default function EngineeringDashboard() {
             </div>
           )}
         </div>
+      ) : activeTab === "products" ? (
+        /* TAB 2: PRODUTOS E MÓDULOS EM DESENVOLVIMENTO (SANDBOX & HOMOLOGAÇÃO) */
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-[#070D1B]">
+          
+          {/* BARRA DE PESQUISA & FILTROS DE STATUS DOS PRODUTOS */}
+          <div className="p-3 md:px-6 bg-[#070D1B] border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            {/* Input de Busca */}
+            <div className="flex items-center gap-2 flex-1 min-w-[240px] max-w-md bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-1.5">
+              <Search size={14} className="text-slate-500 shrink-0" />
+              <input
+                type="text"
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                placeholder="Buscar por produto, tecnologia, protocolo ou engine..."
+                className="bg-transparent text-xs text-white placeholder-slate-500 outline-none w-full"
+              />
+              {productSearch && (
+                <button onClick={() => setProductSearch("")} className="text-slate-500 hover:text-white">
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+
+            {/* Filtros de Status (Pílulas Monocromáticas) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              {[
+                { id: "ALL", label: "Todos os Produtos" },
+                { id: "EM_DESENVOLVIMENTO", label: "Em Desenvolvimento" },
+                { id: "EM_HOMOLOGACAO", label: "Em Homologação" },
+                { id: "EM_PLANEJAMENTO", label: "Em Planejamento" },
+                { id: "EM_PRODUCAO", label: "Em Produção" },
+              ].map((filter) => {
+                const isActive = productStatusFilter === filter.id;
+                return (
+                  <button
+                    key={filter.id}
+                    onClick={() => setProductStatusFilter(filter.id)}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                      isActive
+                        ? "bg-blue-600/20 text-blue-300 border border-blue-500/40 shadow-sm"
+                        : "bg-[#0B1224] text-slate-400 hover:text-white border border-slate-800"
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* GRID DE CARDS DE PRODUTOS & SANDBOXES */}
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+            {loadingProducts ? (
+              <div className="h-64 flex flex-col items-center justify-center gap-3 text-slate-400">
+                <RefreshCw size={24} className="animate-spin text-blue-400" />
+                <p className="text-xs">Carregando módulos e sandboxes de engenharia...</p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="h-64 flex flex-col items-center justify-center text-center p-6 border border-dashed border-slate-800 rounded-2xl">
+                <Cpu size={32} className="text-slate-600 mb-2" />
+                <p className="text-sm font-bold text-slate-300">Nenhum produto encontrado</p>
+                <p className="text-xs text-slate-500 mt-1">Ajuste os filtros de busca ou recarregue a lista.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                {filteredProducts.map((prod) => {
+                  const statusConfig: Record<string, { label: string; badge: string }> = {
+                    EM_PLANEJAMENTO: {
+                      label: "Em Planejamento",
+                      badge: "bg-amber-500/10 text-amber-300 border-amber-500/30",
+                    },
+                    EM_DESENVOLVIMENTO: {
+                      label: "Em Desenvolvimento",
+                      badge: "bg-blue-500/10 text-blue-300 border-blue-500/30",
+                    },
+                    EM_HOMOLOGACAO: {
+                      label: "Em Homologação",
+                      badge: "bg-purple-500/10 text-purple-300 border-purple-500/30",
+                    },
+                    EM_PRODUCAO: {
+                      label: "Em Produção (Ativo)",
+                      badge: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
+                    },
+                  };
+
+                  const currentStatus = statusConfig[prod.status] || {
+                    label: prod.status,
+                    badge: "bg-slate-800 text-slate-300 border-slate-700",
+                  };
+
+                  const doneTasks = prod.tasks?.filter((t: any) => t.done).length || 0;
+                  const totalTasks = prod.tasks?.length || 1;
+                  const progressPct = Math.round((doneTasks / totalTasks) * 100);
+
+                  const getProductIcon = (id: string) => {
+                    switch (id) {
+                      case "voice-ai-agent":
+                        return <Bot size={18} className="text-cyan-400" />;
+                      case "voip-sip-server":
+                        return <PhoneCall size={18} className="text-blue-400" />;
+                      case "suite-erp":
+                        return <Briefcase size={18} className="text-purple-400" />;
+                      case "billing-subscription":
+                        return <CreditCard size={18} className="text-emerald-400" />;
+                      case "onboarding-self-service":
+                        return <Rocket size={18} className="text-amber-400" />;
+                      default:
+                        return <Cpu size={18} className="text-blue-400" />;
+                    }
+                  };
+
+                  return (
+                    <div
+                      key={prod.id}
+                      onClick={() => handleOpenProductSandbox(prod)}
+                      className="bg-[#0B1224] border border-slate-800 hover:border-slate-700 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 group cursor-pointer shadow-lg hover:shadow-xl hover:shadow-blue-950/20"
+                    >
+                      {/* Topo do Card: Categoria, Status & Badge de Isolamento */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-[#070D1B] border border-slate-800 flex items-center justify-center">
+                              {getProductIcon(prod.id)}
+                            </div>
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 uppercase tracking-wider">
+                              {prod.category}
+                            </span>
+                          </div>
+                          <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded border ${currentStatus.badge}`}>
+                            {currentStatus.label}
+                          </span>
+                        </div>
+
+                        {/* Nome & Tagline */}
+                        <div>
+                          <h3 className="text-base font-black text-white group-hover:text-blue-400 transition-colors">
+                            {prod.name}
+                          </h3>
+                          <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                            {prod.tagline}
+                          </p>
+                        </div>
+
+                        {/* Especificações Técnicas Rápidas */}
+                        <div className="p-2.5 rounded-xl bg-[#070D1B] border border-slate-800/80 space-y-1.5 font-mono text-[11px]">
+                          <div className="flex items-center justify-between text-slate-400">
+                            <span className="flex items-center gap-1.5 text-slate-500">
+                              <Code size={12} />
+                              <span>Engine:</span>
+                            </span>
+                            <span className="text-slate-300 font-semibold truncate max-w-[170px]" title={prod.engine}>
+                              {prod.engine}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-slate-400">
+                            <span className="flex items-center gap-1.5 text-slate-500">
+                              <Clock size={12} />
+                              <span>Latência:</span>
+                            </span>
+                            <span className="text-cyan-400 font-semibold">
+                              {prod.targetLatency}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-slate-400">
+                            <span className="flex items-center gap-1.5 text-slate-500">
+                              <Activity size={12} />
+                              <span>Estabilidade:</span>
+                            </span>
+                            <span className="text-emerald-400 font-semibold">
+                              {prod.stabilityScore}%
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Barra de Progresso de Checklist */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px] text-slate-400">
+                            <span>Checklist do Módulo:</span>
+                            <span className="font-mono text-slate-200">
+                              {doneTasks}/{totalTasks} ({progressPct}%)
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
+                            <div
+                              className="h-full bg-blue-500 transition-all duration-300"
+                              style={{ width: `${progressPct}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Ações Inferiores do Card */}
+                      <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                        {/* Botão de Teste Rápido */}
+                        <button
+                          onClick={(e) => handleQuickTest(prod.id, e)}
+                          disabled={quickTestingId === prod.id}
+                          className="px-2.5 py-1.5 rounded-lg bg-[#070D1B] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title="Disparar bateria rápida de testes"
+                        >
+                          <Play size={12} className={quickTestingId === prod.id ? "animate-spin text-blue-400" : ""} />
+                          <span>{quickTestingId === prod.id ? "Testando..." : "Diagnóstico"}</span>
+                        </button>
+
+                        {/* Botão de Abrir Sandbox & Copilot */}
+                        <button
+                          onClick={() => handleOpenProductSandbox(prod)}
+                          className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/20 cursor-pointer"
+                        >
+                          <Terminal size={13} />
+                          <span>Abrir Sandbox</span>
+                          <ChevronRight size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       ) : (
-        /* TAB 2: CHAT DEDICADO COM A IA (FULLSCREEN CHATGPT / OPENAI STYLE) */
+        /* TAB 3: CHAT DEDICADO COM A IA (FULLSCREEN CHATGPT / OPENAI STYLE) */
         <div className="flex-1 flex flex-col min-h-0 bg-[#070D1B] overflow-hidden">
           {/* SUB-HEADER ELEGANTE DO AGENTE IA */}
           <div className="px-4 md:px-6 py-2.5 bg-[#0B1224]/80 backdrop-blur border-b border-slate-800 flex items-center justify-between shrink-0">
@@ -2027,6 +2421,14 @@ export default function EngineeringDashboard() {
           </div>
         </div>
       )}
+
+      {/* MODAL DE SANDBOX E LABORATÓRIO DE TESTES ISOLADOS (ZERO MOCKS) */}
+      <ProductSandboxModal
+        isOpen={isProductModalOpen}
+        onClose={() => setIsProductModalOpen(false)}
+        product={selectedProduct}
+        onProductUpdated={handleProductUpdated}
+      />
     </div>
   );
 }

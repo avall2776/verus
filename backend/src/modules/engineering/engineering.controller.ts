@@ -23,6 +23,8 @@ import { CreateFromTicketDto } from './dto/create-from-ticket.dto';
 import { ChatEngineeringDto } from './dto/chat-engineering.dto';
 import { CreateCardFromChatDto } from './dto/create-card-from-chat.dto';
 import { UpdateChecklistDto } from './dto/update-checklist.dto';
+import { ProductChatDto } from './dto/product-chat.dto';
+import { UpdateProductStatusDto } from './dto/update-product-status.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('engineering')
@@ -140,4 +142,71 @@ export class EngineeringController {
     this.checkSuperAdmin(req);
     return this.engineeringService.syncDeploy();
   }
+
+  // -------------------------------------------------------------
+  // PRODUTOS E MÓDULOS EM DESENVOLVIMENTO (SANDBOX & HOMOLOGAÇÃO)
+  // -------------------------------------------------------------
+
+  @Get('products')
+  async getProducts(@Request() req) {
+    this.checkSuperAdmin(req);
+    return this.engineeringService.getProducts();
+  }
+
+  @Get('products/:id')
+  async getProductById(@Request() req, @Param('id') id: string) {
+    this.checkSuperAdmin(req);
+    return this.engineeringService.getProductById(id);
+  }
+
+  @Patch('products/:id/status')
+  async updateProductStatus(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: UpdateProductStatusDto,
+  ) {
+    this.checkSuperAdmin(req);
+    return this.engineeringService.updateProductStatus(id, dto.status);
+  }
+
+  @Post('products/:id/chat')
+  async chatWithProductAI(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: ProductChatDto,
+  ) {
+    this.checkSuperAdmin(req);
+    return this.engineeringService.chatWithProductAI(id, dto);
+  }
+
+  @Get('products/:id/chat-history')
+  async getProductChatHistory(@Request() req, @Param('id') id: string) {
+    this.checkSuperAdmin(req);
+    return this.engineeringService.getProductChatHistory(id);
+  }
+
+  @Post('products/:id/test')
+  async runSandboxTest(@Request() req, @Param('id') id: string) {
+    this.checkSuperAdmin(req);
+    return this.engineeringService.runSandboxTest(id);
+  }
+
+  @Get('products/:id/logs')
+  async getProductLogs(@Request() req, @Param('id') id: string) {
+    this.checkSuperAdmin(req);
+    return this.engineeringService.getProductLogs(id);
+  }
+
+  @Post('products/:id/clear-logs')
+  async clearProductLogs(@Request() req, @Param('id') id: string) {
+    this.checkSuperAdmin(req);
+    return this.engineeringService.clearProductLogs(id);
+  }
+
+  @Post('products/:id/integrate')
+  async integrateProductToProduction(@Request() req, @Param('id') id: string) {
+    this.checkSuperAdmin(req);
+    return this.engineeringService.integrateProductToProduction(id);
+  }
 }
+

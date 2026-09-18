@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { 
   Bell, BellOff, CheckCheck, MessageSquare, LifeBuoy, 
   Target, Sparkles, Check, ChevronRight, ExternalLink,
-  ShieldCheck, AlertCircle, RefreshCw, X
+  ShieldCheck, AlertCircle, RefreshCw, X, Volume2
 } from "lucide-react";
 import api from "@/lib/api";
 import { useSocket } from "@/components/ui/SocketProvider";
@@ -50,6 +50,32 @@ export default function NotificationsPopover() {
   const [isLoading, setIsLoading] = useState(false);
   const [isMarkingAll, setIsMarkingAll] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'CHAT' | 'SUPPORT' | 'GOAL' | 'SYSTEM'>('ALL');
+  const [selectedSound, setSelectedSound] = useState<'glass' | 'pop'>('glass');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = (localStorage.getItem('versus_sound_preset') as 'glass' | 'pop') || 'glass';
+      setSelectedSound(saved);
+    }
+  }, []);
+
+  const handleSoundChange = (val: 'glass' | 'pop') => {
+    setSelectedSound(val);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('versus_sound_preset', val);
+      const audio = new Audio(val === 'pop' ? '/sounds/notification-pop.wav' : '/sounds/notification-glass.wav');
+      audio.volume = 0.65;
+      audio.play().catch(() => {});
+    }
+  };
+
+  const handleTestSound = () => {
+    if (typeof window !== 'undefined') {
+      const audio = new Audio(selectedSound === 'pop' ? '/sounds/notification-pop.wav' : '/sounds/notification-glass.wav');
+      audio.volume = 0.65;
+      audio.play().catch(() => {});
+    }
+  };
 
   const popoverRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -307,6 +333,29 @@ export default function NotificationsPopover() {
                 )}
               </button>
             ))}
+          </div>
+
+          {/* Barra de Toque de Notificação Corporativo */}
+          <div className="px-3.5 py-1.5 bg-[#080d1a] border-b border-slate-800/80 flex items-center justify-between text-[11px]">
+            <div className="flex items-center gap-1.5 text-slate-300">
+              <Volume2 size={13} className="text-cyan-400 shrink-0" />
+              <span className="font-semibold text-slate-400">Som:</span>
+              <select
+                value={selectedSound}
+                onChange={(e) => handleSoundChange(e.target.value as 'glass' | 'pop')}
+                className="bg-slate-900 border border-slate-700/80 rounded-lg px-2 py-0.5 text-xs text-white outline-none cursor-pointer hover:border-cyan-500/50 transition-colors"
+              >
+                <option value="glass">Glass Chime (Apple/Slack)</option>
+                <option value="pop">Droplet Pop (WhatsApp)</option>
+              </select>
+            </div>
+            <button
+              onClick={handleTestSound}
+              title="Ouvir toque selecionado"
+              className="text-cyan-400 hover:text-cyan-300 font-bold text-[10px] px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-800/60 hover:bg-cyan-900/60 transition-all cursor-pointer"
+            >
+              Testar
+            </button>
           </div>
 
           {/* Lista de Notificações */}
