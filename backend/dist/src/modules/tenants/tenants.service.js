@@ -623,17 +623,17 @@ let TenantsService = class TenantsService {
         }
         const data = {};
         if (dto.name !== undefined)
-            data.name = dto.name.trim();
+            data.name = dto.name ? String(dto.name).trim() : '';
         if (dto.cnpj !== undefined)
-            data.cnpj = dto.cnpj.trim();
+            data.cnpj = dto.cnpj ? String(dto.cnpj).trim() : null;
         if (dto.email !== undefined)
-            data.email = dto.email.trim();
+            data.email = dto.email ? String(dto.email).trim() : null;
         if (dto.phone !== undefined)
-            data.phone = dto.phone.trim();
+            data.phone = dto.phone ? String(dto.phone).trim() : null;
         if (dto.address !== undefined)
-            data.address = dto.address.trim();
+            data.address = dto.address ? String(dto.address).trim() : null;
         if (dto.logoUrl !== undefined)
-            data.logoUrl = dto.logoUrl ? dto.logoUrl.trim() : null;
+            data.logoUrl = dto.logoUrl ? String(dto.logoUrl).trim() : null;
         if (dto.isActive !== undefined)
             data.isActive = Boolean(dto.isActive);
         if (dto.planId) {

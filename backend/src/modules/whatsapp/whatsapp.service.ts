@@ -58,14 +58,101 @@ export class WhatsappService {
   }
 
   /**
+   * Obtém credenciais e URLs de rede seguras para a Evolution API (Baileys)
+   */
+  public getEvolutionConfig() {
+    return {
+      serverUrl: process.env.EVOLUTION_API_URL || 'http://localhost:8080',
+      apiKey: process.env.EVOLUTION_API_KEY || 'verto123',
+      // No Docker da VPS, 172.17.0.1 é a bridge padrão (docker0) que conecta ao host na porta 3001
+      webhookBaseUrl: process.env.EVOLUTION_WEBHOOK_URL || 'http://172.17.0.1:3001',
+    };
+  }
+
+  /**
+   * Sanitiza e gera identificador único, alfanumérico e sem espaços para o Baileys
+   */
+  public getSanitizedInstanceName(tenantId: string, instanceId: string, rawName?: string): string {
+    const cleanTenant = (tenantId || 'tenant').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+    const cleanId = (instanceId || 'inst').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+    return `versus_${cleanTenant}_${cleanId}`;
+  }
+
+  /**
+   * Garante que a instância esteja provisionada na Evolution API e com o Webhook ativo
+   */
+  public async ensureEvolutionInstance(instanceName: string, tenantId: string) {
+    const { serverUrl, apiKey, webhookBaseUrl } = this.getEvolutionConfig();
+
+    try {
+      // 1. Verifica se a sessão já existe na Evolution API
+      const stateRes = await axios.get(`${serverUrl}/instance/connectionState/${instanceName}`, {
+        headers: { apikey: apiKey },
+        timeout: 4000,
+      }).catch(() => null);
+
+      if (!stateRes?.data?.instance) {
+        this.logger.log(`Provisionando nova sessão Baileys na Evolution API: [${instanceName}]`);
+        await axios.post(
+          `${serverUrl}/instance/create`,
+          {
+            instanceName,
+            token: apiKey,
+            qrcode: true,
+            integration: 'WHATSAPP-BAILEYS',
+            reject_call: false,
+            msg_call: '',
+            groups_ignore: true,
+            always_online: false,
+            read_messages: false,
+            read_status: false,
+            sync_full_history: false,
+          },
+          {
+            headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+            timeout: 8000,
+          }
+        );
+      }
+
+      // 2. Registra o Webhook da instância com os eventos essenciais (conexão, QR code e mensagens)
+      const webhookUrl = `${webhookBaseUrl}/webhooks/evolution/${tenantId}`;
+      await axios.post(
+        `${serverUrl}/webhook/set/${instanceName}`,
+        {
+          enabled: true,
+          url: webhookUrl,
+          webhook_by_events: false,
+          events: [
+            'CONNECTION_UPDATE',
+            'QRCODE_UPDATED',
+            'MESSAGES_UPSERT',
+            'MESSAGES_UPDATE',
+            'SEND_MESSAGE',
+            'CONTACTS_UPSERT',
+            'CHATS_UPSERT',
+          ],
+        },
+        {
+          headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+          timeout: 5000,
+        }
+      );
+      this.logger.log(`Webhook Evolution registrado com sucesso para [${instanceName}] -> ${webhookUrl}`);
+    } catch (err: any) {
+      this.logger.error(`Erro ao provisionar sessão Evolution API [${instanceName}]: ${err.message}`);
+      throw err;
+    }
+  }
+
+  /**
    * Sincroniza instâncias ativas do container Evolution API (Baileys) com o banco de dados do tenant
    */
   private async syncEvolutionInstances(tenantId: string) {
     try {
-      const evolutionUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
-      const apiKey = process.env.EVOLUTION_API_KEY || 'verto123';
+      const { serverUrl, apiKey, webhookBaseUrl } = this.getEvolutionConfig();
 
-      const res = await axios.get(`${evolutionUrl}/instance/fetchInstances`, {
+      const res = await axios.get(`${serverUrl}/instance/fetchInstances`, {
         headers: { apikey: apiKey },
         timeout: 4000,
       });
@@ -85,6 +172,7 @@ export class WhatsappService {
           where: {
             tenantId,
             OR: [
+              { settings: { path: ['instanceName'], equals: instanceName } },
               { name: instanceName },
               { name: `${instanceName} (WhatsApp Web)` },
             ],
@@ -106,7 +194,7 @@ export class WhatsappService {
               settings: {
                 provider: 'evolution',
                 instanceName: instanceName,
-                serverUrl: evolutionUrl,
+                serverUrl: serverUrl,
                 antiBanEnabled: true,
                 typingDelayMs: 1200,
                 messageDelayMs: 2500,
@@ -133,15 +221,24 @@ export class WhatsappService {
           });
         }
 
-        // Garante webhook configurado no Evolution API
+        // Garante webhook configurado no Evolution API com endereço bridge 172.17.0.1
         try {
+          const webhookUrl = `${webhookBaseUrl}/webhooks/evolution/${tenantId}`;
           await axios.post(
-            `${evolutionUrl}/webhook/set/${instanceName}`,
+            `${serverUrl}/webhook/set/${instanceName}`,
             {
               enabled: true,
-              url: `http://localhost:3001/webhooks/evolution/${tenantId}`,
+              url: webhookUrl,
               webhook_by_events: false,
-              events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'SEND_MESSAGE'],
+              events: [
+                'CONNECTION_UPDATE',
+                'QRCODE_UPDATED',
+                'MESSAGES_UPSERT',
+                'MESSAGES_UPDATE',
+                'SEND_MESSAGE',
+                'CONTACTS_UPSERT',
+                'CHATS_UPSERT',
+              ],
             },
             {
               headers: { apikey: apiKey, 'Content-Type': 'application/json' },
@@ -340,26 +437,54 @@ export class WhatsappService {
     }
 
     if (mode === 'qr') {
-      let qrCodeToUse = `2@${Date.now()}==,${Buffer.from(id).toString('base64')},${Date.now()}`;
+      const { serverUrl, apiKey } = this.getEvolutionConfig();
+      const currentSettings = (instance.settings as any) || {};
+      const instanceName = currentSettings.instanceName || this.getSanitizedInstanceName(tenantId, id, instance.name);
 
-      // Tenta obter QR Code real da Evolution API se a instância estiver configurada nela
+      // Salva instanceName nas configurações da instância no banco se ainda não estiver salvo
+      if (currentSettings.instanceName !== instanceName) {
+        await this.prisma.whatsAppInstance.update({
+          where: { id },
+          data: {
+            settings: {
+              ...currentSettings,
+              provider: 'evolution',
+              instanceName,
+            }
+          }
+        });
+      }
+
+      let qrCodeToUse: string | null = null;
+
       try {
-        const evolutionUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
-        const apiKey = process.env.EVOLUTION_API_KEY || 'verto123';
-        const instanceName = (instance.settings as any)?.instanceName || instance.name.replace(/\s+/g, '_');
+        // 1. Assegura que a sessão existe na Evolution API e o webhook está cadastrado
+        await this.ensureEvolutionInstance(instanceName, tenantId);
 
-        const evoRes = await axios.get(`${evolutionUrl}/instance/connect/${instanceName}`, {
+        // Aguarda 1.2s para o Baileys iniciar o socket local
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+
+        // 2. Consulta o QR Code gerado pelo Baileys
+        const evoRes = await axios.get(`${serverUrl}/instance/connect/${instanceName}`, {
           headers: { apikey: apiKey },
-          timeout: 6000,
+          timeout: 10000,
         });
 
-        if (evoRes.data?.code) {
-          qrCodeToUse = evoRes.data.code;
-        } else if (evoRes.data?.base64) {
+        if (evoRes.data?.base64) {
           qrCodeToUse = evoRes.data.base64;
+        } else if (evoRes.data?.code) {
+          qrCodeToUse = evoRes.data.code;
+        } else if (evoRes.data?.qrcode?.base64) {
+          qrCodeToUse = evoRes.data.qrcode.base64;
+        } else if (evoRes.data?.qrcode?.code) {
+          qrCodeToUse = evoRes.data.qrcode.code;
         }
       } catch (evoErr: any) {
-        this.logger.debug(`QR real Evolution API indisponível, usando gerador dinâmico: ${evoErr.message}`);
+        this.logger.error(`Erro ao conectar instância Baileys na Evolution API [${instanceName}]: ${evoErr.message}`);
+      }
+
+      if (!qrCodeToUse) {
+        throw new BadRequestException('Não foi possível obter o QR Code no servidor do WhatsApp Baileys. Verifique se o serviço está ativo.');
       }
 
       const updated = await this.prisma.whatsAppInstance.update({
@@ -374,7 +499,7 @@ export class WhatsappService {
         data: {
           instanceId: id,
           status: 'connecting',
-          details: 'Código QR gerado para leitura no aparelho celular'
+          details: 'Código QR autêntico gerado pelo Baileys aguardando leitura no aplicativo WhatsApp'
         }
       });
 
@@ -469,6 +594,17 @@ export class WhatsappService {
       throw new NotFoundException('Instância não encontrada.');
     }
 
+    const currentSettings = (instance.settings as any) || {};
+    const instanceName = currentSettings.instanceName || this.getSanitizedInstanceName(tenantId, id, instance.name);
+    const { serverUrl, apiKey } = this.getEvolutionConfig();
+
+    try {
+      await axios.delete(`${serverUrl}/instance/logout/${instanceName}`, {
+        headers: { apikey: apiKey },
+        timeout: 4000,
+      }).catch(() => null);
+    } catch (e) {}
+
     const updated = await this.prisma.whatsAppInstance.update({
       where: { id },
       data: {
@@ -481,7 +617,7 @@ export class WhatsappService {
       data: {
         instanceId: id,
         status: 'disconnected',
-        details: 'Sessão desconectada manualmente pelo usuário'
+        details: 'Sessão desconectada e encerrada na Evolution API'
       }
     });
 

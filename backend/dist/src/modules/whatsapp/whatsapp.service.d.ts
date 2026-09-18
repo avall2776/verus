@@ -6,6 +6,13 @@ export declare class WhatsappService {
     private readonly logger;
     constructor(prisma: PrismaService, chatGateway: ChatGateway);
     private ensureDefaultInstance;
+    getEvolutionConfig(): {
+        serverUrl: string;
+        apiKey: string;
+        webhookBaseUrl: string;
+    };
+    getSanitizedInstanceName(tenantId: string, instanceId: string, rawName?: string): string;
+    ensureEvolutionInstance(instanceName: string, tenantId: string): Promise<void>;
     private syncEvolutionInstances;
     getInstances(tenantId: string): Promise<{
         token: string;

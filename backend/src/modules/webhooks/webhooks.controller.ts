@@ -154,6 +154,112 @@ export class WebhooksController {
     const event = payload.event;
     this.logger.log(`Recebendo webhook Evolution API [${event}] para tenant: ${tenantId}`);
 
+    // 0. Atualizações de Conexão e Handshake do WhatsApp (CONNECTION_UPDATE)
+    if (event === 'connection.update' || event === 'CONNECTION_UPDATE') {
+      const instanceName = payload.instance || payload.data?.instance;
+      const state = payload.data?.state || payload.state;
+      const statusReason = payload.data?.statusReason;
+      const rawSender = payload.sender || payload.data?.sender || payload.data?.owner || '';
+      const phone = rawSender ? String(rawSender).replace(/\D/g, '') : null;
+
+      this.logger.log(`⚡ [Evolution Webhook] Handshake WhatsApp: [${instanceName}] -> state=${state}, phone=${phone}, reason=${statusReason}`);
+
+      const instances = await this.prisma.whatsAppInstance.findMany({
+        where: { tenantId }
+      });
+
+      const matchedInstance = instances.find(inst => {
+        const set = (inst.settings as any) || {};
+        return set.instanceName === instanceName || inst.name === instanceName || inst.name === `${instanceName} (WhatsApp Web)`;
+      }) || instances.find(inst => inst.isDefault) || instances[0];
+
+      if (matchedInstance) {
+        if (state === 'open') {
+          const updated = await this.prisma.whatsAppInstance.update({
+            where: { id: matchedInstance.id },
+            data: {
+              status: 'connected',
+              phoneNumber: phone || matchedInstance.phoneNumber,
+              qrCode: null,
+              lastConnectedAt: new Date(),
+            },
+          });
+
+          await this.prisma.whatsAppConnectionHistory.create({
+            data: {
+              instanceId: matchedInstance.id,
+              status: 'connected',
+              details: `Dispositivo autenticado com sucesso pelo WhatsApp Business. Número: ${phone || 'Ativo'}`
+            }
+          });
+
+          this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
+          this.logger.log(`✅ [WhatsApp Conectado] Instância [${matchedInstance.id}] confirmada e ativa para tenant ${tenantId}!`);
+        } else if (state === 'close') {
+          if (statusReason === 401 || statusReason === 403 || statusReason === 408) {
+            const updated = await this.prisma.whatsAppInstance.update({
+              where: { id: matchedInstance.id },
+              data: {
+                status: 'disconnected',
+                qrCode: null,
+              },
+            });
+
+            await this.prisma.whatsAppConnectionHistory.create({
+              data: {
+                instanceId: matchedInstance.id,
+                status: 'disconnected',
+                details: `Sessão encerrada pelo WhatsApp (Código: ${statusReason})`
+              }
+            });
+
+            this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
+            this.logger.warn(`🔌 [WhatsApp Desconectado] Instância [${matchedInstance.id}] desconectada.`);
+          }
+        } else if (state === 'connecting') {
+          this.chatGateway.emitWhatsAppStatusUpdated(tenantId, {
+            ...matchedInstance,
+            status: 'connecting',
+          });
+        }
+      }
+
+      return { status: 'connection_update_processed', state };
+    }
+
+    // 0.1 Rotação Dinâmica de QR Code pelo Baileys (QRCODE_UPDATED)
+    if (event === 'qrcode.updated' || event === 'QRCODE_UPDATED') {
+      const instanceName = payload.instance || payload.data?.instance;
+      const qrcodeObj = payload.data?.qrcode || payload.data;
+      const qrCode = qrcodeObj?.base64 || qrcodeObj?.code || payload.base64 || payload.code;
+
+      if (qrCode) {
+        const instances = await this.prisma.whatsAppInstance.findMany({
+          where: { tenantId }
+        });
+
+        const matchedInstance = instances.find(inst => {
+          const set = (inst.settings as any) || {};
+          return set.instanceName === instanceName || inst.name === instanceName || inst.name === `${instanceName} (WhatsApp Web)`;
+        }) || instances.find(inst => inst.isDefault) || instances[0];
+
+        if (matchedInstance && matchedInstance.status !== 'connected') {
+          const updated = await this.prisma.whatsAppInstance.update({
+            where: { id: matchedInstance.id },
+            data: {
+              status: 'qrcode',
+              qrCode,
+            },
+          });
+
+          this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
+          this.logger.log(`🔄 [WhatsApp QR Code] Novo hash QR Code emitido para instância [${matchedInstance.id}].`);
+        }
+      }
+
+      return { status: 'qrcode_updated_processed' };
+    }
+
     // 1. Atualizações de Status de Mensagem (MESSAGES_UPDATE ou SEND_MESSAGE)
     if (event === 'messages.update' || event === 'MESSAGES_UPDATE') {
       const updates = Array.isArray(payload.data) ? payload.data : [payload.data];

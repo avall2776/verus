@@ -69,6 +69,10 @@ export default function WhatsAppSettingsPage() {
   useEffect(() => {
     const rawQr = qrCodeData || activeInstance?.qrCode;
     if (rawQr) {
+      if (rawQr.startsWith('data:image')) {
+        setQrImageUrl(rawQr);
+        return;
+      }
       QRCode.toDataURL(rawQr, {
         width: 380,
         margin: 1,
@@ -109,7 +113,8 @@ export default function WhatsAppSettingsPage() {
 
     const handleStatusUpdate = (data: any) => {
       console.log('📡 [WhatsAppSettings] Evento de status recebido:', data);
-      if (data?.id === activeInstance?.id || data?.instanceId === activeInstance?.id) {
+      const isMatch = !data?.id || data?.id === activeInstance?.id || data?.instanceId === activeInstance?.id;
+      if (isMatch) {
         if (data.status === 'connected') {
           toast.success("Dispositivo pareado com sucesso no WhatsApp!");
           setQrCodeData(null);
