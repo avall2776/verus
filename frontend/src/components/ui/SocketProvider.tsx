@@ -80,6 +80,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const playNotificationSound = useCallback((isHighPriority = false) => {
     try {
       if (typeof window === 'undefined') return;
+      if (window.location.pathname.startsWith('/super-admin')) return;
 
       // 1. Tenta reproduzir arquivo de áudio acústico de alta qualidade
       const preset = localStorage.getItem('versus_sound_preset') || 'glass';
@@ -155,10 +156,17 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (err) {}
   };
 
+  // Helper para verificar se a rota ativa é o Console Master Super Admin
+  const isSuperAdminRoute = useCallback(() => {
+    if (typeof window === 'undefined') return false;
+    return window.location.pathname.startsWith('/super-admin');
+  }, []);
+
   // Vibração Tátil (Mobile & dispositivos compatíveis)
   const triggerVibration = useCallback((isHighPriority = false) => {
     try {
       if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+        if (isSuperAdminRoute()) return;
         if (isHighPriority) {
           navigator.vibrate([120, 60, 120, 60, 200]);
         } else {
@@ -166,11 +174,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
     } catch (e) {}
-  }, []);
+  }, [isSuperAdminRoute]);
 
   // Disparo de Desktop / Web Push Notifications
   const dispatchDesktopNotification = useCallback((title: string, options: { body: string; tag?: string; url?: string }) => {
     try {
+      if (isSuperAdminRoute()) return;
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
         const notif = new Notification(title, {
           body: options.body,
@@ -189,10 +198,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (err) {
       console.warn('[Desktop Notification] Erro ao disparar:', err);
     }
-  }, [router]);
+  }, [router, isSuperAdminRoute]);
 
   // Efeito de piscar a aba do navegador
   const triggerTabBlink = useCallback((titleText: string) => {
+    if (isSuperAdminRoute()) return;
     let isBlinking = false;
     const originalTitle = "VERSUS - Motor Omnichannel";
     const blinkInterval = setInterval(() => {
@@ -209,7 +219,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     window.addEventListener('focus', stopBlinking);
     window.addEventListener('mousemove', stopBlinking);
-  }, []);
+  }, [isSuperAdminRoute]);
 
   useEffect(() => {
     // Conecta ao próprio domínio (Vercel), que fará o proxy para a VPS
@@ -244,6 +254,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Escuta global para Alerta de Handoff da IA (Lead Qualificado)
     socketInstance.on('dealUpdated', (deal) => {
+      // Suprime notificações no console Master Super Admin (/super-admin)
+      if (isSuperAdminRoute()) return;
+
       toast.error(`🚨 Lead Qualificado pela IA!\nUm novo lead precisa de atendimento humano.\nAcesse o Pipeline CRM.`, {
         duration: 8000,
         position: 'top-right',
@@ -264,6 +277,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Escuta global para novas mensagens recebidas de Leads (INBOUND)
     socketInstance.on('newMessage', (msg) => {
+      // Suprime notificações no console Master Super Admin (/super-admin)
+      if (isSuperAdminRoute()) return;
+
       if (msg.direction === 'INBOUND') {
         const convId = msg.conversationId || msg.contact?.conversationId || (msg.contactId ? `conv_${msg.contactId}` : null);
         const contactName = msg.contact?.name || msg.contactName || 'Lead Interessado';
@@ -312,6 +328,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Escuta global para Atendimentos Transferidos (Padrão Lero / Transfer Alert)
     socketInstance.on('conversationTransferred', (data) => {
+      // Suprime notificações no console Master Super Admin (/super-admin)
+      if (isSuperAdminRoute()) return;
+
       console.log('⚡ [WebSockets] Atendimento transferido recebido:', data);
       const convId = data.conversationId;
       const contactName = data.contact?.name || 'Lead';
