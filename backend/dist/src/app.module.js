@@ -40,6 +40,7 @@ const notifications_module_1 = require("./modules/notifications/notifications.mo
 const search_module_1 = require("./modules/search/search.module");
 const operators_module_1 = require("./modules/operators/operators.module");
 const engineering_module_1 = require("./modules/engineering/engineering.module");
+const voip_module_1 = require("./modules/voip/voip.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -78,6 +79,7 @@ exports.AppModule = AppModule = __decorate([
             search_module_1.SearchModule,
             operators_module_1.OperatorsModule,
             engineering_module_1.EngineeringModule,
+            voip_module_1.VoipModule,
         ],
         controllers: [],
         providers: [],

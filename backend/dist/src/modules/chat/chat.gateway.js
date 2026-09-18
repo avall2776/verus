@@ -21,8 +21,27 @@ let ChatGateway = ChatGateway_1 = class ChatGateway {
     handleConnection(client) {
         this.logger.log(`Cliente Web conectado no rádio: ${client.id}`);
         client.on('joinTenant', (tenantId) => {
+            if (!tenantId)
+                return;
+            Array.from(client.rooms).forEach(room => {
+                if (room !== client.id) {
+                    client.leave(room);
+                }
+            });
             client.join(tenantId);
-            this.logger.log(`Cliente ${client.id} entrou na sala do Tenant: ${tenantId}`);
+            this.logger.log(`Cliente ${client.id} entrou na sala: ${tenantId}`);
+        });
+        client.on('leaveTenant', (tenantId) => {
+            if (tenantId) {
+                client.leave(tenantId);
+            }
+            else {
+                Array.from(client.rooms).forEach(room => {
+                    if (room !== client.id)
+                        client.leave(room);
+                });
+            }
+            this.logger.log(`Cliente ${client.id} isolado das salas de tenant.`);
         });
     }
     handleDisconnect(client) {

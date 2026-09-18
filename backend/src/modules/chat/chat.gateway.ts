@@ -21,10 +21,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleConnection(client: Socket) {
     this.logger.log(`Cliente Web conectado no rádio: ${client.id}`);
     
-    // O cliente avisa qual Tenant ele pertence, para entrar na sala certa
+    // O cliente avisa a qual Tenant pertence para entrar na sala certa
     client.on('joinTenant', (tenantId: string) => {
+      if (!tenantId) return;
+      // Remove o socket de salas anteriores de tenant para evitar vazamento de notificações
+      Array.from(client.rooms).forEach(room => {
+        if (room !== client.id) {
+          client.leave(room);
+        }
+      });
       client.join(tenantId);
-      this.logger.log(`Cliente ${client.id} entrou na sala do Tenant: ${tenantId}`);
+      this.logger.log(`Cliente ${client.id} entrou na sala: ${tenantId}`);
+    });
+
+    client.on('leaveTenant', (tenantId?: string) => {
+      if (tenantId) {
+        client.leave(tenantId);
+      } else {
+        Array.from(client.rooms).forEach(room => {
+          if (room !== client.id) client.leave(room);
+        });
+      }
+      this.logger.log(`Cliente ${client.id} isolado das salas de tenant.`);
     });
   }
 

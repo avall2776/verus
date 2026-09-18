@@ -54,6 +54,7 @@ import api from "@/lib/api";
 import { toast } from "sonner";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import ProductSandboxModal from "@/components/super-admin/ProductSandboxModal";
+import SoftphoneModal from "@/components/voip/SoftphoneModal";
 
 export const dynamic = "force-dynamic";
 
@@ -193,6 +194,7 @@ export default function EngineeringDashboard() {
   const [productStatusFilter, setProductStatusFilter] = useState("ALL");
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isSoftphoneOpen, setIsSoftphoneOpen] = useState(false);
   const [quickTestingId, setQuickTestingId] = useState<string | null>(null);
 
   // Carregar Produtos em R&D
@@ -746,7 +748,7 @@ export default function EngineeringDashboard() {
               }`}
             >
               <Cpu size={14} className="text-cyan-400" />
-              <span>Produtos & Módulos</span>
+              <span>Produtos / Roadmap</span>
               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono">
                 {products.length || 5}
               </span>
@@ -1550,17 +1552,33 @@ export default function EngineeringDashboard() {
                       </div>
 
                       {/* Ações Inferiores do Card */}
-                      <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                      <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between gap-2 flex-wrap">
                         {/* Botão de Teste Rápido */}
-                        <button
-                          onClick={(e) => handleQuickTest(prod.id, e)}
-                          disabled={quickTestingId === prod.id}
-                          className="px-2.5 py-1.5 rounded-lg bg-[#070D1B] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                          title="Disparar bateria rápida de testes"
-                        >
-                          <Play size={12} className={quickTestingId === prod.id ? "animate-spin text-blue-400" : ""} />
-                          <span>{quickTestingId === prod.id ? "Testando..." : "Diagnóstico"}</span>
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={(e) => handleQuickTest(prod.id, e)}
+                            disabled={quickTestingId === prod.id}
+                            className="px-2.5 py-1.5 rounded-lg bg-[#070D1B] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                            title="Disparar bateria rápida de testes"
+                          >
+                            <Play size={12} className={quickTestingId === prod.id ? "animate-spin text-blue-400" : ""} />
+                            <span>{quickTestingId === prod.id ? "Testando..." : "Diagnóstico"}</span>
+                          </button>
+
+                          {prod.id === "voip-sip-server" && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsSoftphoneOpen(true);
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                              title="Abrir Softphone Dialpad WebAudio"
+                            >
+                              <PhoneCall size={12} className="text-emerald-400" />
+                              <span>Softphone</span>
+                            </button>
+                          )}
+                        </div>
 
                         {/* Botão de Abrir Sandbox & Copilot */}
                         <button
@@ -2428,6 +2446,12 @@ export default function EngineeringDashboard() {
         onClose={() => setIsProductModalOpen(false)}
         product={selectedProduct}
         onProductUpdated={handleProductUpdated}
+      />
+
+      {/* SOFTPHONE CORPORATIVO WEBRTC & DIALPAD WEBAUDIO */}
+      <SoftphoneModal
+        isOpen={isSoftphoneOpen}
+        onClose={() => setIsSoftphoneOpen(false)}
       />
     </div>
   );

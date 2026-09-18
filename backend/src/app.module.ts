@@ -31,6 +31,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { SearchModule } from './modules/search/search.module';
 import { OperatorsModule } from './modules/operators/operators.module';
 import { EngineeringModule } from './modules/engineering/engineering.module';
+import { VoipModule } from './modules/voip/voip.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { EngineeringModule } from './modules/engineering/engineering.module';
     SearchModule,
     OperatorsModule,
     EngineeringModule,
+    VoipModule,
   ],
   controllers: [],
   providers: [],
