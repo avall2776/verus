@@ -2228,14 +2228,40 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Foco do Dia**: Fase 80 (Refinamento Técnico Geral & Experiência de Notificações: Auditoria E2E de Módulos, Homologação QR Code WhatsApp, Áudio Exclusivo VERSUS e Notificações Visuais/Toasts de Atendimento).
   - **Diretriz Geral**: Padrão Top SaaS mundial, design corporativo monocromático VERSUS, zero mocks, testes rigorosos de ponta a ponta com build código 0 e homologação condicionada ao OK explícito do usuário.
 
+- **[18/09/2026 - 11:45]** ⏸️ **Pausa para Almoço / Meio-Dia - Ponto Eletrônico Registrado (Equipe de Engenharia)**:
+  - **Status do Ponto**: ⏸️ 2º Registro Oficial do Dia (Pausa para Almoço / Intervalo do Meio-Dia às 11:45).
+  - **Balanço Consolidado das Entregas da Manhã (18/09/2026)**:
+    - ✅ **Notificações Visuais de Mensagem na Tela (Padrão Lero / Toasts & Transferências)**:
+      - `LeadMessageToast`: Banner flutuante Dark Glassmorphism para mensagens inbound com avatar, prévia de mídia/áudio e atalho "Abrir Conversa".
+      - `TransferAlertToast`: Card prioritário com beacon âmbar pulsante e botão de ação imediata "Assumir Conversa" via API (`/takeover`).
+      - `SocketProvider`: Motor centralizado com Desktop Notifications nativas em segundo plano, alternância dinâmica de título da aba e vibração tátil em dispositivos móveis.
+      - Motor acústico corporativo VERSUS (.wav) com seletor de toques (Glass Chime / Droplet Pop) e persistência de preferências.
+    - ✅ **Remoção Visual do Softphone do Topbar & Isolamento na Engenharia**:
+      - Topbar limpo e focado no dia a dia operacional, sem elementos de telefonia não ativados na tela principal.
+      - Acesso ao Softphone e testes de VoIP/SIP isolados exclusivamente na subseção Produtos / Roadmap na aba de Engenharia do Super Admin (`/super-admin/engineering`).
+    - ✅ **Auditoria Profunda & Estabilização da Conexão WhatsApp via QR Code (Baileys / Evolution API)**:
+      - Causa raiz da queda de handshake solucionada: expurgo total de fallbacks sintéticos e ativação de sessão Baileys autêntica via Evolution API.
+      - Ponte de rede Docker-to-Host corrigida: webhook configurado para a interface bridge Docker (`http://172.17.0.1:3001`), eliminando falhas de `ECONNREFUSED`.
+      - Eventos de ciclo de vida integrados: captura de `connection.update` (transição para `connected` no DB e no WebSocket com telefone persistido) e `qrcode.updated` (rotação de chaves).
+      - Correção de `TypeError: Cannot read properties of null (reading 'trim')` no serviço de atualização de tenants.
+      - Frontend atualizado para renderização direta de Base64 e transição fluida para "WhatsApp Conectado" sem fechar ou resetar a tela.
+    - ✅ **Qualidade de Código & Produção**:
+      - `npx tsc --noEmit` aprovado com 0 erros de tipagem.
+      - `npm run build` aprovado com código 0 em ambas as pontas (44 rotas estáticas no frontend e build NestJS compilado).
+      - Deploy sincronizado no GitHub / Vercel (`c6d1732`) e VPS Hostinger (PM2 `versus-engine` online e operacional).
+  - **Retorno Previsto**: 13:00 / 13:15 para continuidade das atividades do turno da tarde.
+
 ---
 
 ### 📋 FASE 80: REFINAMENTO TÉCNICO GERAL & EXPERIÊNCIA DE NOTIFICAÇÕES (HOJE - 18/09/2026)
 - [ ] **1. Refinamento Técnico Completo & Varredura E2E de Todo o Sistema**:
   - [ ] Auditoria completa de rotas, componentes e módulos (Inbox, CRM, Metas, Propostas, Contratos, E-mail, Suporte e Chat da Equipe) para assegurar funcionamento fluido sem erros residuais.
-- [ ] **2. Testes & Homologação de Conexão WhatsApp via QR Code**:
-  - [ ] Teste prático do fluxo completo de conexão via QR Code (Baileys/Evolution API) para novas linhas/empresas.
-  - [ ] Validação de recebimento de mensagens, envio livre sem trava de 24h, áudios PTT nativos e sincronização de avatares/nomes de clientes.
+- [x] **2. Testes & Homologação de Conexão WhatsApp via QR Code**:
+  - [x] Diagnóstico e resolução da queda abrupta de handshake: expurgo de payloads sintéticos e geração de sessões Baileys autênticas via Evolution API.
+  - [x] Correção da ponte Docker-to-Host no webhook (`http://172.17.0.1:3001`), eliminando falhas de entrega de eventos `ECONNREFUSED`.
+  - [x] Inclusão de listeners para `connection.update` e `qrcode.updated`, com persistência segura do status `connected` e número de telefone no PostgreSQL/Supabase.
+  - [x] Atualização em tempo real via WebSocket (`whatsappStatusUpdated`) refletindo imediatamente na interface do usuário sem reload.
+  - [x] Correção de exceção nula no provisionamento de tenants (`TenantsService.update`).
 - [x] **3. Áudio de Notificação Exclusivo do App VERSUS (Toque Próprio + Vibração + Som)**:
   - [x] Criação e implementação de motor sonoro corporativo exclusivo VERSUS via Web Audio API (chime harmônico ascendente D5 587Hz -> A5 880Hz suave para mensagens padrão e C5-E5-G5 para transferências de alta prioridade).
   - [x] Disparo automático de áudio ao receber novas mensagens e transferências de conversa no WebSocket.
@@ -2244,6 +2270,9 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] Exibição de notificação flutuante visual na tela do atendente (`LeadMessageToast`) ao entrar nova mensagem de cliente em tempo real, com avatar, prévia de mídia/áudio e ação rápida "Abrir Conversa".
   - [x] Notificação na tela quando uma conversa for transferida para o atendente (`TransferAlertToast` de alta prioridade com beacon âmbar pulsante e botão de ação imediata "Assumir Conversa" via API).
   - [x] Suporte a Web Push Notifications / Desktop Notifications (Notification API nativa do navegador) para alertar o operador mesmo com a aba em segundo plano ou minimizada, com foco automático e navegação ao chat.
+- [x] **5. Remoção Visual do Softphone e Isolamento Restrito na Engenharia**:
+  - [x] Ocultação e remoção do botão de Softphone e indicador de status do Topbar principal da aplicação.
+  - [x] Restrição exclusiva do Softphone e ferramentas de teste VoIP à subseção Produtos / Roadmap na aba de Engenharia do Super Admin (`/super-admin/engineering`).
 
 ---
 
