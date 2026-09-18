@@ -16,6 +16,8 @@ exports.CrmController = void 0;
 const common_1 = require("@nestjs/common");
 const crm_service_1 = require("./crm.service");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const plan_guard_1 = require("../../shared/guards/plan.guard");
+const require_module_decorator_1 = require("../../shared/decorators/require-module.decorator");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 let CrmController = class CrmController {
     constructor(crmService) {
@@ -79,7 +81,8 @@ __decorate([
 ], CrmController.prototype, "updateDeal", null);
 exports.CrmController = CrmController = __decorate([
     (0, common_1.Controller)(['deals', 'crm/deals']),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('crm'),
     __metadata("design:paramtypes", [crm_service_1.CrmService])
 ], CrmController);
 //# sourceMappingURL=crm.controller.js.map

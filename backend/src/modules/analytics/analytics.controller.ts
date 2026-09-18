@@ -1,14 +1,17 @@
 import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { PlanGuard } from '../../shared/guards/plan.guard';
+import { RequireModule } from '../../shared/decorators/require-module.decorator';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 
 @Controller('analytics')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PlanGuard)
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
   @Get('overview')
+  @RequireModule('analytics')
   async getOverview(
     @CurrentTenant() tenantId: string,
     @Query('startDate') startDate?: string,
@@ -18,6 +21,7 @@ export class AnalyticsController {
   }
 
   @Get('charts')
+  @RequireModule('analytics')
   async getCharts(
     @CurrentTenant() tenantId: string,
     @Query('startDate') startDate?: string,
@@ -27,6 +31,7 @@ export class AnalyticsController {
   }
 
   @Get('agent-performance')
+  @RequireModule('analytics')
   async getAgentPerformance(
     @CurrentTenant() tenantId: string,
     @Query('startDate') startDate?: string,
@@ -36,6 +41,7 @@ export class AnalyticsController {
   }
 
   @Get('detailed-tickets')
+  @RequireModule('analytics')
   async getDetailedTickets(
     @CurrentTenant() tenantId: string,
     @Query('startDate') startDate?: string,
@@ -60,6 +66,7 @@ export class AnalyticsController {
   }
 
   @Get('ai-costs')
+  @RequireModule('analytics')
   async getAiCosts(
     @CurrentTenant() tenantId: string,
     @Query('startDate') startDate?: string,
@@ -88,6 +95,7 @@ export class AnalyticsController {
   }
 
   @Get('funnel')
+  @RequireModule('analytics')
   async getFunnel(
     @CurrentTenant() tenantId: string,
     @Query('startDate') startDate?: string,
@@ -97,6 +105,7 @@ export class AnalyticsController {
   }
 
   @Get('bottlenecks')
+  @RequireModule('analytics')
   async getBottlenecks(
     @CurrentTenant() tenantId: string,
     @Query('startDate') startDate?: string,
@@ -106,6 +115,7 @@ export class AnalyticsController {
   }
 
   @Get('channels')
+  @RequireModule('analytics')
   async getChannels(
     @CurrentTenant() tenantId: string,
     @Query('startDate') startDate?: string,
@@ -114,4 +124,3 @@ export class AnalyticsController {
     return this.analyticsService.getChannels(tenantId, startDate, endDate);
   }
 }
-

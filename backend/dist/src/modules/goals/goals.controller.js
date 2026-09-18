@@ -18,6 +18,8 @@ const goals_service_1 = require("./goals.service");
 const create_goal_dto_1 = require("./dto/create-goal.dto");
 const update_goal_dto_1 = require("./dto/update-goal.dto");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const plan_guard_1 = require("../../shared/guards/plan.guard");
+const require_module_decorator_1 = require("../../shared/decorators/require-module.decorator");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 let GoalsController = class GoalsController {
     constructor(goalsService) {
@@ -103,7 +105,8 @@ __decorate([
 ], GoalsController.prototype, "getSellerDetails", null);
 exports.GoalsController = GoalsController = __decorate([
     (0, common_1.Controller)('goals'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('goals'),
     __metadata("design:paramtypes", [goals_service_1.GoalsService])
 ], GoalsController);
 //# sourceMappingURL=goals.controller.js.map

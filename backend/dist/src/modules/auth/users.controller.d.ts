@@ -25,6 +25,21 @@ export declare class UsersController {
         tenant: {
             id: string;
             name: string;
+            plan: {
+                id: string;
+                name: string;
+                price: import("@prisma/client/runtime/library").Decimal;
+                hasCRM: boolean;
+                hasWhatsApp: boolean;
+                hasInstagram: boolean;
+                hasAIAgent: boolean;
+                maxUsers: number;
+                maxAIMsgs: number;
+                maxWorkspaces: number;
+                modules: import("@prisma/client/runtime/library").JsonValue;
+            };
+            isActive: boolean;
+            planId: string;
         };
         isActive: boolean;
         role: string;

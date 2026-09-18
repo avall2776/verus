@@ -1,10 +1,13 @@
 import { Controller, Post, Get, Delete, Param, UseInterceptors, UploadedFile, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { PlanGuard } from '../../shared/guards/plan.guard';
+import { RequireModule } from '../../shared/decorators/require-module.decorator';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 import { RagService } from './services/rag.service';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PlanGuard)
+@RequireModule('aiAgent')
 @Controller('agent/documents')
 export class RagController {
   constructor(private readonly ragService: RagService) {}

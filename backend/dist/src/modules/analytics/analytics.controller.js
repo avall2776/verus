@@ -16,6 +16,8 @@ exports.AnalyticsController = void 0;
 const common_1 = require("@nestjs/common");
 const analytics_service_1 = require("./analytics.service");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const plan_guard_1 = require("../../shared/guards/plan.guard");
+const require_module_decorator_1 = require("../../shared/decorators/require-module.decorator");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 let AnalyticsController = class AnalyticsController {
     constructor(analyticsService) {
@@ -64,6 +66,7 @@ let AnalyticsController = class AnalyticsController {
 exports.AnalyticsController = AnalyticsController;
 __decorate([
     (0, common_1.Get)('overview'),
+    (0, require_module_decorator_1.RequireModule)('analytics'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('startDate')),
     __param(2, (0, common_1.Query)('endDate')),
@@ -73,6 +76,7 @@ __decorate([
 ], AnalyticsController.prototype, "getOverview", null);
 __decorate([
     (0, common_1.Get)('charts'),
+    (0, require_module_decorator_1.RequireModule)('analytics'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('startDate')),
     __param(2, (0, common_1.Query)('endDate')),
@@ -82,6 +86,7 @@ __decorate([
 ], AnalyticsController.prototype, "getCharts", null);
 __decorate([
     (0, common_1.Get)('agent-performance'),
+    (0, require_module_decorator_1.RequireModule)('analytics'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('startDate')),
     __param(2, (0, common_1.Query)('endDate')),
@@ -91,6 +96,7 @@ __decorate([
 ], AnalyticsController.prototype, "getAgentPerformance", null);
 __decorate([
     (0, common_1.Get)('detailed-tickets'),
+    (0, require_module_decorator_1.RequireModule)('analytics'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('startDate')),
     __param(2, (0, common_1.Query)('endDate')),
@@ -106,6 +112,7 @@ __decorate([
 ], AnalyticsController.prototype, "getDetailedTickets", null);
 __decorate([
     (0, common_1.Get)('ai-costs'),
+    (0, require_module_decorator_1.RequireModule)('analytics'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('startDate')),
     __param(2, (0, common_1.Query)('endDate')),
@@ -134,6 +141,7 @@ __decorate([
 ], AnalyticsController.prototype, "createCsat", null);
 __decorate([
     (0, common_1.Get)('funnel'),
+    (0, require_module_decorator_1.RequireModule)('analytics'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('startDate')),
     __param(2, (0, common_1.Query)('endDate')),
@@ -143,6 +151,7 @@ __decorate([
 ], AnalyticsController.prototype, "getFunnel", null);
 __decorate([
     (0, common_1.Get)('bottlenecks'),
+    (0, require_module_decorator_1.RequireModule)('analytics'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('startDate')),
     __param(2, (0, common_1.Query)('endDate')),
@@ -152,6 +161,7 @@ __decorate([
 ], AnalyticsController.prototype, "getBottlenecks", null);
 __decorate([
     (0, common_1.Get)('channels'),
+    (0, require_module_decorator_1.RequireModule)('analytics'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('startDate')),
     __param(2, (0, common_1.Query)('endDate')),
@@ -161,7 +171,7 @@ __decorate([
 ], AnalyticsController.prototype, "getChannels", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, common_1.Controller)('analytics'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
     __metadata("design:paramtypes", [analytics_service_1.AnalyticsService])
 ], AnalyticsController);
 //# sourceMappingURL=analytics.controller.js.map

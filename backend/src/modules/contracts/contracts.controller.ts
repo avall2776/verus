@@ -16,6 +16,8 @@ import { ContractsService } from './contracts.service';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { UpdateContractStatusDto } from './dto/update-contract-status.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { PlanGuard } from '../../shared/guards/plan.guard';
+import { RequireModule } from '../../shared/decorators/require-module.decorator';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 
 @Controller('contracts')
@@ -23,7 +25,8 @@ export class ContractsController {
   constructor(private readonly contractsService: ContractsService) {}
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PlanGuard)
+  @RequireModule('proposalsContracts')
   async findAll(
     @CurrentTenant() tenantId: string,
     @Query('search') search?: string,
@@ -33,7 +36,8 @@ export class ContractsController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PlanGuard)
+  @RequireModule('proposalsContracts')
   async create(
     @CurrentTenant() tenantId: string,
     @Body() dto: CreateContractDto,
@@ -69,7 +73,8 @@ export class ContractsController {
   }
 
   @Get(':id/whatsapp-share')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PlanGuard)
+  @RequireModule('proposalsContracts')
   async getWhatsAppShare(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
@@ -81,7 +86,8 @@ export class ContractsController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PlanGuard)
+  @RequireModule('proposalsContracts')
   async findOne(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
@@ -90,7 +96,8 @@ export class ContractsController {
   }
 
   @Patch(':id/status')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PlanGuard)
+  @RequireModule('proposalsContracts')
   async updateStatus(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
@@ -103,7 +110,8 @@ export class ContractsController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PlanGuard)
+  @RequireModule('proposalsContracts')
   async delete(
     @CurrentTenant() tenantId: string,
     @Param('id') id: string,
@@ -111,4 +119,3 @@ export class ContractsController {
     return this.contractsService.delete(tenantId, id);
   }
 }
-

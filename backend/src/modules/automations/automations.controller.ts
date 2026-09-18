@@ -1,11 +1,14 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { AutomationsService } from './automations.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { PlanGuard } from '../../shared/guards/plan.guard';
+import { RequireModule } from '../../shared/decorators/require-module.decorator';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 import { CreateAutomationDto } from './dto/create-automation.dto';
 import { UpdateAutomationDto } from './dto/update-automation.dto';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PlanGuard)
+@RequireModule('automations')
 @Controller('automations')
 export class AutomationsController {
   constructor(private readonly automationsService: AutomationsService) {}

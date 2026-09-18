@@ -1,10 +1,13 @@
 import { Controller, Get, Patch, Post, Body, UseGuards } from '@nestjs/common';
 import { AgentService } from './agent.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { PlanGuard } from '../../shared/guards/plan.guard';
+import { RequireModule } from '../../shared/decorators/require-module.decorator';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 import { AiService } from '../ai/ai.service';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PlanGuard)
+@RequireModule('aiAgent')
 @Controller('agent')
 export class AgentController {
   constructor(

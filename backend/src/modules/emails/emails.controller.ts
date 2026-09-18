@@ -6,10 +6,13 @@ import { SendEmailDto } from './dto/send-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
 import { EmailSettingsDto } from './dto/email-settings.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { PlanGuard } from '../../shared/guards/plan.guard';
+import { RequireModule } from '../../shared/decorators/require-module.decorator';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 
 @Controller('emails')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PlanGuard)
+@RequireModule('emailInbox')
 export class EmailsController {
   constructor(private readonly emailsService: EmailsService) {}
 

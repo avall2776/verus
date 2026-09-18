@@ -3,11 +3,14 @@ import {
   UseGuards, Request, BadRequestException 
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { PlanGuard } from '../../shared/guards/plan.guard';
+import { RequireModule } from '../../shared/decorators/require-module.decorator';
 import { SupportService } from './support.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { CreateTicketMessageDto } from './dto/create-ticket-message.dto';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PlanGuard)
+@RequireModule('support')
 @Controller('support')
 export class SupportController {
   constructor(private readonly supportService: SupportService) {}

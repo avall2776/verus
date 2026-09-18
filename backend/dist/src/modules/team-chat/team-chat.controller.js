@@ -16,6 +16,8 @@ exports.TeamChatController = void 0;
 const common_1 = require("@nestjs/common");
 const team_chat_service_1 = require("./team-chat.service");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const plan_guard_1 = require("../../shared/guards/plan.guard");
+const require_module_decorator_1 = require("../../shared/decorators/require-module.decorator");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 let TeamChatController = class TeamChatController {
     constructor(teamChatService) {
@@ -132,7 +134,8 @@ __decorate([
 ], TeamChatController.prototype, "clearHistory", null);
 exports.TeamChatController = TeamChatController = __decorate([
     (0, common_1.Controller)('team-chat'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('teamChat'),
     __metadata("design:paramtypes", [team_chat_service_1.TeamChatService])
 ], TeamChatController);
 //# sourceMappingURL=team-chat.controller.js.map

@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SupportController = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const plan_guard_1 = require("../../shared/guards/plan.guard");
+const require_module_decorator_1 = require("../../shared/decorators/require-module.decorator");
 const support_service_1 = require("./support.service");
 const create_ticket_dto_1 = require("./dto/create-ticket.dto");
 const create_ticket_message_dto_1 = require("./dto/create-ticket-message.dto");
@@ -143,7 +145,8 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], SupportController.prototype, "getAiCopilotSuggestion", null);
 exports.SupportController = SupportController = __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('support'),
     (0, common_1.Controller)('support'),
     __metadata("design:paramtypes", [support_service_1.SupportService])
 ], SupportController);

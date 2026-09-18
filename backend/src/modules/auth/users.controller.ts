@@ -57,6 +57,23 @@ export class UsersController {
           select: {
             id: true,
             name: true,
+            isActive: true,
+            planId: true,
+            plan: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+                hasCRM: true,
+                hasWhatsApp: true,
+                hasInstagram: true,
+                hasAIAgent: true,
+                maxUsers: true,
+                maxAIMsgs: true,
+                maxWorkspaces: true,
+                modules: true,
+              },
+            },
           },
         },
       },
@@ -196,6 +213,23 @@ export class UsersController {
   ) {
     const tenantId = req.user?.tenantId;
     if (!tenantId) throw new BadRequestException('Tenant não identificado.');
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      include: { plan: true },
+    });
+    if (!tenant) throw new BadRequestException('Empresa não encontrada.');
+
+    const maxUsers = tenant.plan?.maxUsers ?? 1;
+    const currentUsersCount = await this.prisma.user.count({
+      where: { tenantId, isActive: true },
+    });
+
+    if (currentUsersCount >= maxUsers) {
+      throw new BadRequestException(
+        `Limite de operadores atingido: O seu plano ${tenant.plan?.name || 'atual'} permite no máximo ${maxUsers} usuário(s) ativo(s). Faça um upgrade para adicionar novos operadores.`
+      );
+    }
 
     const name = body.name?.trim();
     const email = body.email?.trim().toLowerCase();

@@ -134,11 +134,27 @@ export default function Sidebar() {
       }
       const res = await api.get('/users/me');
       if (res.data) {
+        // Se a empresa foi bloqueada, desloga imediatamente e redireciona para a tela de bloqueio
+        if (res.data.tenant && res.data.tenant.isActive === false && !res.data.isSuperAdmin) {
+          localStorage.removeItem('versus_auth_token');
+          localStorage.removeItem('versus_token');
+          localStorage.removeItem('token');
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('versus_user');
+          sessionStorage.setItem('versus_blocked_reason', 'O acesso desta empresa foi bloqueado pela administração do VERSUS.');
+          window.location.href = '/blocked';
+          return;
+        }
         setCurrentUser(res.data);
         localStorage.setItem('versus_user', JSON.stringify(res.data));
       }
-    } catch (e) {
-      // Ignora erro se sessão ainda não carregada
+    } catch (e: any) {
+      if (e.response?.status === 401) {
+        const code = e.response?.data?.code;
+        if (code === 'TENANT_BLOCKED') {
+          window.location.href = '/blocked';
+        }
+      }
     }
   };
 
@@ -237,10 +253,91 @@ export default function Sidebar() {
 
   const checkItemPermission = (href: string, user: any): boolean => {
     if (!user) return true;
-    if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.isSuperAdmin) {
+
+    const isSuperAdmin = Boolean(
+      user.isSuperAdmin === true ||
+      user.role === 'SUPER_ADMIN' ||
+      user.role === 'SUPERADMIN'
+    );
+
+    // Super Admin possui acesso irrestrito para auditoria e controle global
+    if (isSuperAdmin) return true;
+
+    const base = href.split('?')[0];
+
+    // 1. CHECAGEM DA MATRIZ DO PLANO DO TENANT (Governança de Planos)
+    const plan = user.tenant?.plan;
+    const planModules = (plan?.modules as Record<string, boolean>) || {};
+
+    if (plan) {
+      // Funil Comercial (CRM)
+      if (base === '/crm' || base === '/dashboard/crm' || base === '/contacts') {
+        const crmAllowed = Boolean(planModules.crm ?? plan.hasCRM ?? false);
+        if (!crmAllowed) return false;
+      }
+
+      // Propostas e Contratos
+      if (base === '/proposals' || base === '/contracts') {
+        const proposalsAllowed = Boolean(planModules.proposalsContracts ?? false);
+        if (!proposalsAllowed) return false;
+      }
+
+      // Automações de Vendas
+      if (href.includes('tab=automations')) {
+        const automationsAllowed = Boolean(planModules.automations ?? false);
+        if (!automationsAllowed) return false;
+      }
+
+      // Agente IA
+      if (base === '/agent') {
+        const aiAllowed = Boolean(planModules.aiAgent ?? plan.hasAIAgent ?? false);
+        if (!aiAllowed) return false;
+      }
+
+      // Inbox de E-mail
+      if (base === '/email-inbox') {
+        const emailAllowed = Boolean(planModules.emailInbox ?? false);
+        if (!emailAllowed) return false;
+      }
+
+      // Metas Comerciais
+      if (base === '/dashboard/goals') {
+        const goalsAllowed = Boolean(planModules.goals ?? false);
+        if (!goalsAllowed) return false;
+      }
+
+      // Analytics Avançado
+      if (base === '/dashboard/analytics') {
+        const analyticsAllowed = Boolean(planModules.analytics ?? false);
+        if (!analyticsAllowed) return false;
+      }
+
+      // Chat Interno da Equipe
+      if (base === '/chat-interno') {
+        const chatAllowed = Boolean(planModules.teamChat ?? true);
+        if (!chatAllowed) return false;
+      }
+
+      // Central de Suporte
+      if (base === '/support') {
+        const supportAllowed = Boolean(planModules.support ?? true);
+        if (!supportAllowed) return false;
+      }
+
+      // WhatsApp / Conexões
+      if (base === '/inbox' || base === '/monitor' || base === '/settings/whatsapp') {
+        const waAllowed = Boolean(planModules.whatsapp ?? plan.hasWhatsApp ?? true);
+        if (!waAllowed) return false;
+      }
+    }
+
+    // 2. CHECAGEM POR CARGO DE ADMIN DO TENANT
+    // Se o recurso está liberado no plano, ADMIN tem acesso total dentro da empresa
+    if (user.role === 'ADMIN') {
       return true;
     }
 
+    // 3. CHECAGEM DE PERMISSÕES INDIVIDUAIS DO OPERADOR (AGENT)
     const perms = user.permissions || {
       inbox: true,
       crm: true,
@@ -249,8 +346,6 @@ export default function Sidebar() {
       settings: false,
       support: true,
     };
-
-    const base = href.split('?')[0];
 
     // Visão Geral sempre liberada
     if (base === '/dashboard') return true;

@@ -19,6 +19,8 @@ const create_proposal_dto_1 = require("./dto/create-proposal.dto");
 const update_proposal_dto_1 = require("./dto/update-proposal.dto");
 const update_proposal_status_dto_1 = require("./dto/update-proposal-status.dto");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const plan_guard_1 = require("../../shared/guards/plan.guard");
+const require_module_decorator_1 = require("../../shared/decorators/require-module.decorator");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 let ProposalsController = class ProposalsController {
     constructor(proposalsService) {
@@ -70,7 +72,8 @@ let ProposalsController = class ProposalsController {
 exports.ProposalsController = ProposalsController;
 __decorate([
     (0, common_1.Get)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('status')),
     __metadata("design:type", Function),
@@ -79,7 +82,8 @@ __decorate([
 ], ProposalsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -88,7 +92,8 @@ __decorate([
 ], ProposalsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)('company-profile'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -96,7 +101,8 @@ __decorate([
 ], ProposalsController.prototype, "getCompanyProfile", null);
 __decorate([
     (0, common_1.Patch)('company-profile'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -105,7 +111,8 @@ __decorate([
 ], ProposalsController.prototype, "updateCompanyProfile", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -114,7 +121,8 @@ __decorate([
 ], ProposalsController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Put)(':id'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -124,7 +132,8 @@ __decorate([
 ], ProposalsController.prototype, "update", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -134,7 +143,8 @@ __decorate([
 ], ProposalsController.prototype, "patch", null);
 __decorate([
     (0, common_1.Patch)(':id/status'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -158,7 +168,8 @@ __decorate([
 ], ProposalsController.prototype, "acceptPublic", null);
 __decorate([
     (0, common_1.Get)(':id/whatsapp-share'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Query)('origin')),
@@ -178,7 +189,8 @@ __decorate([
 ], ProposalsController.prototype, "getPdf", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),

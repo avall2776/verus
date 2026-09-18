@@ -16,6 +16,8 @@ exports.AutomationsController = void 0;
 const common_1 = require("@nestjs/common");
 const automations_service_1 = require("./automations.service");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const plan_guard_1 = require("../../shared/guards/plan.guard");
+const require_module_decorator_1 = require("../../shared/decorators/require-module.decorator");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 const create_automation_dto_1 = require("./dto/create-automation.dto");
 const update_automation_dto_1 = require("./dto/update-automation.dto");
@@ -114,7 +116,8 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AutomationsController.prototype, "remove", null);
 exports.AutomationsController = AutomationsController = __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('automations'),
     (0, common_1.Controller)('automations'),
     __metadata("design:paramtypes", [automations_service_1.AutomationsService])
 ], AutomationsController);

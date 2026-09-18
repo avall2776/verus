@@ -1,10 +1,13 @@
 import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
 import { CrmService } from './crm.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { PlanGuard } from '../../shared/guards/plan.guard';
+import { RequireModule } from '../../shared/decorators/require-module.decorator';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 
 @Controller(['deals', 'crm/deals'])
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PlanGuard)
+@RequireModule('crm')
 export class CrmController {
   constructor(private readonly crmService: CrmService) {}
 

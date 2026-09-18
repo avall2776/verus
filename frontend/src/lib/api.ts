@@ -72,14 +72,58 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor para tratamento de 401/403
+// Interceptor para tratamento de 401/403 com governança em tempo real
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      console.warn('Sessão expirada ou acesso negado. (401/403)', error.response.data);
-      // Aqui podemos redirecionar para /login no futuro: 
-      // if (typeof window !== 'undefined') window.location.href = '/login';
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+
+      if (status === 401) {
+        const isBlocked = 
+          data?.code === 'TENANT_BLOCKED' ||
+          data?.code === 'USER_INACTIVE' ||
+          (typeof data?.message === 'string' && (
+            data.message.toLowerCase().includes('bloqueada') ||
+            data.message.toLowerCase().includes('bloqueado') ||
+            data.message.toLowerCase().includes('suspenso') ||
+            data.message.toLowerCase().includes('desativada')
+          ));
+
+        if (typeof window !== 'undefined') {
+          const currentPath = window.location.pathname;
+
+          if (isBlocked) {
+            // Invalidação imediata de tokens
+            localStorage.removeItem('versus_auth_token');
+            localStorage.removeItem('versus_token');
+            localStorage.removeItem('token');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('versus_user');
+            sessionStorage.setItem(
+              'versus_blocked_reason',
+              typeof data?.message === 'string' ? data.message : 'Acesso suspenso: sua empresa foi bloqueada pela administração.'
+            );
+            
+            if (currentPath !== '/blocked') {
+              window.location.href = '/blocked';
+            }
+          } else if (
+            currentPath !== '/login' && 
+            currentPath !== '/blocked' && 
+            !currentPath.startsWith('/public') && 
+            !currentPath.startsWith('/c/') && 
+            !currentPath.startsWith('/p/')
+          ) {
+            // Sessão normal expirada
+            localStorage.removeItem('versus_auth_token');
+            localStorage.removeItem('versus_token');
+            localStorage.removeItem('versus_user');
+            window.location.href = '/login';
+          }
+        }
+      }
     }
     return Promise.reject(error);
   }

@@ -19,6 +19,8 @@ const send_email_dto_1 = require("./dto/send-email.dto");
 const update_email_dto_1 = require("./dto/update-email.dto");
 const email_settings_dto_1 = require("./dto/email-settings.dto");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const plan_guard_1 = require("../../shared/guards/plan.guard");
+const require_module_decorator_1 = require("../../shared/decorators/require-module.decorator");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 let EmailsController = class EmailsController {
     constructor(emailsService) {
@@ -181,7 +183,8 @@ __decorate([
 ], EmailsController.prototype, "deleteEmail", null);
 exports.EmailsController = EmailsController = __decorate([
     (0, common_1.Controller)('emails'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('emailInbox'),
     __metadata("design:paramtypes", [emails_service_1.EmailsService])
 ], EmailsController);
 //# sourceMappingURL=emails.controller.js.map

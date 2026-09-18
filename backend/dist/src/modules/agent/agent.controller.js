@@ -16,6 +16,8 @@ exports.AgentController = void 0;
 const common_1 = require("@nestjs/common");
 const agent_service_1 = require("./agent.service");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const plan_guard_1 = require("../../shared/guards/plan.guard");
+const require_module_decorator_1 = require("../../shared/decorators/require-module.decorator");
 const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 const ai_service_1 = require("../ai/ai.service");
 let AgentController = class AgentController {
@@ -66,7 +68,8 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AgentController.prototype, "testPlayground", null);
 exports.AgentController = AgentController = __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('aiAgent'),
     (0, common_1.Controller)('agent'),
     __metadata("design:paramtypes", [agent_service_1.AgentService,
         ai_service_1.AiService])
