@@ -32,6 +32,11 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
   onOpen,
   onClose
 }) => {
+  // Isolamento estrito: Nunca renderizar notificações operacionais no console Super Admin
+  if (typeof window !== 'undefined' && window.location.pathname.toLowerCase().includes('/super-admin')) {
+    return null;
+  }
+
   const getInitials = (name: string) => {
     if (!name) return 'L';
     const parts = name.trim().split(' ');
@@ -169,6 +174,11 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
   onOpen,
   onClose
 }) => {
+  // Isolamento estrito: Nunca renderizar alertas operacionais no console Super Admin
+  if (typeof window !== 'undefined' && window.location.pathname.toLowerCase().includes('/super-admin')) {
+    return null;
+  }
+
   const [isTakingOver, setIsTakingOver] = useState(false);
 
   const handleTakeover = async () => {
@@ -286,6 +296,14 @@ export function showLeadMessageToast(
   },
   router: any
 ) {
+  // Isolamento estrito: Se o usuário estiver no console Super Admin, silencia imediatamente
+  if (typeof window !== 'undefined') {
+    const currentPath = (window.location.pathname || '').toLowerCase();
+    if (currentPath.includes('/super-admin')) {
+      return;
+    }
+  }
+
   const toastId = `msg_${data.conversationId}_${Date.now()}`;
   toast.custom(
     (t) => (
@@ -323,6 +341,14 @@ export function showTransferAlertToast(
   router: any,
   onTakeoverSuccess?: (conversationId: string) => void
 ) {
+  // Isolamento estrito: Se o usuário estiver no console Super Admin, silencia imediatamente
+  if (typeof window !== 'undefined') {
+    const currentPath = (window.location.pathname || '').toLowerCase();
+    if (currentPath.includes('/super-admin')) {
+      return;
+    }
+  }
+
   const toastId = `transfer_${data.conversationId}_${Date.now()}`;
   toast.custom(
     (t) => (

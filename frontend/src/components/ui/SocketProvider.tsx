@@ -159,7 +159,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   // Helper para verificar se a rota ativa é o Console Master Super Admin
   const isSuperAdminRoute = useCallback(() => {
     if (typeof window === 'undefined') return false;
-    return window.location.pathname.startsWith('/super-admin');
+    const p = (window.location.pathname || '').toLowerCase();
+    return p.startsWith('/super-admin') || p.includes('/super-admin');
   }, []);
 
   // Vibração Tátil (Mobile & dispositivos compatíveis)
@@ -231,6 +232,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       setIsConnected(true);
       console.log('📡 [WebSockets] Conectado ao Servidor em Tempo Real!', socketInstance.id);
       
+      const isSuperAdmin = typeof window !== 'undefined' && (window.location.pathname || '').toLowerCase().includes('/super-admin');
+      if (isSuperAdmin) {
+        console.log('🛡️ [WebSockets] Super Admin ativo: isolando socket de todas as salas operacionais.');
+        socketInstance.emit('leaveTenant');
+        socketInstance.emit('joinTenant', 'super_admin_isolated');
+        return;
+      }
+
       let tenantId = 'tenant_123';
       try {
         const userStr = localStorage.getItem('versus_user');
@@ -369,6 +378,35 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socketInstance.disconnect();
     };
   }, [router, playNotificationSound, triggerVibration, dispatchDesktopNotification, triggerTabBlink]);
+
+  // Observa mudanças de rota do Next.js para alternar o isolamento do Super Admin vs Operacional
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const isSuperAdmin = (pathname || '').toLowerCase().includes('/super-admin') || 
+      (typeof window !== 'undefined' && (window.location.pathname || '').toLowerCase().includes('/super-admin'));
+
+    if (isSuperAdmin) {
+      console.log('🛡️ [WebSockets] Rota Super Admin ativa: isolando socket de todas as salas de tenant.');
+      socket.emit('leaveTenant');
+      socket.emit('joinTenant', 'super_admin_isolated');
+    } else {
+      let tenantId = 'tenant_123';
+      try {
+        const userStr = localStorage.getItem('versus_user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          if (user.tenantId) tenantId = user.tenantId;
+        }
+        if (!tenantId || tenantId === 'tenant_123') {
+          const savedTenant = localStorage.getItem('tenantId');
+          if (savedTenant) tenantId = savedTenant;
+        }
+      } catch (e) {}
+
+      socket.emit('joinTenant', tenantId);
+    }
+  }, [pathname, socket, isConnected]);
 
   return (
     <SocketContext.Provider value={{ 

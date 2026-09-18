@@ -17,6 +17,7 @@ import {
   Cpu,
   Bot
 } from "lucide-react";
+import { toast } from "sonner";
 import UserProfileModal from "@/components/modals/UserProfileModal";
 
 const ADMIN_MENU = [
@@ -38,6 +39,13 @@ export default function SuperAdminLayout({
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // Isolamento estrito do Super Admin: limpa e descarta imediatamente quaisquer toasts ativos
+  useEffect(() => {
+    try {
+      toast.dismiss();
+    } catch (e) {}
+  }, [pathname]);
 
   const loadUser = () => {
     try {
