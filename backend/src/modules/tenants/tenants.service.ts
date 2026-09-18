@@ -1,17 +1,107 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { EmailsService } from '../emails/emails.service';
 import { QueryTenantsDto } from './dto/query-tenants.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import * as bcrypt from 'bcrypt';
+import axios from 'axios';
 
 @Injectable()
 export class TenantsService {
+  private readonly logger = new Logger(TenantsService.name);
+
   constructor(
     public readonly prisma: PrismaService,
     private readonly emailsService: EmailsService,
   ) {}
+
+  /**
+   * Consulta dinamicamente a Evolution API para obter instâncias ativas (status 'open') em tempo real
+   */
+  private async getActiveEvolutionInstances(): Promise<Map<string, { status: string; owner?: string; profileName?: string }>> {
+    const instancesMap = new Map<string, { status: string; owner?: string; profileName?: string }>();
+    try {
+      const serverUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
+      const apiKey = process.env.EVOLUTION_API_KEY || 'verto123';
+
+      const res = await axios.get(`${serverUrl}/instance/fetchInstances`, {
+        headers: { apikey: apiKey },
+        timeout: 2500,
+      });
+
+      const list = Array.isArray(res.data) ? res.data : [];
+      for (const item of list) {
+        const evo = item.instance || item;
+        const name = String(evo.instanceName || '').trim();
+        const status = String(evo.status || evo.connectionStatus || '').toLowerCase();
+        if (name) {
+          instancesMap.set(name, {
+            status,
+            owner: evo.owner ? String(evo.owner).replace(/\D/g, '') : undefined,
+            profileName: evo.profileName,
+          });
+        }
+      }
+    } catch (err: any) {
+      this.logger.debug(`Consulta à Evolution API ignorada: ${err.message}`);
+    }
+    return instancesMap;
+  }
+
+  /**
+   * Determina o status real de conexão do WhatsApp para um tenant (Cloud API ou Evolution API)
+   */
+  private resolveTenantWhatsAppStatus(
+    tenant: any,
+    liveEvolutionMap: Map<string, { status: string; owner?: string; profileName?: string }>
+  ) {
+    // 1. WhatsApp Oficial / Cloud API (Meta)
+    if (tenant.metaPhoneNumberId && String(tenant.metaPhoneNumberId).trim().length > 5) {
+      return {
+        connected: true,
+        provider: 'meta',
+        phone: String(tenant.metaPhoneNumberId),
+      };
+    }
+
+    // 2. Instâncias vinculadas no banco ou na Evolution API
+    const instances = tenant.whatsappInstances || [];
+    for (const inst of instances) {
+      const dbStatus = String(inst.status || '').toLowerCase().trim();
+      const instanceName = (inst.settings as any)?.instanceName || inst.name;
+      const liveEvo = instanceName ? liveEvolutionMap.get(instanceName) : null;
+
+      const isLiveOpen = liveEvo && (liveEvo.status === 'open' || liveEvo.status === 'connected');
+      const isDbConnected = ['connected', 'open', 'active', 'online'].includes(dbStatus);
+
+      if (isLiveOpen || isDbConnected) {
+        return {
+          connected: true,
+          provider: (inst.settings as any)?.provider || 'evolution',
+          phone: inst.phoneNumber || liveEvo?.owner || null,
+        };
+      }
+    }
+
+    // 3. Fallback dinâmico: busca instâncias provisionadas na Evolution API pelo prefixo do tenant
+    const tenantPrefix = `versus_${tenant.id.replace(/-/g, '').substring(0, 10)}`;
+    for (const [evoName, evoData] of liveEvolutionMap.entries()) {
+      if (evoName.startsWith(tenantPrefix) && (evoData.status === 'open' || evoData.status === 'connected')) {
+        return {
+          connected: true,
+          provider: 'evolution',
+          phone: evoData.owner || null,
+        };
+      }
+    }
+
+    return {
+      connected: false,
+      provider: null,
+      phone: null,
+    };
+  }
 
   async findAll(query: QueryTenantsDto) {
     const page = Math.max(1, parseInt(query.page || '1', 10));
@@ -56,8 +146,8 @@ export class TenantsService {
             take: 1,
           },
           whatsappInstances: {
-            select: { id: true, status: true, name: true },
-            take: 1,
+            select: { id: true, status: true, name: true, phoneNumber: true, settings: true },
+            orderBy: { updatedAt: 'desc' },
           },
           _count: {
             select: {
@@ -71,6 +161,9 @@ export class TenantsService {
       }),
       this.prisma.tenant.count({ where }),
     ]);
+
+    // 1. Busca dinâmica das instâncias ativas na Evolution API em tempo real
+    const liveEvolutionMap = await this.getActiveEvolutionInstances();
 
     // Calcular tickets pendentes e deals por tenant
     const formatted = await Promise.all(
@@ -88,11 +181,7 @@ export class TenantsService {
         ]);
 
         const emailSettings = tenant.emailSettings as any;
-        const whatsappConnected = Boolean(
-          tenant.metaPhoneNumberId ||
-          tenant.whatsappInstances.some((inst) => inst.status === 'CONNECTED') ||
-          (tenant.whatsappSettings as any)?.antiBanEnabled !== undefined
-        );
+        const waInfo = this.resolveTenantWhatsAppStatus(tenant, liveEvolutionMap);
 
         const smtpConfigured = Boolean(
           emailSettings?.isActive ||
@@ -114,7 +203,9 @@ export class TenantsService {
           plan: tenant.plan,
           adminUser: tenant.users[0] || null,
           connections: {
-            whatsapp: whatsappConnected,
+            whatsapp: waInfo.connected,
+            whatsappPhone: waInfo.phone,
+            whatsappProvider: waInfo.provider,
             smtp: smtpConfigured,
           },
           counts: {
@@ -249,18 +340,17 @@ export class TenantsService {
       }),
     ]);
 
-    const signedContractsSummary = await this.prisma.contract.aggregate({
-      where: { tenantId: id, status: 'SIGNED' },
-      _count: { id: true },
-      _sum: { value: true },
-    });
+    const [liveEvolutionMap, signedContractsSummary] = await Promise.all([
+      this.getActiveEvolutionInstances(),
+      this.prisma.contract.aggregate({
+        where: { tenantId: id, status: 'SIGNED' },
+        _count: { id: true },
+        _sum: { value: true },
+      }),
+    ]);
 
     const emailSettings = tenant.emailSettings as any;
-    const whatsappConnected = Boolean(
-      tenant.metaPhoneNumberId ||
-      tenant.whatsappInstances.some((inst) => inst.status === 'CONNECTED') ||
-      (tenant.whatsappSettings as any)?.antiBanEnabled !== undefined
-    );
+    const waInfo = this.resolveTenantWhatsAppStatus(tenant, liveEvolutionMap);
 
     const smtpConfigured = Boolean(
       emailSettings?.isActive ||
@@ -284,8 +374,9 @@ export class TenantsService {
       },
       diagnostics: {
         whatsapp: {
-          connected: whatsappConnected,
-          phoneNumberId: tenant.metaPhoneNumberId,
+          connected: waInfo.connected,
+          provider: waInfo.provider,
+          phoneNumber: waInfo.phone || tenant.metaPhoneNumberId,
           instances: tenant.whatsappInstances,
           settings: tenant.whatsappSettings,
         },

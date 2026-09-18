@@ -107,6 +107,8 @@ export declare class TenantsController {
             };
             connections: {
                 whatsapp: boolean;
+                whatsappPhone: any;
+                whatsappProvider: any;
                 smtp: boolean;
             };
             counts: {
@@ -238,7 +240,8 @@ export declare class TenantsController {
         diagnostics: {
             whatsapp: {
                 connected: boolean;
-                phoneNumberId: string;
+                provider: any;
+                phoneNumber: any;
                 instances: {
                     id: string;
                     name: string;

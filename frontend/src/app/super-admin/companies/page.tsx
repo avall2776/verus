@@ -292,26 +292,33 @@ export default function SuperAdminCompaniesPage() {
                     <td className="p-3.5">
                       <div className="flex items-center gap-1.5">
                         <span
-                          title={company.connections?.whatsapp ? "WhatsApp Conectado" : "WhatsApp Desconectado"}
-                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                          title={
                             company.connections?.whatsapp
-                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                              : "bg-slate-800 text-slate-400 border-slate-700"
+                              ? `WhatsApp Conectado${company.connections?.whatsappPhone ? ` (${company.connections.whatsappPhone})` : ""}`
+                              : "WhatsApp Desconectado"
+                          }
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold border transition-all ${
+                            company.connections?.whatsapp
+                              ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-sm shadow-emerald-500/10"
+                              : "bg-slate-800/80 text-slate-400 border-slate-700"
                           }`}
                         >
-                          <PhoneCall size={10} />
+                          {company.connections?.whatsapp && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                          )}
+                          <PhoneCall size={10} className={company.connections?.whatsapp ? "text-emerald-400" : "text-slate-500"} />
                           <span>WA</span>
                         </span>
 
                         <span
                           title={company.connections?.smtp ? "SMTP Configurado" : "SMTP Não Configurado"}
-                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border transition-all ${
                             company.connections?.smtp
-                              ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
-                              : "bg-slate-800 text-slate-400 border-slate-700"
+                              ? "bg-blue-500/15 text-blue-400 border-blue-500/30 shadow-sm shadow-blue-500/10"
+                              : "bg-slate-800/80 text-slate-400 border-slate-700"
                           }`}
                         >
-                          <Mail size={10} />
+                          <Mail size={10} className={company.connections?.smtp ? "text-blue-400" : "text-slate-500"} />
                           <span>SMTP</span>
                         </span>
                       </div>

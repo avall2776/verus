@@ -8,16 +8,86 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var TenantsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TenantsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const emails_service_1 = require("../emails/emails.service");
 const bcrypt = require("bcrypt");
-let TenantsService = class TenantsService {
+const axios_1 = require("axios");
+let TenantsService = TenantsService_1 = class TenantsService {
     constructor(prisma, emailsService) {
         this.prisma = prisma;
         this.emailsService = emailsService;
+        this.logger = new common_1.Logger(TenantsService_1.name);
+    }
+    async getActiveEvolutionInstances() {
+        const instancesMap = new Map();
+        try {
+            const serverUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
+            const apiKey = process.env.EVOLUTION_API_KEY || 'verto123';
+            const res = await axios_1.default.get(`${serverUrl}/instance/fetchInstances`, {
+                headers: { apikey: apiKey },
+                timeout: 2500,
+            });
+            const list = Array.isArray(res.data) ? res.data : [];
+            for (const item of list) {
+                const evo = item.instance || item;
+                const name = String(evo.instanceName || '').trim();
+                const status = String(evo.status || evo.connectionStatus || '').toLowerCase();
+                if (name) {
+                    instancesMap.set(name, {
+                        status,
+                        owner: evo.owner ? String(evo.owner).replace(/\D/g, '') : undefined,
+                        profileName: evo.profileName,
+                    });
+                }
+            }
+        }
+        catch (err) {
+            this.logger.debug(`Consulta à Evolution API ignorada: ${err.message}`);
+        }
+        return instancesMap;
+    }
+    resolveTenantWhatsAppStatus(tenant, liveEvolutionMap) {
+        if (tenant.metaPhoneNumberId && String(tenant.metaPhoneNumberId).trim().length > 5) {
+            return {
+                connected: true,
+                provider: 'meta',
+                phone: String(tenant.metaPhoneNumberId),
+            };
+        }
+        const instances = tenant.whatsappInstances || [];
+        for (const inst of instances) {
+            const dbStatus = String(inst.status || '').toLowerCase().trim();
+            const instanceName = inst.settings?.instanceName || inst.name;
+            const liveEvo = instanceName ? liveEvolutionMap.get(instanceName) : null;
+            const isLiveOpen = liveEvo && (liveEvo.status === 'open' || liveEvo.status === 'connected');
+            const isDbConnected = ['connected', 'open', 'active', 'online'].includes(dbStatus);
+            if (isLiveOpen || isDbConnected) {
+                return {
+                    connected: true,
+                    provider: inst.settings?.provider || 'evolution',
+                    phone: inst.phoneNumber || liveEvo?.owner || null,
+                };
+            }
+        }
+        const tenantPrefix = `versus_${tenant.id.replace(/-/g, '').substring(0, 10)}`;
+        for (const [evoName, evoData] of liveEvolutionMap.entries()) {
+            if (evoName.startsWith(tenantPrefix) && (evoData.status === 'open' || evoData.status === 'connected')) {
+                return {
+                    connected: true,
+                    provider: 'evolution',
+                    phone: evoData.owner || null,
+                };
+            }
+        }
+        return {
+            connected: false,
+            provider: null,
+            phone: null,
+        };
     }
     async findAll(query) {
         const page = Math.max(1, parseInt(query.page || '1', 10));
@@ -58,8 +128,8 @@ let TenantsService = class TenantsService {
                         take: 1,
                     },
                     whatsappInstances: {
-                        select: { id: true, status: true, name: true },
-                        take: 1,
+                        select: { id: true, status: true, name: true, phoneNumber: true, settings: true },
+                        orderBy: { updatedAt: 'desc' },
                     },
                     _count: {
                         select: {
@@ -73,6 +143,7 @@ let TenantsService = class TenantsService {
             }),
             this.prisma.tenant.count({ where }),
         ]);
+        const liveEvolutionMap = await this.getActiveEvolutionInstances();
         const formatted = await Promise.all(tenants.map(async (tenant) => {
             const [openTickets, dealsCount] = await Promise.all([
                 this.prisma.supportTicket.count({
@@ -86,9 +157,7 @@ let TenantsService = class TenantsService {
                 }),
             ]);
             const emailSettings = tenant.emailSettings;
-            const whatsappConnected = Boolean(tenant.metaPhoneNumberId ||
-                tenant.whatsappInstances.some((inst) => inst.status === 'CONNECTED') ||
-                tenant.whatsappSettings?.antiBanEnabled !== undefined);
+            const waInfo = this.resolveTenantWhatsAppStatus(tenant, liveEvolutionMap);
             const smtpConfigured = Boolean(emailSettings?.isActive ||
                 emailSettings?.smtpHost ||
                 emailSettings?.resendApiKey);
@@ -106,7 +175,9 @@ let TenantsService = class TenantsService {
                 plan: tenant.plan,
                 adminUser: tenant.users[0] || null,
                 connections: {
-                    whatsapp: whatsappConnected,
+                    whatsapp: waInfo.connected,
+                    whatsappPhone: waInfo.phone,
+                    whatsappProvider: waInfo.provider,
                     smtp: smtpConfigured,
                 },
                 counts: {
@@ -223,15 +294,16 @@ let TenantsService = class TenantsService {
                 },
             }),
         ]);
-        const signedContractsSummary = await this.prisma.contract.aggregate({
-            where: { tenantId: id, status: 'SIGNED' },
-            _count: { id: true },
-            _sum: { value: true },
-        });
+        const [liveEvolutionMap, signedContractsSummary] = await Promise.all([
+            this.getActiveEvolutionInstances(),
+            this.prisma.contract.aggregate({
+                where: { tenantId: id, status: 'SIGNED' },
+                _count: { id: true },
+                _sum: { value: true },
+            }),
+        ]);
         const emailSettings = tenant.emailSettings;
-        const whatsappConnected = Boolean(tenant.metaPhoneNumberId ||
-            tenant.whatsappInstances.some((inst) => inst.status === 'CONNECTED') ||
-            tenant.whatsappSettings?.antiBanEnabled !== undefined);
+        const waInfo = this.resolveTenantWhatsAppStatus(tenant, liveEvolutionMap);
         const smtpConfigured = Boolean(emailSettings?.isActive ||
             emailSettings?.smtpHost ||
             emailSettings?.resendApiKey);
@@ -251,8 +323,9 @@ let TenantsService = class TenantsService {
             },
             diagnostics: {
                 whatsapp: {
-                    connected: whatsappConnected,
-                    phoneNumberId: tenant.metaPhoneNumberId,
+                    connected: waInfo.connected,
+                    provider: waInfo.provider,
+                    phoneNumber: waInfo.phone || tenant.metaPhoneNumberId,
                     instances: tenant.whatsappInstances,
                     settings: tenant.whatsappSettings,
                 },
@@ -808,7 +881,7 @@ let TenantsService = class TenantsService {
     }
 };
 exports.TenantsService = TenantsService;
-exports.TenantsService = TenantsService = __decorate([
+exports.TenantsService = TenantsService = TenantsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         emails_service_1.EmailsService])

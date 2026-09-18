@@ -6,7 +6,10 @@ import { CreatePlanDto } from './dto/create-plan.dto';
 export declare class TenantsService {
     readonly prisma: PrismaService;
     private readonly emailsService;
+    private readonly logger;
     constructor(prisma: PrismaService, emailsService: EmailsService);
+    private getActiveEvolutionInstances;
+    private resolveTenantWhatsAppStatus;
     findAll(query: QueryTenantsDto): Promise<{
         data: {
             id: string;
@@ -32,6 +35,8 @@ export declare class TenantsService {
             };
             connections: {
                 whatsapp: boolean;
+                whatsappPhone: any;
+                whatsappProvider: any;
                 smtp: boolean;
             };
             counts: {
@@ -88,7 +93,8 @@ export declare class TenantsService {
         diagnostics: {
             whatsapp: {
                 connected: boolean;
-                phoneNumberId: string;
+                provider: any;
+                phoneNumber: any;
                 instances: {
                     id: string;
                     name: string;
