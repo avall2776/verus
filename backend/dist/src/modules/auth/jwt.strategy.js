@@ -27,16 +27,20 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         this.prisma = prisma;
     }
     async validate(payload) {
-        const { sub: userId, tenantId, role } = payload;
-        const isSuperAdmin = Boolean(payload.isSuperAdmin || role === 'SUPER_ADMIN');
+        const userId = payload?.sub || payload?.id || payload?.userId;
+        const role = String(payload?.role || 'AGENT').toUpperCase();
+        const isSuperAdmin = Boolean(payload?.isSuperAdmin === true ||
+            payload?.isSuperAdmin === 'true' ||
+            role === 'SUPER_ADMIN' ||
+            role === 'SUPERADMIN');
         if (!userId) {
-            throw new common_1.UnauthorizedException('Token inválido.');
+            throw new common_1.UnauthorizedException('Token inválido: identificador de usuário ausente.');
         }
         return {
             id: userId,
             userId,
-            tenantId: tenantId || null,
-            role: role || 'AGENT',
+            tenantId: payload.tenantId || null,
+            role,
             isSuperAdmin
         };
     }

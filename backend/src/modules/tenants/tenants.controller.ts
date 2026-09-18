@@ -26,16 +26,37 @@ import { CreatePlanDto } from './dto/create-plan.dto';
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
-  private checkSuperAdmin(req: any) {
-    const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-    if (!isSuperAdmin) {
-      throw new ForbiddenException('Acesso restrito exclusivamente ao Super Administrador.');
+  private async checkSuperAdmin(req: any) {
+    const userRole = String(req.user?.role || '').toUpperCase();
+    const isSuperAdmin = Boolean(
+      req.user?.isSuperAdmin || 
+      userRole === 'SUPER_ADMIN' || 
+      userRole === 'SUPERADMIN'
+    );
+    if (isSuperAdmin) {
+      return true;
     }
+
+    // Fallback de segurança contra tokens dessincronizados
+    const userId = req.user?.userId || req.user?.id;
+    if (userId) {
+      const user = await this.tenantsService.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, role: true, isSuperAdmin: true },
+      });
+      if (user && (user.isSuperAdmin || String(user.role).toUpperCase() === 'SUPER_ADMIN')) {
+        req.user.isSuperAdmin = true;
+        req.user.role = 'SUPER_ADMIN';
+        return true;
+      }
+    }
+
+    throw new ForbiddenException('Acesso restrito exclusivamente ao Super Administrador.');
   }
 
   @Get('stats/overview')
   async getStats(@Request() req) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.getStats();
   }
 
@@ -53,25 +74,25 @@ export class TenantsController {
 
   @Get()
   async findAll(@Request() req, @Query() query: QueryTenantsDto) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.findAll(query);
   }
 
   @Post()
   async create(@Request() req, @Body() body: CreateTenantDto) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.create(body);
   }
 
   @Get('plans/list')
   async getPlans(@Request() req) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.getPlans();
   }
 
   @Post('plans')
   async createPlan(@Request() req, @Body() body: CreatePlanDto) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.createPlan(body);
   }
 
@@ -81,13 +102,13 @@ export class TenantsController {
     @Param('id') id: string,
     @Body() body: Partial<CreatePlanDto>,
   ) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.updatePlan(id, body);
   }
 
   @Get(':id')
   async findOne(@Request() req, @Param('id') id: string) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.findOne(id);
   }
 
@@ -97,7 +118,7 @@ export class TenantsController {
     @Param('id') id: string,
     @Body() body: UpdateTenantDto
   ) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.update(id, body);
   }
 
@@ -107,7 +128,7 @@ export class TenantsController {
     @Param('id') id: string,
     @Body() body: UpdateTenantDto
   ) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.update(id, body);
   }
 
@@ -117,7 +138,7 @@ export class TenantsController {
     @Param('id') id: string,
     @Body() body: UpdateTenantStatusDto
   ) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.updateStatus(id, body.isActive);
   }
 
@@ -127,7 +148,7 @@ export class TenantsController {
     @Param('id') id: string,
     @Body() body: ResetAdminPasswordDto
   ) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.resetAdminPassword(id, body?.newPassword);
   }
 
@@ -138,7 +159,7 @@ export class TenantsController {
     @Param('userId') userId: string,
     @Body() body: { name?: string; email?: string; role?: string; isActive?: boolean }
   ) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.updateTenantUser(tenantId, userId, body);
   }
 
@@ -149,7 +170,7 @@ export class TenantsController {
     @Param('userId') userId: string,
     @Body() body: { newPassword?: string; sendEmail?: boolean }
   ) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.resetTenantUserPassword(tenantId, userId, body);
   }
 
@@ -159,7 +180,7 @@ export class TenantsController {
     @Param('tenantId') tenantId: string,
     @Param('userId') userId: string
   ) {
-    this.checkSuperAdmin(req);
+    await this.checkSuperAdmin(req);
     return this.tenantsService.deleteTenantUser(tenantId, userId);
   }
 }

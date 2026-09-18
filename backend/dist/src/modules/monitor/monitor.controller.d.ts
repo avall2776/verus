@@ -12,8 +12,8 @@ export declare class MonitorController {
             createdAt: Date;
             updatedAt: Date;
             isActive: boolean;
-            role: string;
             password: string;
+            role: string;
             isSuperAdmin: boolean;
             permissions: import("@prisma/client/runtime/library").JsonValue | null;
             isOnline: boolean;

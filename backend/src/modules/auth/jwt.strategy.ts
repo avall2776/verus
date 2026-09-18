@@ -17,18 +17,24 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    const { sub: userId, tenantId, role } = payload;
-    const isSuperAdmin = Boolean(payload.isSuperAdmin || role === 'SUPER_ADMIN');
+    const userId = payload?.sub || payload?.id || payload?.userId;
+    const role = String(payload?.role || 'AGENT').toUpperCase();
+    const isSuperAdmin = Boolean(
+      payload?.isSuperAdmin === true ||
+      payload?.isSuperAdmin === 'true' ||
+      role === 'SUPER_ADMIN' ||
+      role === 'SUPERADMIN'
+    );
 
     if (!userId) {
-      throw new UnauthorizedException('Token inválido.');
+      throw new UnauthorizedException('Token inválido: identificador de usuário ausente.');
     }
 
     return { 
       id: userId, 
       userId, 
-      tenantId: tenantId || null, 
-      role: role || 'AGENT', 
+      tenantId: payload.tenantId || null, 
+      role, 
       isSuperAdmin 
     };
   }

@@ -26,7 +26,19 @@ async function bootstrap() {
         transform: true,
     }));
     app.useGlobalInterceptors(new sentry_interceptor_1.SentryInterceptor());
-    app.enableCors();
+    app.enableCors({
+        origin: true,
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+        credentials: true,
+        allowedHeaders: [
+            'Content-Type',
+            'Accept',
+            'Authorization',
+            'x-tenant-id',
+            'x-target-tenant-id',
+            'x-requested-with',
+        ],
+    });
     const port = process.env.PORT || 3001;
     await app.listen(port);
     logger.log(`🚀 VERSUS Engine rodando na porta ${port}`);

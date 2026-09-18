@@ -106,6 +106,26 @@ export default function EditCompanyModal({
     try {
       let resolvedPlanId = planId;
 
+      // Cabeçalhos explícitos com token e identificadores do tenant alvo
+      const rawToken = typeof window !== 'undefined'
+        ? localStorage.getItem('versus_auth_token') ||
+          localStorage.getItem('versus_token') ||
+          localStorage.getItem('token') ||
+          localStorage.getItem('auth_token')
+        : null;
+
+      const cleanToken = rawToken
+        ? rawToken.replace(/^Bearer\s+/i, '').replace(/^"|"$/g, '').trim()
+        : null;
+
+      const requestHeaders: Record<string, string> = {
+        'x-target-tenant-id': tenantId,
+        'x-tenant-id': tenantId,
+      };
+      if (cleanToken) {
+        requestHeaders['Authorization'] = `Bearer ${cleanToken}`;
+      }
+
       // Se for plano personalizado, cria o plano primeiro
       if (isCustomPlan) {
         if (!customPlanName.trim()) {
@@ -131,7 +151,7 @@ export default function EditCompanyModal({
           hasInstagram: Boolean(customModules.instagram),
           hasAIAgent: Boolean(customModules.aiAgent),
           modules: customModules,
-        });
+        }, { headers: requestHeaders });
 
         resolvedPlanId = planRes.data.id;
       }
@@ -149,9 +169,16 @@ export default function EditCompanyModal({
         payload.planId = resolvedPlanId;
       }
 
-      const res = await api.patch(`/tenants/${tenantId}`, payload);
-      toast.success(res.data.message || "Dados da empresa atualizados com sucesso!");
-      onCompanyUpdated(res.data.tenant);
+      let res: any;
+      try {
+        res = await api.patch(`/tenants/${tenantId}`, payload, { headers: requestHeaders });
+      } catch (patchErr: any) {
+        // Fallback resiliente para PUT caso o método PATCH sofra restrições de proxy
+        res = await api.put(`/tenants/${tenantId}`, payload, { headers: requestHeaders });
+      }
+
+      toast.success(res.data?.message || "Dados da empresa atualizados com sucesso!");
+      onCompanyUpdated(res.data?.tenant);
       onClose();
     } catch (err: any) {
       console.error(err);

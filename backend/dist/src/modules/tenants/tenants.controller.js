@@ -26,14 +26,30 @@ let TenantsController = class TenantsController {
     constructor(tenantsService) {
         this.tenantsService = tenantsService;
     }
-    checkSuperAdmin(req) {
-        const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-        if (!isSuperAdmin) {
-            throw new common_1.ForbiddenException('Acesso restrito exclusivamente ao Super Administrador.');
+    async checkSuperAdmin(req) {
+        const userRole = String(req.user?.role || '').toUpperCase();
+        const isSuperAdmin = Boolean(req.user?.isSuperAdmin ||
+            userRole === 'SUPER_ADMIN' ||
+            userRole === 'SUPERADMIN');
+        if (isSuperAdmin) {
+            return true;
         }
+        const userId = req.user?.userId || req.user?.id;
+        if (userId) {
+            const user = await this.tenantsService.prisma.user.findUnique({
+                where: { id: userId },
+                select: { id: true, role: true, isSuperAdmin: true },
+            });
+            if (user && (user.isSuperAdmin || String(user.role).toUpperCase() === 'SUPER_ADMIN')) {
+                req.user.isSuperAdmin = true;
+                req.user.role = 'SUPER_ADMIN';
+                return true;
+            }
+        }
+        throw new common_1.ForbiddenException('Acesso restrito exclusivamente ao Super Administrador.');
     }
     async getStats(req) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.getStats();
     }
     async getMyTenant(req) {
@@ -45,55 +61,55 @@ let TenantsController = class TenantsController {
         return this.tenantsService.updateMyTenant(tenantId, body);
     }
     async findAll(req, query) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.findAll(query);
     }
     async create(req, body) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.create(body);
     }
     async getPlans(req) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.getPlans();
     }
     async createPlan(req, body) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.createPlan(body);
     }
     async updatePlan(req, id, body) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.updatePlan(id, body);
     }
     async findOne(req, id) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.findOne(id);
     }
     async update(req, id, body) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.update(id, body);
     }
     async updatePut(req, id, body) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.update(id, body);
     }
     async updateStatus(req, id, body) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.updateStatus(id, body.isActive);
     }
     async resetAdminPassword(req, id, body) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.resetAdminPassword(id, body?.newPassword);
     }
     async updateTenantUser(req, tenantId, userId, body) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.updateTenantUser(tenantId, userId, body);
     }
     async resetTenantUserPassword(req, tenantId, userId, body) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.resetTenantUserPassword(tenantId, userId, body);
     }
     async deleteTenantUser(req, tenantId, userId) {
-        this.checkSuperAdmin(req);
+        await this.checkSuperAdmin(req);
         return this.tenantsService.deleteTenantUser(tenantId, userId);
     }
 };

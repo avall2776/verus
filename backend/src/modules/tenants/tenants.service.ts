@@ -9,7 +9,7 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class TenantsService {
   constructor(
-    private readonly prisma: PrismaService,
+    public readonly prisma: PrismaService,
     private readonly emailsService: EmailsService,
   ) {}
 

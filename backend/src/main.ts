@@ -36,8 +36,20 @@ async function bootstrap() {
   // Intercepta todos os erros e envia pro Sentry
   app.useGlobalInterceptors(new SentryInterceptor());
 
-  // Habilita CORS para o Front-end conseguir fazer FETCH
-  app.enableCors();
+  // Habilita CORS para o Front-end conseguir fazer FETCH (incluindo PATCH/PUT e headers corporativos)
+  app.enableCors({
+    origin: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+    allowedHeaders: [
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'x-tenant-id',
+      'x-target-tenant-id',
+      'x-requested-with',
+    ],
+  });
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

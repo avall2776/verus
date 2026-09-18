@@ -4,7 +4,7 @@ import { QueryTenantsDto } from './dto/query-tenants.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { CreatePlanDto } from './dto/create-plan.dto';
 export declare class TenantsService {
-    private readonly prisma;
+    readonly prisma: PrismaService;
     private readonly emailsService;
     constructor(prisma: PrismaService, emailsService: EmailsService);
     findAll(query: QueryTenantsDto): Promise<{
