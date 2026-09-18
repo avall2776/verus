@@ -17,13 +17,16 @@ exports.WebhookProcessor = void 0;
 const bullmq_1 = require("@nestjs/bullmq");
 const bullmq_2 = require("bullmq");
 const common_1 = require("@nestjs/common");
+const fs = require("fs");
+const path = require("path");
 const prisma_service_1 = require("../../../shared/database/prisma.service");
 const chat_gateway_1 = require("../../chat/chat.gateway");
 const messaging_service_1 = require("../../messaging/messaging.service");
 const automations_service_1 = require("../../automations/automations.service");
 const whatsapp_service_1 = require("../../whatsapp/whatsapp.service");
+const ai_service_1 = require("../../ai/ai.service");
 let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullmq_1.WorkerHost {
-    constructor(prisma, aiQueue, chatGateway, messagingService, automationsService, whatsappService) {
+    constructor(prisma, aiQueue, chatGateway, messagingService, automationsService, whatsappService, aiService) {
         super();
         this.prisma = prisma;
         this.aiQueue = aiQueue;
@@ -31,6 +34,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         this.messagingService = messagingService;
         this.automationsService = automationsService;
         this.whatsappService = whatsappService;
+        this.aiService = aiService;
         this.logger = new common_1.Logger(WebhookProcessor_1.name);
     }
     async process(job) {
@@ -59,36 +63,128 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             this.logger.warn(`Mensagem [${messageId}] já processada. Ignorando.`);
             return { status: 'ignored_duplicate' };
         }
-        const isAudio = message.type === 'audio' || message.type === 'voice' || message.type === 'ptt' || !!message.audio || !!message.voice;
+        const getLocalBuffer = (url) => {
+            if (!url)
+                return null;
+            try {
+                const basename = path.basename(url);
+                const folder = url.includes('/audio/') ? 'audio' : 'media';
+                const candidate1 = path.join(process.cwd(), 'uploads', folder, basename);
+                if (fs.existsSync(candidate1))
+                    return fs.readFileSync(candidate1);
+                const candidate2 = path.join(process.cwd(), 'uploads', 'audio', basename);
+                if (fs.existsSync(candidate2))
+                    return fs.readFileSync(candidate2);
+                const candidate3 = path.join(process.cwd(), 'uploads', 'media', basename);
+                if (fs.existsSync(candidate3))
+                    return fs.readFileSync(candidate3);
+                return null;
+            }
+            catch {
+                return null;
+            }
+        };
+        const isAudio = message.type === 'audio' ||
+            message.type === 'voice' ||
+            message.type === 'ptt' ||
+            !!message.audio ||
+            !!message.voice ||
+            evolutionMetadata?.mediaType === 'audio';
+        const isImage = message.type === 'image' ||
+            !!message.image ||
+            evolutionMetadata?.mediaType === 'image';
+        const isDocument = message.type === 'document' ||
+            !!message.document ||
+            evolutionMetadata?.mediaType === 'document';
         let content = message.text?.body || '';
-        let msgType = message.type || 'text';
+        let msgType = isAudio ? 'audio' : isImage ? 'image' : isDocument ? 'document' : (message.type || 'text');
         let mediaUrl = null;
         if (isAudio) {
             msgType = 'audio';
-            content = '🎤 Mensagem de voz';
             const audioObj = message.audio || message.voice;
             const mediaId = audioObj?.id;
-            const directUrl = audioObj?.link || audioObj?.url;
-            const mimeType = audioObj?.mime_type || 'audio/ogg';
-            if (mediaId) {
-                mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
-            }
-            else if (directUrl) {
+            const directUrl = audioObj?.link || audioObj?.url || evolutionMetadata?.mediaUrl;
+            const mimeType = audioObj?.mime_type || evolutionMetadata?.mediaMime || 'audio/ogg';
+            if (directUrl) {
                 mediaUrl = directUrl;
             }
-        }
-        else if (message.image) {
-            msgType = 'image';
-            content = message.image.caption || '📷 Foto';
-            if (message.image.id) {
-                mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, message.image.id, message.image.mime_type || 'image/jpeg');
+            else if (mediaId) {
+                mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
+            }
+            const audioBuffer = getLocalBuffer(mediaUrl);
+            if (audioBuffer) {
+                this.logger.log(`[Multimodal Audio] Transcrevendo áudio recebido de ${remoteJid}...`);
+                const transcription = await this.aiService.transcribeAudio(audioBuffer, path.basename(mediaUrl || 'audio.ogg'), mimeType);
+                if (transcription) {
+                    content = `🎤 [Áudio]: "${transcription}"`;
+                }
+                else {
+                    content = '🎤 Mensagem de voz';
+                }
+            }
+            else {
+                content = '🎤 Mensagem de voz';
             }
         }
-        else if (message.document) {
+        else if (isImage) {
+            msgType = 'image';
+            const imgObj = message.image;
+            const mediaId = imgObj?.id;
+            const directUrl = imgObj?.link || imgObj?.url || evolutionMetadata?.mediaUrl;
+            const mimeType = imgObj?.mime_type || evolutionMetadata?.mediaMime || 'image/jpeg';
+            const caption = imgObj?.caption || evolutionMetadata?.mediaCaption || message.text?.body || '';
+            if (directUrl) {
+                mediaUrl = directUrl;
+            }
+            else if (mediaId) {
+                mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
+            }
+            const imageBuffer = getLocalBuffer(mediaUrl);
+            if (imageBuffer) {
+                this.logger.log(`[Multimodal Vision] Analisando imagem recebida de ${remoteJid}...`);
+                const visualAnalysis = await this.aiService.analyzeImage(imageBuffer, mimeType, caption);
+                if (visualAnalysis) {
+                    content = caption
+                        ? `${caption}\n📷 [Análise da Imagem]: ${visualAnalysis}`
+                        : `📷 [Análise da Imagem]: ${visualAnalysis}`;
+                }
+                else {
+                    content = caption || '📷 Foto';
+                }
+            }
+            else {
+                content = caption || '📷 Foto';
+            }
+        }
+        else if (isDocument) {
             msgType = 'document';
-            content = message.document.filename || message.document.caption || '📄 Documento';
-            if (message.document.id) {
-                mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, message.document.id, message.document.mime_type || 'application/pdf');
+            const docObj = message.document;
+            const mediaId = docObj?.id;
+            const directUrl = docObj?.link || docObj?.url || evolutionMetadata?.mediaUrl;
+            const mimeType = docObj?.mime_type || evolutionMetadata?.mediaMime || 'application/pdf';
+            const caption = docObj?.caption || evolutionMetadata?.mediaCaption || message.text?.body || '';
+            const filename = docObj?.filename || evolutionMetadata?.mediaFilename || 'documento.pdf';
+            if (directUrl) {
+                mediaUrl = directUrl;
+            }
+            else if (mediaId) {
+                mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
+            }
+            const docBuffer = getLocalBuffer(mediaUrl);
+            if (docBuffer) {
+                this.logger.log(`[Multimodal Doc] Extraindo texto do documento recebido de ${remoteJid}...`);
+                const docText = await this.aiService.extractDocumentText(docBuffer, mimeType, filename);
+                if (docText) {
+                    content = caption
+                        ? `${caption}\n📄 [Documento: ${filename}]:\n${docText}`
+                        : `📄 [Documento: ${filename}]:\n${docText}`;
+                }
+                else {
+                    content = caption || filename || '📄 Documento';
+                }
+            }
+            else {
+                content = caption || filename || '📄 Documento';
             }
         }
         else if (!content) {
@@ -259,6 +355,7 @@ exports.WebhookProcessor = WebhookProcessor = WebhookProcessor_1 = __decorate([
         chat_gateway_1.ChatGateway,
         messaging_service_1.MessagingService,
         automations_service_1.AutomationsService,
-        whatsapp_service_1.WhatsappService])
+        whatsapp_service_1.WhatsappService,
+        ai_service_1.AiService])
 ], WebhookProcessor);
 //# sourceMappingURL=webhook.processor.js.map

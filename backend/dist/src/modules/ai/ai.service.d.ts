@@ -8,6 +8,9 @@ export declare class AiService {
     private readonly openai;
     private readonly fallbackPrompt;
     constructor(configService: ConfigService, ragService: RagService);
+    transcribeAudio(buffer: Buffer, filename?: string, mimeType?: string): Promise<string>;
+    analyzeImage(buffer: Buffer, mimeType?: string, caption?: string): Promise<string>;
+    extractDocumentText(buffer: Buffer, mimeType?: string, filename?: string): Promise<string>;
     processConversation(history: {
         role: 'user' | 'assistant';
         content: string;

@@ -10,7 +10,7 @@ import {
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, Trash2, Play, Pause,
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
-  Clock, AlertCircle
+  Clock, AlertCircle, Workflow
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -49,6 +49,18 @@ function getTagColor(tag: string) {
   const index = Math.abs(hash) % TAG_COLOR_PALETTES.length;
   return TAG_COLOR_PALETTES[index];
 }
+
+const DEFAULT_CRM_STAGES = [
+  { id: "seed", title: "Leads Seed", color: "text-gray-400", bgLight: "bg-gray-500/15", dotColor: "bg-gray-400", borderLight: "border-gray-500/40" },
+  { id: "new", title: "Novo Contato", color: "text-blue-400", bgLight: "bg-blue-500/15", dotColor: "bg-blue-400", borderLight: "border-blue-500/40" },
+  { id: "qualified", title: "Em Qualificação", color: "text-purple-400", bgLight: "bg-purple-500/15", dotColor: "bg-purple-400", borderLight: "border-purple-500/40" },
+  { id: "follow-up", title: "Follow-up", color: "text-yellow-400", bgLight: "bg-yellow-500/15", dotColor: "bg-yellow-400", borderLight: "border-yellow-500/40" },
+  { id: "proposal", title: "Proposta Enviada", color: "text-emerald-400", bgLight: "bg-emerald-500/15", dotColor: "bg-emerald-400", borderLight: "border-emerald-500/40" },
+  { id: "negotiation", title: "Negociação", color: "text-orange-400", bgLight: "bg-orange-500/15", dotColor: "bg-orange-400", borderLight: "border-orange-500/40" },
+  { id: "won", title: "Fechado/Ganho", color: "text-green-400", bgLight: "bg-green-500/15", dotColor: "bg-green-400", borderLight: "border-green-500/40" },
+  { id: "lost", title: "Fechado/Perdido", color: "text-rose-500", bgLight: "bg-rose-500/15", dotColor: "bg-rose-500", borderLight: "border-rose-500/40" },
+  { id: "disqualified", title: "Desqualificados", color: "text-slate-500", bgLight: "bg-slate-500/15", dotColor: "bg-slate-500", borderLight: "border-slate-500/40" }
+];
 
 const WHATSAPP_WALLPAPER_BG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360' viewBox='0 0 360 360' fill='none' stroke='%23ffffff' stroke-width='1.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M30 40c0-5.5 4.5-10 10-10h30c5.5 0 10 4.5 10 10v20c0 5.5-4.5 10-10 10H40l-15 15V40z'/%3E%3Ccircle cx='180' cy='60' r='14'/%3E%3Cpath d='M180 52v8l5 3'/%3E%3Cpath d='M315 35l12 24h-24z'/%3E%3Cpath d='M60 180c-5-8-15-8-20 0-5 8 0 16 10 24 10-8 15-16 10-24z'/%3E%3Cpath d='M150 170h35v18c0 9-9 18-18 18s-18-9-18-18v-18z'/%3E%3Cpath d='M185 174c4 0 9 3 9 9s-5 9-9 9'/%3E%3Cpath d='M290 160c-9 0-16 7-16 16v22c0 9 7 16 16 16s16-7 16-16v-22c0-9-7-16-16-16z'/%3E%3Cpath d='M274 182h32'/%3E%3Cpath d='M40 310l25-8-8 25-6-10z'/%3E%3Ccircle cx='160' cy='310' r='13'/%3E%3Cpath d='M155 306l4 4 7-7'/%3E%3Cpath d='M280 290c0-5 4-9 9-9h18c5 0 9 4 9 9v14l-9-5h-18c-5 0-9-4-9-9z'/%3E%3Cpath d='M335 180c0-4 3-7 7-7h12c4 0 7 3 7 7v10l-7-3h-12c-4 0-7-3-7-7z'/%3E%3Cpath d='M100 80l10 10M110 80l-10 10'/%3E%3Cpath d='M230 110l3 7 7 3-7 3-3 7-3-7-7-3 7-3z'/%3E%3Cpath d='M70 250l3 5 5 3-5 3-3 5-3-5-5-3 5-3z'/%3E%3Cpath d='M220 250c0-5 4-8 8-8s8 3 8 8c0 8-16 16-16 16s-16-8-16-16c0-5 4-8 8-8s8 3 8 8z'/%3E%3Cpath d='M335 315c-3 0-6 3-6 6s3 6 6 6 6-3 6-6-3-6-6-6z'/%3E%3Cpath d='M120 345h40'/%3E%3C/svg%3E")`;
 
@@ -161,6 +173,12 @@ function InboxContent() {
   const [showLeftHeaderMenu, setShowLeftHeaderMenu] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
+  // Estados para Ação Manual no Funil do CRM
+  const [crmStages, setCrmStages] = useState(DEFAULT_CRM_STAGES);
+  const [currentDealStage, setCurrentDealStage] = useState<string | null>(null);
+  const [showCrmDropdown, setShowCrmDropdown] = useState(false);
+  const [isMovingStage, setIsMovingStage] = useState(false);
+
   // Carrega contatos silenciados e mensagens agendadas salvos no localStorage
   useEffect(() => {
     try {
@@ -168,6 +186,22 @@ function InboxContent() {
       if (saved) setMutedContactIds(JSON.parse(saved));
       const savedSched = localStorage.getItem('versus_scheduled_messages');
       if (savedSched) setScheduledMessagesByChat(JSON.parse(savedSched));
+
+      const savedCols = localStorage.getItem('crm_columns');
+      if (savedCols) {
+        const parsed = JSON.parse(savedCols);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const mapped = parsed.map((col: any) => ({
+            id: col.id,
+            title: col.title,
+            color: col.color || 'text-cyan-400',
+            bgLight: col.bgLight || 'bg-cyan-500/15',
+            dotColor: col.color ? col.color.replace('text-', 'bg-') : 'bg-cyan-400',
+            borderLight: col.borderLight || 'border-cyan-500/40'
+          }));
+          setCrmStages(mapped);
+        }
+      }
     } catch (e) {}
   }, []);
 
@@ -407,6 +441,28 @@ function InboxContent() {
     return phone;
   };
 
+  const formatDisplayPhoneNumber = (rawPhone?: string) => {
+    if (!rawPhone) return 'Sem telefone';
+    const cleanJid = rawPhone.replace('@s.whatsapp.net', '').replace('@c.us', '');
+    if (cleanJid.includes('@lid')) {
+      const lidDigits = cleanJid.replace('@lid', '').replace(/\D/g, '');
+      return `WhatsApp ID (${lidDigits.substring(0, 10)}...)`;
+    }
+    const clean = cleanJid.replace(/\D/g, '');
+    if (clean.length === 13 && clean.startsWith('55')) {
+      return `+55 (${clean.slice(2, 4)}) ${clean.slice(4, 9)}-${clean.slice(9)}`;
+    } else if (clean.length === 12 && clean.startsWith('55')) {
+      return `+55 (${clean.slice(2, 4)}) ${clean.slice(4, 8)}-${clean.slice(8)}`;
+    } else if (clean.length === 11) {
+      return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7)}`;
+    } else if (clean.length === 10) {
+      return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
+    } else if (clean.length > 7) {
+      return `+${clean}`;
+    }
+    return rawPhone;
+  };
+
   const formatContactDisplayName = (name?: string, phone?: string) => {
     const isGeneric = !name || name === 'Cliente WhatsApp' || name.includes('@lid') || name.startsWith('WhatsApp');
     if (isGeneric) {
@@ -628,6 +684,11 @@ function InboxContent() {
   };
 
   const togglePlayAudio = (id: string, url: string) => {
+    if (!url) return;
+    let safeUrl = url;
+    if (safeUrl.startsWith('/media/')) {
+      safeUrl = `/api-backend${safeUrl}`;
+    }
     if (playingAudioId === id) {
       if (audioElementsRef.current[id]) {
         audioElementsRef.current[id].pause();
@@ -638,11 +699,19 @@ function InboxContent() {
         audioElementsRef.current[playingAudioId].pause();
       }
       if (!audioElementsRef.current[id]) {
-        const audio = new Audio(url);
+        const audio = new Audio(safeUrl);
         audio.onended = () => setPlayingAudioId(null);
+        audio.onerror = (e) => {
+          console.error("Erro ao carregar/reproduzir áudio:", e);
+          setPlayingAudioId(null);
+          toast.error("Não foi possível carregar a mensagem de áudio.");
+        };
         audioElementsRef.current[id] = audio;
       }
-      audioElementsRef.current[id].play().catch(console.error);
+      audioElementsRef.current[id].play().catch(err => {
+        console.error("Erro no play() do áudio:", err);
+        setPlayingAudioId(null);
+      });
       setPlayingAudioId(id);
     }
   };
@@ -1055,6 +1124,49 @@ function InboxContent() {
 
   // Derivar contato ativo
   const activeContactData = contacts.find(c => c.id === activeChat);
+
+  // Busca o estágio atual do deal no CRM para o contato selecionado
+  useEffect(() => {
+    if (!activeContactData?.contactId) {
+      setCurrentDealStage(null);
+      return;
+    }
+    api.get(`/deals/contact/${activeContactData.contactId}`)
+      .then(res => {
+        if (res.data?.status) {
+          setCurrentDealStage(res.data.status);
+        } else {
+          setCurrentDealStage(null);
+        }
+      })
+      .catch(() => {
+        setCurrentDealStage(null);
+      });
+  }, [activeContactData?.contactId]);
+
+  const handleMoveContactToStage = async (stageId: string, stageTitle: string) => {
+    if (!activeContactData?.contactId) {
+      toast.error('Nenhum contato selecionado.');
+      return;
+    }
+    setIsMovingStage(true);
+    try {
+      await api.post('/deals/move-contact', {
+        contactId: activeContactData.contactId,
+        stageId,
+        title: activeContactData.name || 'Nova Oportunidade',
+      });
+      setCurrentDealStage(stageId);
+      setShowCrmDropdown(false);
+      toast.success(`Lead movido para ${stageTitle}`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao mover lead no CRM.');
+    } finally {
+      setIsMovingStage(false);
+    }
+  };
+
+  const currentStageObj = crmStages.find(s => s.id === currentDealStage);
 
   const handleTakeover = async (targetChatId?: string) => {
     const targetId = targetChatId || activeChat;
@@ -1905,7 +2017,13 @@ function InboxContent() {
                   ) : activeContactData.status === 'waiting' ? (
                     <span className="text-xs text-amber-400 font-medium">Aguardando atendimento</span>
                   ) : (
-                    <span className="text-xs text-slate-400 font-medium">{activeContactData.phone?.includes('@lid') ? 'online' : (activeContactData.phone || 'online')}</span>
+                    <span className="text-xs text-slate-400 font-medium">
+                      {activeContactData.phone?.includes('@lid') 
+                        ? 'online • WhatsApp' 
+                        : activeContactData.phone 
+                          ? `${formatDisplayPhoneNumber(activeContactData.phone)} • online` 
+                          : 'online'}
+                    </span>
                   )}
                 </div>
               </div>
@@ -1937,6 +2055,83 @@ function InboxContent() {
                     Finalizar
                   </button>
                 ) : null}
+
+                {/* Botão de Ação Manual no Funil do CRM */}
+                {activeContactData?.contactId && (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowCrmDropdown(prev => !prev);
+                      }}
+                      className={`px-2.5 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer text-xs font-semibold ${
+                        showCrmDropdown
+                          ? 'bg-blue-600/25 text-blue-300 border-blue-500/60 shadow-lg shadow-blue-500/10'
+                          : currentStageObj
+                            ? `${currentStageObj.bgLight} ${currentStageObj.color} ${currentStageObj.borderLight} hover:brightness-125`
+                            : 'bg-[#1E293B]/80 text-slate-300 border-slate-700/80 hover:bg-slate-700/80 hover:text-white'
+                      }`}
+                      title="Mover lead no Funil do CRM"
+                    >
+                      <Workflow size={13} className={currentStageObj ? currentStageObj.color : 'text-blue-400'} />
+                      <span className="hidden sm:inline font-medium text-[11px] max-w-[110px] truncate">
+                        {currentStageObj ? currentStageObj.title : 'Funil CRM'}
+                      </span>
+                      <ChevronDown size={11} className={`transition-transform duration-200 ${showCrmDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {/* Dropdown de Estágios do Funil com Backdrop Isolado */}
+                    {showCrmDropdown && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-40" 
+                          onClick={() => setShowCrmDropdown(false)} 
+                        />
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="absolute top-full right-0 mt-2 w-64 bg-[#0B1224] border border-slate-700/90 rounded-2xl shadow-[0_25px_50px_rgba(0,0,0,0.9)] p-1.5 z-50 animate-in fade-in zoom-in-95 text-xs backdrop-blur-xl divide-y divide-slate-800/80"
+                        >
+                          <div className="px-3 py-2 flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                              <Workflow size={12} className="text-blue-400" />
+                              Estágios do CRM
+                            </span>
+                            {isMovingStage && (
+                              <RefreshCw size={11} className="animate-spin text-blue-400" />
+                            )}
+                          </div>
+                          <div className="py-1 max-h-72 overflow-y-auto custom-scrollbar flex flex-col gap-0.5">
+                            {crmStages.map((stage) => {
+                              const isCurrent = currentDealStage === stage.id;
+                              return (
+                                <button
+                                  key={stage.id}
+                                  type="button"
+                                  disabled={isMovingStage}
+                                  onClick={() => handleMoveContactToStage(stage.id, stage.title)}
+                                  className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer group ${
+                                    isCurrent
+                                      ? 'bg-blue-600/20 text-white font-bold border border-blue-500/40 shadow-sm'
+                                      : 'hover:bg-slate-800/80 text-slate-300 hover:text-white'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${stage.dotColor || 'bg-blue-400'} shadow-sm`} />
+                                    <span className="truncate text-xs">{stage.title}</span>
+                                  </div>
+                                  {isCurrent && (
+                                    <Check size={14} className="text-blue-400 shrink-0 ml-2" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
 
                 {/* Ícone 1: Busca na Conversa (WhatsApp Web) */}
                 <button
@@ -2272,7 +2467,7 @@ function InboxContent() {
                               )}
 
                               {/* Mini-player de Áudio Customizado Monocromático + Transcrição */}
-                              {msg.type === 'audio' && (
+                              {(msg.type === 'audio' || msg.type === 'voice' || msg.type === 'ptt' || (!!msg.mediaUrl && /\.(ogg|opus|mp3|m4a|wav|webm)($|\?)/i.test(msg.mediaUrl))) && (
                                 <div className="flex flex-col gap-1.5 my-1 w-64">
                                   <div className="flex items-center gap-3 bg-black/30 p-2.5 rounded-xl border border-white/10 shadow-inner">
                                     <button
@@ -2812,21 +3007,25 @@ function InboxContent() {
               {/* Telefone */}
               <div className="flex items-center justify-between p-2.5 bg-[#1E293B]/70 border border-slate-800/80 rounded-xl group hover:border-slate-700 transition-colors">
                 <div className="flex items-center gap-2.5 text-xs text-slate-300 min-w-0">
-                  <div className="p-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800/40 text-emerald-400">
+                  <div className="p-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800/40 text-emerald-400 shrink-0">
                     <Phone size={13} />
                   </div>
-                  <span className="truncate font-mono">{activeContactData.phone || 'Sem telefone'}</span>
+                  <span className="truncate font-mono font-medium" title={activeContactData.phone || ''}>
+                    {formatDisplayPhoneNumber(activeContactData.phone)}
+                  </span>
                 </div>
-                {activeContactData.phone && (
-                  <button
-                    type="button"
-                    onClick={() => handleCopyText(activeContactData.phone, 'phone')}
-                    className="text-slate-500 hover:text-white p-1 transition-colors"
-                    title="Copiar telefone"
-                  >
-                    {copiedField === 'phone' ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                  </button>
-                )}
+                <div className="flex items-center gap-1 shrink-0">
+                  {activeContactData.phone && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopyText(activeContactData.phone?.replace('@s.whatsapp.net', '').replace('@c.us', ''), 'phone')}
+                      className="text-slate-500 hover:text-white p-1 transition-colors cursor-pointer"
+                      title="Copiar telefone"
+                    >
+                      {copiedField === 'phone' ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* E-mail */}

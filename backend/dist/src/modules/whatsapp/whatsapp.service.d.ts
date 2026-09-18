@@ -173,4 +173,11 @@ export declare class WhatsappService {
     fetchContactProfilePicture(tenantId: string, phone: string): Promise<string | null>;
     syncContactAvatar(tenantId: string, contactId: string): Promise<string | null>;
     downloadAndSaveMedia(tenantId: string, mediaId: string, mimeType?: string): Promise<string | null>;
+    getBase64FromEvolutionMedia(instanceName: string, messageObj: any, key: any): Promise<string | null>;
+    saveBase64Media(tenantId: string, base64Data: string, messageId: string, mimeType?: string, originalFilename?: string): Promise<{
+        url: string;
+        filePath: string;
+        buffer: Buffer;
+    } | null>;
+    saveBase64Audio(tenantId: string, base64Data: string, messageId: string, mimeType?: string): Promise<string | null>;
 }

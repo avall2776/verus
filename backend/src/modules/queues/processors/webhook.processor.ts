@@ -1,11 +1,14 @@
 import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { Logger } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { ChatGateway } from '../../chat/chat.gateway';
 import { MessagingService } from '../../messaging/messaging.service';
 import { AutomationsService } from '../../automations/automations.service';
 import { WhatsappService } from '../../whatsapp/whatsapp.service';
+import { AiService } from '../../ai/ai.service';
 
 @Processor('webhook-ingress')
 export class WebhookProcessor extends WorkerHost {
@@ -18,6 +21,7 @@ export class WebhookProcessor extends WorkerHost {
     private readonly messagingService: MessagingService,
     private readonly automationsService: AutomationsService,
     private readonly whatsappService: WhatsappService,
+    private readonly aiService: AiService,
   ) {
     super();
   }
@@ -55,36 +59,135 @@ export class WebhookProcessor extends WorkerHost {
       return { status: 'ignored_duplicate' };
     }
 
-    // 2. Extração de Conteúdo e Mídias (Áudio, Voz/PTT, Imagem, Documento)
-    const isAudio = message.type === 'audio' || message.type === 'voice' || message.type === 'ptt' || !!message.audio || !!message.voice;
+    // Helper para recuperar buffer binário salvo localmente em uploads/
+    const getLocalBuffer = (url: string | null): Buffer | null => {
+      if (!url) return null;
+      try {
+        const basename = path.basename(url);
+        const folder = url.includes('/audio/') ? 'audio' : 'media';
+        const candidate1 = path.join(process.cwd(), 'uploads', folder, basename);
+        if (fs.existsSync(candidate1)) return fs.readFileSync(candidate1);
+        const candidate2 = path.join(process.cwd(), 'uploads', 'audio', basename);
+        if (fs.existsSync(candidate2)) return fs.readFileSync(candidate2);
+        const candidate3 = path.join(process.cwd(), 'uploads', 'media', basename);
+        if (fs.existsSync(candidate3)) return fs.readFileSync(candidate3);
+        return null;
+      } catch {
+        return null;
+      }
+    };
+
+    // 2. Extração de Conteúdo e Processamento Multimodal (Áudio, Imagem, Documento/PDF)
+    const isAudio =
+      message.type === 'audio' ||
+      message.type === 'voice' ||
+      message.type === 'ptt' ||
+      !!message.audio ||
+      !!message.voice ||
+      evolutionMetadata?.mediaType === 'audio';
+
+    const isImage =
+      message.type === 'image' ||
+      !!message.image ||
+      evolutionMetadata?.mediaType === 'image';
+
+    const isDocument =
+      message.type === 'document' ||
+      !!message.document ||
+      evolutionMetadata?.mediaType === 'document';
+
     let content = message.text?.body || '';
-    let msgType = message.type || 'text';
+    let msgType = isAudio ? 'audio' : isImage ? 'image' : isDocument ? 'document' : (message.type || 'text');
     let mediaUrl: string | null = null;
 
     if (isAudio) {
       msgType = 'audio';
-      content = '🎤 Mensagem de voz';
       const audioObj = message.audio || message.voice;
       const mediaId = audioObj?.id;
-      const directUrl = audioObj?.link || audioObj?.url;
-      const mimeType = audioObj?.mime_type || 'audio/ogg';
+      const directUrl = audioObj?.link || audioObj?.url || evolutionMetadata?.mediaUrl;
+      const mimeType = audioObj?.mime_type || evolutionMetadata?.mediaMime || 'audio/ogg';
 
-      if (mediaId) {
-        mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
-      } else if (directUrl) {
+      if (directUrl) {
         mediaUrl = directUrl;
+      } else if (mediaId) {
+        mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
       }
-    } else if (message.image) {
+
+      // Transcrição Automática via Whisper (Speech-to-Text)
+      const audioBuffer = getLocalBuffer(mediaUrl);
+      if (audioBuffer) {
+        this.logger.log(`[Multimodal Audio] Transcrevendo áudio recebido de ${remoteJid}...`);
+        const transcription = await this.aiService.transcribeAudio(
+          audioBuffer,
+          path.basename(mediaUrl || 'audio.ogg'),
+          mimeType
+        );
+        if (transcription) {
+          content = `🎤 [Áudio]: "${transcription}"`;
+        } else {
+          content = '🎤 Mensagem de voz';
+        }
+      } else {
+        content = '🎤 Mensagem de voz';
+      }
+    } else if (isImage) {
       msgType = 'image';
-      content = message.image.caption || '📷 Foto';
-      if (message.image.id) {
-        mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, message.image.id, message.image.mime_type || 'image/jpeg');
+      const imgObj = message.image;
+      const mediaId = imgObj?.id;
+      const directUrl = imgObj?.link || imgObj?.url || evolutionMetadata?.mediaUrl;
+      const mimeType = imgObj?.mime_type || evolutionMetadata?.mediaMime || 'image/jpeg';
+      const caption = imgObj?.caption || evolutionMetadata?.mediaCaption || message.text?.body || '';
+
+      if (directUrl) {
+        mediaUrl = directUrl;
+      } else if (mediaId) {
+        mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
       }
-    } else if (message.document) {
+
+      // Análise Visual via Vision (GPT-4o-mini / Vision)
+      const imageBuffer = getLocalBuffer(mediaUrl);
+      if (imageBuffer) {
+        this.logger.log(`[Multimodal Vision] Analisando imagem recebida de ${remoteJid}...`);
+        const visualAnalysis = await this.aiService.analyzeImage(imageBuffer, mimeType, caption);
+        if (visualAnalysis) {
+          content = caption
+            ? `${caption}\n📷 [Análise da Imagem]: ${visualAnalysis}`
+            : `📷 [Análise da Imagem]: ${visualAnalysis}`;
+        } else {
+          content = caption || '📷 Foto';
+        }
+      } else {
+        content = caption || '📷 Foto';
+      }
+    } else if (isDocument) {
       msgType = 'document';
-      content = message.document.filename || message.document.caption || '📄 Documento';
-      if (message.document.id) {
-        mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, message.document.id, message.document.mime_type || 'application/pdf');
+      const docObj = message.document;
+      const mediaId = docObj?.id;
+      const directUrl = docObj?.link || docObj?.url || evolutionMetadata?.mediaUrl;
+      const mimeType = docObj?.mime_type || evolutionMetadata?.mediaMime || 'application/pdf';
+      const caption = docObj?.caption || evolutionMetadata?.mediaCaption || message.text?.body || '';
+      const filename = docObj?.filename || evolutionMetadata?.mediaFilename || 'documento.pdf';
+
+      if (directUrl) {
+        mediaUrl = directUrl;
+      } else if (mediaId) {
+        mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
+      }
+
+      // Extração de Conteúdo de Documento (PDF / Texto)
+      const docBuffer = getLocalBuffer(mediaUrl);
+      if (docBuffer) {
+        this.logger.log(`[Multimodal Doc] Extraindo texto do documento recebido de ${remoteJid}...`);
+        const docText = await this.aiService.extractDocumentText(docBuffer, mimeType, filename);
+        if (docText) {
+          content = caption
+            ? `${caption}\n📄 [Documento: ${filename}]:\n${docText}`
+            : `📄 [Documento: ${filename}]:\n${docText}`;
+        } else {
+          content = caption || filename || '📄 Documento';
+        }
+      } else {
+        content = caption || filename || '📄 Documento';
       }
     } else if (!content) {
       content = '[Mídia Recebida]';

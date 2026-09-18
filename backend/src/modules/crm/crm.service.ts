@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { AutomationsService } from '../automations/automations.service';
 
@@ -163,4 +163,112 @@ export class CrmService {
     return updated;
   }
 
+  /**
+   * Obtém a oportunidade comercial (Deal) mais recente vinculada a um contato específico
+   */
+  async getContactDeal(tenantId: string, contactId: string) {
+    return this.prisma.deal.findFirst({
+      where: { tenantId, contactId },
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        contact: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            source: true,
+            tags: true,
+          }
+        },
+        assignee: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Move ou vincula instantaneamente um contato a um estágio do funil de CRM
+   */
+  async moveContactToStage(
+    tenantId: string,
+    dto: { contactId: string; stageId: string; title?: string; value?: number }
+  ) {
+    const { contactId, stageId, title, value } = dto;
+    if (!contactId || !stageId) {
+      throw new BadRequestException('contactId e stageId são obrigatórios.');
+    }
+
+    const contact = await this.prisma.contact.findFirst({
+      where: { id: contactId, tenantId },
+    });
+    if (!contact) {
+      throw new NotFoundException('Contato não encontrado no tenant.');
+    }
+
+    let deal = await this.prisma.deal.findFirst({
+      where: { tenantId, contactId },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    const previousStage = deal?.status;
+
+    if (deal) {
+      deal = await this.prisma.deal.update({
+        where: { id: deal.id },
+        data: {
+          status: stageId,
+          ...(title ? { title } : {}),
+          ...(value !== undefined ? { value: Number(value) } : {}),
+          updatedAt: new Date(),
+        },
+        include: {
+          contact: {
+            select: { id: true, name: true, phone: true, email: true, source: true, tags: true },
+          },
+          assignee: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      });
+    } else {
+      deal = await this.prisma.deal.create({
+        data: {
+          tenantId,
+          contactId,
+          title: title || contact.name || 'Nova Oportunidade',
+          status: stageId,
+          value: value !== undefined ? Number(value) : 0,
+        },
+        include: {
+          contact: {
+            select: { id: true, name: true, phone: true, email: true, source: true, tags: true },
+          },
+          assignee: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      });
+    }
+
+    if (previousStage !== stageId) {
+      try {
+        await this.automationsService.evaluateEvent(tenantId, 'STAGE_CHANGED', {
+          contactId,
+          stage: stageId,
+          dealId: deal.id,
+        });
+      } catch (err: any) {
+        // Falha em automação não deve abortar movimentação manual de estágio
+      }
+    }
+
+    return deal;
+  }
 }
+

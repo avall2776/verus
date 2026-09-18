@@ -29,6 +29,22 @@ export class CrmController {
     return this.crmService.createDeal(tenantId, dealData);
   }
 
+  @Post('move-contact')
+  async moveContact(
+    @CurrentTenant() tenantId: string,
+    @Body() body: { contactId: string; stageId: string; title?: string; value?: number }
+  ) {
+    return this.crmService.moveContactToStage(tenantId, body);
+  }
+
+  @Get('contact/:contactId')
+  async getDealByContact(
+    @CurrentTenant() tenantId: string,
+    @Param('contactId') contactId: string
+  ) {
+    return this.crmService.getContactDeal(tenantId, contactId);
+  }
+
   @Get(':id')
   async getDeal(
     @CurrentTenant() tenantId: string,

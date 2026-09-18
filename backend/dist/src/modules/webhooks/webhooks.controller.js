@@ -19,11 +19,13 @@ const bullmq_1 = require("@nestjs/bullmq");
 const bullmq_2 = require("bullmq");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const chat_gateway_1 = require("../chat/chat.gateway");
+const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
 let WebhooksController = WebhooksController_1 = class WebhooksController {
-    constructor(ingressQueue, prisma, chatGateway) {
+    constructor(ingressQueue, prisma, chatGateway, whatsappService) {
         this.ingressQueue = ingressQueue;
         this.prisma = prisma;
         this.chatGateway = chatGateway;
+        this.whatsappService = whatsappService;
         this.logger = new common_1.Logger(WebhooksController_1.name);
         this.META_VERIFY_TOKEN = 'versus_secreto_123';
     }
@@ -102,14 +104,51 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
         return { status: 'queued' };
     }
     async handleEvolutionWebhookDefault(payload) {
-        const defaultTenant = await this.prisma.tenant.findFirst({
-            orderBy: { createdAt: 'asc' },
-            select: { id: true },
-        });
-        const tenantId = defaultTenant?.id || 'tenant_123';
+        const instanceName = payload.instance || payload.data?.instance;
+        let tenantId = null;
+        if (instanceName) {
+            const inst = await this.prisma.whatsAppInstance.findFirst({
+                where: {
+                    OR: [
+                        { name: instanceName },
+                        { name: `${instanceName} (WhatsApp Web)` },
+                        { settings: { path: ['instanceName'], equals: instanceName } },
+                    ],
+                },
+                select: { tenantId: true },
+            });
+            if (inst?.tenantId) {
+                tenantId = inst.tenantId;
+            }
+        }
+        if (!tenantId) {
+            const defaultTenant = await this.prisma.tenant.findFirst({
+                orderBy: { createdAt: 'asc' },
+                select: { id: true },
+            });
+            tenantId = defaultTenant?.id || 'tenant_123';
+        }
         return this.handleEvolutionWebhook(tenantId, payload);
     }
     async handleEvolutionWebhook(tenantId, payload) {
+        const instanceName = payload.instance || payload.data?.instance;
+        let resolvedTenantId = tenantId;
+        if (instanceName) {
+            const inst = await this.prisma.whatsAppInstance.findFirst({
+                where: {
+                    OR: [
+                        { name: instanceName },
+                        { name: `${instanceName} (WhatsApp Web)` },
+                        { settings: { path: ['instanceName'], equals: instanceName } },
+                    ],
+                },
+                select: { tenantId: true },
+            });
+            if (inst?.tenantId) {
+                resolvedTenantId = inst.tenantId;
+            }
+        }
+        tenantId = resolvedTenantId;
         const event = payload.event;
         this.logger.log(`Recebendo webhook Evolution API [${event}] para tenant: ${tenantId}`);
         if (event === 'connection.update' || event === 'CONNECTION_UPDATE') {
@@ -300,6 +339,51 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             const contactDisplayName = candidateName && !candidateName.includes('@lid')
                 ? candidateName
                 : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : remoteJid);
+            const isAudio = !!messageObj?.audioMessage ||
+                data?.messageType === 'audioMessage' ||
+                !!messageObj?.ptt ||
+                !!data?.audioMessage;
+            const isImage = !!messageObj?.imageMessage ||
+                data?.messageType === 'imageMessage' ||
+                !!data?.imageMessage;
+            const docObj = messageObj?.documentMessage ||
+                messageObj?.documentWithCaptionMessage?.message?.documentMessage ||
+                data?.documentMessage;
+            const isDocument = !!docObj || data?.messageType === 'documentMessage';
+            let mediaType = 'text';
+            let mediaMime = 'application/octet-stream';
+            let mediaCaption = '';
+            let mediaFilename = '';
+            let mediaBase64 = data?.base64 || messageObj?.base64;
+            if (isAudio) {
+                mediaType = 'audio';
+                const audioData = messageObj?.audioMessage || data?.audioMessage || messageObj?.ptt;
+                mediaMime = audioData?.mimetype || 'audio/ogg';
+                mediaBase64 = mediaBase64 || audioData?.base64;
+            }
+            else if (isImage) {
+                mediaType = 'image';
+                const imgData = messageObj?.imageMessage || data?.imageMessage;
+                mediaMime = imgData?.mimetype || 'image/jpeg';
+                mediaCaption = imgData?.caption || '';
+                mediaBase64 = mediaBase64 || imgData?.base64;
+            }
+            else if (isDocument) {
+                mediaType = 'document';
+                mediaMime = docObj?.mimetype || 'application/pdf';
+                mediaCaption = docObj?.caption || '';
+                mediaFilename = docObj?.fileName || docObj?.title || 'documento.pdf';
+                mediaBase64 = mediaBase64 || docObj?.base64;
+            }
+            const instName = payload.instance || payload.data?.instance;
+            if (mediaType !== 'text' && !mediaBase64 && instName) {
+                mediaBase64 = await this.whatsappService.getBase64FromEvolutionMedia(instName, messageObj, key);
+            }
+            let savedMediaInfo = null;
+            if (mediaBase64) {
+                savedMediaInfo = await this.whatsappService.saveBase64Media(tenantId, mediaBase64, key.id, mediaMime, mediaFilename);
+            }
+            const mediaUrl = savedMediaInfo?.url || null;
             const normalizedPayload = {
                 entry: [
                     {
@@ -318,8 +402,11 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                                             from: remoteJid,
                                             id: key.id,
                                             timestamp: String(data.messageTimestamp || Math.floor(Date.now() / 1000)),
-                                            type: messageObj?.imageMessage ? 'image' : messageObj?.audioMessage ? 'audio' : 'text',
+                                            type: mediaType,
                                             text: textBody ? { body: textBody } : undefined,
+                                            audio: isAudio ? { link: mediaUrl, id: key.id, mime_type: mediaMime } : undefined,
+                                            image: isImage ? { link: mediaUrl, id: key.id, caption: mediaCaption, mime_type: mediaMime } : undefined,
+                                            document: isDocument ? { link: mediaUrl, id: key.id, caption: mediaCaption, filename: mediaFilename, mime_type: mediaMime } : undefined,
                                         },
                                     ],
                                 },
@@ -332,10 +419,15 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                 tenantId,
                 webhookData: normalizedPayload,
                 evolutionMetadata: {
-                    instanceName: payload.instance || payload.data?.instance,
+                    instanceName: instName,
                     pushName: candidateName,
                     remoteJid: key.remoteJid,
                     profilePictureUrl: data.profilePictureUrl || null,
+                    mediaUrl: mediaUrl,
+                    mediaType: mediaType,
+                    mediaMime: mediaMime,
+                    mediaCaption: mediaCaption,
+                    mediaFilename: mediaFilename,
                 },
             }, {
                 attempts: 3,
@@ -415,6 +507,7 @@ exports.WebhooksController = WebhooksController = WebhooksController_1 = __decor
     __param(0, (0, bullmq_1.InjectQueue)('webhook-ingress')),
     __metadata("design:paramtypes", [bullmq_2.Queue,
         prisma_service_1.PrismaService,
-        chat_gateway_1.ChatGateway])
+        chat_gateway_1.ChatGateway,
+        whatsapp_service_1.WhatsappService])
 ], WebhooksController);
 //# sourceMappingURL=webhooks.controller.js.map

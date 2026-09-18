@@ -32,6 +32,12 @@ let CrmController = class CrmController {
     async createDeal(tenantId, dealData) {
         return this.crmService.createDeal(tenantId, dealData);
     }
+    async moveContact(tenantId, body) {
+        return this.crmService.moveContactToStage(tenantId, body);
+    }
+    async getDealByContact(tenantId, contactId) {
+        return this.crmService.getContactDeal(tenantId, contactId);
+    }
     async getDeal(tenantId, id) {
         return this.crmService.findOneDeal(tenantId, id);
     }
@@ -62,6 +68,22 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], CrmController.prototype, "createDeal", null);
+__decorate([
+    (0, common_1.Post)('move-contact'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], CrmController.prototype, "moveContact", null);
+__decorate([
+    (0, common_1.Get)('contact/:contactId'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('contactId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], CrmController.prototype, "getDealByContact", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

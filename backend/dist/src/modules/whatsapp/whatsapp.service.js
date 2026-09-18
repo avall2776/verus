@@ -102,6 +102,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                 enabled: true,
                 url: webhookUrl,
                 webhook_by_events: false,
+                webhook_base64: true,
                 events: [
                     'CONNECTION_UPDATE',
                     'QRCODE_UPDATED',
@@ -753,24 +754,106 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                 responseType: 'arraybuffer',
                 timeout: 15000
             });
-            const isOgg = mimeType.includes('ogg') || mimeType.includes('opus');
-            const isMp4 = mimeType.includes('mp4') || mimeType.includes('m4a');
-            const isMp3 = mimeType.includes('mpeg') || mimeType.includes('mp3');
-            const ext = isOgg ? 'ogg' : isMp4 ? 'm4a' : isMp3 ? 'mp3' : 'ogg';
-            const filename = `inbound_${Date.now()}_${mediaId.substring(0, 8)}.${ext}`;
-            const uploadDir = path.join(process.cwd(), 'uploads', 'audio');
+            const isAudio = mimeType.includes('audio') || mimeType.includes('ogg') || mimeType.includes('opus') || mimeType.includes('mp3') || mimeType.includes('mp4') || mimeType.includes('m4a');
+            const isImage = mimeType.includes('image');
+            const isPdf = mimeType.includes('pdf');
+            let folder = 'media';
+            let ext = 'bin';
+            if (isAudio) {
+                folder = 'audio';
+                ext = mimeType.includes('mp3') ? 'mp3' : mimeType.includes('mp4') || mimeType.includes('m4a') ? 'm4a' : 'ogg';
+            }
+            else if (isImage) {
+                folder = 'media';
+                ext = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : 'jpg';
+            }
+            else if (isPdf) {
+                folder = 'media';
+                ext = 'pdf';
+            }
+            const safeId = (mediaId || `${Date.now()}`).replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 16);
+            const filename = `inbound_${Date.now()}_${safeId}.${ext}`;
+            const uploadDir = path.join(process.cwd(), 'uploads', folder);
             if (!fs.existsSync(uploadDir)) {
                 fs.mkdirSync(uploadDir, { recursive: true });
             }
             const filePath = path.join(uploadDir, filename);
             await fs.promises.writeFile(filePath, Buffer.from(mediaRes.data));
-            this.logger.log(`Mídia [${mediaId}] baixada e armazenada com sucesso: ${filePath}`);
-            return `/api-backend/media/audio/${filename}`;
+            this.logger.log(`Mídia Meta [${mediaId}] (${mimeType}) baixada com sucesso: ${filePath}`);
+            return folder === 'audio' ? `/api-backend/media/audio/${filename}` : `/api-backend/media/file/${filename}`;
         }
         catch (err) {
             this.logger.error(`Falha ao baixar mídia Meta ${mediaId}: ${err.message}`);
             return null;
         }
+    }
+    async getBase64FromEvolutionMedia(instanceName, messageObj, key) {
+        try {
+            const { serverUrl, apiKey } = this.getEvolutionConfig();
+            const res = await axios_1.default.post(`${serverUrl}/chat/getBase64FromMediaMessage/${instanceName}`, {
+                message: {
+                    key,
+                    message: messageObj,
+                },
+                convertToMp4: false,
+            }, {
+                headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+                timeout: 10000,
+            });
+            return res.data?.base64 || null;
+        }
+        catch (err) {
+            this.logger.warn(`Não foi possível extrair base64 da Evolution API para instância [${instanceName}]: ${err.message}`);
+            return null;
+        }
+    }
+    async saveBase64Media(tenantId, base64Data, messageId, mimeType = 'application/octet-stream', originalFilename) {
+        try {
+            const cleanBase64 = base64Data.includes('base64,') ? base64Data.split('base64,')[1] : base64Data;
+            const buffer = Buffer.from(cleanBase64, 'base64');
+            const isAudio = mimeType.includes('audio') || mimeType.includes('ogg') || mimeType.includes('opus') || mimeType.includes('mp3') || mimeType.includes('mp4') || mimeType.includes('m4a');
+            const isImage = mimeType.includes('image');
+            const isPdf = mimeType.includes('pdf');
+            let folder = 'media';
+            let ext = 'bin';
+            if (isAudio) {
+                folder = 'audio';
+                ext = mimeType.includes('mp3') ? 'mp3' : mimeType.includes('mp4') || mimeType.includes('m4a') ? 'm4a' : 'ogg';
+            }
+            else if (isImage) {
+                folder = 'media';
+                ext = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : 'jpg';
+            }
+            else if (isPdf) {
+                folder = 'media';
+                ext = 'pdf';
+            }
+            else if (originalFilename && originalFilename.includes('.')) {
+                folder = 'media';
+                ext = originalFilename.split('.').pop()?.replace(/[^a-zA-Z0-9]/g, '') || 'bin';
+            }
+            const safeId = (messageId || `${Date.now()}`).replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 16);
+            const filename = originalFilename && !isAudio
+                ? `inbound_${Date.now()}_${path.basename(originalFilename).replace(/[^a-zA-Z0-9._-]/g, '')}`
+                : `inbound_${Date.now()}_${safeId}.${ext}`;
+            const uploadDir = path.join(process.cwd(), 'uploads', folder);
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+            const filePath = path.join(uploadDir, filename);
+            await fs.promises.writeFile(filePath, buffer);
+            const url = folder === 'audio' ? `/api-backend/media/audio/${filename}` : `/api-backend/media/file/${filename}`;
+            this.logger.log(`Mídia [${mimeType}] gravada com sucesso: ${filePath} (${buffer.length} bytes)`);
+            return { url, filePath, buffer };
+        }
+        catch (err) {
+            this.logger.error(`Erro ao salvar mídia base64: ${err.message}`);
+            return null;
+        }
+    }
+    async saveBase64Audio(tenantId, base64Data, messageId, mimeType = 'audio/ogg') {
+        const res = await this.saveBase64Media(tenantId, base64Data, messageId, mimeType);
+        return res?.url || null;
     }
 };
 exports.WhatsappService = WhatsappService;
