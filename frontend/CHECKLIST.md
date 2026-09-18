@@ -2236,14 +2236,14 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [ ] **2. Testes & Homologação de Conexão WhatsApp via QR Code**:
   - [ ] Teste prático do fluxo completo de conexão via QR Code (Baileys/Evolution API) para novas linhas/empresas.
   - [ ] Validação de recebimento de mensagens, envio livre sem trava de 24h, áudios PTT nativos e sincronização de avatares/nomes de clientes.
-- [ ] **3. Áudio de Notificação Exclusivo do App VERSUS (Toque Próprio + Vibração + Som)**:
-  - [ ] Criação e implementação de arquivo de áudio de notificação exclusivo VERSUS (sonoridade moderna, discreta e corporativa, inspirada na sutileza do WhatsApp).
-  - [ ] Disparo de som ao receber novas mensagens no chat (com controle de permissões de áudio e toggle de volume/mute).
-  - [ ] Ativação de vibração tátil (Vibration API) em dispositivos móveis e navegadores suportados.
-- [ ] **4. Notificações Visuais de Mensagem na Tela (Estilo Lero / Toasts & Transferências)**:
-  - [ ] Exibição de notificação flutuante visual na tela do atendente (Toast / Banner) ao entrar nova mensagem de cliente em tempo real.
-  - [ ] Notificação na tela quando uma conversa for transferida para o atendente (indicando quem transferiu e link rápido para assumir o chat na hora).
-  - [ ] Suporte a Web Push Notifications / Desktop Notifications para alertar o operador mesmo com a aba em segundo plano.
+- [x] **3. Áudio de Notificação Exclusivo do App VERSUS (Toque Próprio + Vibração + Som)**:
+  - [x] Criação e implementação de motor sonoro corporativo exclusivo VERSUS via Web Audio API (chime harmônico ascendente D5 587Hz -> A5 880Hz suave para mensagens padrão e C5-E5-G5 para transferências de alta prioridade).
+  - [x] Disparo automático de áudio ao receber novas mensagens e transferências de conversa no WebSocket.
+  - [x] Ativação de vibração tátil nativa (`navigator.vibrate`) em dispositivos móveis e navegadores compatíveis.
+- [x] **4. Notificações Visuais de Mensagem na Tela (Estilo Lero / Toasts & Transferências)**:
+  - [x] Exibição de notificação flutuante visual na tela do atendente (`LeadMessageToast`) ao entrar nova mensagem de cliente em tempo real, com avatar, prévia de mídia/áudio e ação rápida "Abrir Conversa".
+  - [x] Notificação na tela quando uma conversa for transferida para o atendente (`TransferAlertToast` de alta prioridade com beacon âmbar pulsante e botão de ação imediata "Assumir Conversa" via API).
+  - [x] Suporte a Web Push Notifications / Desktop Notifications (Notification API nativa do navegador) para alertar o operador mesmo com a aba em segundo plano ou minimizada, com foco automático e navegação ao chat.
 
 ---
 

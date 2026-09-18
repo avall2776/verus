@@ -137,19 +137,23 @@ export class ChatController {
   @Patch(':id/transfer')
   async transfer(
     @CurrentTenant() tenantId: string,
+    @Request() req: any,
     @Param('id') conversationId: string,
     @Body() body: { departmentId: string; userId?: string },
   ) {
-    return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId, body.userId);
+    const operatorName = req.user?.name || req.user?.email || 'Um operador';
+    return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId, body.userId, operatorName);
   }
 
   @Patch(':id/assign')
   async assign(
     @CurrentTenant() tenantId: string,
+    @Request() req: any,
     @Param('id') conversationId: string,
     @Body() body: { userId: string },
   ) {
-    return this.chatService.assignToUser(tenantId, conversationId, body.userId);
+    const operatorName = req.user?.name || req.user?.email || 'Um operador';
+    return this.chatService.assignToUser(tenantId, conversationId, body.userId, operatorName);
   }
 
   @Post(':id/messages')

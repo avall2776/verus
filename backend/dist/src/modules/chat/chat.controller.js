@@ -70,11 +70,13 @@ let ChatController = class ChatController {
     async ignore(tenantId, conversationId) {
         return this.chatService.releaseConversation(tenantId, conversationId);
     }
-    async transfer(tenantId, conversationId, body) {
-        return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId, body.userId);
+    async transfer(tenantId, req, conversationId, body) {
+        const operatorName = req.user?.name || req.user?.email || 'Um operador';
+        return this.chatService.transferToDepartment(tenantId, conversationId, body.departmentId, body.userId, operatorName);
     }
-    async assign(tenantId, conversationId, body) {
-        return this.chatService.assignToUser(tenantId, conversationId, body.userId);
+    async assign(tenantId, req, conversationId, body) {
+        const operatorName = req.user?.name || req.user?.email || 'Um operador';
+        return this.chatService.assignToUser(tenantId, conversationId, body.userId, operatorName);
     }
     async sendMessage(tenantId, conversationId, payload) {
         try {
@@ -246,19 +248,21 @@ __decorate([
 __decorate([
     (0, common_1.Patch)(':id/transfer'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
-    __param(1, (0, common_1.Param)('id')),
-    __param(2, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Param)('id')),
+    __param(3, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:paramtypes", [String, Object, String, Object]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "transfer", null);
 __decorate([
     (0, common_1.Patch)(':id/assign'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
-    __param(1, (0, common_1.Param)('id')),
-    __param(2, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Param)('id')),
+    __param(3, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:paramtypes", [String, Object, String, Object]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "assign", null);
 __decorate([

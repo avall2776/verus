@@ -302,7 +302,46 @@ export declare class ChatService {
         conversationId: string;
         unreadCount: number;
     }>;
-    assignToUser(tenantId: string, conversationId: string, userId: string): Promise<{
+    assignToUser(tenantId: string, conversationId: string, userId: string, operatorName?: string): Promise<{
+        contact: {
+            id: string;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            avatarUrl: string | null;
+            source: string;
+            tags: string[];
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+        messages: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            contactId: string;
+            status: string;
+            providerMessageId: string | null;
+            content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            isInternal: boolean;
+            fromMe: boolean;
+            direction: string;
+            senderType: string;
+            scheduledAt: Date | null;
+            conversationId: string;
+        }[];
+        department: {
+            id: string;
+            name: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            color: string | null;
+        };
+    } & {
         id: string;
         tenantId: string;
         createdAt: Date;
@@ -312,7 +351,7 @@ export declare class ChatService {
         assignedTo: string | null;
         status: string;
     }>;
-    transferToDepartment(tenantId: string, conversationId: string, departmentId: string, userId?: string): Promise<{
+    transferToDepartment(tenantId: string, conversationId: string, departmentId: string, userId?: string, operatorName?: string): Promise<{
         contact: {
             id: string;
             name: string;

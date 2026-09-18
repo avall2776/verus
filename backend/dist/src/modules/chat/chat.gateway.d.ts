@@ -8,6 +8,7 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
     emitNewMessage(tenantId: string, messageData: any): void;
     emitHandoff(tenantId: string, dealData: any): void;
     emitConversationUpdated(tenantId: string, conversationData: any): void;
+    emitConversationTransferred(tenantId: string, transferData: any): void;
     emitNewTeamMessage(tenantId: string, messageData: any): void;
     emitTeamMessageDeleted(tenantId: string, payload: {
         messageId: string;

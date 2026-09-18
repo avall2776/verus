@@ -411,22 +411,44 @@ export class ChatService {
     return { success: true, conversationId, unreadCount: 1 };
   }
 
-  async assignToUser(tenantId: string, conversationId: string, userId: string) {
+  async assignToUser(tenantId: string, conversationId: string, userId: string, operatorName?: string) {
     const conversation = await this.prisma.conversation.findUnique({
-      where: { id: conversationId }
+      where: { id: conversationId },
+      include: { contact: true, department: true }
     });
 
     if (!conversation || conversation.tenantId !== tenantId) {
       throw new NotFoundException('Conversa não encontrada.');
     }
 
-    return this.prisma.conversation.update({
+    const updated = await this.prisma.conversation.update({
       where: { id: conversationId },
-      data: { assignedTo: userId, status: 'open' }
+      data: { assignedTo: userId, status: 'open' },
+      include: {
+        contact: true,
+        department: true,
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1
+        }
+      }
     });
+
+    this.chatGateway.emitConversationUpdated(tenantId, updated);
+    this.chatGateway.emitConversationTransferred(tenantId, {
+      conversationId: updated.id,
+      contact: updated.contact,
+      department: updated.department,
+      assignedTo: updated.assignedTo,
+      transferredBy: operatorName || 'Um operador',
+      action: 'ASSIGNED',
+      transferredAt: new Date().toISOString()
+    });
+
+    return updated;
   }
 
-  async transferToDepartment(tenantId: string, conversationId: string, departmentId: string, userId?: string) {
+  async transferToDepartment(tenantId: string, conversationId: string, departmentId: string, userId?: string, operatorName?: string) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId }
     });
@@ -464,6 +486,15 @@ export class ChatService {
     });
 
     this.chatGateway.emitConversationUpdated(tenantId, updated);
+    this.chatGateway.emitConversationTransferred(tenantId, {
+      conversationId: updated.id,
+      contact: updated.contact,
+      department: updated.department,
+      assignedTo: updated.assignedTo,
+      transferredBy: operatorName || 'Um colega',
+      action: 'TRANSFERRED',
+      transferredAt: new Date().toISOString()
+    });
     return updated;
   }
 

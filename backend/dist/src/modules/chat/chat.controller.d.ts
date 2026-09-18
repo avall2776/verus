@@ -429,7 +429,7 @@ export declare class ChatController {
         assignedTo: string | null;
         status: string;
     }>;
-    transfer(tenantId: string, conversationId: string, body: {
+    transfer(tenantId: string, req: any, conversationId: string, body: {
         departmentId: string;
         userId?: string;
     }): Promise<{
@@ -481,9 +481,48 @@ export declare class ChatController {
         assignedTo: string | null;
         status: string;
     }>;
-    assign(tenantId: string, conversationId: string, body: {
+    assign(tenantId: string, req: any, conversationId: string, body: {
         userId: string;
     }): Promise<{
+        contact: {
+            id: string;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            avatarUrl: string | null;
+            source: string;
+            tags: string[];
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+        messages: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            contactId: string;
+            status: string;
+            providerMessageId: string | null;
+            content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            isInternal: boolean;
+            fromMe: boolean;
+            direction: string;
+            senderType: string;
+            scheduledAt: Date | null;
+            conversationId: string;
+        }[];
+        department: {
+            id: string;
+            name: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            color: string | null;
+        };
+    } & {
         id: string;
         tenantId: string;
         createdAt: Date;
