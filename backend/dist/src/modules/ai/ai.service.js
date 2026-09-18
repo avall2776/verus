@@ -78,10 +78,14 @@ Responda de forma concisa e factual em português (máximo de 3 a 4 linhas).`;
                 model: 'gpt-4o-mini',
                 messages: [
                     {
+                        role: 'system',
+                        content: 'Você é um especialista em OCR, visão computacional e análise documental. Descreva e extraia todos os dados relevantes da imagem (comprovantes, documentos, gráficos ou prints) com total precisão factual em português.',
+                    },
+                    {
                         role: 'user',
                         content: [
                             { type: 'text', text: prompt },
-                            { type: 'image_url', image_url: { url: dataUrl, detail: 'low' } }
+                            { type: 'image_url', image_url: { url: dataUrl, detail: 'auto' } }
                         ]
                     }
                 ],
