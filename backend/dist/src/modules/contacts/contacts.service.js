@@ -64,6 +64,17 @@ let ContactsService = class ContactsService {
         }
         return contact;
     }
+    async updateContact(tenantId, contactId, data) {
+        const contact = await this.prisma.contact.update({
+            where: { id: contactId, tenantId },
+            data: {
+                ...(data.name !== undefined && { name: data.name }),
+                ...(data.phone !== undefined && { phone: data.phone }),
+                ...(data.email !== undefined && { email: data.email }),
+            }
+        });
+        return contact;
+    }
 };
 exports.ContactsService = ContactsService;
 exports.ContactsService = ContactsService = __decorate([

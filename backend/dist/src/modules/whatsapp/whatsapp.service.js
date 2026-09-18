@@ -131,11 +131,19 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                 timeout: 4000,
             });
             const evoList = Array.isArray(res.data) ? res.data : [];
+            const cleanTenant = (tenantId || '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
             for (const item of evoList) {
                 const evo = item.instance || item;
                 const instanceName = evo.instanceName;
                 if (!instanceName || instanceName.toUpperCase().includes('PROSPECTOR'))
                     continue;
+                if (instanceName.startsWith('versus_')) {
+                    const parts = instanceName.split('_');
+                    const instTenantPrefix = parts[1];
+                    if (instTenantPrefix && instTenantPrefix !== cleanTenant) {
+                        continue;
+                    }
+                }
                 const isConnected = evo.status === 'open' || evo.connectionStatus === 'open';
                 const rawOwner = evo.owner || '';
                 const phone = rawOwner.replace(/\D/g, '') || null;
@@ -197,6 +205,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                         enabled: true,
                         url: webhookUrl,
                         webhook_by_events: false,
+                        webhook_base64: true,
                         events: [
                             'CONNECTION_UPDATE',
                             'QRCODE_UPDATED',

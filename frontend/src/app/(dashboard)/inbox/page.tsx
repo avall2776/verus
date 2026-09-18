@@ -10,7 +10,7 @@ import {
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, Trash2, Play, Pause,
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
-  Clock, AlertCircle, Workflow
+  Clock, AlertCircle, Workflow, Pencil
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -178,6 +178,11 @@ function InboxContent() {
   const [currentDealStage, setCurrentDealStage] = useState<string | null>(null);
   const [showCrmDropdown, setShowCrmDropdown] = useState(false);
   const [isMovingStage, setIsMovingStage] = useState(false);
+
+  // Estados para edição inline do número de telefone no Drawer
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [editingPhoneValue, setEditingPhoneValue] = useState('');
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
 
   // Carrega contatos silenciados e mensagens agendadas salvos no localStorage
   useEffect(() => {
@@ -446,7 +451,19 @@ function InboxContent() {
     const cleanJid = rawPhone.replace('@s.whatsapp.net', '').replace('@c.us', '');
     if (cleanJid.includes('@lid')) {
       const lidDigits = cleanJid.replace('@lid', '').replace(/\D/g, '');
-      return `WhatsApp ID (${lidDigits.substring(0, 10)}...)`;
+      if (lidDigits.length >= 10 && lidDigits.length <= 13) {
+        const clean = lidDigits;
+        if (clean.length === 13 && clean.startsWith('55')) {
+          return `+55 (${clean.slice(2, 4)}) ${clean.slice(4, 9)}-${clean.slice(9)}`;
+        } else if (clean.length === 12 && clean.startsWith('55')) {
+          return `+55 (${clean.slice(2, 4)}) ${clean.slice(4, 8)}-${clean.slice(8)}`;
+        } else if (clean.length === 11) {
+          return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7)}`;
+        } else if (clean.length === 10) {
+          return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
+        }
+      }
+      return `WhatsApp ID (${lidDigits.substring(0, 6)}...)`;
     }
     const clean = cleanJid.replace(/\D/g, '');
     if (clean.length === 13 && clean.startsWith('55')) {
@@ -1163,6 +1180,27 @@ function InboxContent() {
       toast.error(err.response?.data?.message || 'Erro ao mover lead no CRM.');
     } finally {
       setIsMovingStage(false);
+    }
+  };
+
+  const handleSaveContactPhone = async () => {
+    if (!activeContactData?.contactId) return;
+    setIsSavingPhone(true);
+    try {
+      const clean = editingPhoneValue.trim();
+      await api.patch(`/contacts/${activeContactData.contactId}`, { phone: clean });
+      setContacts(prev => prev.map(c => {
+        if (c.contactId === activeContactData.contactId || c.id === activeChat) {
+          return { ...c, phone: clean };
+        }
+        return c;
+      }));
+      setIsEditingPhone(false);
+      toast.success('Número de telefone atualizado com sucesso!');
+    } catch (err: any) {
+      toast.error('Erro ao atualizar telefone: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setIsSavingPhone(false);
     }
   };
 
@@ -2443,114 +2481,119 @@ function InboxContent() {
                             </div>
                           )}
 
-                          {/* Renderização de Mídia */}
-                          {msg.mediaUrl && (
+                          {/* Renderização de Imagens */}
+                          {msg.mediaUrl && msg.type === 'image' && (
                             <div className="mb-2">
-                              {msg.type === 'image' && (
-                                <div 
-                                  onClick={() => setLightboxImage({ url: msg.mediaUrl!, title: msg.content || 'Imagem' })}
-                                  className="relative group cursor-pointer overflow-hidden rounded-xl border border-white/10 shadow-md inline-block max-w-full"
-                                  title="Clique para expandir em tela cheia"
+                              <div 
+                                onClick={() => setLightboxImage({ url: msg.mediaUrl!, title: msg.content || 'Imagem' })}
+                                className="relative group cursor-pointer overflow-hidden rounded-xl border border-white/10 shadow-md inline-block max-w-full"
+                                title="Clique para expandir em tela cheia"
+                              >
+                                <img 
+                                  src={msg.mediaUrl} 
+                                  alt={msg.content || "Anexo"} 
+                                  className="rounded-xl max-h-64 sm:max-h-72 object-cover transition-transform duration-300 group-hover:scale-[1.02]" 
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                  <div className="p-2.5 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-xl flex items-center gap-1.5 text-xs font-semibold transform translate-y-1 group-hover:translate-y-0 transition-transform duration-200">
+                                    <ZoomIn size={16} className="text-cyan-400" />
+                                    <span>Expandir</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Mini-player de Áudio Customizado Monocromático + Transcrição (Renderiza SEMPRE se for áudio) */}
+                          {(msg.type === 'audio' || msg.type === 'voice' || msg.type === 'ptt' || (!!msg.mediaUrl && /\.(ogg|opus|mp3|m4a|wav|webm)($|\?)/i.test(msg.mediaUrl))) && (
+                            <div className="flex flex-col gap-1.5 my-1 w-64 mb-2">
+                              <div className="flex items-center gap-3 bg-black/30 p-2.5 rounded-xl border border-white/10 shadow-inner">
+                                <button
+                                  type="button"
+                                  disabled={!msg.mediaUrl}
+                                  onClick={() => msg.mediaUrl && togglePlayAudio(audioKey, msg.mediaUrl)}
+                                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-md shrink-0 ${
+                                    !msg.mediaUrl
+                                      ? 'bg-slate-700/60 text-slate-400 cursor-not-allowed opacity-80'
+                                      : playingAudioId === audioKey
+                                      ? 'bg-cyan-400 text-slate-950 font-bold cursor-pointer'
+                                      : isMe ? 'bg-cyan-500 text-slate-950 hover:bg-cyan-400 cursor-pointer' : 'bg-blue-600 text-white hover:bg-blue-500 cursor-pointer'
+                                  }`}
+                                  title={msg.mediaUrl ? 'Reproduzir áudio' : 'Mensagem de voz recebida'}
                                 >
-                                  <img 
-                                    src={msg.mediaUrl} 
-                                    alt={msg.content || "Anexo"} 
-                                    className="rounded-xl max-h-64 sm:max-h-72 object-cover transition-transform duration-300 group-hover:scale-[1.02]" 
-                                  />
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                                    <div className="p-2.5 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-xl flex items-center gap-1.5 text-xs font-semibold transform translate-y-1 group-hover:translate-y-0 transition-transform duration-200">
-                                      <ZoomIn size={16} className="text-cyan-400" />
-                                      <span>Expandir</span>
+                                  {playingAudioId === audioKey ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+                                </button>
+                                <div className="flex-1 flex flex-col gap-1 min-w-0">
+                                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+                                    <span className="flex items-center gap-1">
+                                      <Volume2 size={12} className="text-cyan-400" /> Mensagem de voz
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-mono">
+                                      {playingAudioId === audioKey ? 'Tocando...' : msg.mediaUrl ? 'Áudio' : 'Recebido'}
+                                    </span>
+                                  </div>
+                                  {/* Ondas Sonoras Visuais */}
+                                  <div className="flex items-center gap-0.5 h-3">
+                                    {[40, 70, 100, 60, 80, 45, 90, 55, 75, 95, 50, 85, 65, 40].map((height, hIdx) => (
+                                      <div
+                                        key={hIdx}
+                                        style={{ height: `${height}%` }}
+                                        className={`w-1 rounded-full transition-all ${
+                                          playingAudioId === audioKey
+                                            ? 'bg-cyan-400 animate-pulse'
+                                            : 'bg-slate-500/50'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Botão de Expansão "Ver transcrição" */}
+                              <div className="px-1 flex flex-col gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setExpandedTranscriptions(prev => ({
+                                      ...prev,
+                                      [audioKey]: !prev[audioKey]
+                                    }));
+                                  }}
+                                  className="flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer self-start"
+                                >
+                                  <FileText size={12} className="shrink-0" />
+                                  <span>{expandedTranscriptions[audioKey] ? 'Ocultar transcrição' : 'Ver transcrição'}</span>
+                                </button>
+
+                                {expandedTranscriptions[audioKey] && (
+                                  <div className="bg-black/40 rounded-xl p-2.5 text-xs text-slate-200 border border-cyan-500/30 animate-in fade-in slide-in-from-top-1 shadow-inner">
+                                    <div className="flex items-center gap-1 text-[10px] text-cyan-400 font-bold uppercase tracking-wider mb-1">
+                                      <Sparkles size={11} />
+                                      <span>Transcrição Automática (IA)</span>
                                     </div>
+                                    <p className="italic text-slate-300 leading-relaxed text-[11px]">
+                                      "{msg.audioTranscription || 'Mensagem de áudio recebida via WhatsApp.'}"
+                                    </p>
                                   </div>
-                                </div>
-                              )}
+                                )}
+                              </div>
+                            </div>
+                          )}
 
-                              {/* Mini-player de Áudio Customizado Monocromático + Transcrição */}
-                              {(msg.type === 'audio' || msg.type === 'voice' || msg.type === 'ptt' || (!!msg.mediaUrl && /\.(ogg|opus|mp3|m4a|wav|webm)($|\?)/i.test(msg.mediaUrl))) && (
-                                <div className="flex flex-col gap-1.5 my-1 w-64">
-                                  <div className="flex items-center gap-3 bg-black/30 p-2.5 rounded-xl border border-white/10 shadow-inner">
-                                    <button
-                                      type="button"
-                                      onClick={() => togglePlayAudio(audioKey, msg.mediaUrl)}
-                                      className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md shrink-0 ${
-                                        playingAudioId === audioKey
-                                          ? 'bg-cyan-400 text-slate-950 font-bold'
-                                          : isMe ? 'bg-cyan-500 text-slate-950 hover:bg-cyan-400' : 'bg-blue-600 text-white hover:bg-blue-500'
-                                      }`}
-                                    >
-                                      {playingAudioId === audioKey ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
-                                    </button>
-                                    <div className="flex-1 flex flex-col gap-1 min-w-0">
-                                      <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
-                                        <span className="flex items-center gap-1">
-                                          <Volume2 size={12} className="text-cyan-400" /> Mensagem de voz
-                                        </span>
-                                        <span className="text-[10px] text-slate-400 font-mono">
-                                          {playingAudioId === audioKey ? 'Tocando...' : 'Áudio'}
-                                        </span>
-                                      </div>
-                                      {/* Ondas Sonoras Visuais */}
-                                      <div className="flex items-center gap-0.5 h-3">
-                                        {[40, 70, 100, 60, 80, 45, 90, 55, 75, 95, 50, 85, 65, 40].map((height, hIdx) => (
-                                          <div
-                                            key={hIdx}
-                                            style={{ height: `${height}%` }}
-                                            className={`w-1 rounded-full transition-all ${
-                                              playingAudioId === audioKey
-                                                ? 'bg-cyan-400 animate-pulse'
-                                                : 'bg-slate-500/50'
-                                            }`}
-                                          />
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Botão de Expansão "Ver transcrição" */}
-                                  <div className="px-1 flex flex-col gap-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setExpandedTranscriptions(prev => ({
-                                          ...prev,
-                                          [audioKey]: !prev[audioKey]
-                                        }));
-                                      }}
-                                      className="flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer self-start"
-                                    >
-                                      <FileText size={12} className="shrink-0" />
-                                      <span>{expandedTranscriptions[audioKey] ? 'Ocultar transcrição' : 'Ver transcrição'}</span>
-                                    </button>
-
-                                    {expandedTranscriptions[audioKey] && (
-                                      <div className="bg-black/40 rounded-xl p-2.5 text-xs text-slate-200 border border-cyan-500/30 animate-in fade-in slide-in-from-top-1 shadow-inner">
-                                        <div className="flex items-center gap-1 text-[10px] text-cyan-400 font-bold uppercase tracking-wider mb-1">
-                                          <Sparkles size={11} />
-                                          <span>Transcrição Automática (IA)</span>
-                                        </div>
-                                        <p className="italic text-slate-300 leading-relaxed text-[11px]">
-                                          "{msg.audioTranscription || 'Mensagem de áudio recebida. Transcrição automática: Olá! Gostaria de confirmar as informações sobre o atendimento e agendamento da reunião.'}"
-                                        </p>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-
-                              {msg.type === 'document' && (
-                                <div className="flex items-center gap-2.5 p-2.5 bg-black/25 rounded-xl border border-white/10 hover:bg-black/35 transition-colors">
-                                  <FileText size={18} className="text-blue-400 shrink-0" />
-                                  <span className="text-xs truncate font-medium text-slate-200">{msg.content || 'Documento anexo'}</span>
-                                  <a 
-                                    href={msg.mediaUrl} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="ml-auto text-blue-400 hover:text-white p-1"
-                                  >
-                                    <ExternalLink size={13} />
-                                  </a>
-                                </div>
+                          {/* Documentos */}
+                          {(msg.type === 'document' || (!!msg.mediaUrl && /\.pdf($|\?)/i.test(msg.mediaUrl))) && (
+                            <div className="flex items-center gap-2.5 p-2.5 bg-black/25 rounded-xl border border-white/10 hover:bg-black/35 transition-colors mb-2">
+                              <FileText size={18} className="text-blue-400 shrink-0" />
+                              <span className="text-xs truncate font-medium text-slate-200">{msg.content || 'Documento anexo'}</span>
+                              {msg.mediaUrl && (
+                                <a 
+                                  href={msg.mediaUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="ml-auto text-blue-400 hover:text-white p-1"
+                                >
+                                  <ExternalLink size={13} />
+                                </a>
                               )}
                             </div>
                           )}
@@ -3005,27 +3048,74 @@ function InboxContent() {
               </h3>
 
               {/* Telefone */}
-              <div className="flex items-center justify-between p-2.5 bg-[#1E293B]/70 border border-slate-800/80 rounded-xl group hover:border-slate-700 transition-colors">
-                <div className="flex items-center gap-2.5 text-xs text-slate-300 min-w-0">
-                  <div className="p-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800/40 text-emerald-400 shrink-0">
-                    <Phone size={13} />
+              <div className="flex flex-col gap-1.5 p-2.5 bg-[#1E293B]/70 border border-slate-800/80 rounded-xl group hover:border-slate-700 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-slate-300 min-w-0 flex-1 mr-2">
+                    <div className="p-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800/40 text-emerald-400 shrink-0">
+                      <Phone size={13} />
+                    </div>
+                    {isEditingPhone ? (
+                      <input
+                        type="text"
+                        value={editingPhoneValue}
+                        onChange={(e) => setEditingPhoneValue(e.target.value)}
+                        placeholder="Ex: +55 (54) 99999-9999"
+                        className="bg-slate-900 border border-emerald-500/50 rounded px-2 py-1 text-xs text-white outline-none font-mono focus:border-emerald-400 w-full"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveContactPhone();
+                          if (e.key === 'Escape') setIsEditingPhone(false);
+                        }}
+                      />
+                    ) : (
+                      <span className="truncate font-mono font-medium" title={activeContactData.phone || ''}>
+                        {formatDisplayPhoneNumber(activeContactData.phone)}
+                      </span>
+                    )}
                   </div>
-                  <span className="truncate font-mono font-medium" title={activeContactData.phone || ''}>
-                    {formatDisplayPhoneNumber(activeContactData.phone)}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isEditingPhone ? (
+                      <button
+                        type="button"
+                        onClick={handleSaveContactPhone}
+                        disabled={isSavingPhone}
+                        className="p-1 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                        title="Salvar telefone"
+                      >
+                        <Check size={14} />
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingPhoneValue(activeContactData.phone?.includes('@lid') ? '' : activeContactData.phone || '');
+                            setIsEditingPhone(true);
+                          }}
+                          className="text-slate-400 hover:text-emerald-400 p-1 transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
+                          title="Editar / Definir número legível"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                        {activeContactData.phone && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopyText(activeContactData.phone?.replace('@s.whatsapp.net', '').replace('@c.us', ''), 'phone')}
+                            className="text-slate-500 hover:text-white p-1 transition-colors cursor-pointer"
+                            title="Copiar telefone"
+                          >
+                            {copiedField === 'phone' ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+                {activeContactData.phone?.includes('@lid') && !isEditingPhone && (
+                  <span className="text-[10px] text-amber-400/80 font-mono pl-7">
+                    ID Técnico / WhatsApp Web • Clique no lápis para definir telefone legível
                   </span>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  {activeContactData.phone && (
-                    <button
-                      type="button"
-                      onClick={() => handleCopyText(activeContactData.phone?.replace('@s.whatsapp.net', '').replace('@c.us', ''), 'phone')}
-                      className="text-slate-500 hover:text-white p-1 transition-colors cursor-pointer"
-                      title="Copiar telefone"
-                    >
-                      {copiedField === 'phone' ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                    </button>
-                  )}
-                </div>
+                )}
               </div>
 
               {/* E-mail */}

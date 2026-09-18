@@ -28,4 +28,20 @@ export declare class ContactsService {
         createdAt: Date;
         updatedAt: Date;
     }>;
+    updateContact(tenantId: string, contactId: string, data: {
+        name?: string;
+        phone?: string;
+        email?: string;
+    }): Promise<{
+        id: string;
+        name: string;
+        phone: string | null;
+        email: string | null;
+        avatarUrl: string | null;
+        source: string;
+        tags: string[];
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
 }

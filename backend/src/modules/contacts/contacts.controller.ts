@@ -13,6 +13,15 @@ export class ContactsController {
     return this.contactsService.findAll(tenantId);
   }
 
+  @Patch(':id')
+  async updateContact(
+    @CurrentTenant() tenantId: string,
+    @Param('id') contactId: string,
+    @Body() data: { name?: string; phone?: string; email?: string }
+  ) {
+    return this.contactsService.updateContact(tenantId, contactId, data);
+  }
+
   @Patch(':id/tags')
   async updateTags(
     @CurrentTenant() tenantId: string,

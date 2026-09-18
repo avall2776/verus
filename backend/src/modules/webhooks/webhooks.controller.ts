@@ -141,7 +141,19 @@ export class WebhooksController {
     const instanceName = payload.instance || payload.data?.instance;
     let tenantId: string | null = null;
 
-    if (instanceName) {
+    if (instanceName && instanceName.startsWith('versus_')) {
+      const parts = instanceName.split('_');
+      const cleanPrefix = parts[1];
+      if (cleanPrefix) {
+        const allTenants = await this.prisma.tenant.findMany({ select: { id: true } });
+        const matched = allTenants.find(t => t.id.replace(/[^a-zA-Z0-9]/g, '').startsWith(cleanPrefix));
+        if (matched) {
+          tenantId = matched.id;
+        }
+      }
+    }
+
+    if (!tenantId && instanceName) {
       const inst = await this.prisma.whatsAppInstance.findFirst({
         where: {
           OR: [
@@ -177,7 +189,19 @@ export class WebhooksController {
     const instanceName = payload.instance || payload.data?.instance;
     let resolvedTenantId = tenantId;
 
-    if (instanceName) {
+    if (instanceName && instanceName.startsWith('versus_')) {
+      const parts = instanceName.split('_');
+      const cleanPrefix = parts[1];
+      if (cleanPrefix) {
+        const allTenants = await this.prisma.tenant.findMany({ select: { id: true } });
+        const matched = allTenants.find(t => t.id.replace(/[^a-zA-Z0-9]/g, '').startsWith(cleanPrefix));
+        if (matched) {
+          resolvedTenantId = matched.id;
+        }
+      }
+    }
+
+    if (resolvedTenantId === tenantId && instanceName) {
       const inst = await this.prisma.whatsAppInstance.findFirst({
         where: {
           OR: [

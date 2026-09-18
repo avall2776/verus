@@ -160,10 +160,22 @@ export class WhatsappService {
 
       const evoList = Array.isArray(res.data) ? res.data : [];
 
+      const cleanTenant = (tenantId || '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+
       for (const item of evoList) {
         const evo = item.instance || item;
         const instanceName = evo.instanceName;
         if (!instanceName || instanceName.toUpperCase().includes('PROSPECTOR')) continue;
+
+        // Isola estritamente instâncias por tenant - impede que um tenant clone instâncias de outro
+        if (instanceName.startsWith('versus_')) {
+          const parts = instanceName.split('_');
+          const instTenantPrefix = parts[1];
+          if (instTenantPrefix && instTenantPrefix !== cleanTenant) {
+            // Pertence a outro tenant! Não sincroniza nem sobrescreve webhook.
+            continue;
+          }
+        }
 
         const isConnected = evo.status === 'open' || evo.connectionStatus === 'open';
         const rawOwner = evo.owner || '';
@@ -222,7 +234,7 @@ export class WhatsappService {
           });
         }
 
-        // Garante webhook configurado no Evolution API com endereço bridge 172.17.0.1
+        // Garante webhook configurado no Evolution API com endereço bridge 172.17.0.1 e webhook_base64 ativado
         try {
           const webhookUrl = `${webhookBaseUrl}/webhooks/evolution/${tenantId}`;
           await axios.post(
@@ -231,6 +243,7 @@ export class WhatsappService {
               enabled: true,
               url: webhookUrl,
               webhook_by_events: false,
+              webhook_base64: true,
               events: [
                 'CONNECTION_UPDATE',
                 'QRCODE_UPDATED',
