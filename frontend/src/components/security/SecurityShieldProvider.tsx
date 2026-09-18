@@ -189,45 +189,8 @@ export default function SecurityShieldProvider({
     };
   }, [isSuperAdmin]);
 
-  // 4. Marca d'Água Dinâmica Antivazamento (Visual Digital Fingerprint)
-  const watermarkText = useMemo(() => {
-    if (!currentUser) return null;
-    const name = currentUser.name || "VERSUS Operador";
-    const email = currentUser.email || "";
-    const idShort = currentUser.id ? currentUser.id.slice(0, 8) : "CORP";
-    return `${name} • ${email} • ID: ${idShort} • VERSUS SECURITY`;
-  }, [currentUser]);
-
-  // Gera a matriz de repetição da marca d'água
-  const watermarkGrid = useMemo(() => {
-    if (!watermarkText || isSuperAdmin) return null;
-    const rows = Array.from({ length: 18 });
-    return (
-      <div 
-        className="fixed inset-0 pointer-events-none select-none z-[9990] overflow-hidden flex flex-col justify-around opacity-[0.04] sm:opacity-[0.055] transition-opacity duration-500"
-        aria-hidden="true"
-      >
-        {rows.map((_, rIdx) => (
-          <div
-            key={rIdx}
-            className="flex whitespace-nowrap text-[12px] sm:text-[13px] font-semibold tracking-widest text-slate-400 transform -rotate-12 translate-x-[-10%]"
-            style={{ marginLeft: `${(rIdx % 2) * -120}px` }}
-          >
-            {Array.from({ length: 12 }).map((__, cIdx) => (
-              <span key={cIdx} className="mx-12">
-                {watermarkText}
-              </span>
-            ))}
-          </div>
-        ))}
-      </div>
-    );
-  }, [watermarkText, isSuperAdmin]);
-
   return (
     <>
-      {/* Marca d'Água Dinâmica Antivazamento */}
-      {watermarkGrid}
 
       {/* Escudo de Privacidade por Perda de Foco (Blur Screen) */}
       {isWindowBlurred && !isSuperAdmin && currentUser && (
