@@ -200,6 +200,7 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 - **[16/09/2026 - 08:38]** 🟢 **Início de Turno & Atribuição de Metas Comerciais (IDE 2)**. Status: ⏳ Em Andamento (Fase 52 - Autoridade Exclusiva IDE 2). Finalização condicionada ao OK explícito do usuário.
 - **[16/09/2026 - 08:48]** 🟢 **Início de Turno & Atribuição de Inbox de E-mail Unificado (IDE 1)**. Status: ⏳ Em Andamento (Fase 53 - Autoridade Exclusiva IDE 1). Finalização condicionada ao OK explícito do usuário.
 - **[18/09/2026 - 08:00]** 🟢 **Início de Turno (Manhã) - Ponto Eletrônico Registrado (Equipe de Engenharia)**: Foco na Fase 80 (Refinamento Técnico Geral & Experiência de Notificações). Status: ⏳ Em Andamento.
+- **[18/09/2026 - 10:45]** 💎 **Fase 81 Concluída & Deployada com Sucesso (Motor VoIP Proprietário, Softphone WebAudio DTMF e Subseção Produtos / Roadmap)**. Status: ⏳ Aguardando Credenciais de Tronco SIP da Operadora Direct Call.
 
 ### 🟢 FASE 51: ANALYTICS AVANÇADO (PRO) - MAPEAMENTO DE CANAIS, FUNIL & GARGALOS (16/09/2026 - IDE 1)
 - [x] Mapeamento de canais de aquisição (`GET /analytics/channels`) com volume, conversão e receita faturada.
@@ -220,6 +221,55 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 - [ ] Backend NestJS (`EmailsModule`): endpoints `GET /emails`, `POST /emails/send`, estrelas, pastas e exclusão.
 - [ ] Frontend Next.js 14 (`/email-inbox`): Layout 3-pane Enterprise, `EmailComposerModal.tsx` integrado com links de propostas e contratos, zero mocks.
 - [ ] Builds com código 0, deploy na nuvem e homologação final com OK do usuário.
+
+### 📞 FASE 81: MOTOR VOIP PROPRIETÁRIO, SOFTPHONE WEBAUDIO DTMF & PRODUTOS / ROADMAP (18/09/2026 - ENGENHARIA)
+> **Status**: Concluído e Deployado em Produção (VPS + Vercel) com Código 0 de Erros. Aguardando formalização externa do Tronco SIP.
+
+#### 1. Módulos Concluídos pela Engenharia (100% Implementados):
+- [x] **Motor VoIP Backend (`VoipModule`)**:
+  - Implementação completa em NestJS (`backend/src/modules/voip/`).
+  - Endpoints de controle ativo de chamadas:
+    - `POST /voip/call/originate`: Máquina de estados (`DIALING` -> `RINGING` -> `CONNECTED`).
+    - `POST /voip/call/hangup`: Desconexão e geração imediata de bilhetagem no CDR.
+    - `POST /voip/call/dtmf`: Emissão de dígitos DTMF em linha para navegação em URAs.
+    - `POST /voip/call/hold/:id`: Alternância de chamada em espera (`ON_HOLD`) e retomada.
+    - `POST /voip/call/transfer`: Transferência de chamadas entre ramais e números externos.
+    - `GET /voip/calls/active` & `GET /voip/calls/history`: Visualizador de canais ativos e bilhetagem histórica CDR.
+    - `GET /voip/test-connection`: Probe de socket TCP real para medição de latência com o daemon PABX.
+  - Parametrização e persistência do Tronco SIP em `data/voip-config.json` (`GET /voip/config` e `POST /voip/config`).
+- [x] **Softphone Corporativo & Dialpad com Áudio Real**:
+  - Componente [`SoftphoneModal.tsx`](frontend/src/components/voip/SoftphoneModal.tsx) integrado no Super Admin e no Topbar global.
+  - **Síntese Acústica Real de Tons DTMF via WebAudio API (Norma ITU-T Q.23)**:
+    - Frequências puras duplas (697–941 Hz + 1209–1477 Hz) geradas via `AudioContext` nativo (sem áudios gravados).
+  - Tela de chamada ativa com timer em tempo real, avatar, controle de Mute, Hold, teclado DTMF em linha e transferência.
+  - Aba de histórico rápido de ligações e discagem rápida em 1 clique.
+  - Aba de configuração e teste de conectividade do Tronco SIP (Direct Call, FreeSWITCH, Asterisk).
+- [x] **Subseção 'Produtos / Roadmap' no Super Admin (`/super-admin/engineering`)**:
+  - Subcategoria dedicada com visual monocromático corporativo (#0B1224/Slate/Branco) e contador de módulos.
+  - 5 produtos planejados estruturados com sandbox e laboratório isolado:
+    1. *Voice AI Agent* (OpenAI Realtime / PCM16 / WebSockets)
+    2. *Integração VoIP e Servidor SIP* (FreeSWITCH / Asterisk / WebRTC WSS)
+    3. *Suite ERP Gestão Empresarial* (Schema Isolation / Ledger Contábil ACID)
+    4. *Módulo de Faturamento e Assinatura* (Stripe / Asaas / HMAC-SHA256)
+    5. *Onboarding Self-Service* (Provisionamento automatizado / Validação CNPJ)
+  - Botão de atalho rápido direto para o Softphone no card de telefonia.
+- [x] **Script de Hardening de Segurança e Otimização da VPS (`scripts/setup_vps_voip_security.sh`)**:
+  - Alocação de 4 GB de Swapfile (`/swapfile`) com `vm.swappiness=10` para prevenir OOM Killer durante transmissões simultâneas de RTP.
+  - Configuração do firewall UFW liberando portas SIP (`5060/UDP+TCP`), TLS (`5061/TCP`), WSS (`7443/TCP`), ARI (`8089/TCP`) e RTP (`10000:20000/UDP`), preservando SSH (22) e Engine (3001).
+  - Configuração e ativação de jail do Fail2ban para proteção de Asterisk/SIP contra scanners maliciosos.
+- [x] **Validação e Deploy**:
+  - `npm run build` no backend: 0 erros.
+  - `npx tsc --noEmit` no frontend: 0 erros.
+  - `npm run build` no frontend: 0 erros (44 rotas geradas).
+  - Deploy em produção na VPS (`versus-engine` online, PID 494982) e Vercel via branch `main`.
+
+---
+
+#### 2. Próxima Etapa Pendente (Ação Externa / Operacional):
+- [ ] **Aguardando a formalização da contratação e inserção de créditos pré-pagos no Tronco SIP da operadora escolhida (Direct Call)**.
+
+#### 3. Próximo Passo Técnico (Assim que as credenciais forem obtidas):
+- [ ] **Inserção das credenciais finais (Host SIP, porta, usuário, senha e dados de WSS) no painel de configuração do tronco SIP do VERSUS para habilitar o disparo de chamadas reais e a homologação final do sandbox**.
 
 ---
 

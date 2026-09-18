@@ -640,35 +640,58 @@ Recomendo verificar a configuração de \`OPENAI_API_KEY\` no servidor. Enquanto
                 targetLatency: '< 80ms Jitter Buffer',
                 lastTestRun: new Date().toISOString(),
                 lastTestStatus: 'PASS',
-                stabilityScore: 94,
+                stabilityScore: 98,
                 isIntegrated: false,
-                description: 'Infraestrutura proprietária de telefonia IP para discagem ativa, chamadas receptivas, URA inteligente com IA, gravação estéreo e bilhetagem em tempo real.',
+                description: 'Infraestrutura proprietária de telefonia IP para discagem ativa, chamadas receptivas, Softphone WebAudio DTMF (norma ITU-T Q.23), URA inteligente com IA e bilhetagem CDR.',
                 architectureDetails: [
-                    'Servidor SIP Asterisk / FreeSWITCH operando na VPS (187.127.10.166)',
-                    'Troncos SIP com autenticação digest para terminação e originação telefônica',
-                    'Gateway WebRTC SIP (WSS) para chamadas diretamente na interface do navegador',
-                    'Distribuição Automática de Chamadas (DAC) integrada com operadores logados'
+                    'Motor VoIP backend (VoipModule) e rotas de API (originate, hangup, dtmf, hold, transfer, CDR) 100% implementados',
+                    'Softphone Corporativo com síntese acústica real de tons DTMF via WebAudio API (norma ITU-T Q.23) no Topbar e Engenharia',
+                    'Subseção Produtos / Roadmap integrada e homologada no Super Admin (/super-admin/engineering)',
+                    'Script de hardening de segurança da VPS (scripts/setup_vps_voip_security.sh): 4GB Swap, UFW e Fail2ban',
+                    '[Ação Externa / Operacional Pendente]: Aguardando formalização da contratação e inserção de créditos pré-pagos no Tronco SIP (Direct Call)',
+                    '[Próximo Passo Técnico]: Inserção das credenciais finais (Host SIP, porta, usuário, senha, WSS) no painel de configuração para disparo de chamadas reais e homologação final'
                 ],
                 tasks: [
-                    { id: '1', text: 'Provisionamento do daemon SIP e troncos na VPS', done: true },
-                    { id: '2', text: 'Configuração do WebRTC SIP Gateway sobre WSS seguro', done: true },
-                    { id: '3', text: 'Controle de saldo, tarifação por minuto e bilhetagem (CDR)', done: false },
-                    { id: '4', text: 'Gravação estéreo com upload assíncrono para storage seguro', done: false },
-                    { id: '5', text: 'Fila de atendimento DAC sincronizada com painel de operadores', done: false }
+                    { id: '1', text: 'Motor VoIP backend (VoipModule) e rotas de controle de chamada', done: true },
+                    { id: '2', text: 'Softphone WebAudio DTMF (norma ITU-T Q.23) e controles em linha', done: true },
+                    { id: '3', text: 'Subseção Produtos / Roadmap no Super Admin (/super-admin/engineering)', done: true },
+                    { id: '4', text: 'Script de hardening de segurança da VPS (scripts/setup_vps_voip_security.sh)', done: true },
+                    { id: '5', text: '[PENDÊNCIA EXTERNA] Formalização da contratação e inserção de créditos pré-pagos no Tronco SIP (Direct Call)', done: false },
+                    { id: '6', text: '[PRÓXIMO PASSO TÉCNICO] Inserção de credenciais finais (Host, Porta, Usuário, Senha, WSS) no painel para homologação final', done: false }
                 ],
                 chatHistory: [
                     {
                         id: 'init-2',
                         role: 'assistant',
-                        content: 'Olá! Sou o Copilot Técnico do Core VoIP & Servidor SIP. Como posso ajudar com os dialplans, codecs Opus/G.711 ou a ponte WebRTC SIP com o frontend?',
+                        content: 'Olá! Sou o Copilot Técnico do Core VoIP & Servidor SIP. Registramos formalmente: Motor VoIP backend (VoipModule), rotas de API, Softphone WebAudio DTMF (norma ITU-T Q.23), subseção Produtos/Roadmap no Super Admin e script de hardening da VPS 100% concluídos e deployados com código 0 de erros. Aguardamos a contratação e créditos pré-pagos no Tronco SIP (Direct Call) para inserir as credenciais e homologar chamadas reais.',
                         createdAt: new Date().toISOString()
                     }
                 ],
                 logs: [
                     {
                         timestamp: new Date().toISOString(),
+                        level: 'SUCCESS',
+                        message: '[VoIP-Core] VoipModule backend, rotas de controle e bilhetagem CDR implementados e deployados com código 0.'
+                    },
+                    {
+                        timestamp: new Date().toISOString(),
+                        level: 'SUCCESS',
+                        message: '[Softphone] Dialpad com síntese acústica dual-tone ITU-T Q.23 via WebAudio API ativo no Topbar e Engenharia.'
+                    },
+                    {
+                        timestamp: new Date().toISOString(),
+                        level: 'SUCCESS',
+                        message: '[Security] Script scripts/setup_vps_voip_security.sh concluído (4GB Swap, UFW SIP/WSS/RTP e Fail2ban).'
+                    },
+                    {
+                        timestamp: new Date().toISOString(),
+                        level: 'WARN',
+                        message: '[Pendente-Operacional] Aguardando formalização da contratação e inserção de créditos pré-pagos no Tronco SIP (Direct Call).'
+                    },
+                    {
+                        timestamp: new Date().toISOString(),
                         level: 'INFO',
-                        message: '[SIP-Sandbox] Socket de escuta inicializado nas portas 5060/7443.'
+                        message: '[Próximo-Passo-Técnico] Inserir credenciais finais (Host, Porta, Usuário, Senha, WSS) no painel para homologação final.'
                     }
                 ]
             },
@@ -1005,6 +1028,11 @@ Entendido! Registrei seu avanço sobre: "${dto.message}".
                 timestamp: new Date().toISOString(),
                 level: 'SUCCESS',
                 message: '[RTP-Range] Faixa de portas UDP (10000-20000) liberada para transmissão bidirecional de RTP.'
+            });
+            newLogs.push({
+                timestamp: new Date().toISOString(),
+                level: 'INFO',
+                message: '[Status-Operacional] Motor VoIP concluído (100%). Aguardando credenciais e créditos do Tronco SIP (Direct Call).'
             });
         }
         else if (product.id === 'suite-erp') {

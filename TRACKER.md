@@ -4,8 +4,9 @@ Este arquivo serve como mapa central do desenvolvimento do sistema VERSUS.
 **Regra do Agente:** O agente (IA) DEVE atualizar este arquivo automaticamente ao concluir marcos importantes.
 
 ## 📌 Status Atual do Projeto
-- **Fase Atual:** Fase 80 (Refinamento Técnico Geral & Experiência de Notificações - 18/09/2026).
-- **Última Entrega:** Fase 79 Concluída & Homologada (Auditoria, Sincronização & Estabilização da Mensageria Omnichannel Meta Cloud API e Baileys com Recibos em Tempo Real).
+- **Fase Atual:** Fase 81 (Infraestrutura de Telefonia VoIP Proprietária, Softphone WebAudio & Produtos / Roadmap - 18/09/2026).
+- **Última Entrega:** Fase 81 Concluída & Deployada com Sucesso (Motor VoIP NestJS, Softphone WebAudio DTMF ITU-T Q.23, Subseção Produtos/Roadmap na Engenharia e Hardening de Segurança VPS).
+- **Status Operacional:** Aguardando formalização da contratação e inserção de créditos pré-pagos no Tronco SIP (Direct Call) para inserção de credenciais finais e homologação de chamadas reais.
 
 ---
 
