@@ -1,9 +1,143 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldAlert, AlertTriangle, ArrowLeft, Mail, PhoneCall, RefreshCw } from "lucide-react";
+import { ShieldAlert, ArrowLeft, RefreshCw, AlertTriangle } from "lucide-react";
+import * as THREE from "three";
 
+// ================= COMPONENTE OCEANO DE DADOS (THREE.JS) =================
+const BackgroundParticles = () => {
+  const mountRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!mountRef.current) return;
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x0b1224, 0.022);
+
+    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 15, 35);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x0b1224, 1);
+    mountRef.current.appendChild(renderer.domElement);
+
+    const createCircleTexture = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.beginPath();
+        ctx.arc(32, 32, 30, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+      }
+      return new THREE.CanvasTexture(canvas);
+    };
+
+    const SEPARATION = 3, AMOUNTX = 70, AMOUNTY = 70;
+    const numParticles = AMOUNTX * AMOUNTY;
+    const positions = new Float32Array(numParticles * 3);
+
+    let i = 0;
+    for (let ix = 0; ix < AMOUNTX; ix++) {
+      for (let iy = 0; iy < AMOUNTY; iy++) {
+        positions[i] = ix * SEPARATION - ((AMOUNTX * SEPARATION) / 2);
+        positions[i + 1] = 0;
+        positions[i + 2] = iy * SEPARATION - ((AMOUNTY * SEPARATION) / 2);
+        i += 3;
+      }
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+
+    const material = new THREE.PointsMaterial({
+      color: 0xef4444,
+      size: 0.22,
+      map: createCircleTexture(),
+      alphaTest: 0.4,
+      transparent: true,
+      opacity: 0.45,
+    });
+
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+
+    let mouseX = 0;
+    let mouseY = 0;
+    let targetX = 0;
+    let targetY = 0;
+    const windowHalfX = window.innerWidth / 2;
+    const windowHalfY = window.innerHeight / 2;
+
+    const onPointerMove = (e: MouseEvent) => {
+      targetX = (e.clientX - windowHalfX) * 0.07;
+      targetY = (e.clientY - windowHalfY) * 0.07;
+    };
+    window.addEventListener("mousemove", onPointerMove);
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener("resize", handleResize);
+
+    let count = 0;
+    let animationFrameId: number;
+
+    const animate = () => {
+      animationFrameId = requestAnimationFrame(animate);
+
+      mouseX += (targetX - mouseX) * 0.05;
+      mouseY += (targetY - mouseY) * 0.05;
+
+      camera.position.x += (mouseX - camera.position.x) * 0.05;
+      camera.position.y += (-mouseY + 12 - camera.position.y) * 0.04;
+      camera.lookAt(scene.position);
+
+      const posArray = particles.geometry.attributes.position.array as Float32Array;
+
+      let pIdx = 0;
+      for (let ix = 0; ix < AMOUNTX; ix++) {
+        for (let iy = 0; iy < AMOUNTY; iy++) {
+          posArray[pIdx + 1] =
+            (Math.sin((ix + count) * 0.3) * 2) +
+            (Math.sin((iy + count) * 0.4) * 2);
+          pIdx += 3;
+        }
+      }
+
+      particles.geometry.attributes.position.needsUpdate = true;
+      count += 0.03;
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener("mousemove", onPointerMove);
+      window.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(animationFrameId);
+      if (mountRef.current && renderer.domElement) {
+        mountRef.current.removeChild(renderer.domElement);
+      }
+      geometry.dispose();
+      material.dispose();
+      renderer.dispose();
+    };
+  }, []);
+
+  return <div ref={mountRef} className="fixed inset-0 z-0 pointer-events-none" />;
+};
+
+// ================= TELA DE BLOQUEIO CORPORATIVO COMPACTA =================
 export default function BlockedPage() {
   const router = useRouter();
   const [reason, setReason] = useState<string>("");
@@ -11,7 +145,7 @@ export default function BlockedPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Invalida quaisquer credenciais residuais
+      // Invalidação preventiva rigorosa
       localStorage.removeItem("versus_auth_token");
       localStorage.removeItem("versus_token");
       localStorage.removeItem("token");
@@ -32,117 +166,138 @@ export default function BlockedPage() {
     router.push("/login");
   };
 
-  const handleRetry = async () => {
+  const handleRetry = () => {
     setIsChecking(true);
     setTimeout(() => {
       setIsChecking(false);
       handleReturnToLogin();
-    }, 1200);
+    }, 1000);
   };
 
   return (
-    <div className="min-h-screen bg-[#0B1224] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden select-none">
-      {/* Luzes volumétricas decorativas em tons de alerta escuro */}
-      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-red-950/25 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-amber-950/20 rounded-full blur-[140px] pointer-events-none" />
+    <div className="flex min-h-screen items-center justify-center relative overflow-hidden bg-[#0B1224] select-none">
+      {/* Background: Ondas Three.js em tons corporativos sutis */}
+      <BackgroundParticles />
 
-      {/* Grid sutil de fundo */}
-      <div 
-        className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-        style={{
-          backgroundImage: "linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)",
-          backgroundSize: "32px 32px"
-        }}
-      />
+      {/* Brilhos volumétricos idênticos à tela de login */}
+      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-red-950/20 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-slate-900/30 rounded-full blur-[140px] pointer-events-none" />
 
-      <div className="w-full max-w-lg relative z-10 animate-in fade-in zoom-in-95 duration-300">
-        <div className="bg-[#070D1B]/90 border border-red-500/30 rounded-3xl p-8 sm:p-10 shadow-[0_25px_60px_rgba(0,0,0,0.8)] backdrop-blur-2xl flex flex-col items-center text-center relative overflow-hidden">
-          
-          {/* Faixa superior de status */}
-          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-red-600 via-rose-500 to-amber-500" />
+      {/* Container Central com as dimensões exatas da tela de login (max-w-[440px] p-6) */}
+      <div className="w-full max-w-[440px] p-6 relative z-10 animate-[hologramBoot_1.5s_ease-out_forwards,float_7s_ease-in-out_2s_infinite_alternate]">
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+            @keyframes float {
+              0% { transform: translateY(-4px); }
+              100% { transform: translateY(6px); }
+            }
+            @keyframes hologramBoot {
+              0% { 
+                opacity: 0; 
+                filter: blur(16px); 
+                transform: scale(0.92) translateY(30px);
+              }
+              60% {
+                opacity: 0.85;
+                filter: blur(4px); 
+                transform: scale(1.01) translateY(-4px);
+              }
+              100% { 
+                opacity: 1; 
+                filter: blur(0px);
+                transform: scale(1) translateY(0);
+              }
+            }
+          `,
+          }}
+        />
 
-          {/* Ícone de Escudo de Segurança com Pulso */}
-          <div className="relative mb-6">
-            <div className="w-20 h-20 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.25)]">
-              <ShieldAlert size={40} className="text-red-400" />
+        {/* Card de Vidro Corporativo (Mesmos paddings e bordas do login: px-8 py-10 sm:px-10 sm:py-12) */}
+        <div
+          className="bg-[#0B1224]/50 border border-slate-800/80 rounded-[20px] px-8 py-10 sm:px-10 sm:py-12 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl flex flex-col relative overflow-hidden group"
+          onMouseMove={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
+            e.currentTarget.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+          }}
+        >
+          {/* Spotlight sutil corporativo */}
+          <div
+            className="pointer-events-none absolute -inset-px rounded-[20px] opacity-0 transition duration-500 group-hover:opacity-100"
+            style={{
+              background: `radial-gradient(400px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(239, 68, 68, 0.08), transparent 40%)`,
+            }}
+          />
+
+          {/* Header Centralizado */}
+          <div className="mb-6 text-center flex flex-col items-center relative z-10">
+            {/* Badge GOVERNANÇA & SEGURANÇA */}
+            <div className="bg-red-500/10 border border-red-500/25 text-red-400 text-[0.65rem] uppercase tracking-[0.2em] font-semibold py-1 px-4 rounded-full mb-4 flex items-center gap-1.5 shadow-sm">
+              <AlertTriangle size={11} className="text-red-400" />
+              <span>ACESSO SUSPENSO</span>
             </div>
-            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 flex items-center justify-center animate-ping opacity-75">
-              <span className="w-2 h-2 rounded-full bg-white" />
+
+            {/* Ícone de Escudo Compacto */}
+            <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 mb-3 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+              <ShieldAlert size={24} className="text-red-400" />
             </div>
-          </div>
 
-          {/* Badge de Governança */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/25 text-red-400 text-[10px] font-bold uppercase tracking-widest mb-4">
-            <AlertTriangle size={12} />
-            <span>Governança & Segurança VERSUS</span>
-          </div>
+            {/* Logotipo VERSUS */}
+            <div className="flex justify-center py-1 mb-1">
+              <h1 className="text-3xl md:text-[2.2rem] font-black tracking-[0.2em] text-white">
+                VERSUS
+              </h1>
+            </div>
 
-          {/* Título Principal */}
-          <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-white mb-2">
-            Acesso Corporativo Bloqueado
-          </h1>
-
-          <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-md mb-6">
-            O acesso desta organização à plataforma VERSUS foi temporariamente suspenso pela administração central.
-          </p>
-
-          {/* Box de Motivo / Detalhes */}
-          <div className="w-full bg-[#0B1224] border border-slate-800/80 rounded-2xl p-4 text-left mb-6">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-              Notificação do Sistema:
-            </span>
-            <p className="text-xs text-slate-300 font-mono leading-relaxed">
-              {reason || "Sua empresa foi marcada com status 'Bloqueado' no painel de administração. Todos os acessos e sessões ativas foram revogados por motivos de segurança e governança de planos."}
+            <p className="text-slate-400 text-xs mt-1">
+              Acesso Corporativo Bloqueado
             </p>
           </div>
 
-          {/* Instruções de Desbloqueio */}
-          <div className="w-full space-y-2.5 mb-8 text-left text-xs text-slate-400 border-t border-slate-800/80 pt-5">
-            <div className="flex items-start gap-2.5">
-              <div className="w-4 h-4 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                1
-              </div>
-              <span>Se você é colaborador desta empresa, contate o administrador da sua conta.</span>
+          {/* Box de Motivo do Bloqueio (Layout refinado idêntico aos inputs do login) */}
+          <div className="w-full bg-slate-950/60 border border-slate-800 rounded-[10px] p-4 text-left mb-6 relative z-10">
+            <div className="flex items-center gap-1.5 text-[0.7rem] font-semibold text-red-400 uppercase tracking-wider mb-1.5">
+              <span>MOTIVO DO BLOQUEIO</span>
             </div>
-            <div className="flex items-start gap-2.5">
-              <div className="w-4 h-4 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                2
-              </div>
-              <span>Para regularização de mensalidade ou reativação do serviço, acione o canal oficial do VERSUS.</span>
-            </div>
+            <p className="text-xs text-slate-300 font-mono leading-relaxed">
+              {reason || "O acesso desta organização foi temporariamente suspenso pela administração central para fins de governança ou regularização de plano."}
+            </p>
           </div>
 
-          {/* Botões de Ação */}
-          <div className="w-full flex flex-col sm:flex-row items-center gap-3">
+          {/* Botões de Ação com o Design System de Login */}
+          <div className="w-full flex flex-col gap-3 relative z-10">
+            {/* Botão Primário: Voltar ao Login */}
             <button
+              type="button"
               onClick={handleReturnToLogin}
-              className="w-full sm:flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition-colors border border-slate-700 shadow-sm"
+              className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-[0.88rem] rounded-[10px] text-[0.84rem] tracking-wider uppercase transition-all hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 cursor-pointer"
             >
-              <ArrowLeft size={14} />
-              <span>Voltar ao Login</span>
+              <ArrowLeft size={16} />
+              <span>VOLTAR AO LOGIN</span>
             </button>
 
+            {/* Botão Secundário: Testar Reativação */}
             <button
+              type="button"
               onClick={handleRetry}
               disabled={isChecking}
-              className="w-full sm:flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-xs font-bold text-red-300 border border-red-500/30 transition-colors disabled:opacity-50"
+              className="w-full bg-slate-950/60 hover:bg-slate-900 active:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 font-semibold py-[0.85rem] rounded-[10px] text-[0.82rem] tracking-wider uppercase transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <RefreshCw size={14} className={isChecking ? "animate-spin text-red-400" : ""} />
-              <span>{isChecking ? "Verificando..." : "Testar Reativação"}</span>
+              <RefreshCw size={14} className={isChecking ? "animate-spin text-blue-400" : "text-slate-400"} />
+              <span>{isChecking ? "VERIFICANDO..." : "TESTAR REATIVAÇÃO"}</span>
             </button>
           </div>
 
-          {/* Contato de Suporte */}
-          <div className="mt-8 pt-4 border-t border-slate-800/80 w-full flex items-center justify-center gap-4 text-[11px] text-slate-400">
-            <span className="flex items-center gap-1.5">
-              <Mail size={12} className="text-slate-400" />
-              <span>suporte@versus.com.br</span>
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5">
-              <PhoneCall size={12} className="text-slate-400" />
-              <span>Canal Corporativo</span>
-            </span>
+          {/* Rodapé Idêntico ao do Login */}
+          <div className="flex justify-between items-center text-xs text-slate-500 mt-7 relative z-10">
+            <span>suporte@versus.com.br</span>
+            <a 
+              href="mailto:suporte@versus.com.br" 
+              className="hover:text-slate-300 transition-colors"
+            >
+              Canal de Suporte
+            </a>
           </div>
 
         </div>
