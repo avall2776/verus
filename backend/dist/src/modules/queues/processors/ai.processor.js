@@ -67,21 +67,26 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
         this.logger.log(`Enviando ${historyForAi.length} mensagens de histórico para a OpenAI (Tenant: ${conversation.contact.tenant.name})...`);
         const aiResponse = await this.aiService.processConversation(historyForAi, conversation.contact.tenant, dynamicContext);
         if (aiResponse.resposta_cliente) {
-            await this.messagingService.sendText({
+            const sendRes = await this.messagingService.sendText({
                 tenantId,
                 phone: conversation.contact.phone,
                 content: aiResponse.resposta_cliente
             });
+            const messageStatus = sendRes?.success ? 'delivered' : 'failed';
+            const providerMsgId = sendRes?.messageId || `out_${Date.now()}`;
+            if (!sendRes?.success) {
+                this.logger.error(`Falha ao despachar resposta da IA para ${conversation.contact.phone}: ${sendRes?.error}`);
+            }
             const savedMsg = await this.prisma.message.create({
                 data: {
                     tenantId,
                     conversationId,
                     contactId,
-                    providerMessageId: `out_${Date.now()}`,
+                    providerMessageId: providerMsgId,
                     content: aiResponse.resposta_cliente,
                     direction: 'OUTBOUND',
                     senderType: 'system',
-                    status: 'delivered',
+                    status: messageStatus,
                 }
             });
             this.chatGateway.emitNewMessage(tenantId, {

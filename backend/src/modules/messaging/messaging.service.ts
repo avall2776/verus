@@ -44,10 +44,22 @@ export class MessagingService {
 
   /**
    * Limpa e formata o número de telefone:
+   * Preserva identificadores JID especiais (como @lid do WhatsApp Privacy).
    * Remove caracteres não numéricos e garante DDI 55 caso seja número brasileiro com DDD (10 ou 11 dígitos)
    */
   public sanitizePhone(phone: string): string {
-    let clean = (phone || '').replace(/\D/g, '');
+    if (!phone) return '';
+    const trimmed = String(phone).trim();
+
+    // Se for JID com @lid, preserva intacto para entrega via WhatsApp Baileys
+    if (trimmed.includes('@lid')) {
+      return trimmed;
+    }
+
+    // Se tiver sufixo JID comum, limpa
+    let clean = trimmed.replace('@s.whatsapp.net', '').replace('@c.us', '');
+    clean = clean.replace(/\D/g, '');
+
     if (clean.length === 10 || clean.length === 11) {
       clean = '55' + clean;
     }
@@ -56,8 +68,9 @@ export class MessagingService {
 
   /**
    * Resolve a instância ativa ou específica e define o driver (Evolution API ou Meta Cloud API)
+   * Garante compatibilidade universal dual: Evolution API (QR Code / Baileys) e Meta Cloud API Oficial
    */
-  private async resolveConnection(tenantId: string, instanceId?: string) {
+  private async resolveConnection(tenantId: string, instanceId?: string, targetPhone?: string) {
     let instance: any = null;
 
     if (instanceId) {
@@ -89,32 +102,46 @@ export class MessagingService {
     const evolutionUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
     const evolutionGlobalKey = process.env.EVOLUTION_API_KEY || 'verto123';
 
-    // Se a instância tiver identificação explícita de Evolution API ou não tiver phoneNumberId da Meta
-    const isEvolution =
-      instance?.settings?.provider === 'evolution' ||
-      instance?.name?.toUpperCase().includes('PROSPECTOR') ||
-      instance?.token === 'verto123' ||
-      (!instance?.phoneNumberId && !tenant?.metaPhoneNumberId);
+    // Se o número de destino for @lid, a API oficial da Meta rejeita por protocolo (somente Baileys/Evolution suporta)
+    const isLidTarget = !!(targetPhone && targetPhone.includes('@lid'));
 
     const hasMetaCreds = !!(
-      (instance?.token && instance?.phoneNumberId && instance.token.startsWith('EAA')) ||
-      (tenant?.metaToken && tenant?.metaPhoneNumberId && tenant.metaToken.startsWith('EAA'))
+      !isLidTarget &&
+      ((instance?.token && instance?.phoneNumberId && instance.token.startsWith('EAA')) ||
+       (tenant?.metaToken && tenant?.metaPhoneNumberId && tenant.metaToken.startsWith('EAA')))
     );
+
+    // Se a instância tiver identificação explícita de Evolution API ou não tiver phoneNumberId da Meta
+    const isEvolution =
+      isLidTarget ||
+      (instance?.settings as any)?.provider === 'evolution' ||
+      instance?.name?.toUpperCase().includes('PROSPECTOR') ||
+      instance?.token === 'verto123' ||
+      !hasMetaCreds;
 
     const metaToken = (instance?.token && instance.token.startsWith('EAA')) ? instance.token : (tenant?.metaToken || null);
     const metaPhoneNumberId = instance?.phoneNumberId || tenant?.metaPhoneNumberId || null;
 
     // Se preferir Evolution ou se não tiver credenciais Meta válidas
-    const preferredProvider: 'evolution' | 'meta' = isEvolution || !hasMetaCreds ? 'evolution' : 'meta';
+    const preferredProvider: 'evolution' | 'meta' = (isEvolution || !hasMetaCreds) ? 'evolution' : 'meta';
 
-    const evolutionInstanceName =
-      instance?.settings?.instanceName ||
-      (instance?.name?.includes('PROSPECTOR') ? 'PROSPECTOR' : (instance?.name || 'PROSPECTOR'));
+    // Determina o nome exato da instância no Evolution API com fallback seguro
+    let evolutionInstanceName = (instance?.settings as any)?.instanceName;
+    if (!evolutionInstanceName) {
+      if (instance?.name && !instance.name.includes('Linha') && !instance.name.includes('WhatsApp')) {
+        evolutionInstanceName = instance.name;
+      } else {
+        const shortTenant = tenantId.replace(/-/g, '').substring(0, 10);
+        const shortInst = instance?.id ? instance.id.replace(/-/g, '').substring(0, 10) : '';
+        evolutionInstanceName = shortInst ? `versus_${shortTenant}_${shortInst}` : `versus_${shortTenant}`;
+      }
+    }
     const evolutionApiKey = instance?.token || evolutionGlobalKey;
 
     return {
       instance,
       preferredProvider,
+      isLidTarget,
       evolution: {
         url: evolutionUrl,
         apiKey: evolutionApiKey,
@@ -137,15 +164,15 @@ export class MessagingService {
       return { success: false, error: 'Telefone inválido' };
     }
 
-    const conn = await this.resolveConnection(payload.tenantId, payload.instanceId);
+    const conn = await this.resolveConnection(payload.tenantId, payload.instanceId, cleanPhone);
 
     // TENTATIVA 1: Provedor preferencial
     if (conn.preferredProvider === 'evolution') {
       const evoRes = await this.sendEvolutionText(conn.evolution, cleanPhone, payload.content);
       if (evoRes.success) return evoRes;
 
-      // Fallback para Meta se configurado
-      if (conn.meta.token && conn.meta.phoneNumberId) {
+      // Fallback para Meta SOMENTE se não for LID e tiver credenciais Meta válidas
+      if (!conn.isLidTarget && conn.meta.token && conn.meta.phoneNumberId) {
         this.logger.warn(`Evolution API falhou para ${cleanPhone}, acionando fallback Meta API...`);
         const metaRes = await this.sendMetaText(conn.meta, cleanPhone, payload.content);
         if (metaRes.success) return metaRes;
@@ -206,9 +233,10 @@ export class MessagingService {
         raw: response.data,
       };
     } catch (err: any) {
-      const errorMsg = err.response?.data?.response?.message || err.response?.data?.message || err.message;
-      this.logger.error(`Erro no envio Evolution API para ${cleanPhone}: ${JSON.stringify(errorMsg)}`);
-      return { success: false, error: String(errorMsg) };
+      const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
+      const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
+      this.logger.error(`Erro no envio Evolution API para ${cleanPhone}: ${errorMsg}`);
+      return { success: false, error: errorMsg };
     }
   }
 
@@ -273,7 +301,7 @@ export class MessagingService {
       return { success: false, error: 'Telefone inválido' };
     }
 
-    const conn = await this.resolveConnection(payload.tenantId, payload.instanceId);
+    const conn = await this.resolveConnection(payload.tenantId, payload.instanceId, cleanPhone);
 
     // Converte URL local/relativa em URL absoluta
     let fullMediaUrl = payload.mediaUrl;
@@ -286,7 +314,7 @@ export class MessagingService {
       const evoRes = await this.sendEvolutionMedia(conn.evolution, cleanPhone, payload, fullMediaUrl);
       if (evoRes.success) return evoRes;
 
-      if (conn.meta.token && conn.meta.phoneNumberId) {
+      if (!conn.isLidTarget && conn.meta.token && conn.meta.phoneNumberId) {
         return this.sendMetaMedia(conn.meta, cleanPhone, payload, fullMediaUrl);
       }
       return evoRes;
@@ -337,9 +365,10 @@ export class MessagingService {
       this.logger.log(`Mídia [${payload.type}] enviada via Evolution API para ${cleanPhone}. ID: ${messageId}`);
       return { success: true, messageId, provider: 'evolution', raw: response.data };
     } catch (err: any) {
-      const errorMsg = err.response?.data?.response?.message || err.response?.data?.message || err.message;
-      this.logger.error(`Erro ao enviar mídia Evolution API: ${JSON.stringify(errorMsg)}`);
-      return { success: false, error: String(errorMsg) };
+      const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
+      const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
+      this.logger.error(`Erro ao enviar mídia Evolution API: ${errorMsg}`);
+      return { success: false, error: errorMsg };
     }
   }
 
@@ -405,7 +434,7 @@ export class MessagingService {
       return { success: false, error: 'Telefone inválido' };
     }
 
-    const conn = await this.resolveConnection(payload.tenantId, payload.instanceId);
+    const conn = await this.resolveConnection(payload.tenantId, payload.instanceId, cleanPhone);
 
     let fullAudioUrl = payload.audioUrl;
     if (fullAudioUrl && (fullAudioUrl.startsWith('/api-backend') || fullAudioUrl.startsWith('/'))) {
@@ -417,7 +446,7 @@ export class MessagingService {
       const evoRes = await this.sendEvolutionAudio(conn.evolution, cleanPhone, payload, fullAudioUrl);
       if (evoRes.success) return evoRes;
 
-      if (conn.meta.token && conn.meta.phoneNumberId) {
+      if (!conn.isLidTarget && conn.meta.token && conn.meta.phoneNumberId) {
         return this.sendMetaAudio(conn.meta, cleanPhone, payload);
       }
       return evoRes;
@@ -471,9 +500,10 @@ export class MessagingService {
       this.logger.log(`Áudio enviado com sucesso via Evolution API para ${cleanPhone}. ID: ${messageId}`);
       return { success: true, messageId, provider: 'evolution', raw: response.data };
     } catch (err: any) {
-      const errorMsg = err.response?.data?.response?.message || err.response?.data?.message || err.message;
-      this.logger.error(`Erro ao enviar áudio Evolution API: ${JSON.stringify(errorMsg)}`);
-      return { success: false, error: String(errorMsg) };
+      const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
+      const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
+      this.logger.error(`Erro ao enviar áudio Evolution API: ${errorMsg}`);
+      return { success: false, error: errorMsg };
     }
   }
 

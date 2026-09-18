@@ -95,6 +95,9 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             content = '[Mídia Recebida]';
         }
         const phone = remoteJid;
+        const cleanName = (pushName && !pushName.includes('@lid'))
+            ? pushName
+            : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${remoteJid})`);
         const contact = await this.prisma.contact.upsert({
             where: {
                 tenantId_phone: {
@@ -105,12 +108,10 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             create: {
                 tenantId,
                 phone,
-                name: pushName,
+                name: cleanName,
                 source: 'WhatsApp',
             },
-            update: {
-                name: pushName
-            }
+            update: (pushName && !pushName.includes('@lid')) ? { name: pushName } : {}
         });
         if (!contact.avatarUrl) {
             const avatarUrl = await this.whatsappService.syncContactAvatar(tenantId, contact.id);

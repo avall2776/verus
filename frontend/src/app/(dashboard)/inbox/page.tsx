@@ -394,10 +394,18 @@ function InboxContent() {
     }
   };
 
+  const formatContactDisplayName = (name?: string, phone?: string) => {
+    if (!name || name.includes('@lid')) {
+      if (phone && !phone.includes('@lid')) return phone;
+      return 'Cliente WhatsApp';
+    }
+    return name;
+  };
+
   const getContactInitials = (name?: string) => {
-    if (!name) return 'C';
+    if (!name || name.includes('@lid')) return 'WA';
     const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return 'C';
+    if (parts.length === 0) return 'WA';
     if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
@@ -672,7 +680,7 @@ function InboxContent() {
         const formattedContact = {
           id: conv.id,
           contactId: conv.contact?.id || '',
-          name: conv.contact?.name || 'Contato Sem Nome',
+          name: formatContactDisplayName(conv.contact?.name, conv.contact?.phone),
           phone: conv.contact?.phone || '',
           email: conv.contact?.email || '',
           avatarUrl: cleanAvatar,
@@ -765,7 +773,7 @@ function InboxContent() {
         return {
           id: conv.id,
           contactId: conv.contact?.id || '',
-          name: conv.contact?.name || 'Contato Sem Nome',
+          name: formatContactDisplayName(conv.contact?.name, conv.contact?.phone),
           phone: conv.contact?.phone || '',
           email: conv.contact?.email || '',
           avatarUrl: cleanAvatar,
@@ -881,7 +889,7 @@ function InboxContent() {
               return {
                 id: conv.id,
                 contactId: conv.contact?.id || '',
-                name: conv.contact?.name || 'Contato Sem Nome',
+                name: formatContactDisplayName(conv.contact?.name, conv.contact?.phone),
                 phone: conv.contact?.phone || '',
                 email: conv.contact?.email || '',
                 avatarUrl: cleanAvatar,
@@ -922,7 +930,7 @@ function InboxContent() {
           return {
             id: conv.id,
             contactId: conv.contact?.id || '',
-            name: conv.contact?.name || 'Contato Sem Nome',
+            name: formatContactDisplayName(conv.contact?.name, conv.contact?.phone),
             phone: conv.contact?.phone || '',
             email: conv.contact?.email || '',
             avatarUrl: conv.contact?.avatarUrl || null,
@@ -1597,7 +1605,7 @@ function InboxContent() {
                     <h3 className={`text-[0.93rem] truncate ${
                       contact.unread > 0 ? 'font-bold text-white' : (activeChat === contact.id ? 'font-semibold text-white' : 'font-medium text-slate-200')
                     }`}>
-                      {contact.name}
+                      {formatContactDisplayName(contact.name, contact.phone)}
                     </h3>
                     <span className={`text-[11px] whitespace-nowrap shrink-0 ${
                       contact.unread > 0 ? 'text-emerald-400 font-semibold' : 'text-slate-400'
@@ -1615,7 +1623,7 @@ function InboxContent() {
                       <p className={`text-xs truncate ${
                         contact.unread > 0 ? 'text-slate-200 font-medium' : 'text-slate-400'
                       }`}>
-                        {contact.lastMessage || 'Nenhuma mensagem recente'}
+                        {contact.lastMessage || contact.lastMsg || 'Nenhuma mensagem recente'}
                       </p>
                     </div>
 
@@ -1808,7 +1816,7 @@ function InboxContent() {
                 {/* Título e Subtítulo WhatsApp */}
                 <div className="min-w-0">
                   <h2 className="text-sm font-bold text-white truncate max-w-[200px] sm:max-w-xs group-hover:text-blue-300 transition-colors">
-                    {activeContactData.name}
+                    {formatContactDisplayName(activeContactData.name, activeContactData.phone)}
                   </h2>
                   {activeContactData.isAi ? (
                     <div className="flex items-center gap-1.5 text-xs text-cyan-400 font-medium">
@@ -1820,7 +1828,7 @@ function InboxContent() {
                   ) : activeContactData.status === 'waiting' ? (
                     <span className="text-xs text-amber-400 font-medium">Aguardando atendimento</span>
                   ) : (
-                    <span className="text-xs text-slate-400 font-medium">{activeContactData.phone || 'online'}</span>
+                    <span className="text-xs text-slate-400 font-medium">{activeContactData.phone?.includes('@lid') ? 'online' : (activeContactData.phone || 'online')}</span>
                   )}
                 </div>
               </div>

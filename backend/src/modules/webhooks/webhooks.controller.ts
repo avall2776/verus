@@ -368,6 +368,11 @@ export class WebhooksController {
         messageObj?.extendedTextMessage?.text ||
         '';
 
+      const candidateName = data.pushName || data.verifiedBizName;
+      const contactDisplayName = candidateName && !candidateName.includes('@lid')
+        ? candidateName
+        : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : remoteJid);
+
       const normalizedPayload = {
         entry: [
           {
@@ -377,7 +382,7 @@ export class WebhooksController {
                   messaging_product: 'whatsapp',
                   contacts: [
                     {
-                      profile: { name: data.pushName || remoteJid },
+                      profile: { name: contactDisplayName },
                       wa_id: remoteJid,
                     },
                   ],
@@ -411,6 +416,30 @@ export class WebhooksController {
       );
 
       return { status: 'queued' };
+    }
+
+    // 4. Sincronização de Contatos do WhatsApp (CONTACTS_UPSERT)
+    if (event === 'contacts.upsert' || event === 'CONTACTS_UPSERT') {
+      const contactsList = Array.isArray(payload.data) ? payload.data : [payload.data];
+      for (const c of contactsList) {
+        const id = c?.id || c?.remoteJid || '';
+        const phone = id.replace('@s.whatsapp.net', '');
+        const pushName = c?.pushName || c?.verifiedName || c?.name;
+        const profilePictureUrl = c?.profilePictureUrl || null;
+
+        if (phone && pushName && !pushName.includes('@lid')) {
+          try {
+            await this.prisma.contact.updateMany({
+              where: { tenantId, phone },
+              data: {
+                name: pushName,
+                ...(profilePictureUrl ? { avatarUrl: profilePictureUrl } : {}),
+              },
+            });
+          } catch (e) {}
+        }
+      }
+      return { status: 'contacts_upsert_processed' };
     }
 
     return { status: 'ignored_unhandled_event' };

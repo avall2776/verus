@@ -92,6 +92,10 @@ export class WebhookProcessor extends WorkerHost {
     
     // 3. Upsert do Contact
     const phone = remoteJid;
+    const cleanName = (pushName && !pushName.includes('@lid'))
+      ? pushName
+      : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${remoteJid})`);
+
     const contact = await this.prisma.contact.upsert({
       where: {
         tenantId_phone: {
@@ -102,12 +106,10 @@ export class WebhookProcessor extends WorkerHost {
       create: {
         tenantId,
         phone,
-        name: pushName,
+        name: cleanName,
         source: 'WhatsApp',
       },
-      update: {
-        name: pushName
-      }
+      update: (pushName && !pushName.includes('@lid')) ? { name: pushName } : {}
     });
 
     if (!contact.avatarUrl) {

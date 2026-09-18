@@ -75,24 +75,31 @@ export class AiProcessor extends WorkerHost {
 
     // 4. Despachar a resposta para o Lead
     if (aiResponse.resposta_cliente) {
-      // O MessagingService se encarrega de disparar via axios para a Evolution API
-      await this.messagingService.sendText({
+      // O MessagingService se encarrega de disparar via driver compatível (Evolution API ou Meta API)
+      const sendRes = await this.messagingService.sendText({
         tenantId,
         phone: conversation.contact.phone,
         content: aiResponse.resposta_cliente
       });
 
-      // Salva a nossa própria resposta no banco como system/delivered
+      const messageStatus = sendRes?.success ? 'delivered' : 'failed';
+      const providerMsgId = sendRes?.messageId || `out_${Date.now()}`;
+
+      if (!sendRes?.success) {
+        this.logger.error(`Falha ao despachar resposta da IA para ${conversation.contact.phone}: ${sendRes?.error}`);
+      }
+
+      // Salva a nossa própria resposta no banco com status real do disparo
       const savedMsg = await this.prisma.message.create({
         data: {
           tenantId,
           conversationId,
           contactId,
-          providerMessageId: `out_${Date.now()}`, // ID temporário ou retornado da API
+          providerMessageId: providerMsgId,
           content: aiResponse.resposta_cliente,
           direction: 'OUTBOUND',
           senderType: 'system',
-          status: 'delivered', 
+          status: messageStatus, 
         }
       });
 
