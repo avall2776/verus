@@ -167,6 +167,7 @@ model Contact {
   source    String   // WhatsApp, Instagram, Web
   tags      String[] // Quente, Frio
   tenantId  String
+  whatsappLid String? // Identificador privado do WhatsApp (@lid)
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
   conversations Conversation[]
   messages  Message[]
@@ -181,6 +182,7 @@ model Contact {
 
   @@unique([tenantId, phone])
   @@index([tenantId])
+  @@index([tenantId, whatsappLid])
 }
 
 model Conversation {

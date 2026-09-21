@@ -46,6 +46,7 @@ export declare class MonitorController {
             source: string;
             tags: string[];
             tenantId: string;
+            whatsappLid: string | null;
             createdAt: Date;
             updatedAt: Date;
         };

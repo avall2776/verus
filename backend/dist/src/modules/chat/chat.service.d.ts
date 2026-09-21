@@ -37,6 +37,7 @@ export declare class ChatService {
             source: string;
             tags: string[];
             tenantId: string;
+            whatsappLid: string | null;
             createdAt: Date;
             updatedAt: Date;
         };
@@ -104,6 +105,7 @@ export declare class ChatService {
             source: string;
             tags: string[];
             tenantId: string;
+            whatsappLid: string | null;
             createdAt: Date;
             updatedAt: Date;
         };
@@ -145,6 +147,7 @@ export declare class ChatService {
             source: string;
             tags: string[];
             tenantId: string;
+            whatsappLid: string | null;
             createdAt: Date;
             updatedAt: Date;
         };
@@ -204,6 +207,7 @@ export declare class ChatService {
             source: string;
             tags: string[];
             tenantId: string;
+            whatsappLid: string | null;
             createdAt: Date;
             updatedAt: Date;
         };
@@ -253,6 +257,7 @@ export declare class ChatService {
             source: string;
             tags: string[];
             tenantId: string;
+            whatsappLid: string | null;
             createdAt: Date;
             updatedAt: Date;
         };
@@ -312,6 +317,7 @@ export declare class ChatService {
             source: string;
             tags: string[];
             tenantId: string;
+            whatsappLid: string | null;
             createdAt: Date;
             updatedAt: Date;
         };
@@ -361,6 +367,7 @@ export declare class ChatService {
             source: string;
             tags: string[];
             tenantId: string;
+            whatsappLid: string | null;
             createdAt: Date;
             updatedAt: Date;
         };

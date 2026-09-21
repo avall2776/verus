@@ -46,6 +46,7 @@ export declare class MonitorService {
             source: string;
             tags: string[];
             tenantId: string;
+            whatsappLid: string | null;
             createdAt: Date;
             updatedAt: Date;
         };

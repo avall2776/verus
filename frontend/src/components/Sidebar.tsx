@@ -448,10 +448,10 @@ export default function Sidebar() {
               </div>
               <div className="flex flex-col overflow-hidden min-w-0 flex-1">
                 <span className="text-xs font-bold text-white truncate leading-tight">
-                  {activeWorkspace?.name || "Workspace Principal"}
+                  {activeWorkspace?.name || targetTenantName || "Workspace Principal"}
                 </span>
                 <span className="text-[10px] text-gray-400 truncate">
-                  {currentUser?.tenantName ? `${currentUser.tenantName}` : "VERSUS INC."}
+                  {targetTenantName ? `${targetTenantName} (Suporte)` : (currentUser?.tenantName ? `${currentUser.tenantName}` : "VERSUS INC.")}
                 </span>
               </div>
               <ChevronDown 

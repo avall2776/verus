@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkspacesController = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 const workspaces_service_1 = require("./workspaces.service");
 const create_workspace_dto_1 = require("./dto/create-workspace.dto");
 const update_workspace_dto_1 = require("./dto/update-workspace.dto");
@@ -22,54 +23,50 @@ let WorkspacesController = class WorkspacesController {
     constructor(workspacesService) {
         this.workspacesService = workspacesService;
     }
-    async list(req) {
-        const tenantId = req.user?.tenantId;
+    async list(tenantId) {
         return this.workspacesService.list(tenantId);
     }
-    async create(req, dto) {
-        const tenantId = req.user?.tenantId;
+    async create(tenantId, dto) {
         return this.workspacesService.create(tenantId, dto);
     }
-    async update(req, id, dto) {
-        const tenantId = req.user?.tenantId;
+    async update(tenantId, id, dto) {
         return this.workspacesService.update(tenantId, id, dto);
     }
-    async delete(req, id) {
-        const tenantId = req.user?.tenantId;
+    async delete(tenantId, id) {
         return this.workspacesService.delete(tenantId, id);
     }
 };
 exports.WorkspacesController = WorkspacesController;
 __decorate([
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], WorkspacesController.prototype, "list", null);
 __decorate([
     (0, common_1.Post)(),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, create_workspace_dto_1.CreateWorkspaceDto]),
+    __metadata("design:paramtypes", [String, create_workspace_dto_1.CreateWorkspaceDto]),
     __metadata("design:returntype", Promise)
 ], WorkspacesController.prototype, "create", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, update_workspace_dto_1.UpdateWorkspaceDto]),
+    __metadata("design:paramtypes", [String, String, update_workspace_dto_1.UpdateWorkspaceDto]),
     __metadata("design:returntype", Promise)
 ], WorkspacesController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], WorkspacesController.prototype, "delete", null);
 exports.WorkspacesController = WorkspacesController = __decorate([

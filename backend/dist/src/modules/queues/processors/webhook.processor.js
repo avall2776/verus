@@ -64,6 +64,12 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             return { status: 'ignored_duplicate' };
         }
         const getLocalBuffer = (url) => {
+            if (evolutionMetadata?.localFilePath && fs.existsSync(evolutionMetadata.localFilePath)) {
+                try {
+                    return fs.readFileSync(evolutionMetadata.localFilePath);
+                }
+                catch { }
+            }
             if (!url)
                 return null;
             try {
@@ -192,41 +198,63 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         else if (!content) {
             content = '[Mídia Recebida]';
         }
-        if (evolutionMetadata?.realPhone && remoteJid.includes('@lid') && evolutionMetadata.realPhone !== remoteJid) {
-            const existingLidContact = await this.prisma.contact.findUnique({
-                where: { tenantId_phone: { tenantId, phone: remoteJid } }
-            });
-            if (existingLidContact) {
-                await this.prisma.contact.update({
-                    where: { id: existingLidContact.id },
-                    data: { phone: evolutionMetadata.realPhone }
-                }).catch(() => null);
-            }
-        }
-        const phone = (evolutionMetadata?.realPhone && evolutionMetadata.realPhone.length >= 10)
+        const isLid = remoteJid.includes('@lid');
+        const realPhone = (evolutionMetadata?.realPhone && evolutionMetadata.realPhone.length >= 10)
             ? evolutionMetadata.realPhone
-            : remoteJid;
+            : null;
+        let existingContact = await this.prisma.contact.findFirst({
+            where: {
+                tenantId,
+                OR: [
+                    ...(isLid ? [{ whatsappLid: remoteJid }] : []),
+                    { phone: remoteJid },
+                    ...(realPhone ? [{ phone: realPhone }, { whatsappLid: realPhone }] : []),
+                ],
+            },
+        });
         const rawPushName = pushName || evolutionMetadata?.pushName;
         const isGenericPushName = !rawPushName || rawPushName === 'Cliente WhatsApp' || rawPushName.includes('@lid') || rawPushName.startsWith('WhatsApp');
-        const cleanName = !isGenericPushName
-            ? rawPushName
-            : (phone.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${phone})`);
-        const contact = await this.prisma.contact.upsert({
-            where: {
-                tenantId_phone: {
+        let contact;
+        if (existingContact) {
+            const dataToUpdate = {};
+            if (isLid && !existingContact.whatsappLid) {
+                dataToUpdate.whatsappLid = remoteJid;
+            }
+            if (realPhone && existingContact.phone?.includes('@lid')) {
+                dataToUpdate.phone = realPhone;
+            }
+            if (!isGenericPushName && (existingContact.name === 'Cliente WhatsApp' || existingContact.name?.includes('@lid'))) {
+                dataToUpdate.name = rawPushName;
+            }
+            if (evolutionMetadata?.profilePictureUrl && !existingContact.avatarUrl) {
+                dataToUpdate.avatarUrl = evolutionMetadata.profilePictureUrl;
+            }
+            if (Object.keys(dataToUpdate).length > 0) {
+                contact = await this.prisma.contact.update({
+                    where: { id: existingContact.id },
+                    data: dataToUpdate,
+                }).catch(() => existingContact);
+            }
+            else {
+                contact = existingContact;
+            }
+        }
+        else {
+            const targetPhone = realPhone || remoteJid;
+            const cleanName = !isGenericPushName
+                ? rawPushName
+                : (targetPhone.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${targetPhone})`);
+            contact = await this.prisma.contact.create({
+                data: {
                     tenantId,
-                    phone,
-                }
-            },
-            create: {
-                tenantId,
-                phone,
-                name: cleanName,
-                source: 'WhatsApp',
-                avatarUrl: (evolutionMetadata?.profilePictureUrl && !evolutionMetadata.profilePictureUrl.includes('unsplash.com')) ? evolutionMetadata.profilePictureUrl : null,
-            },
-            update: !isGenericPushName ? { name: rawPushName } : {}
-        });
+                    phone: targetPhone,
+                    whatsappLid: isLid ? remoteJid : null,
+                    name: cleanName,
+                    source: 'WhatsApp',
+                    avatarUrl: (evolutionMetadata?.profilePictureUrl && !evolutionMetadata.profilePictureUrl.includes('unsplash.com')) ? evolutionMetadata.profilePictureUrl : null,
+                },
+            });
+        }
         const isGenericContact = !contact.name || contact.name === 'Cliente WhatsApp' || contact.name.includes('@lid') || contact.name.startsWith('WhatsApp');
         if (!contact.avatarUrl || isGenericContact) {
             try {
@@ -252,11 +280,12 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             }
         }
         if (!isWithinBusinessHours) {
-            this.logger.log(`Fora do horário comercial. Enviando fallback para ${phone}.`);
+            const contactPhone = contact.phone || remoteJid;
+            this.logger.log(`Fora do horário comercial. Enviando fallback para ${contactPhone}.`);
             const fallbackMsg = "Olá! Nosso horário de atendimento é de segunda a sexta, das 08h às 18h. Já recebemos sua mensagem e retornaremos assim que nossa equipe iniciar o expediente!";
             await this.messagingService.sendText({
                 tenantId,
-                phone,
+                phone: contactPhone,
                 content: fallbackMsg
             });
         }

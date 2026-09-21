@@ -472,6 +472,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     mediaMime: mediaMime,
                     mediaCaption: mediaCaption,
                     mediaFilename: mediaFilename,
+                    localFilePath: savedMediaInfo?.filePath || null,
                 },
             }, {
                 attempts: 3,

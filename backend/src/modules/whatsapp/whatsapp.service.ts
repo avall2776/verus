@@ -198,7 +198,7 @@ export class WhatsappService {
         const rawOwner = evo.owner || '';
         const phone = rawOwner.replace(/\D/g, '') || null;
 
-        const existing = await this.prisma.whatsAppInstance.findFirst({
+        let existing = await this.prisma.whatsAppInstance.findFirst({
           where: {
             tenantId,
             OR: [
@@ -208,6 +208,16 @@ export class WhatsappService {
             ],
           },
         });
+
+        // Se não achou pelo nome ou settings, busca pelo prefixo do ID gerado no nome técnico
+        if (!existing && instanceName.startsWith('versus_')) {
+          const parts = instanceName.split('_');
+          const instIdPrefix = parts[2];
+          if (instIdPrefix) {
+            const allInsts = await this.prisma.whatsAppInstance.findMany({ where: { tenantId } });
+            existing = allInsts.find(i => i.id.replace(/[^a-zA-Z0-9]/g, '').startsWith(instIdPrefix)) || null;
+          }
+        }
 
         if (!existing) {
           await this.prisma.whatsAppInstance.create({
@@ -239,6 +249,7 @@ export class WhatsappService {
             },
           });
         } else {
+          const currentSettings = (existing.settings as any) || {};
           await this.prisma.whatsAppInstance.update({
             where: { id: existing.id },
             data: {
@@ -247,6 +258,12 @@ export class WhatsappService {
               profileName: evo.profileName || existing.profileName,
               phoneNumber: phone || existing.phoneNumber,
               lastConnectedAt: isConnected ? new Date() : existing.lastConnectedAt,
+              settings: {
+                ...currentSettings,
+                provider: 'evolution',
+                instanceName: instanceName,
+                serverUrl: serverUrl,
+              },
             },
           });
         }

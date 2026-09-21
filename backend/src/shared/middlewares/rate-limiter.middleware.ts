@@ -27,18 +27,33 @@ export class RateLimiterMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     const reqPath = req.path || req.originalUrl || req.url || '';
 
-    // Webhooks de mensageria em lote não sofrem throttling por este middleware
-    if (reqPath.startsWith('/webhooks') || req.method === 'OPTIONS') {
+    // Webhooks de mensageria e mídias do chat não sofrem throttling
+    if (
+      reqPath.startsWith('/webhooks') || 
+      reqPath.startsWith('/media') || 
+      reqPath.includes('/media/') ||
+      req.method === 'OPTIONS'
+    ) {
       return next();
     }
 
-    const ip = req.ip || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+    // Extrai o IP real de quem fez o request (mesmo atrás do proxy Vercel/Cloudflare)
+    let clientIp = 'unknown';
+    const forwarded = req.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string' && forwarded) {
+      clientIp = forwarded.split(',')[0].trim();
+    } else if (Array.isArray(forwarded) && forwarded.length > 0) {
+      clientIp = forwarded[0];
+    } else {
+      clientIp = req.ip || req.socket?.remoteAddress || 'unknown';
+    }
+
     const isAuthRoute = reqPath.includes('/auth/login') || reqPath.includes('/reset-password');
     
-    // Limite rigoroso para autenticação (prevenção de força bruta) e padrão para rotas gerais
-    const limit = isAuthRoute ? 25 : 150; 
+    // Limite rigoroso apenas para tentativas de login (força bruta); rotas gerais têm margem ampla para operação contínua
+    const limit = isAuthRoute ? 30 : 1500; 
     const windowMs = 60 * 1000; // Janela de 1 minuto
-    const key = `${ip}:${isAuthRoute ? 'auth' : 'api'}`;
+    const key = `${clientIp}:${isAuthRoute ? 'auth' : 'api'}`;
     const now = Date.now();
 
     let bucket = this.clients.get(key);
@@ -57,7 +72,7 @@ export class RateLimiterMiddleware implements NestMiddleware {
     if (bucket.count > limit) {
       const retryAfterSec = Math.ceil((bucket.resetTime - now) / 1000);
       res.setHeader('Retry-After', retryAfterSec);
-      this.logger.warn(`[RateLimit Defense] IP ${ip} atingiu o limite na rota ${req.originalUrl} (${bucket.count}/${limit})`);
+      this.logger.warn(`[RateLimit Defense] IP ${clientIp} atingiu o limite na rota ${req.originalUrl} (${bucket.count}/${limit})`);
 
       return res.status(429).json({
         statusCode: 429,

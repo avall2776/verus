@@ -163,7 +163,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                 const isConnected = evo.status === 'open' || evo.connectionStatus === 'open';
                 const rawOwner = evo.owner || '';
                 const phone = rawOwner.replace(/\D/g, '') || null;
-                const existing = await this.prisma.whatsAppInstance.findFirst({
+                let existing = await this.prisma.whatsAppInstance.findFirst({
                     where: {
                         tenantId,
                         OR: [
@@ -173,6 +173,14 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                         ],
                     },
                 });
+                if (!existing && instanceName.startsWith('versus_')) {
+                    const parts = instanceName.split('_');
+                    const instIdPrefix = parts[2];
+                    if (instIdPrefix) {
+                        const allInsts = await this.prisma.whatsAppInstance.findMany({ where: { tenantId } });
+                        existing = allInsts.find(i => i.id.replace(/[^a-zA-Z0-9]/g, '').startsWith(instIdPrefix)) || null;
+                    }
+                }
                 if (!existing) {
                     await this.prisma.whatsAppInstance.create({
                         data: {
@@ -204,6 +212,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                     });
                 }
                 else {
+                    const currentSettings = existing.settings || {};
                     await this.prisma.whatsAppInstance.update({
                         where: { id: existing.id },
                         data: {
@@ -212,6 +221,12 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                             profileName: evo.profileName || existing.profileName,
                             phoneNumber: phone || existing.phoneNumber,
                             lastConnectedAt: isConnected ? new Date() : existing.lastConnectedAt,
+                            settings: {
+                                ...currentSettings,
+                                provider: 'evolution',
+                                instanceName: instanceName,
+                                serverUrl: serverUrl,
+                            },
                         },
                     });
                 }

@@ -25,6 +25,7 @@ export declare class ContactsService {
         source: string;
         tags: string[];
         tenantId: string;
+        whatsappLid: string | null;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -41,6 +42,7 @@ export declare class ContactsService {
         source: string;
         tags: string[];
         tenantId: string;
+        whatsappLid: string | null;
         createdAt: Date;
         updatedAt: Date;
     }>;

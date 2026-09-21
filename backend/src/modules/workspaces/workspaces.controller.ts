@@ -7,9 +7,9 @@ import {
   Body,
   Param,
   UseGuards,
-  Request,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 import { WorkspacesService } from './workspaces.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
@@ -20,30 +20,26 @@ export class WorkspacesController {
   constructor(private readonly workspacesService: WorkspacesService) {}
 
   @Get()
-  async list(@Request() req) {
-    const tenantId = req.user?.tenantId;
+  async list(@CurrentTenant() tenantId: string) {
     return this.workspacesService.list(tenantId);
   }
 
   @Post()
-  async create(@Request() req, @Body() dto: CreateWorkspaceDto) {
-    const tenantId = req.user?.tenantId;
+  async create(@CurrentTenant() tenantId: string, @Body() dto: CreateWorkspaceDto) {
     return this.workspacesService.create(tenantId, dto);
   }
 
   @Patch(':id')
   async update(
-    @Request() req,
+    @CurrentTenant() tenantId: string,
     @Param('id') id: string,
     @Body() dto: UpdateWorkspaceDto
   ) {
-    const tenantId = req.user?.tenantId;
     return this.workspacesService.update(tenantId, id, dto);
   }
 
   @Delete(':id')
-  async delete(@Request() req, @Param('id') id: string) {
-    const tenantId = req.user?.tenantId;
+  async delete(@CurrentTenant() tenantId: string, @Param('id') id: string) {
     return this.workspacesService.delete(tenantId, id);
   }
 }

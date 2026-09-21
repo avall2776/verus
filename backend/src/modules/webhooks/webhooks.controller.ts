@@ -575,6 +575,7 @@ export class WebhooksController {
             mediaMime: mediaMime,
             mediaCaption: mediaCaption,
             mediaFilename: mediaFilename,
+            localFilePath: savedMediaInfo?.filePath || null,
           },
         },
         {

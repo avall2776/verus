@@ -4,7 +4,7 @@ import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 export declare class WorkspacesController {
     private readonly workspacesService;
     constructor(workspacesService: WorkspacesService);
-    list(req: any): Promise<{
+    list(tenantId: string): Promise<{
         workspaces: {
             id: string;
             name: string;
@@ -24,7 +24,7 @@ export declare class WorkspacesController {
             planName: string;
         };
     }>;
-    create(req: any, dto: CreateWorkspaceDto): Promise<{
+    create(tenantId: string, dto: CreateWorkspaceDto): Promise<{
         message: string;
         workspace: {
             id: string;
@@ -38,7 +38,7 @@ export declare class WorkspacesController {
             themeColor: string | null;
         };
     }>;
-    update(req: any, id: string, dto: UpdateWorkspaceDto): Promise<{
+    update(tenantId: string, id: string, dto: UpdateWorkspaceDto): Promise<{
         message: string;
         workspace: {
             id: string;
@@ -52,7 +52,7 @@ export declare class WorkspacesController {
             themeColor: string | null;
         };
     }>;
-    delete(req: any, id: string): Promise<{
+    delete(tenantId: string, id: string): Promise<{
         message: string;
     }>;
 }

@@ -158,6 +158,7 @@ export declare class EmailsService {
             source: string;
             tags: string[];
             tenantId: string;
+            whatsappLid: string | null;
             createdAt: Date;
             updatedAt: Date;
         };
@@ -213,6 +214,7 @@ export declare class EmailsService {
             source: string;
             tags: string[];
             tenantId: string;
+            whatsappLid: string | null;
             createdAt: Date;
             updatedAt: Date;
         };

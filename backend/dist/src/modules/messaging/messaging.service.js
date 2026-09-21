@@ -71,14 +71,14 @@ let MessagingService = MessagingService_1 = class MessagingService {
         const metaPhoneNumberId = instance?.phoneNumberId || tenant?.metaPhoneNumberId || null;
         const preferredProvider = (isEvolution || !hasMetaCreds) ? 'evolution' : 'meta';
         let evolutionInstanceName = instance?.settings?.instanceName;
-        if (!evolutionInstanceName) {
-            if (instance?.name && !instance.name.includes('Linha') && !instance.name.includes('WhatsApp')) {
-                evolutionInstanceName = instance.name;
+        if (!evolutionInstanceName || !evolutionInstanceName.startsWith('versus_')) {
+            if (instance?.name && instance.name.startsWith('versus_')) {
+                evolutionInstanceName = instance.name.replace(' (WhatsApp Web)', '').trim();
             }
             else {
-                const shortTenant = tenantId.replace(/-/g, '').substring(0, 10);
-                const shortInst = instance?.id ? instance.id.replace(/-/g, '').substring(0, 10) : '';
-                evolutionInstanceName = shortInst ? `versus_${shortTenant}_${shortInst}` : `versus_${shortTenant}`;
+                const shortTenant = tenantId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+                const shortInst = instance?.id ? instance.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) : 'inst';
+                evolutionInstanceName = `versus_${shortTenant}_${shortInst}`;
             }
         }
         const evolutionApiKey = instance?.token || evolutionGlobalKey;
