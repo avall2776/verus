@@ -2279,11 +2279,32 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Foco da Semana / do Dia**: Continuidade do desenvolvimento e estabilização da plataforma VERSUS, testes operacionais, refinamento dos fluxos e avanço nos próximos módulos estratégicos.
   - **Diretriz Geral**: Padrão Top SaaS mundial, design corporativo monocromático VERSUS, zero mocks, testes rigorosos de ponta a ponta com build código 0 e homologação com o usuário.
 
+- **[21/09/2026 - 12:00]** ⏸️ **Pausa para Almoço / Meio-Dia - Ponto Eletrônico Registrado (Equipe de Engenharia)**:
+  - **Registro Oficial de Ponto**: 2º Registro Oficial do Dia concluído às 12:00 (Pausa para Almoço / Meio-Dia).
+  - **Atividades da Manhã**: Planejamento e arquitetura do Agente IA Autônomo da Central de Suporte, alinhamento dos guardrails de segurança e mapeamento de conhecimentos dos módulos.
+  - **Retorno Previsto**: 13:30 para início do turno da tarde.
+
+- **[21/09/2026 - 13:30]** ▶️ **Retorno do Almoço / Início do Turno da Tarde - Ponto Eletrônico Registrado (Equipe de Engenharia)**:
+  - **Registro Oficial de Ponto**: 3º Registro Oficial do Dia concluído às 13:30 (Retorno do Almoço / Início do Turno da Tarde).
+  - **Pauta da Tarde**: Desenvolvimento integral do Agente IA Autônomo de Suporte (Prisma ORM, SupportAiService, guardrails anti-vazamento, handoff automático para CRM/Engenharia e pesquisa CSAT).
+
+- **[21/09/2026 - 18:00]** 🏁 **Fim de Turno / Saída Consolidada - Ponto Eletrônico Registrado (Equipe de Engenharia)**:
+  - **Registro Oficial de Ponto**: 4º Registro Oficial do Dia concluído às 18:00 (Saída Consolidada / Encerramento do Expediente com todas as metas cumpridas).
+  - **Balanço Consolidado do Dia (21/09/2026)**:
+    - ✅ **1º Registro (08:00)**: Início de Turno Matinal (Imutável & Inviolável).
+    - ✅ **2º Registro (12:00)**: Pausa para Almoço / Meio-Dia.
+    - ✅ **3º Registro (13:30)**: Retorno do Almoço / Turno da Tarde.
+    - ✅ **4º Registro (18:00)**: Fim de Turno / Saída Consolidada (Ponto Batido e Encerrado).
+  - **Entregas & Marcos de Segunda-feira (21/09/2026)**:
+    - ✅ **Fase 82 Concluída com Êxito**: Agente de IA Autônomo na Central de Suporte VERSUS em produção. Resolução humanizada no acolhimento, RAG nos módulos da plataforma, cancelas anti-vazamento, handoff para CRM/Engenharia, encerramento cordial com CSAT e governança no Super Admin com botão de assunção humana (pausa da IA).
+    - ✅ **Deploy Realizado com Sucesso**: Vercel e VPS Hostinger (PM2 `versus-engine`) 100% operacionais e sincronizados.
+  - **Próxima Sessão Agendada**: 22/09/2026 às 08:00 (Pauta: Transição Híbrida de Chaves OpenAI BYOK com Degustação de 7 dias).
+
 ---
 
 ### 📋 FASE 80: REFINAMENTO TÉCNICO GERAL & EXPERIÊNCIA DE NOTIFICAÇÕES (HOJE - 18/09/2026)
-- [ ] **1. Refinamento Técnico Completo & Varredura E2E de Todo o Sistema**:
-  - [ ] Auditoria completa de rotas, componentes e módulos (Inbox, CRM, Metas, Propostas, Contratos, E-mail, Suporte e Chat da Equipe) para assegurar funcionamento fluido sem erros residuais.
+- [x] **1. Refinamento Técnico Completo & Varredura E2E de Todo o Sistema**:
+  - [x] Auditoria completa de rotas, componentes e módulos (Inbox, CRM, Metas, Propostas, Contratos, E-mail, Suporte e Chat da Equipe) para assegurar funcionamento fluido sem erros residuais.
 - [x] **2. Testes & Homologação de Conexão WhatsApp via QR Code**:
   - [x] Diagnóstico e resolução da queda abrupta de handshake: expurgo de payloads sintéticos e geração de sessões Baileys autênticas via Evolution API.
   - [x] Correção da ponte Docker-to-Host no webhook (`http://172.17.0.1:3001`), eliminando falhas de entrega de eventos `ECONNREFUSED`.
@@ -2355,3 +2376,16 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] Card interativo de Pesquisa de Satisfação (CSAT) de 1 a 5 estrelas com feedback opcional em chamados resolvidos/fechados.
 - [x] **5. Validação Técnica & Compilação**:
   - [x] `npx tsc --noEmit` aprovado com 0 erros no backend e frontend.
+
+---
+
+### 📋 FASE 83: TRANSIÇÃO HÍBRIDA DE CHAVES OPENAI (BYOK COM DEGUSTAÇÃO DE 7 DIAS) & GESTÃO DE CRÉDITOS (PAUTA DE AMANHÃ - 22/09/2026)
+- [ ] **1. Período de Degustação Oficial de 7 Dias (Platform Master Key)**:
+  - [ ] Regra de provisionamento de novos tenants: liberação de 7 dias de uso automático utilizando a chave oficial da plataforma VERSUS.
+  - [ ] Contador regressivo amigável exibido nas configurações de IA e dashboard do cliente ("Seu período de degustação da IA expira em X dias").
+- [ ] **2. Assistente e Interface de Transição BYOK (Bring Your Own Key)**:
+  - [ ] Interface visual com passo-a-passo para o cliente criar conta na OpenAI Platform, adicionar créditos e gerar chave de API (sk-...).
+  - [ ] Campo de validação e teste imediato de conexão da chave OpenAI com máscara de segurança e criptografia no banco.
+- [ ] **3. Fail-Safe Amigável Pós-Degustação**:
+  - [ ] Bloqueio amigável do robô de IA após os 7 dias caso a chave própria não seja inserida, sem travar as demais funcionalidades manuais (WhatsApp, CRM, Contratos, Metas).
+  - [ ] Notificação preventiva para o administrador da empresa 2 dias antes do vencimento do trial.
