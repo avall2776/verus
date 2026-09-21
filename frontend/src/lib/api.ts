@@ -65,6 +65,16 @@ api.interceptors.request.use((config) => {
     }
   }
 
+  // Se houver um tenant alvo definido (Super Admin acessando agência cliente para suporte)
+  const targetTenantId = typeof window !== 'undefined' ? localStorage.getItem('versus_target_tenant_id') : null;
+  if (targetTenantId) {
+    if (typeof (config.headers as any).set === 'function') {
+      (config.headers as any).set('x-target-tenant-id', targetTenantId);
+    } else {
+      config.headers['x-target-tenant-id'] = targetTenantId;
+    }
+  }
+
   if (config.data instanceof FormData) {
     delete config.headers['Content-Type'];
   }

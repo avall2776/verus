@@ -2304,6 +2304,46 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ---
 
+### 📋 FASE 82: RESOLUÇÃO DEFINITIVA DE MULTI-TENANCY, ISOLAMENTO WHATSAPP, MÍDIAS, CICLO DE CONEXÃO, SUPER ADMIN & CONTROLE DE IA (21/09/2026)
+*Fase iniciada para resolução de todos os 7 pilares diagnosticados na auditoria técnica de 21/09/2026. Nenhuma tarefa será dada como concluída até a homologação e validação formal do usuário.*
+
+- [ ] ⏳ **[INICIADA / EM ANDAMENTO]** **1. Blindagem e Isolamento Estrito Multi-Tenant no WhatsApp (Fim do Vazamento de Dados)**:
+  - [ ] ⏳ Saneamento e desduplicação física de instâncias duplicadas na tabela `WhatsAppInstance` no PostgreSQL/Supabase.
+  - [ ] ⏳ Refatoração de `syncEvolutionInstances`: bloqueio absoluto de importação de instâncias não pertencentes ao `tenantId` chamador.
+  - [ ] ⏳ Fim da sobrescrita cega de Webhook na Evolution API (`/webhook/set/${instanceName}`), garantindo que cada instância aponte exclusivamente para o webhook do seu próprio tenant.
+  - [ ] ⏳ Roteamento inequívoco de eventos em `webhooks.controller.ts`, eliminando `findFirst` sem escopo de tenant e erradicando fallbacks padrão para `tenant_123`.
+
+- [ ] ⏳ **[INICIADA / EM ANDAMENTO]** **2. Correção do Pipeline de Mídias (Áudio, Imagem, Documento) & Transcrição Whisper**:
+  - [ ] ⏳ Resiliência no download e extração de Base64 de mídias na Evolution API com fallbacks adequados para áudio PTT e fotos.
+  - [ ] ⏳ Eliminação da conversão silenciosa de mídias falhadas para mensagens de texto `[Mídia Recebida]`.
+  - [ ] ⏳ Persistência obrigatória do campo `audioTranscription` no modelo `Message` no banco de dados para alimentar o modal de transcrição da interface.
+  - [ ] ⏳ Validação da reprodução de áudio e visualização de imagens/vídeos no `Inbox` sem erros de codec ou URLs quebradas.
+
+- [ ] ⏳ **[INICIADA / EM ANDAMENTO]** **3. Resolução de Número Real de Telefone (Eliminação do `@lid`)**:
+  - [ ] ⏳ Captura e descompactação do número de telefone real a partir dos metadados do Baileys (`participantPn`, `senderPn` ou busca reversa de contato via LID).
+  - [ ] ⏳ Formatação E.164 no modelo `Contact.phone` e exibição limpa e discável no chat do frontend.
+
+- [ ] ⏳ **[INICIADA / EM ANDAMENTO]** **4. Ciclo de Vida da Conexão, Reconexão e Botão "Sincronizar Conexão" Ativo**:
+  - [ ] ⏳ Criação do endpoint dedicado `POST /whatsapp/instances/:id/sync` no backend para testar estado real na Evolution API e reconectar socket inativo.
+  - [ ] ⏳ Correção do bug do ternário em `whatsapp.service.ts` (linha 228), garantindo que status seja atualizado para `disconnected` quando o socket cair.
+  - [ ] ⏳ Vinculação do botão "Sincronizar Conexão" no frontend com o novo endpoint de sincronização ativa.
+
+- [ ] ⏳ **[INICIADA / EM ANDAMENTO]** **5. Trava de Desconexão e Proteção Anti-Loop da IA contra Robôs**:
+  - [ ] ⏳ Interrupção imediata do pipeline de IA se a instância correspondente do WhatsApp estiver com status `disconnected`.
+  - [ ] ⏳ Implementação de trava de segurança anti-loop (máximo de respostas consecutivas da IA) e detecção de respostas automáticas de outros robôs para evitar conversas infinitas.
+
+- [ ] ⏳ **[INICIADA / EM ANDAMENTO]** **6. Funcionalidade de Exclusão de Mensagem Individual ("Apagar para todos")**:
+  - [ ] ⏳ Implementação da rota `DELETE /conversations/:id/messages/:messageId` no backend com disparo de revogação para a Evolution API (`deleteMessageForEveryone`).
+  - [ ] ⏳ Exclusão/atualização no banco de dados e disparo de evento WebSocket `messageDeleted` em tempo real para o frontend.
+  - [ ] ⏳ Adição da ação "Apagar mensagem" no menu de contexto das mensagens no frontend.
+
+- [ ] ⏳ **[INICIADA / EM ANDAMENTO]** **7. Super Admin: Acesso Global a Todas as Agências (Impersonation / Seletor de Tenant)**:
+  - [ ] ⏳ Adição do botão "Acessar Agência" na tabela de empresas do Super Admin (`/super-admin/companies`).
+  - [ ] ⏳ Seletor dinâmico de Tenant no topo da Sidebar para administradores com perfil `SUPER_ADMIN`.
+  - [ ] ⏳ Injeção transparente de `x-target-tenant-id` no cliente API e banner indicativo de "Modo Suporte / Gestão Global".
+
+---
+
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
 *Esta seção armazena ideias arquiteturais avançadas e expansões de escopo para longo prazo.*
 

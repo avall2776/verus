@@ -99,6 +99,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         let content = message.text?.body || '';
         let msgType = isAudio ? 'audio' : isImage ? 'image' : isDocument ? 'document' : (message.type || 'text');
         let mediaUrl = null;
+        let audioTranscription = null;
         if (isAudio) {
             msgType = 'audio';
             const audioObj = message.audio || message.voice;
@@ -116,6 +117,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 this.logger.log(`[Multimodal Audio] Transcrevendo áudio recebido de ${remoteJid}...`);
                 const transcription = await this.aiService.transcribeAudio(audioBuffer, path.basename(mediaUrl || 'audio.ogg'), mimeType);
                 if (transcription) {
+                    audioTranscription = transcription;
                     content = `🎤 [Áudio]: "${transcription}"`;
                 }
                 else {
@@ -190,12 +192,25 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         else if (!content) {
             content = '[Mídia Recebida]';
         }
-        const phone = remoteJid;
+        if (evolutionMetadata?.realPhone && remoteJid.includes('@lid') && evolutionMetadata.realPhone !== remoteJid) {
+            const existingLidContact = await this.prisma.contact.findUnique({
+                where: { tenantId_phone: { tenantId, phone: remoteJid } }
+            });
+            if (existingLidContact) {
+                await this.prisma.contact.update({
+                    where: { id: existingLidContact.id },
+                    data: { phone: evolutionMetadata.realPhone }
+                }).catch(() => null);
+            }
+        }
+        const phone = (evolutionMetadata?.realPhone && evolutionMetadata.realPhone.length >= 10)
+            ? evolutionMetadata.realPhone
+            : remoteJid;
         const rawPushName = pushName || evolutionMetadata?.pushName;
         const isGenericPushName = !rawPushName || rawPushName === 'Cliente WhatsApp' || rawPushName.includes('@lid') || rawPushName.startsWith('WhatsApp');
         const cleanName = !isGenericPushName
             ? rawPushName
-            : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${remoteJid})`);
+            : (phone.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${phone})`);
         const contact = await this.prisma.contact.upsert({
             where: {
                 tenantId_phone: {
@@ -278,6 +293,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 content,
                 type: msgType,
                 mediaUrl,
+                audioTranscription,
                 senderType: 'contact',
                 status: 'delivered',
             }
@@ -298,6 +314,17 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             contact: { phone: contact.phone, name: contact.name, avatarUrl: contact.avatarUrl }
         });
         if (conversation.status === 'bot_active') {
+            const connectedInst = await this.prisma.whatsAppInstance.findFirst({
+                where: { tenantId, status: 'connected' }
+            });
+            if (!connectedInst) {
+                this.logger.warn(`Tenant [${tenantId}] sem WhatsApp conectado. Conversa [${conversation.id}] mantida como 'waiting' sem IA.`);
+                await this.prisma.conversation.update({
+                    where: { id: conversation.id },
+                    data: { status: 'waiting' }
+                });
+                return { status: 'instance_disconnected' };
+            }
             if (!isWithinBusinessHours) {
                 this.logger.log(`Conversa [${conversation.id}] mantida sem IA por estar fora do expediente.`);
                 const fallbackMsgText = "Olá! Nosso horário de atendimento é de segunda a sexta, das 08h às 18h. Já recebemos sua mensagem e retornaremos assim que nossa equipe iniciar o expediente!";

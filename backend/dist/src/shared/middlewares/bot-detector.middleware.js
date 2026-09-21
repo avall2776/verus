@@ -44,7 +44,8 @@ let BotDetectorMiddleware = BotDetectorMiddleware_1 = class BotDetectorMiddlewar
         const rawUserAgent = String(req.headers['user-agent'] || '').toLowerCase();
         const reqPath = req.path || req.originalUrl || req.url || '';
         const isWebhook = reqPath.startsWith('/webhooks') || reqPath.startsWith('/api/webhooks');
-        if (isWebhook) {
+        const isMedia = reqPath.startsWith('/media') || reqPath.startsWith('/api/media') || reqPath.includes('/media/');
+        if (isWebhook || isMedia) {
             return next();
         }
         if (!rawUserAgent && req.method !== 'OPTIONS') {

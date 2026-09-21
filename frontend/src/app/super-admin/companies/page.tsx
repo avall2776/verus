@@ -23,7 +23,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Edit2,
-  Plus
+  Plus,
+  LogIn
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -135,6 +136,14 @@ export default function SuperAdminCompaniesPage() {
       tenantName: company.name,
       adminEmail: company.adminUser?.email || company.email || "Administrador",
     });
+  };
+
+  const handleAccessCompany = (company: any) => {
+    localStorage.setItem('versus_target_tenant_id', company.id);
+    localStorage.setItem('versus_target_tenant_name', company.name);
+    window.dispatchEvent(new Event('tenant_switched'));
+    toast.success(`Acessando agência "${company.name}" em Modo Suporte...`);
+    router.push('/inbox');
   };
 
   return (
@@ -339,6 +348,16 @@ export default function SuperAdminCompaniesPage() {
                     {/* Ações Administrativas */}
                     <td className="p-3.5 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        {/* Botão Acessar Agência (Modo Suporte) */}
+                        <button
+                          onClick={() => handleAccessCompany(company)}
+                          title={`Acessar painel e conversas da empresa "${company.name}" (Modo Suporte)`}
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-cyan-950/60 border border-cyan-800/60 hover:bg-cyan-900/60 text-cyan-300 hover:text-white transition-all text-xs font-semibold shadow-sm cursor-pointer"
+                        >
+                          <LogIn size={12} className="text-cyan-400" />
+                          <span>Acessar</span>
+                        </button>
+
                         {/* Botão Raio-X */}
                         <button
                           onClick={() => handleOpenXRay(company.id)}

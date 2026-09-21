@@ -1021,5 +1021,56 @@ export class ChatService {
     this.chatGateway.emitNewMessage(tenantId, msg);
     return msg;
   }
+
+  async deleteMessage(tenantId: string, conversationId: string, messageId: string) {
+    const message = await this.prisma.message.findFirst({
+      where: { id: messageId, conversationId, tenantId },
+      include: {
+        contact: true,
+      },
+    });
+
+    if (!message) {
+      throw new NotFoundException('Mensagem não encontrada');
+    }
+
+    // Se for mensagem outbound e tiver providerMessageId, tenta revogar no WhatsApp (Apagar para todos)
+    if (message.direction === 'OUTBOUND' && message.providerMessageId && !message.providerMessageId.startsWith('fallback_')) {
+      try {
+        const instances = await this.prisma.whatsAppInstance.findMany({
+          where: { tenantId },
+          orderBy: { isDefault: 'desc' },
+        });
+        const activeInst = instances.find(i => i.status === 'connected') || instances[0];
+        if (activeInst) {
+          const set = (activeInst.settings as any) || {};
+          const instanceName = set.instanceName || activeInst.name || this.whatsappService.getSanitizedInstanceName(tenantId, activeInst.id);
+          const targetJid = message.contact.phone;
+          await this.whatsappService.deleteMessageForEveryone(
+            tenantId,
+            instanceName,
+            targetJid,
+            message.providerMessageId
+          );
+        }
+      } catch (err: any) {
+        this.logger.warn(`Erro ao deletar mensagem no WhatsApp Evolution: ${err.message}`);
+      }
+    }
+
+    // Remove a mensagem do banco de dados
+    await this.prisma.message.delete({
+      where: { id: message.id },
+    });
+
+    // Emite evento via WebSocket para atualizar todos os operadores em tempo real
+    this.chatGateway.emitMessageDeleted(tenantId, {
+      conversationId,
+      messageId: message.id,
+    });
+
+    this.logger.log(`Mensagem [${message.id}] apagada com sucesso na conversa [${conversationId}]`);
+    return { success: true, messageId: message.id };
+  }
 }
 

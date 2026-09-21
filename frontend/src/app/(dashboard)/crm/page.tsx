@@ -1375,16 +1375,23 @@ function CrmContent() {
                                         {deal.contact?.name || "Contato não informado"}
                                       </span>
                                       {deal.contact?.phone ? (
-                                        <a 
-                                          href={`https://wa.me/${deal.contact.phone.replace(/\D/g, '')}`} 
-                                          target="_blank" 
-                                          rel="noreferrer"
-                                          onClick={(e) => e.stopPropagation()}
-                                          className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
-                                        >
-                                          <Phone size={9} className="text-[#25D366]" />
-                                          <span>{deal.contact.phone}</span>
-                                        </a>
+                                        deal.contact.phone.includes('@lid') ? (
+                                          <span className="text-[10px] text-emerald-400/80 flex items-center gap-1">
+                                            <Phone size={9} className="text-[#25D366]" />
+                                            <span>WhatsApp (Privado)</span>
+                                          </span>
+                                        ) : (
+                                          <a 
+                                            href={`https://wa.me/${deal.contact.phone.replace(/\D/g, '')}`} 
+                                            target="_blank" 
+                                            rel="noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
+                                          >
+                                            <Phone size={9} className="text-[#25D366]" />
+                                            <span>{deal.contact.phone}</span>
+                                          </a>
+                                        )
                                       ) : (
                                         <span className="text-[10px] text-gray-500 italic">Sem telefone</span>
                                       )}
@@ -1888,7 +1895,7 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
                 </h4>
                 <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
                   <span className="text-[#25D366]">🟢</span>
-                  <span className="truncate">{deal.contact?.phone || "+55 00 00000-0000"}</span>
+                  <span className="truncate">{deal.contact?.phone?.includes('@lid') ? 'WhatsApp (Privado)' : (deal.contact?.phone || "+55 00 00000-0000")}</span>
                 </div>
               </div>
             </div>

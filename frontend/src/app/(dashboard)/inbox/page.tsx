@@ -463,7 +463,7 @@ function InboxContent() {
           return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
         }
       }
-      return `WhatsApp ID (${lidDigits.substring(0, 6)}...)`;
+      return 'WhatsApp (Privado)';
     }
     const clean = cleanJid.replace(/\D/g, '');
     if (clean.length === 13 && clean.startsWith('55')) {
@@ -738,6 +738,22 @@ function InboxContent() {
     navigator.clipboard.writeText(text);
     setCopiedField(fieldKey);
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!activeChat) return;
+    if (!confirm("Deseja apagar esta mensagem para todos? Esta ação removerá a mensagem do painel e apagará para o cliente no WhatsApp.")) {
+      return;
+    }
+
+    try {
+      await api.delete(`/conversations/${activeChat}/messages/${messageId}`);
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+      toast.success("Mensagem apagada para todos com sucesso!");
+    } catch (err: any) {
+      console.error("Erro ao apagar mensagem:", err);
+      toast.error(err.response?.data?.message || "Erro ao apagar mensagem.");
+    }
   };
 
   useEffect(() => {
@@ -1126,16 +1142,25 @@ function InboxContent() {
       );
     };
 
+    const handleMessageDeleted = (data: { conversationId: string; messageId: string }) => {
+      console.log('Message Deleted via WebSocket:', data);
+      if (data.conversationId === activeChat) {
+        setMessages((prev) => prev.filter((m) => m.id !== data.messageId));
+      }
+    };
+
     socket.on('newMessage', handleNewMessage);
     socket.on('conversationUpdated', handleConversationUpdated);
     socket.on('contactUpdated', handleContactUpdated);
     socket.on('messageStatusUpdated', handleMessageStatusUpdated);
+    socket.on('messageDeleted', handleMessageDeleted);
 
     return () => {
       socket.off('newMessage', handleNewMessage);
       socket.off('conversationUpdated', handleConversationUpdated);
       socket.off('contactUpdated', handleContactUpdated);
       socket.off('messageStatusUpdated', handleMessageStatusUpdated);
+      socket.off('messageDeleted', handleMessageDeleted);
     };
   }, [socket, activeChat, activeTab, activeFilterTab]);
 
@@ -2443,6 +2468,17 @@ function InboxContent() {
 
                       {/* Balão de Mensagem WhatsApp */}
                       <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5`}>
+                        {/* Botão Apagar Mensagem (Apagar para todos no WhatsApp) */}
+                        {isMe && !msg.isInternal && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            title="Apagar mensagem para todos no WhatsApp"
+                            className="absolute -top-2 -left-6 p-1 rounded-full bg-slate-900/90 border border-slate-700/80 text-slate-400 hover:text-rose-400 hover:border-rose-500/60 opacity-0 group-hover:opacity-100 transition-all shadow-md z-10 cursor-pointer"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        )}
                         <div className={`text-sm shadow-sm relative transition-all pt-1.5 pb-1.5 px-3 min-w-[85px] ${
                           msg.isInternal
                             ? 'bg-[#281b0a] text-amber-100 rounded-lg rounded-tr-none border border-amber-500/30'
@@ -2572,7 +2608,7 @@ function InboxContent() {
                                       <span>Transcrição Automática (IA)</span>
                                     </div>
                                     <p className="italic text-slate-300 leading-relaxed text-[11px]">
-                                      "{msg.audioTranscription || 'Mensagem de áudio recebida via WhatsApp.'}"
+                                      "{msg.audioTranscription || (msg.content?.startsWith('🎤 [Áudio]: "') ? msg.content.replace(/^🎤 \[Áudio\]: "(.*)"$/, '$1') : 'Mensagem de voz recebida.')}"
                                     </p>
                                   </div>
                                 )}

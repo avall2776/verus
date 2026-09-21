@@ -548,4 +548,8 @@ export declare class ChatService {
         scheduledAt: Date | null;
         conversationId: string;
     }>;
+    deleteMessage(tenantId: string, conversationId: string, messageId: string): Promise<{
+        success: boolean;
+        messageId: string;
+    }>;
 }

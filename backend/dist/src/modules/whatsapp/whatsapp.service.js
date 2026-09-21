@@ -144,6 +144,22 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                         continue;
                     }
                 }
+                else {
+                    const belongsToCurrentTenant = await this.prisma.whatsAppInstance.findFirst({
+                        where: {
+                            tenantId,
+                            OR: [
+                                { settings: { path: ['instanceName'], equals: instanceName } },
+                                { name: instanceName },
+                                { name: `${instanceName} (WhatsApp Web)` },
+                            ],
+                        },
+                        select: { id: true },
+                    });
+                    if (!belongsToCurrentTenant) {
+                        continue;
+                    }
+                }
                 const isConnected = evo.status === 'open' || evo.connectionStatus === 'open';
                 const rawOwner = evo.owner || '';
                 const phone = rawOwner.replace(/\D/g, '') || null;
@@ -191,7 +207,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                     await this.prisma.whatsAppInstance.update({
                         where: { id: existing.id },
                         data: {
-                            status: isConnected ? 'connected' : existing.status,
+                            status: isConnected ? 'connected' : (existing.status === 'qrcode' ? 'qrcode' : 'disconnected'),
                             profilePicUrl: evo.profilePictureUrl || existing.profilePicUrl,
                             profileName: evo.profileName || existing.profileName,
                             phoneNumber: phone || existing.phoneNumber,
@@ -533,6 +549,68 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             message: 'Instância desconectada com sucesso.'
         };
     }
+    async syncInstanceStatus(tenantId, id) {
+        const instance = await this.prisma.whatsAppInstance.findFirst({
+            where: { id, tenantId },
+        });
+        if (!instance) {
+            throw new common_1.NotFoundException('Instância não encontrada.');
+        }
+        const currentSettings = instance.settings || {};
+        const instanceName = currentSettings.instanceName || this.getSanitizedInstanceName(tenantId, id, instance.name);
+        const { serverUrl, apiKey } = this.getEvolutionConfig();
+        try {
+            const stateRes = await axios_1.default.get(`${serverUrl}/instance/connectionState/${instanceName}`, {
+                headers: { apikey: apiKey },
+                timeout: 5000,
+            }).catch(() => null);
+            const evoState = stateRes?.data?.instance?.state || stateRes?.data?.state;
+            const isConnected = evoState === 'open' || evoState === 'connected';
+            let newStatus = isConnected ? 'connected' : 'disconnected';
+            let phone = instance.phoneNumber;
+            if (isConnected) {
+                const owner = stateRes?.data?.instance?.owner || stateRes?.data?.owner;
+                if (owner) {
+                    phone = String(owner).replace(/\D/g, '') || phone;
+                }
+            }
+            else {
+                try {
+                    await axios_1.default.get(`${serverUrl}/instance/connect/${instanceName}`, {
+                        headers: { apikey: apiKey },
+                        timeout: 5000,
+                    });
+                }
+                catch (reconnErr) { }
+            }
+            const updated = await this.prisma.whatsAppInstance.update({
+                where: { id: instance.id },
+                data: {
+                    status: newStatus,
+                    phoneNumber: phone,
+                    lastConnectedAt: isConnected ? new Date() : instance.lastConnectedAt,
+                },
+            });
+            await this.prisma.whatsAppConnectionHistory.create({
+                data: {
+                    instanceId: instance.id,
+                    status: isConnected ? 'connected' : 'disconnected',
+                    details: `Sincronização ativa executada. Estado na Evolution API: ${evoState || 'fechado/ausente'}`,
+                },
+            });
+            this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
+            return {
+                success: true,
+                status: newStatus,
+                instance: updated,
+                message: isConnected ? 'Instância sincronizada e conectada com sucesso!' : 'Instância desconectada no WhatsApp. Gere um novo QR Code para parear.',
+            };
+        }
+        catch (err) {
+            this.logger.error(`Erro ao sincronizar status da instância [${id}]: ${err.message}`);
+            throw new common_1.BadRequestException(`Falha ao sincronizar com o servidor WhatsApp: ${err.message}`);
+        }
+    }
     async getConfig(tenantId) {
         const defaultInst = await this.ensureDefaultInstance(tenantId);
         const maskedToken = defaultInst.token ? `${defaultInst.token.substring(0, 15)}...` : null;
@@ -798,8 +876,9 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
     }
     async getBase64FromEvolutionMedia(instanceName, messageObj, key) {
         try {
+            const cleanName = (instanceName || '').replace(' (WhatsApp Web)', '').trim();
             const { serverUrl, apiKey } = this.getEvolutionConfig();
-            const res = await axios_1.default.post(`${serverUrl}/chat/getBase64FromMediaMessage/${instanceName}`, {
+            const res = await axios_1.default.post(`${serverUrl}/chat/getBase64FromMediaMessage/${cleanName}`, {
                 message: {
                     key,
                     message: messageObj,
@@ -807,7 +886,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                 convertToMp4: false,
             }, {
                 headers: { apikey: apiKey, 'Content-Type': 'application/json' },
-                timeout: 10000,
+                timeout: 12000,
             });
             return res.data?.base64 || null;
         }
@@ -863,6 +942,39 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
     async saveBase64Audio(tenantId, base64Data, messageId, mimeType = 'audio/ogg') {
         const res = await this.saveBase64Media(tenantId, base64Data, messageId, mimeType);
         return res?.url || null;
+    }
+    async deleteMessageForEveryone(tenantId, instanceName, remoteJid, providerMessageId) {
+        try {
+            const cleanName = (instanceName || '').replace(' (WhatsApp Web)', '').trim();
+            const { serverUrl, apiKey } = this.getEvolutionConfig();
+            const targetJid = remoteJid.includes('@') ? remoteJid : `${remoteJid.replace(/\D/g, '')}@s.whatsapp.net`;
+            await axios_1.default.delete(`${serverUrl}/chat/deleteMessageForEveryone/${cleanName}`, {
+                headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+                data: {
+                    id: providerMessageId,
+                    remoteJid: targetJid,
+                    fromMe: true,
+                },
+                timeout: 8000,
+            }).catch(async () => {
+                return await axios_1.default.delete(`${serverUrl}/chat/deleteMessage/${cleanName}`, {
+                    headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+                    data: {
+                        id: providerMessageId,
+                        remoteJid: targetJid,
+                        fromMe: true,
+                        everyone: true,
+                    },
+                    timeout: 8000,
+                });
+            });
+            this.logger.log(`[WhatsApp Deletar] Mensagem [${providerMessageId}] apagada para todos na instância [${cleanName}]`);
+            return true;
+        }
+        catch (err) {
+            this.logger.warn(`Não foi possível apagar mensagem para todos no WhatsApp: ${err.message}`);
+            return false;
+        }
     }
 };
 exports.WhatsappService = WhatsappService;

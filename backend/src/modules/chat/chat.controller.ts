@@ -61,6 +61,15 @@ export class ChatController {
     return this.chatService.getConversationMessages(tenantId, conversationId);
   }
 
+  @Delete(':id/messages/:messageId')
+  async deleteMessage(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.chatService.deleteMessage(tenantId, conversationId, messageId);
+  }
+
   @Get('contact/:contactId')
   async getConversationByContact(
     @CurrentTenant() tenantId: string,

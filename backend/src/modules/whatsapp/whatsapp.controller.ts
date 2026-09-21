@@ -67,6 +67,14 @@ export class WhatsappController {
     return this.whatsappService.disconnectInstance(tenantId, id);
   }
 
+  @Post('instances/:id/sync')
+  async syncInstance(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string
+  ) {
+    return this.whatsappService.syncInstanceStatus(tenantId, id);
+  }
+
   @Post('instances/:id/pair')
   async pairInstance(
     @CurrentTenant() tenantId: string,

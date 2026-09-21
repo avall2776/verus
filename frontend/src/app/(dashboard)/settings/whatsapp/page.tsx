@@ -26,6 +26,7 @@ export default function WhatsAppSettingsPage() {
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
   const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
   const [qrCountdown, setQrCountdown] = useState<number>(30);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Estados de Upload da Foto de Perfil
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -158,6 +159,25 @@ export default function WhatsAppSettingsPage() {
     }
     return () => clearInterval(interval);
   }, [activeTab, activeInstance?.status, activeInstance?.id, qrCodeData, refreshInstances]);
+
+  const handleSyncStatus = async () => {
+    if (!activeInstance?.id) return;
+    setIsSyncing(true);
+    try {
+      const res = await api.post(`/whatsapp/instances/${activeInstance.id}/sync`);
+      const data = res.data;
+      if (data?.status === 'connected') {
+        toast.success(`Instância sincronizada: CONECTADA (${data.phoneNumber || 'Ativa'})!`);
+      } else {
+        toast.info(`Instância sincronizada: Status atual '${data?.status || 'desconectado'}'.`);
+      }
+      await refreshInstances();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao sincronizar status com o WhatsApp.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Upload Funcional de Foto de Perfil (Supabase Storage com fallback local)
   const handleFileUpload = async (file: File) => {
@@ -946,11 +966,13 @@ export default function WhatsAppSettingsPage() {
               {/* Botões de Ação Imediata */}
               <div className="space-y-2 pt-2 border-t border-gray-800">
                 <button
-                  onClick={refreshInstances}
-                  className="w-full flex items-center justify-center gap-2 bg-[#161b22] hover:bg-[#21262d] text-gray-300 hover:text-white px-4 py-2.5 rounded-xl border border-gray-800 text-xs font-semibold transition-colors cursor-pointer"
+                  onClick={handleSyncStatus}
+                  disabled={isSyncing}
+                  className="w-full flex items-center justify-center gap-2 bg-[#161b22] hover:bg-[#21262d] text-gray-300 hover:text-white px-4 py-2.5 rounded-xl border border-gray-800 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                  title="Consulta o estado real da conexão no WhatsApp e reconecta automaticamente se a sessão foi interrompida"
                 >
-                  <RefreshCw size={13} />
-                  <span>Sincronizar Conexão</span>
+                  <RefreshCw size={13} className={isSyncing ? "animate-spin text-cyan-400" : ""} />
+                  <span>{isSyncing ? "Sincronizando com WhatsApp..." : "Sincronizar Conexão"}</span>
                 </button>
 
                 {activeInstance.status === 'connected' ? (

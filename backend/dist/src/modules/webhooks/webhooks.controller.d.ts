@@ -24,7 +24,6 @@ export declare class WebhooksController {
         state: any;
     } | {
         status: string;
-        state?: undefined;
     }>;
     handleEvolutionWebhook(tenantId: string, payload: any): Promise<{
         status: string;

@@ -123,6 +123,10 @@ export declare class ChatController {
         scheduledAt: Date | null;
         conversationId: string;
     }[]>;
+    deleteMessage(tenantId: string, conversationId: string, messageId: string): Promise<{
+        success: boolean;
+        messageId: string;
+    }>;
     getConversationByContact(tenantId: string, contactId: string): Promise<{
         contact: {
             id: string;

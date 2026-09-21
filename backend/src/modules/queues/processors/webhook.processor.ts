@@ -99,6 +99,7 @@ export class WebhookProcessor extends WorkerHost {
     let content = message.text?.body || '';
     let msgType = isAudio ? 'audio' : isImage ? 'image' : isDocument ? 'document' : (message.type || 'text');
     let mediaUrl: string | null = null;
+    let audioTranscription: string | null = null;
 
     if (isAudio) {
       msgType = 'audio';
@@ -123,6 +124,7 @@ export class WebhookProcessor extends WorkerHost {
           mimeType
         );
         if (transcription) {
+          audioTranscription = transcription;
           content = `🎤 [Áudio]: "${transcription}"`;
         } else {
           content = '🎤 Mensagem de voz';
@@ -193,13 +195,28 @@ export class WebhookProcessor extends WorkerHost {
       content = '[Mídia Recebida]';
     }
     
-    // 3. Upsert do Contact
-    const phone = remoteJid;
+    // 3. Upsert do Contact (Usa realPhone se disponível para evitar exibir @lid no CRM e Inbox)
+    if (evolutionMetadata?.realPhone && remoteJid.includes('@lid') && evolutionMetadata.realPhone !== remoteJid) {
+      const existingLidContact = await this.prisma.contact.findUnique({
+        where: { tenantId_phone: { tenantId, phone: remoteJid } }
+      });
+      if (existingLidContact) {
+        await this.prisma.contact.update({
+          where: { id: existingLidContact.id },
+          data: { phone: evolutionMetadata.realPhone }
+        }).catch(() => null);
+      }
+    }
+
+    const phone = (evolutionMetadata?.realPhone && evolutionMetadata.realPhone.length >= 10)
+      ? evolutionMetadata.realPhone
+      : remoteJid;
+
     const rawPushName = pushName || evolutionMetadata?.pushName;
     const isGenericPushName = !rawPushName || rawPushName === 'Cliente WhatsApp' || rawPushName.includes('@lid') || rawPushName.startsWith('WhatsApp');
     const cleanName = !isGenericPushName
       ? rawPushName
-      : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${remoteJid})`);
+      : (phone.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${phone})`);
 
     const contact = await this.prisma.contact.upsert({
       where: {
@@ -299,6 +316,7 @@ export class WebhookProcessor extends WorkerHost {
         content,
         type: msgType,
         mediaUrl,
+        audioTranscription,
         senderType: 'contact',
         status: 'delivered', 
       }
@@ -326,8 +344,21 @@ export class WebhookProcessor extends WorkerHost {
       contact: { phone: contact.phone, name: contact.name, avatarUrl: contact.avatarUrl }
     });
 
-    // 6. Integração com Fase 4: Despachar para fila de IA APENAS se o bot estiver ativo e DENTRO do horário comercial!
+    // 6. Integração com Fase 4: Despachar para fila de IA APENAS se o bot estiver ativo, conexão WhatsApp conectada e DENTRO do horário comercial!
     if (conversation.status === 'bot_active') {
+      // Verifica se há instância de WhatsApp conectada no tenant
+      const connectedInst = await this.prisma.whatsAppInstance.findFirst({
+        where: { tenantId, status: 'connected' }
+      });
+
+      if (!connectedInst) {
+        this.logger.warn(`Tenant [${tenantId}] sem WhatsApp conectado. Conversa [${conversation.id}] mantida como 'waiting' sem IA.`);
+        await this.prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { status: 'waiting' }
+        });
+        return { status: 'instance_disconnected' };
+      }
       if (!isWithinBusinessHours) {
         this.logger.log(`Conversa [${conversation.id}] mantida sem IA por estar fora do expediente.`);
         

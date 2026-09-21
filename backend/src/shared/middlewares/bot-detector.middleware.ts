@@ -38,9 +38,10 @@ export class BotDetectorMiddleware implements NestMiddleware {
     const rawUserAgent = String(req.headers['user-agent'] || '').toLowerCase();
     const reqPath = req.path || req.originalUrl || req.url || '';
     const isWebhook = reqPath.startsWith('/webhooks') || reqPath.startsWith('/api/webhooks');
+    const isMedia = reqPath.startsWith('/media') || reqPath.startsWith('/api/media') || reqPath.includes('/media/');
 
-    // Libera webhooks legítimos (Meta, Evolution API, Stripe, etc.)
-    if (isWebhook) {
+    // Libera webhooks legítimos (Meta, Evolution API, Stripe, etc.) e mídias do chat (áudio, imagens, PDFs)
+    if (isWebhook || isMedia) {
       return next();
     }
 

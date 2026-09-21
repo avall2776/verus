@@ -40,6 +40,20 @@ export class AiProcessor extends WorkerHost {
       return { status: 'aborted', reason: 'Not bot_active' };
     }
 
+    // 1.1 Trava de Conexão: Verifica se a instância do WhatsApp do Tenant está realmente conectada
+    const connectedInst = await this.prisma.whatsAppInstance.findFirst({
+      where: { tenantId, status: 'connected' }
+    });
+
+    if (!connectedInst) {
+      this.logger.warn(`Tenant [${tenantId}] sem conexão WhatsApp ativa. Pausando IA para a conversa [${conversationId}].`);
+      await this.prisma.conversation.update({
+        where: { id: conversationId },
+        data: { status: 'waiting' }
+      });
+      return { status: 'aborted', reason: 'WhatsApp disconnected' };
+    }
+
     // 2. Extrair Contexto (Últimas 15 mensagens, ordenadas da mais antiga para a mais nova)
     const historyDb = await this.prisma.message.findMany({
       where: { conversationId },
@@ -47,7 +61,64 @@ export class AiProcessor extends WorkerHost {
       take: 15,
     });
 
-    const historyForAi: { role: 'user'|'assistant', content: string }[] = historyDb
+    if (historyDb.length === 0) {
+      return { status: 'aborted', reason: 'Empty history' };
+    }
+
+    const latestMessage = historyDb[0];
+
+    // Anti-loop 1: Nunca responde se a última mensagem já foi do sistema ou bot
+    if (latestMessage.senderType !== 'contact') {
+      this.logger.warn(`Última mensagem da conversa [${conversationId}] não é do contato. Evitando auto-resposta / loop.`);
+      return { status: 'aborted', reason: 'Last message not from contact' };
+    }
+
+    // Anti-loop 2: Detecção de auto-resposta de outro bot / fora de expediente de cliente
+    const autoReplySignatures = [
+      'mensagem automática',
+      'resposta automática',
+      'atendimento automático',
+      'horário de atendimento',
+      'estamos ausentes',
+      'retornaremos em breve',
+      'fora do expediente',
+      'auto-reply',
+      'automatic reply',
+      'agradecemos seu contato',
+      'nosso horário é de',
+      'este número não recebe chamadas',
+    ];
+    const incomingText = (latestMessage.content || '').toLowerCase();
+    const isBotAutoReply = autoReplySignatures.some(sig => incomingText.includes(sig));
+
+    if (isBotAutoReply) {
+      this.logger.warn(`Mensagem recebida na conversa [${conversationId}] identificada como auto-resposta de outro bot. Pausando IA para evitar loop.`);
+      await this.prisma.conversation.update({
+        where: { id: conversationId },
+        data: { status: 'waiting' }
+      });
+      return { status: 'aborted', reason: 'Detected bot auto-reply loop' };
+    }
+
+    // Anti-loop 3: Frequência anormal de mensagens (mais de 6 mensagens nos últimos 2 minutos)
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+    const recentCount = await this.prisma.message.count({
+      where: {
+        conversationId,
+        createdAt: { gte: twoMinutesAgo }
+      }
+    });
+
+    if (recentCount >= 6) {
+      this.logger.warn(`Frequência anormal de mensagens na conversa [${conversationId}] (${recentCount} msgs em 2min). Pausando IA para segurança.`);
+      await this.prisma.conversation.update({
+        where: { id: conversationId },
+        data: { status: 'waiting' }
+      });
+      return { status: 'aborted', reason: 'Loop frequency limit exceeded' };
+    }
+
+    const historyForAi: { role: 'user'|'assistant', content: string }[] = [...historyDb]
       .reverse() // Transforma para ordem cronológica (antiga -> nova)
       .map(msg => ({
         role: msg.senderType === 'contact' ? 'user' : 'assistant',

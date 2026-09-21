@@ -56,9 +56,9 @@ export declare class SupportController {
             status: string;
             subject: string;
             description: string;
+            priority: string;
             userId: string | null;
             category: string;
-            priority: string;
             ticketNumber: number;
             assignedToId: string | null;
         })[];
@@ -161,9 +161,9 @@ export declare class SupportController {
         status: string;
         subject: string;
         description: string;
+        priority: string;
         userId: string | null;
         category: string;
-        priority: string;
         ticketNumber: number;
         assignedToId: string | null;
     }>;
@@ -195,9 +195,9 @@ export declare class SupportController {
         status: string;
         subject: string;
         description: string;
+        priority: string;
         userId: string | null;
         category: string;
-        priority: string;
         ticketNumber: number;
         assignedToId: string | null;
     }>;
@@ -246,9 +246,9 @@ export declare class SupportController {
         status: string;
         subject: string;
         description: string;
+        priority: string;
         userId: string | null;
         category: string;
-        priority: string;
         ticketNumber: number;
         assignedToId: string | null;
     }>;
@@ -271,9 +271,9 @@ export declare class SupportController {
         status: string;
         subject: string;
         description: string;
+        priority: string;
         userId: string | null;
         category: string;
-        priority: string;
         ticketNumber: number;
         assignedToId: string | null;
     }>;

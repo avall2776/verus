@@ -242,19 +242,36 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
       let tenantId = 'tenant_123';
       try {
-        const userStr = localStorage.getItem('versus_user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          if (user.tenantId) tenantId = user.tenantId;
-        }
-        if (!tenantId || tenantId === 'tenant_123') {
-          const savedTenant = localStorage.getItem('tenantId');
-          if (savedTenant) tenantId = savedTenant;
+        const targetTenant = localStorage.getItem('versus_target_tenant_id');
+        if (targetTenant) {
+          tenantId = targetTenant;
+        } else {
+          const userStr = localStorage.getItem('versus_user');
+          if (userStr) {
+            const user = JSON.parse(userStr);
+            if (user.tenantId) tenantId = user.tenantId;
+          }
+          if (!tenantId || tenantId === 'tenant_123') {
+            const savedTenant = localStorage.getItem('tenantId');
+            if (savedTenant) tenantId = savedTenant;
+          }
         }
       } catch (e) {}
 
       socketInstance.emit('joinTenant', tenantId);
     });
+
+    const handleTenantSwitched = () => {
+      if (socketInstance && socketInstance.connected) {
+        const target = localStorage.getItem('versus_target_tenant_id') || localStorage.getItem('tenantId');
+        if (target) {
+          socketInstance.emit('leaveTenant');
+          socketInstance.emit('joinTenant', target);
+          console.log('🔄 [WebSockets] Alternado para o tenant alvo:', target);
+        }
+      }
+    };
+    window.addEventListener('tenant_switched', handleTenantSwitched);
 
     socketInstance.on('disconnect', () => {
       setIsConnected(false);
@@ -375,6 +392,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     setSocket(socketInstance);
 
     return () => {
+      window.removeEventListener('tenant_switched', handleTenantSwitched);
       socketInstance.disconnect();
     };
   }, [router, playNotificationSound, triggerVibration, dispatchDesktopNotification, triggerTabBlink]);
@@ -393,14 +411,19 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       let tenantId = 'tenant_123';
       try {
-        const userStr = localStorage.getItem('versus_user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          if (user.tenantId) tenantId = user.tenantId;
-        }
-        if (!tenantId || tenantId === 'tenant_123') {
-          const savedTenant = localStorage.getItem('tenantId');
-          if (savedTenant) tenantId = savedTenant;
+        const targetTenant = localStorage.getItem('versus_target_tenant_id');
+        if (targetTenant) {
+          tenantId = targetTenant;
+        } else {
+          const userStr = localStorage.getItem('versus_user');
+          if (userStr) {
+            const user = JSON.parse(userStr);
+            if (user.tenantId) tenantId = user.tenantId;
+          }
+          if (!tenantId || tenantId === 'tenant_123') {
+            const savedTenant = localStorage.getItem('tenantId');
+            if (savedTenant) tenantId = savedTenant;
+          }
         }
       } catch (e) {}
 

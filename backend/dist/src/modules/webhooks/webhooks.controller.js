@@ -133,11 +133,8 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             }
         }
         if (!tenantId) {
-            const defaultTenant = await this.prisma.tenant.findFirst({
-                orderBy: { createdAt: 'asc' },
-                select: { id: true },
-            });
-            tenantId = defaultTenant?.id || 'tenant_123';
+            this.logger.warn(`Webhook Evolution ignorado: não foi possível identificar o tenant da instância [${instanceName}]`);
+            return { status: 'ignored_unresolved_tenant' };
         }
         return this.handleEvolutionWebhook(tenantId, payload);
     }
@@ -209,24 +206,24 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     this.logger.log(`✅ [WhatsApp Conectado] Instância [${matchedInstance.id}] confirmada e ativa para tenant ${tenantId}!`);
                 }
                 else if (state === 'close') {
-                    if (statusReason === 401 || statusReason === 403 || statusReason === 408) {
-                        const updated = await this.prisma.whatsAppInstance.update({
-                            where: { id: matchedInstance.id },
-                            data: {
-                                status: 'disconnected',
-                                qrCode: null,
-                            },
-                        });
-                        await this.prisma.whatsAppConnectionHistory.create({
-                            data: {
-                                instanceId: matchedInstance.id,
-                                status: 'disconnected',
-                                details: `Sessão encerrada pelo WhatsApp (Código: ${statusReason})`
-                            }
-                        });
-                        this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
-                        this.logger.warn(`🔌 [WhatsApp Desconectado] Instância [${matchedInstance.id}] desconectada.`);
-                    }
+                    const updated = await this.prisma.whatsAppInstance.update({
+                        where: { id: matchedInstance.id },
+                        data: {
+                            status: 'disconnected',
+                            qrCode: null,
+                        },
+                    });
+                    await this.prisma.whatsAppConnectionHistory.create({
+                        data: {
+                            instanceId: matchedInstance.id,
+                            status: 'disconnected',
+                            details: statusReason
+                                ? `Sessão encerrada pelo WhatsApp (Código: ${statusReason})`
+                                : 'Sessão encerrada / Desconectado pelo WhatsApp'
+                        }
+                    });
+                    this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
+                    this.logger.warn(`🔌 [WhatsApp Desconectado] Instância [${matchedInstance.id}] desconectada. Motivo: ${statusReason || 'close'}`);
                 }
                 else if (state === 'connecting') {
                     this.chatGateway.emitWhatsAppStatusUpdated(tenantId, {
@@ -354,13 +351,36 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                 return { status: 'ignored_outbound' };
             }
             const remoteJid = (key.remoteJid || '').replace('@s.whatsapp.net', '');
+            let realPhone = null;
+            if (remoteJid.includes('@lid')) {
+                const candidatePn = key.participantPn ||
+                    data?.participantPn ||
+                    data?.senderPn ||
+                    key.senderPn ||
+                    key.remoteJidAlt ||
+                    data?.sender ||
+                    data?.senderId ||
+                    data?.key?.participant;
+                if (candidatePn && typeof candidatePn === 'string') {
+                    const cleanPn = candidatePn.replace('@s.whatsapp.net', '').replace('@lid', '').replace(/\D/g, '');
+                    if (cleanPn.length >= 10 && cleanPn.length <= 13) {
+                        realPhone = cleanPn;
+                    }
+                }
+            }
+            else {
+                const cleanDigits = remoteJid.replace(/\D/g, '');
+                if (cleanDigits.length >= 10 && cleanDigits.length <= 13) {
+                    realPhone = cleanDigits;
+                }
+            }
             const textBody = messageObj?.conversation ||
                 messageObj?.extendedTextMessage?.text ||
                 '';
             const candidateName = data.pushName || data.verifiedBizName || data.verifiedName;
             const contactDisplayName = candidateName && !candidateName.includes('@lid')
                 ? candidateName
-                : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : remoteJid);
+                : (realPhone ? realPhone : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : remoteJid));
             const isAudio = !!messageObj?.audioMessage ||
                 data?.messageType === 'audioMessage' ||
                 !!messageObj?.ptt ||
@@ -397,7 +417,8 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                 mediaFilename = docObj?.fileName || docObj?.title || 'documento.pdf';
                 mediaBase64 = mediaBase64 || docObj?.base64;
             }
-            const instName = payload.instance || payload.data?.instance;
+            const rawInstName = payload.instance || payload.data?.instance;
+            const instName = rawInstName ? rawInstName.replace(' (WhatsApp Web)', '').trim() : '';
             if (mediaType !== 'text' && !mediaBase64 && instName) {
                 mediaBase64 = await this.whatsappService.getBase64FromEvolutionMedia(instName, messageObj, key);
             }
@@ -416,12 +437,12 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                                     contacts: [
                                         {
                                             profile: { name: contactDisplayName },
-                                            wa_id: remoteJid,
+                                            wa_id: realPhone || remoteJid,
                                         },
                                     ],
                                     messages: [
                                         {
-                                            from: remoteJid,
+                                            from: realPhone || remoteJid,
                                             id: key.id,
                                             timestamp: String(data.messageTimestamp || Math.floor(Date.now() / 1000)),
                                             type: mediaType,
@@ -444,6 +465,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     instanceName: instName,
                     pushName: candidateName,
                     remoteJid: key.remoteJid,
+                    realPhone: realPhone,
                     profilePictureUrl: data.profilePictureUrl || null,
                     mediaUrl: mediaUrl,
                     mediaType: mediaType,

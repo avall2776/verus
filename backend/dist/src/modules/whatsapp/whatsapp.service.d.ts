@@ -135,6 +135,28 @@ export declare class WhatsappService {
         status: string;
         message: string;
     }>;
+    syncInstanceStatus(tenantId: string, id: string): Promise<{
+        success: boolean;
+        status: string;
+        instance: {
+            id: string;
+            name: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: string;
+            token: string | null;
+            settings: import("@prisma/client/runtime/library").JsonValue | null;
+            phoneNumber: string | null;
+            profilePicUrl: string | null;
+            profileName: string | null;
+            qrCode: string | null;
+            phoneNumberId: string | null;
+            isDefault: boolean;
+            lastConnectedAt: Date | null;
+        };
+        message: string;
+    }>;
     getConfig(tenantId: string): Promise<{
         metaToken: string;
         hasToken: boolean;
@@ -180,4 +202,5 @@ export declare class WhatsappService {
         buffer: Buffer;
     } | null>;
     saveBase64Audio(tenantId: string, base64Data: string, messageId: string, mimeType?: string): Promise<string | null>;
+    deleteMessageForEveryone(tenantId: string, instanceName: string, remoteJid: string, providerMessageId: string): Promise<boolean>;
 }

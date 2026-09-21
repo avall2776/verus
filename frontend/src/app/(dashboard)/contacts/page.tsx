@@ -100,17 +100,17 @@ export default function ContactsPage() {
                     </div>
                   </td>
 
-                  {/* Contato Info */}
-                  <td className="p-4">
-                    <div className="flex flex-col gap-1 min-w-[150px]">
-                      <div className="flex items-center gap-2 text-xs text-gray-300">
-                        <Phone size={12} className="text-accent" /> {contact.phone || 'N/A'}
+                    {/* Contato Info */}
+                    <td className="p-4">
+                      <div className="flex flex-col gap-1 min-w-[150px]">
+                        <div className="flex items-center gap-2 text-xs text-gray-300">
+                          <Phone size={12} className="text-accent" /> {contact.phone?.includes('@lid') ? 'WhatsApp (Privado)' : (contact.phone || 'N/A')}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                          <Mail size={12} className="text-gray-500" /> {contact.email || 'N/A'}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        <Mail size={12} className="text-gray-500" /> {contact.email || 'N/A'}
-                      </div>
-                    </div>
-                  </td>
+                    </td>
 
                   {/* Origem */}
                   <td className="p-4">

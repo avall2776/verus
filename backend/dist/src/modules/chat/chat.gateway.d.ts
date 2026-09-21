@@ -6,6 +6,10 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
     handleConnection(client: Socket): void;
     handleDisconnect(client: Socket): void;
     emitNewMessage(tenantId: string, messageData: any): void;
+    emitMessageDeleted(tenantId: string, payload: {
+        conversationId: string;
+        messageId: string;
+    }): void;
     emitHandoff(tenantId: string, dealData: any): void;
     emitConversationUpdated(tenantId: string, conversationData: any): void;
     emitConversationTransferred(tenantId: string, transferData: any): void;

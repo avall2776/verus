@@ -125,6 +125,30 @@ export default function Sidebar() {
   const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceItem | null>(null);
 
+  // Modo Suporte para Super Admin em Agências Clientes
+  const [targetTenantId, setTargetTenantId] = useState<string | null>(null);
+  const [targetTenantName, setTargetTenantName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkTarget = () => {
+      if (typeof window !== 'undefined') {
+        setTargetTenantId(localStorage.getItem('versus_target_tenant_id'));
+        setTargetTenantName(localStorage.getItem('versus_target_tenant_name'));
+      }
+    };
+    checkTarget();
+    window.addEventListener('tenant_switched', checkTarget);
+    return () => window.removeEventListener('tenant_switched', checkTarget);
+  }, []);
+
+  const handleExitSupportMode = () => {
+    localStorage.removeItem('versus_target_tenant_id');
+    localStorage.removeItem('versus_target_tenant_name');
+    window.dispatchEvent(new Event('tenant_switched'));
+    toast.success("Saiu do Modo Suporte da agência.");
+    window.location.href = '/super-admin/companies';
+  };
+
   const loadUser = async () => {
     try {
       const stored = localStorage.getItem('versus_user');
@@ -520,6 +544,40 @@ export default function Sidebar() {
             </div>
           )}
         </div>
+
+        {/* Banner Modo Suporte Super Admin */}
+        {targetTenantId && isExpanded && (
+          <div className="mx-3 mt-2 mb-1 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex flex-col gap-1.5 shrink-0 shadow-lg shadow-amber-950/20">
+            <div className="flex items-center justify-between">
+              <span className="font-bold flex items-center gap-1.5 truncate text-[11px]">
+                <Building2 size={13} className="text-amber-400 shrink-0" />
+                <span className="truncate">{targetTenantName || 'Agência Alvo'}</span>
+              </span>
+              <span className="text-[9px] bg-amber-500/25 text-amber-300 font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
+                SUPORTE
+              </span>
+            </div>
+            <p className="text-[10px] text-amber-400/80 leading-tight">
+              Acesso de auditoria no contexto desta agência cliente.
+            </p>
+            <button
+              onClick={handleExitSupportMode}
+              className="w-full text-center text-[11px] font-bold py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 hover:text-white transition-all border border-amber-500/40 cursor-pointer"
+            >
+              Sair do Modo Suporte
+            </button>
+          </div>
+        )}
+
+        {targetTenantId && !isExpanded && (
+          <div 
+            onClick={() => setIsExpanded(true)}
+            title={`Modo Suporte Ativo: ${targetTenantName || 'Agência'}. Clique para expandir.`}
+            className="mx-2 mt-2 p-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center cursor-pointer hover:bg-amber-500/30 transition-colors"
+          >
+            <Building2 size={16} className="animate-pulse" />
+          </div>
+        )}
 
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-1">

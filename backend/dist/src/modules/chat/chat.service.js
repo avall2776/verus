@@ -854,6 +854,44 @@ let ChatService = ChatService_1 = class ChatService {
         this.chatGateway.emitNewMessage(tenantId, msg);
         return msg;
     }
+    async deleteMessage(tenantId, conversationId, messageId) {
+        const message = await this.prisma.message.findFirst({
+            where: { id: messageId, conversationId, tenantId },
+            include: {
+                contact: true,
+            },
+        });
+        if (!message) {
+            throw new common_1.NotFoundException('Mensagem não encontrada');
+        }
+        if (message.direction === 'OUTBOUND' && message.providerMessageId && !message.providerMessageId.startsWith('fallback_')) {
+            try {
+                const instances = await this.prisma.whatsAppInstance.findMany({
+                    where: { tenantId },
+                    orderBy: { isDefault: 'desc' },
+                });
+                const activeInst = instances.find(i => i.status === 'connected') || instances[0];
+                if (activeInst) {
+                    const set = activeInst.settings || {};
+                    const instanceName = set.instanceName || activeInst.name || this.whatsappService.getSanitizedInstanceName(tenantId, activeInst.id);
+                    const targetJid = message.contact.phone;
+                    await this.whatsappService.deleteMessageForEveryone(tenantId, instanceName, targetJid, message.providerMessageId);
+                }
+            }
+            catch (err) {
+                this.logger.warn(`Erro ao deletar mensagem no WhatsApp Evolution: ${err.message}`);
+            }
+        }
+        await this.prisma.message.delete({
+            where: { id: message.id },
+        });
+        this.chatGateway.emitMessageDeleted(tenantId, {
+            conversationId,
+            messageId: message.id,
+        });
+        this.logger.log(`Mensagem [${message.id}] apagada com sucesso na conversa [${conversationId}]`);
+        return { success: true, messageId: message.id };
+    }
 };
 exports.ChatService = ChatService;
 exports.ChatService = ChatService = ChatService_1 = __decorate([
