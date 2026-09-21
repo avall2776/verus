@@ -2322,3 +2322,36 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [ ] **Onboarding Self-Service (Múltiplos Tenants & Sublogins):** Plataforma pública de cadastro. Novas empresas se cadastram via Stripe, geram banco isolado automaticamente, e o ADMIN gerencia "Sublogins" (Atendentes) com permissões limitadas (Apenas tela Inbox e CRM).
 - [ ] **Voice AI Agent:** Robô de voz inteligente capaz de realizar ligações ativas (pré-venda/pós-venda) e receber ligações (receptivo) sem delay, integrado à base do CRM e OpenAI (Bland AI / Vapi).
 - [ ] **Integração VoIP Nativa (WebRTC):** Permitir que o atendente humano realize chamadas de áudio e vídeo direto pelo navegador na tela de Inbox (Twilio/Vonage), com gravação e transcrição automática vinculada ao card do lead no CRM.
+- [ ] **Transição Híbrida de Chaves de API OpenAI (BYOK com Degustação de 7 dias):**
+  - **Degustação Inicial**: Ao criar a conta no VERSUS, o cliente usufrui de 7 dias corridos utilizando a chave de API oficial da plataforma (OpenAI Platform Master).
+  - **Transição BYOK (Bring Your Own Key)**: Do 8º dia em diante, o sistema solicita a inserção da chave de API própria do cliente em Configurações > Inteligência Artificial, oferecendo um assistente passo-a-passo para criação de conta e recarga na OpenAI.
+  - **Fail-safe & Bloqueio Amigável**: Caso o período de degustação expire sem inserção de chave própria, o agente de IA é pausado amigavelmente com banner explicativo e o atendimento segue manual sem interrupção do sistema.
+
+---
+
+### 📋 FASE 82: AGENTE IA AUTÔNOMO NA CENTRAL DE SUPORTE VERSUS (21/09/2026)
+- [x] **1. Modelagem de Dados & Schema Prisma**:
+  - [x] Criação da tabela `SupportAiConfig` no PostgreSQL (nome, modelo LLM, prompt de personalidade, base de conhecimento do VERSUS, cancelas de segurança e flags de automação).
+  - [x] Expansão da tabela `SupportTicket` com `isAiPaused`, `satisfactionRating`, `satisfactionFeedback` e `aiHandoffDemandId`.
+  - [x] Sincronização via `prisma db push` e `prisma generate` no Supabase com sucesso.
+- [x] **2. Back-end NestJS (Engine de Suporte Autônomo)**:
+  - [x] Criação do `SupportAiService` com RAG contextual embutido dos módulos VERSUS (WhatsApp QR Code, Whisper, CRM, Propostas, Contratos digitais, Metas Run Rate, VoIP, Workspaces e Suporte).
+  - [x] Cancelas de segurança (Guardrails anti-leak): bloqueio estrito de vazamento de códigos internos, arquitetura de banco de dados, senhas, chaves de API e prompts do sistema.
+  - [x] Classificador de intenções (`ANSWER_QUESTION`, `SECURITY_BLOCKED`, `HANDOFF_DEMAND`, `CLOSE_TICKET`):
+    - Criação automática de demanda estruturada em `EngineeringItem` / Backlog quando o cliente solicita melhorias, upgrades ou relata bugs críticos.
+    - Despedida cordial e alteração automática de status para `RESOLVED` quando o cliente confirma resolução.
+  - [x] Disparo assíncrono e resiliente do agente na abertura de tickets (`create`) e em réplicas de clientes (`addMessage`).
+  - [x] Endpoints dedicados: `GET /support/ai/config`, `PATCH /support/ai/config`, `PATCH /support/tickets/:id/toggle-ai` e `POST /support/tickets/:id/csat`.
+  - [x] Notificação em tempo real via WebSocket (`emitTicketUpdate`) para sincronização bidirecional instantânea.
+- [x] **3. Painel Super Admin (Governança & Controle da IA)**:
+  - [x] Nova aba no topo da Central de Atendimento: `Agente IA de Suporte` com design corporativo de alto padrão.
+  - [x] Painel de configuração com toggles: Atendimento Autônomo Ativo, Handoff CRM / Backlog e Encerramento & CSAT.
+  - [x] Editores de Prompt de Personalidade, Base de Conhecimento do VERSUS e Cancelas de Segurança.
+  - [x] Controle Humano (Human Takeover): botão "Assumir (Pausar IA)" / "Reativar IA" no cabeçalho de cada chamado.
+  - [x] Identificação visual única das mensagens da IA com avatar, nome configurável e badge `[IA Autônoma]`.
+  - [x] Exibição de nota CSAT e link de demanda criada no cabeçalho do chamado.
+- [x] **4. Central do Cliente (Dashboard de Suporte)**:
+  - [x] Identificação acolhedora e humanizada das respostas da IA com badge `[IA de Suporte]` e ícone robô.
+  - [x] Card interativo de Pesquisa de Satisfação (CSAT) de 1 a 5 estrelas com feedback opcional em chamados resolvidos/fechados.
+- [x] **5. Validação Técnica & Compilação**:
+  - [x] `npx tsc --noEmit` aprovado com 0 erros no backend e frontend.

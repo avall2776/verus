@@ -8,6 +8,9 @@ import { RequireModule } from '../../shared/decorators/require-module.decorator'
 import { SupportService } from './support.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { CreateTicketMessageDto } from './dto/create-ticket-message.dto';
+import { UpdateSupportAiConfigDto } from './dto/update-support-ai-config.dto';
+import { ToggleTicketAiDto } from './dto/toggle-ticket-ai.dto';
+import { SubmitCsatDto } from './dto/submit-csat.dto';
 
 @UseGuards(JwtAuthGuard, PlanGuard)
 @RequireModule('support')
@@ -103,5 +106,36 @@ export class SupportController {
     const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
     const tenantId = req.user.tenantId;
     return this.supportService.generateCopilotSuggestion(id, tenantId, isSuperAdmin);
+  }
+
+  @Get('ai/config')
+  async getAiConfig() {
+    return this.supportService.getAiConfig();
+  }
+
+  @Patch('ai/config')
+  async updateAiConfig(@Body() dto: UpdateSupportAiConfigDto) {
+    return this.supportService.updateAiConfig(dto);
+  }
+
+  @Patch('tickets/:id/toggle-ai')
+  async toggleTicketAi(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: ToggleTicketAiDto
+  ) {
+    const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
+    const tenantId = req.user.tenantId;
+    return this.supportService.toggleTicketAi(id, dto.isPaused, tenantId, isSuperAdmin);
+  }
+
+  @Post('tickets/:id/csat')
+  async submitCsat(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: SubmitCsatDto
+  ) {
+    const tenantId = req.user.tenantId;
+    return this.supportService.submitCsat(id, tenantId, dto);
   }
 }

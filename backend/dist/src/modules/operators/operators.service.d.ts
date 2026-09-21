@@ -46,6 +46,10 @@ export declare class OperatorsService {
                 category: string;
                 ticketNumber: number;
                 assignedToId: string | null;
+                isAiPaused: boolean;
+                satisfactionRating: number | null;
+                satisfactionFeedback: string | null;
+                aiHandoffDemandId: string | null;
             })[];
             id: string;
             name: string;
@@ -125,6 +129,10 @@ export declare class OperatorsService {
             category: string;
             ticketNumber: number;
             assignedToId: string | null;
+            isAiPaused: boolean;
+            satisfactionRating: number | null;
+            satisfactionFeedback: string | null;
+            aiHandoffDemandId: string | null;
         })[];
     }>;
     createOperator(dto: CreateOperatorDto, inviterName: string): Promise<{

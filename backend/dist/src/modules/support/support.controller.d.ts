@@ -1,6 +1,9 @@
 import { SupportService } from './support.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { CreateTicketMessageDto } from './dto/create-ticket-message.dto';
+import { UpdateSupportAiConfigDto } from './dto/update-support-ai-config.dto';
+import { ToggleTicketAiDto } from './dto/toggle-ticket-ai.dto';
+import { SubmitCsatDto } from './dto/submit-csat.dto';
 export declare class SupportController {
     private readonly supportService;
     constructor(supportService: SupportService);
@@ -61,6 +64,10 @@ export declare class SupportController {
             category: string;
             ticketNumber: number;
             assignedToId: string | null;
+            isAiPaused: boolean;
+            satisfactionRating: number | null;
+            satisfactionFeedback: string | null;
+            aiHandoffDemandId: string | null;
         })[];
         counts: {
             total: number;
@@ -166,6 +173,10 @@ export declare class SupportController {
         category: string;
         ticketNumber: number;
         assignedToId: string | null;
+        isAiPaused: boolean;
+        satisfactionRating: number | null;
+        satisfactionFeedback: string | null;
+        aiHandoffDemandId: string | null;
     }>;
     create(req: any, dto: CreateTicketDto): Promise<{
         messages: {
@@ -200,6 +211,10 @@ export declare class SupportController {
         category: string;
         ticketNumber: number;
         assignedToId: string | null;
+        isAiPaused: boolean;
+        satisfactionRating: number | null;
+        satisfactionFeedback: string | null;
+        aiHandoffDemandId: string | null;
     }>;
     addMessage(req: any, id: string, dto: CreateTicketMessageDto): Promise<{
         sender: {
@@ -251,6 +266,10 @@ export declare class SupportController {
         category: string;
         ticketNumber: number;
         assignedToId: string | null;
+        isAiPaused: boolean;
+        satisfactionRating: number | null;
+        satisfactionFeedback: string | null;
+        aiHandoffDemandId: string | null;
     }>;
     assign(req: any, id: string, body: {
         assignedToId: string | null;
@@ -276,6 +295,241 @@ export declare class SupportController {
         category: string;
         ticketNumber: number;
         assignedToId: string | null;
+        isAiPaused: boolean;
+        satisfactionRating: number | null;
+        satisfactionFeedback: string | null;
+        aiHandoffDemandId: string | null;
     }>;
     getAiCopilotSuggestion(req: any, id: string): Promise<any>;
+    getAiConfig(): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        model: string;
+        prompt: string;
+        knowledgeBase: string;
+        guardrails: string;
+        autoHandoffCrm: boolean;
+        autoCloseSolved: boolean;
+    }>;
+    updateAiConfig(dto: UpdateSupportAiConfigDto): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        model: string;
+        prompt: string;
+        knowledgeBase: string;
+        guardrails: string;
+        autoHandoffCrm: boolean;
+        autoCloseSolved: boolean;
+    }>;
+    toggleTicketAi(req: any, id: string, dto: ToggleTicketAiDto): Promise<{
+        tenant: {
+            id: string;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            cnpj: string | null;
+            logoUrl: string | null;
+            leadNotificationPhone: string | null;
+            address: string | null;
+            isActive: boolean;
+            aiEnabled: boolean;
+            aiName: string | null;
+            aiModel: string;
+            aiPrompt: string | null;
+            aiKnowledgeBase: string | null;
+            aiTemperature: number;
+            metaToken: string | null;
+            metaPhoneNumberId: string | null;
+            whatsappSettings: import("@prisma/client/runtime/library").JsonValue | null;
+            emailSettings: import("@prisma/client/runtime/library").JsonValue | null;
+            planId: string;
+        };
+        messages: ({
+            sender: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+                tenantId: string;
+                createdAt: Date;
+                updatedAt: Date;
+                isActive: boolean;
+                password: string;
+                role: string;
+                isSuperAdmin: boolean;
+                permissions: import("@prisma/client/runtime/library").JsonValue | null;
+                isOnline: boolean;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            content: string;
+            isInternal: boolean;
+            senderName: string | null;
+            attachments: import("@prisma/client/runtime/library").JsonValue | null;
+            senderId: string | null;
+            ticketId: string;
+            senderRole: string;
+        })[];
+        assignedTo: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
+            password: string;
+            role: string;
+            isSuperAdmin: boolean;
+            permissions: import("@prisma/client/runtime/library").JsonValue | null;
+            isOnline: boolean;
+        };
+        user: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string | null;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
+            password: string;
+            role: string;
+            isSuperAdmin: boolean;
+            permissions: import("@prisma/client/runtime/library").JsonValue | null;
+            isOnline: boolean;
+        };
+    } & {
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        contactId: string | null;
+        status: string;
+        subject: string;
+        description: string;
+        priority: string;
+        userId: string | null;
+        category: string;
+        ticketNumber: number;
+        assignedToId: string | null;
+        isAiPaused: boolean;
+        satisfactionRating: number | null;
+        satisfactionFeedback: string | null;
+        aiHandoffDemandId: string | null;
+    }>;
+    submitCsat(req: any, id: string, dto: SubmitCsatDto): Promise<{
+        message: string;
+        ticket: {
+            tenant: {
+                id: string;
+                name: string;
+                phone: string | null;
+                email: string | null;
+                createdAt: Date;
+                updatedAt: Date;
+                cnpj: string | null;
+                logoUrl: string | null;
+                leadNotificationPhone: string | null;
+                address: string | null;
+                isActive: boolean;
+                aiEnabled: boolean;
+                aiName: string | null;
+                aiModel: string;
+                aiPrompt: string | null;
+                aiKnowledgeBase: string | null;
+                aiTemperature: number;
+                metaToken: string | null;
+                metaPhoneNumberId: string | null;
+                whatsappSettings: import("@prisma/client/runtime/library").JsonValue | null;
+                emailSettings: import("@prisma/client/runtime/library").JsonValue | null;
+                planId: string;
+            };
+            messages: ({
+                sender: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    avatarUrl: string | null;
+                    tenantId: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    isActive: boolean;
+                    password: string;
+                    role: string;
+                    isSuperAdmin: boolean;
+                    permissions: import("@prisma/client/runtime/library").JsonValue | null;
+                    isOnline: boolean;
+                };
+            } & {
+                id: string;
+                createdAt: Date;
+                content: string;
+                isInternal: boolean;
+                senderName: string | null;
+                attachments: import("@prisma/client/runtime/library").JsonValue | null;
+                senderId: string | null;
+                ticketId: string;
+                senderRole: string;
+            })[];
+            assignedTo: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+                tenantId: string;
+                createdAt: Date;
+                updatedAt: Date;
+                isActive: boolean;
+                password: string;
+                role: string;
+                isSuperAdmin: boolean;
+                permissions: import("@prisma/client/runtime/library").JsonValue | null;
+                isOnline: boolean;
+            };
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string | null;
+                tenantId: string;
+                createdAt: Date;
+                updatedAt: Date;
+                isActive: boolean;
+                password: string;
+                role: string;
+                isSuperAdmin: boolean;
+                permissions: import("@prisma/client/runtime/library").JsonValue | null;
+                isOnline: boolean;
+            };
+        } & {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            contactId: string | null;
+            status: string;
+            subject: string;
+            description: string;
+            priority: string;
+            userId: string | null;
+            category: string;
+            ticketNumber: number;
+            assignedToId: string | null;
+            isAiPaused: boolean;
+            satisfactionRating: number | null;
+            satisfactionFeedback: string | null;
+            aiHandoffDemandId: string | null;
+        };
+    }>;
 }

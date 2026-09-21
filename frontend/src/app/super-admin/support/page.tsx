@@ -37,7 +37,13 @@ import {
   Eye,
   PanelRight,
   Zap,
-  Bot
+  Bot,
+  Play,
+  Pause,
+  Save,
+  Star,
+  Sliders,
+  ShieldAlert
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -93,13 +99,38 @@ function SuperAdminSupportContent() {
   const searchParams = useSearchParams();
   const initialTicketId = searchParams.get("ticketId");
 
-  // Sub-aba Ativa: 'customer_service' (WhatsApp ao Cliente) | 'team_chat' (Chat da Equipe)
-  const [activeSubView, setActiveSubView] = useState<'customer_service' | 'team_chat'>('customer_service');
+  // Sub-aba Ativa: 'customer_service' (WhatsApp ao Cliente) | 'team_chat' (Chat da Equipe) | 'ai_config' (Agente IA de Suporte)
+  const [activeSubView, setActiveSubView] = useState<'customer_service' | 'team_chat' | 'ai_config'>('customer_service');
 
   const [tickets, setTickets] = useState<any[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
   const [loadingTicket, setLoadingTicket] = useState(false);
+
+  // Governança & Configuração do Agente IA de Suporte
+  const [aiConfig, setAiConfig] = useState<{
+    id?: string;
+    name: string;
+    model: string;
+    prompt: string;
+    knowledgeBase: string;
+    guardrails: string;
+    isActive: boolean;
+    autoHandoffCrm: boolean;
+    autoCloseSolved: boolean;
+  }>({
+    name: "Sofia - Suporte VERSUS",
+    model: "gpt-4o-mini",
+    prompt: "",
+    knowledgeBase: "",
+    guardrails: "",
+    isActive: true,
+    autoHandoffCrm: true,
+    autoCloseSolved: true,
+  });
+  const [loadingAiConfig, setLoadingAiConfig] = useState(false);
+  const [savingAiConfig, setSavingAiConfig] = useState(false);
+  const [togglingTicketAi, setTogglingTicketAi] = useState(false);
 
   // Filtros da fila
   const [search, setSearch] = useState("");
@@ -201,6 +232,68 @@ function SuperAdminSupportContent() {
       toast.error("Erro ao carregar detalhes do chamado.");
     } finally {
       setLoadingTicket(false);
+    }
+  };
+
+  // Carregar Configuração do Agente IA
+  const fetchAiConfig = useCallback(async () => {
+    setLoadingAiConfig(true);
+    try {
+      const res = await api.get("/support/ai/config");
+      if (res.data) {
+        setAiConfig(res.data);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar configuração da IA de Suporte:", err);
+    } finally {
+      setLoadingAiConfig(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAiConfig();
+  }, [fetchAiConfig]);
+
+  // Salvar Configuração do Agente IA
+  const handleSaveAiConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingAiConfig(true);
+    try {
+      const res = await api.patch("/support/ai/config", aiConfig);
+      setAiConfig(res.data);
+      toast.success("Configuração do Agente IA salva com sucesso!");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Erro ao salvar configuração da IA.");
+    } finally {
+      setSavingAiConfig(false);
+    }
+  };
+
+  // Pausar ou Retomar IA no Chamado Selecionado
+  const handleToggleTicketAi = async () => {
+    if (!selectedTicket || togglingTicketAi) return;
+    setTogglingTicketAi(true);
+    try {
+      const nextPaused = !selectedTicket.isAiPaused;
+      const res = await api.patch(`/support/tickets/${selectedTicket.id}/toggle-ai`, {
+        isPaused: nextPaused,
+      });
+      setSelectedTicket((prev: any) => ({
+        ...prev,
+        isAiPaused: res.data.isAiPaused,
+      }));
+      if (nextPaused) {
+        toast.success("Atendimento Humano assumido: IA pausada neste chamado!");
+      } else {
+        toast.success("IA de Suporte reativada para responder este chamado!");
+      }
+      fetchTickets();
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erro ao alterar controle da IA para este chamado.");
+    } finally {
+      setTogglingTicketAi(false);
     }
   };
 
@@ -429,6 +522,28 @@ function SuperAdminSupportContent() {
                 </span>
               )}
             </button>
+
+            {/* Aba 3: Agente IA de Suporte */}
+            <button
+              type="button"
+              onClick={() => {
+                setActiveSubView('ai_config');
+                fetchAiConfig();
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                activeSubView === 'ai_config'
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <Bot size={14} className={aiConfig.isActive ? "text-cyan-300" : "text-slate-400"} />
+              <span>Agente IA de Suporte</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                aiConfig.isActive ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/40' : 'bg-slate-800 text-slate-400'
+              }`}>
+                {aiConfig.isActive ? "ATIVO" : "OFF"}
+              </span>
+            </button>
           </div>
 
           <button
@@ -617,7 +732,60 @@ function SuperAdminSupportContent() {
 
                     {/* Botões de Ação do Header */}
                     <div className="flex items-center gap-2 shrink-0">
-                      
+
+                      {/* BADGE CSAT (se avaliado pelo cliente) */}
+                      {selectedTicket.satisfactionRating && (
+                        <div 
+                          className="flex items-center gap-1 bg-amber-500/15 border border-amber-500/30 px-2 py-1 rounded-lg text-xs font-bold text-amber-300"
+                          title={selectedTicket.satisfactionFeedback ? `Avaliação do Cliente: "${selectedTicket.satisfactionFeedback}"` : "Avaliação CSAT registrada"}
+                        >
+                          <Star size={13} className="fill-amber-400 text-amber-400" />
+                          <span>CSAT: {selectedTicket.satisfactionRating}/5</span>
+                        </div>
+                      )}
+
+                      {/* BADGE DEMANDA ENGENHARIA/CRM */}
+                      {selectedTicket.aiHandoffDemandId && (
+                        <div 
+                          className="flex items-center gap-1 bg-cyan-500/15 border border-cyan-500/30 px-2 py-1 rounded-lg text-xs font-bold text-cyan-300"
+                          title="Demanda catalogada automaticamente no Backlog de Engenharia/CRM"
+                        >
+                          <Cpu size={13} className="text-cyan-400" />
+                          <span className="hidden md:inline">Demanda Vinculada</span>
+                        </div>
+                      )}
+
+                      {/* BOTÃO ASSUMIR ATENDIMENTO HUMANO / REATIVAR IA */}
+                      <button
+                        type="button"
+                        onClick={handleToggleTicketAi}
+                        disabled={togglingTicketAi}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border shadow-sm ${
+                          selectedTicket.isAiPaused
+                            ? "bg-emerald-950/70 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/60"
+                            : "bg-amber-950/70 border-amber-500/40 text-amber-300 hover:bg-amber-900/60"
+                        }`}
+                        title={
+                          selectedTicket.isAiPaused
+                            ? "A IA está pausada para este chamado. Clique para reativar as respostas automáticas da IA."
+                            : "Clique para assumir o chamado com operador humano e pausar a IA."
+                        }
+                      >
+                        {togglingTicketAi ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : selectedTicket.isAiPaused ? (
+                          <>
+                            <Play size={13} className="text-emerald-400" />
+                            <span className="hidden sm:inline">Reativar IA</span>
+                          </>
+                        ) : (
+                          <>
+                            <Pause size={13} className="text-amber-400" />
+                            <span className="hidden sm:inline">Assumir (Pausar IA)</span>
+                          </>
+                        )}
+                      </button>
+
                       {/* BOTÃO DO COPILOTO IA */}
                       <button
                         type="button"
@@ -828,7 +996,8 @@ function SuperAdminSupportContent() {
                       </div>
                     ) : (
                       publicMessages.map((msg: any, idx: number) => {
-                        const isOperator = msg.senderRole === "SUPER_ADMIN" || msg.senderRole === "ADMIN" || msg.senderRole === "AGENT";
+                        const isAi = msg.senderRole === "AI_AGENT";
+                        const isOperator = msg.senderRole === "SUPER_ADMIN" || msg.senderRole === "ADMIN" || msg.senderRole === "AGENT" || isAi;
                         
                         // Separador de Data estilo WhatsApp
                         const prevMsg = idx > 0 ? publicMessages[idx - 1] : null;
@@ -850,14 +1019,16 @@ function SuperAdminSupportContent() {
                             {/* Balão de Mensagem WhatsApp com Cauda SVG */}
                             <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isOperator ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5`}>
                               <div className={`text-xs shadow-sm relative pt-2 pb-2 px-3.5 min-w-[100px] leading-relaxed ${
-                                isOperator
+                                isAi
+                                  ? 'bg-[#0e223b] text-slate-100 rounded-lg rounded-tr-none border border-cyan-500/40 shadow-cyan-950/30'
+                                  : isOperator
                                   ? 'bg-[#17253D] text-slate-100 rounded-lg rounded-tr-none border border-blue-900/30'
                                   : 'bg-[#1E293B] text-slate-100 rounded-lg rounded-tl-none border border-slate-700/40'
                               }`}>
                                 
                                 {/* Cauda SVG do Balão WhatsApp */}
                                 {isOperator ? (
-                                  <svg className="absolute -top-[0.5px] -right-2 text-[#17253D] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
+                                  <svg className={`absolute -top-[0.5px] -right-2 pointer-events-none drop-shadow-sm ${isAi ? 'text-[#0e223b]' : 'text-[#17253D]'}`} width="9" height="13" viewBox="0 0 9 13">
                                     <path fill="currentColor" d="M0 0h6.5c1.1 0 1.8.9 1.3 1.9l-5.2 9.8c-.7 1.4-2.6.8-2.6-.8V0z" />
                                   </svg>
                                 ) : (
@@ -868,25 +1039,36 @@ function SuperAdminSupportContent() {
 
                                 {/* Nome do Remetente */}
                                 <div className="flex items-center justify-between gap-3 text-[10px] font-bold mb-1 pb-0.5 border-b border-white/5">
-                                  <span className={isOperator ? "text-cyan-300" : "text-blue-400"}>
-                                    {msg.senderName || (isOperator ? "Suporte VERSUS" : "Cliente")}
+                                  <span className={isAi ? "text-cyan-300 flex items-center gap-1.5" : isOperator ? "text-cyan-300" : "text-blue-400"}>
+                                    {isAi && <Bot size={12} className="text-cyan-400 shrink-0" />}
+                                    {msg.senderName || (isAi ? "Sofia - Suporte VERSUS" : isOperator ? "Suporte VERSUS" : "Cliente")}
                                   </span>
-                                  <span className="text-slate-400 font-mono text-[9px]">
-                                    {isOperator ? "Operador" : "Cliente"}
+                                  <span className={`font-mono text-[9px] px-1 py-0.2 rounded uppercase ${
+                                    isAi 
+                                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30" 
+                                      : isOperator 
+                                      ? "text-slate-400" 
+                                      : "text-slate-400"
+                                  }`}>
+                                    {isAi ? "IA Autônoma" : isOperator ? "Operador" : "Cliente"}
                                   </span>
                                 </div>
 
                                 {/* Texto da Mensagem */}
                                 <p className="whitespace-pre-wrap">{msg.content}</p>
 
-                                {/* Horário e Duplo Check em Ciano para Mensagens do Operador */}
+                                {/* Horário e Duplo Check em Ciano ou Sparkles para IA */}
                                 <div className="flex items-center justify-end gap-1 text-[10px] text-slate-400 mt-1">
                                   <span>
                                     {new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                                   </span>
-                                  {isOperator && (
+                                  {isAi ? (
+                                    <span title="Gerado por IA Autônoma">
+                                      <Sparkles size={12} className="text-cyan-400" />
+                                    </span>
+                                  ) : isOperator ? (
                                     <CheckCheck size={13} className="text-cyan-400" />
-                                  )}
+                                  ) : null}
                                 </div>
                               </div>
                             </div>
@@ -1170,6 +1352,263 @@ function SuperAdminSupportContent() {
                 <div className="flex items-center justify-between text-[10px] text-purple-400/80 px-2">
                   <span>🔒 Visível exclusivamente para operadores master e atendentes cadastrados no VERSUS.</span>
                   <span>Enter para registrar • Shift + Enter para quebra de linha</span>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* SUB-ABA 3: CONFIGURAÇÃO DO AGENTE IA DE SUPORTE (GOVERNANÇA & REGRAS)     */}
+        {/* ========================================================================= */}
+        {activeSubView === 'ai_config' && (
+          <div className="flex-1 bg-[#0B1224] border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-xl">
+            
+            {/* Header da Aba de Governança da IA */}
+            <div className="p-4 border-b border-cyan-500/30 bg-gradient-to-r from-[#071322] via-[#0B1A2E] to-[#071322] flex flex-wrap items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-600/30 to-blue-600/30 border border-cyan-500/40 flex items-center justify-center text-cyan-300 shrink-0 shadow-lg">
+                  <Bot size={22} />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                    Agente de IA Autônomo • Central de Atendimento
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono uppercase font-bold border ${
+                      aiConfig.isActive 
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" 
+                        : "bg-slate-800 text-slate-400 border-slate-700"
+                    }`}>
+                      {aiConfig.isActive ? "Operação Ativa" : "Pausado"}
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    Acolhimento imediato, solução com base nos manuais do VERSUS, cancelas de segurança e handoff ao CRM.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={fetchAiConfig}
+                  disabled={loadingAiConfig}
+                  className="px-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                  title="Recarregar configurações do servidor"
+                >
+                  <RefreshCw size={13} className={loadingAiConfig ? "animate-spin text-cyan-400" : ""} />
+                  <span className="hidden sm:inline">Recarregar</span>
+                </button>
+
+                <button
+                  type="submit"
+                  form="ai-config-form"
+                  disabled={savingAiConfig}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-lg cursor-pointer disabled:opacity-50"
+                >
+                  {savingAiConfig ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Save size={14} />
+                  )}
+                  <span>Salvar Configurações</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Formulário de Configuração */}
+            <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#070D1B]/60">
+              <form id="ai-config-form" onSubmit={handleSaveAiConfig} className="max-w-4xl mx-auto space-y-6">
+                
+                {/* 1. Toggles de Automação */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  
+                  {/* Toggle 1: Atendimento Ativo */}
+                  <label className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                    aiConfig.isActive 
+                      ? "bg-cyan-950/20 border-cyan-500/50 shadow-cyan-950/20 shadow-sm" 
+                      : "bg-[#0B1224] border-slate-800 opacity-80"
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Bot size={16} className={aiConfig.isActive ? "text-cyan-400" : "text-slate-500"} />
+                        <span className="text-xs font-bold text-white">Atendimento Autônomo</span>
+                      </div>
+                      <input 
+                        type="checkbox"
+                        checked={aiConfig.isActive}
+                        onChange={(e) => setAiConfig(prev => ({ ...prev, isActive: e.target.checked }))}
+                        className="w-4 h-4 accent-cyan-500 cursor-pointer"
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Responde instantaneamente a abertura de chamados e réplicas dos clientes com acolhimento humanizado.
+                    </p>
+                  </label>
+
+                  {/* Toggle 2: Auto Handoff CRM */}
+                  <label className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                    aiConfig.autoHandoffCrm 
+                      ? "bg-blue-950/20 border-blue-500/50 shadow-blue-950/20 shadow-sm" 
+                      : "bg-[#0B1224] border-slate-800 opacity-80"
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Cpu size={16} className={aiConfig.autoHandoffCrm ? "text-blue-400" : "text-slate-500"} />
+                        <span className="text-xs font-bold text-white">Handoff CRM / Backlog</span>
+                      </div>
+                      <input 
+                        type="checkbox"
+                        checked={aiConfig.autoHandoffCrm}
+                        onChange={(e) => setAiConfig(prev => ({ ...prev, autoHandoffCrm: e.target.checked }))}
+                        className="w-4 h-4 accent-blue-500 cursor-pointer"
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Detecta automaticamente upgrades de planos, novos recursos ou bugs e cria card no Kanban de Engenharia.
+                    </p>
+                  </label>
+
+                  {/* Toggle 3: Auto Close & CSAT */}
+                  <label className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                    aiConfig.autoCloseSolved 
+                      ? "bg-emerald-950/20 border-emerald-500/50 shadow-emerald-950/20 shadow-sm" 
+                      : "bg-[#0B1224] border-slate-800 opacity-80"
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Star size={16} className={aiConfig.autoCloseSolved ? "text-emerald-400" : "text-slate-500"} />
+                        <span className="text-xs font-bold text-white">Encerramento & CSAT</span>
+                      </div>
+                      <input 
+                        type="checkbox"
+                        checked={aiConfig.autoCloseSolved}
+                        onChange={(e) => setAiConfig(prev => ({ ...prev, autoCloseSolved: e.target.checked }))}
+                        className="w-4 h-4 accent-emerald-500 cursor-pointer"
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Detecta agradecimento ou confirmação de resolução, marca o ticket como RESOLVIDO e solicita nota de 1 a 5 estrelas.
+                    </p>
+                  </label>
+                </div>
+
+                {/* 2. Identidade & Modelo LLM */}
+                <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 space-y-3">
+                  <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <Sliders size={14} className="text-cyan-400" />
+                    <span>Identidade & Modelo Neural</span>
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                        Nome de Exibição do Agente
+                      </label>
+                      <input 
+                        type="text"
+                        value={aiConfig.name}
+                        onChange={(e) => setAiConfig(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Ex: Sofia - Suporte VERSUS"
+                        className="w-full bg-[#070D1B] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+                        Modelo de Linguagem (LLM)
+                      </label>
+                      <select
+                        value={aiConfig.model}
+                        onChange={(e) => setAiConfig(prev => ({ ...prev, model: e.target.value }))}
+                        className="w-full bg-[#070D1B] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-500 transition-colors cursor-pointer"
+                      >
+                        <option value="gpt-4o-mini">gpt-4o-mini (Recomendado • Alta Velocidade & Precisão)</option>
+                        <option value="gpt-4o">gpt-4o (Máxima Capacidade Cognitiva & Diagnóstico)</option>
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo (Legado)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Prompt do Sistema / Tom de Voz */}
+                <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <Sparkles size={14} className="text-cyan-400" />
+                      <span>Prompt de Personalidade & Tom de Voz</span>
+                    </h3>
+                    <span className="text-[10px] text-slate-500">Humanizado, acolhedor e corporativo</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Define como o agente se comunica com os clientes. Ele sempre chama pelo primeiro nome e adota postura resolutiva.
+                  </p>
+                  <textarea 
+                    rows={6}
+                    value={aiConfig.prompt}
+                    onChange={(e) => setAiConfig(prev => ({ ...prev, prompt: e.target.value }))}
+                    placeholder="Instruções de personalidade e acolhimento..."
+                    className="w-full bg-[#070D1B] border border-slate-700 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors font-mono leading-relaxed custom-scrollbar"
+                  />
+                </div>
+
+                {/* 4. Base de Conhecimento RAG do VERSUS */}
+                <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <FileText size={14} className="text-blue-400" />
+                      <span>Base de Conhecimento do VERSUS (Manual dos Módulos)</span>
+                    </h3>
+                    <span className="text-[10px] text-slate-500">Manual operacional completo</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Instruções sobre conexão de WhatsApp (QR Code / Evolution), Whisper áudio, funis de CRM, propostas, contratos com assinatura digital, metas, VoIP e configurações gerais.
+                  </p>
+                  <textarea 
+                    rows={8}
+                    value={aiConfig.knowledgeBase}
+                    onChange={(e) => setAiConfig(prev => ({ ...prev, knowledgeBase: e.target.value }))}
+                    placeholder="Documentação de arquitetura funcional e módulos para resposta aos clientes..."
+                    className="w-full bg-[#070D1B] border border-slate-700 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-blue-500 transition-colors font-mono leading-relaxed custom-scrollbar"
+                  />
+                </div>
+
+                {/* 5. Cancelas de Segurança (Anti-Leak Guardrails) */}
+                <div className="p-4 rounded-xl bg-[#0B1224] border border-rose-900/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-rose-300 uppercase tracking-wider flex items-center gap-2">
+                      <ShieldAlert size={14} className="text-rose-400" />
+                      <span>Cancelas Rígidas de Segurança (Anti-Vazamento)</span>
+                    </h3>
+                    <span className="text-[10px] bg-rose-500/10 text-rose-300 px-2 py-0.5 rounded border border-rose-500/30 uppercase font-mono font-bold">
+                      Blindagem
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Regras inegociáveis para impedir que usuários extraiam dados de outros clientes, credenciais, senhas, chaves de API ou detalhes de código de backend.
+                  </p>
+                  <textarea 
+                    rows={6}
+                    value={aiConfig.guardrails}
+                    onChange={(e) => setAiConfig(prev => ({ ...prev, guardrails: e.target.value }))}
+                    placeholder="Regras estritas de segurança e bloqueio..."
+                    className="w-full bg-[#070D1B] border border-rose-900/40 rounded-xl p-3 text-xs text-rose-100 placeholder-slate-500 outline-none focus:border-rose-500 transition-colors font-mono leading-relaxed custom-scrollbar"
+                  />
+                </div>
+
+                {/* Rodapé de Ações */}
+                <div className="flex items-center justify-end gap-3 pt-2 pb-6">
+                  <button
+                    type="submit"
+                    disabled={savingAiConfig}
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-lg cursor-pointer disabled:opacity-50"
+                  >
+                    {savingAiConfig ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Save size={14} />
+                    )}
+                    <span>Salvar Configurações da IA</span>
+                  </button>
                 </div>
               </form>
             </div>

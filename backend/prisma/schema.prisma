@@ -623,15 +623,33 @@ model SupportTicket {
   assignedTo   User?          @relation("AssignedSupportTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
   contactId    String?
   contact      Contact?       @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  messages     TicketMessage[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  isAiPaused          Boolean        @default(false)
+  satisfactionRating  Int?
+  satisfactionFeedback String?       @db.Text
+  aiHandoffDemandId   String?
+  messages            TicketMessage[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
   @@index([tenantId, status])
   @@index([tenantId, priority])
   @@index([tenantId, category])
   @@index([userId])
   @@index([assignedToId])
+}
+
+model SupportAiConfig {
+  id              String   @id @default("default")
+  name            String   @default("Sofia - Suporte VERSUS")
+  model           String   @default("gpt-4o-mini")
+  prompt          String   @db.Text
+  knowledgeBase   String   @db.Text
+  guardrails      String   @db.Text
+  isActive        Boolean  @default(true)
+  autoHandoffCrm  Boolean  @default(true)
+  autoCloseSolved Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model TicketMessage {

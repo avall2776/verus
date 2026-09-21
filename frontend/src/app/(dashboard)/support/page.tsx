@@ -5,7 +5,8 @@ import {
   LifeBuoy, MessageSquare, ShieldCheck, AlertCircle, CheckCircle2, 
   Clock, Plus, Search, Filter, RefreshCw, Send, Lock, User, 
   ExternalLink, ChevronRight, HelpCircle, Smartphone, Mail, 
-  Target, Bot, Zap, ArrowRight, X, AlertTriangle, Eye, Building2
+  Target, Bot, Zap, ArrowRight, X, AlertTriangle, Eye, Building2,
+  Star, Sparkles, Loader2
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
@@ -76,6 +77,10 @@ interface SupportTicket {
     messages: number;
   };
   messages?: TicketMessage[];
+  isAiPaused?: boolean;
+  satisfactionRating?: number;
+  satisfactionFeedback?: string;
+  aiHandoffDemandId?: string;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -133,6 +138,11 @@ export default function SupportPage() {
   const [replyContent, setReplyContent] = useState("");
   const [isInternalNote, setIsInternalNote] = useState(false);
   const [isSendingReply, setIsSendingReply] = useState(false);
+
+  // Pesquisa de Satisfação (CSAT)
+  const [csatRating, setCsatRating] = useState(5);
+  const [csatFeedback, setCsatFeedback] = useState("");
+  const [isSubmittingCsat, setIsSubmittingCsat] = useState(false);
 
   // Autoatendimento - Busca Instantânea
   const [knowledgeSearch, setKnowledgeSearch] = useState("");
@@ -251,6 +261,29 @@ export default function SupportPage() {
     } catch (e) {
       console.error(e);
       toast.error("Erro ao alterar status do chamado.");
+    }
+  };
+
+  const handleSubmitCsat = async () => {
+    if (!selectedTicket || csatRating === 0 || isSubmittingCsat) return;
+    setIsSubmittingCsat(true);
+    try {
+      const res = await api.post(`/support/tickets/${selectedTicket.id}/csat`, {
+        rating: csatRating,
+        feedback: csatFeedback.trim() || undefined,
+      });
+      toast.success("Obrigado pela sua avaliação!");
+      setSelectedTicket((prev) => prev ? {
+        ...prev,
+        satisfactionRating: res.data.satisfactionRating,
+        satisfactionFeedback: res.data.satisfactionFeedback,
+      } : null);
+      fetchTickets();
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.response?.data?.message || "Erro ao enviar avaliação de satisfação.");
+    } finally {
+      setIsSubmittingCsat(false);
     }
   };
 
@@ -756,37 +789,143 @@ export default function SupportPage() {
                       </div>
                     ) : (
                       selectedTicket.messages?.map((msg) => {
-                        const isAgentOrAdmin = msg.senderRole === "AGENT" || msg.senderRole === "ADMIN";
+                        const isAi = msg.senderRole === "AI_AGENT";
+                        const isAgentOrAdmin = msg.senderRole === "AGENT" || msg.senderRole === "ADMIN" || msg.senderRole === "SUPER_ADMIN" || isAi;
                         return (
                           <div 
                             key={msg.id}
-                            className={`p-3.5 rounded-xl border text-xs leading-relaxed max-w-[90%] ${
+                            className={`p-3.5 rounded-xl border text-xs leading-relaxed max-w-[90%] shadow-sm ${
                               msg.isInternal
                                 ? "bg-amber-950/20 border-amber-500/30 text-amber-200 ml-auto"
+                                : isAi
+                                ? "bg-gradient-to-br from-[#0c1f36] to-[#071322] border-cyan-500/40 text-slate-100 mr-auto ring-1 ring-cyan-500/20 shadow-cyan-950/20"
                                 : isAgentOrAdmin
                                 ? "bg-slate-800/80 border-slate-700 text-slate-200 mr-auto"
                                 : "bg-blue-600/10 border-blue-500/30 text-slate-200 ml-auto"
                             }`}
                           >
-                            <div className="flex items-center justify-between gap-3 mb-1.5">
+                            <div className="flex items-center justify-between gap-3 mb-1.5 pb-1 border-b border-white/5">
                               <span className="font-bold text-[11px] text-white flex items-center gap-1.5">
-                                {msg.senderName || msg.sender?.name || "Atendente"}
-                                {msg.isInternal && (
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold">
-                                    Nota Interna
-                                  </span>
+                                {isAi ? (
+                                  <>
+                                    <Bot size={13} className="text-cyan-400 shrink-0" />
+                                    <span className="text-cyan-300 font-bold">{msg.senderName || "Sofia - Suporte VERSUS"}</span>
+                                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold font-mono uppercase">
+                                      IA de Suporte
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>
+                                    {msg.senderName || msg.sender?.name || "Atendente"}
+                                    {msg.isInternal && (
+                                      <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold">
+                                        Nota Interna
+                                      </span>
+                                    )}
+                                  </>
                                 )}
                               </span>
-                              <span className="text-[10px] text-slate-500 font-mono">
-                                {new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                              </span>
+                              <div className="flex items-center gap-1 text-[10px] text-slate-400 font-mono">
+                                <span>
+                                  {new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                                {isAi && <Sparkles size={11} className="text-cyan-400" />}
+                              </div>
                             </div>
-                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                            <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                           </div>
                         );
                       })
                     )}
                   </div>
+
+                  {/* Card de Pesquisa de Satisfação (CSAT) quando o chamado estiver Resolvido ou Fechado */}
+                  {(selectedTicket.status === 'RESOLVED' || selectedTicket.status === 'CLOSED') && (
+                    <div className="mt-2 mb-3">
+                      {selectedTicket.satisfactionRating ? (
+                        <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs shadow-sm">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center text-amber-400">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star 
+                                  key={star} 
+                                  size={16} 
+                                  className={star <= (selectedTicket.satisfactionRating || 0) ? "fill-amber-400 text-amber-400" : "text-slate-600"} 
+                                />
+                              ))}
+                            </div>
+                            <div>
+                              <span className="font-bold text-emerald-300 block">
+                                Atendimento Avaliado ({selectedTicket.satisfactionRating}/5)
+                              </span>
+                              {selectedTicket.satisfactionFeedback && (
+                                <p className="text-slate-300 italic text-[11px] mt-0.5">&quot;{selectedTicket.satisfactionFeedback}&quot;</p>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/40 uppercase font-mono font-bold">
+                            Obrigado pelo Feedback!
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="p-4 rounded-xl bg-[#070D1B] border border-blue-500/30 space-y-3 shadow-md">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Star size={16} className="text-amber-400 fill-amber-400" />
+                              <h4 className="text-xs font-bold text-white">Como foi sua experiência com a resolução deste chamado?</h4>
+                            </div>
+                            <span className="text-[10px] bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30 font-semibold">
+                              Pesquisa de Satisfação
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => setCsatRating(star)}
+                                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                                  csatRating >= star
+                                    ? "bg-amber-500/20 border-amber-500/50 text-amber-400 scale-110"
+                                    : "bg-slate-800/60 border-slate-700 text-slate-500 hover:text-amber-300"
+                                }`}
+                              >
+                                <Star size={20} className={csatRating >= star ? "fill-amber-400" : ""} />
+                              </button>
+                            ))}
+                            <span className="text-xs text-slate-300 ml-2 font-semibold">
+                              {csatRating === 5 && "Excelente! 🚀"}
+                              {csatRating === 4 && "Muito Bom! 👍"}
+                              {csatRating === 3 && "Regular 🙂"}
+                              {csatRating === 2 && "Ruim 😕"}
+                              {csatRating === 1 && "Muito Insatisfeito 😞"}
+                            </span>
+                          </div>
+
+                          <textarea
+                            rows={2}
+                            value={csatFeedback}
+                            onChange={(e) => setCsatFeedback(e.target.value)}
+                            placeholder="Deixe um comentário sobre a agilidade e clareza da resposta recebida (opcional)..."
+                            className="w-full p-2.5 rounded-xl text-xs bg-[#0B1224] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors resize-none"
+                          />
+
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={handleSubmitCsat}
+                              disabled={csatRating === 0 || isSubmittingCsat}
+                              className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 cursor-pointer shadow-md"
+                            >
+                              {isSubmittingCsat ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                              <span>Enviar Avaliação</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Caixa de Resposta com Sincronização & Blindagem Contra Envio Acidental */}
                   <form onSubmit={handleSendReply} className="border-t border-slate-800 pt-3 space-y-2.5">

@@ -15,10 +15,14 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const openai_1 = require("openai");
 const prisma_service_1 = require("../../shared/database/prisma.service");
+const chat_gateway_1 = require("../chat/chat.gateway");
+const support_ai_service_1 = require("./support-ai.service");
 let SupportService = SupportService_1 = class SupportService {
-    constructor(prisma, configService) {
+    constructor(prisma, configService, supportAiService, chatGateway) {
         this.prisma = prisma;
         this.configService = configService;
+        this.supportAiService = supportAiService;
+        this.chatGateway = chatGateway;
         this.logger = new common_1.Logger(SupportService_1.name);
         const apiKey = this.configService?.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
         this.openai = new openai_1.default({
@@ -190,6 +194,12 @@ let SupportService = SupportService_1 = class SupportService {
                 messages: true
             }
         });
+        this.chatGateway.emitTicketUpdate(tenantId, ticket);
+        setTimeout(() => {
+            this.supportAiService.handleTicketCreated(ticket.id).catch((err) => {
+                this.logger.error(`Erro ao disparar IA para novo chamado #${ticket.ticketNumber}: ${err?.message}`);
+            });
+        }, 1000);
         return ticket;
     }
     async addMessage(ticketId, tenantId, userId, dto, isSuperAdmin) {
@@ -242,6 +252,18 @@ let SupportService = SupportService_1 = class SupportService {
                 updatedAt: new Date()
             }
         });
+        this.chatGateway.emitTicketUpdate(ticket.tenantId, {
+            ticketId,
+            message,
+            status: nextStatus,
+        });
+        if (!isInternal && !isSuperAdmin && (senderRole === 'USER' || sender?.role === 'USER')) {
+            setTimeout(() => {
+                this.supportAiService.handleIncomingClientMessage(ticketId, dto.content.trim(), sender?.name || 'Cliente').catch((err) => {
+                    this.logger.error(`Erro ao disparar IA para resposta no chamado #${ticket.ticketNumber}: ${err?.message}`);
+                });
+            }, 1200);
+        }
         return message;
     }
     async updateStatus(ticketId, tenantId, status, isSuperAdmin) {
@@ -448,11 +470,74 @@ INSTRUÇÕES PARA O COPILOTO:
             ]
         };
     }
+    async getAiConfig() {
+        return this.supportAiService.getConfig();
+    }
+    async updateAiConfig(dto) {
+        return this.supportAiService.updateConfig(dto);
+    }
+    async toggleTicketAi(ticketId, isPaused, tenantId, isSuperAdmin) {
+        const where = isSuperAdmin ? { id: ticketId } : { id: ticketId, tenantId };
+        const ticket = await this.prisma.supportTicket.findFirst({ where });
+        if (!ticket) {
+            throw new common_1.NotFoundException('Chamado de suporte não encontrado.');
+        }
+        const updated = await this.prisma.supportTicket.update({
+            where: { id: ticketId },
+            data: {
+                isAiPaused: isPaused,
+                updatedAt: new Date(),
+            },
+            include: {
+                user: true,
+                assignedTo: true,
+                tenant: true,
+                messages: {
+                    include: { sender: true },
+                    orderBy: { createdAt: 'asc' },
+                },
+            },
+        });
+        this.chatGateway.emitTicketUpdate(ticket.tenantId, updated);
+        return updated;
+    }
+    async submitCsat(ticketId, tenantId, dto) {
+        const ticket = await this.prisma.supportTicket.findFirst({
+            where: { id: ticketId, tenantId },
+        });
+        if (!ticket) {
+            throw new common_1.NotFoundException('Chamado de suporte não encontrado.');
+        }
+        const updated = await this.prisma.supportTicket.update({
+            where: { id: ticketId },
+            data: {
+                satisfactionRating: dto.rating,
+                satisfactionFeedback: dto.feedback?.trim() || null,
+                updatedAt: new Date(),
+            },
+            include: {
+                user: true,
+                assignedTo: true,
+                tenant: true,
+                messages: {
+                    include: { sender: true },
+                    orderBy: { createdAt: 'asc' },
+                },
+            },
+        });
+        this.chatGateway.emitTicketUpdate(tenantId, updated);
+        return {
+            message: 'Avaliação registrada com sucesso! Muito obrigado pelo seu feedback.',
+            ticket: updated,
+        };
+    }
 };
 exports.SupportService = SupportService;
 exports.SupportService = SupportService = SupportService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        config_1.ConfigService])
+        config_1.ConfigService,
+        support_ai_service_1.SupportAiService,
+        chat_gateway_1.ChatGateway])
 ], SupportService);
 //# sourceMappingURL=support.service.js.map

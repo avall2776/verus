@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const database_module_1 = require("../../shared/database/database.module");
 const support_service_1 = require("./support.service");
+const support_ai_service_1 = require("./support-ai.service");
 const support_controller_1 = require("./support.controller");
 let SupportModule = class SupportModule {
 };
@@ -19,8 +20,8 @@ exports.SupportModule = SupportModule = __decorate([
     (0, common_1.Module)({
         imports: [database_module_1.DatabaseModule, config_1.ConfigModule],
         controllers: [support_controller_1.SupportController],
-        providers: [support_service_1.SupportService],
-        exports: [support_service_1.SupportService],
+        providers: [support_service_1.SupportService, support_ai_service_1.SupportAiService],
+        exports: [support_service_1.SupportService, support_ai_service_1.SupportAiService],
     })
 ], SupportModule);
 //# sourceMappingURL=support.module.js.map

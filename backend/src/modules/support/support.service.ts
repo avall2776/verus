@@ -2,8 +2,12 @@ import { Injectable, NotFoundException, BadRequestException, Logger } from '@nes
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 import { PrismaService } from '../../shared/database/prisma.service';
+import { ChatGateway } from '../chat/chat.gateway';
+import { SupportAiService } from './support-ai.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { CreateTicketMessageDto } from './dto/create-ticket-message.dto';
+import { UpdateSupportAiConfigDto } from './dto/update-support-ai-config.dto';
+import { SubmitCsatDto } from './dto/submit-csat.dto';
 
 @Injectable()
 export class SupportService {
@@ -13,6 +17,8 @@ export class SupportService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly supportAiService: SupportAiService,
+    private readonly chatGateway: ChatGateway,
   ) {
     const apiKey = this.configService?.get<string>('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
     this.openai = new OpenAI({
@@ -208,6 +214,16 @@ export class SupportService {
       }
     });
 
+    // Emite atualização em tempo real no WebSocket
+    this.chatGateway.emitTicketUpdate(tenantId, ticket);
+
+    // Dispara IA de atendimento autônomo de forma assíncrona
+    setTimeout(() => {
+      this.supportAiService.handleTicketCreated(ticket.id).catch((err) => {
+        this.logger.error(`Erro ao disparar IA para novo chamado #${ticket.ticketNumber}: ${err?.message}`);
+      });
+    }, 1000);
+
     return ticket;
   }
 
@@ -273,6 +289,26 @@ export class SupportService {
         updatedAt: new Date()
       }
     });
+
+    // Emite atualização no WebSocket
+    this.chatGateway.emitTicketUpdate(ticket.tenantId, {
+      ticketId,
+      message,
+      status: nextStatus,
+    });
+
+    // Se a mensagem for do cliente e não for interna, aciona a IA de atendimento
+    if (!isInternal && !isSuperAdmin && (senderRole === 'USER' || sender?.role === 'USER')) {
+      setTimeout(() => {
+        this.supportAiService.handleIncomingClientMessage(
+          ticketId,
+          dto.content.trim(),
+          sender?.name || 'Cliente'
+        ).catch((err) => {
+          this.logger.error(`Erro ao disparar IA para resposta no chamado #${ticket.ticketNumber}: ${err?.message}`);
+        });
+      }, 1200);
+    }
 
     return message;
   }
@@ -501,6 +537,75 @@ INSTRUÇÕES PARA O COPILOTO:
         'Confirmar parâmetros do tenant',
         'Aguardar retorno do cliente'
       ]
+    };
+  }
+
+  async getAiConfig() {
+    return this.supportAiService.getConfig();
+  }
+
+  async updateAiConfig(dto: UpdateSupportAiConfigDto) {
+    return this.supportAiService.updateConfig(dto);
+  }
+
+  async toggleTicketAi(ticketId: string, isPaused: boolean, tenantId?: string, isSuperAdmin?: boolean) {
+    const where = isSuperAdmin ? { id: ticketId } : { id: ticketId, tenantId };
+    const ticket = await this.prisma.supportTicket.findFirst({ where });
+    if (!ticket) {
+      throw new NotFoundException('Chamado de suporte não encontrado.');
+    }
+
+    const updated = await this.prisma.supportTicket.update({
+      where: { id: ticketId },
+      data: {
+        isAiPaused: isPaused,
+        updatedAt: new Date(),
+      },
+      include: {
+        user: true,
+        assignedTo: true,
+        tenant: true,
+        messages: {
+          include: { sender: true },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    this.chatGateway.emitTicketUpdate(ticket.tenantId, updated);
+    return updated;
+  }
+
+  async submitCsat(ticketId: string, tenantId: string, dto: SubmitCsatDto) {
+    const ticket = await this.prisma.supportTicket.findFirst({
+      where: { id: ticketId, tenantId },
+    });
+    if (!ticket) {
+      throw new NotFoundException('Chamado de suporte não encontrado.');
+    }
+
+    const updated = await this.prisma.supportTicket.update({
+      where: { id: ticketId },
+      data: {
+        satisfactionRating: dto.rating,
+        satisfactionFeedback: dto.feedback?.trim() || null,
+        updatedAt: new Date(),
+      },
+      include: {
+        user: true,
+        assignedTo: true,
+        tenant: true,
+        messages: {
+          include: { sender: true },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    this.chatGateway.emitTicketUpdate(tenantId, updated);
+    return {
+      message: 'Avaliação registrada com sucesso! Muito obrigado pelo seu feedback.',
+      ticket: updated,
     };
   }
 }
