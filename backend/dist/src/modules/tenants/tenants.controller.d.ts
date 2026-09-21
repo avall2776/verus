@@ -50,6 +50,7 @@ export declare class TenantsController {
         leadNotificationPhone: string | null;
         address: string | null;
         isActive: boolean;
+        aiEnabled: boolean;
         aiName: string | null;
         aiModel: string;
         aiPrompt: string | null;
@@ -73,6 +74,7 @@ export declare class TenantsController {
         leadNotificationPhone: string | null;
         address: string | null;
         isActive: boolean;
+        aiEnabled: boolean;
         aiName: string | null;
         aiModel: string;
         aiPrompt: string | null;
@@ -157,6 +159,7 @@ export declare class TenantsController {
             leadNotificationPhone: string | null;
             address: string | null;
             isActive: boolean;
+            aiEnabled: boolean;
             aiName: string | null;
             aiModel: string;
             aiPrompt: string | null;
@@ -225,6 +228,7 @@ export declare class TenantsController {
             address: string;
             logoUrl: string;
             isActive: boolean;
+            aiEnabled: boolean;
             createdAt: Date;
             updatedAt: Date;
             plan: {
@@ -316,6 +320,7 @@ export declare class TenantsController {
             leadNotificationPhone: string | null;
             address: string | null;
             isActive: boolean;
+            aiEnabled: boolean;
             aiName: string | null;
             aiModel: string;
             aiPrompt: string | null;
@@ -348,6 +353,7 @@ export declare class TenantsController {
             leadNotificationPhone: string | null;
             address: string | null;
             isActive: boolean;
+            aiEnabled: boolean;
             aiName: string | null;
             aiModel: string;
             aiPrompt: string | null;

@@ -318,6 +318,7 @@ let TenantsService = TenantsService_1 = class TenantsService {
                 address: tenant.address,
                 logoUrl: tenant.logoUrl,
                 isActive: tenant.isActive,
+                aiEnabled: tenant.aiEnabled !== false,
                 createdAt: tenant.createdAt,
                 updatedAt: tenant.updatedAt,
                 plan: tenant.plan,
@@ -458,6 +459,8 @@ let TenantsService = TenantsService_1 = class TenantsService {
             updateData.leadNotificationPhone = data.leadNotificationPhone ? data.leadNotificationPhone.trim() : null;
         if (data.address !== undefined)
             updateData.address = data.address.trim();
+        if (data.aiEnabled !== undefined)
+            updateData.aiEnabled = Boolean(data.aiEnabled);
         return this.prisma.tenant.update({
             where: { id: tenantId },
             data: updateData,
@@ -714,6 +717,8 @@ let TenantsService = TenantsService_1 = class TenantsService {
             data.logoUrl = dto.logoUrl ? String(dto.logoUrl).trim() : null;
         if (dto.isActive !== undefined)
             data.isActive = Boolean(dto.isActive);
+        if (dto.aiEnabled !== undefined)
+            data.aiEnabled = Boolean(dto.aiEnabled);
         if (dto.planId) {
             const plan = await this.prisma.plan.findUnique({ where: { id: dto.planId } });
             if (!plan) {

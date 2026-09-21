@@ -75,6 +75,7 @@ export declare class TenantsService {
             address: string;
             logoUrl: string;
             isActive: boolean;
+            aiEnabled: boolean;
             createdAt: Date;
             updatedAt: Date;
             plan: {
@@ -197,6 +198,7 @@ export declare class TenantsService {
         leadNotificationPhone: string | null;
         address: string | null;
         isActive: boolean;
+        aiEnabled: boolean;
         aiName: string | null;
         aiModel: string;
         aiPrompt: string | null;
@@ -215,6 +217,7 @@ export declare class TenantsService {
         phone?: string;
         leadNotificationPhone?: string;
         address?: string;
+        aiEnabled?: boolean;
     }): Promise<{
         id: string;
         name: string;
@@ -227,6 +230,7 @@ export declare class TenantsService {
         leadNotificationPhone: string | null;
         address: string | null;
         isActive: boolean;
+        aiEnabled: boolean;
         aiName: string | null;
         aiModel: string;
         aiPrompt: string | null;
@@ -306,6 +310,7 @@ export declare class TenantsService {
             leadNotificationPhone: string | null;
             address: string | null;
             isActive: boolean;
+            aiEnabled: boolean;
             aiName: string | null;
             aiModel: string;
             aiPrompt: string | null;
@@ -344,6 +349,7 @@ export declare class TenantsService {
             leadNotificationPhone: string | null;
             address: string | null;
             isActive: boolean;
+            aiEnabled: boolean;
             aiName: string | null;
             aiModel: string;
             aiPrompt: string | null;

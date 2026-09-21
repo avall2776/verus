@@ -369,6 +369,7 @@ export class TenantsService {
         address: tenant.address,
         logoUrl: tenant.logoUrl,
         isActive: tenant.isActive,
+        aiEnabled: tenant.aiEnabled !== false,
         createdAt: tenant.createdAt,
         updatedAt: tenant.updatedAt,
         plan: tenant.plan,
@@ -507,7 +508,7 @@ export class TenantsService {
     return tenant;
   }
 
-  async updateMyTenant(tenantId: string, data: { name?: string; cnpj?: string; email?: string; phone?: string; leadNotificationPhone?: string; address?: string }) {
+  async updateMyTenant(tenantId: string, data: { name?: string; cnpj?: string; email?: string; phone?: string; leadNotificationPhone?: string; address?: string; aiEnabled?: boolean }) {
     if (!tenantId) throw new BadRequestException('Tenant não identificado.');
     const updateData: any = {};
     if (data.name !== undefined) updateData.name = data.name.trim();
@@ -516,6 +517,7 @@ export class TenantsService {
     if (data.phone !== undefined) updateData.phone = data.phone.trim();
     if (data.leadNotificationPhone !== undefined) updateData.leadNotificationPhone = data.leadNotificationPhone ? data.leadNotificationPhone.trim() : null;
     if (data.address !== undefined) updateData.address = data.address.trim();
+    if (data.aiEnabled !== undefined) updateData.aiEnabled = Boolean(data.aiEnabled);
 
     return this.prisma.tenant.update({
       where: { id: tenantId },
@@ -771,6 +773,7 @@ export class TenantsService {
     if (dto.address !== undefined) data.address = dto.address ? String(dto.address).trim() : null;
     if (dto.logoUrl !== undefined) data.logoUrl = dto.logoUrl ? String(dto.logoUrl).trim() : null;
     if (dto.isActive !== undefined) data.isActive = Boolean(dto.isActive);
+    if (dto.aiEnabled !== undefined) data.aiEnabled = Boolean(dto.aiEnabled);
 
     if (dto.planId) {
       const plan = await this.prisma.plan.findUnique({ where: { id: dto.planId } });

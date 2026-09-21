@@ -73,8 +73,9 @@ model Tenant {
   chunks     DocumentChunk[]
 
   // Configurações da IA
+  aiEnabled       Boolean  @default(true)
   aiName          String? 
-  aiModel         String  @default("gpt-4o-mini")
+  aiModel         String   @default("gpt-4o-mini")
   aiPrompt        String?
   aiKnowledgeBase String?
   aiTemperature   Float   @default(0.7)

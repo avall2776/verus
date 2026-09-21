@@ -39,7 +39,17 @@ export class AiProcessor extends WorkerHost {
       return { status: 'aborted', reason: 'Not bot_active' };
     }
 
-    // 1.1 Trava de Conexão: Verifica se a instância do WhatsApp do Tenant está realmente conectada
+    // 1.1 Trava Master da Empresa: Verifica se o auto-atendimento por IA está ligado
+    if (conversation.contact.tenant?.aiEnabled === false) {
+      this.logger.warn(`Tenant [${conversation.contact.tenant?.name || tenantId}] com auto-atendimento por IA DESLIGADO nas Configurações. Abortando IA.`);
+      await this.prisma.conversation.update({
+        where: { id: conversationId },
+        data: { status: 'waiting' }
+      });
+      return { status: 'aborted', reason: 'ai_disabled_for_tenant' };
+    }
+
+    // 1.2 Trava de Conexão: Verifica se a instância do WhatsApp do Tenant está realmente conectada
     const connectedInst = await this.prisma.whatsAppInstance.findFirst({
       where: { tenantId, status: 'connected' }
     });

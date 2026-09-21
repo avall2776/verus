@@ -308,7 +308,14 @@ export class WebhookProcessor extends WorkerHost {
       // Salva a mensagem no banco? Sim, mas precisamos da conversa primeiro.
     }
 
-    // 4. Buscar a conversa (só pode haver UMA por contato agora)
+    // 4. Buscar a conversa (respeitando se a IA da empresa está ligada ou desligada)
+    const currentTenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { aiEnabled: true, name: true }
+    });
+    const isAiActiveForTenant = currentTenant?.aiEnabled !== false;
+    const initialStatus = isAiActiveForTenant ? 'bot_active' : 'waiting';
+
     let conversation = await this.prisma.conversation.upsert({
       where: {
         tenantId_contactId: {
@@ -319,19 +326,19 @@ export class WebhookProcessor extends WorkerHost {
       create: {
         tenantId,
         contactId: contact.id,
-        status: 'bot_active',
+        status: initialStatus,
         assignedTo: null,
       },
       update: {} // Apenas recupera se já existir
     });
 
     if (conversation.status === 'resolved' || conversation.status === 'closed') {
-      // Reabre a mesma conversa com IA Ativa na Fila Aguardando (assignedTo = null)
+      // Reabre a mesma conversa na Fila Aguardando
       conversation = await this.prisma.conversation.update({
         where: { id: conversation.id },
-        data: { status: 'bot_active', assignedTo: null }
+        data: { status: initialStatus, assignedTo: null }
       });
-      this.logger.log(`Conversa [${conversation.id}] reaberta (status -> bot_active, assignedTo -> null).`);
+      this.logger.log(`Conversa [${conversation.id}] reaberta (status -> ${initialStatus}, assignedTo -> null).`);
       
       // Emite atualização para as telas (mover de Resolvidos -> Aguardando)
       this.chatGateway.emitConversationUpdated(tenantId, conversation);
@@ -376,8 +383,16 @@ export class WebhookProcessor extends WorkerHost {
       contact: { phone: contact.phone, name: contact.name, avatarUrl: contact.avatarUrl }
     });
 
-    // 6. Integração com Fase 4: Despachar para fila de IA APENAS se o bot estiver ativo, conexão WhatsApp conectada e DENTRO do horário comercial!
-    if (conversation.status === 'bot_active') {
+    // 6. Integração com Fase 4: Despachar para fila de IA APENAS se o auto-atendimento estiver LIGADO nas configurações da empresa
+    if (!isAiActiveForTenant) {
+      this.logger.log(`Conversa [${conversation.id}] mantida para atendimento humano. O auto-atendimento por IA está DESLIGADO nas Configurações da Empresa.`);
+      if (conversation.status === 'bot_active') {
+        await this.prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { status: 'waiting' }
+        });
+      }
+    } else if (conversation.status === 'bot_active') {
       // Verifica se há instância de WhatsApp conectada no tenant
       const connectedInst = await this.prisma.whatsAppInstance.findFirst({
         where: { tenantId, status: 'connected' }

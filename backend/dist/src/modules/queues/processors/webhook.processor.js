@@ -289,6 +289,12 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 content: fallbackMsg
             });
         }
+        const currentTenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { aiEnabled: true, name: true }
+        });
+        const isAiActiveForTenant = currentTenant?.aiEnabled !== false;
+        const initialStatus = isAiActiveForTenant ? 'bot_active' : 'waiting';
         let conversation = await this.prisma.conversation.upsert({
             where: {
                 tenantId_contactId: {
@@ -299,7 +305,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             create: {
                 tenantId,
                 contactId: contact.id,
-                status: 'bot_active',
+                status: initialStatus,
                 assignedTo: null,
             },
             update: {}
@@ -307,9 +313,9 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         if (conversation.status === 'resolved' || conversation.status === 'closed') {
             conversation = await this.prisma.conversation.update({
                 where: { id: conversation.id },
-                data: { status: 'bot_active', assignedTo: null }
+                data: { status: initialStatus, assignedTo: null }
             });
-            this.logger.log(`Conversa [${conversation.id}] reaberta (status -> bot_active, assignedTo -> null).`);
+            this.logger.log(`Conversa [${conversation.id}] reaberta (status -> ${initialStatus}, assignedTo -> null).`);
             this.chatGateway.emitConversationUpdated(tenantId, conversation);
         }
         const savedMessage = await this.prisma.message.create({
@@ -342,7 +348,16 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             ...savedMessage,
             contact: { phone: contact.phone, name: contact.name, avatarUrl: contact.avatarUrl }
         });
-        if (conversation.status === 'bot_active') {
+        if (!isAiActiveForTenant) {
+            this.logger.log(`Conversa [${conversation.id}] mantida para atendimento humano. O auto-atendimento por IA está DESLIGADO nas Configurações da Empresa.`);
+            if (conversation.status === 'bot_active') {
+                await this.prisma.conversation.update({
+                    where: { id: conversation.id },
+                    data: { status: 'waiting' }
+                });
+            }
+        }
+        else if (conversation.status === 'bot_active') {
             const connectedInst = await this.prisma.whatsAppInstance.findFirst({
                 where: { tenantId, status: 'connected' }
             });

@@ -8,4 +8,5 @@ export declare class UpdateTenantDto {
     planId?: string;
     logoUrl?: string;
     isActive?: boolean;
+    aiEnabled?: boolean;
 }

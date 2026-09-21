@@ -28,6 +28,7 @@ export default function EditCompanyModal({
   const [address, setAddress] = useState("");
   const [planId, setPlanId] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [aiEnabled, setAiEnabled] = useState(true);
 
   // Estados de Plano Personalizado
   const [isCustomPlan, setIsCustomPlan] = useState(false);
@@ -65,6 +66,7 @@ export default function EditCompanyModal({
       setAddress(initialData.address || "");
       setPlanId(initialData.planId || initialData.plan?.id || "");
       setIsActive(initialData.isActive !== false);
+      setAiEnabled(initialData.aiEnabled !== false);
     } else {
       // Carregar dados da empresa
       api.get(`/tenants/${tenantId}`)
@@ -78,6 +80,7 @@ export default function EditCompanyModal({
           setAddress(comp.address || "");
           setPlanId(comp.planId || comp.plan?.id || "");
           setIsActive(comp.isActive !== false);
+          setAiEnabled(comp.aiEnabled !== false);
         })
         .catch((e) => console.error(e));
     }
@@ -167,6 +170,7 @@ export default function EditCompanyModal({
         leadNotificationPhone: leadNotificationPhone.trim() || null,
         address: address.trim() || null,
         isActive,
+        aiEnabled,
       };
 
       if (resolvedPlanId && resolvedPlanId !== "custom") {
@@ -273,6 +277,45 @@ export default function EditCompanyModal({
               <p className="text-[10px] text-slate-400">
                 Número do gerente comercial ou ID de grupo do WhatsApp para onde o robô enviará alertas de novos leads qualificados.
               </p>
+            </div>
+
+            {/* Auto-Atendimento por IA (Toggle) */}
+            <div className="sm:col-span-2 p-3 rounded-lg bg-[#070D1B] border border-slate-800 flex items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-200">
+                    Auto-Atendimento por IA (WhatsApp)
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${
+                      aiEnabled
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                        : "bg-red-500/10 text-red-400 border-red-500/30"
+                    }`}
+                  >
+                    {aiEnabled ? "Ligado" : "Desligado"}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  Quando desligado, o robô não responde nenhuma mensagem para esta empresa.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setAiEnabled(!aiEnabled)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  aiEnabled ? "bg-emerald-500" : "bg-red-500/80"
+                }`}
+                role="switch"
+                aria-checked={aiEnabled}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    aiEnabled ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
             </div>
           </div>
 

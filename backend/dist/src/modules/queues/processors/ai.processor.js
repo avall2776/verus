@@ -40,6 +40,14 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
             this.logger.warn(`Conversa [${conversationId}] está com status '${conversation.status}'. IA Abortada.`);
             return { status: 'aborted', reason: 'Not bot_active' };
         }
+        if (conversation.contact.tenant?.aiEnabled === false) {
+            this.logger.warn(`Tenant [${conversation.contact.tenant?.name || tenantId}] com auto-atendimento por IA DESLIGADO nas Configurações. Abortando IA.`);
+            await this.prisma.conversation.update({
+                where: { id: conversationId },
+                data: { status: 'waiting' }
+            });
+            return { status: 'aborted', reason: 'ai_disabled_for_tenant' };
+        }
         const connectedInst = await this.prisma.whatsAppInstance.findFirst({
             where: { tenantId, status: 'connected' }
         });

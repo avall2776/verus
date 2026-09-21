@@ -18,6 +18,7 @@ export default function CompanySettingsTab() {
     email: "",
     phone: "",
     leadNotificationPhone: "",
+    aiEnabled: true,
     address: "",
   });
 
@@ -36,6 +37,7 @@ export default function CompanySettingsTab() {
         email: res.data.email || "",
         phone: res.data.phone || "",
         leadNotificationPhone: res.data.leadNotificationPhone || "",
+        aiEnabled: res.data.aiEnabled !== false,
         address: res.data.address || "",
       });
     } catch (err: any) {
@@ -214,6 +216,46 @@ export default function CompanySettingsTab() {
               className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-blue-500/30 text-white placeholder:text-slate-500 outline-none focus:border-blue-500 font-mono"
             />
           </div>
+        </div>
+
+        {/* Interruptor Master do Auto-Atendimento por IA */}
+        <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                Auto-Atendimento por IA (WhatsApp)
+              </span>
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${
+                  form.aiEnabled
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                    : "bg-red-500/10 text-red-400 border-red-500/30"
+                }`}
+              >
+                {form.aiEnabled ? "Ligado" : "Desligado"}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed max-w-xl">
+              Quando desligado, o robô para de responder novas mensagens e todos os novos chamados caem diretamente para atendimento humano no Inbox.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, aiEnabled: !form.aiEnabled })}
+            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+              form.aiEnabled ? "bg-emerald-500" : "bg-red-500/80"
+            }`}
+            role="switch"
+            aria-checked={form.aiEnabled}
+            title={form.aiEnabled ? "Clique para desligar a IA" : "Clique para ligar a IA"}
+          >
+            <span
+              className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                form.aiEnabled ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
         </div>
 
         <div className="space-y-1.5">
