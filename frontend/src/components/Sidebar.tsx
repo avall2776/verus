@@ -134,6 +134,8 @@ export default function Sidebar() {
       if (typeof window !== 'undefined') {
         setTargetTenantId(localStorage.getItem('versus_target_tenant_id'));
         setTargetTenantName(localStorage.getItem('versus_target_tenant_name'));
+        loadUser();
+        loadWorkspaces();
       }
     };
     checkTarget();

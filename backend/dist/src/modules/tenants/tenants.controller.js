@@ -23,6 +23,7 @@ const update_tenant_dto_1 = require("./dto/update-tenant.dto");
 const reset_admin_password_dto_1 = require("./dto/reset-admin-password.dto");
 const create_tenant_dto_1 = require("./dto/create-tenant.dto");
 const create_plan_dto_1 = require("./dto/create-plan.dto");
+const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 let TenantsController = class TenantsController {
     constructor(tenantsService) {
         this.tenantsService = tenantsService;
@@ -52,12 +53,10 @@ let TenantsController = class TenantsController {
     async getStats(req) {
         return this.tenantsService.getStats();
     }
-    async getMyTenant(req) {
-        const tenantId = req.user?.tenantId;
+    async getMyTenant(tenantId) {
         return this.tenantsService.getMyTenant(tenantId);
     }
-    async updateMyTenant(req, body) {
-        const tenantId = req.user?.tenantId;
+    async updateMyTenant(tenantId, body) {
         return this.tenantsService.updateMyTenant(tenantId, body);
     }
     async findAll(req, query) {
@@ -111,17 +110,17 @@ __decorate([
 ], TenantsController.prototype, "getStats", null);
 __decorate([
     (0, common_1.Get)('me'),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "getMyTenant", null);
 __decorate([
     (0, common_1.Patch)('me'),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "updateMyTenant", null);
 __decorate([

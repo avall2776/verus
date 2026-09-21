@@ -446,25 +446,23 @@ function InboxContent() {
     return phone;
   };
 
+  const getAudioSrc = (url?: string | null) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
+      return url;
+    }
+    if (url.startsWith('/api-backend/')) {
+      return url;
+    }
+    if (url.startsWith('/media/')) {
+      return `/api-backend${url}`;
+    }
+    return `/api-backend/media/audio/${url.replace(/^.*[\\\/]/, '')}`;
+  };
+
   const formatDisplayPhoneNumber = (rawPhone?: string) => {
     if (!rawPhone) return 'Sem telefone';
     const cleanJid = rawPhone.replace('@s.whatsapp.net', '').replace('@c.us', '');
-    if (cleanJid.includes('@lid')) {
-      const lidDigits = cleanJid.replace('@lid', '').replace(/\D/g, '');
-      if (lidDigits.length >= 10 && lidDigits.length <= 13) {
-        const clean = lidDigits;
-        if (clean.length === 13 && clean.startsWith('55')) {
-          return `+55 (${clean.slice(2, 4)}) ${clean.slice(4, 9)}-${clean.slice(9)}`;
-        } else if (clean.length === 12 && clean.startsWith('55')) {
-          return `+55 (${clean.slice(2, 4)}) ${clean.slice(4, 8)}-${clean.slice(8)}`;
-        } else if (clean.length === 11) {
-          return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7)}`;
-        } else if (clean.length === 10) {
-          return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
-        }
-      }
-      return 'WhatsApp (Privado)';
-    }
     const clean = cleanJid.replace(/\D/g, '');
     if (clean.length === 13 && clean.startsWith('55')) {
       return `+55 (${clean.slice(2, 4)}) ${clean.slice(4, 9)}-${clean.slice(9)}`;
@@ -474,8 +472,11 @@ function InboxContent() {
       return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7)}`;
     } else if (clean.length === 10) {
       return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
-    } else if (clean.length > 7) {
+    } else if (clean.length >= 8) {
       return `+${clean}`;
+    }
+    if (cleanJid.includes('@lid')) {
+      return 'Definir número';
     }
     return rawPhone;
   };
@@ -2540,49 +2541,48 @@ function InboxContent() {
                             </div>
                           )}
 
-                          {/* Mini-player de Áudio Customizado Monocromático + Transcrição (Renderiza SEMPRE se for áudio) */}
-                          {(msg.type === 'audio' || msg.type === 'voice' || msg.type === 'ptt' || (!!msg.mediaUrl && /\.(ogg|opus|mp3|m4a|wav|webm)($|\?)/i.test(msg.mediaUrl))) && (
-                            <div className="flex flex-col gap-1.5 my-1 w-64 mb-2">
-                              <div className="flex items-center gap-3 bg-black/30 p-2.5 rounded-xl border border-white/10 shadow-inner">
-                                <button
-                                  type="button"
-                                  disabled={!msg.mediaUrl}
-                                  onClick={() => msg.mediaUrl && togglePlayAudio(audioKey, msg.mediaUrl)}
-                                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-md shrink-0 ${
-                                    !msg.mediaUrl
-                                      ? 'bg-slate-700/60 text-slate-400 cursor-not-allowed opacity-80'
-                                      : playingAudioId === audioKey
-                                      ? 'bg-cyan-400 text-slate-950 font-bold cursor-pointer'
-                                      : isMe ? 'bg-cyan-500 text-slate-950 hover:bg-cyan-400 cursor-pointer' : 'bg-blue-600 text-white hover:bg-blue-500 cursor-pointer'
-                                  }`}
-                                  title={msg.mediaUrl ? 'Reproduzir áudio' : 'Mensagem de voz recebida'}
-                                >
-                                  {playingAudioId === audioKey ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
-                                </button>
-                                <div className="flex-1 flex flex-col gap-1 min-w-0">
-                                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
-                                    <span className="flex items-center gap-1">
-                                      <Volume2 size={12} className="text-cyan-400" /> Mensagem de voz
-                                    </span>
-                                    <span className="text-[10px] text-slate-400 font-mono">
-                                      {playingAudioId === audioKey ? 'Tocando...' : msg.mediaUrl ? 'Áudio' : 'Recebido'}
-                                    </span>
-                                  </div>
-                                  {/* Ondas Sonoras Visuais */}
-                                  <div className="flex items-center gap-0.5 h-3">
-                                    {[40, 70, 100, 60, 80, 45, 90, 55, 75, 95, 50, 85, 65, 40].map((height, hIdx) => (
-                                      <div
-                                        key={hIdx}
-                                        style={{ height: `${height}%` }}
-                                        className={`w-1 rounded-full transition-all ${
-                                          playingAudioId === audioKey
-                                            ? 'bg-cyan-400 animate-pulse'
-                                            : 'bg-slate-500/50'
-                                        }`}
-                                      />
-                                    ))}
-                                  </div>
+                          {/* Player de Áudio Nativo HTML5 + Download + Transcrição Whisper */}
+                          {(msg.type === 'audio' || msg.type === 'voice' || msg.type === 'ptt' || (!!msg.mediaUrl && /\.(ogg|opus|mp3|m4a|wav|webm)($|\?)/i.test(msg.mediaUrl)) || msg.content?.includes('🎤')) && (
+                            <div className="flex flex-col gap-1.5 my-1.5 w-full min-w-[240px] max-w-[310px] mb-2">
+                              <div className="bg-black/40 p-2.5 rounded-xl border border-white/10 shadow-inner flex flex-col gap-2">
+                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+                                  <span className="flex items-center gap-1.5">
+                                    <Volume2 size={13} className="text-cyan-400 shrink-0" />
+                                    <span>Mensagem de voz</span>
+                                  </span>
+                                  {msg.mediaUrl && (
+                                    <a
+                                      href={getAudioSrc(msg.mediaUrl)}
+                                      download={`audio_${msg.id || Date.now()}.ogg`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10"
+                                      title="Baixar arquivo de áudio"
+                                    >
+                                      <Download size={11} />
+                                      <span>Baixar</span>
+                                    </a>
+                                  )}
                                 </div>
+
+                                {msg.mediaUrl ? (
+                                  <audio
+                                    controls
+                                    preload="metadata"
+                                    src={getAudioSrc(msg.mediaUrl)}
+                                    className="w-full h-8 rounded-lg outline-none accent-cyan-400 bg-slate-900/90 border border-slate-700/50"
+                                  >
+                                    <source src={getAudioSrc(msg.mediaUrl)} type="audio/ogg" />
+                                    <source src={getAudioSrc(msg.mediaUrl)} type="audio/mp4" />
+                                    <source src={getAudioSrc(msg.mediaUrl)} type="audio/mpeg" />
+                                    Seu navegador não suporta a reprodução deste áudio.
+                                  </audio>
+                                ) : (
+                                  <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
+                                    <Volume2 size={14} className="shrink-0 animate-pulse text-amber-400" />
+                                    <span>Processando áudio recebido...</span>
+                                  </div>
+                                )}
                               </div>
 
                               {/* Botão de Expansão "Ver transcrição" */}
@@ -3042,9 +3042,12 @@ function InboxContent() {
               <button
                 type="button"
                 onClick={() => {
-                  if (activeContactData.phone) {
-                    setVoipNumber(activeContactData.phone);
+                  const cleanPhone = activeContactData.phone?.replace(/\D/g, '') || '';
+                  if (cleanPhone && cleanPhone.length >= 8) {
+                    setVoipNumber(cleanPhone);
                     setShowVoipDialer(true);
+                  } else {
+                    toast.error('Número de telefone não disponível para chamada.');
                   }
                 }}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-emerald-600/20 border border-slate-700/70 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
@@ -3104,7 +3107,7 @@ function InboxContent() {
                         }}
                       />
                     ) : (
-                      <span className="truncate font-mono font-medium" title={activeContactData.phone || ''}>
+                      <span className="truncate font-mono font-medium text-white text-xs" title={activeContactData.phone || ''}>
                         {formatDisplayPhoneNumber(activeContactData.phone)}
                       </span>
                     )}
@@ -3129,14 +3132,14 @@ function InboxContent() {
                             setIsEditingPhone(true);
                           }}
                           className="text-slate-400 hover:text-emerald-400 p-1 transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
-                          title="Editar / Definir número legível"
+                          title="Editar número de telefone"
                         >
                           <Pencil size={12} />
                         </button>
                         {activeContactData.phone && (
                           <button
                             type="button"
-                            onClick={() => handleCopyText(activeContactData.phone?.replace('@s.whatsapp.net', '').replace('@c.us', ''), 'phone')}
+                            onClick={() => handleCopyText(activeContactData.phone?.replace('@s.whatsapp.net', '').replace('@c.us', '').replace(/\D/g, ''), 'phone')}
                             className="text-slate-500 hover:text-white p-1 transition-colors cursor-pointer"
                             title="Copiar telefone"
                           >
@@ -3147,11 +3150,6 @@ function InboxContent() {
                     )}
                   </div>
                 </div>
-                {activeContactData.phone?.includes('@lid') && !isEditingPhone && (
-                  <span className="text-[10px] text-amber-400/80 font-mono pl-7">
-                    ID Técnico / WhatsApp Web • Clique no lápis para definir telefone legível
-                  </span>
-                )}
               </div>
 
               {/* E-mail */}

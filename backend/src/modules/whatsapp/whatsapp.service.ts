@@ -723,6 +723,9 @@ export class WhatsappService {
 
       this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
 
+      // Dispara resolução em background de contatos com @lid para números reais
+      this.syncAndResolveLidContacts(tenantId).catch(() => {});
+
       return {
         success: true,
         status: newStatus,
@@ -1222,6 +1225,117 @@ export class WhatsappService {
     } catch (err: any) {
       this.logger.warn(`Não foi possível apagar mensagem para todos no WhatsApp: ${err.message}`);
       return false;
+    }
+  }
+
+  /**
+   * Resolve contatos armazenados com identificador @lid para seus números de telefone reais
+   * cruzando o catálogo de contatos sincronizados na Evolution API (mesma foto ou pushName).
+   */
+  async syncAndResolveLidContacts(tenantId: string): Promise<number> {
+    try {
+      const lidContacts = await this.prisma.contact.findMany({
+        where: {
+          tenantId,
+          OR: [
+            { phone: { contains: 'lid' } },
+            { name: { contains: 'lid' } },
+          ],
+        },
+      });
+
+      if (!lidContacts.length) return 0;
+
+      const instances = await this.prisma.whatsAppInstance.findMany({
+        where: { tenantId },
+      });
+
+      if (!instances.length) return 0;
+
+      const { serverUrl, apiKey } = this.getEvolutionConfig();
+      let resolvedCount = 0;
+
+      for (const inst of instances) {
+        const cleanName = (inst.name || '').replace(' (WhatsApp Web)', '').trim();
+        if (!cleanName) continue;
+
+        try {
+          const res = await axios.post(
+            `${serverUrl}/chat/findContacts/${cleanName}`,
+            {},
+            {
+              headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+              timeout: 10000,
+            }
+          );
+
+          const evoContacts: Array<{ id: string; pushName?: string; profilePictureUrl?: string | null }> = res.data || [];
+          if (!Array.isArray(evoContacts)) continue;
+
+          // Mapa por foto de perfil para números reais (@s.whatsapp.net)
+          const picToPhoneMap = new Map<string, string>();
+          // Mapa por pushName normalizado para números reais
+          const nameToPhoneMap = new Map<string, string>();
+
+          for (const ec of evoContacts) {
+            if (!ec.id || ec.id.includes('@lid')) continue;
+            const realPhone = ec.id.replace('@s.whatsapp.net', '').replace('@c.us', '').replace(/\D/g, '');
+            if (realPhone.length < 10) continue;
+
+            if (ec.profilePictureUrl) {
+              const cleanPic = ec.profilePictureUrl.split('?')[0];
+              picToPhoneMap.set(cleanPic, realPhone);
+            }
+
+            if (ec.pushName) {
+              const normName = ec.pushName.trim().toLowerCase();
+              nameToPhoneMap.set(normName, realPhone);
+            }
+          }
+
+          for (const contact of lidContacts) {
+            let foundPhone: string | null = null;
+
+            // 1. Tenta correspondência por foto de perfil
+            if (contact.avatarUrl) {
+              const cleanAvatar = contact.avatarUrl.split('?')[0];
+              foundPhone = picToPhoneMap.get(cleanAvatar) || null;
+            }
+
+            // 2. Tenta correspondência por pushName exato ou parcial
+            if (!foundPhone && contact.name && !contact.name.includes('@lid') && contact.name !== 'Cliente WhatsApp') {
+              const normContactName = contact.name.trim().toLowerCase();
+              foundPhone = nameToPhoneMap.get(normContactName) || null;
+
+              if (!foundPhone) {
+                for (const [evoName, phone] of nameToPhoneMap.entries()) {
+                  if (evoName.includes(normContactName) || normContactName.includes(evoName)) {
+                    foundPhone = phone;
+                    break;
+                  }
+                }
+              }
+            }
+
+            if (foundPhone) {
+              await this.prisma.contact.update({
+                where: { id: contact.id },
+                data: { phone: foundPhone },
+              });
+
+              this.logger.log(`[LID Resolution] Contato [${contact.id}] (${contact.name}) resolvido para telefone real: ${foundPhone}`);
+              resolvedCount++;
+            }
+          }
+        } catch (e: any) {
+          this.logger.warn(`Erro ao consultar findContacts na instância [${cleanName}]: ${e.message}`);
+        }
+      }
+
+      return resolvedCount;
+    } catch (err: any) {
+      this.logger.error(`Erro ao resolver contatos LID para tenant [${tenantId}]: ${err.message}`);
+      return 0;
     }
   }
 }

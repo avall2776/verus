@@ -121,6 +121,19 @@ export const WhatsAppProvider = ({ children }: { children: React.ReactNode }) =>
     refreshStatus();
   }, [refreshStatus]);
 
+  // Limpa e recarrega conexões de forma reativa quando o Super Admin alternar de tenant
+  useEffect(() => {
+    const handleTenantSwitched = () => {
+      setInstances([]);
+      setActiveInstance(null);
+      setStatus({ hasToken: false, status: 'disconnected' });
+      refreshStatus();
+    };
+
+    window.addEventListener('tenant_switched', handleTenantSwitched);
+    return () => window.removeEventListener('tenant_switched', handleTenantSwitched);
+  }, [refreshStatus]);
+
   return (
     <WhatsAppContext.Provider value={{ 
       status, 

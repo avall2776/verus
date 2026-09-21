@@ -49,7 +49,7 @@ let UsersController = class UsersController {
         if (!userId) {
             throw new common_1.BadRequestException('ID de usuário não identificado no token.');
         }
-        return this.prisma.user.findUnique({
+        const user = await this.prisma.user.findUnique({
             where: { id: userId },
             select: {
                 id: true,
@@ -86,6 +86,45 @@ let UsersController = class UsersController {
                 },
             },
         });
+        if (!user)
+            return null;
+        const isSuperAdmin = Boolean(user.isSuperAdmin || String(user.role).toUpperCase() === 'SUPER_ADMIN');
+        const targetTenantId = req.headers['x-target-tenant-id'] || req.headers['x-tenant-id'];
+        if (isSuperAdmin && targetTenantId && typeof targetTenantId === 'string' && targetTenantId !== user.tenantId) {
+            const targetTenant = await this.prisma.tenant.findUnique({
+                where: { id: targetTenantId },
+                select: {
+                    id: true,
+                    name: true,
+                    isActive: true,
+                    planId: true,
+                    plan: {
+                        select: {
+                            id: true,
+                            name: true,
+                            price: true,
+                            hasCRM: true,
+                            hasWhatsApp: true,
+                            hasInstagram: true,
+                            hasAIAgent: true,
+                            maxUsers: true,
+                            maxAIMsgs: true,
+                            maxWorkspaces: true,
+                            modules: true,
+                        },
+                    },
+                },
+            });
+            if (targetTenant) {
+                return {
+                    ...user,
+                    tenantId: targetTenant.id,
+                    tenant: targetTenant,
+                    isImpersonating: true,
+                };
+            }
+        }
+        return user;
     }
     async updateProfile(req, body) {
         const userId = req.user?.id || req.user?.userId;

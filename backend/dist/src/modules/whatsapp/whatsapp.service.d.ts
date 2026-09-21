@@ -203,4 +203,5 @@ export declare class WhatsappService {
     } | null>;
     saveBase64Audio(tenantId: string, base64Data: string, messageId: string, mimeType?: string): Promise<string | null>;
     deleteMessageForEveryone(tenantId: string, instanceName: string, remoteJid: string, providerMessageId: string): Promise<boolean>;
+    syncAndResolveLidContacts(tenantId: string): Promise<number>;
 }

@@ -45,6 +45,36 @@ export declare class UsersController {
         role: string;
         isSuperAdmin: boolean;
         permissions: import("@prisma/client/runtime/library").JsonValue;
+    } | {
+        tenantId: string;
+        tenant: {
+            id: string;
+            name: string;
+            plan: {
+                id: string;
+                name: string;
+                price: import("@prisma/client/runtime/library").Decimal;
+                hasCRM: boolean;
+                hasWhatsApp: boolean;
+                hasInstagram: boolean;
+                hasAIAgent: boolean;
+                maxUsers: number;
+                maxAIMsgs: number;
+                maxWorkspaces: number;
+                modules: import("@prisma/client/runtime/library").JsonValue;
+            };
+            isActive: boolean;
+            planId: string;
+        };
+        isImpersonating: boolean;
+        id: string;
+        name: string;
+        email: string;
+        avatarUrl: string;
+        isActive: boolean;
+        role: string;
+        isSuperAdmin: boolean;
+        permissions: import("@prisma/client/runtime/library").JsonValue;
     }>;
     updateProfile(req: any, body: {
         name?: string;

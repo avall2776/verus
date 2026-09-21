@@ -21,6 +21,7 @@ import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { ResetAdminPasswordDto } from './dto/reset-admin-password.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { CreatePlanDto } from './dto/create-plan.dto';
+import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('tenants')
@@ -62,14 +63,12 @@ export class TenantsController {
   }
 
   @Get('me')
-  async getMyTenant(@Request() req) {
-    const tenantId = req.user?.tenantId;
+  async getMyTenant(@CurrentTenant() tenantId: string) {
     return this.tenantsService.getMyTenant(tenantId);
   }
 
   @Patch('me')
-  async updateMyTenant(@Request() req, @Body() body: any) {
-    const tenantId = req.user?.tenantId;
+  async updateMyTenant(@CurrentTenant() tenantId: string, @Body() body: any) {
     return this.tenantsService.updateMyTenant(tenantId, body);
   }
 

@@ -141,6 +141,9 @@ export default function SuperAdminCompaniesPage() {
   const handleAccessCompany = (company: any) => {
     localStorage.setItem('versus_target_tenant_id', company.id);
     localStorage.setItem('versus_target_tenant_name', company.name);
+    localStorage.removeItem('versus_active_workspace');
+    localStorage.removeItem('versus_scheduled_messages');
+    sessionStorage.removeItem('versus_cached_chat');
     window.dispatchEvent(new Event('tenant_switched'));
     toast.success(`Acessando agência "${company.name}" em Modo Suporte...`);
     router.push('/inbox');

@@ -18,7 +18,7 @@ export declare class TenantsController {
         openTickets: number;
         estimatedMRR: number;
     }>;
-    getMyTenant(req: any): Promise<{
+    getMyTenant(tenantId: string): Promise<{
         _count: {
             supportTickets: number;
             users: number;
@@ -60,7 +60,7 @@ export declare class TenantsController {
         emailSettings: import("@prisma/client/runtime/library").JsonValue | null;
         planId: string;
     }>;
-    updateMyTenant(req: any, body: any): Promise<{
+    updateMyTenant(tenantId: string, body: any): Promise<{
         id: string;
         name: string;
         phone: string | null;

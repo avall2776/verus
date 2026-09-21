@@ -68,17 +68,27 @@ let MediaController = class MediaController {
         const contentType = mimeTypes[ext] || 'application/octet-stream';
         res.setHeader('Content-Type', contentType);
         res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         res.setHeader('Content-Disposition', `inline; filename="${path.basename(filename)}"`);
         return res.sendFile(filePath);
     }
     getAudioFile(filename, res) {
         const safeFilename = path.basename(filename);
-        const filePath = path.join(process.cwd(), 'uploads', 'audio', safeFilename);
-        if (!fs.existsSync(filePath)) {
+        const candidatePaths = [
+            path.join(process.cwd(), 'uploads', 'audio', safeFilename),
+            path.join(process.cwd(), 'uploads', 'media', safeFilename),
+            path.join(process.cwd(), 'uploads', safeFilename),
+        ];
+        let filePath = candidatePaths.find(p => fs.existsSync(p));
+        if (!filePath) {
             const alternativePath = this.storageService.getLocalFilePath(filename);
             if (alternativePath && fs.existsSync(alternativePath)) {
-                return res.sendFile(alternativePath);
+                filePath = alternativePath;
             }
+        }
+        if (!filePath) {
             throw new common_1.NotFoundException('Arquivo de áudio não encontrado.');
         }
         const ext = path.extname(safeFilename).toLowerCase();
@@ -93,6 +103,9 @@ let MediaController = class MediaController {
         const contentType = mimeTypes[ext] || 'audio/ogg';
         res.setHeader('Content-Type', contentType);
         res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         return res.sendFile(filePath);
     }
 };
