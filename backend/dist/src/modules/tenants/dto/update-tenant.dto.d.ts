@@ -3,6 +3,7 @@ export declare class UpdateTenantDto {
     cnpj?: string;
     email?: string;
     phone?: string;
+    leadNotificationPhone?: string;
     address?: string;
     planId?: string;
     logoUrl?: string;

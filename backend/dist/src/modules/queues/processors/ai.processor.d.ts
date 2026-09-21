@@ -10,7 +10,7 @@ export declare class AiProcessor extends WorkerHost {
     private readonly messagingService;
     private readonly chatGateway;
     private readonly logger;
-    private readonly CENTRAL_COMERCIAL;
     constructor(prisma: PrismaService, aiService: AiService, messagingService: MessagingService, chatGateway: ChatGateway);
     process(job: Job<any, any, string>): Promise<any>;
+    private formatCleanPhone;
 }

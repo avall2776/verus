@@ -38,6 +38,11 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
+], UpdateTenantDto.prototype, "leadNotificationPhone", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
 ], UpdateTenantDto.prototype, "address", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),

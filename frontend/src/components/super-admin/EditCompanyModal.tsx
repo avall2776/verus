@@ -24,6 +24,7 @@ export default function EditCompanyModal({
   const [cnpj, setCnpj] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [leadNotificationPhone, setLeadNotificationPhone] = useState("");
   const [address, setAddress] = useState("");
   const [planId, setPlanId] = useState("");
   const [isActive, setIsActive] = useState(true);
@@ -60,6 +61,7 @@ export default function EditCompanyModal({
       setCnpj(initialData.cnpj || "");
       setEmail(initialData.email || "");
       setPhone(initialData.phone || "");
+      setLeadNotificationPhone(initialData.leadNotificationPhone || "");
       setAddress(initialData.address || "");
       setPlanId(initialData.planId || initialData.plan?.id || "");
       setIsActive(initialData.isActive !== false);
@@ -72,6 +74,7 @@ export default function EditCompanyModal({
           setCnpj(comp.cnpj || "");
           setEmail(comp.email || "");
           setPhone(comp.phone || "");
+          setLeadNotificationPhone(comp.leadNotificationPhone || "");
           setAddress(comp.address || "");
           setPlanId(comp.planId || comp.plan?.id || "");
           setIsActive(comp.isActive !== false);
@@ -161,6 +164,7 @@ export default function EditCompanyModal({
         cnpj: cnpj.trim() || null,
         email: email.trim() || null,
         phone: phone.trim() || null,
+        leadNotificationPhone: leadNotificationPhone.trim() || null,
         address: address.trim() || null,
         isActive,
       };
@@ -252,6 +256,23 @@ export default function EditCompanyModal({
                 placeholder="(00) 00000-0000"
                 className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
               />
+            </div>
+
+            {/* WhatsApp Alerta de Leads */}
+            <div className="space-y-1.5 sm:col-span-2 p-3 rounded-lg bg-blue-950/20 border border-blue-500/20">
+              <label className="text-xs font-bold text-blue-300 flex items-center gap-1.5">
+                <span>WhatsApp / Grupo para Alertas de Novos Leads (IA)</span>
+              </label>
+              <input
+                type="text"
+                value={leadNotificationPhone}
+                onChange={(e) => setLeadNotificationPhone(e.target.value)}
+                placeholder="Ex: +55 (54) 99999-9999 ou 12036304... (ID do Grupo)"
+                className="w-full bg-[#070D1B] border border-blue-500/30 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono"
+              />
+              <p className="text-[10px] text-slate-400">
+                Número do gerente comercial ou ID de grupo do WhatsApp para onde o robô enviará alertas de novos leads qualificados.
+              </p>
             </div>
           </div>
 

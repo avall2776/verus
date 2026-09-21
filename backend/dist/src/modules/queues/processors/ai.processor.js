@@ -25,7 +25,6 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
         this.messagingService = messagingService;
         this.chatGateway = chatGateway;
         this.logger = new common_1.Logger(AiProcessor_1.name);
-        this.CENTRAL_COMERCIAL = '+5554999974220';
     }
     async process(job) {
         const { tenantId, conversationId, contactId } = job.data;
@@ -190,15 +189,98 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
                 return await this.prisma.deal.create({ data: dealData });
             });
             this.chatGateway.emitHandoff(tenantId, updatedDeal);
-            const alertMsg = `🚨 *NOVO LEAD QUALIFICADO* 🚨\n\n*Cliente:* ${aiResponse.nome_cliente || conversation.contact.name}\n*Telefone:* ${conversation.contact.phone}\n*Interesse:* ${aiResponse.produto_interesse || 'Não especificado'}\n*Motivo:* ${aiResponse.motivo_transferencia}\n\n*Resumo:* ${aiResponse.resumo_atendimento}`;
-            await this.messagingService.sendText({
-                tenantId,
-                phone: this.CENTRAL_COMERCIAL,
-                content: alertMsg,
-            });
+            let rawCandidatePhone = aiResponse.telefone_cliente || conversation.contact.phone;
+            if (rawCandidatePhone && rawCandidatePhone.includes('@lid')) {
+                const siblingContact = await this.prisma.contact.findFirst({
+                    where: {
+                        tenantId,
+                        id: { not: contactId },
+                        phone: { not: { contains: '@lid' } },
+                        OR: [
+                            ...(conversation.contact.name && conversation.contact.name !== 'Cliente WhatsApp'
+                                ? [{ name: { equals: conversation.contact.name, mode: 'insensitive' } }]
+                                : []),
+                            ...(conversation.contact.whatsappLid
+                                ? [{ whatsappLid: conversation.contact.whatsappLid }]
+                                : [])
+                        ]
+                    },
+                    select: { phone: true }
+                });
+                if (siblingContact?.phone && !siblingContact.phone.includes('@lid')) {
+                    rawCandidatePhone = siblingContact.phone;
+                }
+            }
+            const phoneInfo = this.formatCleanPhone(rawCandidatePhone);
+            let alertMsg = `🚨 *NOVO LEAD QUALIFICADO* 🚨\n\n` +
+                `👤 *Cliente:* ${aiResponse.nome_cliente || conversation.contact.name}\n` +
+                `📱 *Telefone:* ${phoneInfo.formatted}\n`;
+            if (phoneInfo.isRealPhone && phoneInfo.cleanDigits) {
+                alertMsg += `🔗 *WhatsApp Direto:* https://wa.me/${phoneInfo.cleanDigits}\n`;
+            }
+            alertMsg += `🎯 *Interesse:* ${aiResponse.produto_interesse || 'Não especificado'}\n` +
+                `📌 *Motivo:* ${aiResponse.motivo_transferencia}\n\n` +
+                `📝 *Resumo do Atendimento:*\n${aiResponse.resumo_atendimento}`;
+            if (!phoneInfo.isRealPhone) {
+                alertMsg += `\n\n💡 *Ação:* Responda diretamente pela central de atendimento (Inbox) no VERSUS.`;
+            }
+            const tenant = conversation.contact.tenant;
+            const targetRecipient = tenant?.leadNotificationPhone ||
+                tenant?.whatsappSettings?.leadNotificationPhone ||
+                tenant?.phone;
+            if (targetRecipient && String(targetRecipient).trim().length >= 8) {
+                this.logger.log(`[Multi-Tenant Alert] Disparando alerta de lead para o responsável [${targetRecipient}] da empresa [${tenant?.name || tenantId}]`);
+                await this.messagingService.sendText({
+                    tenantId,
+                    phone: targetRecipient.trim(),
+                    content: alertMsg,
+                }).catch((err) => {
+                    this.logger.error(`[Multi-Tenant Alert] Falha ao disparar alerta de lead para ${targetRecipient}: ${err.message}`);
+                });
+            }
+            else {
+                this.logger.warn(`[Multi-Tenant Alert] Empresa [${tenant?.name || tenantId}] não possui WhatsApp de Notificação de Leads configurado. O alerta foi registrado no Kanban e Inbox.`);
+            }
             return { status: 'human_takeover_executed' };
         }
         return { status: 'success' };
+    }
+    formatCleanPhone(rawPhone) {
+        if (!rawPhone)
+            return { formatted: 'Não informado', isRealPhone: false, cleanDigits: '' };
+        const cleanJid = rawPhone.replace('@s.whatsapp.net', '').replace('@c.us', '').trim();
+        if (cleanJid.includes('@lid')) {
+            return { formatted: 'WhatsApp Privado (Iniciado via Comunidade/Canal)', isRealPhone: false, cleanDigits: '' };
+        }
+        const digits = cleanJid.replace(/\D/g, '');
+        if (!digits || digits.length < 8) {
+            return { formatted: rawPhone, isRealPhone: false, cleanDigits: digits };
+        }
+        if (digits.length === 13 && digits.startsWith('55')) {
+            const ddd = digits.slice(2, 4);
+            const p1 = digits.slice(4, 9);
+            const p2 = digits.slice(9);
+            return { formatted: `+55 (${ddd}) ${p1}-${p2}`, isRealPhone: true, cleanDigits: digits };
+        }
+        if (digits.length === 12 && digits.startsWith('55')) {
+            const ddd = digits.slice(2, 4);
+            const p1 = digits.slice(4, 8);
+            const p2 = digits.slice(8);
+            return { formatted: `+55 (${ddd}) ${p1}-${p2}`, isRealPhone: true, cleanDigits: digits };
+        }
+        if (digits.length === 11) {
+            const ddd = digits.slice(0, 2);
+            const p1 = digits.slice(2, 7);
+            const p2 = digits.slice(7);
+            return { formatted: `+55 (${ddd}) ${p1}-${p2}`, isRealPhone: true, cleanDigits: `55${digits}` };
+        }
+        if (digits.length === 10) {
+            const ddd = digits.slice(0, 2);
+            const p1 = digits.slice(2, 6);
+            const p2 = digits.slice(6);
+            return { formatted: `+55 (${ddd}) ${p1}-${p2}`, isRealPhone: true, cleanDigits: `55${digits}` };
+        }
+        return { formatted: `+${digits}`, isRealPhone: true, cleanDigits: digits };
     }
 };
 exports.AiProcessor = AiProcessor;

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Save, ShieldCheck, CreditCard, Users, FileText, Phone, Mail, MapPin, Loader2, ChevronRight } from "lucide-react";
+import { Building2, Save, ShieldCheck, CreditCard, Users, FileText, Phone, Mail, MapPin, Loader2, ChevronRight, BellRing } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 
@@ -17,6 +17,7 @@ export default function CompanySettingsTab() {
     cnpj: "",
     email: "",
     phone: "",
+    leadNotificationPhone: "",
     address: "",
   });
 
@@ -34,6 +35,7 @@ export default function CompanySettingsTab() {
         cnpj: res.data.cnpj || "",
         email: res.data.email || "",
         phone: res.data.phone || "",
+        leadNotificationPhone: res.data.leadNotificationPhone || "",
         address: res.data.address || "",
       });
     } catch (err: any) {
@@ -188,6 +190,28 @@ export default function CompanySettingsTab() {
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               placeholder="+55 (11) 99999-9999"
               className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Notificação de Leads Qualificados (Multi-Tenant) */}
+        <div className="p-4 rounded-xl bg-blue-950/20 border border-blue-500/20 space-y-2">
+          <div className="flex items-center gap-2 text-blue-400">
+            <BellRing className="w-4 h-4" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-blue-300">
+              WhatsApp da Central / Alerta de Novos Leads
+            </h3>
+          </div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Informe o número de WhatsApp do gerente comercial ou o ID de grupo da equipe de vendas para onde a IA enviará os alertas imediatos de <strong>Novos Leads Qualificados</strong>.
+          </p>
+          <div className="pt-1">
+            <input
+              type="text"
+              value={form.leadNotificationPhone}
+              onChange={(e) => setForm({ ...form, leadNotificationPhone: e.target.value })}
+              placeholder="Ex: +55 (54) 99999-9999 ou 12036304... (ID do Grupo)"
+              className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-blue-500/30 text-white placeholder:text-slate-500 outline-none focus:border-blue-500 font-mono"
             />
           </div>
         </div>

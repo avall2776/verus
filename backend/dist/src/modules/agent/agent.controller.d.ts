@@ -30,6 +30,7 @@ export declare class AgentController {
         motivo_transferencia?: string;
         resumo_atendimento?: string;
         nome_cliente?: string;
+        telefone_cliente?: string;
         produto_interesse?: string;
     }>;
 }

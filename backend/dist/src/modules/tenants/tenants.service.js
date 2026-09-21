@@ -314,6 +314,7 @@ let TenantsService = TenantsService_1 = class TenantsService {
                 cnpj: tenant.cnpj,
                 email: tenant.email,
                 phone: tenant.phone,
+                leadNotificationPhone: tenant.leadNotificationPhone,
                 address: tenant.address,
                 logoUrl: tenant.logoUrl,
                 isActive: tenant.isActive,
@@ -453,6 +454,8 @@ let TenantsService = TenantsService_1 = class TenantsService {
             updateData.email = data.email.trim();
         if (data.phone !== undefined)
             updateData.phone = data.phone.trim();
+        if (data.leadNotificationPhone !== undefined)
+            updateData.leadNotificationPhone = data.leadNotificationPhone ? data.leadNotificationPhone.trim() : null;
         if (data.address !== undefined)
             updateData.address = data.address.trim();
         return this.prisma.tenant.update({
@@ -703,6 +706,8 @@ let TenantsService = TenantsService_1 = class TenantsService {
             data.email = dto.email ? String(dto.email).trim() : null;
         if (dto.phone !== undefined)
             data.phone = dto.phone ? String(dto.phone).trim() : null;
+        if (dto.leadNotificationPhone !== undefined)
+            data.leadNotificationPhone = dto.leadNotificationPhone ? String(dto.leadNotificationPhone).trim() : null;
         if (dto.address !== undefined)
             data.address = dto.address ? String(dto.address).trim() : null;
         if (dto.logoUrl !== undefined)

@@ -5,6 +5,7 @@ export declare const AiResponseSchema: z.ZodObject<{
     motivo_transferencia: z.ZodString;
     resumo_atendimento: z.ZodString;
     nome_cliente: z.ZodString;
+    telefone_cliente: z.ZodOptional<z.ZodString>;
     produto_interesse: z.ZodString;
 }, "strip", z.ZodTypeAny, {
     resposta_cliente?: string;
@@ -12,6 +13,7 @@ export declare const AiResponseSchema: z.ZodObject<{
     motivo_transferencia?: string;
     resumo_atendimento?: string;
     nome_cliente?: string;
+    telefone_cliente?: string;
     produto_interesse?: string;
 }, {
     resposta_cliente?: string;
@@ -19,6 +21,7 @@ export declare const AiResponseSchema: z.ZodObject<{
     motivo_transferencia?: string;
     resumo_atendimento?: string;
     nome_cliente?: string;
+    telefone_cliente?: string;
     produto_interesse?: string;
 }>;
 export type AiResponseDto = z.infer<typeof AiResponseSchema>;

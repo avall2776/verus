@@ -43,6 +43,7 @@ model Tenant {
   cnpj       String?
   logoUrl    String?
   phone      String?
+  leadNotificationPhone String?
   address    String?
   email      String?
   isActive   Boolean  @default(true)

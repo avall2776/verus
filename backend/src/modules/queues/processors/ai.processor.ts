@@ -9,7 +9,6 @@ import { ChatGateway } from '../../chat/chat.gateway';
 @Processor('ai-processing')
 export class AiProcessor extends WorkerHost {
   private readonly logger = new Logger(AiProcessor.name);
-  private readonly CENTRAL_COMERCIAL = '+5554999974220'; // Diretriz do plano
 
   constructor(
     private readonly prisma: PrismaService,
@@ -232,18 +231,128 @@ export class AiProcessor extends WorkerHost {
       // Emitir para o front-end (Kanban)
       this.chatGateway.emitHandoff(tenantId, updatedDeal);
 
-      // 5.3 Enviar alerta de transbordo para a central comercial
-      const alertMsg = `🚨 *NOVO LEAD QUALIFICADO* 🚨\n\n*Cliente:* ${aiResponse.nome_cliente || conversation.contact.name}\n*Telefone:* ${conversation.contact.phone}\n*Interesse:* ${aiResponse.produto_interesse || 'Não especificado'}\n*Motivo:* ${aiResponse.motivo_transferencia}\n\n*Resumo:* ${aiResponse.resumo_atendimento}`;
-      
-      await this.messagingService.sendText({
-        tenantId,
-        phone: this.CENTRAL_COMERCIAL,
-        content: alertMsg,
-      });
+      // 5.3 Resolução do telefone real e formatação limpa (eliminando @lid)
+      let rawCandidatePhone = aiResponse.telefone_cliente || conversation.contact.phone;
+
+      // Se o telefone do contato for @lid e a IA não pegou outro, tenta achar contato irmão no mesmo tenant que tenha número real
+      if (rawCandidatePhone && rawCandidatePhone.includes('@lid')) {
+        const siblingContact = await this.prisma.contact.findFirst({
+          where: {
+            tenantId,
+            id: { not: contactId },
+            phone: { not: { contains: '@lid' } },
+            OR: [
+              ...(conversation.contact.name && conversation.contact.name !== 'Cliente WhatsApp'
+                ? [{ name: { equals: conversation.contact.name, mode: 'insensitive' as any } }]
+                : []),
+              ...(conversation.contact.whatsappLid
+                ? [{ whatsappLid: conversation.contact.whatsappLid }]
+                : [])
+            ]
+          },
+          select: { phone: true }
+        });
+
+        if (siblingContact?.phone && !siblingContact.phone.includes('@lid')) {
+          rawCandidatePhone = siblingContact.phone;
+        }
+      }
+
+      const phoneInfo = this.formatCleanPhone(rawCandidatePhone);
+
+      // Montagem do Alerta Corporativo de Lead Qualificado
+      let alertMsg = `🚨 *NOVO LEAD QUALIFICADO* 🚨\n\n` +
+        `👤 *Cliente:* ${aiResponse.nome_cliente || conversation.contact.name}\n` +
+        `📱 *Telefone:* ${phoneInfo.formatted}\n`;
+
+      if (phoneInfo.isRealPhone && phoneInfo.cleanDigits) {
+        alertMsg += `🔗 *WhatsApp Direto:* https://wa.me/${phoneInfo.cleanDigits}\n`;
+      }
+
+      alertMsg += `🎯 *Interesse:* ${aiResponse.produto_interesse || 'Não especificado'}\n` +
+        `📌 *Motivo:* ${aiResponse.motivo_transferencia}\n\n` +
+        `📝 *Resumo do Atendimento:*\n${aiResponse.resumo_atendimento}`;
+
+      if (!phoneInfo.isRealPhone) {
+        alertMsg += `\n\n💡 *Ação:* Responda diretamente pela central de atendimento (Inbox) no VERSUS.`;
+      }
+
+      // 5.4 Envio Multi-Tenant do Alerta (para o Gerente Comercial ou Grupo do Tenant)
+      const tenant = conversation.contact.tenant;
+      const targetRecipient =
+        tenant?.leadNotificationPhone ||
+        (tenant?.whatsappSettings as any)?.leadNotificationPhone ||
+        tenant?.phone;
+
+      if (targetRecipient && String(targetRecipient).trim().length >= 8) {
+        this.logger.log(`[Multi-Tenant Alert] Disparando alerta de lead para o responsável [${targetRecipient}] da empresa [${tenant?.name || tenantId}]`);
+        await this.messagingService.sendText({
+          tenantId,
+          phone: targetRecipient.trim(),
+          content: alertMsg,
+        }).catch((err) => {
+          this.logger.error(`[Multi-Tenant Alert] Falha ao disparar alerta de lead para ${targetRecipient}: ${err.message}`);
+        });
+      } else {
+        this.logger.warn(`[Multi-Tenant Alert] Empresa [${tenant?.name || tenantId}] não possui WhatsApp de Notificação de Leads configurado. O alerta foi registrado no Kanban e Inbox.`);
+      }
 
       return { status: 'human_takeover_executed' };
     }
 
     return { status: 'success' };
+  }
+
+  /**
+   * Sanitiza e formata o telefone para o padrão corporativo nacional/internacional,
+   * eliminando identificadores privados (@lid) do alerta do vendedor.
+   */
+  private formatCleanPhone(rawPhone?: string | null): { formatted: string; isRealPhone: boolean; cleanDigits: string } {
+    if (!rawPhone) return { formatted: 'Não informado', isRealPhone: false, cleanDigits: '' };
+
+    const cleanJid = rawPhone.replace('@s.whatsapp.net', '').replace('@c.us', '').trim();
+
+    if (cleanJid.includes('@lid')) {
+      return { formatted: 'WhatsApp Privado (Iniciado via Comunidade/Canal)', isRealPhone: false, cleanDigits: '' };
+    }
+
+    const digits = cleanJid.replace(/\D/g, '');
+    if (!digits || digits.length < 8) {
+      return { formatted: rawPhone, isRealPhone: false, cleanDigits: digits };
+    }
+
+    // Brasil: 13 dígitos (55 + DDD 2 dígitos + 9 dígitos celular)
+    if (digits.length === 13 && digits.startsWith('55')) {
+      const ddd = digits.slice(2, 4);
+      const p1 = digits.slice(4, 9);
+      const p2 = digits.slice(9);
+      return { formatted: `+55 (${ddd}) ${p1}-${p2}`, isRealPhone: true, cleanDigits: digits };
+    }
+
+    // Brasil: 12 dígitos (55 + DDD 2 dígitos + 8 dígitos fixo/antigo)
+    if (digits.length === 12 && digits.startsWith('55')) {
+      const ddd = digits.slice(2, 4);
+      const p1 = digits.slice(4, 8);
+      const p2 = digits.slice(8);
+      return { formatted: `+55 (${ddd}) ${p1}-${p2}`, isRealPhone: true, cleanDigits: digits };
+    }
+
+    // 11 dígitos (DDD 2 dígitos + 9 dígitos)
+    if (digits.length === 11) {
+      const ddd = digits.slice(0, 2);
+      const p1 = digits.slice(2, 7);
+      const p2 = digits.slice(7);
+      return { formatted: `+55 (${ddd}) ${p1}-${p2}`, isRealPhone: true, cleanDigits: `55${digits}` };
+    }
+
+    // 10 dígitos (DDD 2 dígitos + 8 dígitos)
+    if (digits.length === 10) {
+      const ddd = digits.slice(0, 2);
+      const p1 = digits.slice(2, 6);
+      const p2 = digits.slice(6);
+      return { formatted: `+55 (${ddd}) ${p1}-${p2}`, isRealPhone: true, cleanDigits: `55${digits}` };
+    }
+
+    return { formatted: `+${digits}`, isRealPhone: true, cleanDigits: digits };
   }
 }

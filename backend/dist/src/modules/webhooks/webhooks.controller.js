@@ -38,6 +38,14 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
     }
     async handleMetaWebhook(tenantId, payload) {
         this.logger.log(`Recebendo POST da Meta para o tenant: ${tenantId}`);
+        const metaTenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { id: true, name: true, isActive: true },
+        });
+        if (!metaTenant || metaTenant.isActive === false) {
+            this.logger.warn(`Webhook Meta ignorado: Empresa [${metaTenant?.name || tenantId}] está BLOQUEADA/INATIVA.`);
+            return { status: 'tenant_inactive_ignored' };
+        }
         const entry = payload.entry?.[0];
         const change = entry?.changes?.[0];
         const value = change?.value;
@@ -170,6 +178,14 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
         tenantId = resolvedTenantId;
         const event = payload.event;
         this.logger.log(`Recebendo webhook Evolution API [${event}] para tenant: ${tenantId}`);
+        const evoTenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { id: true, name: true, isActive: true },
+        });
+        if (!evoTenant || evoTenant.isActive === false) {
+            this.logger.warn(`Webhook Evolution ignorado: Empresa [${evoTenant?.name || tenantId}] está BLOQUEADA/INATIVA.`);
+            return { status: 'tenant_inactive_ignored' };
+        }
         if (event === 'connection.update' || event === 'CONNECTION_UPDATE') {
             const instanceName = payload.instance || payload.data?.instance;
             const state = payload.data?.state || payload.state;

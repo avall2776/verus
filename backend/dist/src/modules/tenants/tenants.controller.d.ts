@@ -47,6 +47,7 @@ export declare class TenantsController {
         updatedAt: Date;
         cnpj: string | null;
         logoUrl: string | null;
+        leadNotificationPhone: string | null;
         address: string | null;
         isActive: boolean;
         aiName: string | null;
@@ -69,6 +70,7 @@ export declare class TenantsController {
         updatedAt: Date;
         cnpj: string | null;
         logoUrl: string | null;
+        leadNotificationPhone: string | null;
         address: string | null;
         isActive: boolean;
         aiName: string | null;
@@ -152,6 +154,7 @@ export declare class TenantsController {
             updatedAt: Date;
             cnpj: string | null;
             logoUrl: string | null;
+            leadNotificationPhone: string | null;
             address: string | null;
             isActive: boolean;
             aiName: string | null;
@@ -218,6 +221,7 @@ export declare class TenantsController {
             cnpj: string;
             email: string;
             phone: string;
+            leadNotificationPhone: string;
             address: string;
             logoUrl: string;
             isActive: boolean;
@@ -309,6 +313,7 @@ export declare class TenantsController {
             updatedAt: Date;
             cnpj: string | null;
             logoUrl: string | null;
+            leadNotificationPhone: string | null;
             address: string | null;
             isActive: boolean;
             aiName: string | null;
@@ -340,6 +345,7 @@ export declare class TenantsController {
             updatedAt: Date;
             cnpj: string | null;
             logoUrl: string | null;
+            leadNotificationPhone: string | null;
             address: string | null;
             isActive: boolean;
             aiName: string | null;

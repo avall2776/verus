@@ -19,6 +19,10 @@ export class UpdateTenantDto {
 
   @IsOptional()
   @IsString()
+  leadNotificationPhone?: string;
+
+  @IsOptional()
+  @IsString()
   address?: string;
 
   @IsOptional()

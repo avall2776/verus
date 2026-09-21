@@ -46,6 +46,17 @@ export class WebhooksController {
   ) {
     this.logger.log(`Recebendo POST da Meta para o tenant: ${tenantId}`);
 
+    // Trava de Segurança: Verifica se o Tenant está ativo antes de processar
+    const metaTenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true, name: true, isActive: true },
+    });
+
+    if (!metaTenant || metaTenant.isActive === false) {
+      this.logger.warn(`Webhook Meta ignorado: Empresa [${metaTenant?.name || tenantId}] está BLOQUEADA/INATIVA.`);
+      return { status: 'tenant_inactive_ignored' };
+    }
+
     const entry = payload.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
@@ -217,6 +228,17 @@ export class WebhooksController {
     tenantId = resolvedTenantId;
     const event = payload.event;
     this.logger.log(`Recebendo webhook Evolution API [${event}] para tenant: ${tenantId}`);
+
+    // Trava de Segurança: Verifica se o Tenant está ativo antes de processar
+    const evoTenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true, name: true, isActive: true },
+    });
+
+    if (!evoTenant || evoTenant.isActive === false) {
+      this.logger.warn(`Webhook Evolution ignorado: Empresa [${evoTenant?.name || tenantId}] está BLOQUEADA/INATIVA.`);
+      return { status: 'tenant_inactive_ignored' };
+    }
 
     // 0. Atualizações de Conexão e Handshake do WhatsApp (CONNECTION_UPDATE)
     if (event === 'connection.update' || event === 'CONNECTION_UPDATE') {

@@ -6,6 +6,7 @@ export const AiResponseSchema = z.object({
   motivo_transferencia: z.string().describe("Breve explicação interna do porquê o atendimento foi transferido. Ex: 'Dúvida complexa', 'Solicitou vendedor'."),
   resumo_atendimento: z.string().describe("Um parágrafo resumindo as dores, necessidades e o contexto da conversa até agora para o vendedor."),
   nome_cliente: z.string().describe("O nome do cliente caso ele tenha informado na conversa. Se não souber, preencha com 'Não informado'."),
+  telefone_cliente: z.string().optional().describe("O telefone ou WhatsApp informado pelo cliente durante a conversa, com DDD se houver. Se não informado, deixe em branco."),
   produto_interesse: z.string().describe("Qual o principal produto ou serviço de interesse do cliente (ex: VersátilMAX, Kit Solar, etc).")
 });
 

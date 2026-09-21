@@ -365,6 +365,7 @@ export class TenantsService {
         cnpj: tenant.cnpj,
         email: tenant.email,
         phone: tenant.phone,
+        leadNotificationPhone: tenant.leadNotificationPhone,
         address: tenant.address,
         logoUrl: tenant.logoUrl,
         isActive: tenant.isActive,
@@ -506,13 +507,14 @@ export class TenantsService {
     return tenant;
   }
 
-  async updateMyTenant(tenantId: string, data: { name?: string; cnpj?: string; email?: string; phone?: string; address?: string }) {
+  async updateMyTenant(tenantId: string, data: { name?: string; cnpj?: string; email?: string; phone?: string; leadNotificationPhone?: string; address?: string }) {
     if (!tenantId) throw new BadRequestException('Tenant não identificado.');
     const updateData: any = {};
     if (data.name !== undefined) updateData.name = data.name.trim();
     if (data.cnpj !== undefined) updateData.cnpj = data.cnpj.trim();
     if (data.email !== undefined) updateData.email = data.email.trim();
     if (data.phone !== undefined) updateData.phone = data.phone.trim();
+    if (data.leadNotificationPhone !== undefined) updateData.leadNotificationPhone = data.leadNotificationPhone ? data.leadNotificationPhone.trim() : null;
     if (data.address !== undefined) updateData.address = data.address.trim();
 
     return this.prisma.tenant.update({
@@ -765,6 +767,7 @@ export class TenantsService {
     if (dto.cnpj !== undefined) data.cnpj = dto.cnpj ? String(dto.cnpj).trim() : null;
     if (dto.email !== undefined) data.email = dto.email ? String(dto.email).trim() : null;
     if (dto.phone !== undefined) data.phone = dto.phone ? String(dto.phone).trim() : null;
+    if (dto.leadNotificationPhone !== undefined) data.leadNotificationPhone = dto.leadNotificationPhone ? String(dto.leadNotificationPhone).trim() : null;
     if (dto.address !== undefined) data.address = dto.address ? String(dto.address).trim() : null;
     if (dto.logoUrl !== undefined) data.logoUrl = dto.logoUrl ? String(dto.logoUrl).trim() : null;
     if (dto.isActive !== undefined) data.isActive = Boolean(dto.isActive);
