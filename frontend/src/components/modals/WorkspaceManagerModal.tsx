@@ -184,26 +184,60 @@ export default function WorkspaceManagerModal({
       const payload = {
         name: cleanName,
         description: formDescription.trim() || undefined,
-        logoUrl: formLogoUrl || undefined,
+        logoUrl: formLogoUrl && formLogoUrl.trim() ? formLogoUrl.trim() : null,
         themeColor: formThemeColor || "#2563EB",
       };
 
+      let updatedWs: WorkspaceItem | null = null;
       if (editingId) {
         // Atualização
         const res = await api.patch(`/workspaces/${editingId}`, payload);
+        updatedWs = res.data?.workspace || null;
         toast.success(res.data?.message || "Workspace atualizado com sucesso!");
       } else {
         // Criação
         const res = await api.post("/workspaces", payload);
+        updatedWs = res.data?.workspace || null;
         toast.success(res.data?.message || "Workspace criado com sucesso!");
+      }
+
+      // Revalidação imediata do state no modal
+      if (updatedWs) {
+        setWorkspaces((prev) => {
+          const exists = prev.some((w) => w.id === updatedWs!.id);
+          if (exists) {
+            return prev.map((w) => (w.id === updatedWs!.id ? updatedWs! : w));
+          }
+          return [updatedWs!, ...prev];
+        });
+
+        // Se o workspace atualizado for o ativo, sincroniza no localStorage e no callback
+        const activeStr = typeof window !== 'undefined' ? localStorage.getItem("versus_active_workspace") : null;
+        if (activeStr) {
+          try {
+            const activeObj = JSON.parse(activeStr);
+            if (activeObj.id === updatedWs.id) {
+              localStorage.setItem("versus_active_workspace", JSON.stringify(updatedWs));
+              if (onWorkspaceSelected) {
+                onWorkspaceSelected(updatedWs);
+              }
+            }
+          } catch (e) {}
+        }
       }
 
       setIsEditing(false);
       setEditingId(null);
+      setFormLogoUrl("");
+      setFormName("");
+      setFormDescription("");
+
+      // Revalida lista do backend em segundo plano
       await fetchWorkspaces();
 
-      // Notificar recarregamento de workspace
+      // Notificar recarregamento de workspace para todo o sistema (Sidebar, Topbar, etc.)
       window.dispatchEvent(new Event("workspace_updated"));
+      window.dispatchEvent(new Event("workspace_switched"));
     } catch (err: any) {
       console.error("[WORKSPACE_SAVE_ERROR]", err);
       toast.error(err.response?.data?.message || "Erro ao salvar workspace.");
@@ -424,10 +458,14 @@ export default function WorkspaceManagerModal({
                     {formLogoUrl && (
                       <button
                         type="button"
-                        onClick={() => setFormLogoUrl("")}
-                        className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs transition-colors"
+                        onClick={() => {
+                          setFormLogoUrl("");
+                          toast.success("Logo removido do preview. Clique em Salvar para persistir.");
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/25 text-xs transition-colors"
                       >
-                        Remover Logo
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Remover Logo</span>
                       </button>
                     )}
                   </div>

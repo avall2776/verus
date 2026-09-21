@@ -25,8 +25,9 @@ __decorate([
     __metadata("design:type", String)
 ], UpdateWorkspaceDto.prototype, "description", void 0);
 __decorate([
-    (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateIf)((o, v) => v !== null && v !== undefined),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateWorkspaceDto.prototype, "logoUrl", void 0);
 __decorate([

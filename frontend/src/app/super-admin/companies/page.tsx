@@ -141,6 +141,11 @@ export default function SuperAdminCompaniesPage() {
   const handleAccessCompany = (company: any) => {
     localStorage.setItem('versus_target_tenant_id', company.id);
     localStorage.setItem('versus_target_tenant_name', company.name);
+    if (company.logoUrl) {
+      localStorage.setItem('versus_target_tenant_logo', company.logoUrl);
+    } else {
+      localStorage.removeItem('versus_target_tenant_logo');
+    }
     localStorage.removeItem('versus_active_workspace');
     localStorage.removeItem('versus_scheduled_messages');
     sessionStorage.removeItem('versus_cached_chat');

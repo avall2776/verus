@@ -6,7 +6,11 @@ export const CurrentTenant = createParamDecorator(
     const user = request.user;
     
     // Se o usuário autenticado for SUPER_ADMIN, permite selecionar um tenant alvo para governança
-    const isSuperAdmin = Boolean(user?.isSuperAdmin || user?.role === 'SUPER_ADMIN');
+    const isSuperAdmin = Boolean(
+      user?.isSuperAdmin === true ||
+      String(user?.role).toUpperCase() === 'SUPER_ADMIN' ||
+      String(user?.role).toUpperCase() === 'SUPERADMIN'
+    );
     if (isSuperAdmin) {
       const explicitTenantId = 
         request.headers['x-target-tenant-id'] || 

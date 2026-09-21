@@ -24,6 +24,7 @@ let WorkspacesService = class WorkspacesService {
                 data: {
                     name: tenant?.name || 'Workspace Principal',
                     description: 'Unidade operacional principal da empresa.',
+                    logoUrl: tenant?.logoUrl || null,
                     themeColor: '#2563EB',
                     isDefault: true,
                     tenantId,
@@ -104,7 +105,10 @@ let WorkspacesService = class WorkspacesService {
             updateData.description = dto.description?.trim() || null;
         }
         if (dto.logoUrl !== undefined) {
-            updateData.logoUrl = dto.logoUrl;
+            updateData.logoUrl =
+                dto.logoUrl && typeof dto.logoUrl === 'string' && dto.logoUrl.trim()
+                    ? dto.logoUrl.trim()
+                    : null;
         }
         if (dto.themeColor !== undefined) {
             updateData.themeColor = dto.themeColor || '#2563EB';

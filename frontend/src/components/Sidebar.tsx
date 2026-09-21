@@ -132,10 +132,32 @@ export default function Sidebar() {
   useEffect(() => {
     const checkTarget = () => {
       if (typeof window !== 'undefined') {
-        setTargetTenantId(localStorage.getItem('versus_target_tenant_id'));
-        setTargetTenantName(localStorage.getItem('versus_target_tenant_name'));
+        const tId = localStorage.getItem('versus_target_tenant_id');
+        const tName = localStorage.getItem('versus_target_tenant_name');
+        const tLogo = localStorage.getItem('versus_target_tenant_logo');
+        setTargetTenantId(tId);
+        setTargetTenantName(tName);
+
+        // Se entrou em modo suporte, sincroniza imediatamente o workspace para refletir o novo tenant sem delay
+        if (tId) {
+          setActiveWorkspace({
+            id: `target-${tId}`,
+            name: tName || 'Agência em Suporte',
+            description: 'Acesso em modo suporte',
+            logoUrl: tLogo || null,
+            themeColor: '#2563EB',
+            isDefault: true,
+            tenantId: tId,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+        } else {
+          // Se saiu do modo suporte, limpa o workspace temporário para recarregar o original do admin
+          setActiveWorkspace(null);
+        }
+
         loadUser();
-        loadWorkspaces();
+        loadWorkspaces(tId, tName, tLogo);
       }
     };
     checkTarget();
@@ -146,6 +168,8 @@ export default function Sidebar() {
   const handleExitSupportMode = () => {
     localStorage.removeItem('versus_target_tenant_id');
     localStorage.removeItem('versus_target_tenant_name');
+    localStorage.removeItem('versus_target_tenant_logo');
+    localStorage.removeItem('versus_active_workspace');
     window.dispatchEvent(new Event('tenant_switched'));
     toast.success("Saiu do Modo Suporte da agência.");
     window.location.href = '/super-admin/companies';
@@ -184,21 +208,46 @@ export default function Sidebar() {
     }
   };
 
-  const loadWorkspaces = async () => {
+  const loadWorkspaces = async (
+    overrideTargetId?: string | null,
+    overrideTargetName?: string | null,
+    overrideTargetLogo?: string | null
+  ) => {
     try {
+      const currentTargetId = overrideTargetId !== undefined
+        ? overrideTargetId
+        : (typeof window !== 'undefined' ? localStorage.getItem('versus_target_tenant_id') : null);
+      const currentTargetName = overrideTargetName !== undefined
+        ? overrideTargetName
+        : (typeof window !== 'undefined' ? localStorage.getItem('versus_target_tenant_name') : null);
+      const currentTargetLogo = overrideTargetLogo !== undefined
+        ? overrideTargetLogo
+        : (typeof window !== 'undefined' ? localStorage.getItem('versus_target_tenant_logo') : null);
+
       const res = await api.get('/workspaces');
       if (res.data?.workspaces) {
-        const list: WorkspaceItem[] = res.data.workspaces;
+        let list: WorkspaceItem[] = res.data.workspaces;
+
+        // Se estiver em modo suporte, isola e filtra apenas os workspaces do tenant alvo
+        if (currentTargetId) {
+          list = list.filter((w) => w.tenantId === currentTargetId);
+        }
+
         setWorkspaces(list);
 
-        const storedActive = localStorage.getItem('versus_active_workspace');
+        const storedActive = typeof window !== 'undefined' ? localStorage.getItem('versus_active_workspace') : null;
         if (storedActive) {
           try {
             const parsed = JSON.parse(storedActive);
-            const found = list.find((w) => w.id === parsed.id);
-            if (found) {
-              setActiveWorkspace(found);
-              return;
+            // Só reutiliza se pertencer ao tenant atual
+            if (!currentTargetId || parsed.tenantId === currentTargetId) {
+              const found = list.find((w) => w.id === parsed.id);
+              if (found) {
+                setActiveWorkspace(found);
+                return;
+              }
+            } else {
+              localStorage.removeItem('versus_active_workspace');
             }
           } catch (err) {
             // Ignora JSON inválido
@@ -209,10 +258,37 @@ export default function Sidebar() {
         if (defaultWs) {
           setActiveWorkspace(defaultWs);
           localStorage.setItem('versus_active_workspace', JSON.stringify(defaultWs));
+        } else if (currentTargetId) {
+          // Fallback caso o tenant ainda não tenha workspaces cadastrados
+          const fallbackWs: WorkspaceItem = {
+            id: `target-${currentTargetId}`,
+            name: currentTargetName || 'Agência em Suporte',
+            description: 'Acesso em modo suporte',
+            logoUrl: currentTargetLogo || null,
+            themeColor: '#2563EB',
+            isDefault: true,
+            tenantId: currentTargetId,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          setActiveWorkspace(fallbackWs);
         }
+      } else if (currentTargetId) {
+        const fallbackWs: WorkspaceItem = {
+          id: `target-${currentTargetId}`,
+          name: currentTargetName || 'Agência em Suporte',
+          description: 'Acesso em modo suporte',
+          logoUrl: currentTargetLogo || null,
+          themeColor: '#2563EB',
+          isDefault: true,
+          tenantId: currentTargetId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        setActiveWorkspace(fallbackWs);
       }
     } catch (e) {
-      // Ignora erro
+      console.error('[LOAD_WORKSPACES_ERROR]', e);
     }
   };
 
@@ -443,13 +519,20 @@ export default function Sidebar() {
                 {activeWorkspace?.logoUrl ? (
                   <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
                 ) : (
-                  <span>{activeWorkspace?.name?.charAt(0).toUpperCase() || "W"}</span>
+                  <span>{(activeWorkspace?.name || targetTenantName || "W").charAt(0).toUpperCase()}</span>
                 )}
               </div>
               <div className="flex flex-col overflow-hidden min-w-0 flex-1">
-                <span className="text-xs font-bold text-white truncate leading-tight">
-                  {activeWorkspace?.name || targetTenantName || "Workspace Principal"}
-                </span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-xs font-bold text-white truncate leading-tight">
+                    {targetTenantName ? (activeWorkspace?.name || targetTenantName) : (activeWorkspace?.name || "Workspace Principal")}
+                  </span>
+                  {targetTenantId && (
+                    <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 shrink-0">
+                      Suporte
+                    </span>
+                  )}
+                </div>
                 <span className="text-[10px] text-gray-400 truncate">
                   {targetTenantName ? `${targetTenantName} (Suporte)` : (currentUser?.tenantName ? `${currentUser.tenantName}` : "VERSUS INC.")}
                 </span>
@@ -467,12 +550,12 @@ export default function Sidebar() {
               }}
               className="w-8 h-8 rounded-xl border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 mx-auto shadow-sm cursor-pointer overflow-hidden"
               style={{ backgroundColor: activeWorkspace?.themeColor || "#2563EB" }}
-              title={activeWorkspace?.name || "Workspace"}
+              title={targetTenantName ? `${activeWorkspace?.name || targetTenantName} (Modo Suporte)` : (activeWorkspace?.name || "Workspace")}
             >
               {activeWorkspace?.logoUrl ? (
                 <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
               ) : (
-                <span>{activeWorkspace?.name?.charAt(0).toUpperCase() || "W"}</span>
+                <span>{(activeWorkspace?.name || targetTenantName || "W").charAt(0).toUpperCase()}</span>
               )}
             </div>
           )}
@@ -485,49 +568,55 @@ export default function Sidebar() {
               </div>
 
               <div className="max-h-48 overflow-y-auto custom-scrollbar divide-y divide-slate-800/40 my-1">
-                {workspaces.map((ws) => {
-                  const isSelected = activeWorkspace?.id === ws.id;
-                  return (
-                    <button
-                      key={ws.id}
-                      type="button"
-                      onClick={() => {
-                        setActiveWorkspace(ws);
-                        localStorage.setItem("versus_active_workspace", JSON.stringify(ws));
-                        setIsWorkspaceDropdownOpen(false);
-                        toast.success(`Workspace "${ws.name}" ativado!`);
-                        window.dispatchEvent(new Event("workspace_switched"));
-                      }}
-                      className={`w-full flex items-center gap-2.5 p-2 rounded-xl text-left transition-colors ${
-                        isSelected
-                          ? "bg-blue-600/15 text-white"
-                          : "hover:bg-slate-800/60 text-slate-300 hover:text-white"
-                      }`}
-                    >
-                      <div
-                        className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden"
-                        style={{ backgroundColor: ws.themeColor || "#2563EB" }}
+                {workspaces.length === 0 ? (
+                  <div className="p-3 text-center text-[11px] text-slate-400">
+                    Nenhum workspace secundário configurado.
+                  </div>
+                ) : (
+                  workspaces.map((ws) => {
+                    const isSelected = activeWorkspace?.id === ws.id;
+                    return (
+                      <button
+                        key={ws.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveWorkspace(ws);
+                          localStorage.setItem("versus_active_workspace", JSON.stringify(ws));
+                          setIsWorkspaceDropdownOpen(false);
+                          toast.success(`Workspace "${ws.name}" ativado!`);
+                          window.dispatchEvent(new Event("workspace_switched"));
+                        }}
+                        className={`w-full flex items-center gap-2.5 p-2 rounded-xl text-left transition-colors ${
+                          isSelected
+                            ? "bg-blue-600/15 text-white"
+                            : "hover:bg-slate-800/60 text-slate-300 hover:text-white"
+                        }`}
                       >
-                        {ws.logoUrl ? (
-                          <img src={ws.logoUrl} alt={ws.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span>{ws.name.charAt(0).toUpperCase()}</span>
-                        )}
-                      </div>
+                        <div
+                          className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden"
+                          style={{ backgroundColor: ws.themeColor || "#2563EB" }}
+                        >
+                          {ws.logoUrl ? (
+                            <img src={ws.logoUrl} alt={ws.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{ws.name.charAt(0).toUpperCase()}</span>
+                          )}
+                        </div>
 
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-semibold truncate">{ws.name}</div>
-                        {ws.isDefault && (
-                          <span className="text-[9px] text-blue-400">Principal</span>
-                        )}
-                      </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-semibold truncate">{ws.name}</div>
+                          {ws.isDefault && (
+                            <span className="text-[9px] text-blue-400">Principal</span>
+                          )}
+                        </div>
 
-                      {isSelected && (
-                        <Check size={14} className="text-blue-400 shrink-0" />
-                      )}
-                    </button>
-                  );
-                })}
+                        {isSelected && (
+                          <Check size={14} className="text-blue-400 shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })
+                )}
               </div>
 
               <div className="pt-2 border-t border-slate-800/80 mt-1">

@@ -1,4 +1,4 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, ValidateIf } from 'class-validator';
 
 export class UpdateWorkspaceDto {
   @IsString()
@@ -9,11 +9,13 @@ export class UpdateWorkspaceDto {
   @IsOptional()
   description?: string;
 
-  @IsString()
   @IsOptional()
-  logoUrl?: string;
+  @ValidateIf((o, v) => v !== null && v !== undefined)
+  @IsString()
+  logoUrl?: string | null;
 
   @IsString()
   @IsOptional()
   themeColor?: string;
 }
+
