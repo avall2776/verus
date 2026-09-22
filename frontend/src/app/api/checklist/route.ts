@@ -141,22 +141,7 @@ function parseChecklistMarkdown(markdown: string) {
       continue;
     }
 
-    // Processa Roadmap
-    if (currentSection === 'roadmap') {
-      const matchRoadmap = line.match(/^-\s+\[( |x)\]\s+\*\*(.+?)\*\*(?::)?\s*(.*)$/i);
-      if (matchRoadmap) {
-        const title = matchRoadmap[2].replace(/:$/, '').trim();
-        const inlineDesc = matchRoadmap[3].trim();
-        roadmapItems.push({
-          checked: matchRoadmap[1].toLowerCase() === 'x',
-          title,
-          description: inlineDesc || 'Módulo estratégico de expansão planejado para os próximos ciclos.'
-        });
-      }
-      continue;
-    }
-
-    // Processa Fases
+    // Processa Fases (Mesmo se após uma seção de roadmap ou ponto)
     const isPhaseLine = /^###\s+.*?\bFase\s+(\d+)/i.test(line);
     if (isPhaseLine) {
       if (currentPhase) {
@@ -178,6 +163,21 @@ function parseChecklistMarkdown(markdown: string) {
         items: []
       };
       currentItem = null;
+      continue;
+    }
+
+    // Processa Roadmap
+    if (currentSection === 'roadmap') {
+      const matchRoadmap = line.match(/^-\s+\[( |x)\]\s+\*\*(.+?)\*\*(?::)?\s*(.*)$/i);
+      if (matchRoadmap) {
+        const title = matchRoadmap[2].replace(/:$/, '').trim();
+        const inlineDesc = matchRoadmap[3].trim();
+        roadmapItems.push({
+          checked: matchRoadmap[1].toLowerCase() === 'x',
+          title,
+          description: inlineDesc || 'Módulo estratégico de expansão planejado para os próximos ciclos.'
+        });
+      }
       continue;
     }
 

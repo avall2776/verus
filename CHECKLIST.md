@@ -2340,31 +2340,6 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ---
 
-## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
-*Esta seção armazena ideias arquiteturais avançadas e expansões de escopo para longo prazo.*
-
-- [ ] **Suite ERP & Gestão Empresarial Integrada (Padrão Omie / Tecnologia VERSUS):** Ecossistema corporativo completo de gestão integrada em tempo real estilo Omie com 6 módulos estratégicos: CRM Inteligente, Vendas e NF-e de Produtos, Finanças e Conciliação Bancária, Estoque e Produção (PCP), Painel do Contador e Serviços com NFS-e.
-  - **Visão Geral**: Expansão do ecossistema VERSUS para além do CRM e Atendimento Omnichannel, incorporando uma suíte completa de gestão empresarial integrada em tempo real, inspirada no modelo Omie com arquitetura corporativa moderna, IA nativa e design system monocromático (#0B1224, slate, branco).
-  - **1. CRM Inteligente & Vendas Preditivas:** Acompanhamento unificado do ciclo de vida dos clientes, histórico omnichannel (WhatsApp, E-mail, reuniões), compras, vendas e previsibilidade de receita com pontuação e qualificação preditiva por IA.
-  - **2. Vendas e Emissão de NF-e (Produtos):** Gestão completa de pedidos comerciais, propostas e orçamentos com faturamento automático em 1 clique. Emissão integrada de NF-e (Modelo 55) e NFC-e (Modelo 65) com motor de cálculo tributário automático (ICMS, IPI, PIS, COFINS, ST e DIFAL) integrado a provedores fiscais (Focus NFe / PlugNotas / Nuvem Fiscal / SEFAZ direta).
-  - **3. Finanças, Tesouraria & Conciliação Bancária:** Painel financeiro executivo com contas a pagar, contas a receber, fluxo de caixa previsto vs. realizado e DRE em tempo real. Conciliação bancária automatizada via importação de extratos OFX e Open Finance, com emissão de boletos e PIX integrado.
-  - **4. Gestão de Estoque & Produção (PCP):** Controle dinâmico de estoque com múltiplos armazéns e filiais, rastreamento por lote, grade e validade. Ponto de pedido automatizado com alertas preditivos de IA e ficha técnica (BOM) com baixa automática de insumos.
-  - **5. Painel do Contador (Portal Colaborativo da Contabilidade):** Acesso restrito e exclusivo para o contador credenciado acessar balancetes, relatórios contábeis, livros fiscais, exportações SPED e download em lote de arquivos XML em 1 clique.
-  - **6. Serviços e Emissão de NFS-e (Notas Fiscais de Serviços):** Gestão de ordens de serviço, contratos de prestação recorrente de serviços (mensalidades / planos) e faturamento programado com emissão de NFS-e integrada às prefeituras (padrão ABRASF) e disparo via WhatsApp.
-- [ ] **Módulo de Faturamento e Assinaturas Automatizadas (Stripe / Asaas):** Cobrança recorrente automatizada com tokenização segura (Zero PCI-DSS Direct Storage), webhooks NestJS para liberação instantânea de planos/módulos e gestão de inadimplência preventiva (Dunning & Grace Period de 7 dias úteis).
-  - **Segurança & Tokenização (Zero PCI-DSS Direct Storage):** Proibição absoluta de armazenamento de dados sensíveis de cartões de crédito no banco de dados da aplicação, utilizando estritamente a tokenização nativa do gateway (Stripe Elements / Asaas CreditCardToken).
-  - **Automação via Webhooks (Backend NestJS):** Endpoint seguro POST /billing/webhook com validação criptográfica de assinatura de payload para ativação imediata de módulos e tratamento automático de falhas e estornos.
-  - **Gestão de Inadimplência e Tolerância (Dunning Management & Grace Period):** Grace Period de 7 dias úteis para contas com faturas pendentes, régua de cobrança automática via E-mail e WhatsApp, e bloqueio preventivo apenas após esgotamento da tolerância.
-- [ ] **Onboarding Self-Service (Múltiplos Tenants & Sublogins):** Plataforma pública de cadastro. Novas empresas se cadastram via Stripe, geram banco isolado automaticamente, e o ADMIN gerencia "Sublogins" (Atendentes) com permissões limitadas (Apenas tela Inbox e CRM).
-- [ ] **Voice AI Agent:** Robô de voz inteligente capaz de realizar ligações ativas (pré-venda/pós-venda) e receber ligações (receptivo) sem delay, integrado à base do CRM e OpenAI (Bland AI / Vapi).
-- [ ] **Integração VoIP Nativa (WebRTC):** Permitir que o atendente humano realize chamadas de áudio e vídeo direto pelo navegador na tela de Inbox (Twilio/Vonage), com gravação e transcrição automática vinculada ao card do lead no CRM.
-- [ ] **Transição Híbrida de Chaves de API OpenAI (BYOK com Degustação de 7 dias):**
-  - **Degustação Inicial**: Ao criar a conta no VERSUS, o cliente usufrui de 7 dias corridos utilizando a chave de API oficial da plataforma (OpenAI Platform Master).
-  - **Transição BYOK (Bring Your Own Key)**: Do 8º dia em diante, o sistema solicita a inserção da chave de API própria do cliente em Configurações > Inteligência Artificial, oferecendo um assistente passo-a-passo para criação de conta e recarga na OpenAI.
-  - **Fail-safe & Bloqueio Amigável**: Caso o período de degustação expire sem inserção de chave própria, o agente de IA é pausado amigavelmente com banner explicativo e o atendimento segue manual sem interrupção do sistema.
-
----
-
 ### 📋 FASE 82: AGENTE IA AUTÔNOMO NA CENTRAL DE SUPORTE VERSUS (21/09/2026)
 - [x] **1. Modelagem de Dados & Schema Prisma**:
   - [x] Criação da tabela `SupportAiConfig` no PostgreSQL (nome, modelo LLM, prompt de personalidade, base de conhecimento do VERSUS, cancelas de segurança e flags de automação).
@@ -2404,3 +2379,28 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [ ] **3. Fail-Safe Amigável Pós-Degustação**:
   - [ ] Bloqueio amigável do robô de IA após os 7 dias caso a chave própria não seja inserida, sem travar as demais funcionalidades manuais (WhatsApp, CRM, Contratos, Metas).
   - [ ] Notificação preventiva para o administrador da empresa 2 dias antes do vencimento do trial.
+
+---
+
+## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
+*Esta seção armazena ideias arquiteturais avançadas e expansões de escopo para longo prazo.*
+
+- [ ] **Suite ERP & Gestão Empresarial Integrada (Padrão Omie / Tecnologia VERSUS):** Ecossistema corporativo completo de gestão integrada em tempo real estilo Omie com 6 módulos estratégicos: CRM Inteligente, Vendas e NF-e de Produtos, Finanças e Conciliação Bancária, Estoque e Produção (PCP), Painel do Contador e Serviços com NFS-e.
+  - **Visão Geral**: Expansão do ecossistema VERSUS para além do CRM e Atendimento Omnichannel, incorporando uma suíte completa de gestão empresarial integrada em tempo real, inspirada no modelo Omie com arquitetura corporativa moderna, IA nativa e design system monocromático (#0B1224, slate, branco).
+  - **1. CRM Inteligente & Vendas Preditivas:** Acompanhamento unificado do ciclo de vida dos clientes, histórico omnichannel (WhatsApp, E-mail, reuniões), compras, vendas e previsibilidade de receita com pontuação e qualificação preditiva por IA.
+  - **2. Vendas e Emissão de NF-e (Produtos):** Gestão completa de pedidos comerciais, propostas e orçamentos com faturamento automático em 1 clique. Emissão integrada de NF-e (Modelo 55) e NFC-e (Modelo 65) com motor de cálculo tributário automático (ICMS, IPI, PIS, COFINS, ST e DIFAL) integrado a provedores fiscais (Focus NFe / PlugNotas / Nuvem Fiscal / SEFAZ direta).
+  - **3. Finanças, Tesouraria & Conciliação Bancária:** Painel financeiro executivo com contas a pagar, contas a receber, fluxo de caixa previsto vs. realizado e DRE em tempo real. Conciliação bancária automatizada via importação de extratos OFX e Open Finance, com emissão de boletos e PIX integrado.
+  - **4. Gestão de Estoque & Produção (PCP):** Controle dinâmico de estoque com múltiplos armazéns e filiais, rastreamento por lote, grade e validade. Ponto de pedido automatizado com alertas preditivos de IA e ficha técnica (BOM) com baixa automática de insumos.
+  - **5. Painel do Contador (Portal Colaborativo da Contabilidade):** Acesso restrito e exclusivo para o contador credenciado acessar balancetes, relatórios contábeis, livros fiscais, exportações SPED e download em lote de arquivos XML em 1 clique.
+  - **6. Serviços e Emissão de NFS-e (Notas Fiscais de Serviços):** Gestão de ordens de serviço, contratos de prestação recorrente de serviços (mensalidades / planos) e faturamento programado com emissão de NFS-e integrada às prefeituras (padrão ABRASF) e disparo via WhatsApp.
+- [ ] **Módulo de Faturamento e Assinaturas Automatizadas (Stripe / Asaas):** Cobrança recorrente automatizada com tokenização segura (Zero PCI-DSS Direct Storage), webhooks NestJS para liberação instantânea de planos/módulos e gestão de inadimplência preventiva (Dunning & Grace Period de 7 dias úteis).
+  - **Segurança & Tokenização (Zero PCI-DSS Direct Storage):** Proibição absoluta de armazenamento de dados sensíveis de cartões de crédito no banco de dados da aplicação, utilizando estritamente a tokenização nativa do gateway (Stripe Elements / Asaas CreditCardToken).
+  - **Automação via Webhooks (Backend NestJS):** Endpoint seguro POST /billing/webhook com validação criptográfica de assinatura de payload para ativação imediata de módulos e tratamento automático de falhas e estornos.
+  - **Gestão de Inadimplência e Tolerância (Dunning Management & Grace Period):** Grace Period de 7 dias úteis para contas com faturas pendentes, régua de cobrança automática via E-mail e WhatsApp, e bloqueio preventivo apenas após esgotamento da tolerância.
+- [ ] **Onboarding Self-Service (Múltiplos Tenants & Sublogins):** Plataforma pública de cadastro. Novas empresas se cadastram via Stripe, geram banco isolado automaticamente, e o ADMIN gerencia "Sublogins" (Atendentes) com permissões limitadas (Apenas tela Inbox e CRM).
+- [ ] **Voice AI Agent:** Robô de voz inteligente capaz de realizar ligações ativas (pré-venda/pós-venda) e receber ligações (receptivo) sem delay, integrado à base do CRM e OpenAI (Bland AI / Vapi).
+- [ ] **Integração VoIP Nativa (WebRTC):** Permitir que o atendente humano realize chamadas de áudio e vídeo direto pelo navegador na tela de Inbox (Twilio/Vonage), com gravação e transcrição automática vinculada ao card do lead no CRM.
+- [ ] **Transição Híbrida de Chaves de API OpenAI (BYOK com Degustação de 7 dias):**
+  - **Degustação Inicial**: Ao criar a conta no VERSUS, o cliente usufrui de 7 dias corridos utilizando a chave de API oficial da plataforma (OpenAI Platform Master).
+  - **Transição BYOK (Bring Your Own Key)**: Do 8º dia em diante, o sistema solicita a inserção da chave de API própria do cliente em Configurações > Inteligência Artificial, oferecendo um assistente passo-a-passo para criação de conta e recarga na OpenAI.
+  - **Fail-safe & Bloqueio Amigável**: Caso o período de degustação expire sem inserção de chave própria, o agente de IA é pausado amigavelmente com banner explicativo e o atendimento segue manual sem interrupção do sistema.
