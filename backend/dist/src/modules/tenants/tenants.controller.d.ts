@@ -56,6 +56,14 @@ export declare class TenantsController {
         aiPrompt: string | null;
         aiKnowledgeBase: string | null;
         aiTemperature: number;
+        aiTrialStartedAt: Date | null;
+        aiTrialDays: number;
+        aiPlatformKeyAllowed: boolean;
+        aiCustomApiKey: string | null;
+        aiKeyType: string;
+        aiKeyStatus: string;
+        aiLastKeyTestAt: Date | null;
+        aiTrialWarningSent: boolean;
         metaToken: string | null;
         metaPhoneNumberId: string | null;
         whatsappSettings: import("@prisma/client/runtime/library").JsonValue | null;
@@ -80,11 +88,52 @@ export declare class TenantsController {
         aiPrompt: string | null;
         aiKnowledgeBase: string | null;
         aiTemperature: number;
+        aiTrialStartedAt: Date | null;
+        aiTrialDays: number;
+        aiPlatformKeyAllowed: boolean;
+        aiCustomApiKey: string | null;
+        aiKeyType: string;
+        aiKeyStatus: string;
+        aiLastKeyTestAt: Date | null;
+        aiTrialWarningSent: boolean;
         metaToken: string | null;
         metaPhoneNumberId: string | null;
         whatsappSettings: import("@prisma/client/runtime/library").JsonValue | null;
         emailSettings: import("@prisma/client/runtime/library").JsonValue | null;
         planId: string;
+    }>;
+    getAiStatus(tenantId: string): Promise<{
+        canUseAi: boolean;
+        source: "platform_authorized" | "byok" | "trial_active" | "trial_expired";
+        daysLeft: number;
+        totalTrialDays: number;
+        statusText: string;
+        isPlatformAllowed: boolean;
+        hasCustomKey: boolean;
+        maskedCustomKey: string;
+        aiModel: string;
+        aiEnabled: boolean;
+        lastKeyTestAt: Date;
+        trialStartedAt: Date;
+    }>;
+    testAiKey(tenantId: string, body: {
+        apiKey?: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+        modelsCount?: number;
+        error?: string;
+    }>;
+    saveAiKey(tenantId: string, body: {
+        apiKey: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+        maskedKey: string;
+    }>;
+    removeAiKey(tenantId: string): Promise<{
+        success: boolean;
+        message: string;
     }>;
     findAll(req: any, query: QueryTenantsDto): Promise<{
         data: {
@@ -165,6 +214,14 @@ export declare class TenantsController {
             aiPrompt: string | null;
             aiKnowledgeBase: string | null;
             aiTemperature: number;
+            aiTrialStartedAt: Date | null;
+            aiTrialDays: number;
+            aiPlatformKeyAllowed: boolean;
+            aiCustomApiKey: string | null;
+            aiKeyType: string;
+            aiKeyStatus: string;
+            aiLastKeyTestAt: Date | null;
+            aiTrialWarningSent: boolean;
             metaToken: string | null;
             metaPhoneNumberId: string | null;
             whatsappSettings: import("@prisma/client/runtime/library").JsonValue | null;
@@ -326,6 +383,14 @@ export declare class TenantsController {
             aiPrompt: string | null;
             aiKnowledgeBase: string | null;
             aiTemperature: number;
+            aiTrialStartedAt: Date | null;
+            aiTrialDays: number;
+            aiPlatformKeyAllowed: boolean;
+            aiCustomApiKey: string | null;
+            aiKeyType: string;
+            aiKeyStatus: string;
+            aiLastKeyTestAt: Date | null;
+            aiTrialWarningSent: boolean;
             metaToken: string | null;
             metaPhoneNumberId: string | null;
             whatsappSettings: import("@prisma/client/runtime/library").JsonValue | null;
@@ -359,6 +424,14 @@ export declare class TenantsController {
             aiPrompt: string | null;
             aiKnowledgeBase: string | null;
             aiTemperature: number;
+            aiTrialStartedAt: Date | null;
+            aiTrialDays: number;
+            aiPlatformKeyAllowed: boolean;
+            aiCustomApiKey: string | null;
+            aiKeyType: string;
+            aiKeyStatus: string;
+            aiLastKeyTestAt: Date | null;
+            aiTrialWarningSent: boolean;
             metaToken: string | null;
             metaPhoneNumberId: string | null;
             whatsappSettings: import("@prisma/client/runtime/library").JsonValue | null;
@@ -422,5 +495,48 @@ export declare class TenantsController {
     deleteTenantUser(req: any, tenantId: string, userId: string): Promise<{
         success: boolean;
         message: string;
+    }>;
+    getSuperTenantAi(req: any, id: string): Promise<{
+        tenantId: string;
+        tenantName: string;
+        aiPlatformKeyAllowed: boolean;
+        canUseAi: boolean;
+        source: "platform_authorized" | "byok" | "trial_active" | "trial_expired";
+        daysLeft: number;
+        totalTrialDays: number;
+        statusText: string;
+        hasCustomKey: boolean;
+        maskedCustomKey: string;
+        lastKeyTestAt: Date;
+        trialStartedAt: Date;
+    }>;
+    togglePlatformKey(req: any, id: string, body: {
+        allowed?: boolean;
+    }): Promise<{
+        success: boolean;
+        allowed: boolean;
+        message: string;
+    }>;
+    superTestAiKey(req: any, id: string, body: {
+        apiKey?: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+        modelsCount?: number;
+        error?: string;
+    }>;
+    superExtendTrial(req: any, id: string, body: {
+        extraDays?: number;
+    }): Promise<{
+        success: boolean;
+        aiTrialDays: number;
+        message: string;
+    }>;
+    superSaveAiKey(req: any, id: string, body: {
+        apiKey: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+        maskedKey: string;
     }>;
 }

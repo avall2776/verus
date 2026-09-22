@@ -12,16 +12,18 @@ import {
   Sliders,
   ShieldCheck,
   CreditCard,
+  Sparkles,
 } from "lucide-react";
 
 import CompanySettingsTab from "@/components/settings/CompanySettingsTab";
 import PlanSettingsTab from "@/components/settings/PlanSettingsTab";
+import AiSettingsTab from "@/components/settings/AiSettingsTab";
 import UsersSettingsTab from "@/components/settings/UsersSettingsTab";
 import DepartmentsSettingsTab from "@/components/settings/DepartmentsSettingsTab";
 import QuickRepliesSettingsTab from "@/components/settings/QuickRepliesSettingsTab";
 import AutomationsSettingsTab from "@/components/settings/AutomationsSettingsTab";
 
-type TabId = "company" | "plan" | "users" | "departments" | "quick-replies" | "automations";
+type TabId = "company" | "plan" | "ai" | "users" | "departments" | "quick-replies" | "automations";
 
 interface TabConfig {
   id: TabId;
@@ -42,6 +44,12 @@ const SETTINGS_TABS: TabConfig[] = [
     label: "Plano & Assinatura",
     description: "Plano contratado, limites operacionais e recursos liberados",
     icon: CreditCard,
+  },
+  {
+    id: "ai",
+    label: "Inteligência Artificial (BYOK)",
+    description: "Degustação oficial de 7 dias, conexão da sua chave própria da OpenAI e créditos",
+    icon: Sparkles,
   },
   {
     id: "users",
@@ -155,6 +163,7 @@ function SettingsContent() {
         <main className="flex-1 w-full min-w-0 bg-[#0B1224]/80 border border-slate-800/80 rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
           {activeTab === "company" && <CompanySettingsTab />}
           {activeTab === "plan" && <PlanSettingsTab />}
+          {activeTab === "ai" && <AiSettingsTab />}
           {activeTab === "users" && <UsersSettingsTab />}
           {activeTab === "departments" && <DepartmentsSettingsTab />}
           {activeTab === "quick-replies" && <QuickRepliesSettingsTab />}

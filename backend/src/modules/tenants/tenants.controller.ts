@@ -72,6 +72,30 @@ export class TenantsController {
     return this.tenantsService.updateMyTenant(tenantId, body);
   }
 
+  // --------------------------------------------------------------------------
+  // AI STATUS & BYOK (CLIENTE / TENANT)
+  // --------------------------------------------------------------------------
+
+  @Get('ai-status')
+  async getAiStatus(@CurrentTenant() tenantId: string) {
+    return this.tenantsService.getAiStatus(tenantId);
+  }
+
+  @Post('test-ai-key')
+  async testAiKey(@CurrentTenant() tenantId: string, @Body() body: { apiKey?: string }) {
+    return this.tenantsService.testClientAiKey(tenantId, body?.apiKey);
+  }
+
+  @Patch('save-ai-key')
+  async saveAiKey(@CurrentTenant() tenantId: string, @Body() body: { apiKey: string }) {
+    return this.tenantsService.saveCustomAiKey(tenantId, body?.apiKey);
+  }
+
+  @Delete('remove-ai-key')
+  async removeAiKey(@CurrentTenant() tenantId: string) {
+    return this.tenantsService.removeCustomAiKey(tenantId);
+  }
+
   @UseGuards(SuperAdminGuard)
   @Get()
   async findAll(@Request() req, @Query() query: QueryTenantsDto) {
@@ -182,6 +206,56 @@ export class TenantsController {
     @Param('userId') userId: string
   ) {
     return this.tenantsService.deleteTenantUser(tenantId, userId);
+  }
+
+  // --------------------------------------------------------------------------
+  // GOVERNANÇA DE IA SUPER ADMIN (BYPASS DE CHAVE MASTER & MODO TESTE)
+  // --------------------------------------------------------------------------
+
+  @UseGuards(SuperAdminGuard)
+  @Get(':id/super-ai-key')
+  async getSuperTenantAi(@Request() req, @Param('id') id: string) {
+    return this.tenantsService.getSuperTenantAi(id);
+  }
+
+  @UseGuards(SuperAdminGuard)
+  @Patch(':id/toggle-platform-key')
+  async togglePlatformKey(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { allowed?: boolean }
+  ) {
+    return this.tenantsService.togglePlatformKeyAllowed(id, body?.allowed);
+  }
+
+  @UseGuards(SuperAdminGuard)
+  @Post(':id/super-test-ai-key')
+  async superTestAiKey(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { apiKey?: string }
+  ) {
+    return this.tenantsService.testClientAiKey(id, body?.apiKey);
+  }
+
+  @UseGuards(SuperAdminGuard)
+  @Patch(':id/super-extend-trial')
+  async superExtendTrial(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { extraDays?: number }
+  ) {
+    return this.tenantsService.superExtendTrial(id, body?.extraDays || 7);
+  }
+
+  @UseGuards(SuperAdminGuard)
+  @Patch(':id/super-ai-key')
+  async superSaveAiKey(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { apiKey: string }
+  ) {
+    return this.tenantsService.superSaveAiKey(id, body?.apiKey);
   }
 }
 

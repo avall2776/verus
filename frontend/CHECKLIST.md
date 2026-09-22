@@ -2369,16 +2369,25 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ---
 
-### 📋 FASE 83: TRANSIÇÃO HÍBRIDA DE CHAVES OPENAI (BYOK COM DEGUSTAÇÃO DE 7 DIAS) & GESTÃO DE CRÉDITOS (HOJE - 22/09/2026)
-- [ ] **1. Período de Degustação Oficial de 7 Dias (Platform Master Key)**:
-  - [ ] Regra de provisionamento de novos tenants: liberação de 7 dias de uso automático utilizando a chave oficial da plataforma VERSUS.
-  - [ ] Contador regressivo amigável exibido nas configurações de IA e dashboard do cliente ("Seu período de degustação da IA expira em X dias").
-- [ ] **2. Assistente e Interface de Transição BYOK (Bring Your Own Key)**:
-  - [ ] Interface visual com passo-a-passo para o cliente criar conta na OpenAI Platform, adicionar créditos e gerar chave de API (sk-...).
-  - [ ] Campo de validação e teste imediato de conexão da chave OpenAI com máscara de segurança e criptografia no banco.
-- [ ] **3. Fail-Safe Amigável Pós-Degustação**:
-  - [ ] Bloqueio amigável do robô de IA após os 7 dias caso a chave própria não seja inserida, sem travar as demais funcionalidades manuais (WhatsApp, CRM, Contratos, Metas).
-  - [ ] Notificação preventiva para o administrador da empresa 2 dias antes do vencimento do trial.
+### Fase 83: Transição Híbrida de Chaves OpenAI (BYOK com Degustação de 7 dias) & Gestão de Créditos (22/09/2026 - Manhã)
+- [x] **1. Período de Degustação Oficial de 7 Dias (Platform Master Key)**:
+  - [x] Regra de provisionamento de tenants: liberação de 7 dias de uso automático utilizando a chave oficial da plataforma VERSUS.
+  - [x] Contador regressivo amigável exibido nas configurações de IA e dashboard do cliente com cálculo dinâmico de dias restantes.
+- [x] **2. Assistente e Interface de Transição BYOK (Bring Your Own Key)**:
+  - [x] Interface visual corporativa em `/settings?tab=ai` com passo-a-passo para o cliente criar conta na OpenAI, adicionar créditos e gerar chave de API.
+  - [x] Campo de validação e teste imediato de conexão da chave OpenAI com máscara de segurança e criptografia reversível AES-256-GCM no banco.
+  - [x] Atalho direto na barra lateral (Sidebar) para rápido acesso às configurações de IA (BYOK).
+- [x] **3. Painel Super Admin - Liberação Manual para Testes (Master Key Bypass)**:
+  - [x] Interruptor/Toggle dedicado no Super Admin (`/super-admin/ai-agents`) para liberar a chave do sistema (`OPENAI_API_KEY`) em qualquer tenant sem limite de 7 dias.
+  - [x] Permite ao Super Admin testar contas de clientes por prazo indeterminado usando a infraestrutura do próprio sistema.
+  - [x] Teste imediato de conexão OpenAI e renovação de trial (+7 dias) diretamente pelo console do Super Admin.
+- [x] **4. Fail-Safe Amigável Pós-Degustação**:
+  - [x] Bloqueio amigável do robô de IA após os 7 dias caso a chave própria não seja inserida e o Super Admin não tenha ativado o bypass, mantendo o atendimento manual 100% ativo com encaminhamento para a fila humana (`status: 'waiting'`).
+  - [x] Componente `TrialBanner` preventivo exibido no topo do sistema quando restarem 2 dias ou menos de degustação.
+- [x] **5. Validação Técnica, Segurança & Compilação**:
+  - [x] Criptografia de dados sensíveis com SHA-256 e AES-256-GCM com tag de autenticação (`crypto.util.ts`).
+  - [x] `npx prisma db push` e `npx prisma generate` sincronizados com o Supabase.
+  - [x] `npx tsc --noEmit` e `npm run build` aprovados com 0 erros no backend e frontend.
 
 ---
 
@@ -2400,7 +2409,3 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [ ] **Onboarding Self-Service (Múltiplos Tenants & Sublogins):** Plataforma pública de cadastro. Novas empresas se cadastram via Stripe, geram banco isolado automaticamente, e o ADMIN gerencia "Sublogins" (Atendentes) com permissões limitadas (Apenas tela Inbox e CRM).
 - [ ] **Voice AI Agent:** Robô de voz inteligente capaz de realizar ligações ativas (pré-venda/pós-venda) e receber ligações (receptivo) sem delay, integrado à base do CRM e OpenAI (Bland AI / Vapi).
 - [ ] **Integração VoIP Nativa (WebRTC):** Permitir que o atendente humano realize chamadas de áudio e vídeo direto pelo navegador na tela de Inbox (Twilio/Vonage), com gravação e transcrição automática vinculada ao card do lead no CRM.
-- [ ] **Transição Híbrida de Chaves de API OpenAI (BYOK com Degustação de 7 dias):**
-  - **Degustação Inicial**: Ao criar a conta no VERSUS, o cliente usufrui de 7 dias corridos utilizando a chave de API oficial da plataforma (OpenAI Platform Master).
-  - **Transição BYOK (Bring Your Own Key)**: Do 8º dia em diante, o sistema solicita a inserção da chave de API própria do cliente em Configurações > Inteligência Artificial, oferecendo um assistente passo-a-passo para criação de conta e recarga na OpenAI.
-  - **Fail-safe & Bloqueio Amigável**: Caso o período de degustação expire sem inserção de chave própria, o agente de IA é pausado amigavelmente com banner explicativo e o atendimento segue manual sem interrupção do sistema.

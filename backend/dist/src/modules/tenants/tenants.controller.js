@@ -59,6 +59,18 @@ let TenantsController = class TenantsController {
     async updateMyTenant(tenantId, body) {
         return this.tenantsService.updateMyTenant(tenantId, body);
     }
+    async getAiStatus(tenantId) {
+        return this.tenantsService.getAiStatus(tenantId);
+    }
+    async testAiKey(tenantId, body) {
+        return this.tenantsService.testClientAiKey(tenantId, body?.apiKey);
+    }
+    async saveAiKey(tenantId, body) {
+        return this.tenantsService.saveCustomAiKey(tenantId, body?.apiKey);
+    }
+    async removeAiKey(tenantId) {
+        return this.tenantsService.removeCustomAiKey(tenantId);
+    }
     async findAll(req, query) {
         return this.tenantsService.findAll(query);
     }
@@ -98,6 +110,21 @@ let TenantsController = class TenantsController {
     async deleteTenantUser(req, tenantId, userId) {
         return this.tenantsService.deleteTenantUser(tenantId, userId);
     }
+    async getSuperTenantAi(req, id) {
+        return this.tenantsService.getSuperTenantAi(id);
+    }
+    async togglePlatformKey(req, id, body) {
+        return this.tenantsService.togglePlatformKeyAllowed(id, body?.allowed);
+    }
+    async superTestAiKey(req, id, body) {
+        return this.tenantsService.testClientAiKey(id, body?.apiKey);
+    }
+    async superExtendTrial(req, id, body) {
+        return this.tenantsService.superExtendTrial(id, body?.extraDays || 7);
+    }
+    async superSaveAiKey(req, id, body) {
+        return this.tenantsService.superSaveAiKey(id, body?.apiKey);
+    }
 };
 exports.TenantsController = TenantsController;
 __decorate([
@@ -123,6 +150,36 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "updateMyTenant", null);
+__decorate([
+    (0, common_1.Get)('ai-status'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "getAiStatus", null);
+__decorate([
+    (0, common_1.Post)('test-ai-key'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "testAiKey", null);
+__decorate([
+    (0, common_1.Patch)('save-ai-key'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "saveAiKey", null);
+__decorate([
+    (0, common_1.Delete)('remove-ai-key'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "removeAiKey", null);
 __decorate([
     (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Get)(),
@@ -249,6 +306,55 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "deleteTenantUser", null);
+__decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
+    (0, common_1.Get)(':id/super-ai-key'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "getSuperTenantAi", null);
+__decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
+    (0, common_1.Patch)(':id/toggle-platform-key'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "togglePlatformKey", null);
+__decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
+    (0, common_1.Post)(':id/super-test-ai-key'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "superTestAiKey", null);
+__decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
+    (0, common_1.Patch)(':id/super-extend-trial'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "superExtendTrial", null);
+__decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
+    (0, common_1.Patch)(':id/super-ai-key'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "superSaveAiKey", null);
 exports.TenantsController = TenantsController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('tenants'),

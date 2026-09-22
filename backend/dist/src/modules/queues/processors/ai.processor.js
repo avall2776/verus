@@ -59,6 +59,16 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
             });
             return { status: 'aborted', reason: 'WhatsApp disconnected' };
         }
+        const tenant = conversation.contact.tenant;
+        const keyResolution = this.aiService.resolveTenantApiKey(tenant);
+        if (!keyResolution.canUseAi) {
+            this.logger.warn(`Tenant [${tenant?.name || tenantId}] com degustação de IA expirada (${keyResolution.statusText}). Transferindo conversa [${conversationId}] para fila de espera humana.`);
+            await this.prisma.conversation.update({
+                where: { id: conversationId },
+                data: { status: 'waiting' },
+            });
+            return { status: 'aborted', reason: 'ai_trial_expired_no_byok' };
+        }
         const historyDb = await this.prisma.message.findMany({
             where: { conversationId },
             orderBy: { createdAt: 'desc' },

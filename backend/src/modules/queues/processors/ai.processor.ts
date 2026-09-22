@@ -63,6 +63,20 @@ export class AiProcessor extends WorkerHost {
       return { status: 'aborted', reason: 'WhatsApp disconnected' };
     }
 
+    // 1.3 Trava de Degustação / Chave OpenAI (BYOK & Super Admin Bypass)
+    const tenant = conversation.contact.tenant;
+    const keyResolution = this.aiService.resolveTenantApiKey(tenant);
+    if (!keyResolution.canUseAi) {
+      this.logger.warn(
+        `Tenant [${tenant?.name || tenantId}] com degustação de IA expirada (${keyResolution.statusText}). Transferindo conversa [${conversationId}] para fila de espera humana.`
+      );
+      await this.prisma.conversation.update({
+        where: { id: conversationId },
+        data: { status: 'waiting' },
+      });
+      return { status: 'aborted', reason: 'ai_trial_expired_no_byok' };
+    }
+
     // 2. Extrair Contexto (Últimas 15 mensagens, ordenadas da mais antiga para a mais nova)
     const historyDb = await this.prisma.message.findMany({
       where: { conversationId },

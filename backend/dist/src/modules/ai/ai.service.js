@@ -17,6 +17,7 @@ const openai_1 = require("openai");
 const zod_1 = require("openai/helpers/zod");
 const response_schema_1 = require("./schemas/response.schema");
 const rag_service_1 = require("../rag/services/rag.service");
+const crypto_util_1 = require("../../shared/utils/crypto.util");
 let AiService = AiService_1 = class AiService {
     constructor(configService, ragService) {
         this.configService = configService;
@@ -35,11 +36,114 @@ DIRETRIZES ESTRITAS DE COMPORTAMENTO:
    - Você analisa e compreende fotos, prints e comprovantes de pagamento (que chegam detalhados como '📷 [Análise da Imagem]: ...').
    - Você lê e extrai dados de documentos e PDFs (que chegam com o texto extraído como '📄 [Documento PDF]: ...').
    - É ESTRITAMENTE PROIBIDO recusar mídias ou dizer 'não posso ouvir áudio', 'não recebo arquivos' ou 'só aceito texto'. Responda diretamente ao conteúdo falado, analisado ou documento com naturalidade!`;
-        const apiKey = this.configService.get('OPENAI_API_KEY');
-        if (!apiKey) {
+        this.masterApiKey = this.configService.get('OPENAI_API_KEY') || '';
+        if (!this.masterApiKey) {
             this.logger.warn('⚠️ OPENAI_API_KEY não configurada no .env. A IA vai falhar em produção.');
         }
-        this.openai = new openai_1.default({ apiKey: apiKey || 'test-key' });
+        this.openai = new openai_1.default({ apiKey: this.masterApiKey || 'test-key' });
+    }
+    resolveTenantApiKey(tenant) {
+        const isPlatformAllowed = Boolean(tenant?.aiPlatformKeyAllowed);
+        const hasCustomKey = Boolean(tenant?.aiCustomApiKey && String(tenant?.aiCustomApiKey).trim().length > 0);
+        const totalTrialDays = tenant?.aiTrialDays || 7;
+        if (isPlatformAllowed) {
+            return {
+                canUseAi: Boolean(this.masterApiKey),
+                apiKey: this.masterApiKey || null,
+                source: 'platform_authorized',
+                daysLeft: null,
+                totalTrialDays,
+                statusText: 'Chave Master da Plataforma Liberada pelo Super Admin (Modo Teste Sem Bloqueio)',
+                isPlatformAllowed: true,
+                hasCustomKey,
+            };
+        }
+        if (hasCustomKey) {
+            const decrypted = (0, crypto_util_1.decryptApiKey)(tenant.aiCustomApiKey);
+            if (decrypted && (decrypted.startsWith('sk-') || decrypted.length > 20)) {
+                return {
+                    canUseAi: true,
+                    apiKey: decrypted,
+                    source: 'byok',
+                    daysLeft: null,
+                    totalTrialDays,
+                    statusText: 'Chave Própria do Cliente (BYOK Ativa)',
+                    isPlatformAllowed: false,
+                    hasCustomKey: true,
+                };
+            }
+        }
+        const startDate = tenant?.aiTrialStartedAt
+            ? new Date(tenant.aiTrialStartedAt)
+            : tenant?.createdAt
+                ? new Date(tenant.createdAt)
+                : new Date();
+        const now = new Date();
+        const elapsedMs = Math.max(0, now.getTime() - startDate.getTime());
+        const elapsedDays = elapsedMs / (1000 * 60 * 60 * 24);
+        const daysLeft = Math.max(0, Math.ceil(totalTrialDays - elapsedDays));
+        if (daysLeft > 0) {
+            return {
+                canUseAi: Boolean(this.masterApiKey),
+                apiKey: this.masterApiKey || null,
+                source: 'trial_active',
+                daysLeft,
+                totalTrialDays,
+                statusText: `Período de Degustação Ativo (${daysLeft} ${daysLeft === 1 ? 'dia restante' : 'dias restantes'})`,
+                isPlatformAllowed: false,
+                hasCustomKey: false,
+            };
+        }
+        return {
+            canUseAi: false,
+            apiKey: null,
+            source: 'trial_expired',
+            daysLeft: 0,
+            totalTrialDays,
+            statusText: 'Período de Degustação Expirado (Necessário Chave Própria ou Liberação do Admin)',
+            isPlatformAllowed: false,
+            hasCustomKey: false,
+        };
+    }
+    async testApiKey(apiKey) {
+        if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length < 15) {
+            return {
+                success: false,
+                message: 'Chave inválida. Certifique-se de colar uma chave válida no formato sk-...',
+                error: 'Chave inválida ou incompleta.',
+            };
+        }
+        try {
+            const testClient = new openai_1.default({
+                apiKey: apiKey.trim(),
+                timeout: 5000,
+            });
+            const modelsResponse = await testClient.models.list();
+            const count = modelsResponse.data?.length || 0;
+            return {
+                success: true,
+                message: `Conexão bem-sucedida! Chave validada na OpenAI (${count} modelos disponíveis).`,
+                modelsCount: count,
+            };
+        }
+        catch (error) {
+            this.logger.warn(`[testApiKey] Falha na validação da chave OpenAI: ${error?.message}`);
+            let friendlyError = 'Falha ao conectar aos servidores da OpenAI.';
+            if (error?.status === 401 || error?.message?.includes('Incorrect API key') || error?.code === 'invalid_api_key') {
+                friendlyError = 'Chave incorreta ou revogada pela OpenAI (401 Unauthorized). Verifique suas credenciais em platform.openai.com.';
+            }
+            else if (error?.status === 429 || error?.code === 'insufficient_quota' || error?.message?.includes('quota')) {
+                friendlyError = 'Chave válida, porém sem saldo ou créditos na OpenAI (429 Insufficient Quota). Adicione saldo à sua conta OpenAI.';
+            }
+            else if (error?.code === 'ETIMEDOUT' || error?.name === 'APIConnectionTimeoutError') {
+                friendlyError = 'Tempo limite esgotado ao contatar a OpenAI (Timeout de 5s). Tente novamente em instantes.';
+            }
+            return {
+                success: false,
+                message: friendlyError,
+                error: error?.message || friendlyError,
+            };
+        }
     }
     async transcribeAudio(buffer, filename = 'audio.ogg', mimeType = 'audio/ogg') {
         try {
@@ -153,7 +257,14 @@ Responda de forma concisa e factual em português (máximo de 3 a 4 linhas).`;
             const targetModel = (tenantConfig?.aiModel === 'gpt-4o' || tenantConfig?.aiModel === 'gpt-4o-mini')
                 ? tenantConfig.aiModel
                 : 'gpt-4o-mini';
-            const completion = await this.openai.beta.chat.completions.parse({
+            const keyResolution = this.resolveTenantApiKey(tenantConfig);
+            if (!keyResolution.canUseAi || !keyResolution.apiKey) {
+                throw new Error(`Auto-atendimento por IA suspenso: ${keyResolution.statusText}`);
+            }
+            const client = (keyResolution.apiKey === this.masterApiKey)
+                ? this.openai
+                : new openai_1.default({ apiKey: keyResolution.apiKey, timeout: 25000 });
+            const completion = await client.beta.chat.completions.parse({
                 model: targetModel,
                 messages: messages,
                 response_format: (0, zod_1.zodResponseFormat)(response_schema_1.AiResponseSchema, 'atendimento_result'),

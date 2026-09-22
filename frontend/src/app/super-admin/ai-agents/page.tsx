@@ -21,7 +21,11 @@ import {
   Info,
   Check,
   ArrowRight,
-  MessageSquare
+  MessageSquare,
+  Key,
+  Clock,
+  Zap,
+  AlertTriangle,
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -110,6 +114,25 @@ export default function SuperAdminAiAgentsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const playgroundEndRef = useRef<HTMLDivElement>(null);
 
+  // Governança de Chaves OpenAI & Bypass Super Admin (Modo Teste)
+  const [tenantAiStatus, setTenantAiStatus] = useState<{
+    tenantId: string;
+    tenantName: string;
+    aiPlatformKeyAllowed: boolean;
+    canUseAi: boolean;
+    source: string;
+    daysLeft: number | null;
+    totalTrialDays: number;
+    statusText: string;
+    hasCustomKey: boolean;
+    maskedCustomKey: string | null;
+    lastKeyTestAt: string | null;
+  } | null>(null);
+  const [loadingAiStatus, setLoadingAiStatus] = useState(false);
+  const [togglingPlatformKey, setTogglingPlatformKey] = useState(false);
+  const [testingMasterKey, setTestingMasterKey] = useState(false);
+  const [extendingTrial, setExtendingTrial] = useState(false);
+
   // Carregar Lista de Empresas (Tenants)
   useEffect(() => {
     async function loadTenants() {
@@ -130,6 +153,65 @@ export default function SuperAdminAiAgentsPage() {
     loadTenants();
   }, []);
 
+  const fetchTenantAiStatus = useCallback(async (tenantId: string) => {
+    if (!tenantId) return;
+    try {
+      setLoadingAiStatus(true);
+      const res = await api.get(`/tenants/${tenantId}/super-ai-key`);
+      setTenantAiStatus(res.data);
+    } catch (err) {
+      console.error("Erro ao carregar status de chave do tenant:", err);
+    } finally {
+      setLoadingAiStatus(false);
+    }
+  }, []);
+
+  const handleTogglePlatformKey = async () => {
+    if (!selectedTenantId) return;
+    try {
+      setTogglingPlatformKey(true);
+      const res = await api.patch(`/tenants/${selectedTenantId}/toggle-platform-key`, {});
+      toast.success(res.data.message || "Permissão da Chave Master atualizada!");
+      await fetchTenantAiStatus(selectedTenantId);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao alterar permissão de chave.");
+    } finally {
+      setTogglingPlatformKey(false);
+    }
+  };
+
+  const handleSuperTestKey = async () => {
+    if (!selectedTenantId) return;
+    try {
+      setTestingMasterKey(true);
+      const res = await api.post(`/tenants/${selectedTenantId}/super-test-ai-key`, {});
+      if (res.data.success) {
+        toast.success(res.data.message || "Conexão OpenAI validada com sucesso!");
+        await fetchTenantAiStatus(selectedTenantId);
+      } else {
+        toast.error(res.data.message || "Falha na conexão.");
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao testar chave.");
+    } finally {
+      setTestingMasterKey(false);
+    }
+  };
+
+  const handleExtendTrial = async () => {
+    if (!selectedTenantId) return;
+    try {
+      setExtendingTrial(true);
+      const res = await api.patch(`/tenants/${selectedTenantId}/super-extend-trial`, { extraDays: 7 });
+      toast.success(res.data.message || "Período renovado por +7 dias!");
+      await fetchTenantAiStatus(selectedTenantId);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao renovar degustação.");
+    } finally {
+      setExtendingTrial(false);
+    }
+  };
+
   // Carregar Configuração e Documentos do Tenant Selecionado
   const loadTenantConfig = useCallback(async (tenantId: string) => {
     if (!tenantId) return;
@@ -140,6 +222,7 @@ export default function SuperAdminAiAgentsPage() {
         api.get("/agent/config", { headers }),
         api.get("/agent/documents", { headers }).catch(() => ({ data: [] })),
       ]);
+      fetchTenantAiStatus(tenantId);
 
       if (configRes.data) {
         const rawTemp = typeof configRes.data.aiTemperature === "number" 
@@ -405,6 +488,121 @@ export default function SuperAdminAiAgentsPage() {
           {/* COLUNA ESQUERDA: CONFIGURAÇÕES DO AGENTE (7 COLUNAS) */}
           <div className="lg:col-span-7 space-y-8">
             
+            {/* SEÇÃO 0: GOVERNANÇA DE CHAVES OPENAI & MODO TESTE (SUPER ADMIN) */}
+            <div className={`rounded-2xl bg-[#0B1224] border p-6 space-y-5 transition-all shadow-lg ${
+              tenantAiStatus?.aiPlatformKeyAllowed 
+                ? "border-emerald-500/40 shadow-emerald-950/20" 
+                : "border-slate-800"
+            }`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <Key size={18} className={tenantAiStatus?.aiPlatformKeyAllowed ? "text-emerald-400" : "text-blue-400"} />
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-white">
+                    Governança de Chave OpenAI & Modo Teste
+                  </h2>
+                </div>
+
+                {/* Badge de Status Atual */}
+                {loadingAiStatus ? (
+                  <span className="text-xs text-slate-500 flex items-center gap-1">
+                    <Loader2 size={12} className="animate-spin" /> Carregando...
+                  </span>
+                ) : tenantAiStatus?.aiPlatformKeyAllowed ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 border border-emerald-500/40 text-emerald-300">
+                    <ShieldCheck size={13} />
+                    Chave Master Liberada (Sem Bloqueio)
+                  </span>
+                ) : tenantAiStatus?.hasCustomKey ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-blue-500/10 border border-blue-500/30 text-blue-400">
+                    <CheckCircle2 size={13} />
+                    BYOK: {tenantAiStatus.maskedCustomKey}
+                  </span>
+                ) : (tenantAiStatus?.daysLeft || 0) > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                    <Clock size={13} />
+                    Degustação ({tenantAiStatus?.daysLeft} dias restantes)
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-rose-500/10 border border-rose-500/30 text-rose-400">
+                    <AlertTriangle size={13} />
+                    Degustação Expirada
+                  </span>
+                )}
+              </div>
+
+              {/* CARD PRINCIPAL DO TOGGLE (INTERRUPTOR DE TESTES) */}
+              <div className={`p-4 rounded-xl border transition-all ${
+                tenantAiStatus?.aiPlatformKeyAllowed 
+                  ? "bg-emerald-950/20 border-emerald-500/30" 
+                  : "bg-[#070D1B] border-slate-800"
+              }`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white">
+                        Liberar Chave do Sistema (Modo Teste / Super Admin)
+                      </span>
+                      {tenantAiStatus?.aiPlatformKeyAllowed && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500 text-slate-950">
+                          ATIVO
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed max-w-xl">
+                      Permite que a conta de <strong>{tenantAiStatus?.tenantName || "esta empresa"}</strong> utilize a chave oficial OpenAI Master do servidor (<code className="text-slate-300 font-mono">OPENAI_API_KEY</code>) por tempo indeterminado, permitindo realizar testes de chat, WhatsApp e robôs sem a trava dos 7 dias.
+                    </p>
+                  </div>
+
+                  {/* Switch Toggle */}
+                  <button
+                    type="button"
+                    onClick={handleTogglePlatformKey}
+                    disabled={togglingPlatformKey || loadingAiStatus}
+                    className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
+                      tenantAiStatus?.aiPlatformKeyAllowed ? "bg-emerald-500" : "bg-slate-800"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                        tenantAiStatus?.aiPlatformKeyAllowed ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* AÇÕES COMPLEMENTARES: TESTAR CONEXÃO E RENOVAR TRIAL */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSuperTestKey}
+                    disabled={testingMasterKey || loadingAiStatus}
+                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {testingMasterKey ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} className="text-amber-400" />}
+                    <span>{testingMasterKey ? "Testando..." : "Testar Conexão OpenAI"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleExtendTrial}
+                    disabled={extendingTrial || loadingAiStatus}
+                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {extendingTrial ? <Loader2 size={13} className="animate-spin" /> : <Clock size={13} className="text-blue-400" />}
+                    <span>{extendingTrial ? "Renovando..." : "+7 Dias de Degustação"}</span>
+                  </button>
+                </div>
+
+                {tenantAiStatus?.lastKeyTestAt && (
+                  <span className="text-[11px] text-slate-500 font-mono">
+                    Último teste: {new Date(tenantAiStatus.lastKeyTestAt).toLocaleTimeString("pt-BR")}
+                  </span>
+                )}
+              </div>
+            </div>
+
             {/* SEÇÃO 1: IDENTIDADE DO AGENTE & MOTOR COGNITIVO */}
             <div className="rounded-2xl bg-[#0B1224] border border-slate-800 p-6 space-y-6">
               <div className="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">

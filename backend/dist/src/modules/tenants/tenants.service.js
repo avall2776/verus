@@ -14,12 +14,15 @@ exports.TenantsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const emails_service_1 = require("../emails/emails.service");
+const ai_service_1 = require("../ai/ai.service");
+const crypto_util_1 = require("../../shared/utils/crypto.util");
 const bcrypt = require("bcrypt");
 const axios_1 = require("axios");
 let TenantsService = TenantsService_1 = class TenantsService {
-    constructor(prisma, emailsService) {
+    constructor(prisma, emailsService, aiService) {
         this.prisma = prisma;
         this.emailsService = emailsService;
+        this.aiService = aiService;
         this.logger = new common_1.Logger(TenantsService_1.name);
     }
     async getActiveEvolutionInstances() {
@@ -889,11 +892,203 @@ let TenantsService = TenantsService_1 = class TenantsService {
             message: `Usuário '${user.name}' (${user.email}) removido permanentemente com sucesso do banco de dados.`,
         };
     }
+    async getAiStatus(tenantId) {
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: {
+                id: true,
+                name: true,
+                createdAt: true,
+                aiEnabled: true,
+                aiModel: true,
+                aiTrialStartedAt: true,
+                aiTrialDays: true,
+                aiPlatformKeyAllowed: true,
+                aiCustomApiKey: true,
+                aiKeyType: true,
+                aiKeyStatus: true,
+                aiLastKeyTestAt: true,
+            },
+        });
+        if (!tenant) {
+            throw new common_1.NotFoundException('Empresa não encontrada.');
+        }
+        const keyResolution = this.aiService.resolveTenantApiKey(tenant);
+        const hasCustomKey = Boolean(tenant.aiCustomApiKey && tenant.aiCustomApiKey.trim().length > 0);
+        const decryptedKey = hasCustomKey ? (0, crypto_util_1.decryptApiKey)(tenant.aiCustomApiKey) : '';
+        const maskedCustomKey = decryptedKey ? (0, crypto_util_1.maskApiKey)(decryptedKey) : null;
+        return {
+            canUseAi: keyResolution.canUseAi,
+            source: keyResolution.source,
+            daysLeft: keyResolution.daysLeft,
+            totalTrialDays: keyResolution.totalTrialDays,
+            statusText: keyResolution.statusText,
+            isPlatformAllowed: keyResolution.isPlatformAllowed,
+            hasCustomKey,
+            maskedCustomKey,
+            aiModel: tenant.aiModel,
+            aiEnabled: tenant.aiEnabled,
+            lastKeyTestAt: tenant.aiLastKeyTestAt,
+            trialStartedAt: tenant.aiTrialStartedAt || tenant.createdAt,
+        };
+    }
+    async testClientAiKey(tenantId, apiKey) {
+        let keyToTest = apiKey?.trim();
+        if (!keyToTest) {
+            const tenant = await this.prisma.tenant.findUnique({
+                where: { id: tenantId },
+                select: { aiCustomApiKey: true },
+            });
+            if (!tenant?.aiCustomApiKey) {
+                throw new common_1.BadRequestException('Nenhuma chave própria cadastrada para testar. Digite uma chave para testar.');
+            }
+            keyToTest = (0, crypto_util_1.decryptApiKey)(tenant.aiCustomApiKey);
+        }
+        const result = await this.aiService.testApiKey(keyToTest);
+        if (result.success) {
+            await this.prisma.tenant.update({
+                where: { id: tenantId },
+                data: { aiLastKeyTestAt: new Date() },
+            });
+        }
+        return result;
+    }
+    async saveCustomAiKey(tenantId, plainKey) {
+        const trimmed = (plainKey || '').trim();
+        if (!trimmed || trimmed.length < 15) {
+            throw new common_1.BadRequestException('Chave da OpenAI inválida. Formato esperado: sk-...');
+        }
+        this.logger.log(`Validando chave OpenAI fornecida pelo tenant [${tenantId}]...`);
+        const testResult = await this.aiService.testApiKey(trimmed);
+        if (!testResult.success) {
+            throw new common_1.BadRequestException(`Não foi possível ativar esta chave: ${testResult.message || testResult.error}`);
+        }
+        const encrypted = (0, crypto_util_1.encryptApiKey)(trimmed);
+        await this.prisma.tenant.update({
+            where: { id: tenantId },
+            data: {
+                aiCustomApiKey: encrypted,
+                aiKeyType: 'custom',
+                aiKeyStatus: 'byok_active',
+                aiLastKeyTestAt: new Date(),
+            },
+        });
+        this.logger.log(`Chave OpenAI própria ativada com sucesso para o tenant [${tenantId}].`);
+        return {
+            success: true,
+            message: 'Chave própria da OpenAI configurada e validada com sucesso! Seu robô de IA agora utiliza seus próprios créditos.',
+            maskedKey: (0, crypto_util_1.maskApiKey)(trimmed),
+        };
+    }
+    async removeCustomAiKey(tenantId) {
+        await this.prisma.tenant.update({
+            where: { id: tenantId },
+            data: {
+                aiCustomApiKey: null,
+                aiKeyType: 'platform',
+                aiKeyStatus: 'trial_active',
+            },
+        });
+        return {
+            success: true,
+            message: 'Chave própria removida com sucesso. A empresa retornou para a política de degustação da plataforma.',
+        };
+    }
+    async getSuperTenantAi(tenantId) {
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: {
+                id: true,
+                name: true,
+                createdAt: true,
+                aiEnabled: true,
+                aiModel: true,
+                aiTrialStartedAt: true,
+                aiTrialDays: true,
+                aiPlatformKeyAllowed: true,
+                aiCustomApiKey: true,
+                aiKeyType: true,
+                aiKeyStatus: true,
+                aiLastKeyTestAt: true,
+            },
+        });
+        if (!tenant) {
+            throw new common_1.NotFoundException('Empresa não encontrada.');
+        }
+        const keyResolution = this.aiService.resolveTenantApiKey(tenant);
+        const hasCustomKey = Boolean(tenant.aiCustomApiKey);
+        const decryptedKey = hasCustomKey ? (0, crypto_util_1.decryptApiKey)(tenant.aiCustomApiKey) : '';
+        return {
+            tenantId: tenant.id,
+            tenantName: tenant.name,
+            aiPlatformKeyAllowed: tenant.aiPlatformKeyAllowed,
+            canUseAi: keyResolution.canUseAi,
+            source: keyResolution.source,
+            daysLeft: keyResolution.daysLeft,
+            totalTrialDays: keyResolution.totalTrialDays,
+            statusText: keyResolution.statusText,
+            hasCustomKey,
+            maskedCustomKey: decryptedKey ? (0, crypto_util_1.maskApiKey)(decryptedKey) : null,
+            lastKeyTestAt: tenant.aiLastKeyTestAt,
+            trialStartedAt: tenant.aiTrialStartedAt || tenant.createdAt,
+        };
+    }
+    async togglePlatformKeyAllowed(tenantId, allowed) {
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { id: true, name: true, aiPlatformKeyAllowed: true },
+        });
+        if (!tenant) {
+            throw new common_1.NotFoundException('Empresa não encontrada.');
+        }
+        const newAllowed = typeof allowed === 'boolean' ? allowed : !tenant.aiPlatformKeyAllowed;
+        await this.prisma.tenant.update({
+            where: { id: tenantId },
+            data: {
+                aiPlatformKeyAllowed: newAllowed,
+                aiKeyStatus: newAllowed ? 'platform_authorized' : 'trial_active',
+            },
+        });
+        this.logger.log(`[SuperAdmin] Toggle Chave Master para tenant [${tenant.name}]: ${newAllowed ? 'LIBERADA (Modo Teste)' : 'REVOGADA'}`);
+        return {
+            success: true,
+            allowed: newAllowed,
+            message: newAllowed
+                ? `Chave Master da plataforma LIBERADA com sucesso para '${tenant.name}'. O robô de IA funcionará sem limite de 7 dias para testes.`
+                : `Liberação de chave Master revogada para '${tenant.name}'. O tenant voltou a operar sob a política normal de degustação/BYOK.`,
+        };
+    }
+    async superExtendTrial(tenantId, extraDays = 7) {
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { id: true, name: true, aiTrialDays: true },
+        });
+        if (!tenant) {
+            throw new common_1.NotFoundException('Empresa não encontrada.');
+        }
+        const updated = await this.prisma.tenant.update({
+            where: { id: tenantId },
+            data: {
+                aiTrialDays: (tenant.aiTrialDays || 7) + extraDays,
+                aiTrialStartedAt: new Date(),
+                aiKeyStatus: 'trial_active',
+            },
+        });
+        return {
+            success: true,
+            aiTrialDays: updated.aiTrialDays,
+            message: `Período de degustação de '${tenant.name}' renovado por mais ${extraDays} dias com sucesso.`,
+        };
+    }
+    async superSaveAiKey(tenantId, plainKey) {
+        return this.saveCustomAiKey(tenantId, plainKey);
+    }
 };
 exports.TenantsService = TenantsService;
 exports.TenantsService = TenantsService = TenantsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        emails_service_1.EmailsService])
+        emails_service_1.EmailsService,
+        ai_service_1.AiService])
 ], TenantsService);
 //# sourceMappingURL=tenants.service.js.map

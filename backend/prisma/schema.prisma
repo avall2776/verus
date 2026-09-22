@@ -79,6 +79,16 @@ model Tenant {
   aiPrompt        String?
   aiKnowledgeBase String?
   aiTemperature   Float   @default(0.7)
+
+  // Transição Híbrida de Chaves OpenAI (BYOK & Trial de 7 dias)
+  aiTrialStartedAt      DateTime? @default(now())
+  aiTrialDays           Int       @default(7)
+  aiPlatformKeyAllowed  Boolean   @default(false) // Bypass do Super Admin (Modo Teste irrestrito)
+  aiCustomApiKey        String?   // Chave OpenAI do cliente (criptografada AES-256)
+  aiKeyType             String    @default("platform") // "platform" | "custom"
+  aiKeyStatus           String    @default("trial_active") // "trial_active" | "platform_authorized" | "byok_active" | "trial_expired"
+  aiLastKeyTestAt       DateTime?
+  aiTrialWarningSent    Boolean   @default(false)
   
   metaToken         String?
   metaPhoneNumberId String?

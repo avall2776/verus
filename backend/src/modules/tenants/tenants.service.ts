@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { EmailsService } from '../emails/emails.service';
+import { AiService } from '../ai/ai.service';
+import { encryptApiKey, decryptApiKey, maskApiKey } from '../../shared/utils/crypto.util';
 import { QueryTenantsDto } from './dto/query-tenants.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { CreatePlanDto } from './dto/create-plan.dto';
@@ -14,6 +16,7 @@ export class TenantsService {
   constructor(
     public readonly prisma: PrismaService,
     private readonly emailsService: EmailsService,
+    private readonly aiService: AiService,
   ) {}
 
   /**
@@ -1002,6 +1005,270 @@ export class TenantsService {
       success: true,
       message: `Usuário '${user.name}' (${user.email}) removido permanentemente com sucesso do banco de dados.`,
     };
+  }
+
+  // --------------------------------------------------------------------------
+  // TRANSIÇÃO HÍBRIDA DE CHAVES OPENAI (BYOK, TRIAL 7 DIAS & SUPER ADMIN BYPASS)
+  // --------------------------------------------------------------------------
+
+  /**
+   * Retorna o status detalhado de IA para o Tenant logado
+   */
+  async getAiStatus(tenantId: string) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        aiEnabled: true,
+        aiModel: true,
+        aiTrialStartedAt: true,
+        aiTrialDays: true,
+        aiPlatformKeyAllowed: true,
+        aiCustomApiKey: true,
+        aiKeyType: true,
+        aiKeyStatus: true,
+        aiLastKeyTestAt: true,
+      },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
+    const keyResolution = this.aiService.resolveTenantApiKey(tenant);
+    const hasCustomKey = Boolean(tenant.aiCustomApiKey && tenant.aiCustomApiKey.trim().length > 0);
+    const decryptedKey = hasCustomKey ? decryptApiKey(tenant.aiCustomApiKey!) : '';
+    const maskedCustomKey = decryptedKey ? maskApiKey(decryptedKey) : null;
+
+    return {
+      canUseAi: keyResolution.canUseAi,
+      source: keyResolution.source,
+      daysLeft: keyResolution.daysLeft,
+      totalTrialDays: keyResolution.totalTrialDays,
+      statusText: keyResolution.statusText,
+      isPlatformAllowed: keyResolution.isPlatformAllowed,
+      hasCustomKey,
+      maskedCustomKey,
+      aiModel: tenant.aiModel,
+      aiEnabled: tenant.aiEnabled,
+      lastKeyTestAt: tenant.aiLastKeyTestAt,
+      trialStartedAt: tenant.aiTrialStartedAt || tenant.createdAt,
+    };
+  }
+
+  /**
+   * Testa a conectividade de uma chave informada pelo cliente ou a chave salva no banco
+   */
+  async testClientAiKey(tenantId: string, apiKey?: string) {
+    let keyToTest = apiKey?.trim();
+
+    if (!keyToTest) {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { aiCustomApiKey: true },
+      });
+
+      if (!tenant?.aiCustomApiKey) {
+        throw new BadRequestException('Nenhuma chave própria cadastrada para testar. Digite uma chave para testar.');
+      }
+
+      keyToTest = decryptApiKey(tenant.aiCustomApiKey);
+    }
+
+    const result = await this.aiService.testApiKey(keyToTest);
+
+    if (result.success) {
+      await this.prisma.tenant.update({
+        where: { id: tenantId },
+        data: { aiLastKeyTestAt: new Date() },
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Valida, testa, criptografa e salva a chave própria da OpenAI do cliente (BYOK)
+   */
+  async saveCustomAiKey(tenantId: string, plainKey: string) {
+    const trimmed = (plainKey || '').trim();
+    if (!trimmed || trimmed.length < 15) {
+      throw new BadRequestException('Chave da OpenAI inválida. Formato esperado: sk-...');
+    }
+
+    // 1. Testa na OpenAI antes de salvar para garantir que a chave é funcional e tem créditos
+    this.logger.log(`Validando chave OpenAI fornecida pelo tenant [${tenantId}]...`);
+    const testResult = await this.aiService.testApiKey(trimmed);
+    if (!testResult.success) {
+      throw new BadRequestException(
+        `Não foi possível ativar esta chave: ${testResult.message || testResult.error}`
+      );
+    }
+
+    // 2. Criptografa com chave AES-256
+    const encrypted = encryptApiKey(trimmed);
+
+    // 3. Atualiza tenant
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        aiCustomApiKey: encrypted,
+        aiKeyType: 'custom',
+        aiKeyStatus: 'byok_active',
+        aiLastKeyTestAt: new Date(),
+      },
+    });
+
+    this.logger.log(`Chave OpenAI própria ativada com sucesso para o tenant [${tenantId}].`);
+
+    return {
+      success: true,
+      message: 'Chave própria da OpenAI configurada e validada com sucesso! Seu robô de IA agora utiliza seus próprios créditos.',
+      maskedKey: maskApiKey(trimmed),
+    };
+  }
+
+  /**
+   * Remove a chave própria do cliente e retorna para a degustação da plataforma
+   */
+  async removeCustomAiKey(tenantId: string) {
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        aiCustomApiKey: null,
+        aiKeyType: 'platform',
+        aiKeyStatus: 'trial_active',
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Chave própria removida com sucesso. A empresa retornou para a política de degustação da plataforma.',
+    };
+  }
+
+  // --------------------------------------------------------------------------
+  // GOVERNANÇA SUPER ADMIN (BYPASS DO SISTEMA & MODO TESTE)
+  // --------------------------------------------------------------------------
+
+  /**
+   * Consulta status de IA e chave para o Super Admin
+   */
+  async getSuperTenantAi(tenantId: string) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        aiEnabled: true,
+        aiModel: true,
+        aiTrialStartedAt: true,
+        aiTrialDays: true,
+        aiPlatformKeyAllowed: true,
+        aiCustomApiKey: true,
+        aiKeyType: true,
+        aiKeyStatus: true,
+        aiLastKeyTestAt: true,
+      },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
+    const keyResolution = this.aiService.resolveTenantApiKey(tenant);
+    const hasCustomKey = Boolean(tenant.aiCustomApiKey);
+    const decryptedKey = hasCustomKey ? decryptApiKey(tenant.aiCustomApiKey!) : '';
+
+    return {
+      tenantId: tenant.id,
+      tenantName: tenant.name,
+      aiPlatformKeyAllowed: tenant.aiPlatformKeyAllowed,
+      canUseAi: keyResolution.canUseAi,
+      source: keyResolution.source,
+      daysLeft: keyResolution.daysLeft,
+      totalTrialDays: keyResolution.totalTrialDays,
+      statusText: keyResolution.statusText,
+      hasCustomKey,
+      maskedCustomKey: decryptedKey ? maskApiKey(decryptedKey) : null,
+      lastKeyTestAt: tenant.aiLastKeyTestAt,
+      trialStartedAt: tenant.aiTrialStartedAt || tenant.createdAt,
+    };
+  }
+
+  /**
+   * Toggle do Super Admin: Libera ou revoga o uso da chave Master da plataforma para testes contínuos
+   */
+  async togglePlatformKeyAllowed(tenantId: string, allowed?: boolean) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true, name: true, aiPlatformKeyAllowed: true },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
+    const newAllowed = typeof allowed === 'boolean' ? allowed : !tenant.aiPlatformKeyAllowed;
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        aiPlatformKeyAllowed: newAllowed,
+        aiKeyStatus: newAllowed ? 'platform_authorized' : 'trial_active',
+      },
+    });
+
+    this.logger.log(
+      `[SuperAdmin] Toggle Chave Master para tenant [${tenant.name}]: ${newAllowed ? 'LIBERADA (Modo Teste)' : 'REVOGADA'}`
+    );
+
+    return {
+      success: true,
+      allowed: newAllowed,
+      message: newAllowed
+        ? `Chave Master da plataforma LIBERADA com sucesso para '${tenant.name}'. O robô de IA funcionará sem limite de 7 dias para testes.`
+        : `Liberação de chave Master revogada para '${tenant.name}'. O tenant voltou a operar sob a política normal de degustação/BYOK.`,
+    };
+  }
+
+  /**
+   * Super Admin: Estende ou renova o período de degustação em N dias
+   */
+  async superExtendTrial(tenantId: string, extraDays: number = 7) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true, name: true, aiTrialDays: true },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
+    const updated = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        aiTrialDays: (tenant.aiTrialDays || 7) + extraDays,
+        aiTrialStartedAt: new Date(), // reinicia a contagem a partir de agora
+        aiKeyStatus: 'trial_active',
+      },
+    });
+
+    return {
+      success: true,
+      aiTrialDays: updated.aiTrialDays,
+      message: `Período de degustação de '${tenant.name}' renovado por mais ${extraDays} dias com sucesso.`,
+    };
+  }
+
+  /**
+   * Super Admin: Injeta uma chave OpenAI específica para o tenant
+   */
+  async superSaveAiKey(tenantId: string, plainKey: string) {
+    return this.saveCustomAiKey(tenantId, plainKey);
   }
 }
 
