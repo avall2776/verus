@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
 const emails_service_1 = require("../emails/emails.service");
+const crypto_util_1 = require("../../shared/utils/crypto.util");
 let UsersController = class UsersController {
     constructor(prisma, emailsService) {
         this.prisma = prisma;
@@ -204,6 +205,7 @@ let UsersController = class UsersController {
             }
             const bcrypt = await Promise.resolve().then(() => require('bcrypt'));
             updateData.password = await bcrypt.hash(rawPass, 10);
+            updateData.rawPasswordEncrypted = (0, crypto_util_1.encryptApiKey)(rawPass);
         }
         if (body.avatarUrl !== undefined) {
             updateData.avatarUrl = body.avatarUrl;
@@ -272,6 +274,7 @@ let UsersController = class UsersController {
                 name,
                 email,
                 password: hashedPassword,
+                rawPasswordEncrypted: (0, crypto_util_1.encryptApiKey)(rawPass),
                 role,
                 permissions,
                 isActive: true,

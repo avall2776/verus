@@ -55,11 +55,13 @@ export default function SuperAdminCompaniesPage() {
     tenantId: string | null;
     tenantName: string;
     adminEmail: string;
+    adminSavedPassword?: string | null;
   }>({
     isOpen: false,
     tenantId: null,
     tenantName: "",
     adminEmail: "",
+    adminSavedPassword: null,
   });
 
   const [editCompanyData, setEditCompanyData] = useState<{
@@ -135,6 +137,7 @@ export default function SuperAdminCompaniesPage() {
       tenantId: company.id,
       tenantName: company.name,
       adminEmail: company.adminUser?.email || company.email || "Administrador",
+      adminSavedPassword: company.adminUser?.savedPassword || null,
     });
   };
 
@@ -468,6 +471,7 @@ export default function SuperAdminCompaniesPage() {
         tenantId={resetModalData.tenantId}
         tenantName={resetModalData.tenantName}
         adminEmail={resetModalData.adminEmail}
+        currentSavedPassword={resetModalData.adminSavedPassword}
         onClose={() => setResetModalData((prev) => ({ ...prev, isOpen: false }))}
         onSuccess={() => fetchCompanies()}
       />

@@ -2,6 +2,7 @@ import { Controller, Get, Post, Delete, Patch, Put, Body, Param, UseGuards, Requ
 import { PrismaService } from '../../shared/database/prisma.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { EmailsService } from '../emails/emails.service';
+import { encryptApiKey } from '../../shared/utils/crypto.util';
 
 @UseGuards(JwtAuthGuard)
 @Controller('users')
@@ -221,6 +222,7 @@ export class UsersController {
       }
       const bcrypt = await import('bcrypt');
       updateData.password = await bcrypt.hash(rawPass, 10);
+      updateData.rawPasswordEncrypted = encryptApiKey(rawPass);
     }
 
     if (body.avatarUrl !== undefined) {
@@ -306,6 +308,7 @@ export class UsersController {
         name,
         email,
         password: hashedPassword,
+        rawPasswordEncrypted: encryptApiKey(rawPass),
         role,
         permissions,
         isActive: true,

@@ -25,7 +25,9 @@ import {
   RefreshCw,
   Check,
   Copy,
-  AlertTriangle
+  AlertTriangle,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -55,6 +57,17 @@ export default function CompanyXRayModal({
   const [editingUser, setEditingUser] = useState<any | null>(null);
   const [passwordUser, setPasswordUser] = useState<any | null>(null);
   const [deletingUser, setDeletingUser] = useState<any | null>(null);
+
+  // Visualização de senhas salvas
+  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+
+  const toggleRevealPassword = (id: string) => {
+    setRevealedPasswords((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   // Formulário de Edição
   const [userFormData, setUserFormData] = useState({
@@ -117,18 +130,32 @@ export default function CompanyXRayModal({
 
     setPasswordResetting(true);
     try {
+      const trimmedPass = newPasswordInput.trim();
       const res = await api.post(`/tenants/${tenantId}/users/${passwordUser.id}/reset-password`, {
-        newPassword: newPasswordInput.trim() || undefined,
+        newPassword: trimmedPass || undefined,
         sendEmail: sendEmailCheckbox,
       });
 
+      const effectivePassword = res.data.savedPassword || res.data.temporaryPassword;
+
       setGeneratedResult({
-        temporaryPassword: res.data.temporaryPassword,
+        temporaryPassword: effectivePassword,
         emailSent: res.data.emailSent,
         emailError: res.data.emailError,
       });
 
-      toast.success("Senha redefinida com sucesso!");
+      // Atualiza o estado da tabela imediatamente com a nova senha gravada
+      setData((prev: any) => {
+        if (!prev) return prev;
+        const updatedUsers = (prev.users || []).map((u: any) =>
+          u.id === passwordUser.id ? { ...u, savedPassword: effectivePassword } : u
+        );
+        return { ...prev, users: updatedUsers };
+      });
+
+      setPasswordUser((prev: any) => (prev ? { ...prev, savedPassword: effectivePassword } : null));
+
+      toast.success("Senha gravada e atualizada com sucesso!");
     } catch (err: any) {
       console.error(err);
       toast.error(err.response?.data?.message || "Erro ao redefinir senha.");
@@ -360,6 +387,7 @@ export default function CompanyXRayModal({
                             <th className="pb-2 font-bold">E-mail</th>
                             <th className="pb-2 font-bold">Papel</th>
                             <th className="pb-2 font-bold">Status</th>
+                            <th className="pb-2 font-bold">Senha de Acesso</th>
                             <th className="pb-2 font-bold">Cadastrado em</th>
                             <th className="pb-2 font-bold text-right pr-2">Ações</th>
                           </tr>
@@ -387,6 +415,42 @@ export default function CompanyXRayModal({
                                   {u.isActive !== false ? "Ativo" : "Bloqueado"}
                                 </span>
                               </td>
+                              {/* Senha de Acesso */}
+                              <td className="py-2.5">
+                                {u.savedPassword ? (
+                                  <div className="inline-flex items-center gap-1.5 bg-[#070D1B] border border-slate-800 px-2 py-1 rounded-lg">
+                                    <span className="font-mono text-[11px] text-slate-200">
+                                      {revealedPasswords[u.id] ? u.savedPassword : "••••••••"}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleRevealPassword(u.id)}
+                                      title={revealedPasswords[u.id] ? "Ocultar senha" : "Ver senha salva"}
+                                      className="text-slate-400 hover:text-white p-0.5 transition-colors cursor-pointer"
+                                    >
+                                      {revealedPasswords[u.id] ? <EyeOff size={13} /> : <Eye size={13} />}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(u.savedPassword);
+                                        toast.success(`Senha de ${u.name} copiada!`);
+                                      }}
+                                      title="Copiar senha"
+                                      className="text-slate-400 hover:text-blue-400 p-0.5 transition-colors cursor-pointer"
+                                    >
+                                      <Copy size={13} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span 
+                                    className="text-slate-500 font-mono text-[11px] inline-flex items-center gap-1"
+                                    title="Senha protegida unidirecional. Redefina na chave para deixá-la visível permanentemente."
+                                  >
+                                    •••••••• <span className="text-[9px] text-amber-500/70">(redefinir p/ ver)</span>
+                                  </span>
+                                )}
+                              </td>
                               <td className="py-2.5 text-slate-400">
                                 {new Date(u.createdAt).toLocaleDateString("pt-BR")}
                               </td>
@@ -410,10 +474,11 @@ export default function CompanyXRayModal({
                                   </button>
                                   <button
                                     type="button"
-                                    title="Redefinir Senha de Acesso"
+                                    title="Redefinir / Ver Senha de Acesso"
                                     onClick={() => {
                                       setPasswordUser(u);
                                       setNewPasswordInput("");
+                                      setShowCurrentPassword(false);
                                       setGeneratedResult(null);
                                       setCopiedPass(false);
                                       setSendEmailCheckbox(true);
@@ -794,6 +859,56 @@ export default function CompanyXRayModal({
             <div className="p-5 space-y-4">
               {!generatedResult ? (
                 <>
+                  {/* Visualização da Senha Atual Cadastrada para Testes Imediatos */}
+                  {passwordUser.savedPassword ? (
+                    <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                          Senha Atual Salva
+                        </span>
+                        <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-semibold">
+                          Pronta para Acesso / Testes
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 bg-[#0B1224] p-2.5 rounded-lg border border-slate-800">
+                        <span className="font-mono text-xs font-bold text-slate-100 tracking-wider">
+                          {showCurrentPassword ? passwordUser.savedPassword : "••••••••••••"}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                            title={showCurrentPassword ? "Ocultar senha" : "Ver senha salva"}
+                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                          >
+                            {showCurrentPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(passwordUser.savedPassword);
+                              toast.success("Senha copiada para a área de transferência!");
+                            }}
+                            title="Copiar senha atual"
+                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                          >
+                            <Copy size={14} />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        Você pode copiar a senha acima para fazer login e testes imediatamente, sem precisar redefini-la.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300/90 flex items-start gap-2">
+                      <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-400" />
+                      <span>
+                        Este usuário possui senha protegida anterior. Digite ou gere uma nova senha abaixo para gravá-la e torná-la visível permanentemente para seus testes.
+                      </span>
+                    </div>
+                  )}
+
                   <p className="text-xs text-slate-300 leading-relaxed">
                     Defina manualmente uma nova senha para o operador ou clique em <strong className="text-white">Gerar Automática</strong>.
                   </p>
@@ -801,12 +916,12 @@ export default function CompanyXRayModal({
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="text-xs font-semibold text-slate-300">
-                        Nova Senha Temporária
+                        Nova Senha (Manual ou Automática)
                       </label>
                       <button
                         type="button"
                         onClick={() => setNewPasswordInput(`Versus@${Math.floor(100000 + Math.random() * 900000)}`)}
-                        className="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium transition-colors"
+                        className="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium transition-colors cursor-pointer"
                       >
                         <RefreshCw size={11} /> Gerar Automática
                       </button>
@@ -815,7 +930,7 @@ export default function CompanyXRayModal({
                       type="text"
                       value={newPasswordInput}
                       onChange={(e) => setNewPasswordInput(e.target.value)}
-                      placeholder="Ex: Versus@984721 (mínimo 6 dígitos)"
+                      placeholder="Digite a senha que você desejar (ex: minhaSenha123)"
                       className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all font-mono"
                     />
                   </div>
@@ -838,8 +953,8 @@ export default function CompanyXRayModal({
                   <div className="pt-2 flex items-center justify-end gap-2">
                     <button
                       type="button"
-                      onClick={() => setPasswordUser(null)}
-                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors"
+                      onClick={() => { setPasswordUser(null); setNewPasswordInput(""); setShowCurrentPassword(false); }}
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors cursor-pointer"
                     >
                       Cancelar
                     </button>
@@ -847,7 +962,7 @@ export default function CompanyXRayModal({
                       type="button"
                       onClick={handleResetPassword}
                       disabled={passwordResetting}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-xs font-semibold text-white transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-xs font-semibold text-white transition-colors cursor-pointer"
                     >
                       {passwordResetting ? <Loader2 size={14} className="animate-spin" /> : <KeyRound size={14} />}
                       <span>Confirmar Nova Senha</span>
@@ -858,12 +973,12 @@ export default function CompanyXRayModal({
                 <div className="space-y-4 animate-in fade-in duration-200">
                   <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-400 flex items-center gap-2">
                     <CheckCircle2 size={16} className="shrink-0" />
-                    <span>Senha redefinida com sucesso no banco de dados!</span>
+                    <span>Senha atualizada e gravada com sucesso no banco de dados!</span>
                   </div>
 
                   <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2">
                     <span className="text-[11px] text-slate-400 font-semibold block uppercase">
-                      Senha Provisória Gerada:
+                      Nova Senha Gravada:
                     </span>
                     <div className="flex items-center justify-between gap-2 bg-[#0B1224] p-3 rounded-lg border border-slate-800">
                       <span className="font-mono text-sm font-bold text-blue-400 tracking-wider">
@@ -877,7 +992,7 @@ export default function CompanyXRayModal({
                           toast.success("Senha copiada para a área de transferência!");
                           setTimeout(() => setCopiedPass(false), 2500);
                         }}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 font-medium transition-colors"
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 font-medium transition-colors cursor-pointer"
                       >
                         {copiedPass ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
                         <span>{copiedPass ? "Copiado!" : "Copiar"}</span>
@@ -898,8 +1013,13 @@ export default function CompanyXRayModal({
                   <div className="pt-2 flex justify-end">
                     <button
                       type="button"
-                      onClick={() => { setPasswordUser(null); setGeneratedResult(null); }}
-                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition-colors"
+                      onClick={() => {
+                        setPasswordUser(null);
+                        setGeneratedResult(null);
+                        setNewPasswordInput("");
+                        setShowCurrentPassword(false);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition-colors cursor-pointer"
                     >
                       Concluir
                     </button>

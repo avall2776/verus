@@ -14,6 +14,7 @@ exports.OperatorsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const emails_service_1 = require("../emails/emails.service");
+const crypto_util_1 = require("../../shared/utils/crypto.util");
 const bcrypt = require("bcrypt");
 let OperatorsService = OperatorsService_1 = class OperatorsService {
     constructor(prisma, emailsService) {
@@ -44,6 +45,7 @@ let OperatorsService = OperatorsService_1 = class OperatorsService {
                 isOnline: true,
                 avatarUrl: true,
                 permissions: true,
+                rawPasswordEncrypted: true,
                 createdAt: true,
                 updatedAt: true,
             },
@@ -81,9 +83,19 @@ let OperatorsService = OperatorsService_1 = class OperatorsService {
             const perm = op.permissions || {};
             const roleTitle = perm.roleTitle || (op.role === 'ADMIN' ? 'Gerente de Atendimento' : 'Atendente de Suporte');
             const avgResponseMinutes = perm.avgResponseMinutes || (op.isActive ? Number((3.5 + (op.name.length % 4) * 0.8).toFixed(1)) : 0);
+            let savedPassword = null;
+            if (op.rawPasswordEncrypted) {
+                try {
+                    savedPassword = (0, crypto_util_1.decryptApiKey)(op.rawPasswordEncrypted);
+                }
+                catch {
+                    savedPassword = null;
+                }
+            }
             return {
                 ...op,
                 roleTitle,
+                savedPassword,
                 metrics: {
                     todayAttendances: todayTickets.length,
                     todayResolved,
@@ -183,6 +195,7 @@ let OperatorsService = OperatorsService_1 = class OperatorsService {
                 name: dto.name.trim(),
                 email: dto.email.trim().toLowerCase(),
                 password: hashedPassword,
+                rawPasswordEncrypted: (0, crypto_util_1.encryptApiKey)(rawPass),
                 role: dto.role || 'AGENT',
                 isSuperAdmin: false,
                 isActive: true,
@@ -247,6 +260,7 @@ let OperatorsService = OperatorsService_1 = class OperatorsService {
             data.role = dto.role;
         if (dto.password && dto.password.trim()) {
             data.password = await bcrypt.hash(dto.password.trim(), 10);
+            data.rawPasswordEncrypted = (0, crypto_util_1.encryptApiKey)(dto.password.trim());
         }
         if (dto.permissions || dto.roleTitle) {
             const currentPerm = operator.permissions || {};

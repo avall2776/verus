@@ -101,13 +101,14 @@ model Tenant {
 // ------------------------------------------------------
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      String   // ADMIN, AGENT, SUPER_ADMIN
-  isActive  Boolean  @default(true)
-  isSuperAdmin Boolean @default(false)
+  id                   String   @id @default(uuid())
+  name                 String
+  email                String   @unique
+  password             String
+  rawPasswordEncrypted String?  // Senha reversível (criptografada AES-256) para visualização e testes pelo Super Admin
+  role                 String   // ADMIN, AGENT, SUPER_ADMIN
+  isActive             Boolean  @default(true)
+  isSuperAdmin         Boolean  @default(false)
   permissions Json?   // { inbox: boolean, crm: boolean, chat: boolean, automations: boolean, settings: boolean, support: boolean }
   avatarUrl String?
   tenantId  String

@@ -25,6 +25,7 @@ export declare class DepartmentsController {
                 updatedAt: Date;
                 isActive: boolean;
                 password: string;
+                rawPasswordEncrypted: string | null;
                 role: string;
                 isSuperAdmin: boolean;
                 permissions: import("@prisma/client/runtime/library").JsonValue | null;

@@ -157,6 +157,7 @@ export declare class TenantsController {
                 name: string;
                 email: string;
                 isOnline: boolean;
+                savedPassword: string;
             };
             connections: {
                 whatsapp: boolean;
@@ -233,6 +234,7 @@ export declare class TenantsController {
             name: string;
             email: string;
             role: string;
+            savedPassword: string;
         };
     }>;
     getPlans(req: any): Promise<{
@@ -339,11 +341,12 @@ export declare class TenantsController {
             id: string;
             name: string;
             email: string;
-            avatarUrl: string;
-            createdAt: Date;
-            isActive: boolean;
             role: string;
+            isActive: boolean;
+            avatarUrl: string;
             isOnline: boolean;
+            createdAt: Date;
+            savedPassword: string;
         }[];
         recentTickets: {
             id: string;
@@ -455,8 +458,10 @@ export declare class TenantsController {
             name: string;
             email: string;
             role: string;
+            savedPassword: string;
         };
         temporaryPassword: string;
+        savedPassword: string;
     }>;
     updateTenantUser(req: any, tenantId: string, userId: string, body: {
         name?: string;
@@ -483,6 +488,7 @@ export declare class TenantsController {
     }): Promise<{
         message: string;
         temporaryPassword: string;
+        savedPassword: string;
         emailSent: boolean;
         emailError: string;
         user: {
@@ -490,6 +496,7 @@ export declare class TenantsController {
             name: string;
             email: string;
             role: string;
+            savedPassword: string;
         };
     }>;
     deleteTenantUser(req: any, tenantId: string, userId: string): Promise<{

@@ -145,7 +145,7 @@ export class TenantsService {
           },
           users: {
             where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] } },
-            select: { id: true, name: true, email: true, isOnline: true },
+            select: { id: true, name: true, email: true, isOnline: true, rawPasswordEncrypted: true },
             take: 1,
           },
           whatsappInstances: {
@@ -192,6 +192,16 @@ export class TenantsService {
           emailSettings?.resendApiKey
         );
 
+        const firstAdmin = tenant.users[0] || null;
+        let adminSavedPassword: string | null = null;
+        if (firstAdmin?.rawPasswordEncrypted) {
+          try {
+            adminSavedPassword = decryptApiKey(firstAdmin.rawPasswordEncrypted);
+          } catch {
+            adminSavedPassword = null;
+          }
+        }
+
         return {
           id: tenant.id,
           name: tenant.name,
@@ -204,7 +214,15 @@ export class TenantsService {
           createdAt: tenant.createdAt,
           updatedAt: tenant.updatedAt,
           plan: tenant.plan,
-          adminUser: tenant.users[0] || null,
+          adminUser: firstAdmin
+            ? {
+                id: firstAdmin.id,
+                name: firstAdmin.name,
+                email: firstAdmin.email,
+                isOnline: firstAdmin.isOnline,
+                savedPassword: adminSavedPassword,
+              }
+            : null,
           connections: {
             whatsapp: waInfo.connected,
             whatsappPhone: waInfo.phone,
@@ -288,6 +306,7 @@ export class TenantsService {
             isActive: true,
             avatarUrl: true,
             isOnline: true,
+            rawPasswordEncrypted: true,
             createdAt: true,
           },
           orderBy: { createdAt: 'asc' },
@@ -404,7 +423,27 @@ export class TenantsService {
         signedContractsValue: signedContractsSummary._sum.value || 0,
         totalTickets: tenant._count.supportTickets,
       },
-      users: tenant.users,
+      users: (tenant.users || []).map((u) => {
+        let savedPassword: string | null = null;
+        if (u.rawPasswordEncrypted) {
+          try {
+            savedPassword = decryptApiKey(u.rawPasswordEncrypted);
+          } catch {
+            savedPassword = null;
+          }
+        }
+        return {
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          isActive: u.isActive,
+          avatarUrl: u.avatarUrl,
+          isOnline: u.isOnline,
+          createdAt: u.createdAt,
+          savedPassword,
+        };
+      }),
       recentTickets: recentTickets.map((t) => ({
         id: t.id,
         ticketNumber: t.ticketNumber,
@@ -467,27 +506,34 @@ export class TenantsService {
       throw new NotFoundException('Nenhum usuário administrador cadastrado nesta empresa.');
     }
 
+    const trimmed = newPassword ? String(newPassword).trim() : '';
     const plainPassword =
-      newPassword && newPassword.trim().length >= 6
-        ? newPassword.trim()
+      trimmed.length > 0
+        ? trimmed
         : `Versus@${Math.floor(100000 + Math.random() * 900000)}`;
 
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
+    const rawPasswordEncrypted = encryptApiKey(plainPassword);
 
     await this.prisma.user.update({
       where: { id: adminUser.id },
-      data: { password: hashedPassword },
+      data: {
+        password: hashedPassword,
+        rawPasswordEncrypted,
+      },
     });
 
     return {
-      message: `Senha do administrador ${adminUser.name} (${adminUser.email}) redefinida com sucesso.`,
+      message: `Senha do administrador ${adminUser.name} (${adminUser.email}) redefinida e salva com sucesso.`,
       user: {
         id: adminUser.id,
         name: adminUser.name,
         email: adminUser.email,
         role: adminUser.role,
+        savedPassword: plainPassword,
       },
       temporaryPassword: plainPassword,
+      savedPassword: plainPassword,
     };
   }
 
@@ -716,7 +762,9 @@ export class TenantsService {
       throw new BadRequestException('Já existe um usuário cadastrado com este e-mail.');
     }
 
-    const hashedPassword = await bcrypt.hash(dto.adminPassword, 10);
+    const rawAdminPass = dto.adminPassword?.trim() || 'Versus@123456';
+    const hashedPassword = await bcrypt.hash(rawAdminPass, 10);
+    const rawPasswordEncrypted = encryptApiKey(rawAdminPass);
 
     const result = await this.prisma.$transaction(async (tx) => {
       const tenant = await tx.tenant.create({
@@ -739,6 +787,7 @@ export class TenantsService {
           name: dto.adminName.trim(),
           email: dto.adminEmail.toLowerCase().trim(),
           password: hashedPassword,
+          rawPasswordEncrypted,
           role: 'ADMIN',
           isActive: true,
           isSuperAdmin: false,
@@ -757,6 +806,7 @@ export class TenantsService {
         name: result.user.name,
         email: result.user.email,
         role: result.user.role,
+        savedPassword: rawAdminPass,
       },
     };
   }
@@ -857,6 +907,12 @@ export class TenantsService {
       data.isActive = Boolean(dto.isActive);
     }
 
+    if ((dto as any).password && String((dto as any).password).trim()) {
+      const p = String((dto as any).password).trim();
+      data.password = await bcrypt.hash(p, 10);
+      data.rawPasswordEncrypted = encryptApiKey(p);
+    }
+
     const updated = await this.prisma.user.update({
       where: { id: userId },
       data,
@@ -895,16 +951,21 @@ export class TenantsService {
       throw new NotFoundException('Usuário não encontrado nesta empresa.');
     }
 
+    const trimmed = dto.newPassword ? String(dto.newPassword).trim() : '';
     const plainPassword =
-      dto.newPassword && dto.newPassword.trim().length >= 6
-        ? dto.newPassword.trim()
+      trimmed.length > 0
+        ? trimmed
         : `Versus@${Math.floor(100000 + Math.random() * 900000)}`;
 
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
+    const rawPasswordEncrypted = encryptApiKey(plainPassword);
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: { password: hashedPassword },
+      data: {
+        password: hashedPassword,
+        rawPasswordEncrypted,
+      },
     });
 
     let emailSent = false;
@@ -926,8 +987,9 @@ export class TenantsService {
     }
 
     return {
-      message: `Senha do usuário '${user.name}' redefinida com sucesso!`,
+      message: `Senha do usuário '${user.name}' redefinida e salva com sucesso!`,
       temporaryPassword: plainPassword,
+      savedPassword: plainPassword,
       emailSent,
       emailError,
       user: {
@@ -935,6 +997,7 @@ export class TenantsService {
         name: user.name,
         email: user.email,
         role: user.role,
+        savedPassword: plainPassword,
       },
     };
   }

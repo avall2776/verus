@@ -11,6 +11,7 @@ export declare class OperatorsService {
     findAllWithMetrics(): Promise<{
         operators: {
             roleTitle: any;
+            savedPassword: string;
             metrics: {
                 todayAttendances: number;
                 todayResolved: number;
@@ -58,6 +59,7 @@ export declare class OperatorsService {
             createdAt: Date;
             updatedAt: Date;
             isActive: boolean;
+            rawPasswordEncrypted: string;
             role: string;
             permissions: import("@prisma/client/runtime/library").JsonValue;
             isOnline: boolean;

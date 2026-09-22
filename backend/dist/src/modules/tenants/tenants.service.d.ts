@@ -34,6 +34,7 @@ export declare class TenantsService {
                 name: string;
                 email: string;
                 isOnline: boolean;
+                savedPassword: string;
             };
             connections: {
                 whatsapp: boolean;
@@ -131,11 +132,12 @@ export declare class TenantsService {
             id: string;
             name: string;
             email: string;
-            avatarUrl: string;
-            createdAt: Date;
-            isActive: boolean;
             role: string;
+            isActive: boolean;
+            avatarUrl: string;
             isOnline: boolean;
+            createdAt: Date;
+            savedPassword: string;
         }[];
         recentTickets: {
             id: string;
@@ -165,8 +167,10 @@ export declare class TenantsService {
             name: string;
             email: string;
             role: string;
+            savedPassword: string;
         };
         temporaryPassword: string;
+        savedPassword: string;
     }>;
     getMyTenant(tenantId: string): Promise<{
         _count: {
@@ -353,6 +357,7 @@ export declare class TenantsService {
             name: string;
             email: string;
             role: string;
+            savedPassword: string;
         };
     }>;
     update(id: string, dto: any): Promise<{
@@ -421,6 +426,7 @@ export declare class TenantsService {
     }): Promise<{
         message: string;
         temporaryPassword: string;
+        savedPassword: string;
         emailSent: boolean;
         emailError: string;
         user: {
@@ -428,6 +434,7 @@ export declare class TenantsService {
             name: string;
             email: string;
             role: string;
+            savedPassword: string;
         };
     }>;
     deleteTenantUser(tenantId: string, userId: string): Promise<{

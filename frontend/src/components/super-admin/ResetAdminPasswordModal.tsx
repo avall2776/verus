@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, KeyRound, Copy, Check, Loader2, ShieldAlert } from "lucide-react";
+import { X, KeyRound, Copy, Check, Loader2, ShieldAlert, Eye, EyeOff, RefreshCw } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
 
@@ -10,6 +10,7 @@ interface ResetAdminPasswordModalProps {
   tenantId: string | null;
   tenantName: string;
   adminEmail: string;
+  currentSavedPassword?: string | null;
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -19,10 +20,12 @@ export default function ResetAdminPasswordModal({
   tenantId,
   tenantName,
   adminEmail,
+  currentSavedPassword,
   onClose,
   onSuccess,
 }: ResetAdminPasswordModalProps) {
   const [newPassword, setNewPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resultPassword, setResultPassword] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -121,6 +124,49 @@ export default function ResetAdminPasswordModal({
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Senha Atual Salva para Testes Imediatos */}
+              {currentSavedPassword && (
+                <div className="p-3 rounded-lg bg-[#070D1B] border border-slate-800 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Senha Atual Salva
+                    </span>
+                    <span className="text-[9px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-semibold">
+                      Disponível para Teste
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 bg-[#0B1224] p-2 rounded-lg border border-slate-800">
+                    <span className="font-mono text-xs font-bold text-slate-100 tracking-wider">
+                      {showCurrentPassword ? currentSavedPassword : "••••••••••••"}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        title={showCurrentPassword ? "Ocultar senha" : "Ver senha salva"}
+                        className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                      >
+                        {showCurrentPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(currentSavedPassword);
+                          toast.success("Senha copiada para a área de transferência!");
+                        }}
+                        title="Copiar senha atual"
+                        className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                      >
+                        <Copy size={13} />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    Você pode copiar a senha acima para efetuar testes imediatamente, sem precisar redefini-la.
+                  </p>
+                </div>
+              )}
+
               <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 space-y-1">
                 <div>
                   <span className="text-slate-400 block text-[10px]">Administrador Alvo:</span>
@@ -129,23 +175,24 @@ export default function ResetAdminPasswordModal({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">Nova Senha (Opcional):</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-300">Nova Senha (Manual ou Automática):</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateRandom}
+                    className="text-[11px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw size={11} /> Gerar Automática
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Deixe em branco para gerar aleatória"
+                  placeholder="Digite a senha que você desejar (ex: minhaSenha123)"
                   className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono"
                 />
               </div>
-
-              <button
-                type="button"
-                onClick={handleGenerateRandom}
-                className="text-[11px] font-bold text-blue-400 hover:text-blue-300 underline block"
-              >
-                + Gerar senha aleatória segura
-              </button>
 
               <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300/90 flex items-start gap-2">
                 <ShieldAlert size={16} className="shrink-0 mt-0.5 text-amber-400" />

@@ -3,6 +3,7 @@ import { PrismaService } from '../../shared/database/prisma.service';
 import { EmailsService } from '../emails/emails.service';
 import { CreateOperatorDto } from './dto/create-operator.dto';
 import { UpdateOperatorDto } from './dto/update-operator.dto';
+import { encryptApiKey, decryptApiKey } from '../../shared/utils/crypto.util';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -42,6 +43,7 @@ export class OperatorsService {
         isOnline: true,
         avatarUrl: true,
         permissions: true,
+        rawPasswordEncrypted: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -92,9 +94,19 @@ export class OperatorsService {
         const roleTitle = perm.roleTitle || (op.role === 'ADMIN' ? 'Gerente de Atendimento' : 'Atendente de Suporte');
         const avgResponseMinutes = perm.avgResponseMinutes || (op.isActive ? Number((3.5 + (op.name.length % 4) * 0.8).toFixed(1)) : 0);
 
+        let savedPassword: string | null = null;
+        if (op.rawPasswordEncrypted) {
+          try {
+            savedPassword = decryptApiKey(op.rawPasswordEncrypted);
+          } catch {
+            savedPassword = null;
+          }
+        }
+
         return {
           ...op,
           roleTitle,
+          savedPassword,
           metrics: {
             todayAttendances: todayTickets.length,
             todayResolved,
@@ -216,6 +228,7 @@ export class OperatorsService {
         name: dto.name.trim(),
         email: dto.email.trim().toLowerCase(),
         password: hashedPassword,
+        rawPasswordEncrypted: encryptApiKey(rawPass),
         role: dto.role || 'AGENT',
         isSuperAdmin: false, // NUNCA Super Admin Mestre
         isActive: true,
@@ -286,6 +299,7 @@ export class OperatorsService {
 
     if (dto.password && dto.password.trim()) {
       data.password = await bcrypt.hash(dto.password.trim(), 10);
+      data.rawPasswordEncrypted = encryptApiKey(dto.password.trim());
     }
 
     if (dto.permissions || dto.roleTitle) {
