@@ -366,6 +366,45 @@ function parseChecklistMarkdown(markdown: string) {
     latestActivity
   };
 
+  // Mapa completo de Timeclocks por dia (Permite inspecionar qualquer dia da semana)
+  const dailyTimeclocks: Record<string, DailyTimeclock> = {};
+  for (const dKey of sortedDates) {
+    const dPunches = punchesByDate.get(dKey) || [];
+    const dEntry = dPunches.find(p => p.type === 'start') || dPunches[0] || null;
+    const dLunchOut = dPunches.find(p => p.type === 'pause') || null;
+    const dLunchIn = dPunches.find(p => p.type === 'resume') || null;
+    const dExit = dPunches.find(p => p.type === 'end') || null;
+
+    let dStatus: DailyTimeclock['status'] = 'idle';
+    let dStatusLabel = 'Aguardando Início';
+    if (dExit) {
+      dStatus = 'completed';
+      dStatusLabel = 'Jornada Concluída';
+    } else if (dLunchIn) {
+      dStatus = 'afternoon_active';
+      dStatusLabel = 'Turno da Tarde Ativo';
+    } else if (dLunchOut) {
+      dStatus = 'lunch';
+      dStatusLabel = 'Intervalo de Almoço';
+    } else if (dEntry) {
+      dStatus = 'morning_active';
+      dStatusLabel = 'Turno Ativo (Em Andamento)';
+    }
+
+    dailyTimeclocks[dKey] = {
+      date: dKey,
+      entryTime: dEntry ? dEntry.time : null,
+      entryDescription: dEntry ? dEntry.description : null,
+      lunchOutTime: dLunchOut ? dLunchOut.time : null,
+      lunchInTime: dLunchIn ? dLunchIn.time : null,
+      exitTime: dExit ? dExit.time : null,
+      status: dStatus,
+      statusLabel: dStatusLabel,
+      totalEventsToday: dPunches.length,
+      latestActivity: dPunches.length > 0 ? dPunches[dPunches.length - 1] : null
+    };
+  }
+
   // Lista geral ordenada cronologicamente decrescente para histórico visual na aba
   punchIns.sort((a, b) => parseDateTime(b.date, b.time) - parseDateTime(a.date, a.time));
 
@@ -381,6 +420,8 @@ function parseChecklistMarkdown(markdown: string) {
       lastPunchIn: entryPunch, // Imutável: entrada oficial do dia (08:15)
       latestActivity,
       timeclock,
+      dailyTimeclocks,
+      availableDates: sortedDates,
       entryTime: entryPunch?.time || '--:--',
       entryDate: latestDate,
       workdayStatus: workdayStatusLabel,
@@ -399,18 +440,20 @@ export async function GET() {
   // 1. Tenta carregar do disco local (Workspace / Servidor VPS / Vercel Serverless)
   try {
     const localPaths = [
-      path.join(process.cwd(), '..', 'CHECKLIST.md'),
-      path.join(process.cwd(), 'CHECKLIST.md'),
       path.join(process.cwd(), 'public', 'CHECKLIST.md'),
+      path.join(process.cwd(), 'CHECKLIST.md'),
+      path.join(process.cwd(), '..', 'frontend', 'public', 'CHECKLIST.md'),
+      path.join(process.cwd(), '..', 'CHECKLIST.md'),
       path.join(process.cwd(), 'src', 'CHECKLIST.md'),
       path.resolve(process.cwd(), '..', 'CHECKLIST.md'),
+      '/root/verus/frontend/public/CHECKLIST.md',
       '/root/verus/CHECKLIST.md'
     ];
 
     for (const p of localPaths) {
       if (fs.existsSync(p)) {
         markdown = fs.readFileSync(p, 'utf-8');
-        break;
+        if (markdown.trim().length > 0) break;
       }
     }
   } catch (err) {
@@ -420,10 +463,16 @@ export async function GET() {
   // 2. Se não encontrou no disco local (ex: Vercel Serverless isolado), busca do GitHub oficial
   if (!markdown || markdown.trim().length === 0) {
     try {
-      const ghUrl = 'https://raw.githubusercontent.com/avall2776/verus/main/CHECKLIST.md';
-      const res = await fetch(ghUrl, { cache: 'no-store' });
-      if (res.ok) {
-        markdown = await res.text();
+      const ghUrls = [
+        'https://raw.githubusercontent.com/avall2776/verus/main/frontend/public/CHECKLIST.md',
+        'https://raw.githubusercontent.com/avall2776/verus/main/CHECKLIST.md'
+      ];
+      for (const url of ghUrls) {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (res.ok) {
+          markdown = await res.text();
+          if (markdown.trim().length > 0) break;
+        }
       }
     } catch (err) {
       console.error('[Checklist API] Falha ao buscar do GitHub Raw:', err);

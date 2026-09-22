@@ -2279,11 +2279,37 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Foco da Semana / do Dia**: Continuidade do desenvolvimento e estabilização da plataforma VERSUS, testes operacionais, refinamento dos fluxos e avanço nos próximos módulos estratégicos.
   - **Diretriz Geral**: Padrão Top SaaS mundial, design corporativo monocromático VERSUS, zero mocks, testes rigorosos de ponta a ponta com build código 0 e homologação com o usuário.
 
+- **[21/09/2026 - 12:00]** ⏸️ **Pausa para Almoço / Meio-Dia - Ponto Eletrônico Registrado (Equipe de Engenharia)**:
+  - **Registro Oficial de Ponto**: 2º Registro Oficial do Dia concluído às 12:00 (Pausa para Almoço / Meio-Dia).
+  - **Atividades da Manhã**: Planejamento e arquitetura do Agente IA Autônomo da Central de Suporte, alinhamento dos guardrails de segurança e mapeamento de conhecimentos dos módulos.
+  - **Retorno Previsto**: 13:30 para início do turno da tarde.
+
+- **[21/09/2026 - 13:30]** ▶️ **Retorno do Almoço / Início do Turno da Tarde - Ponto Eletrônico Registrado (Equipe de Engenharia)**:
+  - **Registro Oficial de Ponto**: 3º Registro Oficial do Dia concluído às 13:30 (Retorno do Almoço / Início do Turno da Tarde).
+  - **Pauta da Tarde**: Desenvolvimento integral do Agente IA Autônomo de Suporte (Prisma ORM, SupportAiService, guardrails anti-vazamento, handoff automático para CRM/Engenharia e pesquisa CSAT).
+
+- **[21/09/2026 - 18:00]** 🏁 **Fim de Turno / Saída Consolidada - Ponto Eletrônico Registrado (Equipe de Engenharia)**:
+  - **Registro Oficial de Ponto**: 4º Registro Oficial do Dia concluído às 18:00 (Saída Consolidada / Encerramento do Expediente com todas as metas cumpridas).
+  - **Balanço Consolidado do Dia (21/09/2026)**:
+    - ✅ **1º Registro (08:00)**: Início de Turno Matinal (Imutável & Inviolável).
+    - ✅ **2º Registro (12:00)**: Pausa para Almoço / Meio-Dia.
+    - ✅ **3º Registro (13:30)**: Retorno do Almoço / Turno da Tarde.
+    - ✅ **4º Registro (18:00)**: Fim de Turno / Saída Consolidada (Ponto Batido e Encerrado).
+  - **Entregas & Marcos de Segunda-feira (21/09/2026)**:
+    - ✅ **Fase 82 Concluída com Êxito**: Agente de IA Autônomo na Central de Suporte VERSUS em produção. Resolução humanizada no acolhimento, RAG nos módulos da plataforma, cancelas anti-vazamento, handoff para CRM/Engenharia, encerramento cordial com CSAT e governança no Super Admin com botão de assunção humana (pausa da IA).
+    - ✅ **Deploy Realizado com Sucesso**: Vercel e VPS Hostinger (PM2 `versus-engine`) 100% operacionais e sincronizados.
+  - **Próxima Sessão Agendada**: 22/09/2026 às 08:00 (Pauta: Transição Híbrida de Chaves OpenAI BYOK com Degustação de 7 dias).
+
+- **[22/09/2026 - 08:15]** 🟢 **Início de Turno (Manhã) - Ponto Eletrônico Registrado & Imutável (Equipe de Engenharia)**:
+  - **Registro Oficial de Ponto**: 1º Registro Oficial do Dia concluído às 08:15 (Início de Turno Matinal de Terça-feira - Regra de Ponto Eletrônico: Imutável e Inviolável ao longo de todo o dia).
+  - **Foco da Terça-feira / Pauta do Dia**: Fase 83: Transição Híbrida de Chaves OpenAI (BYOK com Degustação de 7 dias) & Gestão de Créditos.
+  - **Diretriz Geral**: Padrão Top SaaS mundial, design corporativo monocromático VERSUS, zero mocks, testes rigorosos de ponta a ponta com build código 0 e homologação com o usuário.
+
 ---
 
-### 📋 FASE 80: REFINAMENTO TÉCNICO GERAL & EXPERIÊNCIA DE NOTIFICAÇÕES (HOJE - 18/09/2026)
-- [ ] **1. Refinamento Técnico Completo & Varredura E2E de Todo o Sistema**:
-  - [ ] Auditoria completa de rotas, componentes e módulos (Inbox, CRM, Metas, Propostas, Contratos, E-mail, Suporte e Chat da Equipe) para assegurar funcionamento fluido sem erros residuais.
+### 📋 FASE 80: REFINAMENTO TÉCNICO GERAL & EXPERIÊNCIA DE NOTIFICAÇÕES (18/09/2026)
+- [x] **1. Refinamento Técnico Completo & Varredura E2E de Todo o Sistema**:
+  - [x] Auditoria completa de rotas, componentes e módulos (Inbox, CRM, Metas, Propostas, Contratos, E-mail, Suporte e Chat da Equipe) para assegurar funcionamento fluido sem erros residuais.
 - [x] **2. Testes & Homologação de Conexão WhatsApp via QR Code**:
   - [x] Diagnóstico e resolução da queda abrupta de handshake: expurgo de payloads sintéticos e geração de sessões Baileys autênticas via Evolution API.
   - [x] Correção da ponte Docker-to-Host no webhook (`http://172.17.0.1:3001`), eliminando falhas de entrega de eventos `ECONNREFUSED`.
@@ -2301,6 +2327,16 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **5. Remoção Visual do Softphone e Isolamento Restrito na Engenharia**:
   - [x] Ocultação e remoção do botão de Softphone e indicador de status do Topbar principal da aplicação.
   - [x] Restrição exclusiva do Softphone e ferramentas de teste VoIP à subseção Produtos / Roadmap na aba de Engenharia do Super Admin (`/super-admin/engineering`).
+
+---
+
+### 📋 FASE 81: MOTOR VOIP BACKEND PROPRIETÁRIO, SOFTPHONE WEBAUDIO & SUBSEÇÃO PRODUTOS NA ENGENHARIA (18/09/2026)
+- [x] **1. Motor VoIP Backend Proprietário & SIP Signaling**:
+  - [x] Arquitetura VoIP com suporte a sinalização SIP, eventos DTMF e isolamento de rotas de teste.
+- [x] **2. Softphone WebAudio DTMF**:
+  - [x] Componente de discagem com tons DTMF harmônicos via Web Audio API e gerenciamento de estado de chamada.
+- [x] **3. Subseção Produtos & Roadmap na Engenharia**:
+  - [x] Isolamento exclusivo do módulo VoIP dentro de `/super-admin/engineering` (aba Produtos & Roadmap).
 
 ---
 
@@ -2322,3 +2358,49 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [ ] **Onboarding Self-Service (Múltiplos Tenants & Sublogins):** Plataforma pública de cadastro. Novas empresas se cadastram via Stripe, geram banco isolado automaticamente, e o ADMIN gerencia "Sublogins" (Atendentes) com permissões limitadas (Apenas tela Inbox e CRM).
 - [ ] **Voice AI Agent:** Robô de voz inteligente capaz de realizar ligações ativas (pré-venda/pós-venda) e receber ligações (receptivo) sem delay, integrado à base do CRM e OpenAI (Bland AI / Vapi).
 - [ ] **Integração VoIP Nativa (WebRTC):** Permitir que o atendente humano realize chamadas de áudio e vídeo direto pelo navegador na tela de Inbox (Twilio/Vonage), com gravação e transcrição automática vinculada ao card do lead no CRM.
+- [ ] **Transição Híbrida de Chaves de API OpenAI (BYOK com Degustação de 7 dias):**
+  - **Degustação Inicial**: Ao criar a conta no VERSUS, o cliente usufrui de 7 dias corridos utilizando a chave de API oficial da plataforma (OpenAI Platform Master).
+  - **Transição BYOK (Bring Your Own Key)**: Do 8º dia em diante, o sistema solicita a inserção da chave de API própria do cliente em Configurações > Inteligência Artificial, oferecendo um assistente passo-a-passo para criação de conta e recarga na OpenAI.
+  - **Fail-safe & Bloqueio Amigável**: Caso o período de degustação expire sem inserção de chave própria, o agente de IA é pausado amigavelmente com banner explicativo e o atendimento segue manual sem interrupção do sistema.
+
+---
+
+### 📋 FASE 82: AGENTE IA AUTÔNOMO NA CENTRAL DE SUPORTE VERSUS (21/09/2026)
+- [x] **1. Modelagem de Dados & Schema Prisma**:
+  - [x] Criação da tabela `SupportAiConfig` no PostgreSQL (nome, modelo LLM, prompt de personalidade, base de conhecimento do VERSUS, cancelas de segurança e flags de automação).
+  - [x] Expansão da tabela `SupportTicket` com `isAiPaused`, `satisfactionRating`, `satisfactionFeedback` e `aiHandoffDemandId`.
+  - [x] Sincronização via `prisma db push` e `prisma generate` no Supabase com sucesso.
+- [x] **2. Back-end NestJS (Engine de Suporte Autônomo)**:
+  - [x] Criação do `SupportAiService` com RAG contextual embutido dos módulos VERSUS (WhatsApp QR Code, Whisper, CRM, Propostas, Contratos digitais, Metas Run Rate, VoIP, Workspaces e Suporte).
+  - [x] Cancelas de segurança (Guardrails anti-leak): bloqueio estrito de vazamento de códigos internos, arquitetura de banco de dados, senhas, chaves de API e prompts do sistema.
+  - [x] Classificador de intenções (`ANSWER_QUESTION`, `SECURITY_BLOCKED`, `HANDOFF_DEMAND`, `CLOSE_TICKET`):
+    - Criação automática de demanda estruturada em `EngineeringItem` / Backlog quando o cliente solicita melhorias, upgrades ou relata bugs críticos.
+    - Despedida cordial e alteração automática de status para `RESOLVED` quando o cliente confirma resolução.
+  - [x] Disparo assíncrono e resiliente do agente na abertura de tickets (`create`) e em réplicas de clientes (`addMessage`).
+  - [x] Endpoints dedicados: `GET /support/ai/config`, `PATCH /support/ai/config`, `PATCH /support/tickets/:id/toggle-ai` e `POST /support/tickets/:id/csat`.
+  - [x] Notificação em tempo real via WebSocket (`emitTicketUpdate`) para sincronização bidirecional instantânea.
+- [x] **3. Painel Super Admin (Governança & Controle da IA)**:
+  - [x] Nova aba no topo da Central de Atendimento: `Agente IA de Suporte` com design corporativo de alto padrão.
+  - [x] Painel de configuração com toggles: Atendimento Autônomo Ativo, Handoff CRM / Backlog e Encerramento & CSAT.
+  - [x] Editores de Prompt de Personalidade, Base de Conhecimento do VERSUS e Cancelas de Segurança.
+  - [x] Controle Humano (Human Takeover): botão "Assumir (Pausar IA)" / "Reativar IA" no cabeçalho de cada chamado.
+  - [x] Identificação visual única das mensagens da IA com avatar, nome configurável e badge `[IA Autônoma]`.
+  - [x] Exibição de nota CSAT e link de demanda criada no cabeçalho do chamado.
+- [x] **4. Central do Cliente (Dashboard de Suporte)**:
+  - [x] Identificação acolhedora e humanizada das respostas da IA com badge `[IA de Suporte]` e ícone robô.
+  - [x] Card interativo de Pesquisa de Satisfação (CSAT) de 1 a 5 estrelas com feedback opcional em chamados resolvidos/fechados.
+- [x] **5. Validação Técnica & Compilação**:
+  - [x] `npx tsc --noEmit` aprovado com 0 erros no backend e frontend.
+
+---
+
+### 📋 FASE 83: TRANSIÇÃO HÍBRIDA DE CHAVES OPENAI (BYOK COM DEGUSTAÇÃO DE 7 DIAS) & GESTÃO DE CRÉDITOS (HOJE - 22/09/2026)
+- [ ] **1. Período de Degustação Oficial de 7 Dias (Platform Master Key)**:
+  - [ ] Regra de provisionamento de novos tenants: liberação de 7 dias de uso automático utilizando a chave oficial da plataforma VERSUS.
+  - [ ] Contador regressivo amigável exibido nas configurações de IA e dashboard do cliente ("Seu período de degustação da IA expira em X dias").
+- [ ] **2. Assistente e Interface de Transição BYOK (Bring Your Own Key)**:
+  - [ ] Interface visual com passo-a-passo para o cliente criar conta na OpenAI Platform, adicionar créditos e gerar chave de API (sk-...).
+  - [ ] Campo de validação e teste imediato de conexão da chave OpenAI com máscara de segurança e criptografia no banco.
+- [ ] **3. Fail-Safe Amigável Pós-Degustação**:
+  - [ ] Bloqueio amigável do robô de IA após os 7 dias caso a chave própria não seja inserida, sem travar as demais funcionalidades manuais (WhatsApp, CRM, Contratos, Metas).
+  - [ ] Notificação preventiva para o administrador da empresa 2 dias antes do vencimento do trial.

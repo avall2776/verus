@@ -2300,9 +2300,14 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
     - ✅ **Deploy Realizado com Sucesso**: Vercel e VPS Hostinger (PM2 `versus-engine`) 100% operacionais e sincronizados.
   - **Próxima Sessão Agendada**: 22/09/2026 às 08:00 (Pauta: Transição Híbrida de Chaves OpenAI BYOK com Degustação de 7 dias).
 
+- **[22/09/2026 - 08:15]** 🟢 **Início de Turno (Manhã) - Ponto Eletrônico Registrado & Imutável (Equipe de Engenharia)**:
+  - **Registro Oficial de Ponto**: 1º Registro Oficial do Dia concluído às 08:15 (Início de Turno Matinal de Terça-feira - Regra de Ponto Eletrônico: Imutável e Inviolável ao longo de todo o dia).
+  - **Foco da Terça-feira / Pauta do Dia**: Fase 83: Transição Híbrida de Chaves OpenAI (BYOK com Degustação de 7 dias) & Gestão de Créditos.
+  - **Diretriz Geral**: Padrão Top SaaS mundial, design corporativo monocromático VERSUS, zero mocks, testes rigorosos de ponta a ponta com build código 0 e homologação com o usuário.
+
 ---
 
-### 📋 FASE 80: REFINAMENTO TÉCNICO GERAL & EXPERIÊNCIA DE NOTIFICAÇÕES (HOJE - 18/09/2026)
+### 📋 FASE 80: REFINAMENTO TÉCNICO GERAL & EXPERIÊNCIA DE NOTIFICAÇÕES (18/09/2026)
 - [x] **1. Refinamento Técnico Completo & Varredura E2E de Todo o Sistema**:
   - [x] Auditoria completa de rotas, componentes e módulos (Inbox, CRM, Metas, Propostas, Contratos, E-mail, Suporte e Chat da Equipe) para assegurar funcionamento fluido sem erros residuais.
 - [x] **2. Testes & Homologação de Conexão WhatsApp via QR Code**:
@@ -2322,6 +2327,16 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **5. Remoção Visual do Softphone e Isolamento Restrito na Engenharia**:
   - [x] Ocultação e remoção do botão de Softphone e indicador de status do Topbar principal da aplicação.
   - [x] Restrição exclusiva do Softphone e ferramentas de teste VoIP à subseção Produtos / Roadmap na aba de Engenharia do Super Admin (`/super-admin/engineering`).
+
+---
+
+### 📋 FASE 81: MOTOR VOIP BACKEND PROPRIETÁRIO, SOFTPHONE WEBAUDIO & SUBSEÇÃO PRODUTOS NA ENGENHARIA (18/09/2026)
+- [x] **1. Motor VoIP Backend Proprietário & SIP Signaling**:
+  - [x] Arquitetura VoIP com suporte a sinalização SIP, eventos DTMF e isolamento de rotas de teste.
+- [x] **2. Softphone WebAudio DTMF**:
+  - [x] Componente de discagem com tons DTMF harmônicos via Web Audio API e gerenciamento de estado de chamada.
+- [x] **3. Subseção Produtos & Roadmap na Engenharia**:
+  - [x] Isolamento exclusivo do módulo VoIP dentro de `/super-admin/engineering` (aba Produtos & Roadmap).
 
 ---
 
@@ -2379,7 +2394,7 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ---
 
-### 📋 FASE 83: TRANSIÇÃO HÍBRIDA DE CHAVES OPENAI (BYOK COM DEGUSTAÇÃO DE 7 DIAS) & GESTÃO DE CRÉDITOS (PAUTA DE AMANHÃ - 22/09/2026)
+### 📋 FASE 83: TRANSIÇÃO HÍBRIDA DE CHAVES OPENAI (BYOK COM DEGUSTAÇÃO DE 7 DIAS) & GESTÃO DE CRÉDITOS (HOJE - 22/09/2026)
 - [ ] **1. Período de Degustação Oficial de 7 Dias (Platform Master Key)**:
   - [ ] Regra de provisionamento de novos tenants: liberação de 7 dias de uso automático utilizando a chave oficial da plataforma VERSUS.
   - [ ] Contador regressivo amigável exibido nas configurações de IA e dashboard do cliente ("Seu período de degustação da IA expira em X dias").

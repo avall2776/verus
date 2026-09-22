@@ -77,6 +77,8 @@ interface ChecklistData {
     lastPunchIn: PunchIn | null;
     latestActivity?: PunchIn | null;
     timeclock?: DailyTimeclock | null;
+    dailyTimeclocks?: Record<string, DailyTimeclock>;
+    availableDates?: string[];
     entryTime?: string;
     entryDate?: string;
     workdayStatus?: string;
@@ -99,6 +101,7 @@ export default function RelatorioPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedPhases, setExpandedPhases] = useState<{ [key: number]: boolean }>({});
   const [copiedLink, setCopiedLink] = useState(false);
+  const [selectedPontoDate, setSelectedPontoDate] = useState<string>('');
 
   const fetchChecklist = async (isManual = false) => {
     if (isManual) setIsRefreshing(true);
@@ -107,6 +110,9 @@ export default function RelatorioPage() {
       if (!res.ok) throw new Error('Falha ao carregar relatório.');
       const json = await res.json();
       setData(json);
+      if (json.stats?.entryDate) {
+        setSelectedPontoDate(prev => prev || json.stats.entryDate);
+      }
       
       // Expande as fases ativas e as últimas 4 fases por padrão
       if (json.phases && json.phases.length > 0) {
@@ -609,7 +615,11 @@ export default function RelatorioPage() {
         )}
 
         {/* --- ABA 2: REGISTRO DE PONTO (TIMESHEET) --- */}
-        {activeTab === 'ponto' && (
+        {activeTab === 'ponto' && (() => {
+          const effectiveDate = selectedPontoDate || stats.entryDate || stats.timeclock?.date || '';
+          const activeTimeclock = (data.stats.dailyTimeclocks && data.stats.dailyTimeclocks[effectiveDate]) || stats.timeclock;
+          
+          return (
           <div className="space-y-4">
             
             {/* Header da Aba */}
@@ -625,24 +635,62 @@ export default function RelatorioPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 ${
-                  stats.timeclock?.exitTime 
+                  activeTimeclock?.exitTime 
                     ? 'text-purple-400 bg-purple-950/60 border border-purple-800/40' 
-                    : stats.timeclock?.lunchInTime
+                    : activeTimeclock?.lunchInTime
                       ? 'text-cyan-400 bg-cyan-950/60 border border-cyan-800/40'
-                      : stats.timeclock?.lunchOutTime
+                      : activeTimeclock?.lunchOutTime
                         ? 'text-amber-400 bg-amber-950/60 border border-amber-800/40'
                         : 'text-emerald-400 bg-emerald-950/60 border border-emerald-800/40'
                 }`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${
-                    stats.timeclock?.exitTime ? 'bg-purple-400' : 'bg-emerald-400 animate-pulse'
+                    activeTimeclock?.exitTime ? 'bg-purple-400' : 'bg-emerald-400 animate-pulse'
                   }`} />
-                  {stats.workdayStatus || (stats.timeclock?.exitTime ? 'Jornada Concluída' : 'Turno Ativo')}
+                  {activeTimeclock?.statusLabel || (activeTimeclock?.exitTime ? 'Jornada Concluída' : 'Turno Ativo')}
                 </span>
                 <span className="text-xs text-cyan-400 font-bold bg-cyan-950/60 border border-cyan-800/40 px-3 py-1 rounded-full">
                   {data.punchIns.length} Registros
                 </span>
               </div>
             </div>
+
+            {/* Seletor de Data do Ponto Eletrônico */}
+            {data.stats.availableDates && data.stats.availableDates.length > 0 && (
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
+                  <Calendar size={13} className="text-cyan-400" />
+                  Inspecionar Dia:
+                </span>
+                {data.stats.availableDates.map((d) => {
+                  const isLatest = d === data.stats.entryDate;
+                  const isSelected = effectiveDate === d;
+                  const dt = data.stats.dailyTimeclocks?.[d];
+                  return (
+                    <button
+                      key={d}
+                      onClick={() => setSelectedPontoDate(d)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 flex items-center gap-2 ${
+                        isSelected
+                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-sm shadow-cyan-500/10'
+                          : 'bg-slate-900/70 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'
+                      }`}
+                    >
+                      <span>{d}</span>
+                      {isLatest && (
+                        <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-sans uppercase font-extrabold">
+                          Hoje
+                        </span>
+                      )}
+                      {dt?.exitTime ? (
+                        <span className="w-2 h-2 rounded-full bg-purple-400 shadow-sm shadow-purple-500/50" title="Jornada Concluída (4/4)" />
+                      ) : dt?.entryTime ? (
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-500/50" title="Turno Ativo" />
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Painel Visual dos 4 Marcos Diários (Ponto Eletrônico) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -657,7 +705,7 @@ export default function RelatorioPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-black text-emerald-400 font-mono">
-                    {stats.timeclock?.entryTime || stats.entryTime || '08:15'}
+                    {activeTimeclock?.entryTime || '--:--'}
                   </span>
                   <div>
                     <p className="text-xs font-bold text-white">Início do Turno</p>
@@ -667,16 +715,16 @@ export default function RelatorioPage() {
               </div>
 
               {/* 2. Pausa para Almoço */}
-              <div className={`p-3.5 rounded-xl bg-[#0F172A]/90 border ${stats.timeclock?.lunchOutTime ? 'border-amber-500/40' : 'border-slate-800'} shadow-sm relative`}>
+              <div className={`p-3.5 rounded-xl bg-[#0F172A]/90 border ${activeTimeclock?.lunchOutTime ? 'border-amber-500/40' : 'border-slate-800'} shadow-sm relative`}>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">2º Registro · Meio-dia</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${stats.timeclock?.lunchOutTime ? 'text-amber-400 bg-amber-950/60 border border-amber-800/50' : 'text-slate-500 bg-slate-800/50'}`}>
-                    {stats.timeclock?.lunchOutTime ? 'Registrado' : 'Aguardando'}
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTimeclock?.lunchOutTime ? 'text-amber-400 bg-amber-950/60 border border-amber-800/50' : 'text-slate-500 bg-slate-800/50'}`}>
+                    {activeTimeclock?.lunchOutTime ? 'Registrado' : 'Aguardando'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-2xl font-black font-mono ${stats.timeclock?.lunchOutTime ? 'text-amber-400' : 'text-slate-600'}`}>
-                    {stats.timeclock?.lunchOutTime || '--:--'}
+                  <span className={`text-2xl font-black font-mono ${activeTimeclock?.lunchOutTime ? 'text-amber-400' : 'text-slate-600'}`}>
+                    {activeTimeclock?.lunchOutTime || '--:--'}
                   </span>
                   <div>
                     <p className="text-xs font-bold text-white">Pausa Almoço</p>
@@ -686,16 +734,16 @@ export default function RelatorioPage() {
               </div>
 
               {/* 3. Retorno do Almoço */}
-              <div className={`p-3.5 rounded-xl bg-[#0F172A]/90 border ${stats.timeclock?.lunchInTime ? 'border-cyan-500/40' : 'border-slate-800'} shadow-sm relative`}>
+              <div className={`p-3.5 rounded-xl bg-[#0F172A]/90 border ${activeTimeclock?.lunchInTime ? 'border-cyan-500/40' : 'border-slate-800'} shadow-sm relative`}>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">3º Registro · Tarde</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${stats.timeclock?.lunchInTime ? 'text-cyan-400 bg-cyan-950/60 border border-cyan-800/50' : 'text-slate-500 bg-slate-800/50'}`}>
-                    {stats.timeclock?.lunchInTime ? 'Registrado' : 'Aguardando'}
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTimeclock?.lunchInTime ? 'text-cyan-400 bg-cyan-950/60 border border-cyan-800/50' : 'text-slate-500 bg-slate-800/50'}`}>
+                    {activeTimeclock?.lunchInTime ? 'Registrado' : 'Aguardando'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-2xl font-black font-mono ${stats.timeclock?.lunchInTime ? 'text-cyan-400' : 'text-slate-600'}`}>
-                    {stats.timeclock?.lunchInTime || '--:--'}
+                  <span className={`text-2xl font-black font-mono ${activeTimeclock?.lunchInTime ? 'text-cyan-400' : 'text-slate-600'}`}>
+                    {activeTimeclock?.lunchInTime || '--:--'}
                   </span>
                   <div>
                     <p className="text-xs font-bold text-white">Retorno Almoço</p>
@@ -705,16 +753,16 @@ export default function RelatorioPage() {
               </div>
 
               {/* 4. Encerramento / Saída */}
-              <div className={`p-3.5 rounded-xl bg-[#0F172A]/90 border ${stats.timeclock?.exitTime ? 'border-purple-500/40' : 'border-slate-800'} shadow-sm relative`}>
+              <div className={`p-3.5 rounded-xl bg-[#0F172A]/90 border ${activeTimeclock?.exitTime ? 'border-purple-500/40' : 'border-slate-800'} shadow-sm relative`}>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">4º Registro · Fim do Dia</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${stats.timeclock?.exitTime ? 'text-purple-400 bg-purple-950/60 border border-purple-800/50' : 'text-slate-500 bg-slate-800/50'}`}>
-                    {stats.timeclock?.exitTime ? 'Encerrado' : 'Aguardando'}
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTimeclock?.exitTime ? 'text-purple-400 bg-purple-950/60 border border-purple-800/50' : 'text-slate-500 bg-slate-800/50'}`}>
+                    {activeTimeclock?.exitTime ? 'Encerrado' : 'Aguardando'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-2xl font-black font-mono ${stats.timeclock?.exitTime ? 'text-purple-400' : 'text-slate-600'}`}>
-                    {stats.timeclock?.exitTime || '--:--'}
+                  <span className={`text-2xl font-black font-mono ${activeTimeclock?.exitTime ? 'text-purple-400' : 'text-slate-600'}`}>
+                    {activeTimeclock?.exitTime || '--:--'}
                   </span>
                   <div>
                     <p className="text-xs font-bold text-white">Fim de Turno</p>
@@ -784,7 +832,8 @@ export default function RelatorioPage() {
               ))}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* --- ABA 3: ROADMAP FUTURO (ICEBOX) --- */}
         {activeTab === 'roadmap' && (
