@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense, useRef, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { 
   Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, 
@@ -10,7 +10,7 @@ import {
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, Trash2, Play, Pause,
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
-  Clock, AlertCircle, Workflow, Pencil
+  Clock, AlertCircle, Workflow, Pencil, ShoppingBag
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -98,6 +98,9 @@ function InboxContent() {
   const [quickReplies, setQuickReplies] = useState<any[]>([]);
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [quickReplyFilter, setQuickReplyFilter] = useState('');
+  const [quickReplyIndex, setQuickReplyIndex] = useState(0);
+  const fileInputImageRef = useRef<HTMLInputElement>(null);
+  const fileInputDocRef = useRef<HTMLInputElement>(null);
   const [newTagInput, setNewTagInput] = useState('');
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [departments, setDepartments] = useState<any[]>([]);
@@ -799,10 +802,125 @@ function InboxContent() {
     }
   };
 
-  useEffect(() => {
-    // Busca macros na montagem
-    api.get('/quick-replies').then(res => setQuickReplies(res.data)).catch(console.error);
+  const loadQuickReplies = useCallback(async () => {
+    try {
+      const res = await api.get('/quick-replies');
+      if (Array.isArray(res.data)) {
+        setQuickReplies(res.data);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar respostas rápidas:", err);
+    }
   }, []);
+
+  useEffect(() => {
+    loadQuickReplies();
+  }, [loadQuickReplies, activeChat]);
+
+  // Lista unificada de Respostas Rápidas e Ações disparadas por "/"
+  const slashItems = useMemo(() => {
+    const items: Array<{
+      id: string;
+      category: 'reply' | 'action';
+      shortcut: string;
+      title: string;
+      description: string;
+      iconType: 'zap' | 'image' | 'file' | 'audio' | 'catalog';
+      content?: string;
+      action?: () => void;
+    }> = [];
+
+    // 1. Respostas Rápidas vindas do banco de dados (por tenant)
+    if (Array.isArray(quickReplies) && quickReplies.length > 0) {
+      quickReplies.forEach(qr => {
+        const sc = qr.shortcut.startsWith('/') ? qr.shortcut : `/${qr.shortcut}`;
+        items.push({
+          id: `qr-${qr.id}`,
+          category: 'reply',
+          shortcut: sc,
+          title: sc,
+          description: qr.content,
+          iconType: sc.toLowerCase().includes('cat') ? 'catalog' : 'zap',
+          content: qr.content
+        });
+      });
+    }
+
+    // Atalho garantido para Catálogo se o banco não tiver
+    const hasCatalogo = items.some(i => i.shortcut.toLowerCase().includes('cat'));
+    if (!hasCatalogo) {
+      items.push({
+        id: 'action-catalogo',
+        category: 'action',
+        shortcut: '/catalogo',
+        title: '/catalogo',
+        description: 'Enviar link e apresentação do catálogo comercial',
+        iconType: 'catalog',
+        content: 'Confira nosso catálogo de produtos e serviços em nosso link oficial: https://catalogo.com'
+      });
+    }
+
+    // 2. Ações Rápidas de Mídia e Utilitários (Foto, Documento, Áudio)
+    items.push(
+      {
+        id: 'action-foto',
+        category: 'action',
+        shortcut: '/foto',
+        title: '/foto (ou /video)',
+        description: 'Anexar imagem, foto ou vídeo da galeria',
+        iconType: 'image',
+        action: () => fileInputImageRef.current?.click()
+      },
+      {
+        id: 'action-arquivo',
+        category: 'action',
+        shortcut: '/arquivo',
+        title: '/arquivo (ou /documento)',
+        description: 'Anexar documento PDF, DOCX ou planilha',
+        iconType: 'file',
+        action: () => fileInputDocRef.current?.click()
+      },
+      {
+        id: 'action-audio',
+        category: 'action',
+        shortcut: '/audio',
+        title: '/audio (gravar voz)',
+        description: 'Iniciar gravador de mensagem de áudio',
+        iconType: 'audio',
+        action: () => startRecording()
+      }
+    );
+
+    return items;
+  }, [quickReplies]);
+
+  const filteredSlashItems = useMemo(() => {
+    const q = quickReplyFilter.toLowerCase().trim();
+    if (!q) return slashItems;
+    return slashItems.filter(item => 
+      item.shortcut.toLowerCase().replace('/', '').includes(q) ||
+      item.title.toLowerCase().includes(q) ||
+      item.description.toLowerCase().includes(q)
+    );
+  }, [slashItems, quickReplyFilter]);
+
+  const handleSelectSlashItem = (item: typeof slashItems[0]) => {
+    setShowQuickReplies(false);
+    setQuickReplyIndex(0);
+
+    if (item.action) {
+      setInputText('');
+      item.action();
+    } else if (item.content) {
+      setInputText(item.content);
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.setSelectionRange(item.content!.length, item.content!.length);
+        }
+      }, 50);
+    }
+  };
 
   // Listener de URL (contactId ou conversationId): auto-identifica aba e abre o chat diretamente
   useEffect(() => {
@@ -2882,11 +3000,11 @@ function InboxContent() {
                               <div className="absolute bottom-12 left-0 bg-[#0F172A] border border-slate-700/90 shadow-[0_15px_35px_rgba(0,0,0,0.8)] rounded-2xl p-2 flex flex-col gap-1 w-52 z-50 animate-in slide-in-from-bottom-2">
                                 <label className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl cursor-pointer transition-colors">
                                   <ImageIcon size={16} className="text-blue-400" /> Foto / Vídeo
-                                  <input type="file" className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
+                                  <input ref={fileInputImageRef} type="file" className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
                                 </label>
                                 <label className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl cursor-pointer transition-colors">
                                   <FileText size={16} className="text-cyan-400" /> Documento
-                                  <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileSelect} />
+                                  <input ref={fileInputDocRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileSelect} />
                                 </label>
                                 <button 
                                   type="button"
@@ -2902,6 +3020,35 @@ function InboxContent() {
                             )}
                           </div>
 
+                          {/* Botão de Atalho Rápido / (Respostas Rápidas e Ações) */}
+                          <div className="relative">
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                setShowQuickReplies(prev => {
+                                  const nextState = !prev;
+                                  if (nextState) {
+                                    if (!inputText.startsWith('/')) {
+                                      setInputText('/');
+                                    }
+                                    setQuickReplyFilter('');
+                                    setQuickReplyIndex(0);
+                                    setTimeout(() => textareaRef.current?.focus(), 50);
+                                  }
+                                  return nextState;
+                                });
+                              }}
+                              className={`p-2 rounded-full transition-colors cursor-pointer flex items-center justify-center font-mono font-bold text-sm ${
+                                showQuickReplies 
+                                  ? 'text-blue-400 bg-blue-500/20 ring-1 ring-blue-500/40' 
+                                  : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+                              }`}
+                              title="Respostas Rápidas & Catálogo (/)"
+                            >
+                              <span className="leading-none text-base">/</span>
+                            </button>
+                          </div>
+
                           {/* 3. Cápsula de Texto WhatsApp com Cantos Arredondados */}
                           <div className={`flex-1 bg-[#1E293B] border rounded-lg px-4 py-2.5 min-h-[44px] max-h-36 flex items-center transition-all shadow-inner relative ${
                             isInternalMode 
@@ -2910,7 +3057,7 @@ function InboxContent() {
                           }`}>
                             <textarea 
                               ref={textareaRef}
-                              placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem"} 
+                              placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem (ou '/' para atalhos e catálogo)"} 
                               className={`flex-1 bg-transparent text-[0.93rem] resize-none outline-none py-0.5 max-h-32 
                                 ${isInternalMode ? 'text-amber-100 placeholder:text-amber-500/50' : 'text-slate-100 placeholder:text-slate-400'}
                               `}
@@ -2922,12 +3069,43 @@ function InboxContent() {
                                 
                                 if (val.startsWith('/')) {
                                   setShowQuickReplies(true);
-                                  setQuickReplyFilter(val.substring(1).toLowerCase());
+                                  setQuickReplyFilter(val.substring(1));
+                                  setQuickReplyIndex(0);
                                 } else {
                                   setShowQuickReplies(false);
                                 }
                               }}
                               onKeyDown={(e) => {
+                                if (showQuickReplies) {
+                                  if (e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                    if (filteredSlashItems.length > 0) {
+                                      setQuickReplyIndex(prev => (prev + 1) % filteredSlashItems.length);
+                                    }
+                                    return;
+                                  }
+                                  if (e.key === 'ArrowUp') {
+                                    e.preventDefault();
+                                    if (filteredSlashItems.length > 0) {
+                                      setQuickReplyIndex(prev => (prev - 1 + filteredSlashItems.length) % filteredSlashItems.length);
+                                    }
+                                    return;
+                                  }
+                                  if (e.key === 'Enter' || e.key === 'Tab') {
+                                    if (filteredSlashItems.length > 0) {
+                                      e.preventDefault();
+                                      const selected = filteredSlashItems[quickReplyIndex] || filteredSlashItems[0];
+                                      handleSelectSlashItem(selected);
+                                      return;
+                                    }
+                                  }
+                                  if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    setShowQuickReplies(false);
+                                    return;
+                                  }
+                                }
+
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                   e.preventDefault();
                                   if (!showQuickReplies) {
@@ -2937,24 +3115,94 @@ function InboxContent() {
                               }}
                             />
                             
-                            {/* Popover de Respostas Rápidas */}
-                            {showQuickReplies && quickReplies.length > 0 && (
-                              <div className="absolute bottom-full left-0 mb-3 w-[320px] bg-[#0F172A] border border-slate-700 shadow-[0_15px_35px_rgba(0,0,0,0.8)] rounded-2xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
-                                <div className="px-3 py-2 bg-slate-800/70 text-xs font-bold text-slate-300 border-b border-slate-700">Respostas Rápidas</div>
-                                <div className="max-h-48 overflow-y-auto">
-                                  {quickReplies.filter(qr => qr.shortcut.toLowerCase().includes(quickReplyFilter)).map(qr => (
-                                    <div 
-                                      key={qr.id}
-                                      onClick={() => {
-                                        setInputText(qr.content);
-                                        setShowQuickReplies(false);
-                                      }}
-                                      className="px-3 py-2 border-b border-slate-800/50 hover:bg-slate-800 cursor-pointer transition-colors"
+                            {/* Popover de Respostas Rápidas & Catálogo (Menu /) */}
+                            {showQuickReplies && (
+                              <div className="absolute bottom-full left-0 mb-3 w-[360px] max-w-[90vw] bg-[#0F172A] border border-slate-700 shadow-[0_20px_50px_rgba(0,0,0,0.85)] rounded-2xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
+                                {/* Cabeçalho */}
+                                <div className="px-3.5 py-2.5 bg-slate-800/90 text-xs font-bold text-slate-200 border-b border-slate-700 flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <Zap size={13} className="text-amber-400" />
+                                    <span>Respostas Rápidas & Catálogo</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-slate-400 font-normal">Use ↑↓ e Enter</span>
+                                    <button 
+                                      type="button" 
+                                      onClick={() => setShowQuickReplies(false)} 
+                                      className="text-slate-400 hover:text-white p-0.5"
                                     >
-                                      <div className="text-blue-400 text-xs font-bold mb-0.5">{qr.shortcut}</div>
-                                      <div className="text-slate-300 text-xs line-clamp-1">{qr.content}</div>
+                                      <X size={12} />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Lista de itens */}
+                                <div className="max-h-64 overflow-y-auto divide-y divide-slate-800/60">
+                                  {filteredSlashItems.length > 0 ? (
+                                    filteredSlashItems.map((item, idx) => {
+                                      const isSelected = idx === quickReplyIndex;
+                                      return (
+                                        <div 
+                                          key={item.id}
+                                          onClick={() => handleSelectSlashItem(item)}
+                                          onMouseEnter={() => setQuickReplyIndex(idx)}
+                                          className={`px-3.5 py-2.5 cursor-pointer transition-colors flex items-start gap-2.5 ${
+                                            isSelected 
+                                              ? 'bg-blue-600/20 border-l-2 border-blue-400 text-white' 
+                                              : 'hover:bg-slate-800/70 text-slate-300'
+                                          }`}
+                                        >
+                                          <div className="mt-0.5 p-1 rounded-md bg-slate-800/80 border border-slate-700/60 shrink-0">
+                                            {item.iconType === 'catalog' && <ShoppingBag size={14} className="text-emerald-400" />}
+                                            {item.iconType === 'image' && <ImageIcon size={14} className="text-blue-400" />}
+                                            {item.iconType === 'file' && <FileText size={14} className="text-cyan-400" />}
+                                            {item.iconType === 'audio' && <Mic size={14} className="text-rose-400" />}
+                                            {item.iconType === 'zap' && <Zap size={14} className="text-amber-400" />}
+                                          </div>
+
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between gap-1 mb-0.5">
+                                              <span className="text-xs font-mono font-bold text-blue-400">{item.shortcut}</span>
+                                              {item.category === 'action' && (
+                                                <span className="text-[10px] px-1.5 py-0.2 bg-slate-800 text-slate-400 rounded border border-slate-700">ação</span>
+                                              )}
+                                            </div>
+                                            <div className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
+                                              {item.description}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })
+                                  ) : (
+                                    <div className="p-4 text-center">
+                                      <p className="text-xs text-slate-400 mb-2">
+                                        Nenhum atalho encontrado para <span className="font-mono text-blue-400 font-bold">/{quickReplyFilter}</span>
+                                      </p>
+                                      <a 
+                                        href="/settings?tab=quick-replies" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 underline"
+                                      >
+                                        <Plus size={12} /> Criar nova resposta rápida
+                                      </a>
                                     </div>
-                                  ))}
+                                  )}
+                                </div>
+
+                                {/* Rodapé informativo */}
+                                <div className="px-3 py-1.5 bg-[#0B1224] border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+                                  <span>Dica: digite <code className="text-blue-300 font-mono">/catalogo</code>, <code className="text-blue-300 font-mono">/ola</code></span>
+                                  <a 
+                                    href="/settings?tab=quick-replies" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-slate-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                                  >
+                                    <span>Gerenciar atalhos</span>
+                                    <ExternalLink size={10} />
+                                  </a>
                                 </div>
                               </div>
                             )}

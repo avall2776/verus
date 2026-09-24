@@ -16,54 +16,55 @@ exports.QuickRepliesController = void 0;
 const common_1 = require("@nestjs/common");
 const quick_replies_service_1 = require("./quick-replies.service");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 let QuickRepliesController = class QuickRepliesController {
     constructor(quickRepliesService) {
         this.quickRepliesService = quickRepliesService;
     }
-    async getQuickReplies(req) {
-        return this.quickRepliesService.findAll(req.user.tenantId);
+    async getQuickReplies(tenantId) {
+        return this.quickRepliesService.findAll(tenantId);
     }
-    async createQuickReply(req, body) {
-        return this.quickRepliesService.create(req.user.tenantId, body.shortcut, body.content);
+    async createQuickReply(tenantId, body) {
+        return this.quickRepliesService.create(tenantId, body.shortcut, body.content);
     }
-    async updateQuickReply(req, id, body) {
-        return this.quickRepliesService.update(req.user.tenantId, id, body);
+    async updateQuickReply(tenantId, id, body) {
+        return this.quickRepliesService.update(tenantId, id, body);
     }
-    async deleteQuickReply(req, id) {
-        return this.quickRepliesService.delete(req.user.tenantId, id);
+    async deleteQuickReply(tenantId, id) {
+        return this.quickRepliesService.delete(tenantId, id);
     }
 };
 exports.QuickRepliesController = QuickRepliesController;
 __decorate([
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], QuickRepliesController.prototype, "getQuickReplies", null);
 __decorate([
     (0, common_1.Post)(),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], QuickRepliesController.prototype, "createQuickReply", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], QuickRepliesController.prototype, "updateQuickReply", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], QuickRepliesController.prototype, "deleteQuickReply", null);
 exports.QuickRepliesController = QuickRepliesController = __decorate([
