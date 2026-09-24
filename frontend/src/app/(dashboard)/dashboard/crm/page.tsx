@@ -208,10 +208,28 @@ export default function CrmDashboardPage() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
 
-  const [metrics, setMetrics] = useState<CrmMetrics | null>(null);
-  const [deals, setDeals] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [metrics, setMetrics] = useState<CrmMetrics | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const s = sessionStorage.getItem('versus_cache_crm_metrics');
+      return s ? JSON.parse(s) : null;
+    } catch { return null; }
+  });
+  const [deals, setDeals] = useState<any[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const s = sessionStorage.getItem('versus_cache_crm_deals');
+      return s ? JSON.parse(s) : [];
+    } catch { return []; }
+  });
+  const [users, setUsers] = useState<any[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const s = sessionStorage.getItem('versus_cache_crm_users');
+      return s ? JSON.parse(s) : [];
+    } catch { return []; }
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Relatórios: Busca, Paginação e Modal de Detalhes
@@ -231,6 +249,13 @@ export default function CrmDashboardPage() {
       setMetrics(metricsRes.data);
       setDeals(dealsRes.data || []);
       setUsers(usersRes.data || []);
+
+      try {
+        sessionStorage.setItem('versus_cache_crm_metrics', JSON.stringify(metricsRes.data));
+        sessionStorage.setItem('versus_cache_crm_deals', JSON.stringify(dealsRes.data || []));
+        sessionStorage.setItem('versus_cache_crm_users', JSON.stringify(usersRes.data || []));
+      } catch (e) {}
+
       if (showToast) {
         toast.success("Dados e métricas atualizados com sucesso!");
       }

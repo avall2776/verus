@@ -3,6 +3,8 @@ import { PrismaService } from '../../shared/database/prisma.service';
 
 @Injectable()
 export class DashboardService {
+  private readonly crmCache = new Map<string, { data: any; expiresAt: number }>();
+
   constructor(private readonly prisma: PrismaService) {}
 
   async getDashboardData(tenantId: string) {
@@ -98,6 +100,11 @@ export class DashboardService {
   }
 
   async getCrmMetrics(tenantId: string) {
+    const cached = this.crmCache.get(tenantId);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+
     const deals = await this.prisma.deal.findMany({ 
       where: { tenantId },
       include: {
@@ -189,7 +196,7 @@ export class DashboardService {
       );
     }
 
-    return {
+    const result = {
       totalDeals: deals.length,
       totalRevenue,
       wonRevenue: wonRevenue || 18500,
@@ -204,5 +211,8 @@ export class DashboardService {
       weeklyComparison,
       funnelData
     };
+
+    this.crmCache.set(tenantId, { data: result, expiresAt: Date.now() + 45000 });
+    return result;
   }
 }

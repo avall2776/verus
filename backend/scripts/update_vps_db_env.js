@@ -2,7 +2,7 @@ const { Client } = require('ssh2');
 
 const conn = new Client();
 conn.on('ready', () => {
-  const newDbUrl = 'DATABASE_URL="postgresql://postgres.aoxajwlocxetfxthkdxa:xRR%40QZJ5g3UV%3F74@aws-0-us-east-2.pooler.supabase.com:5432/postgres?connection_limit=15&pool_timeout=15"';
+  const newDbUrl = 'DATABASE_URL="postgresql://postgres.aoxajwlocxetfxthkdxa:xRR%40QZJ5g3UV%3F74@aws-0-us-east-2.pooler.supabase.com:6543/postgres?pgbouncer=true"';
   const cmd = `
     sed -i '/DATABASE_URL=/c\\${newDbUrl}' /root/verus/backend/.env
     grep DATABASE_URL /root/verus/backend/.env

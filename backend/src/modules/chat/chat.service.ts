@@ -58,30 +58,55 @@ export class ChatService {
     return { waiting, mine, resolved, total: waiting + mine + resolved };
   }
 
+  private readonly productivityCache = new Map<string, { data: any; expiresAt: number }>();
+
   async getOperatorProductivity(tenantId: string, userId: string) {
+    const cacheKey = `${tenantId}:${userId}`;
+    const cached = this.productivityCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    // 1. Buscar atendimentos atribuídos ao operador resolvidos/fechados hoje
-    const todayResolved = await this.prisma.conversation.findMany({
-      where: {
-        tenantId,
-        assignedTo: userId,
-        status: { in: ['resolved', 'closed', 'RESOLVED', 'CLOSED'] },
-        updatedAt: { gte: startOfToday, lte: endOfToday },
-      },
-      include: {
-        messages: {
-          select: {
-            createdAt: true,
-            direction: true,
-            isInternal: true,
-          },
-          orderBy: { createdAt: 'asc' },
+    // 1. Executa busca dos atendimentos de hoje, contagem histórica e meta EM PARALELO
+    const [todayResolved, pastResolvedCount, userGoal] = await Promise.all([
+      this.prisma.conversation.findMany({
+        where: {
+          tenantId,
+          assignedTo: userId,
+          status: { in: ['resolved', 'closed', 'RESOLVED', 'CLOSED'] },
+          updatedAt: { gte: startOfToday, lte: endOfToday },
         },
-      },
-    });
+        include: {
+          messages: {
+            select: {
+              createdAt: true,
+              direction: true,
+              isInternal: true,
+            },
+            orderBy: { createdAt: 'asc' },
+          },
+        },
+      }),
+      this.prisma.conversation.count({
+        where: {
+          tenantId,
+          assignedTo: userId,
+          status: { in: ['resolved', 'closed', 'RESOLVED', 'CLOSED'] },
+          updatedAt: { gte: thirtyDaysAgo, lt: startOfToday },
+        },
+      }),
+      this.prisma.goal.findFirst({
+        where: {
+          tenantId,
+          userId,
+        },
+      }),
+    ]);
 
     const todayFinishedCount = todayResolved.length;
 
@@ -120,30 +145,12 @@ export class ChatService {
       firstResponseSeconds = firstRespCount > 0 ? Math.round(totalFirstRespSeconds / firstRespCount) : 0;
     }
 
-    // 3. Média diária histórica nos últimos 30 dias do operador
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const pastResolvedCount = await this.prisma.conversation.count({
-      where: {
-        tenantId,
-        assignedTo: userId,
-        status: { in: ['resolved', 'closed', 'RESOLVED', 'CLOSED'] },
-        updatedAt: { gte: thirtyDaysAgo, lt: startOfToday },
-      },
-    });
-
     const avgDaily = Math.round(pastResolvedCount / 30);
     let finishedVsAveragePercent = 0;
     if (avgDaily > 0) {
       finishedVsAveragePercent = Math.round(((todayFinishedCount - avgDaily) / avgDaily) * 100);
     }
 
-    // 4. Meta diária configurada ou fallback padrão
-    const userGoal = await this.prisma.goal.findFirst({
-      where: {
-        tenantId,
-        userId,
-      },
-    });
     const dailyGoal = userGoal?.targetValue ? Math.round(Number(userGoal.targetValue)) : 10;
 
     const formatDuration = (sec: number): string => {
@@ -159,7 +166,7 @@ export class ChatService {
       return remM > 0 ? `${h}h ${remM}m` : `${h}h`;
     };
 
-    return {
+    const result = {
       todayFinishedCount,
       tmaSeconds,
       firstResponseSeconds,
@@ -169,6 +176,9 @@ export class ChatService {
       finishedVsAveragePercent,
       dailyGoal,
     };
+
+    this.productivityCache.set(cacheKey, { data: result, expiresAt: Date.now() + 30000 });
+    return result;
   }
 
   async findAllConversations(tenantId: string, userId: string, userRole: string, tab: string = 'waiting') {

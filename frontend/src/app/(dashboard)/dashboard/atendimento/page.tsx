@@ -208,13 +208,43 @@ export default function AtendimentoAnalyticsDashboard() {
   const [newHolidayName, setNewHolidayName] = useState('');
   const [newHolidayDate, setNewHolidayDate] = useState('');
 
-  // Data States
-  const [overview, setOverview] = useState<any>(null);
-  const [chartsData, setChartsData] = useState<any>(null);
-  const [agents, setAgents] = useState<any[]>([]);
+  // Data States com hidratação instantânea via sessionStorage (0ms de espera ao alternar telas)
+  const [overview, setOverview] = useState<any>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const s = sessionStorage.getItem('versus_cache_analytics_overview');
+      return s ? JSON.parse(s) : null;
+    } catch { return null; }
+  });
+  const [chartsData, setChartsData] = useState<any>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const s = sessionStorage.getItem('versus_cache_analytics_charts');
+      return s ? JSON.parse(s) : null;
+    } catch { return null; }
+  });
+  const [agents, setAgents] = useState<any[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const s = sessionStorage.getItem('versus_cache_analytics_agents');
+      return s ? JSON.parse(s) : [];
+    } catch { return []; }
+  });
   const [ticketsData, setTicketsData] = useState<any>({ tickets: [], total: 0, page: 1, totalPages: 1 });
-  const [aiCosts, setAiCosts] = useState<any>(null);
-  const [csatData, setCsatData] = useState<any>(null);
+  const [aiCosts, setAiCosts] = useState<any>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const s = sessionStorage.getItem('versus_cache_analytics_aicosts');
+      return s ? JSON.parse(s) : null;
+    } catch { return null; }
+  });
+  const [csatData, setCsatData] = useState<any>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const s = sessionStorage.getItem('versus_cache_analytics_csat');
+      return s ? JSON.parse(s) : null;
+    } catch { return null; }
+  });
 
   // Tickets Filter State (Reports Mode)
   const [ticketSearch, setTicketSearch] = useState('');
@@ -528,6 +558,14 @@ export default function AtendimentoAnalyticsDashboard() {
       setAgents(agentsRes.data);
       setAiCosts(aiRes.data);
       setCsatData(csatRes.data);
+
+      try {
+        sessionStorage.setItem('versus_cache_analytics_overview', JSON.stringify(overviewRes.data));
+        sessionStorage.setItem('versus_cache_analytics_charts', JSON.stringify(chartsRes.data));
+        sessionStorage.setItem('versus_cache_analytics_agents', JSON.stringify(agentsRes.data));
+        sessionStorage.setItem('versus_cache_analytics_aicosts', JSON.stringify(aiRes.data));
+        sessionStorage.setItem('versus_cache_analytics_csat', JSON.stringify(csatRes.data));
+      } catch (e) {}
 
       if (showToast) {
         toast.success("Métricas atualizadas com sucesso!");

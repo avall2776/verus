@@ -3,7 +3,22 @@ import { PrismaService } from '../../shared/database/prisma.service';
 
 @Injectable()
 export class AnalyticsService {
+  private readonly memoryCache = new Map<string, { data: any; expiresAt: number }>();
+  private readonly seededTenants = new Set<string>();
+
   constructor(private readonly prisma: PrismaService) {}
+
+  private getCached<T>(key: string): T | null {
+    const item = this.memoryCache.get(key);
+    if (item && Date.now() < item.expiresAt) {
+      return item.data as T;
+    }
+    return null;
+  }
+
+  private setCached(key: string, data: any, ttlMs: number = 45000) {
+    this.memoryCache.set(key, { data, expiresAt: Date.now() + ttlMs });
+  }
 
   private parseDateRange(startDate?: string, endDate?: string) {
     const end = endDate ? new Date(endDate) : new Date();
@@ -16,6 +31,10 @@ export class AnalyticsService {
   }
 
   async getOverview(tenantId: string, startDate?: string, endDate?: string) {
+    const cacheKey = `overview:${tenantId}:${startDate || ''}:${endDate || ''}`;
+    const cached = this.getCached(cacheKey);
+    if (cached) return cached;
+
     const { start, end } = this.parseDateRange(startDate, endDate);
 
     const whereBase = {
@@ -102,7 +121,7 @@ export class AnalyticsService {
 
     const firstResponseSeconds = Math.max(Math.round(tmaSeconds * 0.25), 95);
 
-    return {
+    const result = {
       total,
       inProgress,
       finished,
@@ -113,9 +132,16 @@ export class AnalyticsService {
       firstResponseSeconds,
       ignoredCount: waitingExpired,
     };
+
+    this.setCached(cacheKey, result, 45000);
+    return result;
   }
 
   async getCharts(tenantId: string, startDate?: string, endDate?: string) {
+    const cacheKey = `charts:${tenantId}:${startDate || ''}:${endDate || ''}`;
+    const cached = this.getCached(cacheKey);
+    if (cached) return cached;
+
     const { start, end } = this.parseDateRange(startDate, endDate);
 
     const conversations = await this.prisma.conversation.findMany({
@@ -228,7 +254,7 @@ export class AnalyticsService {
       { name: 'Outros', value: Math.max(Math.round(byStatusMap.resolved * 0.10), 1), color: '#8B5CF6' },
     ];
 
-    return {
+    const result = {
       timeline,
       distributions: {
         byStatus,
@@ -237,9 +263,16 @@ export class AnalyticsService {
         byCloseReason,
       },
     };
+
+    this.setCached(cacheKey, result, 45000);
+    return result;
   }
 
   async getAgentPerformance(tenantId: string, startDate?: string, endDate?: string) {
+    const cacheKey = `agents:${tenantId}:${startDate || ''}:${endDate || ''}`;
+    const cached = this.getCached(cacheKey);
+    if (cached) return cached;
+
     const { start, end } = this.parseDateRange(startDate, endDate);
 
     const [users, conversations] = await Promise.all([
@@ -262,7 +295,7 @@ export class AnalyticsService {
       }),
     ]);
 
-    return users.map((user) => {
+    const result = users.map((user) => {
       const userConvs = conversations.filter((c) => c.assignedTo === user.id);
 
       const inProgressCount = userConvs.filter(
@@ -299,6 +332,9 @@ export class AnalyticsService {
         csatAvg: (4.7 + (user.name.length % 4) * 0.1).toFixed(1),
       };
     });
+
+    this.setCached(cacheKey, result, 45000);
+    return result;
   }
 
   async getDetailedTickets(
@@ -412,6 +448,10 @@ export class AnalyticsService {
   }
 
   async getAiCosts(tenantId: string, startDate?: string, endDate?: string) {
+    const cacheKey = `aicosts:${tenantId}:${startDate || ''}:${endDate || ''}`;
+    const cached = this.getCached(cacheKey);
+    if (cached) return cached;
+
     const { start, end } = this.parseDateRange(startDate, endDate);
 
     const aiMessagesCount = await this.prisma.message.count({
@@ -482,7 +522,7 @@ export class AnalyticsService {
       },
     ];
 
-    return {
+    const result = {
       spent7d,
       spent15d,
       spent30d,
@@ -490,6 +530,9 @@ export class AnalyticsService {
       dailyCostEvolution,
       detailedExecutions,
     };
+
+    this.setCached(cacheKey, result, 45000);
+    return result;
   }
 
   async getCsat(
@@ -499,6 +542,10 @@ export class AnalyticsService {
     agentName?: string,
     search?: string,
   ) {
+    const cacheKey = `csat:${tenantId}:${startDate || ''}:${endDate || ''}:${agentName || ''}:${search || ''}`;
+    const cached = this.getCached(cacheKey);
+    if (cached) return cached;
+
     const { start, end } = this.parseDateRange(startDate, endDate);
 
     // Garantir histórico inicial com base nos contatos e usuários reais do tenant
@@ -573,7 +620,7 @@ export class AnalyticsService {
       createdAt: s.createdAt.toISOString(),
     }));
 
-    return {
+    const result = {
       csatScore,
       totalSurveys,
       responsesCount,
@@ -583,10 +630,16 @@ export class AnalyticsService {
       surveys: formattedSurveys,
       recentFeedbacks: formattedSurveys,
     };
+
+    this.setCached(cacheKey, result, 45000);
+    return result;
   }
 
   private async ensureInitialCsatSeed(tenantId: string) {
     try {
+      if (this.seededTenants.has(tenantId)) return;
+      this.seededTenants.add(tenantId);
+
       const count = await this.prisma.csatSurvey.count({ where: { tenantId } });
       if (count > 0) return;
 
