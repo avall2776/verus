@@ -88,6 +88,14 @@ export class UsersController {
 
     if (isSuperAdmin && targetTenantId && typeof targetTenantId === 'string' && targetTenantId.trim()) {
       const cleanTargetId = targetTenantId.trim();
+      if (user.tenant && user.tenant.id === cleanTargetId) {
+        return {
+          ...user,
+          tenantId: user.tenant.id,
+          tenant: user.tenant,
+          isImpersonating: true,
+        };
+      }
       const targetTenant = await this.prisma.tenant.findUnique({
         where: { id: cleanTargetId },
         select: {

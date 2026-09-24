@@ -24,22 +24,65 @@ export class NotificationsService {
    */
   async getNotifications(tenantId: string, userId: string): Promise<{ notifications: NotificationItem[]; unreadCount: number }> {
     try {
-      // 1. Busca dados do usuário para verificar preferências de leitura
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          name: true,
-          permissions: true,
-          tenant: {
-            select: {
-              metaPhoneNumberId: true,
-              whatsappSettings: true,
-              emailSettings: true,
+      const now = new Date();
+
+      // Busca dados do usuário, chat, chamados e metas EM PARALELO (1 único round-trip ao Postgres)
+      const [user, teamMessages, supportTickets, goals] = await Promise.all([
+        this.prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            name: true,
+            permissions: true,
+            tenant: {
+              select: {
+                metaPhoneNumberId: true,
+                whatsappSettings: true,
+                emailSettings: true,
+              }
             }
           }
-        }
-      });
+        }),
+        this.prisma.teamMessage.findMany({
+          where: {
+            tenantId,
+            senderId: { not: userId },
+            OR: [
+              { receiverId: userId },
+              { channelId: { not: null } }
+            ]
+          },
+          take: 15,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            sender: { select: { id: true, name: true } },
+            channel: { select: { id: true, name: true } }
+          }
+        }),
+        this.prisma.supportTicket.findMany({
+          where: {
+            tenantId,
+          },
+          take: 10,
+          orderBy: { updatedAt: 'desc' },
+          include: {
+            user: { select: { name: true } },
+            messages: {
+              take: 1,
+              orderBy: { createdAt: 'desc' },
+              select: { id: true, content: true, senderName: true, senderRole: true, createdAt: true }
+            }
+          }
+        }),
+        this.prisma.goal.findMany({
+          where: {
+            tenantId,
+            periodEnd: { gte: now }
+          },
+          take: 5,
+          orderBy: { updatedAt: 'desc' }
+        })
+      ]);
 
       const permissions = (user?.permissions as any) || {};
       const readNotificationIds: string[] = Array.isArray(permissions.readNotificationIds)
@@ -52,23 +95,6 @@ export class NotificationsService {
       const rawItems: NotificationItem[] = [];
 
       // 2. Notificações do Chat Interno (TeamMessage)
-      const teamMessages = await this.prisma.teamMessage.findMany({
-        where: {
-          tenantId,
-          senderId: { not: userId },
-          OR: [
-            { receiverId: userId },
-            { channelId: { not: null } }
-          ]
-        },
-        take: 15,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          sender: { select: { id: true, name: true } },
-          channel: { select: { id: true, name: true } }
-        }
-      });
-
       for (const msg of teamMessages) {
         const id = `chat_${msg.id}`;
         const isChannel = Boolean(msg.channelId && msg.channel);
@@ -93,22 +119,6 @@ export class NotificationsService {
       }
 
       // 3. Notificações de Chamados de Suporte (SupportTicket)
-      const supportTickets = await this.prisma.supportTicket.findMany({
-        where: {
-          tenantId,
-        },
-        take: 10,
-        orderBy: { updatedAt: 'desc' },
-        include: {
-          user: { select: { name: true } },
-          messages: {
-            take: 1,
-            orderBy: { createdAt: 'desc' },
-            select: { id: true, content: true, senderName: true, senderRole: true, createdAt: true }
-          }
-        }
-      });
-
       for (const ticket of supportTickets) {
         const id = `ticket_${ticket.id}_${ticket.status}`;
         const latestMsg = ticket.messages?.[0];
@@ -141,16 +151,6 @@ export class NotificationsService {
       }
 
       // 4. Alertas de Metas Comerciais (Goal)
-      const now = new Date();
-      const goals = await this.prisma.goal.findMany({
-        where: {
-          tenantId,
-          periodEnd: { gte: now }
-        },
-        take: 5,
-        orderBy: { updatedAt: 'desc' }
-      });
-
       for (const g of goals) {
         const target = Number(g.targetValue || 0);
         const current = Number(g.currentValue || 0);
@@ -190,7 +190,6 @@ export class NotificationsService {
 
       // 5. Avisos Globais do Sistema
       const isWhatsappActive = Boolean(user?.tenant?.metaPhoneNumberId || user?.tenant?.whatsappSettings);
-      const isEmailActive = Boolean(user?.tenant?.emailSettings);
 
       const sysNoticeId = 'sys_v24_update';
       const releaseDate = new Date('2026-09-17T08:00:00Z');

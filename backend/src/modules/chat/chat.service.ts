@@ -28,28 +28,32 @@ export class ChatService {
   async getConversationCounts(tenantId: string, userId: string, userRole: string) {
     const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
 
-    const [waiting, mine, resolved] = await Promise.all([
-      this.prisma.conversation.count({
-        where: {
-          tenantId,
-          status: { in: ['waiting', 'bot_active'] },
-          assignedTo: null,
+    // Agregação via groupBy em uma ÚNICA consulta ao banco de dados
+    const groups = await this.prisma.conversation.groupBy({
+      by: ['status', 'assignedTo'],
+      where: { tenantId },
+      _count: { id: true },
+    });
+
+    let waiting = 0;
+    let mine = 0;
+    let resolved = 0;
+
+    for (const g of groups) {
+      const count = g._count.id;
+      const status = (g.status || '').toLowerCase();
+      if ((status === 'waiting' || status === 'bot_active') && !g.assignedTo) {
+        waiting += count;
+      }
+      if (['open', 'human_takeover', 'in_progress'].includes(status)) {
+        if (isMaster || g.assignedTo === userId) {
+          mine += count;
         }
-      }),
-      this.prisma.conversation.count({
-        where: {
-          tenantId,
-          status: { in: ['open', 'human_takeover', 'in_progress'] },
-          ...(isMaster ? {} : { assignedTo: userId }),
-        }
-      }),
-      this.prisma.conversation.count({
-        where: {
-          tenantId,
-          status: { in: ['resolved', 'closed'] },
-        }
-      }),
-    ]);
+      }
+      if (['resolved', 'closed'].includes(status)) {
+        resolved += count;
+      }
+    }
 
     return { waiting, mine, resolved, total: waiting + mine + resolved };
   }
@@ -236,15 +240,6 @@ export class ChatService {
   }
 
   async getConversationMessages(tenantId: string, conversationId: string) {
-    // Valida permissão do tenant explicitamente
-    const conversation = await this.prisma.conversation.findUnique({
-      where: { id: conversationId }
-    });
-
-    if (!conversation || conversation.tenantId !== tenantId) {
-      throw new NotFoundException('Conversa não encontrada ou não pertence a este tenant.');
-    }
-
     return this.prisma.message.findMany({
       where: { tenantId, conversationId },
       orderBy: { createdAt: 'asc' }
