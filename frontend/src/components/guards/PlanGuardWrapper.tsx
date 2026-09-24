@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { Lock, Sparkles, ArrowLeft, LifeBuoy } from "lucide-react";
 import api from "@/lib/api";
 
+import { getCachedUser } from "@/lib/userCache";
+
 interface PlanGuardWrapperProps {
   children: React.ReactNode;
 }
@@ -15,33 +17,15 @@ export default function PlanGuardWrapper({ children }: PlanGuardWrapperProps) {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isSyncing, setIsSyncing] = useState(true);
 
-  // Sincronização e verificação de governança em tempo real
+  // Sincronização e verificação de governança com cache inteligente de 0ms
   useEffect(() => {
     let isMounted = true;
 
     const verifyTenantAndPlan = async () => {
       try {
-        // Recupera dados locais primeiro para render inicial veloz
-        const stored = localStorage.getItem("versus_user");
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            if (isMounted) setCurrentUser(parsed);
-
-            // Se já constar como inativo localmente
-            if (parsed.tenant && parsed.tenant.isActive === false && !parsed.isSuperAdmin) {
-              handleTenantBlocked("Acesso suspenso: sua empresa está bloqueada.");
-              return;
-            }
-          } catch (e) {}
-        }
-
-        // Validação viva contra o backend Supabase/NestJS
-        const res = await api.get("/users/me");
-        if (res.data && isMounted) {
-          const freshUser = res.data;
+        const freshUser = await getCachedUser();
+        if (freshUser && isMounted) {
           setCurrentUser(freshUser);
-          localStorage.setItem("versus_user", JSON.stringify(freshUser));
 
           // Verificação de bloqueio da empresa
           if (freshUser.tenant && freshUser.tenant.isActive === false && !freshUser.isSuperAdmin) {

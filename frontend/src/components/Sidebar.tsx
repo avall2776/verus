@@ -44,6 +44,7 @@ import SoundAlertsModal from "@/components/modals/SoundAlertsModal";
 import KeyboardShortcutsModal from "@/components/modals/KeyboardShortcutsModal";
 import UserProfileModal from "@/components/modals/UserProfileModal";
 import WorkspaceManagerModal, { WorkspaceItem } from "@/components/modals/WorkspaceManagerModal";
+import { getCachedUser, clearUserCache } from "@/lib/userCache";
 
 function WhatsAppIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
   return (
@@ -167,6 +168,7 @@ export default function Sidebar() {
   }, []);
 
   const handleExitSupportMode = () => {
+    clearUserCache();
     localStorage.removeItem('versus_target_tenant_id');
     localStorage.removeItem('versus_target_tenant_name');
     localStorage.removeItem('versus_target_tenant_logo');
@@ -178,15 +180,10 @@ export default function Sidebar() {
 
   const loadUser = async () => {
     try {
-      const stored = localStorage.getItem('versus_user');
-      if (stored) {
-        const u = JSON.parse(stored);
-        setCurrentUser(u);
-      }
-      const res = await api.get('/users/me');
-      if (res.data) {
+      const data = await getCachedUser();
+      if (data) {
         // Se a empresa foi bloqueada, desloga imediatamente e redireciona para a tela de bloqueio
-        if (res.data.tenant && res.data.tenant.isActive === false && !res.data.isSuperAdmin) {
+        if (data.tenant && data.tenant.isActive === false && !data.isSuperAdmin) {
           localStorage.removeItem('versus_auth_token');
           localStorage.removeItem('versus_token');
           localStorage.removeItem('token');
@@ -196,8 +193,7 @@ export default function Sidebar() {
           window.location.href = '/blocked';
           return;
         }
-        setCurrentUser(res.data);
-        localStorage.setItem('versus_user', JSON.stringify(res.data));
+        setCurrentUser(data);
       }
     } catch (e: any) {
       if (e.response?.status === 401) {

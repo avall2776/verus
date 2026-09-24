@@ -83,6 +83,7 @@ function InboxContent() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesCacheRef = useRef<{ [chatId: string]: any[] }>({});
 
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [contacts, setContacts] = useState<any[]>([]);
@@ -1006,7 +1007,8 @@ function InboxContent() {
         return null;
       }
     },
-    refetchInterval: 8000,
+    refetchInterval: 30000,
+    staleTime: 15000,
     retry: false,
     refetchOnWindowFocus: false,
   });
@@ -1021,7 +1023,8 @@ function InboxContent() {
         return null;
       }
     },
-    refetchInterval: 10000,
+    refetchInterval: 30000,
+    staleTime: 15000,
     retry: false,
     refetchOnWindowFocus: true,
   });
@@ -1074,6 +1077,8 @@ function InboxContent() {
         };
       });
     },
+    staleTime: 30000,
+    placeholderData: (prev) => prev,
     retry: false,
     refetchOnWindowFocus: false,
   });
@@ -1112,13 +1117,24 @@ function InboxContent() {
     if (!activeChat) return;
 
     const fetchMessages = async () => {
-      try {
-        const { data } = await api.get(`/conversations/${activeChat}/messages`);
-        setMessages(data);
+      // 1. Render instantâneo da conversa da memória (0ms percebido)
+      if (messagesCacheRef.current[activeChat] && messagesCacheRef.current[activeChat].length > 0) {
+        setMessages(messagesCacheRef.current[activeChat]);
         setTimeout(() => {
           scrollToBottom('auto');
-          textareaRef.current?.focus();
-        }, 50);
+        }, 10);
+      }
+
+      try {
+        const { data } = await api.get(`/conversations/${activeChat}/messages`);
+        if (Array.isArray(data)) {
+          messagesCacheRef.current[activeChat] = data;
+          setMessages(data);
+          setTimeout(() => {
+            scrollToBottom('auto');
+            textareaRef.current?.focus();
+          }, 50);
+        }
       } catch (error) {
         console.error("Erro ao buscar mensagens:", error);
       }
@@ -1147,6 +1163,16 @@ function InboxContent() {
 
     const handleNewMessage = async (data: any) => {
       console.log('Nova Mensagem via WebSocket:', data);
+
+      // Mantém o cache local em memória sincronizado em tempo real
+      if (data.conversationId) {
+        if (!messagesCacheRef.current[data.conversationId]) {
+          messagesCacheRef.current[data.conversationId] = [];
+        }
+        if (!messagesCacheRef.current[data.conversationId].some((m: any) => m.id === data.id)) {
+          messagesCacheRef.current[data.conversationId].push(data);
+        }
+      }
       
       // Se a mensagem for para a conversa ativa, joga na tela
       if (activeChat === data.conversationId) {

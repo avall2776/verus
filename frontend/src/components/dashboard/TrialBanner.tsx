@@ -17,13 +17,26 @@ export default function TrialBanner() {
     let isMounted = true;
     async function checkStatus() {
       try {
+        const cached = sessionStorage.getItem("versus_ai_status");
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (Date.now() - parsed.timestamp < 10 * 60 * 1000) {
+              if (isMounted) setData(parsed.data);
+              return;
+            }
+          } catch {}
+        }
+
         const res = await api.get("/tenants/ai-status");
         if (isMounted && res.data) {
-          setData({
+          const payload = {
             daysLeft: res.data.daysLeft,
             isPlatformAllowed: Boolean(res.data.isPlatformAllowed),
             hasCustomKey: Boolean(res.data.hasCustomKey),
-          });
+          };
+          setData(payload);
+          sessionStorage.setItem("versus_ai_status", JSON.stringify({ data: payload, timestamp: Date.now() }));
         }
       } catch (err) {
         // Silencioso em caso de erro no background

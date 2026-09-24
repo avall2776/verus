@@ -214,6 +214,8 @@ model Conversation {
 
   @@index([tenantId])
   @@index([tenantId, status])
+  @@index([tenantId, updatedAt])
+  @@index([tenantId, assignedTo])
   @@index([departmentId])
   @@unique([tenantId, contactId])
 }
@@ -239,6 +241,8 @@ model Message {
   createdAt         DateTime @default(now())
 
   @@unique([tenantId, providerMessageId])
+  @@index([conversationId, createdAt])
+  @@index([tenantId, createdAt])
   @@index([tenantId, status, scheduledAt])
 }
 
