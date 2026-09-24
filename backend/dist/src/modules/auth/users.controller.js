@@ -90,10 +90,12 @@ let UsersController = class UsersController {
         if (!user)
             return null;
         const isSuperAdmin = Boolean(user.isSuperAdmin || String(user.role).toUpperCase() === 'SUPER_ADMIN');
-        const targetTenantId = req.headers['x-target-tenant-id'] || req.headers['x-tenant-id'];
-        if (isSuperAdmin && targetTenantId && typeof targetTenantId === 'string' && targetTenantId !== user.tenantId) {
+        const rawTarget = req.headers['x-target-tenant-id'] || req.headers['x-tenant-id'];
+        const targetTenantId = Array.isArray(rawTarget) ? rawTarget[0] : rawTarget;
+        if (isSuperAdmin && targetTenantId && typeof targetTenantId === 'string' && targetTenantId.trim()) {
+            const cleanTargetId = targetTenantId.trim();
             const targetTenant = await this.prisma.tenant.findUnique({
-                where: { id: targetTenantId },
+                where: { id: cleanTargetId },
                 select: {
                     id: true,
                     name: true,

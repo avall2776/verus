@@ -442,10 +442,11 @@ export class WebhooksController {
       const data = payload.data;
       const messageObj = data?.message;
       const key = data?.key;
-
-      if (!key || key.fromMe) {
-        return { status: 'ignored_outbound' };
+      if (!key) {
+        return { status: 'ignored_no_key' };
       }
+
+      const isFromMe = Boolean(key.fromMe);
 
       // Normaliza payload para formato Meta compatível com o WebhookProcessor
       const remoteJid = (key.remoteJid || '').replace('@s.whatsapp.net', '');
@@ -572,6 +573,7 @@ export class WebhooksController {
                       audio: isAudio ? { link: mediaUrl, id: key.id, mime_type: mediaMime } : undefined,
                       image: isImage ? { link: mediaUrl, id: key.id, caption: mediaCaption, mime_type: mediaMime } : undefined,
                       document: isDocument ? { link: mediaUrl, id: key.id, caption: mediaCaption, filename: mediaFilename, mime_type: mediaMime } : undefined,
+                      fromMe: isFromMe,
                     },
                   ],
                 },
@@ -598,6 +600,7 @@ export class WebhooksController {
             mediaCaption: mediaCaption,
             mediaFilename: mediaFilename,
             localFilePath: savedMediaInfo?.filePath || null,
+            fromMe: isFromMe,
           },
         },
         {

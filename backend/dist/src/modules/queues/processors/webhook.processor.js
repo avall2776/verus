@@ -48,9 +48,9 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             return { status: 'ignored' };
         const messageId = message.id;
         const remoteJid = message.from;
-        const fromMe = false;
+        const fromMe = Boolean(evolutionMetadata?.fromMe || message.fromMe || false);
         const pushName = contactInfo?.profile?.name || remoteJid;
-        this.logger.debug(`Processando job [${job.id}] - Mensagem de ${remoteJid} (Tenant: ${tenantId})`);
+        this.logger.debug(`Processando job [${job.id}] - Mensagem ${fromMe ? 'OUTBOUND (do celular)' : 'INBOUND'} de/para ${remoteJid} (Tenant: ${tenantId})`);
         const existingMessage = await this.prisma.message.findUnique({
             where: {
                 tenantId_providerMessageId: {
@@ -310,7 +310,28 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             },
             update: {}
         });
-        if (conversation.status === 'resolved' || conversation.status === 'closed') {
+        if (fromMe) {
+            if (conversation.status === 'bot_active' || conversation.status === 'waiting' || conversation.status === 'resolved' || conversation.status === 'closed') {
+                conversation = await this.prisma.conversation.update({
+                    where: { id: conversation.id },
+                    data: { status: 'human_takeover', updatedAt: new Date() }
+                });
+                this.chatGateway.emitConversationUpdated(tenantId, conversation);
+            }
+            try {
+                const jobId = `ai_reply_${conversation.id}`;
+                const existingJob = await this.aiQueue.getJob(jobId);
+                if (existingJob) {
+                    const state = await existingJob.getState();
+                    if (state === 'delayed' || state === 'waiting') {
+                        await existingJob.remove();
+                        this.logger.log(`[fromMe] IA interrompida para a conversa [${conversation.id}] pois o atendente respondeu via WhatsApp`);
+                    }
+                }
+            }
+            catch (err) { }
+        }
+        else if (conversation.status === 'resolved' || conversation.status === 'closed') {
             conversation = await this.prisma.conversation.update({
                 where: { id: conversation.id },
                 data: { status: initialStatus, assignedTo: null }
@@ -324,30 +345,40 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 conversationId: conversation.id,
                 contactId: contact.id,
                 providerMessageId: messageId,
-                direction: 'INBOUND',
+                direction: fromMe ? 'OUTBOUND' : 'INBOUND',
                 content,
                 type: msgType,
                 mediaUrl,
                 audioTranscription,
-                senderType: 'contact',
+                senderType: fromMe ? 'user' : 'contact',
+                fromMe: fromMe,
                 status: 'delivered',
             }
         });
-        this.logger.log(`Mensagem [${messageId}] salva com sucesso na conversa [${conversation.id}]`);
-        if (conversation.status === 'waiting' || conversation.status === 'bot_active') {
-            await this.automationsService.evaluateEvent(tenantId, 'NEW_CONVERSATION', {
+        this.logger.log(`Mensagem [${messageId}] (${fromMe ? 'OUTBOUND direto do WhatsApp' : 'INBOUND'}) salva com sucesso na conversa [${conversation.id}]`);
+        await this.prisma.conversation.update({
+            where: { id: conversation.id },
+            data: { updatedAt: new Date() }
+        }).catch(() => { });
+        if (!fromMe) {
+            if (conversation.status === 'waiting' || conversation.status === 'bot_active') {
+                await this.automationsService.evaluateEvent(tenantId, 'NEW_CONVERSATION', {
+                    contactId: contact.id,
+                    conversationId: conversation.id
+                });
+            }
+            await this.automationsService.evaluateEvent(tenantId, 'INACTIVITY', {
                 contactId: contact.id,
                 conversationId: conversation.id
             });
         }
-        await this.automationsService.evaluateEvent(tenantId, 'INACTIVITY', {
-            contactId: contact.id,
-            conversationId: conversation.id
-        });
         this.chatGateway.emitNewMessage(tenantId, {
             ...savedMessage,
             contact: { phone: contact.phone, name: contact.name, avatarUrl: contact.avatarUrl }
         });
+        if (fromMe) {
+            return { status: 'success_outbound_synced', messageId: savedMessage.id };
+        }
         if (!isAiActiveForTenant) {
             this.logger.log(`Conversa [${conversation.id}] mantida para atendimento humano. O auto-atendimento por IA está DESLIGADO nas Configurações da Empresa.`);
             if (conversation.status === 'bot_active') {

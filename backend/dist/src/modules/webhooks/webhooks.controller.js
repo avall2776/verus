@@ -363,9 +363,10 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             const data = payload.data;
             const messageObj = data?.message;
             const key = data?.key;
-            if (!key || key.fromMe) {
-                return { status: 'ignored_outbound' };
+            if (!key) {
+                return { status: 'ignored_no_key' };
             }
+            const isFromMe = Boolean(key.fromMe);
             const remoteJid = (key.remoteJid || '').replace('@s.whatsapp.net', '');
             let realPhone = null;
             if (remoteJid.includes('@lid')) {
@@ -466,6 +467,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                                             audio: isAudio ? { link: mediaUrl, id: key.id, mime_type: mediaMime } : undefined,
                                             image: isImage ? { link: mediaUrl, id: key.id, caption: mediaCaption, mime_type: mediaMime } : undefined,
                                             document: isDocument ? { link: mediaUrl, id: key.id, caption: mediaCaption, filename: mediaFilename, mime_type: mediaMime } : undefined,
+                                            fromMe: isFromMe,
                                         },
                                     ],
                                 },
@@ -489,6 +491,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     mediaCaption: mediaCaption,
                     mediaFilename: mediaFilename,
                     localFilePath: savedMediaInfo?.filePath || null,
+                    fromMe: isFromMe,
                 },
             }, {
                 attempts: 3,

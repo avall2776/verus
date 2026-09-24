@@ -21,6 +21,7 @@ import { v4 as uuidv4 } from "uuid";
 import ScheduleModal from "@/components/inbox/ScheduleModal";
 import ScheduledMessagesDrawer, { ScheduledMessage } from "@/components/inbox/ScheduledMessagesDrawer";
 import GlobalScheduledCenterModal from "@/components/inbox/GlobalScheduledCenterModal";
+import VersusAudioPlayer from "@/components/chat/VersusAudioPlayer";
 
 const COMMON_EMOJIS = [
   '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', 
@@ -433,19 +434,6 @@ function InboxContent() {
     }
   };
 
-  const formatPhoneNumber = (phone?: string) => {
-    if (!phone || phone.includes('@lid')) return '';
-    const clean = phone.replace(/\D/g, '');
-    if (clean.length === 13 && clean.startsWith('55')) {
-      return `+55 (${clean.slice(2, 4)}) ${clean.slice(4, 9)}-${clean.slice(9)}`;
-    } else if (clean.length === 12 && clean.startsWith('55')) {
-      return `+55 (${clean.slice(2, 4)}) ${clean.slice(4, 8)}-${clean.slice(8)}`;
-    } else if (clean.length > 8) {
-      return `+${clean}`;
-    }
-    return phone;
-  };
-
   const getAudioSrc = (url?: string | null) => {
     if (!url) return '';
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
@@ -460,8 +448,20 @@ function InboxContent() {
     return `/api-backend/media/audio/${url.replace(/^.*[\\\/]/, '')}`;
   };
 
-  const formatDisplayPhoneNumber = (rawPhone?: string) => {
-    if (!rawPhone) return 'Sem telefone';
+  const getLoggedInUserName = (): string => {
+    if (typeof window === 'undefined') return '';
+    try {
+      const stored = localStorage.getItem('versus_user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        return (u.name || '').trim();
+      }
+    } catch (e) {}
+    return '';
+  };
+
+  const formatPhoneNumber = (rawPhone?: string) => {
+    if (!rawPhone) return '';
     const cleanJid = rawPhone.replace('@s.whatsapp.net', '').replace('@c.us', '');
     const clean = cleanJid.replace(/\D/g, '');
     if (clean.length === 13 && clean.startsWith('55')) {
@@ -472,37 +472,79 @@ function InboxContent() {
       return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7)}`;
     } else if (clean.length === 10) {
       return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
-    } else if (clean.length >= 8) {
-      return `+${clean}`;
+    } else if (clean.length >= 8 && clean.length <= 15) {
+      return clean.startsWith('55') ? `+${clean}` : clean;
     }
     if (cleanJid.includes('@lid')) {
-      return 'Definir número';
+      return 'Contato WhatsApp';
     }
     return rawPhone;
   };
 
-  const formatContactDisplayName = (name?: string, phone?: string) => {
-    const isGeneric = !name || name === 'Cliente WhatsApp' || name.includes('@lid') || name.startsWith('WhatsApp');
-    if (isGeneric) {
-      if (phone && !phone.includes('@lid')) {
-        const formatted = formatPhoneNumber(phone);
+  const formatDisplayPhoneNumber = (rawPhone?: string) => {
+    if (!rawPhone) return 'Sem telefone';
+    return formatPhoneNumber(rawPhone);
+  };
+
+  const getContactDisplayName = (name?: string | null, phone?: string | null, overrideOperatorName?: string | null) => {
+    const opName = overrideOperatorName || getLoggedInUserName();
+    const cleanName = (name || '').trim();
+    const cleanPhone = (phone || '').trim();
+
+    // Se o nome vier idêntico ou contiver indicação de que é o operador logado, nunca exibir como nome do cliente
+    const isOperatorMatch = Boolean(
+      opName &&
+      cleanName &&
+      (cleanName.toLowerCase() === opName.toLowerCase() ||
+       cleanName.toLowerCase().includes('(você)') ||
+       cleanName.toLowerCase() === 'você')
+    );
+
+    const isGenericOrMasked = 
+      !cleanName ||
+      isOperatorMatch ||
+      cleanName === 'Cliente WhatsApp' ||
+      cleanName.includes('@lid') ||
+      cleanName.includes('@s.whatsapp.net') ||
+      cleanName.startsWith('WhatsApp') ||
+      cleanName.toLowerCase() === 'sem nome' ||
+      cleanName.toLowerCase() === 'cliente';
+
+    if (isGenericOrMasked) {
+      if (cleanPhone && !cleanPhone.includes('@lid')) {
+        const formatted = formatPhoneNumber(cleanPhone);
         if (formatted) return formatted;
+      }
+      if (!isOperatorMatch && cleanName && !cleanName.includes('@lid') && cleanName !== 'Cliente WhatsApp') {
+        return cleanName;
+      }
+      if (cleanPhone && !cleanPhone.includes('@lid')) {
+        return formatPhoneNumber(cleanPhone);
       }
       return 'Cliente WhatsApp';
     }
-    return name;
+
+    return cleanName;
   };
 
-  const getContactInitials = (name?: string, phone?: string) => {
-    const isGeneric = !name || name === 'Cliente WhatsApp' || name.includes('@lid') || name.startsWith('WhatsApp');
-    if (isGeneric) {
+  const formatContactDisplayName = (name?: string | null, phone?: string | null) => {
+    return getContactDisplayName(name, phone, getLoggedInUserName());
+  };
+
+  const getContactInitials = (name?: string | null, phone?: string | null) => {
+    const displayName = getContactDisplayName(name, phone, getLoggedInUserName());
+    if (!displayName || displayName === 'Cliente WhatsApp') {
       if (phone && !phone.includes('@lid')) {
         const clean = phone.replace(/\D/g, '');
         if (clean.length >= 2) return clean.slice(-2);
       }
       return 'WA';
     }
-    const parts = name.trim().split(/\s+/).filter(Boolean);
+    const cleanDigits = displayName.replace(/\D/g, '');
+    if (displayName.startsWith('+') || cleanDigits.length >= 8) {
+      return cleanDigits.length >= 2 ? cleanDigits.slice(-2) : 'WA';
+    }
+    const parts = displayName.trim().split(/\s+/).filter(Boolean);
     if (parts.length === 0) return 'WA';
     if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
@@ -2541,49 +2583,20 @@ function InboxContent() {
                             </div>
                           )}
 
-                          {/* Player de Áudio Nativo HTML5 + Download + Transcrição Whisper */}
+                          {/* Player de Áudio Monocromático VERSUS com Play/Pause Fluido, Barra Interativa, Velocidade (1x, 1.5x, 2x) e Transcrição Whisper */}
                           {(msg.type === 'audio' || msg.type === 'voice' || msg.type === 'ptt' || (!!msg.mediaUrl && /\.(ogg|opus|mp3|m4a|wav|webm)($|\?)/i.test(msg.mediaUrl)) || msg.content?.includes('🎤')) && (
-                            <div className="flex flex-col gap-1.5 my-1.5 w-full min-w-[240px] max-w-[310px] mb-2">
-                              <div className="bg-black/40 p-2.5 rounded-xl border border-white/10 shadow-inner flex flex-col gap-2">
-                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
-                                  <span className="flex items-center gap-1.5">
-                                    <Volume2 size={13} className="text-cyan-400 shrink-0" />
-                                    <span>Mensagem de voz</span>
-                                  </span>
-                                  {msg.mediaUrl && (
-                                    <a
-                                      href={getAudioSrc(msg.mediaUrl)}
-                                      download={`audio_${msg.id || Date.now()}.ogg`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10"
-                                      title="Baixar arquivo de áudio"
-                                    >
-                                      <Download size={11} />
-                                      <span>Baixar</span>
-                                    </a>
-                                  )}
+                            <div className="flex flex-col gap-1.5 my-1.5 w-full min-w-[260px] max-w-[340px] mb-2">
+                              {msg.mediaUrl ? (
+                                <VersusAudioPlayer
+                                  src={getAudioSrc(msg.mediaUrl)}
+                                  downloadName={`audio_${msg.id || Date.now()}.ogg`}
+                                />
+                              ) : (
+                                <div className="flex items-center gap-2 p-3 rounded-2xl bg-[#0B1224] border border-amber-500/30 text-amber-300 text-xs shadow-md">
+                                  <Volume2 size={16} className="shrink-0 animate-pulse text-amber-400" />
+                                  <span>Processando áudio recebido...</span>
                                 </div>
-
-                                {msg.mediaUrl ? (
-                                  <audio
-                                    controls
-                                    preload="metadata"
-                                    src={getAudioSrc(msg.mediaUrl)}
-                                    className="w-full h-8 rounded-lg outline-none accent-cyan-400 bg-slate-900/90 border border-slate-700/50"
-                                  >
-                                    <source src={getAudioSrc(msg.mediaUrl)} type="audio/ogg" />
-                                    <source src={getAudioSrc(msg.mediaUrl)} type="audio/mp4" />
-                                    <source src={getAudioSrc(msg.mediaUrl)} type="audio/mpeg" />
-                                    Seu navegador não suporta a reprodução deste áudio.
-                                  </audio>
-                                ) : (
-                                  <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
-                                    <Volume2 size={14} className="shrink-0 animate-pulse text-amber-400" />
-                                    <span>Processando áudio recebido...</span>
-                                  </div>
-                                )}
-                              </div>
+                              )}
 
                               {/* Botão de Expansão "Ver transcrição" */}
                               <div className="px-1 flex flex-col gap-1">

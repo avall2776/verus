@@ -11,14 +11,23 @@ export const CurrentTenant = createParamDecorator(
       String(user?.role).toUpperCase() === 'SUPER_ADMIN' ||
       String(user?.role).toUpperCase() === 'SUPERADMIN'
     );
+
     if (isSuperAdmin) {
-      const explicitTenantId = 
+      const rawTenantId = 
         request.headers['x-target-tenant-id'] || 
         request.headers['x-tenant-id'] || 
         request.query?.tenantId;
-      if (explicitTenantId && typeof explicitTenantId === 'string') {
-        return explicitTenantId;
+      
+      const explicitTenantId = Array.isArray(rawTenantId) ? rawTenantId[0] : rawTenantId;
+      if (explicitTenantId && typeof explicitTenantId === 'string' && explicitTenantId.trim()) {
+        return explicitTenantId.trim();
       }
+
+      // Se for Super Admin e não passou header específico, usa o seu tenant padrão ou 'tenant_123'
+      if (user?.tenantId) {
+        return user.tenantId;
+      }
+      return 'tenant_123';
     }
 
     if (!user || !user.tenantId) {

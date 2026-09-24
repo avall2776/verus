@@ -39,10 +39,10 @@ export class WebhookProcessor extends WorkerHost {
 
     const messageId = message.id;
     const remoteJid = message.from; // Número do cliente
-    const fromMe = false; // A Meta Cloud API de entrada via Webhook (neste formato) sempre é do cliente para o bot
+    const fromMe = Boolean(evolutionMetadata?.fromMe || message.fromMe || false);
     const pushName = contactInfo?.profile?.name || remoteJid;
 
-    this.logger.debug(`Processando job [${job.id}] - Mensagem de ${remoteJid} (Tenant: ${tenantId})`);
+    this.logger.debug(`Processando job [${job.id}] - Mensagem ${fromMe ? 'OUTBOUND (do celular)' : 'INBOUND'} de/para ${remoteJid} (Tenant: ${tenantId})`);
 
     // 1. Idempotência: Verifica se a mensagem já existe
     const existingMessage = await this.prisma.message.findUnique({
@@ -332,7 +332,30 @@ export class WebhookProcessor extends WorkerHost {
       update: {} // Apenas recupera se já existir
     });
 
-    if (conversation.status === 'resolved' || conversation.status === 'closed') {
+    if (fromMe) {
+      // Se a mensagem foi enviada diretamente pelo celular WhatsApp da empresa:
+      // Transiciona a conversa para atendimento humano se estava com bot ou fila
+      if (conversation.status === 'bot_active' || conversation.status === 'waiting' || conversation.status === 'resolved' || conversation.status === 'closed') {
+        conversation = await this.prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { status: 'human_takeover', updatedAt: new Date() }
+        });
+        this.chatGateway.emitConversationUpdated(tenantId, conversation);
+      }
+
+      // Cancela imediatamente qualquer resposta pendente da IA para não falar por cima do humano
+      try {
+        const jobId = `ai_reply_${conversation.id}`;
+        const existingJob = await this.aiQueue.getJob(jobId);
+        if (existingJob) {
+          const state = await existingJob.getState();
+          if (state === 'delayed' || state === 'waiting') {
+            await existingJob.remove();
+            this.logger.log(`[fromMe] IA interrompida para a conversa [${conversation.id}] pois o atendente respondeu via WhatsApp`);
+          }
+        }
+      } catch (err) {}
+    } else if (conversation.status === 'resolved' || conversation.status === 'closed') {
       // Reabre a mesma conversa na Fila Aguardando
       conversation = await this.prisma.conversation.update({
         where: { id: conversation.id },
@@ -344,44 +367,58 @@ export class WebhookProcessor extends WorkerHost {
       this.chatGateway.emitConversationUpdated(tenantId, conversation);
     }
 
-    // 5. Persistir a Mensagem (Inbound)
+    // 5. Persistir a Mensagem (Inbound ou Outbound pelo celular)
     const savedMessage = await this.prisma.message.create({
       data: {
         tenantId,
         conversationId: conversation.id,
         contactId: contact.id,
         providerMessageId: messageId,
-        direction: 'INBOUND',
+        direction: fromMe ? 'OUTBOUND' : 'INBOUND',
         content,
         type: msgType,
         mediaUrl,
         audioTranscription,
-        senderType: 'contact',
+        senderType: fromMe ? 'user' : 'contact',
+        fromMe: fromMe,
         status: 'delivered', 
       }
     });
 
-    this.logger.log(`Mensagem [${messageId}] salva com sucesso na conversa [${conversation.id}]`);
+    this.logger.log(`Mensagem [${messageId}] (${fromMe ? 'OUTBOUND direto do WhatsApp' : 'INBOUND'}) salva com sucesso na conversa [${conversation.id}]`);
 
-    // Gatilhos de automação
-    if (conversation.status === 'waiting' || conversation.status === 'bot_active') {
-       // Possível nova conversa ou inatividade 
-       await this.automationsService.evaluateEvent(tenantId, 'NEW_CONVERSATION', { 
-         contactId: contact.id, 
-         conversationId: conversation.id 
-       });
+    // Atualiza updatedAt da conversa
+    await this.prisma.conversation.update({
+      where: { id: conversation.id },
+      data: { updatedAt: new Date() }
+    }).catch(() => {});
+
+    // Gatilhos de automação (apenas para mensagens do cliente)
+    if (!fromMe) {
+      if (conversation.status === 'waiting' || conversation.status === 'bot_active') {
+         // Possível nova conversa ou inatividade 
+         await this.automationsService.evaluateEvent(tenantId, 'NEW_CONVERSATION', { 
+           contactId: contact.id, 
+           conversationId: conversation.id 
+         });
+      }
+
+      await this.automationsService.evaluateEvent(tenantId, 'INACTIVITY', { 
+           contactId: contact.id, 
+           conversationId: conversation.id 
+      });
     }
 
-    await this.automationsService.evaluateEvent(tenantId, 'INACTIVITY', { 
-         contactId: contact.id, 
-         conversationId: conversation.id 
-    });
-
-    // -> EMISSÃO EM TEMPO REAL PARA O FRONT-END <-
+    // -> EMISSÃO EM TEMPO REAL PARA O FRONT-END (WEBSOCKET) <-
     this.chatGateway.emitNewMessage(tenantId, {
       ...savedMessage,
       contact: { phone: contact.phone, name: contact.name, avatarUrl: contact.avatarUrl }
     });
+
+    // Se a mensagem partiu de nós (fromMe: true), não deve ser respondida por IA
+    if (fromMe) {
+      return { status: 'success_outbound_synced', messageId: savedMessage.id };
+    }
 
     // 6. Integração com Fase 4: Despachar para fila de IA APENAS se o auto-atendimento estiver LIGADO nas configurações da empresa
     if (!isAiActiveForTenant) {

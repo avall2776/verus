@@ -304,7 +304,10 @@ export function showLeadMessageToast(
     }
   }
 
-  const toastId = `msg_${data.conversationId}_${Date.now()}`;
+  // Chave única e estável por conversa/contato: mantém apenas 1 card flutuante ativo atualizando o conteúdo
+  const stableKey = data.conversationId || (data.contactPhone ? data.contactPhone.replace(/\D/g, '') : 'default_lead');
+  const toastId = `lead_toast_${stableKey}`;
+
   toast.custom(
     (t) => (
       <LeadMessageToast
@@ -316,15 +319,15 @@ export function showLeadMessageToast(
         messageContent={data.messageContent}
         messageType={data.messageType}
         onOpen={(cId) => {
-          toast.dismiss(t);
+          toast.dismiss(toastId);
           router.push(`/inbox?conversationId=${cId}`);
         }}
-        onClose={() => toast.dismiss(t)}
+        onClose={() => toast.dismiss(toastId)}
       />
     ),
     {
       id: toastId,
-      duration: 7000,
+      duration: 8000,
       position: 'top-right'
     }
   );
@@ -349,7 +352,9 @@ export function showTransferAlertToast(
     }
   }
 
-  const toastId = `transfer_${data.conversationId}_${Date.now()}`;
+  const stableTransferKey = data.conversationId || (data.contactPhone ? data.contactPhone.replace(/\D/g, '') : 'default_transfer');
+  const toastId = `transfer_toast_${stableTransferKey}`;
+
   toast.custom(
     (t) => (
       <TransferAlertToast
@@ -360,15 +365,15 @@ export function showTransferAlertToast(
         departmentName={data.departmentName}
         transferredBy={data.transferredBy}
         onTakeoverSuccess={(cId) => {
-          toast.dismiss(t);
+          toast.dismiss(toastId);
           if (onTakeoverSuccess) onTakeoverSuccess(cId);
           router.push(`/inbox?conversationId=${cId}`);
         }}
         onOpen={(cId) => {
-          toast.dismiss(t);
+          toast.dismiss(toastId);
           router.push(`/inbox?conversationId=${cId}`);
         }}
-        onClose={() => toast.dismiss(t)}
+        onClose={() => toast.dismiss(toastId)}
       />
     ),
     {
