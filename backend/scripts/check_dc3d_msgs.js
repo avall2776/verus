@@ -8,16 +8,17 @@ const { PrismaClient } = require("/root/verus/backend/node_modules/@prisma/clien
 const prisma = new PrismaClient();
 
 async function main() {
-  const contact = await prisma.contact.findFirst({
+  const msgs = await prisma.message.findMany({
     where: {
-      OR: [
-        { name: { contains: "Ernesto", mode: "insensitive" } },
-        { phone: { contains: "555499812192" } }
-      ]
-    }
+      conversation: { contactId: "dc3d5734-df29-418a-ac83-7175055742a3" }
+    },
+    orderBy: { createdAt: "desc" },
+    take: 10
   });
-  console.log("=== CONTATO ERNESTO APÓS RECONCILIAÇÃO ===");
-  console.log(JSON.stringify(contact, null, 2));
+  console.log("MENSAGENS DO CONTATO DC3D:");
+  for (const m of msgs) {
+    console.log(m.createdAt.toISOString(), m.direction, m.type, m.content);
+  }
   await prisma.$disconnect();
 }
 main().catch(console.error);

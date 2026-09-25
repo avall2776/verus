@@ -1128,18 +1128,9 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             }
             if (pushName && !pushName.includes('@lid') && pushName !== 'Cliente WhatsApp') {
                 const inNormName = this.normalizeContactName(pushName);
-                let match = nameToContactMap.get(inNormName);
-                if (!match) {
-                    const inFirstName = inNormName.split(' ')[0];
-                    for (const [key, val] of nameToContactMap.entries()) {
-                        if (key === inNormName || key === inFirstName || (key.startsWith(inFirstName) && inFirstName.length >= 4)) {
-                            match = val;
-                            break;
-                        }
-                    }
-                }
+                const match = nameToContactMap.get(inNormName);
                 if (match) {
-                    this.logger.log(`[LID Mapeado por Nome] Remetente [${remoteJid}] (${pushName}) -> Telefone Real: ${match.realPhone} (${match.name})`);
+                    this.logger.log(`[LID Mapeado por Nome Exato] Remetente [${remoteJid}] (${pushName}) -> Telefone Real: ${match.realPhone} (${match.name})`);
                     return {
                         realPhone: match.realPhone,
                         realName: pushName || match.name || null,

@@ -5,19 +5,26 @@ conn.on('ready', () => {
   const remoteCmd = `
 node -e '
 const { PrismaClient } = require("/root/verus/backend/node_modules/@prisma/client");
+const axios = require("/root/verus/backend/node_modules/axios");
 const prisma = new PrismaClient();
 
 async function main() {
-  const contact = await prisma.contact.findFirst({
+  const msg = await prisma.message.findFirst({
     where: {
-      OR: [
-        { name: { contains: "Ernesto", mode: "insensitive" } },
-        { phone: { contains: "555499812192" } }
-      ]
+      conversation: { contactId: "dc3d5734-df29-418a-ac83-7175055742a3" }
     }
   });
-  console.log("=== CONTATO ERNESTO APÓS RECONCILIAÇÃO ===");
-  console.log(JSON.stringify(contact, null, 2));
+  console.log("MSG DC3D:", JSON.stringify(msg, null, 2));
+
+  // Tenta buscar essa mensagem na Evolution API
+  const instName = "versus_c38f8968ee_1bceb585fb";
+  const evoMsg = await axios.post("http://localhost:8080/chat/findMessages/" + instName, {
+    where: { key: { id: msg.providerMessageId } }
+  }, {
+    headers: { apikey: "verto123" }
+  }).catch(e => ({ data: e.message }));
+  console.log("EVOLUTION MSG:", JSON.stringify(evoMsg.data, null, 2));
+
   await prisma.$disconnect();
 }
 main().catch(console.error);
