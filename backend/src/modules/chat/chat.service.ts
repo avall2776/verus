@@ -1220,6 +1220,40 @@ export class ChatService {
             },
           });
 
+          // Fallback 1: Cruzamento por Foto de Perfil (Hash CDN da foto do WhatsApp)
+          if (!contact && resolution.avatarUrl) {
+            const photoId = this.whatsappService.extractPhotoId(resolution.avatarUrl);
+            if (photoId) {
+              contact = await this.prisma.contact.findFirst({
+                where: {
+                  tenantId,
+                  avatarUrl: { contains: photoId },
+                },
+                orderBy: { updatedAt: 'desc' },
+              });
+            }
+          }
+
+          // Fallback 2: Cruzamento por Nome Semântico para contatos com número real
+          const push = (rawMsg.pushName || '').trim();
+          if (!contact && push && push.length >= 3 && push !== 'Cliente WhatsApp' && !push.includes('@lid')) {
+            const normPush = push.toLowerCase();
+            const candidates = await this.prisma.contact.findMany({
+              where: {
+                tenantId,
+                NOT: { phone: { contains: '@lid' } },
+              },
+              orderBy: { updatedAt: 'desc' },
+            });
+            const matched = candidates.find(c => {
+              const cNorm = (c.name || '').trim().toLowerCase();
+              return cNorm === normPush || cNorm.startsWith(normPush + ' ') || cNorm.includes(' ' + normPush);
+            });
+            if (matched) {
+              contact = matched;
+            }
+          }
+
           if (!contact) {
             contact = await this.prisma.contact.create({
               data: {
@@ -1231,11 +1265,20 @@ export class ChatService {
                 source: 'WhatsApp',
               },
             });
-          } else if (realPhone && (contact.phone?.includes('@lid') || contact.phone?.replace(/\D/g, '').length > 13)) {
-            contact = await this.prisma.contact.update({
-              where: { id: contact.id },
-              data: { phone: realPhone, whatsappLid: remoteJid },
-            });
+          } else {
+            const updateData: any = {};
+            if (remoteJid.includes('@lid') && contact.whatsappLid !== remoteJid) {
+              updateData.whatsappLid = remoteJid;
+            }
+            if (realPhone && (contact.phone?.includes('@lid') || contact.phone?.replace(/\D/g, '').length > 13)) {
+              updateData.phone = realPhone;
+            }
+            if (Object.keys(updateData).length > 0) {
+              contact = await this.prisma.contact.update({
+                where: { id: contact.id },
+                data: updateData,
+              });
+            }
           }
 
           // 3. Busca ou cria a conversa

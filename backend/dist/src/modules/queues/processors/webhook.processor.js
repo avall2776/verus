@@ -252,10 +252,39 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         });
         const rawPushName = pushName || evolutionMetadata?.pushName;
         const isGenericPushName = !rawPushName || rawPushName === 'Cliente WhatsApp' || rawPushName.includes('@lid') || rawPushName.startsWith('WhatsApp');
+        if (!existingContact && evolutionMetadata?.profilePictureUrl) {
+            const photoId = this.whatsappService.extractPhotoId(evolutionMetadata.profilePictureUrl);
+            if (photoId) {
+                existingContact = await this.prisma.contact.findFirst({
+                    where: {
+                        tenantId,
+                        avatarUrl: { contains: photoId },
+                    },
+                    orderBy: { updatedAt: 'desc' },
+                });
+            }
+        }
+        if (!existingContact && rawPushName && !isGenericPushName && rawPushName.length >= 3) {
+            const normPush = rawPushName.trim().toLowerCase();
+            const candidates = await this.prisma.contact.findMany({
+                where: {
+                    tenantId,
+                    NOT: { phone: { contains: '@lid' } },
+                },
+                orderBy: { updatedAt: 'desc' },
+            });
+            const matched = candidates.find(c => {
+                const cNorm = (c.name || '').trim().toLowerCase();
+                return cNorm === normPush || cNorm.startsWith(normPush + ' ') || cNorm.includes(' ' + normPush);
+            });
+            if (matched) {
+                existingContact = matched;
+            }
+        }
         let contact;
         if (existingContact) {
             const dataToUpdate = {};
-            if (lidId && !existingContact.whatsappLid) {
+            if (lidId && existingContact.whatsappLid !== lidId) {
                 dataToUpdate.whatsappLid = lidId;
             }
             if (realPhone && (existingContact.phone?.includes('@lid') || existingContact.phone?.replace(/\D/g, '').length > 13)) {

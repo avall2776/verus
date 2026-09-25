@@ -1251,13 +1251,14 @@ export class WhatsappService {
   /**
    * Extrai o identificador único da foto de perfil do WhatsApp para correspondência biunívoca
    */
-  private extractPhotoId(url: string | null | undefined): string | null {
+  public extractPhotoId(url: string | null | undefined): string | null {
     if (!url) return null;
     try {
       const cleanUrl = url.split('?')[0];
-      const match = cleanUrl.match(/([0-9]+_[0-9]+_[0-9]+_n\.jpg)/);
+      const match = cleanUrl.match(/([0-9]+_[0-9]+_[0-9]+_n)/);
       if (match) return match[1];
-      return path.basename(cleanUrl);
+      const file = path.basename(cleanUrl);
+      return file.length > 5 ? file : null;
     } catch {
       return null;
     }
@@ -1266,7 +1267,7 @@ export class WhatsappService {
   /**
    * Normaliza strings de nomes retirando acentos e pontuação
    */
-  private normalizeContactName(s: string | null | undefined): string {
+  public normalizeContactName(s: string | null | undefined): string {
     if (!s) return '';
     return s
       .toLowerCase()

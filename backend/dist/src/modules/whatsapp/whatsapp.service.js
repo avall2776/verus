@@ -998,10 +998,11 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             return null;
         try {
             const cleanUrl = url.split('?')[0];
-            const match = cleanUrl.match(/([0-9]+_[0-9]+_[0-9]+_n\.jpg)/);
+            const match = cleanUrl.match(/([0-9]+_[0-9]+_[0-9]+_n)/);
             if (match)
                 return match[1];
-            return path.basename(cleanUrl);
+            const file = path.basename(cleanUrl);
+            return file.length > 5 ? file : null;
         }
         catch {
             return null;

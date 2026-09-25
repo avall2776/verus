@@ -271,11 +271,44 @@ export class WebhookProcessor extends WorkerHost {
     const rawPushName = pushName || evolutionMetadata?.pushName;
     const isGenericPushName = !rawPushName || rawPushName === 'Cliente WhatsApp' || rawPushName.includes('@lid') || rawPushName.startsWith('WhatsApp');
 
+    // Fallback 1: Cruzamento biunívoco por Foto de Perfil (Hash CDN da foto do WhatsApp)
+    if (!existingContact && evolutionMetadata?.profilePictureUrl) {
+      const photoId = this.whatsappService.extractPhotoId(evolutionMetadata.profilePictureUrl);
+      if (photoId) {
+        existingContact = await this.prisma.contact.findFirst({
+          where: {
+            tenantId,
+            avatarUrl: { contains: photoId },
+          },
+          orderBy: { updatedAt: 'desc' },
+        });
+      }
+    }
+
+    // Fallback 2: Cruzamento por Nome Semântico para contatos que já possuem telefone real salvo
+    if (!existingContact && rawPushName && !isGenericPushName && rawPushName.length >= 3) {
+      const normPush = rawPushName.trim().toLowerCase();
+      const candidates = await this.prisma.contact.findMany({
+        where: {
+          tenantId,
+          NOT: { phone: { contains: '@lid' } },
+        },
+        orderBy: { updatedAt: 'desc' },
+      });
+      const matched = candidates.find(c => {
+        const cNorm = (c.name || '').trim().toLowerCase();
+        return cNorm === normPush || cNorm.startsWith(normPush + ' ') || cNorm.includes(' ' + normPush);
+      });
+      if (matched) {
+        existingContact = matched;
+      }
+    }
+
     let contact;
     if (existingContact) {
-      // Se encontrou, atualiza dados que faltavam (ex: vincula whatsappLid ou atualiza para número real)
+      // Se encontrou, atualiza dados que faltavam ou novo whatsappLid emitido pelo WhatsApp
       const dataToUpdate: any = {};
-      if (lidId && !existingContact.whatsappLid) {
+      if (lidId && existingContact.whatsappLid !== lidId) {
         dataToUpdate.whatsappLid = lidId;
       }
       if (realPhone && (existingContact.phone?.includes('@lid') || existingContact.phone?.replace(/\D/g, '').length > 13)) {
