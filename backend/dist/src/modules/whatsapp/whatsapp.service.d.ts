@@ -203,5 +203,13 @@ export declare class WhatsappService {
     } | null>;
     saveBase64Audio(tenantId: string, base64Data: string, messageId: string, mimeType?: string): Promise<string | null>;
     deleteMessageForEveryone(tenantId: string, instanceName: string, remoteJid: string, providerMessageId: string): Promise<boolean>;
+    private evoContactsCache;
+    private extractPhotoId;
+    private normalizeContactName;
+    resolveContactFromEvolution(tenantId: string, instanceName?: string, remoteJid?: string, pushName?: string, profilePictureUrl?: string | null): Promise<{
+        realPhone: string | null;
+        realName: string | null;
+        avatarUrl: string | null;
+    }>;
     syncAndResolveLidContacts(tenantId: string): Promise<number>;
 }

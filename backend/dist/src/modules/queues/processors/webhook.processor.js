@@ -229,15 +229,22 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         else if (!content) {
             content = '[Mídia Recebida]';
         }
-        const isLid = remoteJid.includes('@lid');
-        const realPhone = (evolutionMetadata?.realPhone && evolutionMetadata.realPhone.length >= 10)
+        const isLid = remoteJid.includes('@lid') || remoteJid.replace(/\D/g, '').length > 13;
+        let realPhone = (evolutionMetadata?.realPhone && evolutionMetadata.realPhone.length >= 10 && evolutionMetadata.realPhone.length <= 13)
             ? evolutionMetadata.realPhone
             : null;
+        const lidId = evolutionMetadata?.remoteJid || (isLid ? remoteJid : null);
+        if (!realPhone && (isLid || (lidId && lidId.includes('@lid')))) {
+            const resolved = await this.whatsappService.resolveContactFromEvolution(tenantId, evolutionMetadata?.instanceName, lidId || remoteJid, pushName || evolutionMetadata?.pushName, evolutionMetadata?.profilePictureUrl);
+            if (resolved.realPhone) {
+                realPhone = resolved.realPhone;
+            }
+        }
         let existingContact = await this.prisma.contact.findFirst({
             where: {
                 tenantId,
                 OR: [
-                    ...(isLid ? [{ whatsappLid: remoteJid }] : []),
+                    ...(lidId ? [{ whatsappLid: lidId }, { phone: lidId }] : []),
                     { phone: remoteJid },
                     ...(realPhone ? [{ phone: realPhone }, { whatsappLid: realPhone }] : []),
                 ],
@@ -248,10 +255,10 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         let contact;
         if (existingContact) {
             const dataToUpdate = {};
-            if (isLid && !existingContact.whatsappLid) {
-                dataToUpdate.whatsappLid = remoteJid;
+            if (lidId && !existingContact.whatsappLid) {
+                dataToUpdate.whatsappLid = lidId;
             }
-            if (realPhone && existingContact.phone?.includes('@lid')) {
+            if (realPhone && (existingContact.phone?.includes('@lid') || existingContact.phone?.replace(/\D/g, '').length > 13)) {
                 dataToUpdate.phone = realPhone;
             }
             if (!isGenericPushName && (existingContact.name === 'Cliente WhatsApp' || existingContact.name?.includes('@lid'))) {
@@ -274,12 +281,12 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             const targetPhone = realPhone || remoteJid;
             const cleanName = !isGenericPushName
                 ? rawPushName
-                : (targetPhone.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${targetPhone})`);
+                : (realPhone ? `WhatsApp (${realPhone})` : (targetPhone.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${targetPhone})`));
             contact = await this.prisma.contact.create({
                 data: {
                     tenantId,
                     phone: targetPhone,
-                    whatsappLid: isLid ? remoteJid : null,
+                    whatsappLid: lidId || (isLid ? remoteJid : null),
                     name: cleanName,
                     source: 'WhatsApp',
                     avatarUrl: (evolutionMetadata?.profilePictureUrl && !evolutionMetadata.profilePictureUrl.includes('unsplash.com')) ? evolutionMetadata.profilePictureUrl : null,

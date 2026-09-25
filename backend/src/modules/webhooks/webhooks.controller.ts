@@ -450,10 +450,15 @@ export class WebhooksController {
 
       // Normaliza payload para formato Meta compatível com o WebhookProcessor
       const remoteJid = (key.remoteJid || '').replace('@s.whatsapp.net', '');
+      const rawInstName = payload.instance || payload.data?.instance;
+      const instName = rawInstName ? rawInstName.replace(' (WhatsApp Web)', '').trim() : '';
       
-      // Resolução inteligente do número de telefone real (evita exibir @lid)
+      // Resolução inteligente e ativa do número de telefone real (evita exibir e salvar @lid)
       let realPhone: string | null = null;
-      if (remoteJid.includes('@lid')) {
+      let candidateName = data.pushName || data.verifiedBizName || data.verifiedName;
+      let profilePicUrl = data.profilePictureUrl || null;
+
+      if (remoteJid.includes('@lid') || remoteJid.replace(/\D/g, '').length > 13) {
         const candidatePn = 
           key.participantPn || 
           data?.participantPn || 
@@ -470,6 +475,22 @@ export class WebhooksController {
             realPhone = cleanPn;
           }
         }
+
+        // Se ainda não encontrou telefone real, busca síncronamente na agenda da Evolution API
+        if (!realPhone) {
+          const resolved = await this.whatsappService.resolveContactFromEvolution(
+            tenantId,
+            instName,
+            key.remoteJid || remoteJid,
+            candidateName,
+            profilePicUrl
+          );
+          if (resolved.realPhone) {
+            realPhone = resolved.realPhone;
+            if (resolved.realName) candidateName = resolved.realName;
+            if (resolved.avatarUrl && !profilePicUrl) profilePicUrl = resolved.avatarUrl;
+          }
+        }
       } else {
         const cleanDigits = remoteJid.replace(/\D/g, '');
         if (cleanDigits.length >= 10 && cleanDigits.length <= 13) {
@@ -482,7 +503,6 @@ export class WebhooksController {
         messageObj?.extendedTextMessage?.text ||
         '';
 
-      const candidateName = data.pushName || data.verifiedBizName || data.verifiedName;
       const contactDisplayName = candidateName && !candidateName.includes('@lid')
         ? candidateName
         : (realPhone ? realPhone : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : remoteJid));
@@ -560,8 +580,6 @@ export class WebhooksController {
       }
 
       // Se não veio base64 embutido no payload, busca dinamicamente na Evolution API
-      const rawInstName = payload.instance || payload.data?.instance;
-      const instName = rawInstName ? rawInstName.replace(' (WhatsApp Web)', '').trim() : '';
       if ((isAudio || isImage || isVideo || isDocument) && !mediaBase64 && instName) {
         mediaBase64 = await this.whatsappService.getBase64FromEvolutionMedia(instName, messageObj, key);
       }
@@ -624,7 +642,7 @@ export class WebhooksController {
             pushName: candidateName,
             remoteJid: key.remoteJid,
             realPhone: realPhone,
-            profilePictureUrl: data.profilePictureUrl || null,
+            profilePictureUrl: profilePicUrl,
             mediaUrl: mediaUrl,
             mediaType: mediaType,
             mediaMime: mediaMime,

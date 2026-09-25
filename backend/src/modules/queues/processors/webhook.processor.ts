@@ -234,18 +234,34 @@ export class WebhookProcessor extends WorkerHost {
       content = '[Mídia Recebida]';
     }
     
-    // 3. Resolução unificada do Contato (evita contatos duplicados entre @lid e número real)
-    const isLid = remoteJid.includes('@lid');
-    const realPhone = (evolutionMetadata?.realPhone && evolutionMetadata.realPhone.length >= 10)
+    // 3. Resolução unificada do Contato (prioriza sempre número real E.164 e elimina @lid como telefone principal)
+    const isLid = remoteJid.includes('@lid') || remoteJid.replace(/\D/g, '').length > 13;
+    let realPhone = (evolutionMetadata?.realPhone && evolutionMetadata.realPhone.length >= 10 && evolutionMetadata.realPhone.length <= 13)
       ? evolutionMetadata.realPhone
       : null;
 
-    // Busca contato existente por telefone direto ou whatsappLid
+    const lidId = evolutionMetadata?.remoteJid || (isLid ? remoteJid : null);
+
+    // Se ainda não tiver número real e for LID, busca síncronamente na agenda da Evolution API
+    if (!realPhone && (isLid || (lidId && lidId.includes('@lid')))) {
+      const resolved = await this.whatsappService.resolveContactFromEvolution(
+        tenantId,
+        evolutionMetadata?.instanceName,
+        lidId || remoteJid,
+        pushName || evolutionMetadata?.pushName,
+        evolutionMetadata?.profilePictureUrl
+      );
+      if (resolved.realPhone) {
+        realPhone = resolved.realPhone;
+      }
+    }
+
+    // Busca contato existente por telefone direto, whatsappLid ou número real
     let existingContact = await this.prisma.contact.findFirst({
       where: {
         tenantId,
         OR: [
-          ...(isLid ? [{ whatsappLid: remoteJid }] : []),
+          ...(lidId ? [{ whatsappLid: lidId }, { phone: lidId }] : []),
           { phone: remoteJid },
           ...(realPhone ? [{ phone: realPhone }, { whatsappLid: realPhone }] : []),
         ],
@@ -259,10 +275,10 @@ export class WebhookProcessor extends WorkerHost {
     if (existingContact) {
       // Se encontrou, atualiza dados que faltavam (ex: vincula whatsappLid ou atualiza para número real)
       const dataToUpdate: any = {};
-      if (isLid && !existingContact.whatsappLid) {
-        dataToUpdate.whatsappLid = remoteJid;
+      if (lidId && !existingContact.whatsappLid) {
+        dataToUpdate.whatsappLid = lidId;
       }
-      if (realPhone && existingContact.phone?.includes('@lid')) {
+      if (realPhone && (existingContact.phone?.includes('@lid') || existingContact.phone?.replace(/\D/g, '').length > 13)) {
         dataToUpdate.phone = realPhone;
       }
       if (!isGenericPushName && (existingContact.name === 'Cliente WhatsApp' || existingContact.name?.includes('@lid'))) {
@@ -281,17 +297,17 @@ export class WebhookProcessor extends WorkerHost {
         contact = existingContact;
       }
     } else {
-      // Novo contato no banco
+      // Novo contato no banco: prioriza SEMPRE o telefone real E.164
       const targetPhone = realPhone || remoteJid;
       const cleanName = !isGenericPushName
         ? rawPushName
-        : (targetPhone.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${targetPhone})`);
+        : (realPhone ? `WhatsApp (${realPhone})` : (targetPhone.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${targetPhone})`));
 
       contact = await this.prisma.contact.create({
         data: {
           tenantId,
           phone: targetPhone,
-          whatsappLid: isLid ? remoteJid : null,
+          whatsappLid: lidId || (isLid ? remoteJid : null),
           name: cleanName,
           source: 'WhatsApp',
           avatarUrl: (evolutionMetadata?.profilePictureUrl && !evolutionMetadata.profilePictureUrl.includes('unsplash.com')) ? evolutionMetadata.profilePictureUrl : null,

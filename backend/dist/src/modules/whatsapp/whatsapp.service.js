@@ -22,6 +22,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
         this.prisma = prisma;
         this.chatGateway = chatGateway;
         this.logger = new common_1.Logger(WhatsappService_1.name);
+        this.evoContactsCache = new Map();
     }
     async ensureDefaultInstance(tenantId) {
         const existing = await this.prisma.whatsAppInstance.findFirst({
@@ -992,6 +993,167 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             return false;
         }
     }
+    extractPhotoId(url) {
+        if (!url)
+            return null;
+        try {
+            const cleanUrl = url.split('?')[0];
+            const match = cleanUrl.match(/([0-9]+_[0-9]+_[0-9]+_n\.jpg)/);
+            if (match)
+                return match[1];
+            return path.basename(cleanUrl);
+        }
+        catch {
+            return null;
+        }
+    }
+    normalizeContactName(s) {
+        if (!s)
+            return '';
+        return s
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+    async resolveContactFromEvolution(tenantId, instanceName, remoteJid, pushName, profilePictureUrl) {
+        const isLid = remoteJid && (remoteJid.includes('@lid') || remoteJid.replace(/\D/g, '').length > 13);
+        if (!isLid && remoteJid) {
+            const cleanDigits = remoteJid.replace(/\D/g, '');
+            if (cleanDigits.length >= 10 && cleanDigits.length <= 13) {
+                return { realPhone: cleanDigits, realName: pushName || null, avatarUrl: profilePictureUrl || null };
+            }
+        }
+        try {
+            let targetInstanceName = instanceName ? (instanceName || '').replace(' (WhatsApp Web)', '').trim() : '';
+            if (!targetInstanceName) {
+                const inst = await this.prisma.whatsAppInstance.findFirst({
+                    where: { tenantId, status: { in: ['open', 'connected'] } },
+                });
+                if (inst?.name) {
+                    targetInstanceName = (inst.name || '').replace(' (WhatsApp Web)', '').trim();
+                }
+            }
+            if (!targetInstanceName) {
+                return { realPhone: null, realName: null, avatarUrl: null };
+            }
+            const { serverUrl, apiKey } = this.getEvolutionConfig();
+            const now = Date.now();
+            let contacts = this.evoContactsCache.get(targetInstanceName)?.contacts;
+            const cacheTimestamp = this.evoContactsCache.get(targetInstanceName)?.timestamp || 0;
+            if (!contacts || (now - cacheTimestamp > 90 * 1000)) {
+                try {
+                    const res = await axios_1.default.post(`${serverUrl}/chat/findContacts/${targetInstanceName}`, {}, {
+                        headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+                        timeout: 5000,
+                    });
+                    if (Array.isArray(res.data) && res.data.length > 0) {
+                        contacts = res.data;
+                        this.evoContactsCache.set(targetInstanceName, { timestamp: now, contacts });
+                    }
+                }
+                catch (fetchErr) {
+                    this.logger.warn(`[LID Sync] Falha ao consultar findContacts na instância ${targetInstanceName}: ${fetchErr.message}`);
+                }
+                if (!contacts || !contacts.length) {
+                    try {
+                        const allInstRes = await axios_1.default.get(`${serverUrl}/instance/fetchInstances`, {
+                            headers: { apikey: apiKey },
+                            timeout: 4000,
+                        });
+                        const allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
+                        for (const item of allInstances) {
+                            const instObj = item.instance || item;
+                            const realName = instObj.instanceName || instObj.name;
+                            const status = instObj.status || instObj.connectionStatus;
+                            if (realName && (status === 'open' || status === 'connected')) {
+                                const retryRes = await axios_1.default.post(`${serverUrl}/chat/findContacts/${realName}`, {}, {
+                                    headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+                                    timeout: 5000,
+                                });
+                                if (Array.isArray(retryRes.data) && retryRes.data.length > 0) {
+                                    contacts = retryRes.data;
+                                    this.evoContactsCache.set(targetInstanceName, { timestamp: now, contacts });
+                                    this.evoContactsCache.set(realName, { timestamp: now, contacts });
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    catch (instListErr) {
+                        this.logger.warn(`[LID Sync] Erro ao listar instâncias ativas na Evolution: ${instListErr.message}`);
+                    }
+                }
+            }
+            if (!contacts || !contacts.length) {
+                return { realPhone: null, realName: null, avatarUrl: null };
+            }
+            const picToContactMap = new Map();
+            const nameToContactMap = new Map();
+            for (const ec of contacts) {
+                if (!ec.id || ec.id.includes('@lid'))
+                    continue;
+                const realPhone = ec.id.replace('@s.whatsapp.net', '').replace('@c.us', '').replace(/\D/g, '');
+                if (realPhone.length < 10 || realPhone.length > 13)
+                    continue;
+                const photoId = this.extractPhotoId(ec.profilePictureUrl);
+                if (photoId) {
+                    picToContactMap.set(photoId, {
+                        realPhone,
+                        name: ec.pushName || ec.name,
+                        avatarUrl: ec.profilePictureUrl || null,
+                    });
+                }
+                const candidateName = ec.pushName || ec.name;
+                const norm = this.normalizeContactName(candidateName);
+                if (norm && norm.length >= 3) {
+                    nameToContactMap.set(norm, {
+                        realPhone,
+                        name: candidateName,
+                        avatarUrl: ec.profilePictureUrl || null,
+                    });
+                }
+            }
+            const inPhotoId = this.extractPhotoId(profilePictureUrl);
+            if (inPhotoId && picToContactMap.has(inPhotoId)) {
+                const match = picToContactMap.get(inPhotoId);
+                this.logger.log(`[LID Mapeado por Foto] Remetente [${remoteJid}] (${pushName}) -> Telefone Real: ${match.realPhone} (${match.name})`);
+                return {
+                    realPhone: match.realPhone,
+                    realName: pushName || match.name || null,
+                    avatarUrl: match.avatarUrl || profilePictureUrl || null,
+                };
+            }
+            if (pushName && !pushName.includes('@lid') && pushName !== 'Cliente WhatsApp') {
+                const inNormName = this.normalizeContactName(pushName);
+                let match = nameToContactMap.get(inNormName);
+                if (!match) {
+                    const inFirstName = inNormName.split(' ')[0];
+                    for (const [key, val] of nameToContactMap.entries()) {
+                        if (key === inNormName || key === inFirstName || (key.startsWith(inFirstName) && inFirstName.length >= 4)) {
+                            match = val;
+                            break;
+                        }
+                    }
+                }
+                if (match) {
+                    this.logger.log(`[LID Mapeado por Nome] Remetente [${remoteJid}] (${pushName}) -> Telefone Real: ${match.realPhone} (${match.name})`);
+                    return {
+                        realPhone: match.realPhone,
+                        realName: pushName || match.name || null,
+                        avatarUrl: match.avatarUrl || profilePictureUrl || null,
+                    };
+                }
+            }
+            return { realPhone: null, realName: null, avatarUrl: null };
+        }
+        catch (err) {
+            this.logger.warn(`[LID Resolve] Erro durante a resolução: ${err.message}`);
+            return { realPhone: null, realName: null, avatarUrl: null };
+        }
+    }
     async syncAndResolveLidContacts(tenantId) {
         try {
             const lidContacts = await this.prisma.contact.findMany({
@@ -1000,6 +1162,8 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                     OR: [
                         { phone: { contains: 'lid' } },
                         { name: { contains: 'lid' } },
+                        { whatsappLid: { not: null } },
+                        { phone: { startsWith: '173' } },
                     ],
                 },
             });
@@ -1010,67 +1174,32 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             });
             if (!instances.length)
                 return 0;
-            const { serverUrl, apiKey } = this.getEvolutionConfig();
             let resolvedCount = 0;
             for (const inst of instances) {
                 const cleanName = (inst.name || '').replace(' (WhatsApp Web)', '').trim();
                 if (!cleanName)
                     continue;
-                try {
-                    const res = await axios_1.default.post(`${serverUrl}/chat/findContacts/${cleanName}`, {}, {
-                        headers: { apikey: apiKey, 'Content-Type': 'application/json' },
-                        timeout: 10000,
-                    });
-                    const evoContacts = res.data || [];
-                    if (!Array.isArray(evoContacts))
+                for (const contact of lidContacts) {
+                    const digits = (contact.phone || '').replace(/\D/g, '');
+                    if (digits.length >= 10 && digits.length <= 13 && !contact.phone.includes('@lid')) {
                         continue;
-                    const picToPhoneMap = new Map();
-                    const nameToPhoneMap = new Map();
-                    for (const ec of evoContacts) {
-                        if (!ec.id || ec.id.includes('@lid'))
-                            continue;
-                        const realPhone = ec.id.replace('@s.whatsapp.net', '').replace('@c.us', '').replace(/\D/g, '');
-                        if (realPhone.length < 10)
-                            continue;
-                        if (ec.profilePictureUrl) {
-                            const cleanPic = ec.profilePictureUrl.split('?')[0];
-                            picToPhoneMap.set(cleanPic, realPhone);
-                        }
-                        if (ec.pushName) {
-                            const normName = ec.pushName.trim().toLowerCase();
-                            nameToPhoneMap.set(normName, realPhone);
-                        }
                     }
-                    for (const contact of lidContacts) {
-                        let foundPhone = null;
-                        if (contact.avatarUrl) {
-                            const cleanAvatar = contact.avatarUrl.split('?')[0];
-                            foundPhone = picToPhoneMap.get(cleanAvatar) || null;
-                        }
-                        if (!foundPhone && contact.name && !contact.name.includes('@lid') && contact.name !== 'Cliente WhatsApp') {
-                            const normContactName = contact.name.trim().toLowerCase();
-                            foundPhone = nameToPhoneMap.get(normContactName) || null;
-                            if (!foundPhone) {
-                                for (const [evoName, phone] of nameToPhoneMap.entries()) {
-                                    if (evoName.includes(normContactName) || normContactName.includes(evoName)) {
-                                        foundPhone = phone;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        if (foundPhone) {
-                            await this.prisma.contact.update({
-                                where: { id: contact.id },
-                                data: { phone: foundPhone },
-                            });
-                            this.logger.log(`[LID Resolution] Contato [${contact.id}] (${contact.name}) resolvido para telefone real: ${foundPhone}`);
-                            resolvedCount++;
-                        }
+                    const resolution = await this.resolveContactFromEvolution(tenantId, cleanName, contact.whatsappLid || contact.phone, contact.name, contact.avatarUrl);
+                    if (resolution.realPhone) {
+                        await this.prisma.contact.update({
+                            where: { id: contact.id },
+                            data: {
+                                phone: resolution.realPhone,
+                                whatsappLid: contact.whatsappLid || contact.phone,
+                                name: (contact.name && !contact.name.includes('@lid') && contact.name !== 'Cliente WhatsApp')
+                                    ? contact.name
+                                    : (resolution.realName || `WhatsApp (${resolution.realPhone})`),
+                                avatarUrl: contact.avatarUrl || resolution.avatarUrl,
+                            },
+                        });
+                        this.logger.log(`[LID Resolution Retroativa] Contato [${contact.id}] (${contact.name}) atualizado para telefone real: ${resolution.realPhone}`);
+                        resolvedCount++;
                     }
-                }
-                catch (e) {
-                    this.logger.warn(`Erro ao consultar findContacts na instância [${cleanName}]: ${e.message}`);
                 }
             }
             return resolvedCount;

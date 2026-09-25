@@ -474,6 +474,12 @@ function InboxContent() {
     if (!rawPhone) return '';
     const cleanJid = rawPhone.replace('@s.whatsapp.net', '').replace('@c.us', '');
     const clean = cleanJid.replace(/\D/g, '');
+
+    // Se for um LID do WhatsApp (identificador técnico de 14 ou 15 dígitos, ou contiver @lid)
+    if (cleanJid.includes('@lid') || (clean.length > 13 && !clean.startsWith('55'))) {
+      return 'WhatsApp Contato';
+    }
+
     if (clean.length === 13 && clean.startsWith('55')) {
       return `+55 (${clean.slice(2, 4)}) ${clean.slice(4, 9)}-${clean.slice(9)}`;
     } else if (clean.length === 12 && clean.startsWith('55')) {
@@ -482,13 +488,11 @@ function InboxContent() {
       return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7)}`;
     } else if (clean.length === 10) {
       return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
-    } else if (clean.length >= 8 && clean.length <= 15) {
+    } else if (clean.length >= 8 && clean.length <= 13) {
       return clean.startsWith('55') ? `+${clean}` : clean;
     }
-    if (cleanJid.includes('@lid')) {
-      return 'Contato WhatsApp';
-    }
-    return rawPhone;
+
+    return 'WhatsApp Contato';
   };
 
   const formatDisplayPhoneNumber = (rawPhone?: string) => {

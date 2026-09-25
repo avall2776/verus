@@ -368,8 +368,12 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             }
             const isFromMe = Boolean(key.fromMe);
             const remoteJid = (key.remoteJid || '').replace('@s.whatsapp.net', '');
+            const rawInstName = payload.instance || payload.data?.instance;
+            const instName = rawInstName ? rawInstName.replace(' (WhatsApp Web)', '').trim() : '';
             let realPhone = null;
-            if (remoteJid.includes('@lid')) {
+            let candidateName = data.pushName || data.verifiedBizName || data.verifiedName;
+            let profilePicUrl = data.profilePictureUrl || null;
+            if (remoteJid.includes('@lid') || remoteJid.replace(/\D/g, '').length > 13) {
                 const candidatePn = key.participantPn ||
                     data?.participantPn ||
                     data?.senderPn ||
@@ -384,6 +388,16 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                         realPhone = cleanPn;
                     }
                 }
+                if (!realPhone) {
+                    const resolved = await this.whatsappService.resolveContactFromEvolution(tenantId, instName, key.remoteJid || remoteJid, candidateName, profilePicUrl);
+                    if (resolved.realPhone) {
+                        realPhone = resolved.realPhone;
+                        if (resolved.realName)
+                            candidateName = resolved.realName;
+                        if (resolved.avatarUrl && !profilePicUrl)
+                            profilePicUrl = resolved.avatarUrl;
+                    }
+                }
             }
             else {
                 const cleanDigits = remoteJid.replace(/\D/g, '');
@@ -394,7 +408,6 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             const textBody = messageObj?.conversation ||
                 messageObj?.extendedTextMessage?.text ||
                 '';
-            const candidateName = data.pushName || data.verifiedBizName || data.verifiedName;
             const contactDisplayName = candidateName && !candidateName.includes('@lid')
                 ? candidateName
                 : (realPhone ? realPhone : (remoteJid.includes('@lid') ? 'Cliente WhatsApp' : remoteJid));
@@ -461,8 +474,6 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                 mediaFilename = docObj?.fileName || docObj?.title || 'documento.pdf';
                 mediaBase64 = mediaBase64 || docObj?.base64;
             }
-            const rawInstName = payload.instance || payload.data?.instance;
-            const instName = rawInstName ? rawInstName.replace(' (WhatsApp Web)', '').trim() : '';
             if ((isAudio || isImage || isVideo || isDocument) && !mediaBase64 && instName) {
                 mediaBase64 = await this.whatsappService.getBase64FromEvolutionMedia(instName, messageObj, key);
             }
@@ -513,7 +524,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     pushName: candidateName,
                     remoteJid: key.remoteJid,
                     realPhone: realPhone,
-                    profilePictureUrl: data.profilePictureUrl || null,
+                    profilePictureUrl: profilePicUrl,
                     mediaUrl: mediaUrl,
                     mediaType: mediaType,
                     mediaMime: mediaMime,
