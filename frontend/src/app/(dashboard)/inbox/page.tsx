@@ -1122,6 +1122,38 @@ function InboxContent() {
     }
   }, [fetchErrorQuery]);
 
+  // Sincronização e Hidratação Retroativa de Mensagens Offline (24h)
+  const [isSyncingOffline, setIsSyncingOffline] = useState(false);
+
+  const handleSyncOfflineMessages = useCallback(async (showToast = false) => {
+    setIsSyncingOffline(true);
+    try {
+      const res = await api.post('/chat/sync');
+      const { syncedCount = 0, updatedCount = 0 } = res.data || {};
+      if (syncedCount > 0 || updatedCount > 0) {
+        refetchConversations();
+        refetchCounts();
+        if (showToast) {
+          toast.success(`Sincronização concluída: ${syncedCount} novas mensagens e ${updatedCount} atualizadas.`);
+        }
+      } else if (showToast) {
+        toast.success("Mensagens e contatos já estão 100% atualizados!");
+      }
+    } catch (err) {
+      console.warn("Falha silenciosa na sincronização retroativa:", err);
+      if (showToast) {
+        toast.error("Falha ao sincronizar mensagens da Evolution API.");
+      }
+    } finally {
+      setIsSyncingOffline(false);
+    }
+  }, [refetchConversations, refetchCounts]);
+
+  // Disparo obrigatório automático ao abrir o Inbox (hidratação offline 24h)
+  useEffect(() => {
+    handleSyncOfflineMessages(false);
+  }, [handleSyncOfflineMessages]);
+
   // 2. Buscar mensagens quando o chat ativo mudar
   useEffect(() => {
     if (!activeChat) return;
@@ -1738,8 +1770,19 @@ function InboxContent() {
             );
           })()}
 
-          {/* Ações Rápidas do Topo: Novo Chat & Menu de Opções */}
+          {/* Ações Rápidas do Topo: Novo Chat, Sincronização & Menu de Opções */}
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Botão Sincronização Offline 24h */}
+            <button
+              type="button"
+              onClick={() => handleSyncOfflineMessages(true)}
+              disabled={isSyncingOffline}
+              className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95 disabled:opacity-50"
+              title="Sincronizar mensagens offline (últimas 24h)"
+            >
+              <RefreshCw size={14} className={isSyncingOffline ? "animate-spin text-blue-400" : ""} />
+            </button>
+
             {/* Botão Novo Chat */}
             <button
               type="button"
@@ -1803,13 +1846,12 @@ function InboxContent() {
                         type="button"
                         onClick={() => {
                           setShowLeftHeaderMenu(false);
-                          refetchConversations();
-                          toast.success("Lista de conversas atualizada");
+                          handleSyncOfflineMessages(true);
                         }}
                         className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
                       >
-                        <RefreshCw size={14} className="text-blue-400" />
-                        <span>Atualizar conversas</span>
+                        <RefreshCw size={14} className={`text-blue-400 ${isSyncingOffline ? 'animate-spin' : ''}`} />
+                        <span>Sincronizar mensagens offline (24h)</span>
                       </button>
                     </div>
                   </div>

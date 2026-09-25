@@ -22,6 +22,7 @@ const child_process_1 = require("child_process");
 const util_1 = require("util");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
+const axios_1 = require("axios");
 const messaging_service_1 = require("../messaging/messaging.service");
 const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
 const chat_gateway_1 = require("./chat.gateway");
@@ -896,6 +897,198 @@ let ChatService = ChatService_1 = class ChatService {
         });
         this.logger.log(`Mensagem [${message.id}] apagada com sucesso na conversa [${conversationId}]`);
         return { success: true, messageId: message.id };
+    }
+    async syncOfflineMessages(tenantId) {
+        try {
+            this.logger.log(`[Offline Sync] Iniciando sincronização retroativa (24h) para o tenant [${tenantId}]...`);
+            const instances = await this.prisma.whatsAppInstance.findMany({
+                where: { tenantId, status: { in: ['open', 'connected'] } },
+            });
+            if (!instances.length) {
+                return { syncedCount: 0, updatedCount: 0 };
+            }
+            const { serverUrl, apiKey } = this.whatsappService.getEvolutionConfig();
+            const cutoffTimestamp = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
+            let syncedCount = 0;
+            let updatedCount = 0;
+            for (const inst of instances) {
+                let cleanName = (inst.name || '').replace(' (WhatsApp Web)', '').trim();
+                if (!cleanName)
+                    continue;
+                try {
+                    const allInstRes = await axios_1.default.get(`${serverUrl}/instance/fetchInstances`, {
+                        headers: { apikey: apiKey },
+                        timeout: 4000,
+                    });
+                    const allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
+                    for (const item of allInstances) {
+                        const instObj = item.instance || item;
+                        const rName = instObj.instanceName || instObj.name;
+                        const status = instObj.status || instObj.connectionStatus;
+                        if (rName && (status === 'open' || status === 'connected')) {
+                            cleanName = rName;
+                            break;
+                        }
+                    }
+                }
+                catch { }
+                let recentMessages = [];
+                try {
+                    const res = await axios_1.default.post(`${serverUrl}/chat/findMessages/${cleanName}`, {}, {
+                        headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+                        timeout: 10000,
+                    });
+                    if (Array.isArray(res.data)) {
+                        recentMessages = res.data;
+                    }
+                }
+                catch (e) {
+                    this.logger.warn(`[Offline Sync] Falha ao consultar mensagens de ${cleanName}: ${e.message}`);
+                }
+                for (const rawMsg of recentMessages) {
+                    const key = rawMsg.key || {};
+                    const msgId = key.id;
+                    const remoteJid = key.remoteJid || '';
+                    const msgTimestamp = rawMsg.messageTimestamp || 0;
+                    if (!msgId || !remoteJid || remoteJid.includes('status@broadcast') || msgTimestamp < cutoffTimestamp) {
+                        continue;
+                    }
+                    const isFromMe = Boolean(key.fromMe);
+                    const messageObj = rawMsg.message || {};
+                    const textBody = messageObj.conversation ||
+                        messageObj.extendedTextMessage?.text ||
+                        '';
+                    const isAudio = !!messageObj.audioMessage || !!messageObj.ptt || rawMsg.messageType === 'audioMessage';
+                    const isImage = !!messageObj.imageMessage || rawMsg.messageType === 'imageMessage';
+                    const isVideo = !!messageObj.videoMessage || rawMsg.messageType === 'videoMessage';
+                    const isDocument = !!messageObj.documentMessage || rawMsg.messageType === 'documentMessage';
+                    const isLocation = !!messageObj.locationMessage || !!messageObj.liveLocationMessage || rawMsg.messageType === 'locationMessage';
+                    const msgType = isAudio ? 'audio' : isImage ? 'image' : isVideo ? 'video' : isLocation ? 'location' : isDocument ? 'document' : 'text';
+                    const existingMsg = await this.prisma.message.findUnique({
+                        where: {
+                            tenantId_providerMessageId: {
+                                tenantId,
+                                providerMessageId: msgId,
+                            },
+                        },
+                    });
+                    if (existingMsg) {
+                        if (existingMsg.content === '[Mídia Recebida]' && !existingMsg.mediaUrl && (isAudio || isImage || isVideo || isDocument)) {
+                            let mediaBase64 = rawMsg.base64 || messageObj.base64;
+                            if (!mediaBase64) {
+                                mediaBase64 = await this.whatsappService.getBase64FromEvolutionMedia(cleanName, messageObj, key);
+                            }
+                            if (mediaBase64) {
+                                const mime = isAudio ? 'audio/ogg' : isImage ? 'image/jpeg' : isVideo ? 'video/mp4' : 'application/pdf';
+                                const saved = await this.whatsappService.saveBase64Media(tenantId, mediaBase64, msgId, mime);
+                                if (saved?.url) {
+                                    await this.prisma.message.update({
+                                        where: { id: existingMsg.id },
+                                        data: { mediaUrl: saved.url, type: msgType },
+                                    });
+                                    updatedCount++;
+                                }
+                            }
+                        }
+                        continue;
+                    }
+                    const resolution = await this.whatsappService.resolveContactFromEvolution(tenantId, cleanName, remoteJid, rawMsg.pushName, null);
+                    const realPhone = resolution.realPhone || (remoteJid.includes('@lid') ? null : remoteJid.replace(/\D/g, ''));
+                    const targetPhone = realPhone || remoteJid;
+                    let contact = await this.prisma.contact.findFirst({
+                        where: {
+                            tenantId,
+                            OR: [
+                                ...(remoteJid.includes('@lid') ? [{ whatsappLid: remoteJid }, { phone: remoteJid }] : []),
+                                { phone: targetPhone },
+                                ...(realPhone ? [{ phone: realPhone }, { whatsappLid: realPhone }] : []),
+                            ],
+                        },
+                    });
+                    if (!contact) {
+                        contact = await this.prisma.contact.create({
+                            data: {
+                                tenantId,
+                                phone: targetPhone,
+                                whatsappLid: remoteJid.includes('@lid') ? remoteJid : null,
+                                name: resolution.realName || rawMsg.pushName || (targetPhone.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${targetPhone})`),
+                                avatarUrl: resolution.avatarUrl,
+                                source: 'WhatsApp',
+                            },
+                        });
+                    }
+                    else if (realPhone && (contact.phone?.includes('@lid') || contact.phone?.replace(/\D/g, '').length > 13)) {
+                        contact = await this.prisma.contact.update({
+                            where: { id: contact.id },
+                            data: { phone: realPhone, whatsappLid: remoteJid },
+                        });
+                    }
+                    let conversation = await this.prisma.conversation.findUnique({
+                        where: { tenantId_contactId: { tenantId, contactId: contact.id } },
+                    });
+                    if (!conversation) {
+                        conversation = await this.prisma.conversation.create({
+                            data: {
+                                tenantId,
+                                contactId: contact.id,
+                                status: 'waiting',
+                            },
+                        });
+                    }
+                    let mediaUrl = null;
+                    if (isAudio || isImage || isVideo || isDocument) {
+                        let mediaBase64 = rawMsg.base64 || messageObj.base64;
+                        if (!mediaBase64) {
+                            mediaBase64 = await this.whatsappService.getBase64FromEvolutionMedia(cleanName, messageObj, key);
+                        }
+                        if (mediaBase64) {
+                            const mime = isAudio ? 'audio/ogg' : isImage ? 'image/jpeg' : isVideo ? 'video/mp4' : 'application/pdf';
+                            const saved = await this.whatsappService.saveBase64Media(tenantId, mediaBase64, msgId, mime);
+                            mediaUrl = saved?.url || null;
+                        }
+                    }
+                    else if (isLocation) {
+                        const locObj = messageObj.locationMessage || messageObj.liveLocationMessage;
+                        if (locObj?.degreesLatitude && locObj?.degreesLongitude) {
+                            mediaUrl = `https://maps.google.com/?q=${locObj.degreesLatitude},${locObj.degreesLongitude}`;
+                        }
+                    }
+                    const content = textBody || (mediaUrl ? `[${msgType.toUpperCase()}]` : '[Mídia Recebida]');
+                    const savedMsg = await this.prisma.message.create({
+                        data: {
+                            tenantId,
+                            conversationId: conversation.id,
+                            contactId: contact.id,
+                            providerMessageId: msgId,
+                            direction: isFromMe ? 'OUTBOUND' : 'INBOUND',
+                            senderType: isFromMe ? 'user' : 'contact',
+                            type: msgType,
+                            content,
+                            mediaUrl,
+                            fromMe: isFromMe,
+                            status: 'delivered',
+                            createdAt: new Date(msgTimestamp * 1000),
+                        },
+                    });
+                    await this.prisma.conversation.update({
+                        where: { id: conversation.id },
+                        data: { updatedAt: new Date(msgTimestamp * 1000) },
+                    });
+                    this.chatGateway.emitNewMessage(tenantId, {
+                        ...savedMsg,
+                        contactName: contact.name,
+                        contactPhone: contact.phone,
+                    });
+                    syncedCount++;
+                }
+            }
+            this.logger.log(`[Offline Sync Concluído] Mensagens sincronizadas: ${syncedCount} | Mídias recuperadas: ${updatedCount}`);
+            return { syncedCount, updatedCount };
+        }
+        catch (err) {
+            this.logger.error(`[Offline Sync Erro]: ${err.message}`);
+            return { syncedCount: 0, updatedCount: 0 };
+        }
     }
 };
 exports.ChatService = ChatService;

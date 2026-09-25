@@ -551,4 +551,8 @@ export declare class ChatService {
         success: boolean;
         messageId: string;
     }>;
+    syncOfflineMessages(tenantId: string): Promise<{
+        syncedCount: number;
+        updatedCount: number;
+    }>;
 }

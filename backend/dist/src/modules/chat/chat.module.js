@@ -14,6 +14,7 @@ const messaging_module_1 = require("../messaging/messaging.module");
 const auth_module_1 = require("../auth/auth.module");
 const chat_service_1 = require("./chat.service");
 const chat_controller_1 = require("./chat.controller");
+const chat_alias_controller_1 = require("./chat-alias.controller");
 const media_controller_1 = require("./media.controller");
 const chat_gateway_1 = require("./chat.gateway");
 let ChatModule = class ChatModule {
@@ -29,7 +30,7 @@ exports.ChatModule = ChatModule = __decorate([
             bullmq_1.BullModule.registerQueue({ name: 'scheduled-messages' }),
         ],
         providers: [chat_service_1.ChatService, chat_gateway_1.ChatGateway],
-        controllers: [chat_controller_1.ChatController, media_controller_1.MediaController],
+        controllers: [chat_controller_1.ChatController, chat_alias_controller_1.ChatAliasController, media_controller_1.MediaController],
         exports: [chat_gateway_1.ChatGateway, chat_service_1.ChatService],
     })
 ], ChatModule);

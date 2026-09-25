@@ -22,6 +22,13 @@ export class ChatController {
     return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, selectedTab);
   }
 
+  @Post('sync')
+  async syncOfflineMessages(
+    @CurrentTenant() tenantId: string,
+  ) {
+    return this.chatService.syncOfflineMessages(tenantId);
+  }
+
   @Get('counts')
   async getConversationCounts(
     @CurrentTenant() tenantId: string,
