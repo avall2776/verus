@@ -17,10 +17,21 @@ let WorkspacesService = class WorkspacesService {
         this.prisma = prisma;
     }
     async list(tenantId) {
-        const existingCount = await this.prisma.workspace.count({ where: { tenantId } });
-        if (existingCount === 0) {
-            const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
-            await this.prisma.workspace.create({
+        let [workspaces, tenant] = await Promise.all([
+            this.prisma.workspace.findMany({
+                where: { tenantId },
+                orderBy: [
+                    { isDefault: 'desc' },
+                    { createdAt: 'asc' },
+                ],
+            }),
+            this.prisma.tenant.findUnique({
+                where: { id: tenantId },
+                include: { plan: true },
+            }),
+        ]);
+        if (workspaces.length === 0) {
+            const defaultWorkspace = await this.prisma.workspace.create({
                 data: {
                     name: tenant?.name || 'Workspace Principal',
                     description: 'Unidade operacional principal da empresa.',
@@ -30,18 +41,8 @@ let WorkspacesService = class WorkspacesService {
                     tenantId,
                 },
             });
+            workspaces = [defaultWorkspace];
         }
-        const tenant = await this.prisma.tenant.findUnique({
-            where: { id: tenantId },
-            include: { plan: true },
-        });
-        const workspaces = await this.prisma.workspace.findMany({
-            where: { tenantId },
-            orderBy: [
-                { isDefault: 'desc' },
-                { createdAt: 'asc' },
-            ],
-        });
         const maxWorkspaces = tenant?.plan?.maxWorkspaces ?? 1;
         return {
             workspaces,

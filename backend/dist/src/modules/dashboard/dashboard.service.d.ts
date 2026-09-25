@@ -1,6 +1,7 @@
 import { PrismaService } from '../../shared/database/prisma.service';
 export declare class DashboardService {
     private readonly prisma;
+    private readonly crmCache;
     constructor(prisma: PrismaService);
     getDashboardData(tenantId: string): Promise<{
         kpis: {
@@ -34,26 +35,5 @@ export declare class DashboardService {
             resolved: number;
         }[];
     }>;
-    getCrmMetrics(tenantId: string): Promise<{
-        totalDeals: number;
-        totalRevenue: number;
-        wonRevenue: number;
-        lostRevenue: number;
-        wonCount: number;
-        lostCount: number;
-        openCount: number;
-        winRate: number;
-        avgTicket: number;
-        avgSalesCycleDays: number;
-        avgTimeToMoveHours: number;
-        weeklyComparison: {
-            name: string;
-            ganho: number;
-            perdido: number;
-        }[];
-        funnelData: {
-            name: string;
-            value: number;
-        }[];
-    }>;
+    getCrmMetrics(tenantId: string): Promise<any>;
 }

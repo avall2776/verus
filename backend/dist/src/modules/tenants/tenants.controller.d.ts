@@ -9,15 +9,7 @@ export declare class TenantsController {
     private readonly tenantsService;
     constructor(tenantsService: TenantsService);
     private checkSuperAdmin;
-    getStats(req: any): Promise<{
-        totalTenants: number;
-        activeTenants: number;
-        blockedTenants: number;
-        totalUsers: number;
-        totalContracts: number;
-        openTickets: number;
-        estimatedMRR: number;
-    }>;
+    getStats(req: any): Promise<any>;
     getMyTenant(tenantId: string): Promise<{
         _count: {
             supportTickets: number;

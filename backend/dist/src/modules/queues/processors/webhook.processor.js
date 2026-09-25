@@ -99,11 +99,17 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         const isImage = message.type === 'image' ||
             !!message.image ||
             evolutionMetadata?.mediaType === 'image';
+        const isVideo = message.type === 'video' ||
+            !!message.video ||
+            evolutionMetadata?.mediaType === 'video';
+        const isLocation = message.type === 'location' ||
+            !!message.location ||
+            evolutionMetadata?.mediaType === 'location';
         const isDocument = message.type === 'document' ||
             !!message.document ||
             evolutionMetadata?.mediaType === 'document';
         let content = message.text?.body || '';
-        let msgType = isAudio ? 'audio' : isImage ? 'image' : isDocument ? 'document' : (message.type || 'text');
+        let msgType = isAudio ? 'audio' : isImage ? 'image' : isVideo ? 'video' : isLocation ? 'location' : isDocument ? 'document' : (message.type || 'text');
         let mediaUrl = null;
         let audioTranscription = null;
         if (isAudio) {
@@ -163,6 +169,31 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             else {
                 content = caption || '📷 Foto';
             }
+        }
+        else if (isVideo) {
+            msgType = 'video';
+            const vidObj = message.video;
+            const mediaId = vidObj?.id;
+            const directUrl = vidObj?.link || vidObj?.url || evolutionMetadata?.mediaUrl;
+            const mimeType = vidObj?.mime_type || evolutionMetadata?.mediaMime || 'video/mp4';
+            const caption = vidObj?.caption || evolutionMetadata?.mediaCaption || message.text?.body || '';
+            if (directUrl) {
+                mediaUrl = directUrl;
+            }
+            else if (mediaId) {
+                mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
+            }
+            content = caption ? `${caption}` : '📹 Vídeo';
+        }
+        else if (isLocation) {
+            msgType = 'location';
+            const locObj = message.location;
+            const lat = locObj?.latitude;
+            const lng = locObj?.longitude;
+            const locName = locObj?.name || '';
+            const locAddress = locObj?.address || '';
+            mediaUrl = (lat !== undefined && lng !== undefined) ? `https://maps.google.com/?q=${lat},${lng}` : evolutionMetadata?.mediaUrl || null;
+            content = locName ? `📍 ${locName}${locAddress ? ' - ' + locAddress : ''}` : (locAddress ? `📍 ${locAddress}` : (mediaUrl ? `📍 Localização no Mapa` : '📍 Localização compartilhada'));
         }
         else if (isDocument) {
             msgType = 'document';

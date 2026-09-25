@@ -24,15 +24,21 @@ let TenantsService = TenantsService_1 = class TenantsService {
         this.emailsService = emailsService;
         this.aiService = aiService;
         this.logger = new common_1.Logger(TenantsService_1.name);
+        this.evolutionInstancesCache = null;
+        this.statsCache = null;
     }
     async getActiveEvolutionInstances() {
+        const now = Date.now();
+        if (this.evolutionInstancesCache && now < this.evolutionInstancesCache.expiresAt) {
+            return this.evolutionInstancesCache.data;
+        }
         const instancesMap = new Map();
         try {
             const serverUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
             const apiKey = process.env.EVOLUTION_API_KEY || 'verto123';
             const res = await axios_1.default.get(`${serverUrl}/instance/fetchInstances`, {
                 headers: { apikey: apiKey },
-                timeout: 2500,
+                timeout: 1500,
             });
             const list = Array.isArray(res.data) ? res.data : [];
             for (const item of list) {
@@ -49,8 +55,12 @@ let TenantsService = TenantsService_1 = class TenantsService {
             }
         }
         catch (err) {
-            this.logger.debug(`Consulta à Evolution API ignorada: ${err.message}`);
+            this.logger.debug(`Consulta à Evolution API ignorada ou offline: ${err.message}`);
         }
+        this.evolutionInstancesCache = {
+            data: instancesMap,
+            expiresAt: now + 15000,
+        };
         return instancesMap;
     }
     resolveTenantWhatsAppStatus(tenant, liveEvolutionMap) {
@@ -115,7 +125,7 @@ let TenantsService = TenantsService_1 = class TenantsService {
                 { phone: { contains: term, mode: 'insensitive' } },
             ];
         }
-        const [tenants, total] = await Promise.all([
+        const [tenants, total, liveEvolutionMap] = await Promise.all([
             this.prisma.tenant.findMany({
                 where,
                 skip,
@@ -145,20 +155,42 @@ let TenantsService = TenantsService_1 = class TenantsService {
                 },
             }),
             this.prisma.tenant.count({ where }),
+            this.getActiveEvolutionInstances(),
         ]);
-        const liveEvolutionMap = await this.getActiveEvolutionInstances();
-        const formatted = await Promise.all(tenants.map(async (tenant) => {
-            const [openTickets, dealsCount] = await Promise.all([
-                this.prisma.supportTicket.count({
+        const tenantIds = tenants.map((t) => t.id);
+        const [openTicketsGroup, dealsGroup] = await Promise.all([
+            tenantIds.length > 0
+                ? this.prisma.supportTicket.groupBy({
+                    by: ['tenantId'],
                     where: {
-                        tenantId: tenant.id,
+                        tenantId: { in: tenantIds },
                         status: { in: ['OPEN', 'IN_PROGRESS', 'WAITING_CLIENT'] },
                     },
-                }),
-                this.prisma.deal.count({
-                    where: { tenantId: tenant.id },
-                }),
-            ]);
+                    _count: { id: true },
+                })
+                : [],
+            tenantIds.length > 0
+                ? this.prisma.deal.groupBy({
+                    by: ['tenantId'],
+                    where: {
+                        tenantId: { in: tenantIds },
+                    },
+                    _count: { id: true },
+                })
+                : [],
+        ]);
+        const openTicketsMap = new Map();
+        for (const item of openTicketsGroup) {
+            openTicketsMap.set(item.tenantId, item._count.id);
+        }
+        const dealsMap = new Map();
+        for (const item of dealsGroup) {
+            if (item.tenantId)
+                dealsMap.set(item.tenantId, item._count.id);
+        }
+        const formatted = tenants.map((tenant) => {
+            const openTickets = openTicketsMap.get(tenant.id) || 0;
+            const dealsCount = dealsMap.get(tenant.id) || 0;
             const emailSettings = tenant.emailSettings;
             const waInfo = this.resolveTenantWhatsAppStatus(tenant, liveEvolutionMap);
             const smtpConfigured = Boolean(emailSettings?.isActive ||
@@ -210,7 +242,7 @@ let TenantsService = TenantsService_1 = class TenantsService {
                     openTickets,
                 },
             };
-        }));
+        });
         return {
             data: formatted,
             pagination: {
@@ -222,6 +254,10 @@ let TenantsService = TenantsService_1 = class TenantsService {
         };
     }
     async getStats() {
+        const now = Date.now();
+        if (this.statsCache && now < this.statsCache.expiresAt) {
+            return this.statsCache.data;
+        }
         const [totalTenants, activeTenants, blockedTenants, totalUsers, totalContracts, openTickets, tenantsWithPlans,] = await Promise.all([
             this.prisma.tenant.count(),
             this.prisma.tenant.count({ where: { isActive: true } }),
@@ -240,7 +276,7 @@ let TenantsService = TenantsService_1 = class TenantsService {
             const price = Number(t.plan?.price || 0);
             return acc + price;
         }, 0);
-        return {
+        const statsData = {
             totalTenants,
             activeTenants,
             blockedTenants,
@@ -249,6 +285,11 @@ let TenantsService = TenantsService_1 = class TenantsService {
             openTickets,
             estimatedMRR,
         };
+        this.statsCache = {
+            data: statsData,
+            expiresAt: now + 10000,
+        };
+        return statsData;
     }
     async findOne(id) {
         const tenant = await this.prisma.tenant.findUnique({

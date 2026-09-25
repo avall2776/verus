@@ -36,14 +36,35 @@ import CreateCompanyModal from "@/components/super-admin/CreateCompanyModal";
 export default function SuperAdminCompaniesPage() {
   const router = useRouter();
 
-  // Estados de listagem
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Estados de listagem com hidratação instantânea
+  const [companies, setCompanies] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("versus_superadmin_companies");
+        if (cached) return JSON.parse(cached);
+      } catch (e) {}
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      return !sessionStorage.getItem("versus_superadmin_companies");
+    }
+    return true;
+  });
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [planFilter, setPlanFilter] = useState("ALL");
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ total: 0, totalPages: 1, limit: 10 });
+  const [pagination, setPagination] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("versus_superadmin_companies_pag");
+        if (cached) return JSON.parse(cached);
+      } catch (e) {}
+    }
+    return { total: 0, totalPages: 1, limit: 10 };
+  });
 
   // Estados de modais
   const [xRayTenantId, setXRayTenantId] = useState<string | null>(null);
@@ -76,8 +97,8 @@ export default function SuperAdminCompaniesPage() {
 
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const fetchCompanies = useCallback(async () => {
-    setLoading(true);
+  const fetchCompanies = useCallback(async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const params: any = {
         page: String(page),
@@ -89,18 +110,26 @@ export default function SuperAdminCompaniesPage() {
       if (planFilter !== "ALL") params.planId = planFilter;
 
       const res = await api.get("/tenants", { params });
-      setCompanies(res.data.data || []);
-      setPagination(res.data.pagination || { total: 0, totalPages: 1, limit: 10 });
+      const data = res.data.data || [];
+      const pag = res.data.pagination || { total: 0, totalPages: 1, limit: 10 };
+      setCompanies(data);
+      setPagination(pag);
+
+      if (typeof window !== "undefined" && page === 1 && !search.trim() && statusFilter === "ALL" && planFilter === "ALL") {
+        sessionStorage.setItem("versus_superadmin_companies", JSON.stringify(data));
+        sessionStorage.setItem("versus_superadmin_companies_pag", JSON.stringify(pag));
+      }
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.message || "Erro ao carregar lista de empresas.");
+      if (companies.length === 0) toast.error(err.response?.data?.message || "Erro ao carregar lista de empresas.");
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter, planFilter]);
+  }, [page, search, statusFilter, planFilter, companies.length]);
 
   useEffect(() => {
-    fetchCompanies();
+    const hasInitialData = companies.length > 0 && page === 1 && !search && statusFilter === 'ALL' && planFilter === 'ALL';
+    fetchCompanies(hasInitialData);
   }, [fetchCompanies]);
 
   const handleToggleStatus = async (company: any) => {

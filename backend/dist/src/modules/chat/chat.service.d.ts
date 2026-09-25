@@ -17,16 +17,8 @@ export declare class ChatService {
         resolved: number;
         total: number;
     }>;
-    getOperatorProductivity(tenantId: string, userId: string): Promise<{
-        todayFinishedCount: number;
-        tmaSeconds: number;
-        firstResponseSeconds: number;
-        todayAvgTma: string;
-        todayFirstResp: string;
-        avgDaily: number;
-        finishedVsAveragePercent: number;
-        dailyGoal: number;
-    }>;
+    private readonly productivityCache;
+    getOperatorProductivity(tenantId: string, userId: string): Promise<any>;
     findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string): Promise<({
         contact: {
             id: string;

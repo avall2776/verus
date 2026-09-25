@@ -1,62 +1,15 @@
 import { PrismaService } from '../../shared/database/prisma.service';
 export declare class AnalyticsService {
     private readonly prisma;
+    private readonly memoryCache;
+    private readonly seededTenants;
     constructor(prisma: PrismaService);
+    private getCached;
+    private setCached;
     private parseDateRange;
-    getOverview(tenantId: string, startDate?: string, endDate?: string): Promise<{
-        total: number;
-        inProgress: number;
-        finished: number;
-        inbound: number;
-        outbound: number;
-        newContacts: number;
-        tmaSeconds: number;
-        firstResponseSeconds: number;
-        ignoredCount: number;
-    }>;
-    getCharts(tenantId: string, startDate?: string, endDate?: string): Promise<{
-        timeline: {
-            date: string;
-            label: string;
-            finished: number;
-            inProgress: number;
-            avgTmaMinutes: number;
-        }[];
-        distributions: {
-            byStatus: {
-                name: string;
-                value: number;
-                color: string;
-            }[];
-            byDepartment: {
-                name: string;
-                value: number;
-                color: string;
-            }[];
-            byDayOfWeek: {
-                name: string;
-                value: number;
-            }[];
-            byCloseReason: {
-                name: string;
-                value: number;
-                color: string;
-            }[];
-        };
-    }>;
-    getAgentPerformance(tenantId: string, startDate?: string, endDate?: string): Promise<{
-        id: string;
-        name: string;
-        role: string;
-        isOnline: boolean;
-        pendingCount: number;
-        inProgressCount: number;
-        finishedCount: number;
-        total: number;
-        avgFirstResponse: string;
-        avgTma: string;
-        csatAvg: string;
-    }[]>;
+    getOverview(tenantId: string, startDate?: string, endDate?: string): Promise<unknown>;
+    getCharts(tenantId: string, startDate?: string, endDate?: string): Promise<unknown>;
+    getAgentPerformance(tenantId: string, startDate?: string, endDate?: string): Promise<unknown>;
     getDetailedTickets(tenantId: string, query: {
         startDate?: string;
         endDate?: string;
@@ -85,54 +38,8 @@ export declare class AnalyticsService {
         page: number;
         totalPages: number;
     }>;
-    getAiCosts(tenantId: string, startDate?: string, endDate?: string): Promise<{
-        spent7d: number;
-        spent15d: number;
-        spent30d: number;
-        projectionMonth: number;
-        dailyCostEvolution: any[];
-        detailedExecutions: {
-            id: string;
-            model: string;
-            promptTokens: number;
-            completionTokens: number;
-            costUsd: number;
-            createdAt: string;
-            contactName: string;
-        }[];
-    }>;
-    getCsat(tenantId: string, startDate?: string, endDate?: string, agentName?: string, search?: string): Promise<{
-        csatScore: number;
-        totalSurveys: number;
-        responsesCount: number;
-        responseRate: number;
-        positivePercent: number;
-        distribution: {
-            stars: number;
-            count: number;
-            percent: number;
-        }[];
-        surveys: {
-            id: string;
-            contactName: string;
-            phone: string;
-            agentName: string;
-            rating: number;
-            comment: string;
-            channel: string;
-            createdAt: string;
-        }[];
-        recentFeedbacks: {
-            id: string;
-            contactName: string;
-            phone: string;
-            agentName: string;
-            rating: number;
-            comment: string;
-            channel: string;
-            createdAt: string;
-        }[];
-    }>;
+    getAiCosts(tenantId: string, startDate?: string, endDate?: string): Promise<unknown>;
+    getCsat(tenantId: string, startDate?: string, endDate?: string, agentName?: string, search?: string): Promise<unknown>;
     private ensureInitialCsatSeed;
     createCsatSurvey(tenantId: string, data: {
         contactName: string;

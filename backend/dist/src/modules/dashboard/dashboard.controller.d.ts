@@ -34,26 +34,5 @@ export declare class DashboardController {
             resolved: number;
         }[];
     }>;
-    getCrmMetrics(tenantId: string): Promise<{
-        totalDeals: number;
-        totalRevenue: number;
-        wonRevenue: number;
-        lostRevenue: number;
-        wonCount: number;
-        lostCount: number;
-        openCount: number;
-        winRate: number;
-        avgTicket: number;
-        avgSalesCycleDays: number;
-        avgTimeToMoveHours: number;
-        weeklyComparison: {
-            name: string;
-            ganho: number;
-            perdido: number;
-        }[];
-        funnelData: {
-            name: string;
-            value: number;
-        }[];
-    }>;
+    getCrmMetrics(tenantId: string): Promise<any>;
 }

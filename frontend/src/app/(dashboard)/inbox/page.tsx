@@ -10,7 +10,7 @@ import {
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, Trash2, Play, Pause,
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
-  Clock, AlertCircle, Workflow, Pencil, ShoppingBag
+  Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -438,7 +438,7 @@ function InboxContent() {
     }
   };
 
-  const getAudioSrc = (url?: string | null) => {
+  const getMediaUrl = (url?: string | null, type?: string) => {
     if (!url) return '';
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
       return url;
@@ -449,8 +449,14 @@ function InboxContent() {
     if (url.startsWith('/media/')) {
       return `/api-backend${url}`;
     }
-    return `/api-backend/media/audio/${url.replace(/^.*[\\\/]/, '')}`;
+    const cleanFilename = url.replace(/^.*[\\\/]/, '');
+    if (type === 'audio' || /\.(ogg|opus|mp3|m4a|wav|webm)($|\?)/i.test(cleanFilename)) {
+      return `/api-backend/media/audio/${cleanFilename}`;
+    }
+    return `/api-backend/media/file/${cleanFilename}`;
   };
+
+  const getAudioSrc = (url?: string | null) => getMediaUrl(url, 'audio');
 
   const getLoggedInUserName = (): string => {
     if (typeof window === 'undefined') return '';
@@ -2708,12 +2714,12 @@ function InboxContent() {
                           {msg.mediaUrl && msg.type === 'image' && (
                             <div className="mb-2">
                               <div 
-                                onClick={() => setLightboxImage({ url: msg.mediaUrl!, title: msg.content || 'Imagem' })}
+                                onClick={() => setLightboxImage({ url: getMediaUrl(msg.mediaUrl, 'image'), title: msg.content || 'Imagem' })}
                                 className="relative group cursor-pointer overflow-hidden rounded-xl border border-white/10 shadow-md inline-block max-w-full"
                                 title="Clique para expandir em tela cheia"
                               >
                                 <img 
-                                  src={msg.mediaUrl} 
+                                  src={getMediaUrl(msg.mediaUrl, 'image')} 
                                   alt={msg.content || "Anexo"} 
                                   className="rounded-xl max-h-64 sm:max-h-72 object-cover transition-transform duration-300 group-hover:scale-[1.02]" 
                                 />
@@ -2724,6 +2730,54 @@ function InboxContent() {
                                   </div>
                                 </div>
                               </div>
+                            </div>
+                          )}
+
+                          {/* Renderização de Vídeos (WhatsApp Nativo) */}
+                          {(msg.type === 'video' || (!!msg.mediaUrl && /\.(mp4|mov|webm|mkv|avi)($|\?)/i.test(msg.mediaUrl))) && (
+                            <div className="mb-2 max-w-[320px] sm:max-w-[380px]">
+                              <div className="relative overflow-hidden rounded-xl border border-white/10 shadow-md bg-black">
+                                <video
+                                  src={getMediaUrl(msg.mediaUrl, 'video')}
+                                  controls
+                                  preload="metadata"
+                                  className="rounded-xl w-full max-h-72 object-contain bg-black"
+                                >
+                                  Seu navegador não suporta reprodução de vídeo.
+                                </video>
+                              </div>
+                              {msg.content && !msg.content.startsWith('📹') && (
+                                <p className="text-xs text-slate-300 mt-1 px-1">{msg.content}</p>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Renderização de Localização (Mapas e Coordenadas) */}
+                          {(msg.type === 'location' || (!!msg.mediaUrl && msg.mediaUrl.includes('maps.google.com')) || msg.content?.includes('📍')) && (
+                            <div className="flex flex-col gap-2 p-3 my-1.5 rounded-xl bg-slate-900/80 border border-emerald-500/40 text-white max-w-[320px] shadow-lg">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                                  <MapPin size={18} />
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="text-xs font-bold text-white truncate">Localização compartilhada</h4>
+                                  <p className="text-[11px] text-slate-300 truncate">
+                                    {msg.content?.replace(/^📍\s*/, '') || 'Coordenadas do WhatsApp'}
+                                  </p>
+                                </div>
+                              </div>
+                              {(msg.mediaUrl || msg.content?.includes('http')) && (
+                                <a
+                                  href={msg.mediaUrl || (msg.content?.match(/https?:\/\/[^\s]+/)?.[0] || '#')}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/25 hover:bg-emerald-600/40 border border-emerald-500/40 text-emerald-300 hover:text-white text-xs font-semibold transition-colors mt-0.5"
+                                >
+                                  <MapPin size={13} />
+                                  <span>Abrir no Google Maps</span>
+                                  <ExternalLink size={12} className="ml-1 opacity-70" />
+                                </a>
+                              )}
                             </div>
                           )}
 
@@ -2773,19 +2827,29 @@ function InboxContent() {
                             </div>
                           )}
 
-                          {/* Documentos */}
-                          {(msg.type === 'document' || (!!msg.mediaUrl && /\.pdf($|\?)/i.test(msg.mediaUrl))) && (
-                            <div className="flex items-center gap-2.5 p-2.5 bg-black/25 rounded-xl border border-white/10 hover:bg-black/35 transition-colors mb-2">
-                              <FileText size={18} className="text-blue-400 shrink-0" />
-                              <span className="text-xs truncate font-medium text-slate-200">{msg.content || 'Documento anexo'}</span>
+                          {/* Documentos e Anexos Diversos */}
+                          {(msg.type === 'document' || (!!msg.mediaUrl && !/\.(mp4|mov|webm|ogg|opus|mp3|m4a|wav|jpg|jpeg|png|webp|gif)($|\?)/i.test(msg.mediaUrl) && !msg.mediaUrl.includes('maps.google.com') && msg.type !== 'audio' && msg.type !== 'video' && msg.type !== 'image' && msg.type !== 'location')) && (
+                            <div className="flex items-center gap-2.5 p-2.5 bg-black/30 rounded-xl border border-white/10 hover:bg-black/40 transition-colors mb-2 max-w-[340px]">
+                              <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shrink-0">
+                                <FileText size={18} />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-xs truncate font-medium text-slate-200 block" title={msg.content || 'Documento anexo'}>
+                                  {msg.content?.replace(/^📄\s*\[Documento:\s*([^\]]+)\][\s\S]*$/, '$1') || 'Documento anexo'}
+                                </span>
+                                <span className="text-[10px] text-slate-400 uppercase tracking-wider">
+                                  {msg.mediaUrl ? (msg.mediaUrl.split('.').pop()?.split('?')[0] || 'ARQUIVO') : 'ARQUIVO'}
+                                </span>
+                              </div>
                               {msg.mediaUrl && (
                                 <a 
-                                  href={msg.mediaUrl} 
+                                  href={getMediaUrl(msg.mediaUrl, 'document')} 
                                   target="_blank" 
                                   rel="noopener noreferrer" 
-                                  className="ml-auto text-blue-400 hover:text-white p-1"
+                                  className="ml-auto text-blue-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+                                  title="Abrir anexo"
                                 >
-                                  <ExternalLink size={13} />
+                                  <ExternalLink size={14} />
                                 </a>
                               )}
                             </div>
@@ -2793,7 +2857,7 @@ function InboxContent() {
 
                           {/* Conteúdo de Texto com Horário e Ticks Inline WhatsApp */}
                           <div className="text-[0.92rem] leading-relaxed break-words relative">
-                            {msg.content && msg.type !== 'audio' && msg.type !== 'document' && (
+                            {msg.content && msg.type !== 'audio' && msg.type !== 'document' && msg.type !== 'location' && !msg.content.startsWith('📍') && (
                               <span className="whitespace-pre-wrap select-text">{msg.content}</span>
                             )}
                             {/* Horário e Ticks WhatsApp (Float-Right Inline) */}

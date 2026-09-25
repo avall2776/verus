@@ -18,24 +18,41 @@ import api from "@/lib/api";
 import { toast } from "sonner";
 
 export default function SuperAdminDashboard() {
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("versus_superadmin_stats");
+        if (cached) return JSON.parse(cached);
+      } catch (e) {}
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      return !sessionStorage.getItem("versus_superadmin_stats");
+    }
+    return true;
+  });
 
-  const fetchStats = async () => {
-    setLoading(true);
+  const fetchStats = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     try {
       const res = await api.get("/tenants/stats/overview");
       setStats(res.data);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("versus_superadmin_stats", JSON.stringify(res.data));
+      }
     } catch (err: any) {
       console.error(err);
-      toast.error("Erro ao carregar métricas globais.");
+      if (!stats) toast.error("Erro ao carregar métricas globais.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStats();
+    const hasCache = !!stats;
+    fetchStats(hasCache);
   }, []);
 
   const kpis = [
@@ -85,7 +102,7 @@ export default function SuperAdminDashboard() {
         </div>
 
         <button
-          onClick={fetchStats}
+          onClick={() => fetchStats(false)}
           disabled={loading}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B1224] border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
         >

@@ -93,6 +93,15 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
     }
   };
 
+  // Pausa o áudio ao desmontar o componente
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
   // Porcentagem atual
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -108,6 +117,8 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
         onWaiting={() => setIsLoading(true)}
         onCanPlay={() => setIsLoading(false)}
         className="hidden"

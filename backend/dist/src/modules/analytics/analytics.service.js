@@ -15,6 +15,18 @@ const prisma_service_1 = require("../../shared/database/prisma.service");
 let AnalyticsService = class AnalyticsService {
     constructor(prisma) {
         this.prisma = prisma;
+        this.memoryCache = new Map();
+        this.seededTenants = new Set();
+    }
+    getCached(key) {
+        const item = this.memoryCache.get(key);
+        if (item && Date.now() < item.expiresAt) {
+            return item.data;
+        }
+        return null;
+    }
+    setCached(key, data, ttlMs = 45000) {
+        this.memoryCache.set(key, { data, expiresAt: Date.now() + ttlMs });
     }
     parseDateRange(startDate, endDate) {
         const end = endDate ? new Date(endDate) : new Date();
@@ -24,6 +36,10 @@ let AnalyticsService = class AnalyticsService {
         return { start, end };
     }
     async getOverview(tenantId, startDate, endDate) {
+        const cacheKey = `overview:${tenantId}:${startDate || ''}:${endDate || ''}`;
+        const cached = this.getCached(cacheKey);
+        if (cached)
+            return cached;
         const { start, end } = this.parseDateRange(startDate, endDate);
         const whereBase = {
             tenantId,
@@ -93,7 +109,7 @@ let AnalyticsService = class AnalyticsService {
             ? Math.round(totalDurationMs / resolvedConversations.length / 1000)
             : 480;
         const firstResponseSeconds = Math.max(Math.round(tmaSeconds * 0.25), 95);
-        return {
+        const result = {
             total,
             inProgress,
             finished,
@@ -104,8 +120,14 @@ let AnalyticsService = class AnalyticsService {
             firstResponseSeconds,
             ignoredCount: waitingExpired,
         };
+        this.setCached(cacheKey, result, 45000);
+        return result;
     }
     async getCharts(tenantId, startDate, endDate) {
+        const cacheKey = `charts:${tenantId}:${startDate || ''}:${endDate || ''}`;
+        const cached = this.getCached(cacheKey);
+        if (cached)
+            return cached;
         const { start, end } = this.parseDateRange(startDate, endDate);
         const conversations = await this.prisma.conversation.findMany({
             where: {
@@ -200,7 +222,7 @@ let AnalyticsService = class AnalyticsService {
             { name: 'Não respondeu', value: Math.max(Math.round(byStatusMap.resolved * 0.15), 1), color: '#64748B' },
             { name: 'Outros', value: Math.max(Math.round(byStatusMap.resolved * 0.10), 1), color: '#8B5CF6' },
         ];
-        return {
+        const result = {
             timeline,
             distributions: {
                 byStatus,
@@ -209,8 +231,14 @@ let AnalyticsService = class AnalyticsService {
                 byCloseReason,
             },
         };
+        this.setCached(cacheKey, result, 45000);
+        return result;
     }
     async getAgentPerformance(tenantId, startDate, endDate) {
+        const cacheKey = `agents:${tenantId}:${startDate || ''}:${endDate || ''}`;
+        const cached = this.getCached(cacheKey);
+        if (cached)
+            return cached;
         const { start, end } = this.parseDateRange(startDate, endDate);
         const [users, conversations] = await Promise.all([
             this.prisma.user.findMany({
@@ -231,7 +259,7 @@ let AnalyticsService = class AnalyticsService {
                 },
             }),
         ]);
-        return users.map((user) => {
+        const result = users.map((user) => {
             const userConvs = conversations.filter((c) => c.assignedTo === user.id);
             const inProgressCount = userConvs.filter((c) => c.status === 'open' || c.status === 'human_takeover').length;
             const finishedCount = userConvs.filter((c) => c.status === 'resolved' || c.status === 'closed').length;
@@ -258,6 +286,8 @@ let AnalyticsService = class AnalyticsService {
                 csatAvg: (4.7 + (user.name.length % 4) * 0.1).toFixed(1),
             };
         });
+        this.setCached(cacheKey, result, 45000);
+        return result;
     }
     async getDetailedTickets(tenantId, query) {
         const { start, end } = this.parseDateRange(query.startDate, query.endDate);
@@ -346,6 +376,10 @@ let AnalyticsService = class AnalyticsService {
         };
     }
     async getAiCosts(tenantId, startDate, endDate) {
+        const cacheKey = `aicosts:${tenantId}:${startDate || ''}:${endDate || ''}`;
+        const cached = this.getCached(cacheKey);
+        if (cached)
+            return cached;
         const { start, end } = this.parseDateRange(startDate, endDate);
         const aiMessagesCount = await this.prisma.message.count({
             where: {
@@ -410,7 +444,7 @@ let AnalyticsService = class AnalyticsService {
                 contactName: 'Contato Web (Triagem Inicial)',
             },
         ];
-        return {
+        const result = {
             spent7d,
             spent15d,
             spent30d,
@@ -418,8 +452,14 @@ let AnalyticsService = class AnalyticsService {
             dailyCostEvolution,
             detailedExecutions,
         };
+        this.setCached(cacheKey, result, 45000);
+        return result;
     }
     async getCsat(tenantId, startDate, endDate, agentName, search) {
+        const cacheKey = `csat:${tenantId}:${startDate || ''}:${endDate || ''}:${agentName || ''}:${search || ''}`;
+        const cached = this.getCached(cacheKey);
+        if (cached)
+            return cached;
         const { start, end } = this.parseDateRange(startDate, endDate);
         await this.ensureInitialCsatSeed(tenantId);
         const where = {
@@ -480,7 +520,7 @@ let AnalyticsService = class AnalyticsService {
             channel: s.channel || 'WhatsApp',
             createdAt: s.createdAt.toISOString(),
         }));
-        return {
+        const result = {
             csatScore,
             totalSurveys,
             responsesCount,
@@ -490,9 +530,14 @@ let AnalyticsService = class AnalyticsService {
             surveys: formattedSurveys,
             recentFeedbacks: formattedSurveys,
         };
+        this.setCached(cacheKey, result, 45000);
+        return result;
     }
     async ensureInitialCsatSeed(tenantId) {
         try {
+            if (this.seededTenants.has(tenantId))
+                return;
+            this.seededTenants.add(tenantId);
             const count = await this.prisma.csatSurvey.count({ where: { tenantId } });
             if (count > 0)
                 return;

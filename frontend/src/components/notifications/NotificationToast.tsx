@@ -17,6 +17,7 @@ export interface LeadMessageToastProps {
   contactPhone?: string | null;
   messageContent: string;
   messageType?: 'TEXT' | 'AUDIO' | 'IMAGE' | 'DOCUMENT' | string;
+  messageCount?: number;
   onOpen: (conversationId: string) => void;
   onClose: () => void;
 }
@@ -29,6 +30,7 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
   contactPhone,
   messageContent,
   messageType = 'TEXT',
+  messageCount = 1,
   onOpen,
   onClose
 }) => {
@@ -103,13 +105,18 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
 
           {/* Nome e Badge WhatsApp */}
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <h4 className="font-bold text-sm text-white truncate max-w-[180px]" title={contactName}>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h4 className="font-bold text-sm text-white truncate max-w-[170px]" title={contactName}>
                 {contactName}
               </h4>
               <span className="text-[10px] font-semibold bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 px-1.5 py-0.5 rounded-full shrink-0">
                 WhatsApp
               </span>
+              {messageCount > 1 && (
+                <span className="text-[10px] font-bold bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">
+                  +{messageCount} novas
+                </span>
+              )}
             </div>
             {contactPhone && (
               <p className="text-[11px] text-slate-400 font-mono truncate">{contactPhone}</p>
@@ -136,7 +143,7 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
       <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/60">
         <span className="text-[10px] text-slate-400 flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-          Recebida agora
+          {messageCount > 1 ? `${messageCount} mensagens recebidas` : 'Recebida agora'}
         </span>
 
         <button
@@ -284,6 +291,9 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
   );
 };
 
+// Rastreio em memória da contagem de mensagens acumuladas por conversa ativa
+const activeToastMessageCounts: Record<string, number> = {};
+
 // Funções utilitárias de disparo
 export function showLeadMessageToast(
   data: {
@@ -308,6 +318,10 @@ export function showLeadMessageToast(
   const stableKey = data.conversationId || (data.contactPhone ? data.contactPhone.replace(/\D/g, '') : 'default_lead');
   const toastId = `lead_toast_${stableKey}`;
 
+  // Incrementa contagem de mensagens agrupadas deste contato
+  activeToastMessageCounts[stableKey] = (activeToastMessageCounts[stableKey] || 0) + 1;
+  const currentCount = activeToastMessageCounts[stableKey];
+
   toast.custom(
     (t) => (
       <LeadMessageToast
@@ -318,11 +332,16 @@ export function showLeadMessageToast(
         contactPhone={data.contactPhone}
         messageContent={data.messageContent}
         messageType={data.messageType}
+        messageCount={currentCount}
         onOpen={(cId) => {
+          delete activeToastMessageCounts[stableKey];
           toast.dismiss(toastId);
           router.push(`/inbox?conversationId=${cId}`);
         }}
-        onClose={() => toast.dismiss(toastId)}
+        onClose={() => {
+          delete activeToastMessageCounts[stableKey];
+          toast.dismiss(toastId);
+        }}
       />
     ),
     {

@@ -10,6 +10,8 @@ export declare class TenantsService {
     private readonly aiService;
     private readonly logger;
     constructor(prisma: PrismaService, emailsService: EmailsService, aiService: AiService);
+    private evolutionInstancesCache;
+    private statsCache;
     private getActiveEvolutionInstances;
     private resolveTenantWhatsAppStatus;
     findAll(query: QueryTenantsDto): Promise<{
@@ -58,15 +60,7 @@ export declare class TenantsService {
             totalPages: number;
         };
     }>;
-    getStats(): Promise<{
-        totalTenants: number;
-        activeTenants: number;
-        blockedTenants: number;
-        totalUsers: number;
-        totalContracts: number;
-        openTickets: number;
-        estimatedMRR: number;
-    }>;
+    getStats(): Promise<any>;
     findOne(id: string): Promise<{
         company: {
             id: string;

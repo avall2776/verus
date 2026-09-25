@@ -35,55 +35,79 @@ let ChatService = ChatService_1 = class ChatService {
         this.chatGateway = chatGateway;
         this.scheduledQueue = scheduledQueue;
         this.logger = new common_1.Logger(ChatService_1.name);
+        this.productivityCache = new Map();
     }
     async getConversationCounts(tenantId, userId, userRole) {
         const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
-        const [waiting, mine, resolved] = await Promise.all([
-            this.prisma.conversation.count({
-                where: {
-                    tenantId,
-                    status: { in: ['waiting', 'bot_active'] },
-                    assignedTo: null,
+        const groups = await this.prisma.conversation.groupBy({
+            by: ['status', 'assignedTo'],
+            where: { tenantId },
+            _count: { id: true },
+        });
+        let waiting = 0;
+        let mine = 0;
+        let resolved = 0;
+        for (const g of groups) {
+            const count = g._count.id;
+            const status = (g.status || '').toLowerCase();
+            if ((status === 'waiting' || status === 'bot_active') && !g.assignedTo) {
+                waiting += count;
+            }
+            if (['open', 'human_takeover', 'in_progress'].includes(status)) {
+                if (isMaster || g.assignedTo === userId) {
+                    mine += count;
                 }
-            }),
-            this.prisma.conversation.count({
-                where: {
-                    tenantId,
-                    status: { in: ['open', 'human_takeover', 'in_progress'] },
-                    ...(isMaster ? {} : { assignedTo: userId }),
-                }
-            }),
-            this.prisma.conversation.count({
-                where: {
-                    tenantId,
-                    status: { in: ['resolved', 'closed'] },
-                }
-            }),
-        ]);
+            }
+            if (['resolved', 'closed'].includes(status)) {
+                resolved += count;
+            }
+        }
         return { waiting, mine, resolved, total: waiting + mine + resolved };
     }
     async getOperatorProductivity(tenantId, userId) {
+        const cacheKey = `${tenantId}:${userId}`;
+        const cached = this.productivityCache.get(cacheKey);
+        if (cached && Date.now() < cached.expiresAt) {
+            return cached.data;
+        }
         const now = new Date();
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
         const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-        const todayResolved = await this.prisma.conversation.findMany({
-            where: {
-                tenantId,
-                assignedTo: userId,
-                status: { in: ['resolved', 'closed', 'RESOLVED', 'CLOSED'] },
-                updatedAt: { gte: startOfToday, lte: endOfToday },
-            },
-            include: {
-                messages: {
-                    select: {
-                        createdAt: true,
-                        direction: true,
-                        isInternal: true,
-                    },
-                    orderBy: { createdAt: 'asc' },
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const [todayResolved, pastResolvedCount, userGoal] = await Promise.all([
+            this.prisma.conversation.findMany({
+                where: {
+                    tenantId,
+                    assignedTo: userId,
+                    status: { in: ['resolved', 'closed', 'RESOLVED', 'CLOSED'] },
+                    updatedAt: { gte: startOfToday, lte: endOfToday },
                 },
-            },
-        });
+                include: {
+                    messages: {
+                        select: {
+                            createdAt: true,
+                            direction: true,
+                            isInternal: true,
+                        },
+                        orderBy: { createdAt: 'asc' },
+                    },
+                },
+            }),
+            this.prisma.conversation.count({
+                where: {
+                    tenantId,
+                    assignedTo: userId,
+                    status: { in: ['resolved', 'closed', 'RESOLVED', 'CLOSED'] },
+                    updatedAt: { gte: thirtyDaysAgo, lt: startOfToday },
+                },
+            }),
+            this.prisma.goal.findFirst({
+                where: {
+                    tenantId,
+                    userId,
+                },
+            }),
+        ]);
         const todayFinishedCount = todayResolved.length;
         let tmaSeconds = 0;
         let firstResponseSeconds = 0;
@@ -112,26 +136,11 @@ let ChatService = ChatService_1 = class ChatService {
             tmaSeconds = Math.round(totalDurationSeconds / todayFinishedCount);
             firstResponseSeconds = firstRespCount > 0 ? Math.round(totalFirstRespSeconds / firstRespCount) : 0;
         }
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-        const pastResolvedCount = await this.prisma.conversation.count({
-            where: {
-                tenantId,
-                assignedTo: userId,
-                status: { in: ['resolved', 'closed', 'RESOLVED', 'CLOSED'] },
-                updatedAt: { gte: thirtyDaysAgo, lt: startOfToday },
-            },
-        });
         const avgDaily = Math.round(pastResolvedCount / 30);
         let finishedVsAveragePercent = 0;
         if (avgDaily > 0) {
             finishedVsAveragePercent = Math.round(((todayFinishedCount - avgDaily) / avgDaily) * 100);
         }
-        const userGoal = await this.prisma.goal.findFirst({
-            where: {
-                tenantId,
-                userId,
-            },
-        });
         const dailyGoal = userGoal?.targetValue ? Math.round(Number(userGoal.targetValue)) : 10;
         const formatDuration = (sec) => {
             if (sec <= 0)
@@ -147,7 +156,7 @@ let ChatService = ChatService_1 = class ChatService {
             const remM = Math.floor((sec % 3600) / 60);
             return remM > 0 ? `${h}h ${remM}m` : `${h}h`;
         };
-        return {
+        const result = {
             todayFinishedCount,
             tmaSeconds,
             firstResponseSeconds,
@@ -157,6 +166,8 @@ let ChatService = ChatService_1 = class ChatService {
             finishedVsAveragePercent,
             dailyGoal,
         };
+        this.productivityCache.set(cacheKey, { data: result, expiresAt: Date.now() + 30000 });
+        return result;
     }
     async findAllConversations(tenantId, userId, userRole, tab = 'waiting') {
         const whereClause = { tenantId };
@@ -220,12 +231,6 @@ let ChatService = ChatService_1 = class ChatService {
         return conversations;
     }
     async getConversationMessages(tenantId, conversationId) {
-        const conversation = await this.prisma.conversation.findUnique({
-            where: { id: conversationId }
-        });
-        if (!conversation || conversation.tenantId !== tenantId) {
-            throw new common_1.NotFoundException('Conversa não encontrada ou não pertence a este tenant.');
-        }
         return this.prisma.message.findMany({
             where: { tenantId, conversationId },
             orderBy: { createdAt: 'asc' }

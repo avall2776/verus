@@ -60,16 +60,7 @@ export declare class ChatController {
         resolved: number;
         total: number;
     }>;
-    getOperatorProductivity(tenantId: string, req: any): Promise<{
-        todayFinishedCount: number;
-        tmaSeconds: number;
-        firstResponseSeconds: number;
-        todayAvgTma: string;
-        todayFirstResp: string;
-        avgDaily: number;
-        finishedVsAveragePercent: number;
-        dailyGoal: number;
-    }>;
+    getOperatorProductivity(tenantId: string, req: any): Promise<any>;
     getAllScheduledMessages(tenantId: string): Promise<({
         contact: {
             id: string;

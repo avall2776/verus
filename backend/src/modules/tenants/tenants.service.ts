@@ -19,10 +19,18 @@ export class TenantsService {
     private readonly aiService: AiService,
   ) {}
 
+  private evolutionInstancesCache: { data: Map<string, { status: string; owner?: string; profileName?: string }>; expiresAt: number } | null = null;
+  private statsCache: { data: any; expiresAt: number } | null = null;
+
   /**
-   * Consulta dinamicamente a Evolution API para obter instâncias ativas (status 'open') em tempo real
+   * Consulta dinamicamente a Evolution API com cache em memória (TTL: 15s) para evitar atrasos na navegação
    */
   private async getActiveEvolutionInstances(): Promise<Map<string, { status: string; owner?: string; profileName?: string }>> {
+    const now = Date.now();
+    if (this.evolutionInstancesCache && now < this.evolutionInstancesCache.expiresAt) {
+      return this.evolutionInstancesCache.data;
+    }
+
     const instancesMap = new Map<string, { status: string; owner?: string; profileName?: string }>();
     try {
       const serverUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
@@ -30,7 +38,7 @@ export class TenantsService {
 
       const res = await axios.get(`${serverUrl}/instance/fetchInstances`, {
         headers: { apikey: apiKey },
-        timeout: 2500,
+        timeout: 1500,
       });
 
       const list = Array.isArray(res.data) ? res.data : [];
@@ -47,8 +55,14 @@ export class TenantsService {
         }
       }
     } catch (err: any) {
-      this.logger.debug(`Consulta à Evolution API ignorada: ${err.message}`);
+      this.logger.debug(`Consulta à Evolution API ignorada ou offline: ${err.message}`);
     }
+
+    this.evolutionInstancesCache = {
+      data: instancesMap,
+      expiresAt: now + 15000,
+    };
+
     return instancesMap;
   }
 
@@ -133,7 +147,7 @@ export class TenantsService {
       ];
     }
 
-    const [tenants, total] = await Promise.all([
+    const [tenants, total, liveEvolutionMap] = await Promise.all([
       this.prisma.tenant.findMany({
         where,
         skip,
@@ -163,83 +177,103 @@ export class TenantsService {
         },
       }),
       this.prisma.tenant.count({ where }),
+      this.getActiveEvolutionInstances(),
     ]);
 
-    // 1. Busca dinâmica das instâncias ativas na Evolution API em tempo real
-    const liveEvolutionMap = await this.getActiveEvolutionInstances();
-
-    // Calcular tickets pendentes e deals por tenant
-    const formatted = await Promise.all(
-      tenants.map(async (tenant) => {
-        const [openTickets, dealsCount] = await Promise.all([
-          this.prisma.supportTicket.count({
+    // Otimização: agregação em lote de openTickets e deals em consultas paralelas agrupadas
+    const tenantIds = tenants.map((t) => t.id);
+    const [openTicketsGroup, dealsGroup] = await Promise.all([
+      tenantIds.length > 0
+        ? this.prisma.supportTicket.groupBy({
+            by: ['tenantId'],
             where: {
-              tenantId: tenant.id,
+              tenantId: { in: tenantIds },
               status: { in: ['OPEN', 'IN_PROGRESS', 'WAITING_CLIENT'] },
             },
-          }),
-          this.prisma.deal.count({
-            where: { tenantId: tenant.id },
-          }),
-        ]);
+            _count: { id: true },
+          })
+        : [],
+      tenantIds.length > 0
+        ? this.prisma.deal.groupBy({
+            by: ['tenantId'],
+            where: {
+              tenantId: { in: tenantIds },
+            },
+            _count: { id: true },
+          })
+        : [],
+    ]);
 
-        const emailSettings = tenant.emailSettings as any;
-        const waInfo = this.resolveTenantWhatsAppStatus(tenant, liveEvolutionMap);
+    const openTicketsMap = new Map<string, number>();
+    for (const item of openTicketsGroup) {
+      openTicketsMap.set(item.tenantId, item._count.id);
+    }
 
-        const smtpConfigured = Boolean(
-          emailSettings?.isActive ||
-          emailSettings?.smtpHost ||
-          emailSettings?.resendApiKey
-        );
+    const dealsMap = new Map<string, number>();
+    for (const item of dealsGroup) {
+      if (item.tenantId) dealsMap.set(item.tenantId, item._count.id);
+    }
 
-        const firstAdmin = tenant.users[0] || null;
-        let adminSavedPassword: string | null = null;
-        if (firstAdmin?.rawPasswordEncrypted) {
-          try {
-            adminSavedPassword = decryptApiKey(firstAdmin.rawPasswordEncrypted);
-          } catch {
-            adminSavedPassword = null;
-          }
+    const formatted = tenants.map((tenant) => {
+      const openTickets = openTicketsMap.get(tenant.id) || 0;
+      const dealsCount = dealsMap.get(tenant.id) || 0;
+
+      const emailSettings = tenant.emailSettings as any;
+      const waInfo = this.resolveTenantWhatsAppStatus(tenant, liveEvolutionMap);
+
+      const smtpConfigured = Boolean(
+        emailSettings?.isActive ||
+        emailSettings?.smtpHost ||
+        emailSettings?.resendApiKey
+      );
+
+      const firstAdmin = tenant.users[0] || null;
+      let adminSavedPassword: string | null = null;
+      if (firstAdmin?.rawPasswordEncrypted) {
+        try {
+          adminSavedPassword = decryptApiKey(firstAdmin.rawPasswordEncrypted);
+        } catch {
+          adminSavedPassword = null;
         }
+      }
 
-        return {
-          id: tenant.id,
-          name: tenant.name,
-          cnpj: tenant.cnpj,
-          email: tenant.email,
-          phone: tenant.phone,
-          address: tenant.address,
-          logoUrl: tenant.logoUrl,
-          isActive: tenant.isActive,
-          createdAt: tenant.createdAt,
-          updatedAt: tenant.updatedAt,
-          plan: tenant.plan,
-          adminUser: firstAdmin
-            ? {
-                id: firstAdmin.id,
-                name: firstAdmin.name,
-                email: firstAdmin.email,
-                isOnline: firstAdmin.isOnline,
-                savedPassword: adminSavedPassword,
-              }
-            : null,
-          connections: {
-            whatsapp: waInfo.connected,
-            whatsappPhone: waInfo.phone,
-            whatsappProvider: waInfo.provider,
-            smtp: smtpConfigured,
-          },
-          counts: {
-            users: tenant._count.users,
-            contracts: tenant._count.contracts,
-            deals: dealsCount,
-            contacts: tenant._count.contacts,
-            supportTickets: tenant._count.supportTickets,
-            openTickets,
-          },
-        };
-      })
-    );
+      return {
+        id: tenant.id,
+        name: tenant.name,
+        cnpj: tenant.cnpj,
+        email: tenant.email,
+        phone: tenant.phone,
+        address: tenant.address,
+        logoUrl: tenant.logoUrl,
+        isActive: tenant.isActive,
+        createdAt: tenant.createdAt,
+        updatedAt: tenant.updatedAt,
+        plan: tenant.plan,
+        adminUser: firstAdmin
+          ? {
+              id: firstAdmin.id,
+              name: firstAdmin.name,
+              email: firstAdmin.email,
+              isOnline: firstAdmin.isOnline,
+              savedPassword: adminSavedPassword,
+            }
+          : null,
+        connections: {
+          whatsapp: waInfo.connected,
+          whatsappPhone: waInfo.phone,
+          whatsappProvider: waInfo.provider,
+          smtp: smtpConfigured,
+        },
+        counts: {
+          users: tenant._count.users,
+          contracts: tenant._count.contracts,
+          deals: dealsCount,
+          contacts: tenant._count.contacts,
+          supportTickets: tenant._count.supportTickets,
+          openTickets,
+        },
+      };
+    });
 
     return {
       data: formatted,
@@ -253,6 +287,11 @@ export class TenantsService {
   }
 
   async getStats() {
+    const now = Date.now();
+    if (this.statsCache && now < this.statsCache.expiresAt) {
+      return this.statsCache.data;
+    }
+
     const [
       totalTenants,
       activeTenants,
@@ -281,7 +320,7 @@ export class TenantsService {
       return acc + price;
     }, 0);
 
-    return {
+    const statsData = {
       totalTenants,
       activeTenants,
       blockedTenants,
@@ -290,6 +329,13 @@ export class TenantsService {
       openTickets,
       estimatedMRR,
     };
+
+    this.statsCache = {
+      data: statsData,
+      expiresAt: now + 10000, // Cache de 10s para carregamento instantâneo
+    };
+
+    return statsData;
   }
 
   async findOne(id: string) {

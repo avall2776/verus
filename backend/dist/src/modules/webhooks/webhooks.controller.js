@@ -405,6 +405,13 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             const isImage = !!messageObj?.imageMessage ||
                 data?.messageType === 'imageMessage' ||
                 !!data?.imageMessage;
+            const isVideo = !!messageObj?.videoMessage ||
+                data?.messageType === 'videoMessage' ||
+                !!data?.videoMessage;
+            const locObj = messageObj?.locationMessage ||
+                messageObj?.liveLocationMessage ||
+                data?.locationMessage;
+            const isLocation = !!locObj || data?.messageType === 'locationMessage';
             const docObj = messageObj?.documentMessage ||
                 messageObj?.documentWithCaptionMessage?.message?.documentMessage ||
                 data?.documentMessage;
@@ -414,6 +421,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             let mediaCaption = '';
             let mediaFilename = '';
             let mediaBase64 = data?.base64 || messageObj?.base64;
+            let locationUrl = null;
             if (isAudio) {
                 mediaType = 'audio';
                 const audioData = messageObj?.audioMessage || data?.audioMessage || messageObj?.ptt;
@@ -427,6 +435,25 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                 mediaCaption = imgData?.caption || '';
                 mediaBase64 = mediaBase64 || imgData?.base64;
             }
+            else if (isVideo) {
+                mediaType = 'video';
+                const vidData = messageObj?.videoMessage || data?.videoMessage;
+                mediaMime = vidData?.mimetype || 'video/mp4';
+                mediaCaption = vidData?.caption || '';
+                mediaFilename = vidData?.fileName || 'video.mp4';
+                mediaBase64 = mediaBase64 || vidData?.base64;
+            }
+            else if (isLocation) {
+                mediaType = 'location';
+                const lat = locObj?.degreesLatitude || locObj?.latitude;
+                const lng = locObj?.degreesLongitude || locObj?.longitude;
+                const locName = locObj?.name || '';
+                const locAddress = locObj?.address || '';
+                if (lat !== undefined && lng !== undefined) {
+                    locationUrl = `https://maps.google.com/?q=${lat},${lng}`;
+                    mediaCaption = locName ? `${locName}${locAddress ? ' - ' + locAddress : ''}` : (locAddress || `Localização: ${lat}, ${lng}`);
+                }
+            }
             else if (isDocument) {
                 mediaType = 'document';
                 mediaMime = docObj?.mimetype || 'application/pdf';
@@ -436,14 +463,14 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             }
             const rawInstName = payload.instance || payload.data?.instance;
             const instName = rawInstName ? rawInstName.replace(' (WhatsApp Web)', '').trim() : '';
-            if (mediaType !== 'text' && !mediaBase64 && instName) {
+            if ((isAudio || isImage || isVideo || isDocument) && !mediaBase64 && instName) {
                 mediaBase64 = await this.whatsappService.getBase64FromEvolutionMedia(instName, messageObj, key);
             }
             let savedMediaInfo = null;
             if (mediaBase64) {
                 savedMediaInfo = await this.whatsappService.saveBase64Media(tenantId, mediaBase64, key.id, mediaMime, mediaFilename);
             }
-            const mediaUrl = savedMediaInfo?.url || null;
+            const mediaUrl = savedMediaInfo?.url || locationUrl || null;
             const normalizedPayload = {
                 entry: [
                     {
@@ -466,7 +493,9 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                                             text: textBody ? { body: textBody } : undefined,
                                             audio: isAudio ? { link: mediaUrl, id: key.id, mime_type: mediaMime } : undefined,
                                             image: isImage ? { link: mediaUrl, id: key.id, caption: mediaCaption, mime_type: mediaMime } : undefined,
+                                            video: isVideo ? { link: mediaUrl, id: key.id, caption: mediaCaption, mime_type: mediaMime } : undefined,
                                             document: isDocument ? { link: mediaUrl, id: key.id, caption: mediaCaption, filename: mediaFilename, mime_type: mediaMime } : undefined,
+                                            location: isLocation ? { latitude: locObj?.degreesLatitude || locObj?.latitude, longitude: locObj?.degreesLongitude || locObj?.longitude, name: locObj?.name, address: locObj?.address } : undefined,
                                             fromMe: isFromMe,
                                         },
                                     ],

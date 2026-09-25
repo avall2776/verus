@@ -37,6 +37,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const router = useRouter();
   const audioContextRef = useRef<AudioContext | null>(null);
+  const lastSoundTriggeredRef = useRef<{ [key: string]: number }>({});
 
   const clearGlobalUnread = () => setHasGlobalUnread(false);
 
@@ -336,9 +337,16 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           setHasGlobalUnread(true);
         }
 
-        // Toca o Chime harmônico e vibra
-        playNotificationSound(false);
-        triggerVibration(false);
+        // Debounce acústico inteligente: Toca o chime e vibra apenas 1 vez por contato a cada 3.5 segundos
+        const now = Date.now();
+        const soundKey = convId || contactPhone || 'global_inbound';
+        const lastPlayed = lastSoundTriggeredRef.current[soundKey] || 0;
+
+        if (now - lastPlayed > 3500) {
+          playNotificationSound(false);
+          triggerVibration(false);
+          lastSoundTriggeredRef.current[soundKey] = now;
+        }
 
         // Se aba em background / minimizada, dispara Web Push Notification e pisca a aba
         if (typeof document !== 'undefined' && (document.hidden || !document.hasFocus())) {

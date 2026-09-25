@@ -15,6 +15,7 @@ const prisma_service_1 = require("../../shared/database/prisma.service");
 let DashboardService = class DashboardService {
     constructor(prisma) {
         this.prisma = prisma;
+        this.crmCache = new Map();
     }
     async getDashboardData(tenantId) {
         const today = new Date();
@@ -88,6 +89,10 @@ let DashboardService = class DashboardService {
         };
     }
     async getCrmMetrics(tenantId) {
+        const cached = this.crmCache.get(tenantId);
+        if (cached && Date.now() < cached.expiresAt) {
+            return cached.data;
+        }
         const deals = await this.prisma.deal.findMany({
             where: { tenantId },
             include: {
@@ -162,7 +167,7 @@ let DashboardService = class DashboardService {
         if (funnelData.length === 0) {
             funnelData.push({ name: 'Leads Seed', value: 18 }, { name: 'Novo Contato', value: 24 }, { name: 'Em Qualificação', value: 16 }, { name: 'Qualificado', value: 12 }, { name: 'Proposta', value: 9 }, { name: 'Negociação', value: 7 }, { name: 'Fechado / Ganho', value: wonCount || 6 });
         }
-        return {
+        const result = {
             totalDeals: deals.length,
             totalRevenue,
             wonRevenue: wonRevenue || 18500,
@@ -177,6 +182,8 @@ let DashboardService = class DashboardService {
             weeklyComparison,
             funnelData
         };
+        this.crmCache.set(tenantId, { data: result, expiresAt: Date.now() + 45000 });
+        return result;
     }
 };
 exports.DashboardService = DashboardService;
