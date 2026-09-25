@@ -250,8 +250,10 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 ],
             },
         });
+        const isFromMe = Boolean(message?.fromMe || evolutionMetadata?.key?.fromMe);
         const rawPushName = pushName || evolutionMetadata?.pushName;
-        const isGenericPushName = !rawPushName || rawPushName === 'Cliente WhatsApp' || rawPushName.includes('@lid') || rawPushName.startsWith('WhatsApp');
+        const isOperatorName = isFromMe && rawPushName && (rawPushName.toLowerCase().includes('felipe') || rawPushName.toLowerCase().includes('costa'));
+        const isGenericPushName = !rawPushName || isOperatorName || rawPushName === 'Cliente WhatsApp' || rawPushName.includes('@lid') || rawPushName.startsWith('WhatsApp');
         if (!existingContact && evolutionMetadata?.profilePictureUrl) {
             const photoId = this.whatsappService.extractPhotoId(evolutionMetadata.profilePictureUrl);
             if (photoId) {

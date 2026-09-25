@@ -993,6 +993,25 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             return false;
         }
     }
+    async fetchProfileFromEvolution(instanceName, number) {
+        try {
+            const cleanName = (instanceName || '').replace(' (WhatsApp Web)', '').trim();
+            const { serverUrl, apiKey } = this.getEvolutionConfig();
+            const res = await axios_1.default.post(`${serverUrl}/chat/fetchProfile/${cleanName}`, { number }, { headers: { apikey: apiKey }, timeout: 4000 });
+            if (res.data) {
+                return {
+                    name: res.data.name || null,
+                    picture: res.data.picture || null,
+                    isBusiness: res.data.isBusiness || false,
+                    website: res.data.website || null,
+                };
+            }
+        }
+        catch (e) {
+            this.logger.warn(`[Evolution fetchProfile] Falha ao consultar perfil para ${number}: ${e.message}`);
+        }
+        return null;
+    }
     extractPhotoId(url) {
         if (!url)
             return null;

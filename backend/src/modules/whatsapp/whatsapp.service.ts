@@ -1249,6 +1249,32 @@ export class WhatsappService {
   private evoContactsCache = new Map<string, { timestamp: number; contacts: Array<{ id: string; pushName?: string; name?: string; profilePictureUrl?: string | null }> }>();
 
   /**
+   * Consulta o perfil público ou comercial de um contato no WhatsApp via Evolution API
+   */
+  async fetchProfileFromEvolution(instanceName: string, number: string): Promise<{ name?: string; picture?: string; isBusiness?: boolean; website?: string } | null> {
+    try {
+      const cleanName = (instanceName || '').replace(' (WhatsApp Web)', '').trim();
+      const { serverUrl, apiKey } = this.getEvolutionConfig();
+      const res = await axios.post(
+        `${serverUrl}/chat/fetchProfile/${cleanName}`,
+        { number },
+        { headers: { apikey: apiKey }, timeout: 4000 }
+      );
+      if (res.data) {
+        return {
+          name: res.data.name || null,
+          picture: res.data.picture || null,
+          isBusiness: res.data.isBusiness || false,
+          website: res.data.website || null,
+        };
+      }
+    } catch (e: any) {
+      this.logger.warn(`[Evolution fetchProfile] Falha ao consultar perfil para ${number}: ${e.message}`);
+    }
+    return null;
+  }
+
+  /**
    * Extrai o identificador único da foto de perfil do WhatsApp para correspondência biunívoca
    */
   public extractPhotoId(url: string | null | undefined): string | null {

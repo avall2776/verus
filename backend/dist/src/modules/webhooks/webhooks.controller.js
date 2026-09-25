@@ -371,8 +371,24 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             const rawInstName = payload.instance || payload.data?.instance;
             const instName = rawInstName ? rawInstName.replace(' (WhatsApp Web)', '').trim() : '';
             let realPhone = null;
-            let candidateName = data.pushName || data.verifiedBizName || data.verifiedName;
+            const adTitle = messageObj?.extendedTextMessage?.contextInfo?.externalAdReply?.title ||
+                data?.contextInfo?.externalAdReply?.title ||
+                messageObj?.contextInfo?.externalAdReply?.title;
+            let candidateName = adTitle || (!isFromMe ? (data.pushName || data.verifiedBizName || data.verifiedName) : (data.verifiedBizName || data.verifiedName || null));
             let profilePicUrl = data.profilePictureUrl || null;
+            if (isFromMe && instName) {
+                try {
+                    const profile = await this.whatsappService.fetchProfileFromEvolution(instName, key.remoteJid || remoteJid);
+                    if (profile) {
+                        if (profile.picture && !profilePicUrl)
+                            profilePicUrl = profile.picture;
+                        if (!candidateName && profile.name && !profile.name.toLowerCase().includes('felipe')) {
+                            candidateName = profile.name;
+                        }
+                    }
+                }
+                catch (e) { }
+            }
             if (remoteJid.includes('@lid') || remoteJid.replace(/\D/g, '').length > 13) {
                 const candidatePn = key.participantPn ||
                     data?.participantPn ||

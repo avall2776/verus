@@ -268,8 +268,10 @@ export class WebhookProcessor extends WorkerHost {
       },
     });
 
+    const isFromMe = Boolean(message?.fromMe || evolutionMetadata?.key?.fromMe);
     const rawPushName = pushName || evolutionMetadata?.pushName;
-    const isGenericPushName = !rawPushName || rawPushName === 'Cliente WhatsApp' || rawPushName.includes('@lid') || rawPushName.startsWith('WhatsApp');
+    const isOperatorName = isFromMe && rawPushName && (rawPushName.toLowerCase().includes('felipe') || rawPushName.toLowerCase().includes('costa'));
+    const isGenericPushName = !rawPushName || isOperatorName || rawPushName === 'Cliente WhatsApp' || rawPushName.includes('@lid') || rawPushName.startsWith('WhatsApp');
 
     // Fallback 1: Cruzamento biunívoco por Foto de Perfil (Hash CDN da foto do WhatsApp)
     if (!existingContact && evolutionMetadata?.profilePictureUrl) {

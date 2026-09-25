@@ -455,8 +455,29 @@ export class WebhooksController {
       
       // Resolução inteligente e ativa do número de telefone real (evita exibir e salvar @lid)
       let realPhone: string | null = null;
-      let candidateName = data.pushName || data.verifiedBizName || data.verifiedName;
+
+      // Se a mensagem foi enviada pelo operador (fromMe: true), o pushName recebido no webhook é do OPERADOR!
+      // Extrai título de anúncio (CTWA / externalAdReply) se houver
+      const adTitle = 
+        messageObj?.extendedTextMessage?.contextInfo?.externalAdReply?.title ||
+        data?.contextInfo?.externalAdReply?.title ||
+        messageObj?.contextInfo?.externalAdReply?.title;
+
+      let candidateName = adTitle || (!isFromMe ? (data.pushName || data.verifiedBizName || data.verifiedName) : (data.verifiedBizName || data.verifiedName || null));
       let profilePicUrl = data.profilePictureUrl || null;
+
+      // Se for mensagem enviada pelo operador (fromMe), consulta ativamente o perfil público/comercial do destinatário
+      if (isFromMe && instName) {
+        try {
+          const profile = await this.whatsappService.fetchProfileFromEvolution(instName, key.remoteJid || remoteJid);
+          if (profile) {
+            if (profile.picture && !profilePicUrl) profilePicUrl = profile.picture;
+            if (!candidateName && profile.name && !profile.name.toLowerCase().includes('felipe')) {
+              candidateName = profile.name;
+            }
+          }
+        } catch (e) {}
+      }
 
       if (remoteJid.includes('@lid') || remoteJid.replace(/\D/g, '').length > 13) {
         const candidatePn = 
