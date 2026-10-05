@@ -62,37 +62,16 @@ interface OverviewMetrics {
 }
 
 export default function SuperAdminOperatorsPage() {
-  const [operators, setOperators] = useState<Operator[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = sessionStorage.getItem("versus_super_operators");
-        if (cached) return JSON.parse(cached);
-      } catch {}
-    }
-    return [];
+  const [operators, setOperators] = useState<Operator[]>([]);
+  const [overview, setOverview] = useState<OverviewMetrics>({
+    totalOperators: 0,
+    onlineOperators: 0,
+    totalAttendancesToday: 0,
+    totalResolvedToday: 0,
+    globalAvgResponseTime: 0,
+    globalResolutionRate: 0,
   });
-  const [overview, setOverview] = useState<OverviewMetrics>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = sessionStorage.getItem("versus_super_operators_overview");
-        if (cached) return JSON.parse(cached);
-      } catch {}
-    }
-    return {
-      totalOperators: 0,
-      onlineOperators: 0,
-      totalAttendancesToday: 0,
-      totalResolvedToday: 0,
-      globalAvgResponseTime: 0,
-      globalResolutionRate: 0,
-    };
-  });
-  const [loading, setLoading] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return !sessionStorage.getItem("versus_super_operators");
-    }
-    return true;
-  });
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -159,6 +138,20 @@ export default function SuperAdminOperatorsPage() {
   }, []);
 
   useEffect(() => {
+    try {
+      const cachedOps = sessionStorage.getItem("versus_super_operators");
+      if (cachedOps) {
+        const list = JSON.parse(cachedOps);
+        if (Array.isArray(list) && list.length > 0) {
+          setOperators(list);
+          setLoading(false);
+        }
+      }
+      const cachedOverview = sessionStorage.getItem("versus_super_operators_overview");
+      if (cachedOverview) {
+        setOverview(JSON.parse(cachedOverview));
+      }
+    } catch {}
     fetchOperators();
   }, [fetchOperators]);
 

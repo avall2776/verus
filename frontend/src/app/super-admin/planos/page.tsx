@@ -114,21 +114,8 @@ const getPlanModuleStatus = (plan: any, moduleKey: string): boolean => {
 };
 
 export default function SuperAdminPlansPage() {
-  const [plans, setPlans] = useState<any[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = sessionStorage.getItem("versus_super_plans");
-        if (cached) return JSON.parse(cached);
-      } catch {}
-    }
-    return [];
-  });
-  const [loading, setLoading] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return !sessionStorage.getItem("versus_super_plans");
-    }
-    return true;
-  });
+  const [plans, setPlans] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [savingId, setSavingId] = useState<string | null>(null);
 
   // Modal / Formulário de Criação de Plano
@@ -172,6 +159,16 @@ export default function SuperAdminPlansPage() {
   };
 
   useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem("versus_super_plans");
+      if (cached) {
+        const list = JSON.parse(cached);
+        if (Array.isArray(list) && list.length > 0) {
+          setPlans(list);
+          setLoading(false);
+        }
+      }
+    } catch {}
     fetchPlans();
   }, []);
 

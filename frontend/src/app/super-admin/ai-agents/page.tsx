@@ -96,82 +96,24 @@ interface AiConfigState {
 }
 
 export default function SuperAdminAiAgentsPage() {
-  // Lista de Tenants para Governança Centralizada (Hidratação Instantânea)
-  const [tenants, setTenants] = useState<{ id: string; name: string; document?: string }[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = sessionStorage.getItem("versus_super_tenants_simple");
-        if (cached) return JSON.parse(cached);
-      } catch {}
-    }
-    return [];
-  });
-  const [selectedTenantId, setSelectedTenantId] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = sessionStorage.getItem("versus_super_ai_selected_tenant");
-        if (stored) return stored;
-        const cachedTenants = sessionStorage.getItem("versus_super_tenants_simple");
-        if (cachedTenants) {
-          const list = JSON.parse(cachedTenants);
-          if (list[0]?.id) return list[0].id;
-        }
-      } catch {}
-    }
-    return "";
-  });
-  const [loadingTenants, setLoadingTenants] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return !sessionStorage.getItem("versus_super_tenants_simple");
-    }
-    return true;
-  });
+  // Lista de Tenants para Governança Centralizada (Inicialização Segura e Uniforme para SSR)
+  const [tenants, setTenants] = useState<{ id: string; name: string; document?: string }[]>([]);
+  const [selectedTenantId, setSelectedTenantId] = useState<string>("");
+  const [loadingTenants, setLoadingTenants] = useState<boolean>(true);
 
   // Estados de Configuração da IA
-  const [config, setConfig] = useState<AiConfigState>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const storedTenant = sessionStorage.getItem("versus_super_ai_selected_tenant");
-        if (storedTenant) {
-          const cached = sessionStorage.getItem(`versus_super_ai_config_${storedTenant}`);
-          if (cached) return JSON.parse(cached);
-        }
-      } catch {}
-    }
-    return {
-      aiName: "Vitor (IA)",
-      aiModel: "gpt-4o-mini",
-      aiPrompt: "",
-      aiKnowledgeBase: "",
-      aiTemperature: 0.7,
-    };
+  const [config, setConfig] = useState<AiConfigState>({
+    aiName: "Vitor (IA)",
+    aiModel: "gpt-4o-mini",
+    aiPrompt: "",
+    aiKnowledgeBase: "",
+    aiTemperature: 0.7,
   });
-  const [loadingConfig, setLoadingConfig] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const storedTenant = sessionStorage.getItem("versus_super_ai_selected_tenant");
-        if (storedTenant && sessionStorage.getItem(`versus_super_ai_config_${storedTenant}`)) {
-          return false;
-        }
-      } catch {}
-    }
-    return true;
-  });
+  const [loadingConfig, setLoadingConfig] = useState<boolean>(true);
   const [saving, setSaving] = useState(false);
 
   // Documentos RAG
-  const [documents, setDocuments] = useState<{ id: string; filename: string; createdAt?: string }[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const storedTenant = sessionStorage.getItem("versus_super_ai_selected_tenant");
-        if (storedTenant) {
-          const cached = sessionStorage.getItem(`versus_super_ai_docs_${storedTenant}`);
-          if (cached) return JSON.parse(cached);
-        }
-      } catch {}
-    }
-    return [];
-  });
+  const [documents, setDocuments] = useState<{ id: string; filename: string; createdAt?: string }[]>([]);
   const [uploadingDoc, setUploadingDoc] = useState(false);
 
   // Playground State
@@ -193,24 +135,47 @@ export default function SuperAdminAiAgentsPage() {
     hasCustomKey: boolean;
     maskedCustomKey: string | null;
     lastKeyTestAt: string | null;
-  } | null>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const storedTenant = sessionStorage.getItem("versus_super_ai_selected_tenant");
-        if (storedTenant) {
-          const cached = sessionStorage.getItem(`versus_super_ai_status_${storedTenant}`);
-          if (cached) return JSON.parse(cached);
-        }
-      } catch {}
-    }
-    return null;
-  });
+  } | null>(null);
   const [loadingAiStatus, setLoadingAiStatus] = useState(false);
   const [togglingPlatformKey, setTogglingPlatformKey] = useState(false);
   const [testingMasterKey, setTestingMasterKey] = useState(false);
   const [extendingTrial, setExtendingTrial] = useState(false);
 
-  // Carregar Lista de Empresas (Tenants)
+  // 1. Efeito de Montagem: Restaurar Cache do sessionStorage no Cliente com Segurança pós-hidratação (Zero Mismatch)
+  useEffect(() => {
+    try {
+      const cachedTenants = sessionStorage.getItem("versus_super_tenants_simple");
+      if (cachedTenants) {
+        const list = JSON.parse(cachedTenants);
+        if (Array.isArray(list) && list.length > 0) {
+          setTenants(list);
+          setLoadingTenants(false);
+        }
+      }
+
+      const storedTenant = sessionStorage.getItem("versus_super_ai_selected_tenant");
+      if (storedTenant) {
+        setSelectedTenantId(storedTenant);
+        const cachedCfg = sessionStorage.getItem(`versus_super_ai_config_${storedTenant}`);
+        if (cachedCfg) {
+          setConfig(JSON.parse(cachedCfg));
+          setLoadingConfig(false);
+        }
+        const cachedDocs = sessionStorage.getItem(`versus_super_ai_docs_${storedTenant}`);
+        if (cachedDocs) {
+          setDocuments(JSON.parse(cachedDocs));
+        }
+        const cachedStatus = sessionStorage.getItem(`versus_super_ai_status_${storedTenant}`);
+        if (cachedStatus) {
+          setTenantAiStatus(JSON.parse(cachedStatus));
+        }
+      }
+    } catch (e) {
+      console.warn("Erro ao restaurar cache do agente:", e);
+    }
+  }, []);
+
+  // 2. Carregar Lista de Empresas (Tenants) via API (SWR em Background)
   useEffect(() => {
     async function loadTenants() {
       try {
@@ -691,7 +656,7 @@ export default function SuperAdminAiAgentsPage() {
                 </div>
 
                 {tenantAiStatus?.lastKeyTestAt && (
-                  <span className="text-[11px] text-slate-500 font-mono">
+                  <span className="text-[11px] text-slate-500 font-mono" suppressHydrationWarning>
                     Último teste: {new Date(tenantAiStatus.lastKeyTestAt).toLocaleTimeString("pt-BR")}
                   </span>
                 )}
@@ -882,7 +847,7 @@ export default function SuperAdminAiAgentsPage() {
                           <FileText size={16} className="text-slate-400 shrink-0" />
                           <span className="text-slate-200 truncate font-medium">{doc.filename}</span>
                           {doc.createdAt && (
-                            <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">
+                            <span className="text-[10px] text-slate-500 font-mono hidden sm:inline" suppressHydrationWarning>
                               • {new Date(doc.createdAt).toLocaleDateString("pt-BR")}
                             </span>
                           )}

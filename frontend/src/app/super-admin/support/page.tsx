@@ -102,21 +102,8 @@ function SuperAdminSupportContent() {
   // Sub-aba Ativa: 'customer_service' (WhatsApp ao Cliente) | 'team_chat' (Chat da Equipe) | 'ai_config' (Agente IA de Suporte)
   const [activeSubView, setActiveSubView] = useState<'customer_service' | 'team_chat' | 'ai_config'>('customer_service');
 
-  const [tickets, setTickets] = useState<any[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = sessionStorage.getItem("versus_super_support_tickets");
-        if (cached) return JSON.parse(cached);
-      } catch {}
-    }
-    return [];
-  });
-  const [loadingList, setLoadingList] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return !sessionStorage.getItem("versus_super_support_tickets");
-    }
-    return true;
-  });
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [loadingList, setLoadingList] = useState<boolean>(true);
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
   const [loadingTicket, setLoadingTicket] = useState(false);
 
@@ -149,16 +136,29 @@ function SuperAdminSupportContent() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [priorityFilter, setPriorityFilter] = useState("ALL");
-  const [tenantsList, setTenantsList] = useState<any[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = sessionStorage.getItem("versus_super_tenants_simple");
-        if (cached) return JSON.parse(cached);
-      } catch {}
-    }
-    return [];
-  });
+  const [tenantsList, setTenantsList] = useState<any[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState("ALL");
+
+  // Restaurar dados do cache no cliente com segurança pós-hidratação (Zero Mismatch)
+  useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem("versus_super_support_tickets");
+      if (cached) {
+        const list = JSON.parse(cached);
+        if (Array.isArray(list) && list.length > 0) {
+          setTickets(list);
+          setLoadingList(false);
+        }
+      }
+      const cachedTenants = sessionStorage.getItem("versus_super_tenants_simple");
+      if (cachedTenants) {
+        const tList = JSON.parse(cachedTenants);
+        if (Array.isArray(tList) && tList.length > 0) {
+          setTenantsList(tList);
+        }
+      }
+    } catch {}
+  }, []);
 
   // Mensagens do Cliente (Atendimento WhatsApp)
   const [clientMessage, setClientMessage] = useState("");
