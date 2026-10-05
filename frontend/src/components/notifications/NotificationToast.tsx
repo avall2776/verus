@@ -93,13 +93,19 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
               <img 
                 src={contactAvatar} 
                 alt={contactName} 
+                referrerPolicy="no-referrer"
                 className="w-10 h-10 rounded-full object-cover border border-cyan-500/30 shadow-sm" 
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.display = 'none';
+                  const fallback = e.currentTarget.parentElement?.querySelector('.toast-avatar-fallback') as HTMLElement;
+                  if (fallback) fallback.classList.remove('hidden');
+                }}
               />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center font-bold text-xs text-white border border-cyan-400/30 shadow-sm">
-                {getInitials(contactName)}
-              </div>
-            )}
+            ) : null}
+            <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center font-bold text-xs text-white border border-cyan-400/30 shadow-sm toast-avatar-fallback ${contactAvatar ? 'hidden' : ''}`}>
+              {getInitials(contactName)}
+            </div>
+
             <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0B1224] rounded-full shadow-[0_0_8px_#10b981]" />
           </div>
 

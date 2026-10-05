@@ -468,10 +468,19 @@ export default function WhatsAppSettingsPage() {
                     className="w-14 h-14 rounded-2xl bg-gray-800 border border-gray-700 flex items-center justify-center text-white font-bold text-lg overflow-hidden shrink-0 relative cursor-pointer group shadow-md"
                   >
                     {formData.profilePicUrl ? (
-                      <img src={formData.profilePicUrl} alt={formData.name} className="w-full h-full object-cover" />
+                      <img 
+                        src={formData.profilePicUrl} 
+                        alt={formData.name} 
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover" 
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = 'none';
+                        }}
+                      />
                     ) : (
                       <span>{formData.name[0]?.toUpperCase() || "W"}</span>
                     )}
+
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                       <Upload size={16} />
                     </div>
@@ -560,11 +569,16 @@ export default function WhatsAppSettingsPage() {
                         <img 
                           src={formData.profilePicUrl} 
                           alt={formData.name || "Foto da Instância"} 
+                          referrerPolicy="no-referrer"
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = 'none';
+                          }}
                         />
                       ) : (
                         <User size={28} className="text-gray-500" />
                       )}
+
                       
                       {isUploadingImage && (
                         <div className="absolute inset-0 bg-black/70 flex items-center justify-center">

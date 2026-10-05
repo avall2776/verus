@@ -2305,6 +2305,15 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - **Foco da Terça-feira / Pauta do Dia**: Fase 83: Transição Híbrida de Chaves OpenAI (BYOK com Degustação de 7 dias) & Gestão de Créditos.
   - **Diretriz Geral**: Padrão Top SaaS mundial, design corporativo monocromático VERSUS, zero mocks, testes rigorosos de ponta a ponta com build código 0 e homologação com o usuário.
 
+- **[25/09/2026 - 17:56]** 🏁 **Fim de Turno / Saída Consolidada - Ponto Eletrônico Registrado (Equipe de Engenharia)**:
+  - **Registro Oficial de Ponto**: Registro Oficial de Encerramento de Turno concluído às 17:56 (Sexta-feira, 25/09/2026 - Ponto Batido e Encerrado).
+  - **Balanço da Semana & Planejamento da Próxima Sprint**:
+    - Planejamento estratégico e esteira de dados alinhados com o PO e documentados no checklist de governança.
+    - Pautas da Próxima Sprint (Segunda-feira, 28/09/2026) devidamente mapeadas e priorizadas:
+      1. **Bugfix: Falha de Persistência na Ingestão (API Error)** na tabela local `propriedades_rurais`.
+      2. **Feature: Integração do CAR (Cadastro Ambiental Rural)** para inteligência fundiária na região Sul (RS, SC, PR).
+  - **Próxima Sessão Agendada**: 28/09/2026 às 08:00 (Abertura de Turno e Início da Próxima Sprint).
+
 ---
 
 ### 📋 FASE 80: REFINAMENTO TÉCNICO GERAL & EXPERIÊNCIA DE NOTIFICAÇÕES (18/09/2026)
@@ -2391,6 +2400,13 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ---
 
+## 📅 Próxima Sprint (Segunda-feira)
+
+- [ ] **Bugfix: Falha de Persistência na Ingestão (API Error):** Investigar e corrigir o alerta "Falha de API, verifique sua conexão com a internet ou o estado da VPS". O sistema carrega as parcelas (ex: MT) no mapa WebGL, mas a transação falha ao tentar salvar os dados na tabela local `propriedades_rurais`, impedindo que os leads apareçam na grelha.
+- [ ] **Feature: Integração do CAR (Cadastro Ambiental Rural):** Criar a rota de ingestão de dados da base do CAR. Objetivo: Garantir cobertura de inteligência fundiária para a região Sul (RS, SC, PR), compensando o vácuo de certificações do SIGEF devido ao modelo de minifúndios.
+
+---
+
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
 *Esta seção armazena ideias arquiteturais avançadas e expansões de escopo para longo prazo.*
 
@@ -2409,3 +2425,12 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [ ] **Onboarding Self-Service (Múltiplos Tenants & Sublogins):** Plataforma pública de cadastro. Novas empresas se cadastram via Stripe, geram banco isolado automaticamente, e o ADMIN gerencia "Sublogins" (Atendentes) com permissões limitadas (Apenas tela Inbox e CRM).
 - [ ] **Voice AI Agent:** Robô de voz inteligente capaz de realizar ligações ativas (pré-venda/pós-venda) e receber ligações (receptivo) sem delay, integrado à base do CRM e OpenAI (Bland AI / Vapi).
 - [ ] **Integração VoIP Nativa (WebRTC):** Permitir que o atendente humano realize chamadas de áudio e vídeo direto pelo navegador na tela de Inbox (Twilio/Vonage), com gravação e transcrição automática vinculada ao card do lead no CRM.
+
+---
+
+## 🌐 Backlog de Inovação e Expansão (Multi-Nicho)
+*Arquitetura agnóstica para expansão horizontal pós-consolidação do Agronegócio (SIGEF/CAR), mantendo o painel e o motor de IA e implementando novos adaptadores de fontes de dados por nicho.*
+
+- [ ] **Vertical Imobiliária:** Construir adaptadores para APIs de Geocodificação Reversa, ONR (Registro de Imóveis) e dados públicos de IPTU/Prefeituras para identificação de proprietários urbanos.
+- [ ] **Vertical Engenharia Civil:** Construir adaptadores para extração de Alvarás de Construção, dados do CREA, e portais de transparência para mapeamento de novas obras e responsáveis técnicos.
+- [ ] **Vertical Advocacia (Legal Tech):** Construir adaptadores para Diários Oficiais da União/Estados, CNJ e tribunais para mapear distribuição de processos, litígios corporativos e oportunidades tributárias.

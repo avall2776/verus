@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import api from '@/lib/api';
 
 export interface WhatsAppInstance {
@@ -134,17 +134,27 @@ export const WhatsAppProvider = ({ children }: { children: React.ReactNode }) =>
     return () => window.removeEventListener('tenant_switched', handleTenantSwitched);
   }, [refreshStatus]);
 
+  const contextValue = useMemo(() => ({
+    status,
+    instances,
+    activeInstance,
+    setActiveInstance,
+    refreshStatus,
+    refreshInstances,
+    isLoading,
+  }), [
+    status,
+    instances,
+    activeInstance,
+    refreshStatus,
+    refreshInstances,
+    isLoading,
+  ]);
+
   return (
-    <WhatsAppContext.Provider value={{ 
-      status, 
-      instances, 
-      activeInstance, 
-      setActiveInstance, 
-      refreshStatus, 
-      refreshInstances, 
-      isLoading 
-    }}>
+    <WhatsAppContext.Provider value={contextValue}>
       {children}
     </WhatsAppContext.Provider>
   );
+
 };

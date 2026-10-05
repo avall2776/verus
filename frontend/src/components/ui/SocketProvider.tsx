@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { usePathname, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -39,7 +39,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastSoundTriggeredRef = useRef<{ [key: string]: number }>({});
 
-  const clearGlobalUnread = () => setHasGlobalUnread(false);
+  const clearGlobalUnread = useCallback(() => {
+    setHasGlobalUnread((prev) => (prev ? false : prev));
+  }, []);
 
   // Inicializa estado de permissão do navegador
   useEffect(() => {
@@ -224,9 +226,17 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }, [isSuperAdminRoute]);
 
   useEffect(() => {
-    // Conecta ao próprio domínio (Vercel), que fará o proxy para a VPS
-    const socketInstance = io({
+    // Conexão resiliente: detecta se está rodando na Vercel (onde WebSocket upgrade via rewrite falha)
+    const isVercelHost = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+    const directSocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || undefined;
+
+    const socketInstance = io(directSocketUrl || undefined, {
       autoConnect: true,
+      transports: isVercelHost && !directSocketUrl ? ['polling'] : ['polling', 'websocket'],
+      upgrade: !(isVercelHost && !directSocketUrl),
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2500,
+      timeout: 10000,
     });
 
     socketInstance.on('connect', () => {
@@ -439,17 +449,28 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [pathname, socket, isConnected]);
 
+  const contextValue = useMemo(() => ({
+    socket,
+    isConnected,
+    hasGlobalUnread,
+    clearGlobalUnread,
+    notificationPermission,
+    requestNotificationPermission,
+    playNotificationSound,
+  }), [
+    socket,
+    isConnected,
+    hasGlobalUnread,
+    clearGlobalUnread,
+    notificationPermission,
+    requestNotificationPermission,
+    playNotificationSound,
+  ]);
+
   return (
-    <SocketContext.Provider value={{ 
-      socket, 
-      isConnected, 
-      hasGlobalUnread, 
-      clearGlobalUnread,
-      notificationPermission,
-      requestNotificationPermission,
-      playNotificationSound
-    }}>
+    <SocketContext.Provider value={contextValue}>
       {children}
     </SocketContext.Provider>
   );
+
 };

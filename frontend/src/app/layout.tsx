@@ -26,12 +26,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className={`${inter.className} bg-background text-text-primary custom-scrollbar`}>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className={`${inter.className} bg-background text-text-primary custom-scrollbar`} suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>
       </body>
     </html>
+
   );
 }

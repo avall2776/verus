@@ -1093,9 +1093,13 @@ function InboxContent() {
     refetchOnWindowFocus: false,
   });
 
-  // 1. Sincronizar dados da API com o estado local e resetar chat ativo caso não pertença à aba
+  // Limpa o indicador global de não lidas ao entrar na tela de Atendimento
   useEffect(() => {
     clearGlobalUnread();
+  }, [clearGlobalUnread]);
+
+  // 1. Sincronizar dados da API com o estado local e resetar chat ativo caso não pertença à aba
+  useEffect(() => {
     if (initialContacts) {
       setContacts(prev => {
         if (activeChat) {
@@ -1114,7 +1118,8 @@ function InboxContent() {
         return exists ? prev : (conversationIdParam ? prev : null);
       });
     }
-  }, [initialContacts, clearGlobalUnread, conversationIdParam]);
+  }, [initialContacts, conversationIdParam]);
+
 
   useEffect(() => {
     if (fetchErrorQuery) {
@@ -1737,6 +1742,7 @@ function InboxContent() {
                       <img 
                         src={instancePic} 
                         alt={instanceName} 
+                        referrerPolicy="no-referrer"
                         className="w-full h-full object-cover rounded-full"
                         onError={(e) => {
                           (e.currentTarget as HTMLElement).style.display = 'none';
@@ -1747,6 +1753,7 @@ function InboxContent() {
                         {instanceName.substring(0, 2).toUpperCase()}
                       </span>
                     )}
+
                   </div>
                   {/* Status de Presença */}
                   <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#0B1224] ${
@@ -1889,10 +1896,19 @@ function InboxContent() {
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-800 border border-slate-700/60 shrink-0 flex items-center justify-center text-[10px] font-bold text-white">
                           {inst.profilePicUrl ? (
-                            <img src={inst.profilePicUrl} alt={inst.name} className="w-full h-full object-cover" />
+                            <img 
+                              src={inst.profilePicUrl} 
+                              alt={inst.name} 
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover" 
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = 'none';
+                              }}
+                            />
                           ) : (
                             inst.name.substring(0, 2).toUpperCase()
                           )}
+
                         </div>
                         <span className="truncate">{inst.name}</span>
                       </div>
@@ -2073,6 +2089,7 @@ function InboxContent() {
                       <img 
                         src={contact.avatarUrl} 
                         alt={contact.name} 
+                        referrerPolicy="no-referrer"
                         className="w-full h-full object-cover rounded-full"
                         onError={(e) => {
                           (e.currentTarget as HTMLElement).style.display = 'none';
@@ -2081,6 +2098,7 @@ function InboxContent() {
                         }}
                       />
                     ) : null}
+
                     <span className={`avatar-initials ${contact.avatarUrl ? "hidden" : ""}`}>
                       {getContactInitials(contact.name, contact.phone)}
                     </span>
@@ -2287,6 +2305,7 @@ function InboxContent() {
                         <img 
                           src={contactPhoto} 
                           alt={activeContactData.name} 
+                          referrerPolicy="no-referrer"
                           className="w-full h-full object-cover rounded-full"
                           onError={(e) => {
                             (e.currentTarget as HTMLElement).style.display = 'none';
@@ -2295,6 +2314,7 @@ function InboxContent() {
                           }}
                         />
                       ) : null;
+
                     })()}
                     <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
                       {getContactInitials(activeContactData.name, activeContactData.phone)}
@@ -3412,6 +3432,7 @@ function InboxContent() {
                 <img 
                   src={activeContactData.avatarUrl} 
                   alt={activeContactData.name} 
+                  referrerPolicy="no-referrer"
                   className="w-full h-full object-cover rounded-full"
                   onError={(e) => {
                     (e.currentTarget as HTMLElement).style.display = 'none';
@@ -3420,6 +3441,7 @@ function InboxContent() {
                   }}
                 />
               ) : null}
+
               <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
                 {getContactInitials(activeContactData.name, activeContactData.phone)}
               </span>
@@ -3770,6 +3792,7 @@ function InboxContent() {
                     <img 
                       src={selectedQueueChat.avatarUrl} 
                       alt={selectedQueueChat.name} 
+                      referrerPolicy="no-referrer"
                       className="w-full h-full object-cover rounded-full"
                       onError={(e) => {
                         (e.currentTarget as HTMLElement).style.display = 'none';
@@ -3778,6 +3801,7 @@ function InboxContent() {
                       }}
                     />
                   ) : null}
+
                   <span className={`avatar-initials ${selectedQueueChat.avatarUrl ? "hidden" : ""}`}>
                     {getContactInitials(selectedQueueChat.name, selectedQueueChat.phone)}
                   </span>
@@ -3911,6 +3935,7 @@ function InboxContent() {
                           <img 
                             src={c.avatarUrl} 
                             alt={c.name} 
+                            referrerPolicy="no-referrer"
                             className="w-full h-full object-cover rounded-full"
                             onError={(e) => {
                               (e.currentTarget as HTMLElement).style.display = 'none';
@@ -3919,6 +3944,7 @@ function InboxContent() {
                             }}
                           />
                         ) : null}
+
                         <span className={`avatar-initials ${c.avatarUrl ? "hidden" : ""}`}>
                           {getContactInitials(c.name, c.phone)}
                         </span>

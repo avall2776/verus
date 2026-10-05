@@ -786,10 +786,19 @@ export default function Sidebar() {
                   <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm">
                     {currentUser?.avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      <img 
+                        src={currentUser.avatarUrl} 
+                        alt="Avatar" 
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover" 
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = 'none';
+                        }}
+                      />
                     ) : (
                       currentUser?.name?.[0]?.toUpperCase() || "U"
                     )}
+
                   </div>
                   <div className="flex flex-col min-w-0 flex-1">
                     <span className="text-xs font-bold text-white truncate">{currentUser?.name || "Operador"}</span>
@@ -893,10 +902,19 @@ export default function Sidebar() {
               <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm overflow-hidden">
                 {currentUser?.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  <img 
+                    src={currentUser.avatarUrl} 
+                    alt="Avatar" 
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover" 
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
                 ) : (
                   currentUser?.name?.[0]?.toUpperCase() || "U"
                 )}
+
               </div>
               {isExpanded && (
                 <div className="flex flex-col overflow-hidden flex-1 min-w-0">
