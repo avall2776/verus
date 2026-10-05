@@ -39,10 +39,33 @@ interface Department {
 export default function MonitorPage() {
   const router = useRouter();
   const { socket } = useSocket();
-  const [conversations, setConversations] = useState<MonitorConversation[]>([]);
-  const [users, setUsers] = useState<TeamUser[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [conversations, setConversations] = useState<MonitorConversation[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const s = sessionStorage.getItem('versus_cache_monitor_convs');
+      return s ? JSON.parse(s) : [];
+    } catch { return []; }
+  });
+  const [users, setUsers] = useState<TeamUser[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const s = sessionStorage.getItem('versus_cache_monitor_users');
+      return s ? JSON.parse(s) : [];
+    } catch { return []; }
+  });
+  const [departments, setDepartments] = useState<Department[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const s = sessionStorage.getItem('versus_cache_monitor_depts');
+      return s ? JSON.parse(s) : [];
+    } catch { return []; }
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      return !sessionStorage.getItem('versus_cache_monitor_convs');
+    } catch { return true; }
+  });
   const [now, setNow] = useState(new Date());
   
   // Settings / State
@@ -90,6 +113,12 @@ export default function MonitorPage() {
       setUsers(usersRes.data || []);
       setDepartments(deptRes.data || []);
       setRefreshCountdown(30);
+
+      try {
+        sessionStorage.setItem('versus_cache_monitor_convs', JSON.stringify(convRes.data || []));
+        sessionStorage.setItem('versus_cache_monitor_users', JSON.stringify(usersRes.data || []));
+        sessionStorage.setItem('versus_cache_monitor_depts', JSON.stringify(deptRes.data || []));
+      } catch (e) {}
     } catch (error) {
       toast.error("Erro ao carregar dados da torre de controle.");
     } finally {

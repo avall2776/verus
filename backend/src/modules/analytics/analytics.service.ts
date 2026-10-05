@@ -16,7 +16,7 @@ export class AnalyticsService {
     return null;
   }
 
-  private setCached(key: string, data: any, ttlMs: number = 45000) {
+  private setCached(key: string, data: any, ttlMs: number = 180000) {
     this.memoryCache.set(key, { data, expiresAt: Date.now() + ttlMs });
   }
 
@@ -43,28 +43,18 @@ export class AnalyticsService {
     };
 
     const [
-      total,
-      inProgress,
-      finished,
+      allPeriodConvs,
       newContacts,
       inboundMessages,
       outboundMessages,
-      resolvedConversations,
       waitingExpired
     ] = await Promise.all([
-      this.prisma.conversation.count({ where: whereBase }),
-      this.prisma.conversation.count({
-        where: {
-          tenantId,
-          status: { in: ['open', 'human_takeover'] },
-          createdAt: { gte: start, lte: end },
-        },
-      }),
-      this.prisma.conversation.count({
-        where: {
-          tenantId,
-          status: { in: ['resolved', 'closed'] },
-          createdAt: { gte: start, lte: end },
+      this.prisma.conversation.findMany({
+        where: whereBase,
+        select: {
+          status: true,
+          createdAt: true,
+          updatedAt: true,
         },
       }),
       this.prisma.contact.count({
@@ -87,17 +77,6 @@ export class AnalyticsService {
           createdAt: { gte: start, lte: end },
         },
       }),
-      this.prisma.conversation.findMany({
-        where: {
-          tenantId,
-          status: { in: ['resolved', 'closed'] },
-          createdAt: { gte: start, lte: end },
-        },
-        select: {
-          createdAt: true,
-          updatedAt: true,
-        },
-      }),
       this.prisma.conversation.count({
         where: {
           tenantId,
@@ -107,16 +86,26 @@ export class AnalyticsService {
       }),
     ]);
 
-    // Cálculo do TMA (Tempo Médio de Atendimento)
+    const total = allPeriodConvs.length;
+    let inProgress = 0;
+    let finished = 0;
     let totalDurationMs = 0;
-    resolvedConversations.forEach((conv) => {
-      const duration = new Date(conv.updatedAt).getTime() - new Date(conv.createdAt).getTime();
-      totalDurationMs += Math.max(duration, 60000);
-    });
+    let resolvedCount = 0;
+
+    for (const conv of allPeriodConvs) {
+      if (conv.status === 'open' || conv.status === 'human_takeover') {
+        inProgress++;
+      } else if (conv.status === 'resolved' || conv.status === 'closed') {
+        finished++;
+        const duration = new Date(conv.updatedAt).getTime() - new Date(conv.createdAt).getTime();
+        totalDurationMs += Math.max(duration, 60000);
+        resolvedCount++;
+      }
+    }
 
     const tmaSeconds =
-      resolvedConversations.length > 0
-        ? Math.round(totalDurationMs / resolvedConversations.length / 1000)
+      resolvedCount > 0
+        ? Math.round(totalDurationMs / resolvedCount / 1000)
         : 480;
 
     const firstResponseSeconds = Math.max(Math.round(tmaSeconds * 0.25), 95);
@@ -133,7 +122,7 @@ export class AnalyticsService {
       ignoredCount: waitingExpired,
     };
 
-    this.setCached(cacheKey, result, 45000);
+    this.setCached(cacheKey, result, 180000);
     return result;
   }
 
@@ -264,7 +253,7 @@ export class AnalyticsService {
       },
     };
 
-    this.setCached(cacheKey, result, 45000);
+    this.setCached(cacheKey, result, 180000);
     return result;
   }
 
@@ -333,7 +322,7 @@ export class AnalyticsService {
       };
     });
 
-    this.setCached(cacheKey, result, 45000);
+    this.setCached(cacheKey, result, 180000);
     return result;
   }
 
@@ -531,7 +520,7 @@ export class AnalyticsService {
       detailedExecutions,
     };
 
-    this.setCached(cacheKey, result, 45000);
+    this.setCached(cacheKey, result, 180000);
     return result;
   }
 
@@ -631,7 +620,7 @@ export class AnalyticsService {
       recentFeedbacks: formattedSurveys,
     };
 
-    this.setCached(cacheKey, result, 45000);
+    this.setCached(cacheKey, result, 180000);
     return result;
   }
 

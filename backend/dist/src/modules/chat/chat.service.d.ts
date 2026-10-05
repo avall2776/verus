@@ -17,6 +17,8 @@ export declare class ChatService {
         resolved: number;
         total: number;
     }>;
+    private static readonly activeSyncs;
+    private static readonly lastSyncTimes;
     private readonly productivityCache;
     getOperatorProductivity(tenantId: string, userId: string): Promise<any>;
     findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string): Promise<({
@@ -551,7 +553,7 @@ export declare class ChatService {
         success: boolean;
         messageId: string;
     }>;
-    syncOfflineMessages(tenantId: string): Promise<{
+    syncOfflineMessages(tenantId: string, force?: boolean): Promise<{
         syncedCount: number;
         updatedCount: number;
     }>;

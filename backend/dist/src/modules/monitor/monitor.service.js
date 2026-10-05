@@ -15,8 +15,14 @@ const prisma_service_1 = require("../../shared/database/prisma.service");
 let MonitorService = class MonitorService {
     constructor(prisma) {
         this.prisma = prisma;
+        this.memoryCache = new Map();
     }
     async getActiveConversations(tenantId) {
+        const cacheKey = `monitor:active:${tenantId}`;
+        const cached = this.memoryCache.get(cacheKey);
+        if (cached && Date.now() < cached.expiresAt) {
+            return cached.data;
+        }
         const conversations = await this.prisma.conversation.findMany({
             where: {
                 tenantId,
@@ -24,10 +30,20 @@ let MonitorService = class MonitorService {
                     in: ['waiting', 'human_takeover', 'open']
                 }
             },
-            include: {
-                contact: true,
-                department: true,
+            select: {
+                id: true,
+                status: true,
+                updatedAt: true,
+                departmentId: true,
+                assignedTo: true,
+                contact: {
+                    select: { id: true, name: true, phone: true, source: true }
+                },
+                department: {
+                    select: { id: true, name: true, color: true }
+                },
                 messages: {
+                    select: { content: true, createdAt: true, fromMe: true },
                     orderBy: { createdAt: 'desc' },
                     take: 1
                 }
@@ -36,17 +52,28 @@ let MonitorService = class MonitorService {
                 updatedAt: 'asc'
             }
         });
-        const assigneeIds = [...new Set(conversations.map(c => c.assignedTo).filter(id => id))];
-        const users = await this.prisma.user.findMany({
-            where: { id: { in: assigneeIds } }
-        });
+        const assigneeIds = [...new Set(conversations.map(c => c.assignedTo).filter(Boolean))];
+        const users = assigneeIds.length > 0 ? await this.prisma.user.findMany({
+            where: { id: { in: assigneeIds } },
+            select: { id: true, name: true }
+        }) : [];
         const userMap = new Map(users.map(u => [u.id, u]));
-        return conversations.map(c => ({
+        const result = conversations.map(c => ({
             ...c,
             assignee: c.assignedTo ? userMap.get(c.assignedTo) || null : null,
             lastMessage: c.messages[0] || null,
             lastMessageAt: c.messages[0]?.createdAt || c.updatedAt
         }));
+        this.memoryCache.set(cacheKey, { data: result, expiresAt: Date.now() + 10000 });
+        return result;
+    }
+    clearCache(tenantId) {
+        if (tenantId) {
+            this.memoryCache.delete(`monitor:active:${tenantId}`);
+        }
+        else {
+            this.memoryCache.clear();
+        }
     }
 };
 exports.MonitorService = MonitorService;

@@ -25,8 +25,9 @@ export class ChatController {
   @Post('sync')
   async syncOfflineMessages(
     @CurrentTenant() tenantId: string,
+    @Query('force') force?: string,
   ) {
-    return this.chatService.syncOfflineMessages(tenantId);
+    return this.chatService.syncOfflineMessages(tenantId, force === 'true' || force === '1');
   }
 
   @Get('counts')

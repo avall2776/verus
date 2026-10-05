@@ -54,7 +54,7 @@ export declare class ChatController {
         assignedTo: string | null;
         status: string;
     })[]>;
-    syncOfflineMessages(tenantId: string): Promise<{
+    syncOfflineMessages(tenantId: string, force?: string): Promise<{
         syncedCount: number;
         updatedCount: number;
     }>;

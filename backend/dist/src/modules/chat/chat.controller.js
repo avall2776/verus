@@ -28,8 +28,8 @@ let ChatController = class ChatController {
         const selectedTab = tab || status || 'waiting';
         return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, selectedTab);
     }
-    async syncOfflineMessages(tenantId) {
-        return this.chatService.syncOfflineMessages(tenantId);
+    async syncOfflineMessages(tenantId, force) {
+        return this.chatService.syncOfflineMessages(tenantId, force === 'true' || force === '1');
     }
     async getConversationCounts(tenantId, req) {
         return this.chatService.getConversationCounts(tenantId, req.user.id, req.user.role);
@@ -142,8 +142,9 @@ __decorate([
 __decorate([
     (0, common_1.Post)('sync'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('force')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "syncOfflineMessages", null);
 __decorate([

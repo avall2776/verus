@@ -21,26 +21,28 @@ let ChatAliasController = class ChatAliasController {
     constructor(chatService) {
         this.chatService = chatService;
     }
-    async syncOfflineMessagesPost(tenantId) {
-        return this.chatService.syncOfflineMessages(tenantId);
+    async syncOfflineMessagesPost(tenantId, force) {
+        return this.chatService.syncOfflineMessages(tenantId, force === 'true' || force === '1');
     }
-    async syncOfflineMessagesGet(tenantId) {
-        return this.chatService.syncOfflineMessages(tenantId);
+    async syncOfflineMessagesGet(tenantId, force) {
+        return this.chatService.syncOfflineMessages(tenantId, force === 'true' || force === '1');
     }
 };
 exports.ChatAliasController = ChatAliasController;
 __decorate([
     (0, common_1.Post)('sync'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('force')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], ChatAliasController.prototype, "syncOfflineMessagesPost", null);
 __decorate([
     (0, common_1.Get)('sync'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('force')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], ChatAliasController.prototype, "syncOfflineMessagesGet", null);
 exports.ChatAliasController = ChatAliasController = __decorate([

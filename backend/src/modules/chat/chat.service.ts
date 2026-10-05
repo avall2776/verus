@@ -59,6 +59,8 @@ export class ChatService {
     return { waiting, mine, resolved, total: waiting + mine + resolved };
   }
 
+  private static readonly activeSyncs = new Set<string>();
+  private static readonly lastSyncTimes = new Map<string, number>();
   private readonly productivityCache = new Map<string, { data: any; expiresAt: number }>();
 
   async getOperatorProductivity(tenantId: string, userId: string) {
@@ -1083,7 +1085,21 @@ export class ChatService {
    * Sincroniza retroativamente mensagens offline das últimas 24 horas a partir da Evolution API.
    * Evita perda de mensagens quando o operador estava desconectado e recupera mídias pendentes.
    */
-  async syncOfflineMessages(tenantId: string): Promise<{ syncedCount: number; updatedCount: number }> {
+  async syncOfflineMessages(tenantId: string, force: boolean = false): Promise<{ syncedCount: number; updatedCount: number }> {
+    if (ChatService.activeSyncs.has(tenantId)) {
+      this.logger.log(`[Offline Sync] Ignorado: sincronização já em andamento para o tenant [${tenantId}].`);
+      return { syncedCount: 0, updatedCount: 0 };
+    }
+
+    const lastSync = ChatService.lastSyncTimes.get(tenantId) || 0;
+    if (!force && Date.now() - lastSync < 3 * 60 * 1000) {
+      this.logger.log(`[Offline Sync] Ignorado: cooldown ativo (última execução há menos de 3 min) para o tenant [${tenantId}].`);
+      return { syncedCount: 0, updatedCount: 0 };
+    }
+
+    ChatService.activeSyncs.add(tenantId);
+    ChatService.lastSyncTimes.set(tenantId, Date.now());
+
     try {
       this.logger.log(`[Offline Sync] Iniciando sincronização retroativa (24h) para o tenant [${tenantId}]...`);
 
@@ -1101,26 +1117,28 @@ export class ChatService {
       let syncedCount = 0;
       let updatedCount = 0;
 
+      let allInstances: any[] = [];
+      try {
+        const allInstRes = await axios.get(`${serverUrl}/instance/fetchInstances`, {
+          headers: { apikey: apiKey },
+          timeout: 4000,
+        });
+        allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
+      } catch {}
+
       for (const inst of instances) {
         let cleanName = (inst.name || '').replace(' (WhatsApp Web)', '').trim();
         if (!cleanName) continue;
 
-        try {
-          const allInstRes = await axios.get(`${serverUrl}/instance/fetchInstances`, {
-            headers: { apikey: apiKey },
-            timeout: 4000,
-          });
-          const allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
-          for (const item of allInstances) {
-            const instObj = item.instance || item;
-            const rName = instObj.instanceName || instObj.name;
-            const status = instObj.status || instObj.connectionStatus;
-            if (rName && (status === 'open' || status === 'connected')) {
-              cleanName = rName;
-              break;
-            }
+        for (const item of allInstances) {
+          const instObj = item.instance || item;
+          const rName = instObj.instanceName || instObj.name;
+          const status = instObj.status || instObj.connectionStatus;
+          if (rName && (status === 'open' || status === 'connected')) {
+            cleanName = rName;
+            break;
           }
-        } catch {}
+        }
 
         let recentMessages: any[] = [];
         try {
@@ -1355,6 +1373,8 @@ export class ChatService {
     } catch (err: any) {
       this.logger.error(`[Offline Sync Erro]: ${err.message}`);
       return { syncedCount: 0, updatedCount: 0 };
+    } finally {
+      ChatService.activeSyncs.delete(tenantId);
     }
   }
 }

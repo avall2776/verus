@@ -898,7 +898,18 @@ let ChatService = ChatService_1 = class ChatService {
         this.logger.log(`Mensagem [${message.id}] apagada com sucesso na conversa [${conversationId}]`);
         return { success: true, messageId: message.id };
     }
-    async syncOfflineMessages(tenantId) {
+    async syncOfflineMessages(tenantId, force = false) {
+        if (ChatService_1.activeSyncs.has(tenantId)) {
+            this.logger.log(`[Offline Sync] Ignorado: sincronização já em andamento para o tenant [${tenantId}].`);
+            return { syncedCount: 0, updatedCount: 0 };
+        }
+        const lastSync = ChatService_1.lastSyncTimes.get(tenantId) || 0;
+        if (!force && Date.now() - lastSync < 3 * 60 * 1000) {
+            this.logger.log(`[Offline Sync] Ignorado: cooldown ativo (última execução há menos de 3 min) para o tenant [${tenantId}].`);
+            return { syncedCount: 0, updatedCount: 0 };
+        }
+        ChatService_1.activeSyncs.add(tenantId);
+        ChatService_1.lastSyncTimes.set(tenantId, Date.now());
         try {
             this.logger.log(`[Offline Sync] Iniciando sincronização retroativa (24h) para o tenant [${tenantId}]...`);
             const instances = await this.prisma.whatsAppInstance.findMany({
@@ -911,27 +922,28 @@ let ChatService = ChatService_1 = class ChatService {
             const cutoffTimestamp = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
             let syncedCount = 0;
             let updatedCount = 0;
+            let allInstances = [];
+            try {
+                const allInstRes = await axios_1.default.get(`${serverUrl}/instance/fetchInstances`, {
+                    headers: { apikey: apiKey },
+                    timeout: 4000,
+                });
+                allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
+            }
+            catch { }
             for (const inst of instances) {
                 let cleanName = (inst.name || '').replace(' (WhatsApp Web)', '').trim();
                 if (!cleanName)
                     continue;
-                try {
-                    const allInstRes = await axios_1.default.get(`${serverUrl}/instance/fetchInstances`, {
-                        headers: { apikey: apiKey },
-                        timeout: 4000,
-                    });
-                    const allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
-                    for (const item of allInstances) {
-                        const instObj = item.instance || item;
-                        const rName = instObj.instanceName || instObj.name;
-                        const status = instObj.status || instObj.connectionStatus;
-                        if (rName && (status === 'open' || status === 'connected')) {
-                            cleanName = rName;
-                            break;
-                        }
+                for (const item of allInstances) {
+                    const instObj = item.instance || item;
+                    const rName = instObj.instanceName || instObj.name;
+                    const status = instObj.status || instObj.connectionStatus;
+                    if (rName && (status === 'open' || status === 'connected')) {
+                        cleanName = rName;
+                        break;
                     }
                 }
-                catch { }
                 let recentMessages = [];
                 try {
                     const res = await axios_1.default.post(`${serverUrl}/chat/findMessages/${cleanName}`, {}, {
@@ -1128,9 +1140,14 @@ let ChatService = ChatService_1 = class ChatService {
             this.logger.error(`[Offline Sync Erro]: ${err.message}`);
             return { syncedCount: 0, updatedCount: 0 };
         }
+        finally {
+            ChatService_1.activeSyncs.delete(tenantId);
+        }
     }
 };
 exports.ChatService = ChatService;
+ChatService.activeSyncs = new Set();
+ChatService.lastSyncTimes = new Map();
 exports.ChatService = ChatService = ChatService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(4, (0, bullmq_1.InjectQueue)('scheduled-messages')),

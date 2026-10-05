@@ -191,7 +191,14 @@ export default function AtendimentoAnalyticsDashboard() {
   const [period, setPeriod] = useState<'today' | '7d' | '15d' | '30d' | '90d' | 'custom'>('7d');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      return !sessionStorage.getItem('versus_cache_analytics_overview');
+    } catch {
+      return true;
+    }
+  });
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Popover Datepicker State

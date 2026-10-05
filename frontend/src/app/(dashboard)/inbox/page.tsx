@@ -1130,11 +1130,27 @@ function InboxContent() {
 
   // Sincronização e Hidratação Retroativa de Mensagens Offline (24h)
   const [isSyncingOffline, setIsSyncingOffline] = useState(false);
+  const lastSyncTimestampRef = useRef<number>(0);
 
-  const handleSyncOfflineMessages = useCallback(async (showToast = false) => {
+  const handleSyncOfflineMessages = useCallback(async (showToast = false, force = false) => {
+    const now = Date.now();
+    // Previne requisições desnecessárias repetidas a cada troca de aba (cooldown de 5 minutos, a menos que forçado pelo usuário)
+    if (!force) {
+      if (now - lastSyncTimestampRef.current < 5 * 60 * 1000) return;
+      try {
+        const storedLastSync = sessionStorage.getItem('versus_last_inbox_sync');
+        if (storedLastSync && now - Number(storedLastSync) < 5 * 60 * 1000) return;
+      } catch {}
+    }
+
+    lastSyncTimestampRef.current = now;
+    try {
+      sessionStorage.setItem('versus_last_inbox_sync', String(now));
+    } catch {}
+
     setIsSyncingOffline(true);
     try {
-      const res = await api.post('/chat/sync');
+      const res = await api.post(`/chat/sync${force ? '?force=true' : ''}`);
       const { syncedCount = 0, updatedCount = 0 } = res.data || {};
       if (syncedCount > 0 || updatedCount > 0) {
         refetchConversations();
@@ -1155,9 +1171,9 @@ function InboxContent() {
     }
   }, [refetchConversations, refetchCounts]);
 
-  // Disparo obrigatório automático ao abrir o Inbox (hidratação offline 24h)
+  // Disparo obrigatório automático ao abrir o Inbox (hidratação offline 24h com cooldown)
   useEffect(() => {
-    handleSyncOfflineMessages(false);
+    handleSyncOfflineMessages(false, false);
   }, [handleSyncOfflineMessages]);
 
   // 2. Buscar mensagens quando o chat ativo mudar
@@ -1784,7 +1800,7 @@ function InboxContent() {
             {/* Botão Sincronização Offline 24h */}
             <button
               type="button"
-              onClick={() => handleSyncOfflineMessages(true)}
+              onClick={() => handleSyncOfflineMessages(true, true)}
               disabled={isSyncingOffline}
               className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95 disabled:opacity-50"
               title="Sincronizar mensagens offline (últimas 24h)"
@@ -1855,7 +1871,7 @@ function InboxContent() {
                         type="button"
                         onClick={() => {
                           setShowLeftHeaderMenu(false);
-                          handleSyncOfflineMessages(true);
+                          handleSyncOfflineMessages(true, true);
                         }}
                         className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
                       >

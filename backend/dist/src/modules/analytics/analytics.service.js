@@ -25,7 +25,7 @@ let AnalyticsService = class AnalyticsService {
         }
         return null;
     }
-    setCached(key, data, ttlMs = 45000) {
+    setCached(key, data, ttlMs = 180000) {
         this.memoryCache.set(key, { data, expiresAt: Date.now() + ttlMs });
     }
     parseDateRange(startDate, endDate) {
@@ -45,20 +45,13 @@ let AnalyticsService = class AnalyticsService {
             tenantId,
             createdAt: { gte: start, lte: end },
         };
-        const [total, inProgress, finished, newContacts, inboundMessages, outboundMessages, resolvedConversations, waitingExpired] = await Promise.all([
-            this.prisma.conversation.count({ where: whereBase }),
-            this.prisma.conversation.count({
-                where: {
-                    tenantId,
-                    status: { in: ['open', 'human_takeover'] },
-                    createdAt: { gte: start, lte: end },
-                },
-            }),
-            this.prisma.conversation.count({
-                where: {
-                    tenantId,
-                    status: { in: ['resolved', 'closed'] },
-                    createdAt: { gte: start, lte: end },
+        const [allPeriodConvs, newContacts, inboundMessages, outboundMessages, waitingExpired] = await Promise.all([
+            this.prisma.conversation.findMany({
+                where: whereBase,
+                select: {
+                    status: true,
+                    createdAt: true,
+                    updatedAt: true,
                 },
             }),
             this.prisma.contact.count({
@@ -81,17 +74,6 @@ let AnalyticsService = class AnalyticsService {
                     createdAt: { gte: start, lte: end },
                 },
             }),
-            this.prisma.conversation.findMany({
-                where: {
-                    tenantId,
-                    status: { in: ['resolved', 'closed'] },
-                    createdAt: { gte: start, lte: end },
-                },
-                select: {
-                    createdAt: true,
-                    updatedAt: true,
-                },
-            }),
             this.prisma.conversation.count({
                 where: {
                     tenantId,
@@ -100,13 +82,24 @@ let AnalyticsService = class AnalyticsService {
                 },
             }),
         ]);
+        const total = allPeriodConvs.length;
+        let inProgress = 0;
+        let finished = 0;
         let totalDurationMs = 0;
-        resolvedConversations.forEach((conv) => {
-            const duration = new Date(conv.updatedAt).getTime() - new Date(conv.createdAt).getTime();
-            totalDurationMs += Math.max(duration, 60000);
-        });
-        const tmaSeconds = resolvedConversations.length > 0
-            ? Math.round(totalDurationMs / resolvedConversations.length / 1000)
+        let resolvedCount = 0;
+        for (const conv of allPeriodConvs) {
+            if (conv.status === 'open' || conv.status === 'human_takeover') {
+                inProgress++;
+            }
+            else if (conv.status === 'resolved' || conv.status === 'closed') {
+                finished++;
+                const duration = new Date(conv.updatedAt).getTime() - new Date(conv.createdAt).getTime();
+                totalDurationMs += Math.max(duration, 60000);
+                resolvedCount++;
+            }
+        }
+        const tmaSeconds = resolvedCount > 0
+            ? Math.round(totalDurationMs / resolvedCount / 1000)
             : 480;
         const firstResponseSeconds = Math.max(Math.round(tmaSeconds * 0.25), 95);
         const result = {
@@ -120,7 +113,7 @@ let AnalyticsService = class AnalyticsService {
             firstResponseSeconds,
             ignoredCount: waitingExpired,
         };
-        this.setCached(cacheKey, result, 45000);
+        this.setCached(cacheKey, result, 180000);
         return result;
     }
     async getCharts(tenantId, startDate, endDate) {
@@ -231,7 +224,7 @@ let AnalyticsService = class AnalyticsService {
                 byCloseReason,
             },
         };
-        this.setCached(cacheKey, result, 45000);
+        this.setCached(cacheKey, result, 180000);
         return result;
     }
     async getAgentPerformance(tenantId, startDate, endDate) {
@@ -286,7 +279,7 @@ let AnalyticsService = class AnalyticsService {
                 csatAvg: (4.7 + (user.name.length % 4) * 0.1).toFixed(1),
             };
         });
-        this.setCached(cacheKey, result, 45000);
+        this.setCached(cacheKey, result, 180000);
         return result;
     }
     async getDetailedTickets(tenantId, query) {
@@ -452,7 +445,7 @@ let AnalyticsService = class AnalyticsService {
             dailyCostEvolution,
             detailedExecutions,
         };
-        this.setCached(cacheKey, result, 45000);
+        this.setCached(cacheKey, result, 180000);
         return result;
     }
     async getCsat(tenantId, startDate, endDate, agentName, search) {
@@ -530,7 +523,7 @@ let AnalyticsService = class AnalyticsService {
             surveys: formattedSurveys,
             recentFeedbacks: formattedSurveys,
         };
-        this.setCached(cacheKey, result, 45000);
+        this.setCached(cacheKey, result, 180000);
         return result;
     }
     async ensureInitialCsatSeed(tenantId) {
