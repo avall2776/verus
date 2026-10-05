@@ -102,8 +102,21 @@ function SuperAdminSupportContent() {
   // Sub-aba Ativa: 'customer_service' (WhatsApp ao Cliente) | 'team_chat' (Chat da Equipe) | 'ai_config' (Agente IA de Suporte)
   const [activeSubView, setActiveSubView] = useState<'customer_service' | 'team_chat' | 'ai_config'>('customer_service');
 
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [loadingList, setLoadingList] = useState(true);
+  const [tickets, setTickets] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("versus_super_support_tickets");
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return [];
+  });
+  const [loadingList, setLoadingList] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return !sessionStorage.getItem("versus_super_support_tickets");
+    }
+    return true;
+  });
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
   const [loadingTicket, setLoadingTicket] = useState(false);
 
@@ -136,7 +149,15 @@ function SuperAdminSupportContent() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [priorityFilter, setPriorityFilter] = useState("ALL");
-  const [tenantsList, setTenantsList] = useState<any[]>([]);
+  const [tenantsList, setTenantsList] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("versus_super_tenants_simple");
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return [];
+  });
   const [selectedTenantId, setSelectedTenantId] = useState("ALL");
 
   // Mensagens do Cliente (Atendimento WhatsApp)
@@ -172,15 +193,22 @@ function SuperAdminSupportContent() {
 
   // Carregar lista de empresas para o filtro
   useEffect(() => {
-    api.get("/tenants?limit=100")
+    api.get("/tenants", { params: { limit: "100", simple: "true" } })
       .then((res) => {
-        setTenantsList(res.data.data || []);
+        const list = res.data?.data || res.data || [];
+        setTenantsList(list);
+        try {
+          sessionStorage.setItem("versus_super_tenants_simple", JSON.stringify(list));
+        } catch {}
       })
       .catch((e) => console.error(e));
   }, []);
 
   const fetchTickets = useCallback(async (selectIdAfter?: string) => {
-    setLoadingList(true);
+    const hasCache = typeof window !== "undefined" && Boolean(sessionStorage.getItem("versus_super_support_tickets"));
+    if (!hasCache) {
+      setLoadingList(true);
+    }
     try {
       const params: any = {};
       if (statusFilter !== "ALL") params.status = statusFilter;
@@ -191,6 +219,9 @@ function SuperAdminSupportContent() {
       const res = await api.get("/support/tickets", { params });
       const fetched = res.data.tickets || [];
       setTickets(fetched);
+      try {
+        sessionStorage.setItem("versus_super_support_tickets", JSON.stringify(fetched));
+      } catch {}
 
       // Auto-selecionar ticket inicial ou manter seleção
       const targetId = selectIdAfter || initialTicketId;
@@ -210,7 +241,7 @@ function SuperAdminSupportContent() {
     } finally {
       setLoadingList(false);
     }
-  }, [statusFilter, priorityFilter, selectedTenantId, search, initialTicketId]);
+  }, [statusFilter, priorityFilter, selectedTenantId, search, initialTicketId, selectedTicket]);
 
   useEffect(() => {
     fetchTickets();

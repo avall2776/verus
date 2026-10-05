@@ -29,7 +29,15 @@ let SupportService = SupportService_1 = class SupportService {
             apiKey: apiKey || 'dummy-key',
         });
     }
+    clearCache() {
+        SupportService_1.ticketsCache.clear();
+    }
     async findAll(tenantId, filters) {
+        const cacheKey = JSON.stringify({ tenantId, filters });
+        const cached = SupportService_1.ticketsCache.get(cacheKey);
+        if (cached && Date.now() < cached.expiresAt) {
+            return cached.data;
+        }
         const where = {};
         if (filters.isSuperAdmin) {
             if (filters.targetTenantId && filters.targetTenantId !== 'ALL') {
@@ -59,44 +67,86 @@ let SupportService = SupportService_1 = class SupportService {
         }
         const countWhere = { ...where };
         delete countWhere.status;
-        const [tickets, total, open, inProgress, waitingClient, resolved, closed] = await Promise.all([
-            this.prisma.supportTicket.findMany({
-                where,
-                include: {
-                    tenant: {
-                        select: {
-                            id: true,
-                            name: true,
-                            cnpj: true,
-                            email: true,
-                            phone: true,
-                            isActive: true,
-                            plan: { select: { name: true } }
-                        }
-                    },
-                    user: {
-                        select: { id: true, name: true, email: true, role: true, avatarUrl: true }
-                    },
-                    assignedTo: {
-                        select: { id: true, name: true, email: true, role: true, avatarUrl: true }
-                    },
-                    contact: {
-                        select: { id: true, name: true, phone: true, email: true }
-                    },
-                    _count: {
-                        select: { messages: true }
+        let tickets = [];
+        let total = 0;
+        let open = 0;
+        let inProgress = 0;
+        let waitingClient = 0;
+        let resolved = 0;
+        let closed = 0;
+        const findTicketsPromise = this.prisma.supportTicket.findMany({
+            where,
+            include: {
+                tenant: {
+                    select: {
+                        id: true,
+                        name: true,
+                        cnpj: true,
+                        email: true,
+                        phone: true,
+                        isActive: true,
+                        plan: { select: { name: true } }
                     }
                 },
-                orderBy: { updatedAt: 'desc' }
-            }),
-            this.prisma.supportTicket.count({ where: countWhere }),
-            this.prisma.supportTicket.count({ where: { ...countWhere, status: 'OPEN' } }),
-            this.prisma.supportTicket.count({ where: { ...countWhere, status: 'IN_PROGRESS' } }),
-            this.prisma.supportTicket.count({ where: { ...countWhere, status: 'WAITING_CLIENT' } }),
-            this.prisma.supportTicket.count({ where: { ...countWhere, status: 'RESOLVED' } }),
-            this.prisma.supportTicket.count({ where: { ...countWhere, status: 'CLOSED' } }),
-        ]);
-        return {
+                user: {
+                    select: { id: true, name: true, email: true, role: true, avatarUrl: true }
+                },
+                assignedTo: {
+                    select: { id: true, name: true, email: true, role: true, avatarUrl: true }
+                },
+                contact: {
+                    select: { id: true, name: true, phone: true, email: true }
+                },
+                _count: {
+                    select: { messages: true }
+                }
+            },
+            orderBy: { updatedAt: 'desc' }
+        });
+        if (!filters.status || filters.status === 'ALL') {
+            tickets = await findTicketsPromise;
+            total = tickets.length;
+            for (const t of tickets) {
+                const s = String(t.status || '').toUpperCase();
+                if (s === 'OPEN')
+                    open++;
+                else if (s === 'IN_PROGRESS')
+                    inProgress++;
+                else if (s === 'WAITING_CLIENT')
+                    waitingClient++;
+                else if (s === 'RESOLVED')
+                    resolved++;
+                else if (s === 'CLOSED')
+                    closed++;
+            }
+        }
+        else {
+            const [fetchedTickets, statusGroups] = await Promise.all([
+                findTicketsPromise,
+                this.prisma.supportTicket.groupBy({
+                    by: ['status'],
+                    where: countWhere,
+                    _count: { id: true },
+                }),
+            ]);
+            tickets = fetchedTickets;
+            for (const g of statusGroups) {
+                const cnt = g._count.id;
+                total += cnt;
+                const s = String(g.status || '').toUpperCase();
+                if (s === 'OPEN')
+                    open += cnt;
+                else if (s === 'IN_PROGRESS')
+                    inProgress += cnt;
+                else if (s === 'WAITING_CLIENT')
+                    waitingClient += cnt;
+                else if (s === 'RESOLVED')
+                    resolved += cnt;
+                else if (s === 'CLOSED')
+                    closed += cnt;
+            }
+        }
+        const result = {
             tickets,
             counts: {
                 total,
@@ -107,6 +157,11 @@ let SupportService = SupportService_1 = class SupportService {
                 closed
             }
         };
+        SupportService_1.ticketsCache.set(cacheKey, {
+            data: result,
+            expiresAt: Date.now() + 15000,
+        });
+        return result;
     }
     async findOne(id, tenantId, isSuperAdmin) {
         const where = isSuperAdmin ? { id } : { id, tenantId };
@@ -200,6 +255,7 @@ let SupportService = SupportService_1 = class SupportService {
                 this.logger.error(`Erro ao disparar IA para novo chamado #${ticket.ticketNumber}: ${err?.message}`);
             });
         }, 1000);
+        this.clearCache();
         return ticket;
     }
     async addMessage(ticketId, tenantId, userId, dto, isSuperAdmin) {
@@ -264,6 +320,7 @@ let SupportService = SupportService_1 = class SupportService {
                 });
             }, 1200);
         }
+        this.clearCache();
         return message;
     }
     async updateStatus(ticketId, tenantId, status, isSuperAdmin) {
@@ -276,7 +333,7 @@ let SupportService = SupportService_1 = class SupportService {
         if (!ticket) {
             throw new common_1.NotFoundException('Chamado de suporte não encontrado.');
         }
-        return this.prisma.supportTicket.update({
+        const updated = await this.prisma.supportTicket.update({
             where: { id: ticketId },
             data: { status, updatedAt: new Date() },
             include: {
@@ -288,6 +345,8 @@ let SupportService = SupportService_1 = class SupportService {
                 }
             }
         });
+        this.clearCache();
+        return updated;
     }
     async assign(ticketId, tenantId, assignedToId, isSuperAdmin) {
         const where = isSuperAdmin ? { id: ticketId } : { id: ticketId, tenantId };
@@ -295,7 +354,7 @@ let SupportService = SupportService_1 = class SupportService {
         if (!ticket) {
             throw new common_1.NotFoundException('Chamado de suporte não encontrado.');
         }
-        return this.prisma.supportTicket.update({
+        const updated = await this.prisma.supportTicket.update({
             where: { id: ticketId },
             data: {
                 assignedToId: assignedToId || null,
@@ -308,6 +367,8 @@ let SupportService = SupportService_1 = class SupportService {
                 }
             }
         });
+        this.clearCache();
+        return updated;
     }
     async getNotices(tenantId) {
         const tenant = await this.prisma.tenant.findUnique({
@@ -533,6 +594,7 @@ INSTRUÇÕES PARA O COPILOTO:
     }
 };
 exports.SupportService = SupportService;
+SupportService.ticketsCache = new Map();
 exports.SupportService = SupportService = SupportService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,

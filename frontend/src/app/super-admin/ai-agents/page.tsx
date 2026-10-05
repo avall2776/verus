@@ -87,25 +87,91 @@ const QUICK_PROMPTS = [
   "Vocês oferecem suporte e garantia?",
 ];
 
-export default function SuperAdminAiAgentsPage() {
-  // Lista de Tenants para Governança Centralizada
-  const [tenants, setTenants] = useState<{ id: string; name: string; document?: string }[]>([]);
-  const [selectedTenantId, setSelectedTenantId] = useState<string>("");
-  const [loadingTenants, setLoadingTenants] = useState(true);
+interface AiConfigState {
+  aiName: string;
+  aiModel: string;
+  aiPrompt: string;
+  aiKnowledgeBase: string;
+  aiTemperature: number;
+}
 
-  // Estados de Configuração da IA
-  const [loadingConfig, setLoadingConfig] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [config, setConfig] = useState({
-    aiName: "Vitor (IA)",
-    aiModel: "gpt-4o-mini",
-    aiPrompt: "",
-    aiKnowledgeBase: "",
-    aiTemperature: 0.7,
+export default function SuperAdminAiAgentsPage() {
+  // Lista de Tenants para Governança Centralizada (Hidratação Instantânea)
+  const [tenants, setTenants] = useState<{ id: string; name: string; document?: string }[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("versus_super_tenants_simple");
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return [];
+  });
+  const [selectedTenantId, setSelectedTenantId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = sessionStorage.getItem("versus_super_ai_selected_tenant");
+        if (stored) return stored;
+        const cachedTenants = sessionStorage.getItem("versus_super_tenants_simple");
+        if (cachedTenants) {
+          const list = JSON.parse(cachedTenants);
+          if (list[0]?.id) return list[0].id;
+        }
+      } catch {}
+    }
+    return "";
+  });
+  const [loadingTenants, setLoadingTenants] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return !sessionStorage.getItem("versus_super_tenants_simple");
+    }
+    return true;
   });
 
+  // Estados de Configuração da IA
+  const [config, setConfig] = useState<AiConfigState>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedTenant = sessionStorage.getItem("versus_super_ai_selected_tenant");
+        if (storedTenant) {
+          const cached = sessionStorage.getItem(`versus_super_ai_config_${storedTenant}`);
+          if (cached) return JSON.parse(cached);
+        }
+      } catch {}
+    }
+    return {
+      aiName: "Vitor (IA)",
+      aiModel: "gpt-4o-mini",
+      aiPrompt: "",
+      aiKnowledgeBase: "",
+      aiTemperature: 0.7,
+    };
+  });
+  const [loadingConfig, setLoadingConfig] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedTenant = sessionStorage.getItem("versus_super_ai_selected_tenant");
+        if (storedTenant && sessionStorage.getItem(`versus_super_ai_config_${storedTenant}`)) {
+          return false;
+        }
+      } catch {}
+    }
+    return true;
+  });
+  const [saving, setSaving] = useState(false);
+
   // Documentos RAG
-  const [documents, setDocuments] = useState<{ id: string; filename: string; createdAt?: string }[]>([]);
+  const [documents, setDocuments] = useState<{ id: string; filename: string; createdAt?: string }[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedTenant = sessionStorage.getItem("versus_super_ai_selected_tenant");
+        if (storedTenant) {
+          const cached = sessionStorage.getItem(`versus_super_ai_docs_${storedTenant}`);
+          if (cached) return JSON.parse(cached);
+        }
+      } catch {}
+    }
+    return [];
+  });
   const [uploadingDoc, setUploadingDoc] = useState(false);
 
   // Playground State
@@ -127,7 +193,18 @@ export default function SuperAdminAiAgentsPage() {
     hasCustomKey: boolean;
     maskedCustomKey: string | null;
     lastKeyTestAt: string | null;
-  } | null>(null);
+  } | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedTenant = sessionStorage.getItem("versus_super_ai_selected_tenant");
+        if (storedTenant) {
+          const cached = sessionStorage.getItem(`versus_super_ai_status_${storedTenant}`);
+          if (cached) return JSON.parse(cached);
+        }
+      } catch {}
+    }
+    return null;
+  });
   const [loadingAiStatus, setLoadingAiStatus] = useState(false);
   const [togglingPlatformKey, setTogglingPlatformKey] = useState(false);
   const [testingMasterKey, setTestingMasterKey] = useState(false);
@@ -137,13 +214,20 @@ export default function SuperAdminAiAgentsPage() {
   useEffect(() => {
     async function loadTenants() {
       try {
-        setLoadingTenants(true);
-        const res = await api.get("/tenants", { params: { limit: "100" } });
+        const res = await api.get("/tenants", { params: { limit: "100", simple: "true" } });
         const list = res.data?.data || res.data || [];
         setTenants(list);
-        if (list.length > 0) {
-          setSelectedTenantId(list[0].id);
-        }
+        try {
+          sessionStorage.setItem("versus_super_tenants_simple", JSON.stringify(list));
+        } catch {}
+        setSelectedTenantId((prev) => {
+          if (prev && list.some((t: any) => t.id === prev)) return prev;
+          if (list.length > 0) {
+            try { sessionStorage.setItem("versus_super_ai_selected_tenant", list[0].id); } catch {}
+            return list[0].id;
+          }
+          return "";
+        });
       } catch (err) {
         console.error("Erro ao carregar lista de empresas:", err);
       } finally {
@@ -156,9 +240,9 @@ export default function SuperAdminAiAgentsPage() {
   const fetchTenantAiStatus = useCallback(async (tenantId: string) => {
     if (!tenantId) return;
     try {
-      setLoadingAiStatus(true);
       const res = await api.get(`/tenants/${tenantId}/super-ai-key`);
       setTenantAiStatus(res.data);
+      try { sessionStorage.setItem(`versus_super_ai_status_${tenantId}`, JSON.stringify(res.data)); } catch {}
     } catch (err) {
       console.error("Erro ao carregar status de chave do tenant:", err);
     } finally {
@@ -215,7 +299,14 @@ export default function SuperAdminAiAgentsPage() {
   // Carregar Configuração e Documentos do Tenant Selecionado
   const loadTenantConfig = useCallback(async (tenantId: string) => {
     if (!tenantId) return;
-    setLoadingConfig(true);
+    try { sessionStorage.setItem("versus_super_ai_selected_tenant", tenantId); } catch {}
+    
+    // Se não tiver cache deste tenant em específico, exibe loading
+    const hasCache = typeof window !== "undefined" && Boolean(sessionStorage.getItem(`versus_super_ai_config_${tenantId}`));
+    if (!hasCache) {
+      setLoadingConfig(true);
+    }
+
     try {
       const headers = { "x-target-tenant-id": tenantId };
       const [configRes, docsRes] = await Promise.all([
@@ -229,16 +320,20 @@ export default function SuperAdminAiAgentsPage() {
           ? configRes.data.aiTemperature 
           : parseFloat(configRes.data.aiTemperature);
 
-        setConfig({
+        const newCfg = {
           aiName: configRes.data.aiName || "Vitor (IA)",
           aiModel: configRes.data.aiModel === "gpt-4o" ? "gpt-4o" : "gpt-4o-mini",
           aiPrompt: configRes.data.aiPrompt || "",
           aiKnowledgeBase: configRes.data.aiKnowledgeBase || "",
           aiTemperature: isNaN(rawTemp) ? 0.7 : rawTemp,
-        });
+        };
+        setConfig(newCfg);
+        try { sessionStorage.setItem(`versus_super_ai_config_${tenantId}`, JSON.stringify(newCfg)); } catch {}
       }
 
-      setDocuments(docsRes.data || []);
+      const docs = docsRes.data || [];
+      setDocuments(docs);
+      try { sessionStorage.setItem(`versus_super_ai_docs_${tenantId}`, JSON.stringify(docs)); } catch {}
       setMessages([]); // Reseta histórico de simulação ao trocar de empresa
     } catch (err: any) {
       console.error("Erro ao carregar configurações de IA do tenant:", err);
@@ -246,7 +341,7 @@ export default function SuperAdminAiAgentsPage() {
     } finally {
       setLoadingConfig(false);
     }
-  }, []);
+  }, [fetchTenantAiStatus]);
 
   useEffect(() => {
     if (selectedTenantId) {

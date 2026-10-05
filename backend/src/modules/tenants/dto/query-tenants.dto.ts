@@ -20,4 +20,8 @@ export class QueryTenantsDto {
   @IsOptional()
   @IsString()
   limit?: string;
+
+  @IsOptional()
+  @IsString()
+  simple?: string;
 }

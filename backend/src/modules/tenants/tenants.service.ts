@@ -21,6 +21,29 @@ export class TenantsService {
 
   private evolutionInstancesCache: { data: Map<string, { status: string; owner?: string; profileName?: string }>; expiresAt: number } | null = null;
   private statsCache: { data: any; expiresAt: number } | null = null;
+  private static simpleTenantsCache: { data: any[]; expiresAt: number } | null = null;
+  private static standardPlansEnsured = false;
+  private static plansCache: { data: any; expiresAt: number } | null = null;
+
+  async findSimple() {
+    const now = Date.now();
+    if (TenantsService.simpleTenantsCache && now < TenantsService.simpleTenantsCache.expiresAt) {
+      return TenantsService.simpleTenantsCache.data;
+    }
+
+    const list = await this.prisma.tenant.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, cnpj: true },
+      orderBy: { name: 'asc' },
+    });
+
+    TenantsService.simpleTenantsCache = {
+      data: list,
+      expiresAt: now + 60000, // 60 segundos
+    };
+
+    return list;
+  }
 
   /**
    * Consulta dinamicamente a Evolution API com cache em memória (TTL: 15s) para evitar atrasos na navegação
@@ -121,6 +144,17 @@ export class TenantsService {
   }
 
   async findAll(query: QueryTenantsDto) {
+    if (query.simple === 'true') {
+      const simpleList = await this.findSimple();
+      return {
+        data: simpleList,
+        total: simpleList.length,
+        page: 1,
+        limit: simpleList.length,
+        totalPages: 1,
+      };
+    }
+
     const page = Math.max(1, parseInt(query.page || '1', 10));
     const limit = Math.max(1, Math.min(100, parseInt(query.limit || '10', 10)));
     const skip = (page - 1) * limit;
@@ -715,10 +749,26 @@ export class TenantsService {
   }
 
   async getPlans() {
-    await this.ensureStandardPlans();
-    return this.prisma.plan.findMany({
+    const now = Date.now();
+    if (TenantsService.plansCache && now < TenantsService.plansCache.expiresAt) {
+      return TenantsService.plansCache.data;
+    }
+
+    if (!TenantsService.standardPlansEnsured) {
+      await this.ensureStandardPlans();
+      TenantsService.standardPlansEnsured = true;
+    }
+
+    const plans = await this.prisma.plan.findMany({
       orderBy: { price: 'asc' },
     });
+
+    TenantsService.plansCache = {
+      data: plans,
+      expiresAt: now + 3 * 60 * 1000, // 3 minutos
+    };
+
+    return plans;
   }
 
   async createPlan(dto: CreatePlanDto) {
@@ -753,6 +803,7 @@ export class TenantsService {
         modules,
       },
     });
+    TenantsService.plansCache = null;
     return created;
   }
 
@@ -779,10 +830,12 @@ export class TenantsService {
       if (dto.modules.instagram !== undefined) data.hasInstagram = Boolean(dto.modules.instagram);
     }
 
-    return this.prisma.plan.update({
+    const updated = await this.prisma.plan.update({
       where: { id },
       data,
     });
+    TenantsService.plansCache = null;
+    return updated;
   }
 
   async create(dto: CreateTenantDto) {

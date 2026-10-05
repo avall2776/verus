@@ -12,9 +12,20 @@ export declare class TenantsService {
     constructor(prisma: PrismaService, emailsService: EmailsService, aiService: AiService);
     private evolutionInstancesCache;
     private statsCache;
+    private static simpleTenantsCache;
+    private static standardPlansEnsured;
+    private static plansCache;
+    findSimple(): Promise<any[]>;
     private getActiveEvolutionInstances;
     private resolveTenantWhatsAppStatus;
     findAll(query: QueryTenantsDto): Promise<{
+        data: any[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+        pagination?: undefined;
+    } | {
         data: {
             id: string;
             name: string;
@@ -59,6 +70,10 @@ export declare class TenantsService {
             limit: number;
             totalPages: number;
         };
+        total?: undefined;
+        page?: undefined;
+        limit?: undefined;
+        totalPages?: undefined;
     }>;
     getStats(): Promise<any>;
     findOne(id: string): Promise<{
@@ -259,19 +274,7 @@ export declare class TenantsService {
         planId: string;
     }>;
     private ensureStandardPlans;
-    getPlans(): Promise<{
-        id: string;
-        name: string;
-        price: import("@prisma/client/runtime/library").Decimal;
-        hasCRM: boolean;
-        hasWhatsApp: boolean;
-        hasInstagram: boolean;
-        hasAIAgent: boolean;
-        maxUsers: number;
-        maxAIMsgs: number;
-        maxWorkspaces: number;
-        modules: import("@prisma/client/runtime/library").JsonValue | null;
-    }[]>;
+    getPlans(): Promise<any>;
     createPlan(dto: CreatePlanDto): Promise<{
         id: string;
         name: string;

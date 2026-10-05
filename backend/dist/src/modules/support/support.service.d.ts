@@ -14,6 +14,8 @@ export declare class SupportService {
     private readonly logger;
     private readonly openai;
     constructor(prisma: PrismaService, configService: ConfigService, supportAiService: SupportAiService, chatGateway: ChatGateway);
+    private static readonly ticketsCache;
+    clearCache(): void;
     findAll(tenantId: string, filters: {
         status?: string;
         priority?: string;
@@ -22,70 +24,7 @@ export declare class SupportService {
         userId?: string;
         isSuperAdmin?: boolean;
         targetTenantId?: string;
-    }): Promise<{
-        tickets: ({
-            contact: {
-                id: string;
-                name: string;
-                phone: string;
-                email: string;
-            };
-            tenant: {
-                id: string;
-                name: string;
-                phone: string;
-                email: string;
-                plan: {
-                    name: string;
-                };
-                cnpj: string;
-                isActive: boolean;
-            };
-            _count: {
-                messages: number;
-            };
-            assignedTo: {
-                id: string;
-                name: string;
-                email: string;
-                avatarUrl: string;
-                role: string;
-            };
-            user: {
-                id: string;
-                name: string;
-                email: string;
-                avatarUrl: string;
-                role: string;
-            };
-        } & {
-            id: string;
-            tenantId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            contactId: string | null;
-            status: string;
-            subject: string;
-            description: string;
-            priority: string;
-            userId: string | null;
-            category: string;
-            ticketNumber: number;
-            assignedToId: string | null;
-            isAiPaused: boolean;
-            satisfactionRating: number | null;
-            satisfactionFeedback: string | null;
-            aiHandoffDemandId: string | null;
-        })[];
-        counts: {
-            total: number;
-            open: number;
-            inProgress: number;
-            waitingClient: number;
-            resolved: number;
-            closed: number;
-        };
-    }>;
+    }): Promise<any>;
     findOne(id: string, tenantId: string, isSuperAdmin?: boolean): Promise<{
         contact: {
             id: string;

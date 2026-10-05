@@ -27,6 +27,22 @@ let TenantsService = TenantsService_1 = class TenantsService {
         this.evolutionInstancesCache = null;
         this.statsCache = null;
     }
+    async findSimple() {
+        const now = Date.now();
+        if (TenantsService_1.simpleTenantsCache && now < TenantsService_1.simpleTenantsCache.expiresAt) {
+            return TenantsService_1.simpleTenantsCache.data;
+        }
+        const list = await this.prisma.tenant.findMany({
+            where: { isActive: true },
+            select: { id: true, name: true, cnpj: true },
+            orderBy: { name: 'asc' },
+        });
+        TenantsService_1.simpleTenantsCache = {
+            data: list,
+            expiresAt: now + 60000,
+        };
+        return list;
+    }
     async getActiveEvolutionInstances() {
         const now = Date.now();
         if (this.evolutionInstancesCache && now < this.evolutionInstancesCache.expiresAt) {
@@ -103,6 +119,16 @@ let TenantsService = TenantsService_1 = class TenantsService {
         };
     }
     async findAll(query) {
+        if (query.simple === 'true') {
+            const simpleList = await this.findSimple();
+            return {
+                data: simpleList,
+                total: simpleList.length,
+                page: 1,
+                limit: simpleList.length,
+                totalPages: 1,
+            };
+        }
         const page = Math.max(1, parseInt(query.page || '1', 10));
         const limit = Math.max(1, Math.min(100, parseInt(query.limit || '10', 10)));
         const skip = (page - 1) * limit;
@@ -651,10 +677,22 @@ let TenantsService = TenantsService_1 = class TenantsService {
         }
     }
     async getPlans() {
-        await this.ensureStandardPlans();
-        return this.prisma.plan.findMany({
+        const now = Date.now();
+        if (TenantsService_1.plansCache && now < TenantsService_1.plansCache.expiresAt) {
+            return TenantsService_1.plansCache.data;
+        }
+        if (!TenantsService_1.standardPlansEnsured) {
+            await this.ensureStandardPlans();
+            TenantsService_1.standardPlansEnsured = true;
+        }
+        const plans = await this.prisma.plan.findMany({
             orderBy: { price: 'asc' },
         });
+        TenantsService_1.plansCache = {
+            data: plans,
+            expiresAt: now + 3 * 60 * 1000,
+        };
+        return plans;
     }
     async createPlan(dto) {
         if (!dto.name || dto.price === undefined) {
@@ -686,6 +724,7 @@ let TenantsService = TenantsService_1 = class TenantsService {
                 modules,
             },
         });
+        TenantsService_1.plansCache = null;
         return created;
     }
     async updatePlan(id, dto) {
@@ -722,10 +761,12 @@ let TenantsService = TenantsService_1 = class TenantsService {
             if (dto.modules.instagram !== undefined)
                 data.hasInstagram = Boolean(dto.modules.instagram);
         }
-        return this.prisma.plan.update({
+        const updated = await this.prisma.plan.update({
             where: { id },
             data,
         });
+        TenantsService_1.plansCache = null;
+        return updated;
     }
     async create(dto) {
         let planId = dto.planId;
@@ -1189,6 +1230,9 @@ let TenantsService = TenantsService_1 = class TenantsService {
     }
 };
 exports.TenantsService = TenantsService;
+TenantsService.simpleTenantsCache = null;
+TenantsService.standardPlansEnsured = false;
+TenantsService.plansCache = null;
 exports.TenantsService = TenantsService = TenantsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,

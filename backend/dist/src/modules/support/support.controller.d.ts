@@ -14,70 +14,7 @@ export declare class SupportController {
         search?: string;
         myOnly?: string;
         tenantId?: string;
-    }): Promise<{
-        tickets: ({
-            contact: {
-                id: string;
-                name: string;
-                phone: string;
-                email: string;
-            };
-            tenant: {
-                id: string;
-                name: string;
-                phone: string;
-                email: string;
-                plan: {
-                    name: string;
-                };
-                cnpj: string;
-                isActive: boolean;
-            };
-            _count: {
-                messages: number;
-            };
-            assignedTo: {
-                id: string;
-                name: string;
-                email: string;
-                avatarUrl: string;
-                role: string;
-            };
-            user: {
-                id: string;
-                name: string;
-                email: string;
-                avatarUrl: string;
-                role: string;
-            };
-        } & {
-            id: string;
-            tenantId: string;
-            createdAt: Date;
-            updatedAt: Date;
-            contactId: string | null;
-            status: string;
-            subject: string;
-            description: string;
-            priority: string;
-            userId: string | null;
-            category: string;
-            ticketNumber: number;
-            assignedToId: string | null;
-            isAiPaused: boolean;
-            satisfactionRating: number | null;
-            satisfactionFeedback: string | null;
-            aiHandoffDemandId: string | null;
-        })[];
-        counts: {
-            total: number;
-            open: number;
-            inProgress: number;
-            waitingClient: number;
-            resolved: number;
-            closed: number;
-        };
-    }>;
+    }): Promise<any>;
     getNotices(req: any): Promise<{
         systemStatus: {
             id: string;

@@ -62,16 +62,37 @@ interface OverviewMetrics {
 }
 
 export default function SuperAdminOperatorsPage() {
-  const [operators, setOperators] = useState<Operator[]>([]);
-  const [overview, setOverview] = useState<OverviewMetrics>({
-    totalOperators: 0,
-    onlineOperators: 0,
-    totalAttendancesToday: 0,
-    totalResolvedToday: 0,
-    globalAvgResponseTime: 0,
-    globalResolutionRate: 0,
+  const [operators, setOperators] = useState<Operator[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("versus_super_operators");
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return [];
   });
-  const [loading, setLoading] = useState(true);
+  const [overview, setOverview] = useState<OverviewMetrics>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("versus_super_operators_overview");
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return {
+      totalOperators: 0,
+      onlineOperators: 0,
+      totalAttendancesToday: 0,
+      totalResolvedToday: 0,
+      globalAvgResponseTime: 0,
+      globalResolutionRate: 0,
+    };
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return !sessionStorage.getItem("versus_super_operators");
+    }
+    return true;
+  });
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -112,12 +133,22 @@ export default function SuperAdminOperatorsPage() {
 
   // Carregar dados
   const fetchOperators = useCallback(async () => {
-    setLoading(true);
+    const hasCache = typeof window !== "undefined" && Boolean(sessionStorage.getItem("versus_super_operators"));
+    if (!hasCache) {
+      setLoading(true);
+    }
     try {
       const res = await api.get("/operators");
-      setOperators(res.data.operators || []);
+      const list = res.data.operators || [];
+      setOperators(list);
+      try {
+        sessionStorage.setItem("versus_super_operators", JSON.stringify(list));
+      } catch {}
       if (res.data.overview) {
         setOverview(res.data.overview);
+        try {
+          sessionStorage.setItem("versus_super_operators_overview", JSON.stringify(res.data.overview));
+        } catch {}
       }
     } catch (err: any) {
       console.error(err);

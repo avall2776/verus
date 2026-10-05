@@ -4,4 +4,5 @@ export declare class QueryTenantsDto {
     planId?: string;
     page?: string;
     limit?: string;
+    simple?: string;
 }

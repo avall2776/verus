@@ -128,6 +128,13 @@ export declare class TenantsController {
         message: string;
     }>;
     findAll(req: any, query: QueryTenantsDto): Promise<{
+        data: any[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+        pagination?: undefined;
+    } | {
         data: {
             id: string;
             name: string;
@@ -172,6 +179,10 @@ export declare class TenantsController {
             limit: number;
             totalPages: number;
         };
+        total?: undefined;
+        page?: undefined;
+        limit?: undefined;
+        totalPages?: undefined;
     }>;
     create(req: any, body: CreateTenantDto): Promise<{
         message: string;
@@ -229,19 +240,7 @@ export declare class TenantsController {
             savedPassword: string;
         };
     }>;
-    getPlans(req: any): Promise<{
-        id: string;
-        name: string;
-        price: import("@prisma/client/runtime/library").Decimal;
-        hasCRM: boolean;
-        hasWhatsApp: boolean;
-        hasInstagram: boolean;
-        hasAIAgent: boolean;
-        maxUsers: number;
-        maxAIMsgs: number;
-        maxWorkspaces: number;
-        modules: import("@prisma/client/runtime/library").JsonValue | null;
-    }[]>;
+    getPlans(req: any): Promise<any>;
     createPlan(req: any, body: CreatePlanDto): Promise<{
         id: string;
         name: string;

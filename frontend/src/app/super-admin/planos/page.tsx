@@ -114,8 +114,21 @@ const getPlanModuleStatus = (plan: any, moduleKey: string): boolean => {
 };
 
 export default function SuperAdminPlansPage() {
-  const [plans, setPlans] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [plans, setPlans] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("versus_super_plans");
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return !sessionStorage.getItem("versus_super_plans");
+    }
+    return true;
+  });
   const [savingId, setSavingId] = useState<string | null>(null);
 
   // Modal / Formulário de Criação de Plano
@@ -139,10 +152,17 @@ export default function SuperAdminPlansPage() {
   const [creatingLoading, setCreatingLoading] = useState(false);
 
   const fetchPlans = async () => {
-    setLoading(true);
+    const hasCache = typeof window !== "undefined" && Boolean(sessionStorage.getItem("versus_super_plans"));
+    if (!hasCache) {
+      setLoading(true);
+    }
     try {
       const res = await api.get("/tenants/plans/list");
-      setPlans(res.data || []);
+      const list = res.data || [];
+      setPlans(list);
+      try {
+        sessionStorage.setItem("versus_super_plans", JSON.stringify(list));
+      } catch {}
     } catch (err: any) {
       console.error(err);
       toast.error(err.response?.data?.message || "Erro ao carregar planos.");
