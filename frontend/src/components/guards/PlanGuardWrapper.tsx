@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Lock, Sparkles, ArrowLeft, LifeBuoy } from "lucide-react";
-import api from "@/lib/api";
-
-import { getCachedUser } from "@/lib/userCache";
+import { getCachedUser, getStoredUserSync } from "@/lib/userCache";
 
 interface PlanGuardWrapperProps {
   children: React.ReactNode;
@@ -14,47 +12,9 @@ interface PlanGuardWrapperProps {
 export default function PlanGuardWrapper({ children }: PlanGuardWrapperProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [isSyncing, setIsSyncing] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(() => getStoredUserSync());
 
-  // Sincronização e verificação de governança com cache inteligente de 0ms
-  useEffect(() => {
-    let isMounted = true;
-
-    const verifyTenantAndPlan = async () => {
-      try {
-        const freshUser = await getCachedUser();
-        if (freshUser && isMounted) {
-          setCurrentUser(freshUser);
-
-          // Verificação de bloqueio da empresa
-          if (freshUser.tenant && freshUser.tenant.isActive === false && !freshUser.isSuperAdmin) {
-            handleTenantBlocked(
-              `O acesso da empresa '${freshUser.tenant.name}' foi suspenso pela administração.`
-            );
-            return;
-          }
-        }
-      } catch (err: any) {
-        if (err.response?.status === 401) {
-          const code = err.response?.data?.code;
-          if (code === "TENANT_BLOCKED" || code === "USER_INACTIVE") {
-            handleTenantBlocked(err.response?.data?.message);
-          }
-        }
-      } finally {
-        if (isMounted) setIsSyncing(false);
-      }
-    };
-
-    verifyTenantAndPlan();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [pathname]);
-
-  const handleTenantBlocked = (message?: string) => {
+  const handleTenantBlocked = useCallback((message?: string) => {
     localStorage.removeItem("versus_auth_token");
     localStorage.removeItem("versus_token");
     localStorage.removeItem("token");
@@ -65,7 +25,47 @@ export default function PlanGuardWrapper({ children }: PlanGuardWrapperProps) {
       message || "Acesso suspenso: sua empresa foi bloqueada pela administração do VERSUS."
     );
     window.location.href = "/blocked";
-  };
+  }, []);
+
+  // Escuta atualizações e bloqueios em background sem travar a navegação entre rotas
+  useEffect(() => {
+    const handleBlockedEvent = (e: any) => {
+      handleTenantBlocked(e.detail?.message);
+    };
+    const handleUserUpdated = (e: any) => {
+      if (e.detail) {
+        setCurrentUser(e.detail);
+        if (e.detail.tenant && e.detail.tenant.isActive === false && !e.detail.isSuperAdmin) {
+          handleTenantBlocked(`O acesso da empresa '${e.detail.tenant.name}' foi suspenso pela administração.`);
+        }
+      }
+    };
+
+    window.addEventListener("tenant_blocked_event", handleBlockedEvent);
+    window.addEventListener("user_updated", handleUserUpdated);
+
+    // Revalidação em segundo plano sem congelar a tela
+    getCachedUser().then((freshUser) => {
+      if (freshUser) {
+        setCurrentUser(freshUser);
+        if (freshUser.tenant && freshUser.tenant.isActive === false && !freshUser.isSuperAdmin) {
+          handleTenantBlocked(`O acesso da empresa '${freshUser.tenant.name}' foi suspenso pela administração.`);
+        }
+      }
+    }).catch((err: any) => {
+      if (err.response?.status === 401) {
+        const code = err.response?.data?.code;
+        if (code === "TENANT_BLOCKED" || code === "USER_INACTIVE") {
+          handleTenantBlocked(err.response?.data?.message);
+        }
+      }
+    });
+
+    return () => {
+      window.removeEventListener("tenant_blocked_event", handleBlockedEvent);
+      window.removeEventListener("user_updated", handleUserUpdated);
+    };
+  }, [handleTenantBlocked]);
 
   // Mapeamento de rotas para módulos exigidos pelo plano
   const routeRestriction = useMemo(() => {

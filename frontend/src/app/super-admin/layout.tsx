@@ -108,6 +108,7 @@ export default function SuperAdminLayout({
                 <Link 
                   key={item.href} 
                   href={item.href} 
+                  prefetch={true}
                   className={`flex items-center gap-3 p-2.5 rounded-lg transition-all duration-150 group relative
                     ${isActive 
                       ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 font-semibold' 

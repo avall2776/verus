@@ -710,6 +710,7 @@ export default function Sidebar() {
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={true}
                       title={!isExpanded ? item.name : undefined}
                       className={`
                         flex items-center gap-3 rounded-lg transition-all duration-200 relative
