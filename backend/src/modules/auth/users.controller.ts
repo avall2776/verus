@@ -36,12 +36,24 @@ export class UsersController {
     });
   }
 
+  private readonly meCache = new Map<string, { data: any; expiresAt: number }>();
+
   @Get('me')
   async getMe(@Request() req) {
     const userId = req.user?.id || req.user?.userId;
     if (!userId) {
       throw new BadRequestException('ID de usuário não identificado no token.');
     }
+
+    const rawTarget = req.headers['x-target-tenant-id'] || req.headers['x-tenant-id'];
+    const targetTenantId = Array.isArray(rawTarget) ? rawTarget[0] : rawTarget;
+    const cacheKey = `${userId}:${targetTenantId || ''}`;
+
+    const cached = this.meCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -83,18 +95,18 @@ export class UsersController {
     if (!user) return null;
 
     const isSuperAdmin = Boolean(user.isSuperAdmin || String(user.role).toUpperCase() === 'SUPER_ADMIN');
-    const rawTarget = req.headers['x-target-tenant-id'] || req.headers['x-tenant-id'];
-    const targetTenantId = Array.isArray(rawTarget) ? rawTarget[0] : rawTarget;
 
     if (isSuperAdmin && targetTenantId && typeof targetTenantId === 'string' && targetTenantId.trim()) {
       const cleanTargetId = targetTenantId.trim();
       if (user.tenant && user.tenant.id === cleanTargetId) {
-        return {
+        const finalUser = {
           ...user,
           tenantId: user.tenant.id,
           tenant: user.tenant,
           isImpersonating: true,
         };
+        this.meCache.set(cacheKey, { data: finalUser, expiresAt: Date.now() + 60 * 1000 });
+        return finalUser;
       }
       const targetTenant = await this.prisma.tenant.findUnique({
         where: { id: cleanTargetId },
@@ -122,21 +134,25 @@ export class UsersController {
       });
 
       if (targetTenant) {
-        return {
+        const finalUser = {
           ...user,
           tenantId: targetTenant.id,
           tenant: targetTenant,
           isImpersonating: true,
         };
+        this.meCache.set(cacheKey, { data: finalUser, expiresAt: Date.now() + 60 * 1000 });
+        return finalUser;
       }
     }
 
+    this.meCache.set(cacheKey, { data: user, expiresAt: Date.now() + 60 * 1000 });
     return user;
   }
 
   @Patch('profile')
   @Put('profile')
   async updateProfile(@Request() req, @Body() body: { name?: string; avatarUrl?: string }) {
+    this.meCache.clear();
     const userId = req.user?.id || req.user?.userId;
     if (!userId) {
       throw new BadRequestException('ID de usuário não identificado no token.');
