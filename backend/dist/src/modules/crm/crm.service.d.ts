@@ -3,6 +3,7 @@ import { AutomationsService } from '../automations/automations.service';
 export declare class CrmService {
     private readonly prisma;
     private readonly automationsService;
+    private readonly logger;
     constructor(prisma: PrismaService, automationsService: AutomationsService);
     findAllDeals(tenantId: string): Promise<({
         contact: {

@@ -5,6 +5,7 @@ import { io, Socket } from 'socket.io-client';
 import { usePathname, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { showLeadMessageToast, showTransferAlertToast } from '@/components/notifications/NotificationToast';
+import { sanitizeAvatarUrl } from '@/lib/avatarUtils';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -320,7 +321,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       if (msg.direction === 'INBOUND') {
         const convId = msg.conversationId || msg.contact?.conversationId || (msg.contactId ? `conv_${msg.contactId}` : null);
         const contactName = msg.contact?.name || msg.contactName || 'Lead Interessado';
-        const contactAvatar = msg.contact?.avatarUrl || msg.contact?.avatar || null;
+        const contactAvatar = sanitizeAvatarUrl(msg.contact?.avatarUrl || msg.contact?.avatar);
         const contactPhone = msg.contact?.phone || null;
         const content = msg.content || msg.text || '';
         const msgType = msg.mediaType || msg.type || 'TEXT';

@@ -22,6 +22,7 @@ import ScheduleModal from "@/components/inbox/ScheduleModal";
 import ScheduledMessagesDrawer, { ScheduledMessage } from "@/components/inbox/ScheduledMessagesDrawer";
 import GlobalScheduledCenterModal from "@/components/inbox/GlobalScheduledCenterModal";
 import VersusAudioPlayer from "@/components/chat/VersusAudioPlayer";
+import { sanitizeAvatarUrl, isAvatarUrlValid } from "@/lib/avatarUtils";
 
 const COMMON_EMOJIS = [
   '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', 
@@ -974,7 +975,7 @@ function InboxContent() {
 
         const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
         const rawAvatar = conv.contact?.avatarUrl;
-        const cleanAvatar = (rawAvatar && rawAvatar !== 'null' && rawAvatar !== 'undefined' && !rawAvatar.includes('unsplash.com')) ? rawAvatar : null;
+        const cleanAvatar = sanitizeAvatarUrl(rawAvatar);
         const formattedContact = {
           id: conv.id,
           contactId: conv.contact?.id || '',
@@ -1049,7 +1050,7 @@ function InboxContent() {
           name: c.name,
           phone: c.phone,
           email: c.email,
-          avatarUrl: (c.avatarUrl && c.avatarUrl !== 'null' && c.avatarUrl !== 'undefined' && !c.avatarUrl.includes('unsplash.com')) ? c.avatarUrl : null,
+          avatarUrl: sanitizeAvatarUrl(c.avatarUrl),
           tags: c.tags || []
         }));
       } catch (e) {
@@ -1069,7 +1070,7 @@ function InboxContent() {
       return data.map((conv: any) => {
         const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
         const rawAvatar = conv.contact?.avatarUrl;
-        const cleanAvatar = (rawAvatar && rawAvatar !== 'null' && rawAvatar !== 'undefined' && !rawAvatar.includes('unsplash.com')) ? rawAvatar : null;
+        const cleanAvatar = sanitizeAvatarUrl(rawAvatar);
         return {
           id: conv.id,
           contactId: conv.contact?.id || '',
@@ -1245,7 +1246,7 @@ function InboxContent() {
               const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
               const existing = prev.find((p: any) => p.id === conv.id);
               const rawAvatar = conv.contact?.avatarUrl;
-              const cleanAvatar = (rawAvatar && rawAvatar !== 'null' && rawAvatar !== 'undefined' && !rawAvatar.includes('unsplash.com')) ? rawAvatar : null;
+              const cleanAvatar = sanitizeAvatarUrl(rawAvatar);
               return {
                 id: conv.id,
                 contactId: conv.contact?.id || '',
@@ -1272,8 +1273,9 @@ function InboxContent() {
         contact.time = new Date(data.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
         if (data.contact) {
-          if (data.contact.avatarUrl && (!contact.avatarUrl || contact.avatarUrl !== data.contact.avatarUrl)) {
-            contact.avatarUrl = data.contact.avatarUrl;
+          const sanitizedNewAvatar = sanitizeAvatarUrl(data.contact.avatarUrl);
+          if (sanitizedNewAvatar && (!contact.avatarUrl || contact.avatarUrl !== sanitizedNewAvatar)) {
+            contact.avatarUrl = sanitizedNewAvatar;
           }
           if (data.contact.name && data.contact.name !== 'Cliente WhatsApp' && !data.contact.name.includes('@lid')) {
             contact.name = data.contact.name;
@@ -1297,7 +1299,7 @@ function InboxContent() {
           prev.map((c) => {
             if (c.contactId === data.contact.id || c.id === data.id || (data.contact.phone && c.phone === data.contact.phone)) {
               const rawAvatar = data.contact.avatarUrl;
-              const cleanAvatar = (rawAvatar && rawAvatar !== 'null' && rawAvatar !== 'undefined' && !rawAvatar.includes('unsplash.com')) ? rawAvatar : c.avatarUrl;
+              const cleanAvatar = sanitizeAvatarUrl(rawAvatar) || sanitizeAvatarUrl(c.avatarUrl);
               const newName = (data.contact.name && data.contact.name !== 'Cliente WhatsApp' && !data.contact.name.includes('@lid')) ? data.contact.name : c.name;
               return {
                 ...c,
@@ -1316,7 +1318,7 @@ function InboxContent() {
         const mapped = res.data.map((conv: any) => {
           const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
           const rawAvatar = conv.contact?.avatarUrl;
-          const cleanAvatar = (rawAvatar && rawAvatar !== 'null' && rawAvatar !== 'undefined' && !rawAvatar.includes('unsplash.com')) ? rawAvatar : null;
+          const cleanAvatar = sanitizeAvatarUrl(rawAvatar);
           return {
             id: conv.id,
             contactId: conv.contact?.id || '',
@@ -1348,7 +1350,7 @@ function InboxContent() {
         prev.map((c) => {
           if (c.contactId === contactData.id || c.id === contactData.id || (contactData.phone && c.phone === contactData.phone)) {
             const rawAvatar = contactData.avatarUrl;
-            const cleanAvatar = (rawAvatar && rawAvatar !== 'null' && rawAvatar !== 'undefined' && !rawAvatar.includes('unsplash.com')) ? rawAvatar : c.avatarUrl;
+            const cleanAvatar = sanitizeAvatarUrl(rawAvatar) || sanitizeAvatarUrl(c.avatarUrl);
             const newName = (contactData.name && contactData.name !== 'Cliente WhatsApp' && !contactData.name.includes('@lid')) ? contactData.name : c.name;
             return {
               ...c,
@@ -1738,9 +1740,9 @@ function InboxContent() {
                 {/* Foto de Perfil Circular da Instância (Linha Principal) */}
                 <div className="relative shrink-0">
                   <div className="w-10 h-10 rounded-full overflow-hidden bg-[#17253D] border border-slate-700/80 flex items-center justify-center text-white font-bold text-xs shadow-md">
-                    {instancePic ? (
+                    {isAvatarUrlValid(instancePic) ? (
                       <img 
-                        src={instancePic} 
+                        src={instancePic!} 
                         alt={instanceName} 
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover rounded-full"
@@ -1895,9 +1897,9 @@ function InboxContent() {
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-800 border border-slate-700/60 shrink-0 flex items-center justify-center text-[10px] font-bold text-white">
-                          {inst.profilePicUrl ? (
+                          {isAvatarUrlValid(inst.profilePicUrl) ? (
                             <img 
-                              src={inst.profilePicUrl} 
+                              src={inst.profilePicUrl!} 
                               alt={inst.name} 
                               referrerPolicy="no-referrer"
                               className="w-full h-full object-cover" 
@@ -2085,9 +2087,9 @@ function InboxContent() {
                 {/* Avatar Circular 48x48 */}
                 <div className="relative shrink-0">
                   <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-800 border border-slate-700/60 flex items-center justify-center text-white font-bold text-sm shadow-inner">
-                    {contact.avatarUrl ? (
+                    {isAvatarUrlValid(contact.avatarUrl) ? (
                       <img 
-                        src={contact.avatarUrl} 
+                        src={contact.avatarUrl!} 
                         alt={contact.name} 
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover rounded-full"
@@ -2299,7 +2301,8 @@ function InboxContent() {
                   <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700/60 flex items-center justify-center text-white font-bold shrink-0 relative overflow-hidden shadow-inner">
                     {(() => {
                       const isSelfOrMainLine = activeContactData.name?.includes('(você)') || (activeContactData.phone && activeInstance?.phoneNumber && activeContactData.phone.replace(/\D/g, '') === activeInstance.phoneNumber.replace(/\D/g, ''));
-                      const contactPhoto = activeContactData.avatarUrl || (isSelfOrMainLine ? (activeInstance?.profilePicUrl || waStatus?.profilePicUrl) : null);
+                      const rawContactPhoto = activeContactData.avatarUrl || (isSelfOrMainLine ? (activeInstance?.profilePicUrl || waStatus?.profilePicUrl) : null);
+                      const contactPhoto = sanitizeAvatarUrl(rawContactPhoto);
 
                       return contactPhoto ? (
                         <img 
@@ -3428,9 +3431,9 @@ function InboxContent() {
           {/* Cartão de Perfil Circular */}
           <div className="p-6 flex flex-col items-center border-b border-slate-800/80 relative bg-gradient-to-b from-[#17253D]/40 to-transparent">
             <div className="w-24 h-24 rounded-full bg-slate-800 border-2 border-slate-700/80 flex items-center justify-center text-white font-black text-2xl shadow-xl mb-3 overflow-hidden relative">
-              {activeContactData.avatarUrl ? (
+              {isAvatarUrlValid(activeContactData.avatarUrl) ? (
                 <img 
-                  src={activeContactData.avatarUrl} 
+                  src={activeContactData.avatarUrl!} 
                   alt={activeContactData.name} 
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover rounded-full"
@@ -3788,9 +3791,9 @@ function InboxContent() {
             <div className="p-6 space-y-4">
               <div className="p-3.5 rounded-xl bg-[#1E293B]/70 border border-slate-700/50 flex items-center gap-3.5">
                 <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-slate-700 to-slate-800 border border-slate-600 flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden relative">
-                  {selectedQueueChat.avatarUrl ? (
+                  {isAvatarUrlValid(selectedQueueChat.avatarUrl) ? (
                     <img 
-                      src={selectedQueueChat.avatarUrl} 
+                      src={selectedQueueChat.avatarUrl!} 
                       alt={selectedQueueChat.name} 
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover rounded-full"
@@ -3931,9 +3934,9 @@ function InboxContent() {
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-slate-700 to-slate-800 flex items-center justify-center text-xs font-bold text-white relative overflow-hidden shrink-0">
-                        {c.avatarUrl ? (
+                        {isAvatarUrlValid(c.avatarUrl) ? (
                           <img 
-                            src={c.avatarUrl} 
+                            src={c.avatarUrl!} 
                             alt={c.name} 
                             referrerPolicy="no-referrer"
                             className="w-full h-full object-cover rounded-full"

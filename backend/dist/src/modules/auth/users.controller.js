@@ -22,6 +22,7 @@ let UsersController = class UsersController {
     constructor(prisma, emailsService) {
         this.prisma = prisma;
         this.emailsService = emailsService;
+        this.meCache = new Map();
     }
     async findAll(req) {
         return this.prisma.user.findMany({
@@ -49,6 +50,13 @@ let UsersController = class UsersController {
         const userId = req.user?.id || req.user?.userId;
         if (!userId) {
             throw new common_1.BadRequestException('ID de usuário não identificado no token.');
+        }
+        const rawTarget = req.headers['x-target-tenant-id'] || req.headers['x-tenant-id'];
+        const targetTenantId = Array.isArray(rawTarget) ? rawTarget[0] : rawTarget;
+        const cacheKey = `${userId}:${targetTenantId || ''}`;
+        const cached = this.meCache.get(cacheKey);
+        if (cached && Date.now() < cached.expiresAt) {
+            return cached.data;
         }
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
@@ -90,17 +98,17 @@ let UsersController = class UsersController {
         if (!user)
             return null;
         const isSuperAdmin = Boolean(user.isSuperAdmin || String(user.role).toUpperCase() === 'SUPER_ADMIN');
-        const rawTarget = req.headers['x-target-tenant-id'] || req.headers['x-tenant-id'];
-        const targetTenantId = Array.isArray(rawTarget) ? rawTarget[0] : rawTarget;
         if (isSuperAdmin && targetTenantId && typeof targetTenantId === 'string' && targetTenantId.trim()) {
             const cleanTargetId = targetTenantId.trim();
             if (user.tenant && user.tenant.id === cleanTargetId) {
-                return {
+                const finalUser = {
                     ...user,
                     tenantId: user.tenant.id,
                     tenant: user.tenant,
                     isImpersonating: true,
                 };
+                this.meCache.set(cacheKey, { data: finalUser, expiresAt: Date.now() + 60 * 1000 });
+                return finalUser;
             }
             const targetTenant = await this.prisma.tenant.findUnique({
                 where: { id: cleanTargetId },
@@ -127,17 +135,21 @@ let UsersController = class UsersController {
                 },
             });
             if (targetTenant) {
-                return {
+                const finalUser = {
                     ...user,
                     tenantId: targetTenant.id,
                     tenant: targetTenant,
                     isImpersonating: true,
                 };
+                this.meCache.set(cacheKey, { data: finalUser, expiresAt: Date.now() + 60 * 1000 });
+                return finalUser;
             }
         }
+        this.meCache.set(cacheKey, { data: user, expiresAt: Date.now() + 60 * 1000 });
         return user;
     }
     async updateProfile(req, body) {
+        this.meCache.clear();
         const userId = req.user?.id || req.user?.userId;
         if (!userId) {
             throw new common_1.BadRequestException('ID de usuário não identificado no token.');

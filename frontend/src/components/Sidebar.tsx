@@ -45,6 +45,7 @@ import KeyboardShortcutsModal from "@/components/modals/KeyboardShortcutsModal";
 import UserProfileModal from "@/components/modals/UserProfileModal";
 import WorkspaceManagerModal, { WorkspaceItem } from "@/components/modals/WorkspaceManagerModal";
 import { getCachedUser, clearUserCache } from "@/lib/userCache";
+import { isAvatarUrlValid } from "@/lib/avatarUtils";
 
 function WhatsAppIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
   return (
@@ -785,10 +786,10 @@ export default function Sidebar() {
                 {/* Header do Usuário no Popover */}
                 <div className="p-2.5 border-b border-slate-800/80 mb-1 flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm">
-                    {currentUser?.avatarUrl ? (
+                    {isAvatarUrlValid(currentUser?.avatarUrl) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img 
-                        src={currentUser.avatarUrl} 
+                        src={currentUser!.avatarUrl!} 
                         alt="Avatar" 
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover" 
@@ -901,10 +902,10 @@ export default function Sidebar() {
               className={`flex items-center gap-2.5 px-2 py-2 mt-1 rounded-lg hover:bg-slate-800/60 cursor-pointer transition-colors group relative ${!isExpanded && 'justify-center'}`}
             >
               <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm overflow-hidden">
-                {currentUser?.avatarUrl ? (
+                {isAvatarUrlValid(currentUser?.avatarUrl) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img 
-                    src={currentUser.avatarUrl} 
+                    src={currentUser!.avatarUrl!} 
                     alt="Avatar" 
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover" 

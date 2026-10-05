@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { AutomationsService } from '../automations/automations.service';
 
 @Injectable()
 export class CrmService {
+  private readonly logger = new Logger(CrmService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly automationsService: AutomationsService
@@ -145,7 +147,10 @@ export class CrmService {
   }
 
   async updateDeal(tenantId: string, id: string, data: any) {
-    const deal = await this.prisma.deal.findUnique({ where: { id } });
+    const deal = await this.prisma.deal.findUnique({
+      where: { id },
+      select: { id: true, tenantId: true, contactId: true, status: true }
+    });
     if (!deal || deal.tenantId !== tenantId) throw new NotFoundException('Deal não encontrado');
 
     const updated = await this.prisma.deal.update({
@@ -154,10 +159,14 @@ export class CrmService {
     });
 
     if (data.status && data.status !== deal.status) {
-       await this.automationsService.evaluateEvent(tenantId, 'STAGE_CHANGED', {
-         contactId: deal.contactId,
-         stage: data.status
-       });
+      // Executa automações em background assíncrono para retorno instantâneo (<50ms) ao usuário
+      this.automationsService.evaluateEvent(tenantId, 'STAGE_CHANGED', {
+        contactId: deal.contactId,
+        stage: data.status,
+        dealId: deal.id,
+      }).catch(err => {
+        this.logger.error(`Erro ao disparar automação STAGE_CHANGED para deal ${id}: ${err?.message || err}`);
+      });
     }
 
     return updated;
@@ -257,15 +266,14 @@ export class CrmService {
     }
 
     if (previousStage !== stageId) {
-      try {
-        await this.automationsService.evaluateEvent(tenantId, 'STAGE_CHANGED', {
-          contactId,
-          stage: stageId,
-          dealId: deal.id,
-        });
-      } catch (err: any) {
-        // Falha em automação não deve abortar movimentação manual de estágio
-      }
+      // Disparo em background não-bloqueante
+      this.automationsService.evaluateEvent(tenantId, 'STAGE_CHANGED', {
+        contactId,
+        stage: stageId,
+        dealId: deal.id,
+      }).catch(err => {
+        this.logger.error(`Erro ao disparar automação STAGE_CHANGED para contato ${contactId}: ${err?.message || err}`);
+      });
     }
 
     return deal;

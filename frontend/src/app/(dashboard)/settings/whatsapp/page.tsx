@@ -11,6 +11,7 @@ import QRCode from "qrcode";
 import api from "@/lib/api";
 import { useWhatsApp, WhatsAppInstance } from "@/components/ui/WhatsAppProvider";
 import { useSocket } from "@/components/ui/SocketProvider";
+import { isAvatarUrlValid } from "@/lib/avatarUtils";
 
 export default function WhatsAppSettingsPage() {
   const { instances, activeInstance, setActiveInstance, refreshInstances, isLoading: contextLoading } = useWhatsApp();
@@ -467,9 +468,9 @@ export default function WhatsAppSettingsPage() {
                     title="Clique para alterar a foto de perfil da instância"
                     className="w-14 h-14 rounded-2xl bg-gray-800 border border-gray-700 flex items-center justify-center text-white font-bold text-lg overflow-hidden shrink-0 relative cursor-pointer group shadow-md"
                   >
-                    {formData.profilePicUrl ? (
+                    {isAvatarUrlValid(formData.profilePicUrl) ? (
                       <img 
-                        src={formData.profilePicUrl} 
+                        src={formData.profilePicUrl!} 
                         alt={formData.name} 
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover" 
@@ -565,9 +566,9 @@ export default function WhatsAppSettingsPage() {
                   >
                     {/* Avatar Preview */}
                     <div className="relative group w-16 h-16 rounded-2xl bg-gray-900 border border-gray-700 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
-                      {formData.profilePicUrl ? (
+                      {isAvatarUrlValid(formData.profilePicUrl) ? (
                         <img 
-                          src={formData.profilePicUrl} 
+                          src={formData.profilePicUrl!} 
                           alt={formData.name || "Foto da Instância"} 
                           referrerPolicy="no-referrer"
                           className="w-full h-full object-cover"

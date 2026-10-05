@@ -8,15 +8,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var CrmService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CrmService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const automations_service_1 = require("../automations/automations.service");
-let CrmService = class CrmService {
+let CrmService = CrmService_1 = class CrmService {
     constructor(prisma, automationsService) {
         this.prisma = prisma;
         this.automationsService = automationsService;
+        this.logger = new common_1.Logger(CrmService_1.name);
     }
     async findAllDeals(tenantId) {
         return this.prisma.deal.findMany({
@@ -145,7 +147,10 @@ let CrmService = class CrmService {
         });
     }
     async updateDeal(tenantId, id, data) {
-        const deal = await this.prisma.deal.findUnique({ where: { id } });
+        const deal = await this.prisma.deal.findUnique({
+            where: { id },
+            select: { id: true, tenantId: true, contactId: true, status: true }
+        });
         if (!deal || deal.tenantId !== tenantId)
             throw new common_1.NotFoundException('Deal não encontrado');
         const updated = await this.prisma.deal.update({
@@ -153,9 +158,12 @@ let CrmService = class CrmService {
             data
         });
         if (data.status && data.status !== deal.status) {
-            await this.automationsService.evaluateEvent(tenantId, 'STAGE_CHANGED', {
+            this.automationsService.evaluateEvent(tenantId, 'STAGE_CHANGED', {
                 contactId: deal.contactId,
-                stage: data.status
+                stage: data.status,
+                dealId: deal.id,
+            }).catch(err => {
+                this.logger.error(`Erro ao disparar automação STAGE_CHANGED para deal ${id}: ${err?.message || err}`);
             });
         }
         return updated;
@@ -240,21 +248,19 @@ let CrmService = class CrmService {
             });
         }
         if (previousStage !== stageId) {
-            try {
-                await this.automationsService.evaluateEvent(tenantId, 'STAGE_CHANGED', {
-                    contactId,
-                    stage: stageId,
-                    dealId: deal.id,
-                });
-            }
-            catch (err) {
-            }
+            this.automationsService.evaluateEvent(tenantId, 'STAGE_CHANGED', {
+                contactId,
+                stage: stageId,
+                dealId: deal.id,
+            }).catch(err => {
+                this.logger.error(`Erro ao disparar automação STAGE_CHANGED para contato ${contactId}: ${err?.message || err}`);
+            });
         }
         return deal;
     }
 };
 exports.CrmService = CrmService;
-exports.CrmService = CrmService = __decorate([
+exports.CrmService = CrmService = CrmService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         automations_service_1.AutomationsService])

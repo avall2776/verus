@@ -284,7 +284,39 @@ function CrmContent() {
       return;
     }
 
-    handleUpdateDeal(draggableId, { status: newStatus });
+    // 1. Snapshot para rollback caso ocorra falha de rede
+    const previousDeals = [...deals];
+
+    // 2. Reordenação otimista imediata na UI (0ms de latência percebida)
+    setDeals(prev => {
+      const dragged = prev.find(d => d.id === draggableId);
+      if (!dragged) return prev;
+
+      const updated = { ...dragged, status: newStatus, updatedAt: new Date().toISOString() };
+      const withoutDragged = prev.filter(d => d.id !== draggableId);
+
+      // Agrupa os deals da coluna de destino mantendo a ordenação
+      const destDeals = withoutDragged.filter(d => d.status === newStatus);
+      const otherDeals = withoutDragged.filter(d => d.status !== newStatus);
+
+      // Insere exatamente no índice onde o usuário soltou o card
+      destDeals.splice(destination.index, 0, updated);
+
+      return [...destDeals, ...otherDeals];
+    });
+
+    if (selectedDeal && selectedDeal.id === draggableId) {
+      setSelectedDeal({ ...selectedDeal, status: newStatus });
+    }
+
+    // 3. Sincroniza com o backend em background sem travar a interface
+    try {
+      await api.patch(`/deals/${draggableId}`, { status: newStatus });
+    } catch (error) {
+      console.error("Erro ao sincronizar movimento de fase:", error);
+      toast.error("Não foi possível mover a oportunidade");
+      setDeals(previousDeals);
+    }
   };
 
   const toggleColumn = (colId: string) => {
