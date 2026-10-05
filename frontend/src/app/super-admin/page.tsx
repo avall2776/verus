@@ -18,21 +18,8 @@ import api from "@/lib/api";
 import { toast } from "sonner";
 
 export default function SuperAdminDashboard() {
-  const [stats, setStats] = useState<any>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = sessionStorage.getItem("versus_superadmin_stats");
-        if (cached) return JSON.parse(cached);
-      } catch (e) {}
-    }
-    return null;
-  });
-  const [loading, setLoading] = useState(() => {
-    if (typeof window !== "undefined") {
-      return !sessionStorage.getItem("versus_superadmin_stats");
-    }
-    return true;
-  });
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchStats = async (isBackground = false) => {
     if (!isBackground) setLoading(true);
@@ -51,7 +38,16 @@ export default function SuperAdminDashboard() {
   };
 
   useEffect(() => {
-    const hasCache = !!stats;
+    let hasCache = false;
+    try {
+      const cached = sessionStorage.getItem("versus_superadmin_stats");
+      if (cached) {
+        setStats(JSON.parse(cached));
+        setLoading(false);
+        hasCache = true;
+      }
+    } catch (e) {}
+
     fetchStats(hasCache);
   }, []);
 

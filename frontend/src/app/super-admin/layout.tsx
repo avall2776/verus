@@ -139,8 +139,8 @@ export default function SuperAdminLayout({
             className="flex items-center justify-between p-2 rounded-lg bg-[#0B1224] border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 cursor-pointer transition-all group"
             title="Editar Perfil (Nome, Foto e Dados)"
           >
-            <div className="flex items-center gap-2 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm">
+            <div className="flex items-center gap-2 overflow-hidden" suppressHydrationWarning>
+              <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm" suppressHydrationWarning>
                 {currentUser?.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -148,14 +148,14 @@ export default function SuperAdminLayout({
                   currentUser?.name?.charAt(0)?.toUpperCase() || "SA"
                 )}
               </div>
-              <div className="hidden md:flex flex-col overflow-hidden">
-                <div className="flex items-center gap-1">
-                  <span className="text-xs font-bold text-white truncate group-hover:text-blue-400 transition-colors">
+              <div className="hidden md:flex flex-col overflow-hidden" suppressHydrationWarning>
+                <div className="flex items-center gap-1" suppressHydrationWarning>
+                  <span className="text-xs font-bold text-white truncate group-hover:text-blue-400 transition-colors" suppressHydrationWarning>
                     {currentUser?.name || "Super Admin"}
                   </span>
                   <Edit2 size={10} className="text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                 </div>
-                <span className="text-[10px] text-slate-400 truncate">{currentUser?.email || "admin@versus.com"}</span>
+                <span className="text-[10px] text-slate-400 truncate" suppressHydrationWarning>{currentUser?.email || "admin@versus.com"}</span>
               </div>
             </div>
             <button

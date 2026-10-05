@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Building2, 
@@ -36,35 +36,19 @@ import CreateCompanyModal from "@/components/super-admin/CreateCompanyModal";
 export default function SuperAdminCompaniesPage() {
   const router = useRouter();
 
-  // Estados de listagem com hidratação instantânea
-  const [companies, setCompanies] = useState<any[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = sessionStorage.getItem("versus_superadmin_companies");
-        if (cached) return JSON.parse(cached);
-      } catch (e) {}
-    }
-    return [];
-  });
-  const [loading, setLoading] = useState(() => {
-    if (typeof window !== "undefined") {
-      return !sessionStorage.getItem("versus_superadmin_companies");
-    }
-    return true;
-  });
+  // Estados de listagem neutros (garante hidratação 100% idêntica entre SSR e Client)
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [planFilter, setPlanFilter] = useState("ALL");
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = sessionStorage.getItem("versus_superadmin_companies_pag");
-        if (cached) return JSON.parse(cached);
-      } catch (e) {}
-    }
-    return { total: 0, totalPages: 1, limit: 10 };
-  });
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1, limit: 10 });
+  const companiesRef = useRef<any[]>([]);
+
+  useEffect(() => {
+    companiesRef.current = companies;
+  }, [companies]);
 
   // Estados de modais
   const [xRayTenantId, setXRayTenantId] = useState<string | null>(null);
@@ -121,16 +105,32 @@ export default function SuperAdminCompaniesPage() {
       }
     } catch (err: any) {
       console.error(err);
-      if (companies.length === 0) toast.error(err.response?.data?.message || "Erro ao carregar lista de empresas.");
+      if (companiesRef.current.length === 0) toast.error(err.response?.data?.message || "Erro ao carregar lista de empresas.");
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter, planFilter, companies.length]);
+  }, [page, search, statusFilter, planFilter]);
 
   useEffect(() => {
-    const hasInitialData = companies.length > 0 && page === 1 && !search && statusFilter === 'ALL' && planFilter === 'ALL';
-    fetchCompanies(hasInitialData);
-  }, [fetchCompanies]);
+    let hasCache = false;
+    try {
+      const cached = sessionStorage.getItem("versus_superadmin_companies");
+      const cachedPag = sessionStorage.getItem("versus_superadmin_companies_pag");
+      if (cached && page === 1 && !search && statusFilter === "ALL" && planFilter === "ALL") {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCompanies(parsed);
+          setLoading(false);
+          hasCache = true;
+        }
+      }
+      if (cachedPag) {
+        setPagination(JSON.parse(cachedPag));
+      }
+    } catch (e) {}
+
+    fetchCompanies(hasCache);
+  }, [fetchCompanies, page, search, statusFilter, planFilter]);
 
   const handleToggleStatus = async (company: any) => {
     const nextStatus = !company.isActive;
@@ -193,7 +193,7 @@ export default function SuperAdminCompaniesPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-white tracking-wide">Gestão Global de Empresas</h1>
-            <span className="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700 font-mono">
+            <span className="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700 font-mono" suppressHydrationWarning>
               {pagination.total} empresas
             </span>
           </div>
