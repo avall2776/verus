@@ -185,10 +185,13 @@ function InboxContent() {
   const [showCrmDropdown, setShowCrmDropdown] = useState(false);
   const [isMovingStage, setIsMovingStage] = useState(false);
 
-  // Estados para edição inline do número de telefone no Drawer
+  // Estados para edição inline do número de telefone e nome no Drawer
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [editingPhoneValue, setEditingPhoneValue] = useState('');
   const [isSavingPhone, setIsSavingPhone] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editingNameValue, setEditingNameValue] = useState('');
+  const [isSavingName, setIsSavingName] = useState(false);
 
   // Carrega contatos silenciados e mensagens agendadas salvos no localStorage
   useEffect(() => {
@@ -1485,6 +1488,31 @@ function InboxContent() {
       toast.error('Erro ao atualizar telefone: ' + (err.response?.data?.message || err.message));
     } finally {
       setIsSavingPhone(false);
+    }
+  };
+
+  const handleSaveContactName = async () => {
+    if (!activeContactData?.contactId) return;
+    setIsSavingName(true);
+    try {
+      const clean = editingNameValue.trim();
+      if (!clean) {
+        toast.error('O nome do contato não pode ser vazio.');
+        return;
+      }
+      await api.patch(`/contacts/${activeContactData.contactId}`, { name: clean });
+      setContacts(prev => prev.map(c => {
+        if (c.contactId === activeContactData.contactId || c.id === activeChat) {
+          return { ...c, name: clean };
+        }
+        return c;
+      }));
+      setIsEditingName(false);
+      toast.success('Nome do contato atualizado com sucesso!');
+    } catch (err: any) {
+      toast.error('Erro ao atualizar nome: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setIsSavingName(false);
     }
   };
 
@@ -3474,9 +3502,48 @@ function InboxContent() {
               <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#0B1224] shadow-sm" />
             </div>
 
-            <h2 className="text-base font-bold text-white text-center leading-snug">
-              {formatContactDisplayName(activeContactData.name, activeContactData.phone)}
-            </h2>
+            {isEditingName ? (
+              <div className="flex items-center gap-1.5 w-full justify-center max-w-xs mt-1">
+                <input
+                  type="text"
+                  value={editingNameValue}
+                  onChange={(e) => setEditingNameValue(e.target.value)}
+                  placeholder="Nome do contato"
+                  className="bg-slate-900 border border-emerald-500/50 rounded px-2.5 py-1 text-sm text-white font-semibold outline-none text-center w-full focus:border-emerald-400"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveContactName();
+                    if (e.key === 'Escape') setIsEditingName(false);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveContactName}
+                  disabled={isSavingName}
+                  className="p-1 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                  title="Salvar nome"
+                >
+                  <Check size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 justify-center group/name">
+                <h2 className="text-base font-bold text-white text-center leading-snug">
+                  {formatContactDisplayName(activeContactData.name, activeContactData.phone)}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingNameValue(activeContactData.name === 'Cliente WhatsApp' ? '' : activeContactData.name || '');
+                    setIsEditingName(true);
+                  }}
+                  className="text-slate-400 hover:text-emerald-400 p-1 transition-colors cursor-pointer opacity-70 group-hover/name:opacity-100"
+                  title="Editar nome do contato"
+                >
+                  <Pencil size={12} />
+                </button>
+              </div>
+            )}
             <div className="flex items-center gap-1.5 mt-1">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <p className="text-[11px] text-slate-400 font-medium">WhatsApp Cloud API</p>
