@@ -376,9 +376,9 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                 messageObj?.contextInfo?.externalAdReply?.title;
             let candidateName = adTitle || (!isFromMe ? (data.pushName || data.verifiedBizName || data.verifiedName) : (data.verifiedBizName || data.verifiedName || null));
             let profilePicUrl = data.profilePictureUrl || null;
-            if (isFromMe && instName) {
+            if (isFromMe) {
                 try {
-                    const profile = await this.whatsappService.fetchProfileFromEvolution(instName, key.remoteJid || remoteJid);
+                    const profile = await this.whatsappService.fetchProfileFromEvolution(instName, key.remoteJid || remoteJid, tenantId);
                     if (profile) {
                         if (profile.picture && !profilePicUrl)
                             profilePicUrl = profile.picture;
@@ -560,10 +560,10 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
             const contactsList = Array.isArray(payload.data) ? payload.data : [payload.data];
             for (const c of contactsList) {
                 const id = c?.id || c?.remoteJid || '';
-                const phone = id.replace('@s.whatsapp.net', '');
+                const phone = id.replace('@s.whatsapp.net', '').replace('@c.us', '').replace(/\D/g, '');
                 const pushName = c?.pushName || c?.verifiedName || c?.name;
                 const profilePictureUrl = c?.profilePictureUrl || null;
-                if (phone && pushName && !pushName.includes('@lid')) {
+                if (phone && phone.length >= 10 && phone.length <= 13 && pushName && !pushName.includes('@lid')) {
                     try {
                         await this.prisma.contact.updateMany({
                             where: { tenantId, phone },
@@ -572,6 +572,30 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                                 ...(profilePictureUrl ? { avatarUrl: profilePictureUrl } : {}),
                             },
                         });
+                        const normPush = this.whatsappService.normalizeContactName(pushName);
+                        if (normPush && normPush.length >= 3) {
+                            const lidCandidates = await this.prisma.contact.findMany({
+                                where: {
+                                    tenantId,
+                                    phone: { contains: 'lid' },
+                                },
+                            });
+                            for (const lc of lidCandidates) {
+                                const lcNorm = this.whatsappService.normalizeContactName(lc.name);
+                                if (lcNorm === normPush) {
+                                    await this.prisma.contact.update({
+                                        where: { id: lc.id },
+                                        data: {
+                                            phone: phone,
+                                            whatsappLid: lc.phone,
+                                            name: pushName,
+                                            ...(profilePictureUrl ? { avatarUrl: profilePictureUrl } : {}),
+                                        },
+                                    });
+                                    this.logger.log(`[CONTACTS_UPSERT] Contato LID [${lc.id}] (${lc.name}) reconciliado com telefone real: ${phone}`);
+                                }
+                            }
+                        }
                         const updated = await this.prisma.contact.findFirst({ where: { tenantId, phone } });
                         if (updated) {
                             this.chatGateway.emitContactUpdated(tenantId, updated);

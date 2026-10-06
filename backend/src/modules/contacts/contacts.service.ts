@@ -65,13 +65,23 @@ export class ContactsService {
   }
 
   async updateContact(tenantId: string, contactId: string, data: { name?: string; phone?: string; email?: string }) {
+    const existing = await this.prisma.contact.findFirst({
+      where: { id: contactId, tenantId },
+    });
+
+    const updateData: any = {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.phone !== undefined && { phone: data.phone }),
+      ...(data.email !== undefined && { email: data.email }),
+    };
+
+    if (data.phone && existing?.phone && existing.phone.includes('@lid') && !existing.whatsappLid) {
+      updateData.whatsappLid = existing.phone;
+    }
+
     const contact = await this.prisma.contact.update({
       where: { id: contactId, tenantId },
-      data: {
-        ...(data.name !== undefined && { name: data.name }),
-        ...(data.phone !== undefined && { phone: data.phone }),
-        ...(data.email !== undefined && { email: data.email }),
-      }
+      data: updateData,
     });
     return contact;
   }

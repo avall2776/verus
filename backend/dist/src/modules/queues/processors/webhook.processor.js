@@ -234,10 +234,14 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             ? evolutionMetadata.realPhone
             : null;
         const lidId = evolutionMetadata?.remoteJid || (isLid ? remoteJid : null);
+        let resolvedCustomerName = null;
         if (!realPhone && (isLid || (lidId && lidId.includes('@lid')))) {
             const resolved = await this.whatsappService.resolveContactFromEvolution(tenantId, evolutionMetadata?.instanceName, lidId || remoteJid, pushName || evolutionMetadata?.pushName, evolutionMetadata?.profilePictureUrl);
             if (resolved.realPhone) {
                 realPhone = resolved.realPhone;
+            }
+            if (resolved.realName) {
+                resolvedCustomerName = resolved.realName;
             }
         }
         let existingContact = await this.prisma.contact.findFirst({
@@ -252,8 +256,14 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         });
         const isFromMe = Boolean(message?.fromMe || evolutionMetadata?.key?.fromMe);
         const rawPushName = pushName || evolutionMetadata?.pushName;
-        const isOperatorName = isFromMe && rawPushName && (rawPushName.toLowerCase().includes('felipe') || rawPushName.toLowerCase().includes('costa'));
-        const isGenericPushName = !rawPushName || isOperatorName || rawPushName === 'Cliente WhatsApp' || rawPushName.includes('@lid') || rawPushName.startsWith('WhatsApp');
+        const effectiveCustomerPushName = isFromMe
+            ? resolvedCustomerName
+            : (resolvedCustomerName || rawPushName);
+        const isGenericPushName = !effectiveCustomerPushName ||
+            effectiveCustomerPushName === 'Cliente WhatsApp' ||
+            effectiveCustomerPushName.includes('@lid') ||
+            effectiveCustomerPushName.startsWith('WhatsApp') ||
+            effectiveCustomerPushName.toLowerCase().includes('felipe costa');
         if (!existingContact && evolutionMetadata?.profilePictureUrl) {
             const photoId = this.whatsappService.extractPhotoId(evolutionMetadata.profilePictureUrl);
             if (photoId) {
@@ -266,8 +276,8 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 });
             }
         }
-        if (!existingContact && rawPushName && !isGenericPushName && rawPushName.length >= 3) {
-            const normPush = rawPushName.trim().toLowerCase();
+        if (!existingContact && effectiveCustomerPushName && !isGenericPushName && effectiveCustomerPushName.length >= 3) {
+            const normPush = effectiveCustomerPushName.trim().toLowerCase();
             const candidates = await this.prisma.contact.findMany({
                 where: {
                     tenantId,
@@ -292,8 +302,8 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             if (realPhone && (existingContact.phone?.includes('@lid') || existingContact.phone?.replace(/\D/g, '').length > 13)) {
                 dataToUpdate.phone = realPhone;
             }
-            if (!isGenericPushName && (existingContact.name === 'Cliente WhatsApp' || existingContact.name?.includes('@lid'))) {
-                dataToUpdate.name = rawPushName;
+            if (!isGenericPushName && (existingContact.name === 'Cliente WhatsApp' || existingContact.name?.includes('@lid') || existingContact.name?.toLowerCase().includes('felipe costa'))) {
+                dataToUpdate.name = effectiveCustomerPushName;
             }
             if (evolutionMetadata?.profilePictureUrl && !existingContact.avatarUrl) {
                 dataToUpdate.avatarUrl = evolutionMetadata.profilePictureUrl;
@@ -310,9 +320,19 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         }
         else {
             const targetPhone = realPhone || remoteJid;
-            const cleanName = !isGenericPushName
-                ? rawPushName
-                : (realPhone ? `WhatsApp (${realPhone})` : (targetPhone.includes('@lid') ? 'Cliente WhatsApp' : `WhatsApp (${targetPhone})`));
+            let cleanName = effectiveCustomerPushName;
+            if (!cleanName || isGenericPushName) {
+                if (realPhone) {
+                    cleanName = `WhatsApp (${realPhone})`;
+                }
+                else if (targetPhone.includes('@lid')) {
+                    const cross = await this.whatsappService.resolveLidFromAllTenants(lidId || remoteJid);
+                    cleanName = cross.realName || 'WhatsApp (Contato Direto)';
+                }
+                else {
+                    cleanName = `WhatsApp (${targetPhone})`;
+                }
+            }
             contact = await this.prisma.contact.create({
                 data: {
                     tenantId,

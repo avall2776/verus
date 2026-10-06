@@ -471,6 +471,13 @@ function InboxContent() {
     return '';
   };
 
+  const isLidPhoneNumber = (rawPhone?: string) => {
+    if (!rawPhone) return false;
+    const cleanJid = rawPhone.replace('@s.whatsapp.net', '').replace('@c.us', '');
+    const clean = cleanJid.replace(/\D/g, '');
+    return cleanJid.includes('@lid') || (clean.length > 13 && !clean.startsWith('55'));
+  };
+
   const formatPhoneNumber = (rawPhone?: string) => {
     if (!rawPhone) return '';
     const cleanJid = rawPhone.replace('@s.whatsapp.net', '').replace('@c.us', '');
@@ -3521,7 +3528,10 @@ function InboxContent() {
             <div className="flex flex-col gap-2.5">
               <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-400 flex items-center justify-between">
                 <span>Informações de Contato</span>
-                <span className="text-[9px] text-blue-400 font-normal lowercase">id: {activeContactData.contactId?.substring(0, 8) || '---'}</span>
+                <span className="text-[9px] text-emerald-400/90 font-medium flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  WhatsApp
+                </span>
               </h3>
 
               {/* Telefone */}
@@ -3544,6 +3554,23 @@ function InboxContent() {
                           if (e.key === 'Escape') setIsEditingPhone(false);
                         }}
                       />
+                    ) : isLidPhoneNumber(activeContactData.phone) ? (
+                      <div className="flex items-center gap-2 flex-wrap min-w-0">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 font-sans text-[11px] font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                          WhatsApp Direto (LID)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingPhoneValue('');
+                            setIsEditingPhone(true);
+                          }}
+                          className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium hover:underline cursor-pointer"
+                        >
+                          + Inserir número
+                        </button>
+                      </div>
                     ) : (
                       <span className="truncate font-mono font-medium text-white text-xs" title={activeContactData.phone || ''}>
                         {formatDisplayPhoneNumber(activeContactData.phone)}
@@ -3566,7 +3593,7 @@ function InboxContent() {
                         <button
                           type="button"
                           onClick={() => {
-                            setEditingPhoneValue(activeContactData.phone?.includes('@lid') ? '' : activeContactData.phone || '');
+                            setEditingPhoneValue(isLidPhoneNumber(activeContactData.phone) ? '' : activeContactData.phone || '');
                             setIsEditingPhone(true);
                           }}
                           className="text-slate-400 hover:text-emerald-400 p-1 transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
@@ -3574,7 +3601,7 @@ function InboxContent() {
                         >
                           <Pencil size={12} />
                         </button>
-                        {activeContactData.phone && (
+                        {!isLidPhoneNumber(activeContactData.phone) && activeContactData.phone && (
                           <button
                             type="button"
                             onClick={() => handleCopyText(activeContactData.phone?.replace('@s.whatsapp.net', '').replace('@c.us', '').replace(/\D/g, ''), 'phone')}

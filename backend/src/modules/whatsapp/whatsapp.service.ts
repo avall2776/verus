@@ -799,21 +799,17 @@ export class WhatsappService {
     let resolvedName: string | null = null;
     let resolvedAvatar: string | null = null;
 
+    // Se for um LID, tenta resolver primeiro via cross-tenant em contatos existentes
+    if (phone.includes('@lid') || cleanPhone.length > 13) {
+      const cross = await this.resolveLidFromAllTenants(phone);
+      if (cross.realName) resolvedName = cross.realName;
+      if (cross.avatarUrl) resolvedAvatar = cross.avatarUrl;
+    }
+
     // 1. Tentar obter via Evolution API (Baileys) se houver instância conectada ou configurada
     try {
       const evoConfig = this.getEvolutionConfig();
-      const instances = await this.prisma.whatsAppInstance.findMany({
-        where: { tenantId },
-        orderBy: { isDefault: 'desc' }
-      });
-
-      const connectedInst = instances.find(i => i.status === 'connected') || instances[0];
-      let instanceName: string | null = null;
-
-      if (connectedInst) {
-        const set = (connectedInst.settings as any) || {};
-        instanceName = set.instanceName || connectedInst.name || this.getSanitizedInstanceName(tenantId, connectedInst.id);
-      }
+      const instanceName = await this.getEvolutionInstanceName(tenantId);
 
       if (instanceName) {
         const headers = { apikey: evoConfig.apiKey, 'Content-Type': 'application/json' };
@@ -1249,11 +1245,58 @@ export class WhatsappService {
   private evoContactsCache = new Map<string, { timestamp: number; contacts: Array<{ id: string; pushName?: string; name?: string; profilePictureUrl?: string | null }> }>();
 
   /**
+   * Obtém o nome técnico real da instância na Evolution API (ex: versus_c38f8968ee_1bceb585fb)
+   */
+  async getEvolutionInstanceName(tenantId?: string, fallbackInstanceName?: string): Promise<string> {
+    if (fallbackInstanceName && !fallbackInstanceName.includes(' (WhatsApp Web)') && fallbackInstanceName.includes('_')) {
+      return fallbackInstanceName;
+    }
+    if (tenantId) {
+      const inst = await this.prisma.whatsAppInstance.findFirst({
+        where: { tenantId, status: { in: ['open', 'connected'] } },
+        orderBy: { updatedAt: 'desc' },
+      });
+      if (inst) {
+        const settingsName = (inst.settings as any)?.instanceName;
+        if (settingsName) return settingsName;
+        if (inst.name && inst.name.includes('_')) return inst.name.replace(' (WhatsApp Web)', '').trim();
+      }
+    }
+    // Fallback: consulta instâncias ativas no container Baileys da Evolution API
+    try {
+      const { serverUrl, apiKey } = this.getEvolutionConfig();
+      const allInstRes = await axios.get(`${serverUrl}/instance/fetchInstances`, {
+        headers: { apikey: apiKey },
+        timeout: 3000,
+      });
+      const allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
+      for (const item of allInstances) {
+        const instObj = item.instance || item;
+        const realName = instObj.instanceName || instObj.name;
+        const status = instObj.status || instObj.connectionStatus;
+        if (realName && (status === 'open' || status === 'connected')) {
+          return realName;
+        }
+      }
+    } catch {}
+    return fallbackInstanceName ? fallbackInstanceName.replace(' (WhatsApp Web)', '').trim() : '';
+  }
+
+  /**
    * Consulta o perfil público ou comercial de um contato no WhatsApp via Evolution API
    */
-  async fetchProfileFromEvolution(instanceName: string, number: string): Promise<{ name?: string; picture?: string; isBusiness?: boolean; website?: string } | null> {
+  async fetchProfileFromEvolution(
+    instanceName: string,
+    number: string,
+    tenantId?: string,
+  ): Promise<{ name?: string; picture?: string; isBusiness?: boolean; website?: string; email?: string } | null> {
     try {
-      const cleanName = (instanceName || '').replace(' (WhatsApp Web)', '').trim();
+      let cleanName = (instanceName || '').replace(' (WhatsApp Web)', '').trim();
+      if (!cleanName.includes('_')) {
+        cleanName = await this.getEvolutionInstanceName(tenantId, cleanName);
+      }
+      if (!cleanName) return null;
+
       const { serverUrl, apiKey } = this.getEvolutionConfig();
       const res = await axios.post(
         `${serverUrl}/chat/fetchProfile/${cleanName}`,
@@ -1266,12 +1309,59 @@ export class WhatsappService {
           picture: res.data.picture || null,
           isBusiness: res.data.isBusiness || false,
           website: res.data.website || null,
+          email: res.data.email || null,
         };
       }
     } catch (e: any) {
       this.logger.warn(`[Evolution fetchProfile] Falha ao consultar perfil para ${number}: ${e.message}`);
     }
     return null;
+  }
+
+  /**
+   * Resolve dados de um LID buscando cruzamento com qualquer contato já resolvido no banco (inclusive outros tenants)
+   */
+  async resolveLidFromAllTenants(
+    lid: string
+  ): Promise<{ realPhone: string | null; realName: string | null; avatarUrl: string | null }> {
+    if (!lid) return { realPhone: null, realName: null, avatarUrl: null };
+    try {
+      const cleanLid = lid.trim();
+      const rawNumber = cleanLid.replace('@lid', '').replace(/\D/g, '');
+      const candidates = await this.prisma.contact.findMany({
+        where: {
+          OR: [
+            { whatsappLid: cleanLid },
+            { phone: cleanLid },
+            ...(rawNumber ? [{ whatsappLid: { contains: rawNumber } }, { phone: { contains: rawNumber } }] : []),
+          ],
+        },
+        orderBy: { updatedAt: 'desc' },
+      });
+
+      for (const c of candidates) {
+        const cleanPhone = (c.phone || '').replace(/\D/g, '');
+        const isCleanPhone = !c.phone?.includes('@lid') && cleanPhone.length >= 10 && cleanPhone.length <= 13;
+        const isCleanName = Boolean(
+          c.name &&
+          !c.name.includes('@lid') &&
+          c.name !== 'Cliente WhatsApp' &&
+          !c.name.startsWith('WhatsApp') &&
+          !c.name.toLowerCase().includes('felipe costa')
+        );
+
+        if (isCleanPhone || isCleanName) {
+          return {
+            realPhone: isCleanPhone ? cleanPhone : null,
+            realName: isCleanName ? c.name : null,
+            avatarUrl: c.avatarUrl || null,
+          };
+        }
+      }
+    } catch (err: any) {
+      this.logger.warn(`[resolveLidFromAllTenants] Erro: ${err.message}`);
+    }
+    return { realPhone: null, realName: null, avatarUrl: null };
   }
 
   /**
@@ -1326,24 +1416,40 @@ export class WhatsappService {
     }
 
     try {
-      // 1. Determina a instância Evolution a ser consultada
-      let targetInstanceName = instanceName ? (instanceName || '').replace(' (WhatsApp Web)', '').trim() : '';
-      if (!targetInstanceName) {
-        const inst = await this.prisma.whatsAppInstance.findFirst({
-          where: { tenantId, status: { in: ['open', 'connected'] } },
-        });
-        if (inst?.name) {
-          targetInstanceName = (inst.name || '').replace(' (WhatsApp Web)', '').trim();
+      // 1. Tenta resolver via cross-tenant em contatos já conhecidos no banco
+      if (remoteJid && isLid) {
+        const crossMatch = await this.resolveLidFromAllTenants(remoteJid);
+        if (crossMatch.realPhone || crossMatch.realName) {
+          return {
+            realPhone: crossMatch.realPhone,
+            realName: crossMatch.realName || pushName || null,
+            avatarUrl: crossMatch.avatarUrl || profilePictureUrl || null,
+          };
         }
       }
 
+      // 2. Determina a instância Evolution técnica ativa (com _ e settings.instanceName)
+      const targetInstanceName = await this.getEvolutionInstanceName(tenantId, instanceName);
       if (!targetInstanceName) {
-        return { realPhone: null, realName: null, avatarUrl: null };
+        return { realPhone: null, realName: null, avatarUrl: profilePictureUrl || null };
+      }
+
+      // 3. Tenta buscar perfil ativo (foto de perfil, nome comercial ou e-mail)
+      if (remoteJid && isLid) {
+        const evoProfile = await this.fetchProfileFromEvolution(targetInstanceName, remoteJid, tenantId);
+        if (evoProfile) {
+          if (evoProfile.picture && !profilePictureUrl) {
+            profilePictureUrl = evoProfile.picture;
+          }
+          if (evoProfile.name && (!pushName || pushName === 'Cliente WhatsApp' || pushName.includes('@lid'))) {
+            pushName = evoProfile.name;
+          }
+        }
       }
 
       const { serverUrl, apiKey } = this.getEvolutionConfig();
 
-      // 2. Consulta o catálogo de contatos salvos da instância (com cache de 90s)
+      // 4. Consulta o catálogo de contatos salvos da instância (com cache de 90s)
       const now = Date.now();
       let contacts = this.evoContactsCache.get(targetInstanceName)?.contacts;
       const cacheTimestamp = this.evoContactsCache.get(targetInstanceName)?.timestamp || 0;
@@ -1365,47 +1471,13 @@ export class WhatsappService {
         } catch (fetchErr: any) {
           this.logger.warn(`[LID Sync] Falha ao consultar findContacts na instância ${targetInstanceName}: ${fetchErr.message}`);
         }
-
-        // Se falhou ou não retornou contatos, consulta fetchInstances para pegar a sessão ativa no Baileys
-        if (!contacts || !contacts.length) {
-          try {
-            const allInstRes = await axios.get(`${serverUrl}/instance/fetchInstances`, {
-              headers: { apikey: apiKey },
-              timeout: 4000,
-            });
-            const allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
-            for (const item of allInstances) {
-              const instObj = item.instance || item;
-              const realName = instObj.instanceName || instObj.name;
-              const status = instObj.status || instObj.connectionStatus;
-              if (realName && (status === 'open' || status === 'connected')) {
-                const retryRes = await axios.post(
-                  `${serverUrl}/chat/findContacts/${realName}`,
-                  {},
-                  {
-                    headers: { apikey: apiKey, 'Content-Type': 'application/json' },
-                    timeout: 5000,
-                  }
-                );
-                if (Array.isArray(retryRes.data) && retryRes.data.length > 0) {
-                  contacts = retryRes.data;
-                  this.evoContactsCache.set(targetInstanceName, { timestamp: now, contacts });
-                  this.evoContactsCache.set(realName, { timestamp: now, contacts });
-                  break;
-                }
-              }
-            }
-          } catch (instListErr: any) {
-            this.logger.warn(`[LID Sync] Erro ao listar instâncias ativas na Evolution: ${instListErr.message}`);
-          }
-        }
       }
 
       if (!contacts || !contacts.length) {
-        return { realPhone: null, realName: null, avatarUrl: null };
+        return { realPhone: null, realName: pushName || null, avatarUrl: profilePictureUrl || null };
       }
 
-      // 3. Monta mapas rápidos de busca por foto de perfil e por nome normalizado
+      // 5. Monta mapas rápidos de busca por foto de perfil e por nome normalizado
       const picToContactMap = new Map<string, { realPhone: string; name?: string; avatarUrl?: string | null }>();
       const nameToContactMap = new Map<string, { realPhone: string; name?: string; avatarUrl?: string | null }>();
 
@@ -1434,7 +1506,7 @@ export class WhatsappService {
         }
       }
 
-      // 4. Estratégia A: Cruzamento de Alta Precisão por Foto de Perfil
+      // Estratégia A: Cruzamento de Alta Precisão por Foto de Perfil
       const inPhotoId = this.extractPhotoId(profilePictureUrl);
       if (inPhotoId && picToContactMap.has(inPhotoId)) {
         const match = picToContactMap.get(inPhotoId)!;
@@ -1446,7 +1518,7 @@ export class WhatsappService {
         };
       }
 
-      // 5. Estratégia B: Cruzamento por Nome Exato da Agenda / PushName
+      // Estratégia B: Cruzamento por Nome Exato da Agenda / PushName
       if (pushName && !pushName.includes('@lid') && pushName !== 'Cliente WhatsApp') {
         const inNormName = this.normalizeContactName(pushName);
         const match = nameToContactMap.get(inNormName);
@@ -1461,10 +1533,10 @@ export class WhatsappService {
         }
       }
 
-      return { realPhone: null, realName: null, avatarUrl: null };
+      return { realPhone: null, realName: pushName || null, avatarUrl: profilePictureUrl || null };
     } catch (err: any) {
       this.logger.warn(`[LID Resolve] Erro durante a resolução: ${err.message}`);
-      return { realPhone: null, realName: null, avatarUrl: null };
+      return { realPhone: null, realName: pushName || null, avatarUrl: profilePictureUrl || null };
     }
   }
 
@@ -1481,54 +1553,51 @@ export class WhatsappService {
             { phone: { contains: 'lid' } },
             { name: { contains: 'lid' } },
             { whatsappLid: { not: null } },
-            { phone: { startsWith: '173' } }, // Prefixo comum de LIDs de 15 dígitos
+            { phone: { startsWith: '173' } },
           ],
         },
       });
 
       if (!lidContacts.length) return 0;
 
-      const instances = await this.prisma.whatsAppInstance.findMany({
-        where: { tenantId },
-      });
-
-      if (!instances.length) return 0;
-
+      const targetInstanceName = await this.getEvolutionInstanceName(tenantId);
       let resolvedCount = 0;
 
-      for (const inst of instances) {
-        const cleanName = (inst.name || '').replace(' (WhatsApp Web)', '').trim();
-        if (!cleanName) continue;
+      for (const contact of lidContacts) {
+        // Se já tem um número limpo entre 10 e 13 dígitos que não é LID, pula
+        const digits = (contact.phone || '').replace(/\D/g, '');
+        if (digits.length >= 10 && digits.length <= 13 && !contact.phone.includes('@lid')) {
+          continue;
+        }
 
-        for (const contact of lidContacts) {
-          // Se já tem um número limpo entre 10 e 13 dígitos que não é LID, pula
-          const digits = (contact.phone || '').replace(/\D/g, '');
-          if (digits.length >= 10 && digits.length <= 13 && !contact.phone.includes('@lid')) {
-            continue;
+        const resolution = await this.resolveContactFromEvolution(
+          tenantId,
+          targetInstanceName,
+          contact.whatsappLid || contact.phone,
+          contact.name,
+          contact.avatarUrl
+        );
+
+        if (resolution.realPhone || (resolution.realName && resolution.realName !== contact.name)) {
+          const updateData: any = {};
+          if (resolution.realPhone) {
+            updateData.phone = resolution.realPhone;
+            updateData.whatsappLid = contact.whatsappLid || contact.phone;
+          }
+          if (resolution.realName && (contact.name === 'Cliente WhatsApp' || contact.name?.includes('@lid') || contact.name?.toLowerCase().includes('felipe costa'))) {
+            updateData.name = resolution.realName;
+          }
+          if (resolution.avatarUrl && !contact.avatarUrl) {
+            updateData.avatarUrl = resolution.avatarUrl;
           }
 
-          const resolution = await this.resolveContactFromEvolution(
-            tenantId,
-            cleanName,
-            contact.whatsappLid || contact.phone,
-            contact.name,
-            contact.avatarUrl
-          );
-
-          if (resolution.realPhone) {
+          if (Object.keys(updateData).length > 0) {
             await this.prisma.contact.update({
               where: { id: contact.id },
-              data: {
-                phone: resolution.realPhone,
-                whatsappLid: contact.whatsappLid || contact.phone,
-                name: (contact.name && !contact.name.includes('@lid') && contact.name !== 'Cliente WhatsApp')
-                  ? contact.name
-                  : (resolution.realName || `WhatsApp (${resolution.realPhone})`),
-                avatarUrl: contact.avatarUrl || resolution.avatarUrl,
-              },
+              data: updateData,
             });
 
-            this.logger.log(`[LID Resolution Retroativa] Contato [${contact.id}] (${contact.name}) atualizado para telefone real: ${resolution.realPhone}`);
+            this.logger.log(`[LID Resolution Retroativa] Contato [${contact.id}] atualizado: ${JSON.stringify(updateData)}`);
             resolvedCount++;
           }
         }

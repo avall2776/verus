@@ -204,12 +204,19 @@ export declare class WhatsappService {
     saveBase64Audio(tenantId: string, base64Data: string, messageId: string, mimeType?: string): Promise<string | null>;
     deleteMessageForEveryone(tenantId: string, instanceName: string, remoteJid: string, providerMessageId: string): Promise<boolean>;
     private evoContactsCache;
-    fetchProfileFromEvolution(instanceName: string, number: string): Promise<{
+    getEvolutionInstanceName(tenantId?: string, fallbackInstanceName?: string): Promise<string>;
+    fetchProfileFromEvolution(instanceName: string, number: string, tenantId?: string): Promise<{
         name?: string;
         picture?: string;
         isBusiness?: boolean;
         website?: string;
+        email?: string;
     } | null>;
+    resolveLidFromAllTenants(lid: string): Promise<{
+        realPhone: string | null;
+        realName: string | null;
+        avatarUrl: string | null;
+    }>;
     extractPhotoId(url: string | null | undefined): string | null;
     normalizeContactName(s: string | null | undefined): string;
     resolveContactFromEvolution(tenantId: string, instanceName?: string, remoteJid?: string, pushName?: string, profilePictureUrl?: string | null): Promise<{
