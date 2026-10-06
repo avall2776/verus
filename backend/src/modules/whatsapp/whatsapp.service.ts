@@ -419,7 +419,21 @@ export class WhatsappService {
     if (data.profilePicUrl !== undefined) updateData.profilePicUrl = data.profilePicUrl;
     if (data.status !== undefined) updateData.status = data.status;
     if (data.isDefault !== undefined) updateData.isDefault = data.isDefault;
-    if (data.settings !== undefined) updateData.settings = data.settings;
+    const currentSettings = (instance.settings as any) || {};
+    const effectiveInstanceName = currentSettings.instanceName || (data.settings as any)?.instanceName || this.getSanitizedInstanceName(tenantId, id, instance.name);
+
+    if (data.settings !== undefined) {
+      updateData.settings = {
+        ...currentSettings,
+        ...data.settings,
+        instanceName: effectiveInstanceName,
+      };
+    } else if (!currentSettings.instanceName) {
+      updateData.settings = {
+        ...currentSettings,
+        instanceName: effectiveInstanceName,
+      };
+    }
 
     // Atualiza token apenas se enviado e não mascarado
     if (data.token && !data.token.includes('...')) {
@@ -1346,8 +1360,7 @@ export class WhatsappService {
           c.name &&
           !c.name.includes('@lid') &&
           c.name !== 'Cliente WhatsApp' &&
-          !c.name.startsWith('WhatsApp') &&
-          !c.name.toLowerCase().includes('felipe costa')
+          !c.name.startsWith('WhatsApp')
         );
 
         if (isCleanPhone || isCleanName) {
@@ -1584,7 +1597,7 @@ export class WhatsappService {
             updateData.phone = resolution.realPhone;
             updateData.whatsappLid = contact.whatsappLid || contact.phone;
           }
-          if (resolution.realName && (contact.name === 'Cliente WhatsApp' || contact.name?.includes('@lid') || contact.name?.toLowerCase().includes('felipe costa'))) {
+          if (resolution.realName && (contact.name === 'Cliente WhatsApp' || contact.name?.includes('@lid') || contact.name?.startsWith('WhatsApp'))) {
             updateData.name = resolution.realName;
           }
           if (resolution.avatarUrl && !contact.avatarUrl) {

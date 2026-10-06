@@ -472,7 +472,7 @@ export class WebhooksController {
           const profile = await this.whatsappService.fetchProfileFromEvolution(instName, key.remoteJid || remoteJid, tenantId);
           if (profile) {
             if (profile.picture && !profilePicUrl) profilePicUrl = profile.picture;
-            if (!candidateName && profile.name && !profile.name.toLowerCase().includes('felipe')) {
+            if (!candidateName && profile.name) {
               candidateName = profile.name;
             }
           }

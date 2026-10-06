@@ -382,7 +382,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     if (profile) {
                         if (profile.picture && !profilePicUrl)
                             profilePicUrl = profile.picture;
-                        if (!candidateName && profile.name && !profile.name.toLowerCase().includes('felipe')) {
+                        if (!candidateName && profile.name) {
                             candidateName = profile.name;
                         }
                     }

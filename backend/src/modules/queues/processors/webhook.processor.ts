@@ -283,8 +283,7 @@ export class WebhookProcessor extends WorkerHost {
     const isGenericPushName = !effectiveCustomerPushName ||
       effectiveCustomerPushName === 'Cliente WhatsApp' ||
       effectiveCustomerPushName.includes('@lid') ||
-      effectiveCustomerPushName.startsWith('WhatsApp') ||
-      effectiveCustomerPushName.toLowerCase().includes('felipe costa');
+      effectiveCustomerPushName.startsWith('WhatsApp');
 
     // Fallback 1: Cruzamento biunívoco por Foto de Perfil (Hash CDN da foto do WhatsApp)
     if (!existingContact && evolutionMetadata?.profilePictureUrl) {
@@ -329,7 +328,7 @@ export class WebhookProcessor extends WorkerHost {
       if (realPhone && (existingContact.phone?.includes('@lid') || existingContact.phone?.replace(/\D/g, '').length > 13)) {
         dataToUpdate.phone = realPhone;
       }
-      if (!isGenericPushName && (existingContact.name === 'Cliente WhatsApp' || existingContact.name?.includes('@lid') || existingContact.name?.toLowerCase().includes('felipe costa'))) {
+      if (!isGenericPushName && (existingContact.name === 'Cliente WhatsApp' || existingContact.name?.includes('@lid') || existingContact.name?.startsWith('WhatsApp'))) {
         dataToUpdate.name = effectiveCustomerPushName;
       }
       if (evolutionMetadata?.profilePictureUrl && !existingContact.avatarUrl) {

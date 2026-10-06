@@ -262,8 +262,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         const isGenericPushName = !effectiveCustomerPushName ||
             effectiveCustomerPushName === 'Cliente WhatsApp' ||
             effectiveCustomerPushName.includes('@lid') ||
-            effectiveCustomerPushName.startsWith('WhatsApp') ||
-            effectiveCustomerPushName.toLowerCase().includes('felipe costa');
+            effectiveCustomerPushName.startsWith('WhatsApp');
         if (!existingContact && evolutionMetadata?.profilePictureUrl) {
             const photoId = this.whatsappService.extractPhotoId(evolutionMetadata.profilePictureUrl);
             if (photoId) {
@@ -302,7 +301,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             if (realPhone && (existingContact.phone?.includes('@lid') || existingContact.phone?.replace(/\D/g, '').length > 13)) {
                 dataToUpdate.phone = realPhone;
             }
-            if (!isGenericPushName && (existingContact.name === 'Cliente WhatsApp' || existingContact.name?.includes('@lid') || existingContact.name?.toLowerCase().includes('felipe costa'))) {
+            if (!isGenericPushName && (existingContact.name === 'Cliente WhatsApp' || existingContact.name?.includes('@lid') || existingContact.name?.startsWith('WhatsApp'))) {
                 dataToUpdate.name = effectiveCustomerPushName;
             }
             if (evolutionMetadata?.profilePictureUrl && !existingContact.avatarUrl) {
