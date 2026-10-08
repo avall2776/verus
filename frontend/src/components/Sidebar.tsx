@@ -176,7 +176,7 @@ export default function Sidebar() {
     localStorage.removeItem('versus_active_workspace');
     window.dispatchEvent(new Event('tenant_switched'));
     toast.success("Saiu do Modo Suporte da agência.");
-    window.location.href = '/super-admin/companies';
+    window.location.href = '/vallor/super-admin/companies';
   };
 
   const loadUser = async () => {
@@ -191,7 +191,7 @@ export default function Sidebar() {
           localStorage.removeItem('auth_token');
           localStorage.removeItem('versus_user');
           sessionStorage.setItem('versus_blocked_reason', 'O acesso desta empresa foi bloqueado pela administração do Vallor.');
-          window.location.href = '/blocked';
+          window.location.href = '/vallor/blocked';
           return;
         }
         setCurrentUser(data);
@@ -200,7 +200,7 @@ export default function Sidebar() {
       if (e.response?.status === 401) {
         const code = e.response?.data?.code;
         if (code === 'TENANT_BLOCKED') {
-          window.location.href = '/blocked';
+          window.location.href = '/vallor/blocked';
         }
       }
     }

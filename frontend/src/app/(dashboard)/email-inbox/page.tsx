@@ -122,7 +122,7 @@ export default function EmailInboxPage() {
       if (error.response?.status === 401) {
         toast.error("Sua sessão expirou. Redirecionando para login...");
         setTimeout(() => {
-          if (typeof window !== "undefined") window.location.href = "/login";
+          if (typeof window !== "undefined") window.location.href = "/vallor/login";
         }, 1200);
         return;
       }

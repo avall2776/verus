@@ -135,21 +135,21 @@ api.interceptors.response.use(
               typeof data?.message === 'string' ? data.message : 'Acesso suspenso: sua empresa foi bloqueada pela administração.'
             );
             
-            if (currentPath !== '/blocked') {
-              window.location.href = '/blocked';
+            if (!currentPath.includes('/blocked')) {
+              window.location.href = '/vallor/blocked';
             }
           } else if (
-            currentPath !== '/login' && 
-            currentPath !== '/blocked' && 
-            !currentPath.startsWith('/public') && 
-            !currentPath.startsWith('/c/') && 
-            !currentPath.startsWith('/p/')
+            !currentPath.includes('/login') && 
+            !currentPath.includes('/blocked') && 
+            !currentPath.includes('/public') && 
+            !currentPath.includes('/c/') && 
+            !currentPath.includes('/p/')
           ) {
             // Sessão normal expirada
             localStorage.removeItem('versus_auth_token');
             localStorage.removeItem('versus_token');
             localStorage.removeItem('versus_user');
-            window.location.href = '/login';
+            window.location.href = '/vallor/login';
           }
         }
       }

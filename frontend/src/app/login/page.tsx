@@ -269,40 +269,12 @@ export default function LoginPage() {
           className={`w-full max-w-[440px] p-6 relative z-10 transition-all duration-700 ease-out ${
             cardState === "evaporating"
               ? "opacity-0 scale-95 filter blur-md pointer-events-none"
-              : "opacity-100 scale-100 animate-[hologramBoot_2s_ease-out_forwards,float_7s_ease-in-out_2s_infinite_alternate]"
+              : "opacity-100 scale-100"
           }`}
         >
-          <style
-            dangerouslySetInnerHTML={{
-              __html: `
-            @keyframes float {
-              0% { transform: translateY(-4px); }
-              100% { transform: translateY(6px); }
-            }
-            @keyframes hologramBoot {
-              0% { 
-                opacity: 0; 
-                filter: blur(16px); 
-                transform: scale(0.92) translateY(30px);
-              }
-              60% {
-                opacity: 0.85;
-                filter: blur(4px); 
-                transform: scale(1.01) translateY(-4px);
-              }
-              100% { 
-                opacity: 1; 
-                filter: blur(0px);
-                transform: scale(1) translateY(0);
-              }
-            }
-          `,
-            }}
-          />
-
           {/* Card de Vidro com transparência sutil e efeito fosco/embaçado (Glassmorphism) sobre as bolinhas */}
           <div
-            className="bg-[#0B1224]/35 border border-slate-800/60 rounded-[20px] px-8 py-10 sm:px-10 sm:py-12 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl flex flex-col relative overflow-hidden group"
+            className="bg-[#0B1224]/50 border border-slate-800/80 rounded-[20px] px-8 py-10 sm:px-10 sm:py-12 shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl flex flex-col relative overflow-hidden group"
             onMouseMove={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               e.currentTarget.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
@@ -326,8 +298,8 @@ export default function LoginPage() {
               {/* Logotipo Corporativo */}
               <div className="flex justify-center items-center py-2 mb-2 w-full">
                 <img
-                  src="/Logo_valor_01.svg"
-                  alt="Valor"
+                  src="/vallor/Logo_valor_01.svg"
+                  alt="Vallor"
                   className="w-64 max-w-full h-auto max-h-16 object-contain drop-shadow-[0_2px_12px_rgba(255,255,255,0.06)]"
                 />
               </div>

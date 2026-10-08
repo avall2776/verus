@@ -24,7 +24,7 @@ export default function PlanGuardWrapper({ children }: PlanGuardWrapperProps) {
       "versus_blocked_reason",
       message || "Acesso suspenso: sua empresa foi bloqueada pela administração do Vallor."
     );
-    window.location.href = "/blocked";
+    window.location.href = "/vallor/blocked";
   }, []);
 
   // Escuta atualizações e bloqueios em background sem travar a navegação entre rotas
