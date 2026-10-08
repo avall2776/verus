@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   title: "VERSUS - Motor Omnichannel",
   description: "Plataforma de IA e Atendimento",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/Favicon_vallor.svg",
+    shortcut: "/Favicon_vallor.svg",
+    apple: "/Favicon_vallor.svg",
+  },
 };
 
 export const viewport: Viewport = {

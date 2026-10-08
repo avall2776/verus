@@ -323,11 +323,13 @@ export default function LoginPage() {
                 SEJA BEM-VINDO
               </div>
 
-              {/* Logotipo VERSUS Sólido e Corporativo */}
-              <div className="flex justify-center py-1 mb-2">
-                <h1 className="text-4xl md:text-[2.5rem] font-black tracking-[0.2em] text-white">
-                  VERSUS
-                </h1>
+              {/* Logotipo Corporativo */}
+              <div className="flex justify-center items-center py-2 mb-2 w-full">
+                <img
+                  src="/Logo_valor_01.svg"
+                  alt="Valor"
+                  className="w-64 max-w-full h-auto max-h-16 object-contain drop-shadow-[0_2px_12px_rgba(255,255,255,0.06)]"
+                />
               </div>
 
               <p className="text-slate-400 text-sm mt-2">
