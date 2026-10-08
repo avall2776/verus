@@ -998,6 +998,34 @@ export default function Sidebar() {
               </button>
             </div>
 
+            {/* Banner Modo Suporte Super Admin no Mobile Drawer */}
+            {targetTenantId && (
+              <div className="mx-3 mt-2 mb-1 p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs flex flex-col gap-1.5 shrink-0 shadow-lg shadow-amber-950/20">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold flex items-center gap-1.5 truncate text-[11px]">
+                    <Building2 size={13} className="text-amber-400 shrink-0" />
+                    <span className="truncate">{targetTenantName || 'Agência Alvo'}</span>
+                  </span>
+                  <span className="text-[9px] bg-amber-500/25 text-amber-300 font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
+                    SUPORTE
+                  </span>
+                </div>
+                <p className="text-[10px] text-amber-400/80 leading-tight">
+                  Visualizando em modo suporte como Super Admin.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMobileMenu();
+                    handleExitSupportMode();
+                  }}
+                  className="w-full text-center text-[11px] font-bold py-1.5 rounded-lg bg-amber-500/25 hover:bg-amber-500/35 text-amber-200 hover:text-white transition-all border border-amber-500/40 cursor-pointer"
+                >
+                  Voltar ao Super Admin
+                </button>
+              </div>
+            )}
+
             {/* Itens de Navegação Mobile */}
             <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-1">
               {visibleGroups.map((group) => (
@@ -1044,7 +1072,26 @@ export default function Sidebar() {
             </div>
 
             {/* Rodapé Mobile / Operador */}
-            <div className="p-3 border-t border-gray-800 bg-[#070D1B]">
+            <div className="p-3 border-t border-gray-800 bg-[#070D1B] flex flex-col gap-2">
+              {/* Atalho Console Super Admin no Mobile Footer */}
+              {(currentUser?.isSuperAdmin || currentUser?.role === 'SUPER_ADMIN' || targetTenantId) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMobileMenu();
+                    if (targetTenantId) {
+                      handleExitSupportMode();
+                    } else {
+                      router.push('/super-admin/companies');
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-2 p-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                >
+                  <ShieldCheck size={15} />
+                  <span>{targetTenantId ? 'Voltar ao Super Admin' : 'Console Super Admin'}</span>
+                </button>
+              )}
+
               <div className="flex items-center justify-between p-2 rounded-xl bg-gray-900/60 border border-gray-800">
                 <div 
                   className="flex items-center gap-2.5 min-w-0 cursor-pointer"

@@ -1,5 +1,6 @@
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
+import SupportModeBanner from "@/components/dashboard/SupportModeBanner";
 import TrialBanner from "@/components/dashboard/TrialBanner";
 import FloatingSupportWidget from "@/components/support/FloatingSupportWidget";
 import PlanGuardWrapper from "@/components/guards/PlanGuardWrapper";
@@ -19,6 +20,7 @@ export default function DashboardLayout({
       {/* Área Principal (Conteúdo e Topbar) */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative print:block print:h-auto print:overflow-visible print:w-full print:p-0 print:m-0 min-w-0">
         <Topbar />
+        <SupportModeBanner />
         <TrialBanner />
         
         {/* Container rolável do conteúdo de cada tela com proteção de plano e governança */}
