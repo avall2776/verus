@@ -8,13 +8,16 @@ import Providers from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "VERSUS - Motor Omnichannel",
+  title: "VALLOR - Motor Omnichannel",
   description: "Plataforma de IA e Atendimento",
   manifest: "/manifest.json",
   icons: {
-    icon: "/Favicon_vallor.svg",
-    shortcut: "/Favicon_vallor.svg",
-    apple: "/Favicon_vallor.svg",
+    icon: [
+      { url: "/Favicon_vallor.svg?v=2", type: "image/svg+xml" },
+      { url: "/favicon.ico?v=2", sizes: "any" },
+    ],
+    shortcut: "/Favicon_vallor.svg?v=2",
+    apple: "/Favicon_vallor.svg?v=2",
   },
 };
 
@@ -32,12 +35,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/Favicon_vallor.svg?v=2" type="image/svg+xml" />
+        <link rel="alternate icon" href="/favicon.ico?v=2" />
+        <link rel="apple-touch-icon" href="/Favicon_vallor.svg?v=2" />
+      </head>
       <body className={`${inter.className} bg-background text-text-primary custom-scrollbar`} suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>
       </body>
     </html>
-
   );
 }

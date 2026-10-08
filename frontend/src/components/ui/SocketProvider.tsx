@@ -209,7 +209,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const triggerTabBlink = useCallback((titleText: string) => {
     if (isSuperAdminRoute()) return;
     let isBlinking = false;
-    const originalTitle = "VERSUS - Motor Omnichannel";
+    const originalTitle = "VALLOR - Motor Omnichannel";
     const blinkInterval = setInterval(() => {
       document.title = isBlinking ? originalTitle : titleText;
       isBlinking = !isBlinking;
