@@ -67,6 +67,23 @@ const nextConfig = {
       },
     ];
   },
+
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/vallor',
+        basePath: false,
+        permanent: false,
+      },
+      {
+        source: '/login',
+        destination: '/vallor/login',
+        basePath: false,
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default withSentryConfig(nextConfig, {
