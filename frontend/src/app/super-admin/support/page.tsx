@@ -43,7 +43,8 @@ import {
   Save,
   Star,
   Sliders,
-  ShieldAlert
+  ShieldAlert,
+  ArrowLeft
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -230,10 +231,15 @@ function SuperAdminSupportContent() {
         if (found) {
           loadTicketDetails(targetId);
         } else if (fetched.length > 0 && !selectedTicket) {
-          loadTicketDetails(fetched[0].id);
+          if (typeof window !== "undefined" && window.innerWidth >= 768) {
+            loadTicketDetails(fetched[0].id);
+          }
         }
       } else if (fetched.length > 0 && !selectedTicket) {
-        loadTicketDetails(fetched[0].id);
+        // No desktop auto-seleciona o primeiro da fila; no mobile mantém a lista visível
+        if (typeof window !== "undefined" && window.innerWidth >= 768) {
+          loadTicketDetails(fetched[0].id);
+        }
       }
     } catch (err: any) {
       console.error(err);
@@ -251,6 +257,17 @@ function SuperAdminSupportContent() {
     setLoadingTicket(true);
     // Limpa sugestão anterior de IA ao trocar de chamado
     setCopilotData(null);
+
+    // Otimização de transição ágil (especialmente em conexões móveis):
+    // Pré-carrega dados do ticket básico se já estiver na lista para abrir a tela de imediato
+    const basicTicket = tickets.find((t: any) => t.id === ticketId);
+    if (basicTicket) {
+      setSelectedTicket((prev: any) => ({
+        ...basicTicket,
+        messages: prev?.id === ticketId ? (prev.messages || []) : [],
+      }));
+    }
+
     try {
       const res = await api.get(`/support/tickets/${ticketId}`);
       setSelectedTicket(res.data);
@@ -596,8 +613,8 @@ function SuperAdminSupportContent() {
         {/* ========================================================================= */}
         {activeSubView === 'customer_service' && (
           <>
-            {/* COLUNA 1: FILA DE ATENDIMENTO ESTILO WHATSAPP (320px) */}
-            <div className="w-80 bg-[#0B1224] border border-slate-800 rounded-xl flex flex-col overflow-hidden shrink-0 shadow-md">
+            {/* COLUNA 1: FILA DE ATENDIMENTO ESTILO WHATSAPP (320px no desktop, 100% no mobile) */}
+            <div className={`${selectedTicket ? 'hidden md:flex' : 'flex'} w-full md:w-80 bg-[#0B1224] border border-slate-800 rounded-xl flex-col overflow-hidden shrink-0 shadow-md`}>
               
               {/* Topo da Fila: Busca & Filtros Rápidos */}
               <div className="p-3 border-b border-slate-800 bg-[#070D1B] space-y-2">
@@ -718,7 +735,7 @@ function SuperAdminSupportContent() {
             </div>
 
             {/* COLUNA 2: JANELA DE ATENDIMENTO WHATSAPP BUSINESS COM COPILOTO IA */}
-            <div className="flex-1 bg-[#0B1224] border border-slate-800 rounded-xl flex flex-col overflow-hidden relative shadow-lg">
+            <div className={`${!selectedTicket ? 'hidden md:flex' : 'flex'} flex-1 w-full bg-[#0B1224] border border-slate-800 rounded-xl flex-col overflow-hidden relative shadow-lg`}>
               
               {/* Papel de Parede Sutil Autêntico WhatsApp Dark Mode */}
               <div 
@@ -733,10 +750,20 @@ function SuperAdminSupportContent() {
               {selectedTicket ? (
                 <>
                   {/* HEADER DO ATENDIMENTO ESTILO WHATSAPP WEB */}
-                  <div className="h-16 px-4 border-b border-slate-800/90 bg-[#070D1B] flex items-center justify-between gap-3 z-10 shrink-0">
+                  <div className="h-16 px-3 md:px-4 border-b border-slate-800/90 bg-[#070D1B] flex items-center justify-between gap-2 md:gap-3 z-10 shrink-0 overflow-x-auto no-scrollbar">
                     
                     {/* Informações do Cliente */}
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                      {/* Botão Voltar para Fila (Mobile) */}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTicket(null)}
+                        className="md:hidden p-1.5 -ml-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+                        title="Voltar para a lista de chamados"
+                      >
+                        <ArrowLeft size={18} />
+                      </button>
+
                       <div className="relative shrink-0">
                         <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-white font-bold text-sm">
                           {(selectedTicket.tenant?.name || "C").charAt(0).toUpperCase()}
@@ -879,7 +906,13 @@ function SuperAdminSupportContent() {
                       {/* Alternador do Painel Lateral Raio-X */}
                       <button
                         type="button"
-                        onClick={() => setShowSidePanel(prev => !prev)}
+                        onClick={() => {
+                          if (typeof window !== "undefined" && window.innerWidth < 1280) {
+                            setIsXRayOpen(true);
+                          } else {
+                            setShowSidePanel(prev => !prev);
+                          }
+                        }}
                         className={`p-2 rounded-lg border transition-colors cursor-pointer ${
                           showSidePanel
                             ? "bg-blue-600/20 border-blue-500/40 text-blue-400"
@@ -1196,6 +1229,12 @@ function SuperAdminSupportContent() {
                     </form>
                   </div>
                 </>
+              ) : loadingTicket ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 text-xs p-8 gap-3 z-10">
+                  <Loader2 size={36} className="animate-spin text-blue-500" />
+                  <p className="font-semibold text-slate-300 text-sm">Abrindo chamado...</p>
+                  <p className="text-slate-500">Buscando mensagens e histórico de atendimento.</p>
+                </div>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-slate-500 text-xs p-8 gap-2 z-10">
                   <Headphones size={38} className="text-slate-600" />
@@ -1207,7 +1246,7 @@ function SuperAdminSupportContent() {
 
             {/* COLUNA 3: PAINEL LATERAL RAIO-X DA EMPRESA (300px) */}
             {showSidePanel && selectedTicket?.tenant && (
-              <div className="w-72 bg-[#0B1224] border border-slate-800 rounded-xl flex flex-col overflow-hidden shrink-0 shadow-md animate-fadeIn">
+              <div className="hidden xl:flex w-72 bg-[#0B1224] border border-slate-800 rounded-xl flex-col overflow-hidden shrink-0 shadow-md animate-fadeIn">
                 <div className="p-3 border-b border-slate-800 bg-[#070D1B] flex items-center justify-between">
                   <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                     <Building2 size={13} className="text-blue-400" />
