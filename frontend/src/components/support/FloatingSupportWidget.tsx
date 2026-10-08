@@ -350,7 +350,7 @@ export default function FloatingSupportWidget() {
           <div className="p-4 border-b border-slate-800/80 bg-[#070D1B]/80 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center p-1.5 overflow-hidden shadow-sm">
-                <img src="/Favicon_vallor.svg?v=4" alt="Vallor" className="w-full h-full object-contain" />
+                <img src="/vallor/Favicon_vallor.svg?v=4" alt="Vallor" className="w-full h-full object-contain" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -720,7 +720,7 @@ export default function FloatingSupportWidget() {
         {isOpen ? (
           <X size={20} className="transition-transform rotate-0 group-hover:rotate-90 duration-200 pointer-events-none" />
         ) : (
-          <img src="/Favicon_vallor.svg?v=4" alt="Suporte Vallor" className="w-6 h-6 object-contain transition-transform group-hover:scale-110 duration-200 pointer-events-none" />
+          <img src="/vallor/Favicon_vallor.svg?v=4" alt="Suporte Vallor" className="w-6 h-6 object-contain transition-transform group-hover:scale-110 duration-200 pointer-events-none" />
         )}
 
         {/* Indicador de Status Online (Dot Verde Pulsante) */}

@@ -88,14 +88,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
       // 1. Tenta reproduzir arquivo de áudio acústico de alta qualidade
       const preset = localStorage.getItem('versus_sound_preset') || 'glass';
-      let soundPath = '/sounds/notification.wav';
+      let soundPath = '/vallor/sounds/notification.wav';
 
       if (isHighPriority) {
-        soundPath = '/sounds/transfer.wav';
+        soundPath = '/vallor/sounds/transfer.wav';
       } else if (preset === 'pop') {
-        soundPath = '/sounds/notification-pop.wav';
+        soundPath = '/vallor/sounds/notification-pop.wav';
       } else {
-        soundPath = '/sounds/notification-glass.wav';
+        soundPath = '/vallor/sounds/notification-glass.wav';
       }
 
       const audio = new Audio(soundPath);
@@ -188,7 +188,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
         const notif = new Notification(title, {
           body: options.body,
-          icon: '/favicon.ico',
+          icon: '/vallor/favicon.ico',
           tag: options.tag || 'versus_notification',
         });
 

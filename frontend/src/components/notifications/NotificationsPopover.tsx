@@ -63,7 +63,7 @@ export default function NotificationsPopover() {
     setSelectedSound(val);
     if (typeof window !== 'undefined') {
       localStorage.setItem('versus_sound_preset', val);
-      const audio = new Audio(val === 'pop' ? '/sounds/notification-pop.wav' : '/sounds/notification-glass.wav');
+      const audio = new Audio(val === 'pop' ? '/vallor/sounds/notification-pop.wav' : '/vallor/sounds/notification-glass.wav');
       audio.volume = 0.65;
       audio.play().catch(() => {});
     }
@@ -71,7 +71,7 @@ export default function NotificationsPopover() {
 
   const handleTestSound = () => {
     if (typeof window !== 'undefined') {
-      const audio = new Audio(selectedSound === 'pop' ? '/sounds/notification-pop.wav' : '/sounds/notification-glass.wav');
+      const audio = new Audio(selectedSound === 'pop' ? '/vallor/sounds/notification-pop.wav' : '/vallor/sounds/notification-glass.wav');
       audio.volume = 0.65;
       audio.play().catch(() => {});
     }
