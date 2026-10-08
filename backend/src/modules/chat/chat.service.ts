@@ -1111,6 +1111,16 @@ export class ChatService {
         return { syncedCount: 0, updatedCount: 0 };
       }
 
+      // Apenas instâncias Evolution API (WhatsApp Web / QR Code) sincronizam mensagens offline via Evolution
+      const evolutionInstances = instances.filter(inst => {
+        const isMeta = (inst.token && inst.token.startsWith('EAA')) || Boolean(inst.phoneNumberId && (!inst.settings || (inst.settings as any).provider !== 'evolution'));
+        return !isMeta;
+      });
+
+      if (!evolutionInstances.length) {
+        return { syncedCount: 0, updatedCount: 0 };
+      }
+
       const { serverUrl, apiKey } = (this.whatsappService as any).getEvolutionConfig();
       const cutoffTimestamp = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
 
@@ -1126,19 +1136,24 @@ export class ChatService {
         allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
       } catch {}
 
-      for (const inst of instances) {
-        let cleanName = (inst.name || '').replace(' (WhatsApp Web)', '').trim();
-        if (!cleanName) continue;
+      for (const inst of evolutionInstances) {
+        const targetInstanceName = (inst.settings as any)?.instanceName || (inst.name || '').replace(' (WhatsApp Web)', '').trim();
+        if (!targetInstanceName) continue;
 
-        for (const item of allInstances) {
+        // Verifica se a instância DESTE TENANT realmente existe e está conectada no Evolution API
+        const matched = allInstances.find(item => {
           const instObj = item.instance || item;
           const rName = instObj.instanceName || instObj.name;
           const status = instObj.status || instObj.connectionStatus;
-          if (rName && (status === 'open' || status === 'connected')) {
-            cleanName = rName;
-            break;
-          }
+          return rName === targetInstanceName && (status === 'open' || status === 'connected');
+        });
+
+        if (!matched) {
+          this.logger.debug(`[Offline Sync] Instância [${targetInstanceName}] não encontrada ou desconectada na Evolution API. Pulando.`);
+          continue;
         }
+
+        const cleanName = targetInstanceName;
 
         let recentMessages: any[] = [];
         try {

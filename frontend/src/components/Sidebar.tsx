@@ -765,7 +765,7 @@ export default function Sidebar() {
                   {waStatus.status === 'connected' ? 'WhatsApp Conectado' : 'Desconectado'}
                 </span>
                 <span className="text-[10px] text-gray-500 truncate">
-                  {waStatus.metaPhoneNumberId ? `ID: ${waStatus.metaPhoneNumberId}` : 'Sem Instância'}
+                  {waStatus.metaPhoneNumberId ? `ID: ${String(waStatus.metaPhoneNumberId).replace(/^ID:\s*/i, '').trim()}` : 'Sem Instância'}
                 </span>
               </div>
             )}

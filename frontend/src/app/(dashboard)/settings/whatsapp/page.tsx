@@ -279,7 +279,7 @@ export default function WhatsAppSettingsPage() {
         profileName: formData.profileName,
         profilePicUrl: formData.profilePicUrl,
         token: formData.metaToken,
-        phoneNumberId: formData.metaPhoneNumberId,
+        phoneNumberId: formData.metaPhoneNumberId ? formData.metaPhoneNumberId.replace(/\D/g, '').trim() : null,
         settings: {
           antiBanEnabled: formData.antiBanEnabled,
           typingDelayMs: formData.typingDelayMs,

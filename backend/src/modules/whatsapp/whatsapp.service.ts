@@ -364,12 +364,16 @@ export class WhatsappService {
       });
     }
 
+    const cleanPhoneId = data.phoneNumberId !== undefined && data.phoneNumberId !== null
+      ? String(data.phoneNumberId).replace(/\D/g, '').trim()
+      : null;
+
     const instance = await this.prisma.whatsAppInstance.create({
       data: {
         tenantId,
         name: data.name || "Nova Linha WhatsApp",
         phoneNumber: data.phoneNumber || null,
-        phoneNumberId: data.phoneNumberId || null,
+        phoneNumberId: cleanPhoneId || null,
         token: data.token || null,
         profileName: data.profileName || null,
         profilePicUrl: data.profilePicUrl || null,
@@ -414,7 +418,10 @@ export class WhatsappService {
     const updateData: any = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.phoneNumber !== undefined) updateData.phoneNumber = data.phoneNumber;
-    if (data.phoneNumberId !== undefined) updateData.phoneNumberId = data.phoneNumberId;
+    if (data.phoneNumberId !== undefined) {
+      const sanitizedPhoneId = data.phoneNumberId ? String(data.phoneNumberId).replace(/\D/g, '').trim() : null;
+      updateData.phoneNumberId = sanitizedPhoneId;
+    }
     if (data.profileName !== undefined) updateData.profileName = data.profileName;
     if (data.profilePicUrl !== undefined) updateData.profilePicUrl = data.profilePicUrl;
     if (data.status !== undefined) updateData.status = data.status;
@@ -1276,23 +1283,26 @@ export class WhatsappService {
         if (inst.name && inst.name.includes('_')) return inst.name.replace(' (WhatsApp Web)', '').trim();
       }
     }
-    // Fallback: consulta instâncias ativas no container Baileys da Evolution API
-    try {
-      const { serverUrl, apiKey } = this.getEvolutionConfig();
-      const allInstRes = await axios.get(`${serverUrl}/instance/fetchInstances`, {
-        headers: { apikey: apiKey },
-        timeout: 3000,
-      });
-      const allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
-      for (const item of allInstances) {
-        const instObj = item.instance || item;
-        const realName = instObj.instanceName || instObj.name;
-        const status = instObj.status || instObj.connectionStatus;
-        if (realName && (status === 'open' || status === 'connected')) {
-          return realName;
+    // Fallback: consulta instâncias ativas no container Baileys da Evolution API que pertençam estritamente a este tenant
+    if (tenantId) {
+      const cleanTenant = tenantId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+      try {
+        const { serverUrl, apiKey } = this.getEvolutionConfig();
+        const allInstRes = await axios.get(`${serverUrl}/instance/fetchInstances`, {
+          headers: { apikey: apiKey },
+          timeout: 3000,
+        });
+        const allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
+        for (const item of allInstances) {
+          const instObj = item.instance || item;
+          const realName = instObj.instanceName || instObj.name;
+          const status = instObj.status || instObj.connectionStatus;
+          if (realName && realName.startsWith(`versus_${cleanTenant}_`) && (status === 'open' || status === 'connected')) {
+            return realName;
+          }
         }
-      }
-    } catch {}
+      } catch {}
+    }
     return fallbackInstanceName ? fallbackInstanceName.replace(' (WhatsApp Web)', '').trim() : '';
   }
 
