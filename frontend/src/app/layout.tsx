@@ -8,16 +8,16 @@ import Providers from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "VALLOR - Motor Omnichannel",
+  title: "Vallor - Motor Omnichannel",
   description: "Plataforma de IA e Atendimento",
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/Favicon_vallor.svg?v=3", type: "image/svg+xml" },
-      { url: "/favicon.ico?v=3", sizes: "any" },
+      { url: "/Favicon_vallor.svg?v=4", type: "image/svg+xml" },
+      { url: "/favicon.ico?v=4", sizes: "any" },
     ],
-    shortcut: "/Favicon_vallor.svg?v=3",
-    apple: "/Favicon_vallor.svg?v=3",
+    shortcut: "/Favicon_vallor.svg?v=4",
+    apple: "/Favicon_vallor.svg?v=4",
   },
 };
 
@@ -36,9 +36,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/Favicon_vallor.svg?v=3" type="image/svg+xml" />
-        <link rel="alternate icon" href="/favicon.ico?v=3" />
-        <link rel="apple-touch-icon" href="/Favicon_vallor.svg?v=3" />
+        <link rel="icon" href="/Favicon_vallor.svg?v=4" type="image/svg+xml" />
+        <link rel="alternate icon" href="/favicon.ico?v=4" />
+        <link rel="apple-touch-icon" href="/Favicon_vallor.svg?v=4" />
       </head>
       <body className={`${inter.className} bg-background text-text-primary custom-scrollbar`} suppressHydrationWarning>
         <Providers>
