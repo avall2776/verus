@@ -15,7 +15,9 @@ import {
   Edit2,
   Users,
   Cpu,
-  Bot
+  Bot,
+  Menu,
+  X
 } from "lucide-react";
 import { toast } from "sonner";
 import UserProfileModal from "@/components/modals/UserProfileModal";
@@ -39,6 +41,7 @@ export default function SuperAdminLayout({
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Isolamento estrito do Super Admin: limpa e descarta imediatamente quaisquer toasts ativos
   useEffect(() => {
@@ -75,8 +78,8 @@ export default function SuperAdminLayout({
 
   return (
     <div className="h-screen flex w-full overflow-hidden bg-[#070D1B] text-slate-100 font-sans">
-      {/* Sidebar do Super Admin Monocromática */}
-      <aside className="w-16 md:w-64 bg-[#0B1224] border-r border-slate-800 flex flex-col justify-between h-full transition-all duration-300 relative z-20 shrink-0">
+      {/* Sidebar do Super Admin Monocromática (Desktop) */}
+      <aside className="hidden md:flex md:w-64 bg-[#0B1224] border-r border-slate-800 flex-col justify-between h-full transition-all duration-300 relative z-20 shrink-0">
         
         {/* Header da Sidebar */}
         <div>
@@ -176,8 +179,16 @@ export default function SuperAdminLayout({
       {/* Área Principal */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Topbar Corporativa */}
-        <header className="h-14 border-b border-slate-800 bg-[#0B1224]/80 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-10 w-full shrink-0">
-          <div className="flex items-center gap-2">
+        <header className="h-14 border-b border-slate-800 bg-[#0B1224]/80 backdrop-blur-md flex items-center justify-between px-3 md:px-8 sticky top-0 z-10 w-full shrink-0">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="md:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              title="Abrir Menu"
+            >
+              <Menu size={20} />
+            </button>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:inline">Ambiente:</span>
             <span className="text-xs font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
               SaaS Multi-Tenant Cloud
@@ -197,6 +208,115 @@ export default function SuperAdminLayout({
           {children}
         </div>
       </main>
+
+      {/* Mobile Drawer para Super Admin */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          <div 
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          <aside className="relative w-72 max-w-[85vw] bg-[#0B1224] border-r border-slate-800 flex flex-col justify-between h-full z-10 shadow-2xl animate-in slide-in-from-left duration-200">
+            <div>
+              <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800 bg-[#070D1B]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold shrink-0">
+                    <Layers size={18} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-black text-white text-sm tracking-wider uppercase">VALLOR MASTER</span>
+                    <span className="text-[10px] text-blue-400 font-semibold tracking-wider uppercase">Super Admin</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <nav className="p-3 flex flex-col gap-1.5 mt-2">
+                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest px-2 mb-1">
+                  Administração Global
+                </p>
+                {ADMIN_MENU.map((item) => {
+                  const isActive = 
+                    pathname === item.href || 
+                    (item.href === "/super-admin/planos" && pathname.startsWith("/super-admin/plans")) || 
+                    (item.href !== "/super-admin" && pathname.startsWith(item.href));
+                  
+                  return (
+                    <Link 
+                      key={item.href} 
+                      href={item.href} 
+                      prefetch={true}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 p-2.5 rounded-lg transition-all duration-150 group relative
+                        ${isActive 
+                          ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 font-semibold' 
+                          : 'text-slate-400 hover:bg-slate-800/60 hover:text-white border border-transparent'
+                        }`}
+                    >
+                      <item.icon size={18} className={isActive ? 'text-blue-400' : 'group-hover:text-slate-200 transition-colors'} />
+                      <span className={`text-xs ${isActive ? 'text-white' : ''}`}>
+                        {item.name}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+
+            <div className="p-3 border-t border-slate-800 flex flex-col gap-2 bg-[#070D1B]">
+              <Link
+                href="/dashboard"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition-all text-xs font-medium"
+              >
+                <span>Acessar CRM Operacional</span>
+                <ArrowUpRight size={14} className="text-slate-400" />
+              </Link>
+
+              <div 
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setIsProfileModalOpen(true);
+                }}
+                className="flex items-center justify-between p-2 rounded-lg bg-[#0B1224] border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 cursor-pointer transition-all group"
+              >
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm">
+                    {currentUser?.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      currentUser?.name?.charAt(0)?.toUpperCase() || "SA"
+                    )}
+                  </div>
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="text-xs font-bold text-white truncate">
+                      {currentUser?.name || "Super Admin"}
+                    </span>
+                    <span className="text-[10px] text-slate-400 truncate">{currentUser?.email || "admin@vallor.com"}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  title="Sair da Conta"
+                  className="text-slate-400 hover:text-rose-400 p-1.5 rounded hover:bg-slate-800 transition-colors shrink-0"
+                >
+                  <LogOut size={15} />
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
 
       {/* Modal de Edição de Perfil do Super Admin */}
       <UserProfileModal

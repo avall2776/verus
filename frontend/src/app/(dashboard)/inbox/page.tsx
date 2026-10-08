@@ -10,7 +10,7 @@ import {
   Smile, Bold, Italic, Strikethrough, Code, ChevronDown, Trash2, Play, Pause,
   Volume2, Check, CheckCheck, Copy, ExternalLink, Headphones, Download, ZoomIn, Maximize2,
   BellOff, History, UserPlus, FileDown, MessageSquarePlus, PanelRight, Info, Pin,
-  Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video
+  Clock, AlertCircle, Workflow, Pencil, ShoppingBag, MapPin, Video, ArrowLeft
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -1769,8 +1769,8 @@ function InboxContent() {
   return (
     <div className="flex h-full w-full bg-[#0B1224] overflow-hidden">
       
-      {/* 1. PAINEL ESQUERDO: Lista de Conversas (Padrão Estrutural WhatsApp Web) */}
-      <div className="w-[360px] sm:w-[380px] flex-shrink-0 bg-[#0F172A] border-r border-slate-800/80 flex flex-col overflow-hidden z-10">
+      {/* 1. PAINEL ESQUERDO: Lista de Conversas (Padrão Estrutural WhatsApp Web com Master-Detail Mobile) */}
+      <div className={`${activeChat ? 'hidden md:flex' : 'flex'} w-full md:w-[360px] lg:w-[380px] flex-shrink-0 bg-[#0F172A] border-r border-slate-800/80 flex-col overflow-hidden z-10`}>
         
         {/* Header Superior WhatsApp */}
         {/* Header Superior WhatsApp (Foto de Perfil da Linha Principal & Status) */}
@@ -2209,7 +2209,7 @@ function InboxContent() {
       </div>
 
       {/* 2. PAINEL CENTRAL: Janela de Chat (Estrutura WhatsApp Corporativo VERSUS) */}
-      <div className="flex-1 bg-[#0B1224] flex flex-col overflow-hidden relative border-r border-slate-800/80">
+      <div className={`${!activeChat ? 'hidden md:flex' : 'flex'} flex-1 w-full bg-[#0B1224] flex-col overflow-hidden relative border-r border-slate-800/80`}>
         
         {/* Textura/Papel de Parede Sutil Autêntico WhatsApp adaptado ao Dark Mode Corporativo (2.5% de opacidade) */}
         <div 
@@ -2341,12 +2341,26 @@ function InboxContent() {
         ) : (
           <>
             {/* Chat Header (Padrão Estrutural WhatsApp - Design Monocromático VERSUS) */}
-            <div className="h-16 px-4 border-b border-slate-800/80 flex items-center justify-between bg-[#0B1224] z-20 shadow-sm">
-              <div 
-                className="flex items-center gap-3 min-w-0 cursor-pointer group"
-                onClick={() => setShowContactInfo(prev => !prev)}
-                title="Clique para ver dados do contato"
-              >
+            <div className="h-16 px-3 sm:px-4 border-b border-slate-800/80 flex items-center justify-between bg-[#0B1224] z-20 shadow-sm">
+              <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
+                {/* Botão Voltar para Lista no Mobile (WhatsApp style) */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveChat(null);
+                  }}
+                  className="md:hidden p-1.5 -ml-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/80 transition-colors shrink-0 cursor-pointer"
+                  title="Voltar para conversas"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+
+                <div 
+                  className="flex items-center gap-2.5 sm:gap-3 min-w-0 cursor-pointer group"
+                  onClick={() => setShowContactInfo(prev => !prev)}
+                  title="Clique para ver dados do contato"
+                >
                 {/* Avatar WhatsApp com indicador de status */}
                 <div className="relative shrink-0">
                   <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700/60 flex items-center justify-center text-white font-bold shrink-0 relative overflow-hidden shadow-inner">
@@ -2403,6 +2417,7 @@ function InboxContent() {
                   )}
                 </div>
               </div>
+            </div>
 
               {/* Ações Alinhadas à Direita (Padrão WhatsApp Web) */}
               <div className="flex items-center gap-1 sm:gap-2 shrink-0">
@@ -3461,9 +3476,9 @@ function InboxContent() {
         )}
       </div>
 
-      {/* 3. PAINEL DIREITO: Dados do Contato (Padrão WhatsApp Web) */}
+      {/* 3. PAINEL DIREITO: Dados do Contato (Padrão WhatsApp Web com Overlay Mobile) */}
       {showContactInfo && activeContactData && (
-        <div className="w-[320px] sm:w-[350px] flex-shrink-0 bg-[#0B1224] flex flex-col overflow-y-auto border-l border-slate-800/80 animate-in slide-in-from-right-2 duration-150 z-20">
+        <div className="fixed inset-0 z-50 md:relative md:inset-auto md:w-[320px] lg:w-[350px] flex-shrink-0 bg-[#0B1224] flex flex-col overflow-y-auto border-l border-slate-800/80 animate-in slide-in-from-right-2 duration-150">
           {/* Header do Painel Direito */}
           <div className="h-16 px-4 border-b border-slate-800/80 flex items-center justify-between bg-[#0B1224] shrink-0">
             <div className="flex items-center gap-3">

@@ -1,21 +1,29 @@
+"use client";
+
 import { Menu } from "lucide-react";
 import NotificationsPopover from "@/components/notifications/NotificationsPopover";
 import GlobalSearchBar from "@/components/search/GlobalSearchBar";
+import { useMobileMenu } from "@/contexts/MobileMenuContext";
 
 export default function Topbar() {
+  const { toggleMenu } = useMobileMenu();
+
   return (
-    <header className="h-16 border-b border-slate-800 bg-[#0B1224]/80 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-20 w-full shrink-0 print:hidden">
+    <header className="h-16 border-b border-slate-800 bg-[#0B1224]/80 backdrop-blur-md flex items-center justify-between px-3 md:px-8 sticky top-0 z-20 w-full shrink-0 print:hidden">
       {/* Mobile Menu Button & Busca Global Reativa */}
-      <div className="flex items-center gap-3 md:gap-4 flex-1 max-w-xl">
+      <div className="flex items-center gap-2 md:gap-4 flex-1 max-w-xl min-w-0">
         <button 
-          className="md:hidden text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800/60 transition-colors"
+          type="button"
+          onClick={toggleMenu}
+          className="md:hidden text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800/60 transition-colors shrink-0 cursor-pointer"
           title="Menu de navegação"
+          aria-label="Abrir menu"
         >
           <Menu size={22} />
         </button>
         
         {/* Barra de Busca Global Interativa (Leads, Conversas, Equipe e Módulos) */}
-        <div className="w-full">
+        <div className="w-full min-w-0">
           <GlobalSearchBar />
         </div>
       </div>

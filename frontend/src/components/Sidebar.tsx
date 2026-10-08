@@ -46,6 +46,7 @@ import UserProfileModal from "@/components/modals/UserProfileModal";
 import WorkspaceManagerModal, { WorkspaceItem } from "@/components/modals/WorkspaceManagerModal";
 import { getCachedUser, clearUserCache } from "@/lib/userCache";
 import { isAvatarUrlValid } from "@/lib/avatarUtils";
+import { useMobileMenu } from "@/contexts/MobileMenuContext";
 
 function WhatsAppIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
   return (
@@ -111,6 +112,7 @@ export default function Sidebar() {
   const router = useRouter();
   const { hasGlobalUnread } = useSocket();
   const { status: waStatus } = useWhatsApp();
+  const { isOpen: isMobileOpen, closeMenu: closeMobileMenu } = useMobileMenu();
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
@@ -497,9 +499,10 @@ export default function Sidebar() {
   })).filter((group) => group.items.length > 0);
 
   return (
-    <aside 
-      className={`bg-[#0B1224] border-r border-gray-800 flex flex-col justify-between h-full transition-[width] duration-200 ease-in-out relative z-20 shrink-0 ${isExpanded ? 'w-[260px]' : 'w-[64px]'}`}
-    >
+    <>
+      <aside 
+        className={`hidden md:flex bg-[#0B1224] border-r border-gray-800 flex-col justify-between h-full transition-[width] duration-200 ease-in-out relative z-20 shrink-0 ${isExpanded ? 'w-[260px]' : 'w-[64px]'}`}
+      >
       <div className="flex flex-col h-full overflow-hidden">
         
         {/* Header / Workspace & Tenant Selector */}
@@ -947,8 +950,148 @@ export default function Sidebar() {
             </div>
           </div>
         </div>
-        
       </div>
+    </aside>
+
+      {/* Mobile Drawer (Menu Lateral Deslizante para Celular) */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Backdrop Escurecido com Blur */}
+          <div 
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={closeMobileMenu}
+          />
+
+          {/* Drawer Lateral */}
+          <aside className="relative w-[300px] max-w-[85vw] bg-[#0B1224] border-r border-gray-800 flex flex-col justify-between h-full z-10 shadow-2xl animate-in slide-in-from-left duration-200">
+            {/* Header Mobile Drawer */}
+            <div className="h-16 flex items-center justify-between border-b border-gray-800 px-4 shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div 
+                  className="w-8 h-8 rounded-xl border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 shadow-sm overflow-hidden"
+                  style={{ backgroundColor: activeWorkspace?.themeColor || "#2563EB" }}
+                >
+                  {activeWorkspace?.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{(activeWorkspace?.name || targetTenantName || "V").charAt(0).toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-bold text-white truncate">
+                    {targetTenantName ? (activeWorkspace?.name || targetTenantName) : (activeWorkspace?.name || "Workspace Principal")}
+                  </span>
+                  <span className="text-[10px] text-gray-400 truncate">
+                    {targetTenantName ? `${targetTenantName} (Suporte)` : (currentUser?.tenantName ? currentUser.tenantName : "VALLOR")}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeMobileMenu}
+                className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800/80 transition-colors"
+                title="Fechar Menu"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Itens de Navegação Mobile */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-1">
+              {visibleGroups.map((group) => (
+                <div key={group.title} className="mb-4">
+                  <div className="px-2 py-1 mb-1 text-[10px] font-bold text-gray-500 tracking-wider uppercase">
+                    {group.title}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {group.items.map((item) => {
+                      const itemBase = item.href.split('?')[0];
+                      const isActive = item.href.includes('?')
+                        ? pathname === itemBase
+                        : pathname === item.href || (item.href !== '/dashboard' && item.href !== '/settings' && pathname.startsWith(item.href));
+                      const isInbox = item.href === '/inbox';
+                      const shouldBlink = isInbox && hasGlobalUnread && !isActive;
+
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={closeMobileMenu}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 ${
+                            isActive
+                              ? 'bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30'
+                              : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-200'
+                          }`}
+                        >
+                          <div className="relative shrink-0">
+                            <item.icon size={18} className={isActive ? 'text-blue-400' : 'text-gray-400'} />
+                            {shouldBlink && (
+                              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" />
+                            )}
+                          </div>
+                          <span className="truncate flex-1">{item.name}</span>
+                          {isInbox && hasGlobalUnread && (
+                            <span className="w-2 h-2 rounded-full bg-red-500" />
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Rodapé Mobile / Operador */}
+            <div className="p-3 border-t border-gray-800 bg-[#070D1B]">
+              <div className="flex items-center justify-between p-2 rounded-xl bg-gray-900/60 border border-gray-800">
+                <div 
+                  className="flex items-center gap-2.5 min-w-0 cursor-pointer"
+                  onClick={() => {
+                    closeMobileMenu();
+                    setIsProfileModalOpen(true);
+                  }}
+                >
+                  <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                    {isAvatarUrlValid(currentUser?.avatarUrl) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img 
+                        src={currentUser!.avatarUrl!} 
+                        alt="Avatar" 
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover" 
+                      />
+                    ) : (
+                      currentUser?.name?.[0]?.toUpperCase() || "U"
+                    )}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-bold text-white truncate">
+                      {currentUser?.name || "Usuário"}
+                    </span>
+                    <span className="text-[10px] text-gray-400 truncate">
+                      {currentUser?.role === 'ADMIN' ? 'Administrador' : 'Operador'}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMobileMenu();
+                    handleLogout();
+                  }}
+                  className="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-gray-800 transition-colors"
+                  title="Sair da conta"
+                >
+                  <LogOut size={16} />
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
 
       {/* Modais Estilo Lero */}
       <UserProfileModal
@@ -977,6 +1120,6 @@ export default function Sidebar() {
           loadWorkspaces();
         }}
       />
-    </aside>
+    </>
   );
 }

@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { SocketProvider } from "@/components/ui/SocketProvider";
 import { WhatsAppProvider } from "@/components/ui/WhatsAppProvider";
 import SecurityShieldProvider from "@/components/security/SecurityShieldProvider";
+import { MobileMenuProvider } from "@/contexts/MobileMenuContext";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -33,8 +34,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <SocketProvider>
         <WhatsAppProvider>
           <SecurityShieldProvider>
-            {children}
-            {mounted && <Toaster position="top-right" theme="dark" richColors />}
+            <MobileMenuProvider>
+              {children}
+              {mounted && <Toaster position="top-right" theme="dark" richColors />}
+            </MobileMenuProvider>
           </SecurityShieldProvider>
         </WhatsAppProvider>
       </SocketProvider>

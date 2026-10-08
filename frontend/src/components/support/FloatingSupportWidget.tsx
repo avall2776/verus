@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { 
   LifeBuoy, X, Plus, RefreshCw, ChevronRight, ArrowLeft, 
   ExternalLink, CheckCircle2, AlertCircle, Clock, Send,
@@ -56,6 +56,7 @@ const CATEGORY_OPTIONS = [
 
 export default function FloatingSupportWidget() {
   const router = useRouter();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"support" | "notices">("support");
   const [currentView, setCurrentView] = useState<"list" | "new_ticket">("list");
@@ -331,8 +332,8 @@ export default function FloatingSupportWidget() {
           : undefined
       }
       className={`fixed z-50 select-none print:hidden ${
-        !position ? "bottom-6 right-6" : ""
-      }`}
+        !position ? "bottom-20 right-4 md:bottom-6 md:right-6" : ""
+      } ${pathname === '/inbox' ? 'hidden md:block' : ''}`}
     >
       {/* ========================================================================= */}
       {/* POPOVER / MODAL EXPANSÍVEL ("SUPORTE VERSUS")                             */}
