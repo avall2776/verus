@@ -18,6 +18,11 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
+], UpdateSupportAiConfigDto.prototype, "id", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
 ], UpdateSupportAiConfigDto.prototype, "name", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
@@ -54,4 +59,12 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], UpdateSupportAiConfigDto.prototype, "autoCloseSolved", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], UpdateSupportAiConfigDto.prototype, "createdAt", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], UpdateSupportAiConfigDto.prototype, "updatedAt", void 0);
 //# sourceMappingURL=update-support-ai-config.dto.js.map

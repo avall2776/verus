@@ -18,6 +18,17 @@ import { SubmitCsatDto } from './dto/submit-csat.dto';
 export class SupportController {
   constructor(private readonly supportService: SupportService) {}
 
+  private getEffectiveTenantId(req: any, explicitTenantId?: string): string {
+    const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
+    if (isSuperAdmin) {
+      const targetTenant = req.headers['x-target-tenant-id'] || req.headers['x-tenant-id'] || explicitTenantId || req.query?.tenantId;
+      if (targetTenant && typeof targetTenant === 'string' && targetTenant.trim()) {
+        return targetTenant.trim();
+      }
+    }
+    return req.user.tenantId;
+  }
+
   @Get('tickets')
   async findAll(@Request() req, @Query() query: {
     status?: string;
@@ -28,7 +39,7 @@ export class SupportController {
     tenantId?: string;
   }) {
     const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-    const tenantId = req.user.tenantId;
+    const tenantId = this.getEffectiveTenantId(req, query.tenantId);
     const userId = query.myOnly === 'true' ? (req.user.id || req.user.userId) : undefined;
     return this.supportService.findAll(tenantId, {
       status: query.status,
@@ -43,20 +54,20 @@ export class SupportController {
 
   @Get('notices')
   async getNotices(@Request() req) {
-    const tenantId = req.user.tenantId;
+    const tenantId = this.getEffectiveTenantId(req);
     return this.supportService.getNotices(tenantId);
   }
 
   @Get('tickets/:id')
   async findOne(@Request() req, @Param('id') id: string) {
     const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-    const tenantId = req.user.tenantId;
+    const tenantId = this.getEffectiveTenantId(req);
     return this.supportService.findOne(id, tenantId, isSuperAdmin);
   }
 
   @Post('tickets')
   async create(@Request() req, @Body() dto: CreateTicketDto) {
-    const tenantId = req.user.tenantId;
+    const tenantId = this.getEffectiveTenantId(req, dto?.tenantId);
     const userId = req.user.id || req.user.userId;
     return this.supportService.create(tenantId, userId, dto);
   }
@@ -68,7 +79,7 @@ export class SupportController {
     @Body() dto: CreateTicketMessageDto
   ) {
     const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-    const tenantId = req.user.tenantId;
+    const tenantId = this.getEffectiveTenantId(req);
     const userId = req.user.id || req.user.userId;
     return this.supportService.addMessage(id, tenantId, userId, dto, isSuperAdmin);
   }
@@ -80,7 +91,7 @@ export class SupportController {
     @Body() body: { status: string }
   ) {
     const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-    const tenantId = req.user.tenantId;
+    const tenantId = this.getEffectiveTenantId(req);
     if (!body?.status) {
       throw new BadRequestException('Status é obrigatório.');
     }
@@ -94,7 +105,7 @@ export class SupportController {
     @Body() body: { assignedToId: string | null }
   ) {
     const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-    const tenantId = req.user.tenantId;
+    const tenantId = this.getEffectiveTenantId(req);
     return this.supportService.assign(id, tenantId, body?.assignedToId ?? null, isSuperAdmin);
   }
 
@@ -104,7 +115,7 @@ export class SupportController {
     @Param('id') id: string
   ) {
     const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-    const tenantId = req.user.tenantId;
+    const tenantId = this.getEffectiveTenantId(req);
     return this.supportService.generateCopilotSuggestion(id, tenantId, isSuperAdmin);
   }
 
@@ -125,7 +136,7 @@ export class SupportController {
     @Body() dto: ToggleTicketAiDto
   ) {
     const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-    const tenantId = req.user.tenantId;
+    const tenantId = this.getEffectiveTenantId(req);
     return this.supportService.toggleTicketAi(id, dto.isPaused, tenantId, isSuperAdmin);
   }
 

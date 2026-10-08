@@ -44,7 +44,12 @@ import {
   Star,
   Sliders,
   ShieldAlert,
-  ArrowLeft
+  ArrowLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+  Paperclip
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -182,11 +187,38 @@ function SuperAdminSupportContent() {
 
   // Modais e Painéis
   const [isXRayOpen, setIsXRayOpen] = useState(false);
+  const [showQueuePanel, setShowQueuePanel] = useState(true);
   const [showSidePanel, setShowSidePanel] = useState(true);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [copiedDescription, setCopiedDescription] = useState(false);
   const [sendingToEngineering, setSendingToEngineering] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  // Sincronizar preferências de layout das barras laterais com localStorage
+  useEffect(() => {
+    try {
+      const savedQueue = localStorage.getItem("versus_support_queue_open");
+      if (savedQueue !== null) setShowQueuePanel(savedQueue === "true");
+      const savedSide = localStorage.getItem("versus_support_side_open");
+      if (savedSide !== null) setShowSidePanel(savedSide === "true");
+    } catch {}
+  }, []);
+
+  const toggleQueuePanel = () => {
+    setShowQueuePanel((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("versus_support_queue_open", String(next)); } catch {}
+      return next;
+    });
+  };
+
+  const toggleSidePanel = () => {
+    setShowSidePanel((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("versus_support_side_open", String(next)); } catch {}
+      return next;
+    });
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const teamMessagesEndRef = useRef<HTMLDivElement>(null);
@@ -614,133 +646,154 @@ function SuperAdminSupportContent() {
         {/* ========================================================================= */}
         {activeSubView === 'customer_service' && (
           <>
-            {/* COLUNA 1: FILA DE ATENDIMENTO ESTILO WHATSAPP (320px no desktop, 100% no mobile) */}
-            <div className={`${selectedTicket ? 'hidden md:flex' : 'flex'} w-full md:w-80 bg-[#0B1224] border border-slate-800 rounded-xl flex-col overflow-hidden shrink-0 shadow-md`}>
-              
-              {/* Topo da Fila: Busca & Filtros Rápidos */}
-              <div className="p-3 border-b border-slate-800 bg-[#070D1B] space-y-2">
-                <div className="relative">
-                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar chamados..."
-                    className="w-full bg-[#0B1224] border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-slate-500 outline-none focus:border-blue-500 transition-colors"
-                  />
+            {/* COLUNA 1: FILA DE ATENDIMENTO ESTILO WHATSAPP (Minimizável) */}
+            {showQueuePanel && (
+              <div className={`${selectedTicket ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-84 xl:w-90 bg-[#111b21] border border-[#222d34] rounded-xl flex-col overflow-hidden shrink-0 shadow-xl transition-all duration-200 animate-fadeIn`}>
+                
+                {/* Topo da Fila: Título com Contador & Botão Minimizar */}
+                <div className="p-3 border-b border-[#222d34] bg-[#202c33] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare size={15} className="text-[#00a884]" />
+                      <h2 className="text-xs font-bold text-[#e9edef] uppercase tracking-wider">Conversas & Fila</h2>
+                      <span className="text-[10px] bg-[#00a884]/20 text-[#00a884] font-mono font-bold px-1.5 py-0.2 rounded-full">
+                        {tickets.length}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={toggleQueuePanel}
+                      className="p-1 rounded-lg text-[#8696a0] hover:text-[#e9edef] hover:bg-[#2a3942] transition-colors cursor-pointer"
+                      title="Minimizar fila lateral de conversas"
+                    >
+                      <PanelLeftClose size={16} />
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8696a0]" />
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Pesquisar chamados..."
+                      className="w-full bg-[#111b21] border border-[#2a3942] rounded-lg pl-8 pr-3 py-1.5 text-xs text-[#e9edef] placeholder:text-[#8696a0] outline-none focus:border-[#00a884] transition-colors"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="bg-[#111b21] border border-[#2a3942] rounded px-2 py-1 text-[11px] text-[#d1d7db] outline-none cursor-pointer focus:border-[#00a884]"
+                    >
+                      <option value="ALL">Status: Todos</option>
+                      <option value="OPEN">Abertos</option>
+                      <option value="IN_PROGRESS">Em Atendimento</option>
+                      <option value="WAITING_CLIENT">Aguardando Cliente</option>
+                      <option value="RESOLVED">Resolvidos</option>
+                      <option value="CLOSED">Fechados</option>
+                    </select>
+
+                    <select
+                      value={selectedTenantId}
+                      onChange={(e) => setSelectedTenantId(e.target.value)}
+                      className="bg-[#111b21] border border-[#2a3942] rounded px-2 py-1 text-[11px] text-[#d1d7db] outline-none truncate cursor-pointer focus:border-[#00a884]"
+                    >
+                      <option value="ALL">Empresa: Todas</option>
+                      {tenantsList.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-1.5">
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="bg-[#0B1224] border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 outline-none cursor-pointer"
-                  >
-                    <option value="ALL">Status: Todos</option>
-                    <option value="OPEN">Abertos</option>
-                    <option value="IN_PROGRESS">Em Atendimento</option>
-                    <option value="WAITING_CLIENT">Aguardando Cliente</option>
-                    <option value="RESOLVED">Resolvidos</option>
-                    <option value="CLOSED">Fechados</option>
-                  </select>
+                {/* Lista de Chamados Estilo Contatos WhatsApp */}
+                <div className="flex-1 overflow-y-auto divide-y divide-[#202c33] custom-scrollbar bg-[#111b21]">
+                  {loadingList ? (
+                    <div className="p-6 text-center text-[#8696a0] text-xs flex items-center justify-center gap-2">
+                      <Loader2 size={16} className="animate-spin text-[#00a884]" />
+                      <span>Carregando conversas...</span>
+                    </div>
+                  ) : tickets.length === 0 ? (
+                    <div className="p-6 text-center text-[#8696a0] text-xs">
+                      Nenhum chamado encontrado na fila.
+                    </div>
+                  ) : (
+                    tickets.map((ticket) => {
+                      const isSelected = selectedTicket?.id === ticket.id;
+                      const statusCfg = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.OPEN;
+                      const priorityCfg = PRIORITY_CONFIG[ticket.priority] || PRIORITY_CONFIG.MEDIUM;
+                      const companyInitial = (ticket.tenant?.name || "E").charAt(0).toUpperCase();
 
-                  <select
-                    value={selectedTenantId}
-                    onChange={(e) => setSelectedTenantId(e.target.value)}
-                    className="bg-[#0B1224] border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 outline-none truncate cursor-pointer"
-                  >
-                    <option value="ALL">Empresa: Todas</option>
-                    {tenantsList.map((t) => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Lista de Chamados Estilo Contatos WhatsApp */}
-              <div className="flex-1 overflow-y-auto divide-y divide-slate-800/60 custom-scrollbar">
-                {loadingList ? (
-                  <div className="p-6 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
-                    <Loader2 size={16} className="animate-spin text-blue-500" />
-                    <span>Carregando chamados...</span>
-                  </div>
-                ) : tickets.length === 0 ? (
-                  <div className="p-6 text-center text-slate-500 text-xs">
-                    Nenhum chamado encontrado na fila.
-                  </div>
-                ) : (
-                  tickets.map((ticket) => {
-                    const isSelected = selectedTicket?.id === ticket.id;
-                    const statusCfg = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.OPEN;
-                    const priorityCfg = PRIORITY_CONFIG[ticket.priority] || PRIORITY_CONFIG.MEDIUM;
-                    const companyInitial = (ticket.tenant?.name || "E").charAt(0).toUpperCase();
-
-                    return (
-                      <div
-                        key={ticket.id}
-                        onClick={() => loadTicketDetails(ticket.id)}
-                        className={`p-3 cursor-pointer transition-all flex items-start gap-2.5 ${
-                          isSelected
-                            ? "bg-blue-600/15 border-l-4 border-blue-500"
-                            : "hover:bg-slate-800/30 border-l-4 border-transparent"
-                        }`}
-                      >
-                        {/* Avatar com Inicial da Empresa */}
-                        <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-blue-400 font-bold text-xs shrink-0 relative mt-0.5">
-                          {companyInitial}
-                          {ticket.status === 'OPEN' && (
-                            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 absolute -top-0.5 -right-0.5 ring-2 ring-[#0B1224]" />
-                          )}
-                        </div>
-
-                        {/* Conteúdo do Card */}
-                        <div className="flex-1 min-w-0">
-                          {/* Linha 1: Nome da Empresa + Hora */}
-                          <div className="flex items-center justify-between gap-1 mb-0.5">
-                            <span className="font-bold text-xs text-white truncate">
-                              {ticket.tenant?.name || "Empresa"}
-                            </span>
-                            <span className="text-[10px] text-slate-400 shrink-0 font-mono">
-                              {new Date(ticket.updatedAt || ticket.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                            </span>
+                      return (
+                        <div
+                          key={ticket.id}
+                          onClick={() => loadTicketDetails(ticket.id)}
+                          className={`p-3 cursor-pointer transition-all flex items-start gap-2.5 ${
+                            isSelected
+                              ? "bg-[#2a3942] border-l-4 border-[#00a884]"
+                              : "hover:bg-[#202c33]/70 border-l-4 border-transparent"
+                          }`}
+                        >
+                          {/* Avatar com Inicial da Empresa */}
+                          <div className="w-10 h-10 rounded-full bg-[#202c33] border border-[#2a3942] flex items-center justify-center text-[#e9edef] font-bold text-xs shrink-0 relative mt-0.5">
+                            {companyInitial}
+                            {ticket.status === 'OPEN' && (
+                              <span className="w-2.5 h-2.5 rounded-full bg-[#00a884] absolute -top-0.5 -right-0.5 ring-2 ring-[#111b21]" />
+                            )}
                           </div>
 
-                          {/* Linha 2: Solicitante + Assunto em formato snippet */}
-                          <p className="text-[11px] text-slate-300 truncate mb-1">
-                            <strong className="text-slate-400">{ticket.user?.name ? `${ticket.user.name.split(' ')[0]}: ` : ''}</strong>
-                            {ticket.subject}
-                          </p>
-
-                          {/* Linha 3: Protocolo + Status Traduzido + Prioridade */}
-                          <div className="flex items-center justify-between gap-1">
-                            <div className="flex items-center gap-1.5 overflow-hidden">
-                              <span className="font-mono text-[9px] font-bold text-blue-400">
-                                #{ticket.ticketNumber || ticket.id.substring(0, 5).toUpperCase()}
+                          {/* Conteúdo do Card */}
+                          <div className="flex-1 min-w-0">
+                            {/* Linha 1: Nome da Empresa + Hora */}
+                            <div className="flex items-center justify-between gap-1 mb-0.5">
+                              <span className="font-semibold text-xs text-[#e9edef] truncate">
+                                {ticket.tenant?.name || "Empresa"}
                               </span>
-                              <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded border uppercase shrink-0 ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
-                                {statusCfg.label}
+                              <span className={`text-[10px] shrink-0 font-mono ${ticket.status === 'OPEN' ? 'text-[#00a884] font-bold' : 'text-[#8696a0]'}`}>
+                                {new Date(ticket.updatedAt || ticket.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                               </span>
                             </div>
 
-                            <div className="flex items-center gap-1 shrink-0">
-                              <span className={`w-1.5 h-1.5 rounded-full ${priorityCfg.dot}`} />
-                              <span className="text-[9px] text-slate-400">{priorityCfg.label}</span>
+                            {/* Linha 2: Solicitante + Assunto em formato snippet */}
+                            <p className="text-[11px] text-[#8696a0] truncate mb-1">
+                              <strong className="text-[#d1d7db]">{ticket.user?.name ? `${ticket.user.name.split(' ')[0]}: ` : ''}</strong>
+                              {ticket.subject}
+                            </p>
+
+                            {/* Linha 3: Protocolo + Status Traduzido + Prioridade */}
+                            <div className="flex items-center justify-between gap-1">
+                              <div className="flex items-center gap-1.5 overflow-hidden">
+                                <span className="font-mono text-[9px] font-bold text-[#00a884]">
+                                  #{ticket.ticketNumber || ticket.id.substring(0, 5).toUpperCase()}
+                                </span>
+                                <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded border uppercase shrink-0 ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
+                                  {statusCfg.label}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1 shrink-0">
+                                <span className={`w-1.5 h-1.5 rounded-full ${priorityCfg.dot}`} />
+                                <span className="text-[9px] text-[#8696a0]">{priorityCfg.label}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })
-                )}
+                      );
+                    })
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* COLUNA 2: JANELA DE ATENDIMENTO WHATSAPP BUSINESS COM COPILOTO IA */}
-            <div className={`${!selectedTicket ? 'hidden md:flex' : 'flex'} flex-1 w-full bg-[#0B1224] border border-slate-800 rounded-xl flex-col overflow-hidden relative shadow-lg`}>
+            {/* COLUNA 2: JANELA DE ATENDIMENTO WHATSAPP BUSINESS (Expande para 100% se laterais minimizadas) */}
+            <div className={`${!selectedTicket ? 'hidden md:flex' : 'flex'} flex-1 w-full bg-[#0b141a] border border-[#222d34] rounded-xl flex-col overflow-hidden relative shadow-2xl transition-all duration-200`}>
               
               {/* Papel de Parede Sutil Autêntico WhatsApp Dark Mode */}
               <div 
-                className="absolute inset-0 opacity-[0.025] pointer-events-none z-0" 
+                className="absolute inset-0 opacity-[0.045] pointer-events-none z-0" 
                 style={{ 
                   backgroundImage: WHATSAPP_WALLPAPER_BG, 
                   backgroundRepeat: 'repeat', 
@@ -751,40 +804,64 @@ function SuperAdminSupportContent() {
               {selectedTicket ? (
                 <>
                   {/* HEADER DO ATENDIMENTO ESTILO WHATSAPP WEB */}
-                  <div className="h-16 px-3 md:px-4 border-b border-slate-800/90 bg-[#070D1B] flex items-center justify-between gap-2 md:gap-3 z-10 shrink-0 overflow-x-auto no-scrollbar">
+                  <div className="h-16 px-3 md:px-4 border-b border-[#2a3942] bg-[#202c33] flex items-center justify-between gap-2 md:gap-3 z-10 shrink-0 overflow-x-auto no-scrollbar">
                     
-                    {/* Informações do Cliente */}
+                    {/* Informações do Cliente & Alternador da Fila */}
                     <div className="flex items-center gap-2 md:gap-3 min-w-0">
                       {/* Botão Voltar para Fila (Mobile) */}
                       <button
                         type="button"
                         onClick={() => setSelectedTicket(null)}
-                        className="md:hidden p-1.5 -ml-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+                        className="md:hidden p-1.5 -ml-1 text-[#8696a0] hover:text-[#e9edef] rounded-lg hover:bg-[#2a3942] transition-colors shrink-0 cursor-pointer"
                         title="Voltar para a lista de chamados"
                       >
                         <ArrowLeft size={18} />
                       </button>
 
+                      {/* Botão Expandir/Minimizar Fila (Desktop) */}
+                      {!showQueuePanel ? (
+                        <button
+                          type="button"
+                          onClick={toggleQueuePanel}
+                          className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#111b21] hover:bg-[#2a3942] border border-[#2a3942] text-xs font-semibold text-[#e9edef] transition-colors cursor-pointer shrink-0 shadow-sm group"
+                          title="Expandir fila lateral de chamados"
+                        >
+                          <PanelLeftOpen size={16} className="text-[#00a884] group-hover:translate-x-0.5 transition-transform" />
+                          <span>Fila ({tickets.length})</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={toggleQueuePanel}
+                          className="hidden md:flex p-1.5 rounded-lg text-[#8696a0] hover:text-[#e9edef] hover:bg-[#111b21] transition-colors shrink-0 cursor-pointer"
+                          title="Minimizar fila lateral de conversas"
+                        >
+                          <PanelLeftClose size={16} />
+                        </button>
+                      )}
+
+                      {/* Avatar do Cliente */}
                       <div className="relative shrink-0">
-                        <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-white font-bold text-sm">
+                        <div className="w-10 h-10 rounded-full bg-[#111b21] border border-[#2a3942] flex items-center justify-center text-[#e9edef] font-bold text-sm">
                           {(selectedTicket.tenant?.name || "C").charAt(0).toUpperCase()}
                         </div>
-                        <span className="w-3 h-3 rounded-full bg-emerald-500 absolute bottom-0 right-0 ring-2 ring-[#070D1B]" title="Canal Ativo" />
+                        <span className="w-3 h-3 rounded-full bg-[#00a884] absolute bottom-0 right-0 ring-2 ring-[#202c33]" title="Canal Ativo" />
                       </div>
 
+                      {/* Dados do Cliente */}
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <h2 className="text-sm font-bold text-white truncate" title={selectedTicket.tenant?.name}>
+                          <h2 className="text-sm font-bold text-[#e9edef] truncate" title={selectedTicket.tenant?.name}>
                             {selectedTicket.tenant?.name || "Empresa Cliente"}
                           </h2>
-                          <span className="font-mono text-xs text-blue-400 font-bold shrink-0">
+                          <span className="font-mono text-xs text-[#00a884] font-bold shrink-0">
                             #{selectedTicket.ticketNumber || selectedTicket.id.substring(0, 5).toUpperCase()}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-slate-400">
-                          <span className="truncate">Solicitante: <strong className="text-slate-200">{selectedTicket.user?.name || "Cliente"}</strong></span>
+                        <div className="flex items-center gap-2 text-xs text-[#8696a0]">
+                          <span className="truncate">Solicitante: <strong className="text-[#d1d7db]">{selectedTicket.user?.name || "Cliente"}</strong></span>
                           <span>•</span>
-                          <span className="text-blue-400 text-[11px] truncate">{CATEGORY_CONFIG[selectedTicket.category] || selectedTicket.category}</span>
+                          <span className="text-[#00a884] text-[11px] truncate">{CATEGORY_CONFIG[selectedTicket.category] || selectedTicket.category}</span>
                         </div>
                       </div>
                     </div>
@@ -857,12 +934,12 @@ function SuperAdminSupportContent() {
                         }}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm ${
                           isCopilotOpen
-                            ? "bg-cyan-500 text-slate-950 ring-2 ring-cyan-400/50 font-black"
-                            : "bg-cyan-950/70 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/60"
+                            ? "bg-[#00a884] text-slate-950 ring-2 ring-[#00a884]/50 font-black"
+                            : "bg-[#111b21] border border-[#2a3942] text-[#00a884] hover:bg-[#2a3942]"
                         }`}
                         title="Abrir o Copiloto IA de Atendimento Híbrido"
                       >
-                        <Sparkles size={14} className={copilotLoading ? "animate-spin" : isCopilotOpen ? "text-slate-950" : "text-cyan-400"} />
+                        <Sparkles size={14} className={copilotLoading ? "animate-spin" : isCopilotOpen ? "text-slate-950" : "text-[#00a884]"} />
                         <span>Copiloto IA</span>
                       </button>
 
@@ -870,10 +947,10 @@ function SuperAdminSupportContent() {
                       <button
                         type="button"
                         onClick={() => setIsDetailModalOpen(true)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 text-xs font-semibold transition-all cursor-pointer"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#111b21] border border-[#2a3942] text-[#d1d7db] hover:text-white hover:bg-[#2a3942] text-xs font-semibold transition-all cursor-pointer"
                         title="Ler a dúvida original completa enviada pelo cliente"
                       >
-                        <FileText size={13} className="text-blue-400" />
+                        <FileText size={13} className="text-[#00a884]" />
                         <span className="hidden sm:inline">Ver Dúvida</span>
                       </button>
 
@@ -882,7 +959,7 @@ function SuperAdminSupportContent() {
                         type="button"
                         onClick={handleSendToEngineering}
                         disabled={sendingToEngineering}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 text-xs font-semibold transition-all cursor-pointer"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#111b21] border border-[#2a3942] text-[#d1d7db] hover:text-white hover:bg-[#2a3942] text-xs font-semibold transition-all cursor-pointer"
                         title="Enviar para o Kanban de Engenharia de Produto"
                       >
                         <Cpu size={13} className="text-cyan-400" />
@@ -890,17 +967,17 @@ function SuperAdminSupportContent() {
                       </button>
 
                       {/* Seletor de Status Traduzido */}
-                      <div className="flex items-center gap-1.5 bg-[#0B1224] border border-slate-800 rounded-lg px-2 py-1">
+                      <div className="flex items-center gap-1.5 bg-[#111b21] border border-[#2a3942] rounded-lg px-2 py-1">
                         <select
                           value={selectedTicket.status}
                           onChange={(e) => handleUpdateStatus(e.target.value)}
-                          className="bg-transparent text-xs font-bold text-white outline-none cursor-pointer"
+                          className="bg-transparent text-xs font-bold text-[#e9edef] outline-none cursor-pointer"
                         >
-                          <option value="OPEN" className="bg-[#0F172A] text-amber-400">Aberto</option>
-                          <option value="IN_PROGRESS" className="bg-[#0F172A] text-blue-400">Em Atendimento</option>
-                          <option value="WAITING_CLIENT" className="bg-[#0F172A] text-purple-400">Aguardando Cliente</option>
-                          <option value="RESOLVED" className="bg-[#0F172A] text-emerald-400">Resolvido</option>
-                          <option value="CLOSED" className="bg-[#0F172A] text-slate-400">Fechado</option>
+                          <option value="OPEN" className="bg-[#202c33] text-amber-400">Aberto</option>
+                          <option value="IN_PROGRESS" className="bg-[#202c33] text-blue-400">Em Atendimento</option>
+                          <option value="WAITING_CLIENT" className="bg-[#202c33] text-purple-400">Aguardando Cliente</option>
+                          <option value="RESOLVED" className="bg-[#202c33] text-emerald-400">Resolvido</option>
+                          <option value="CLOSED" className="bg-[#202c33] text-slate-400">Fechado</option>
                         </select>
                       </div>
 
@@ -911,33 +988,34 @@ function SuperAdminSupportContent() {
                           if (typeof window !== "undefined" && window.innerWidth < 1280) {
                             setIsXRayOpen(true);
                           } else {
-                            setShowSidePanel(prev => !prev);
+                            toggleSidePanel();
                           }
                         }}
-                        className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer text-xs font-semibold ${
                           showSidePanel
-                            ? "bg-blue-600/20 border-blue-500/40 text-blue-400"
-                            : "bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white"
+                            ? "bg-[#00a884]/20 border-[#00a884]/40 text-[#00a884]"
+                            : "bg-[#111b21] border-[#2a3942] text-[#8696a0] hover:text-[#e9edef] hover:bg-[#2a3942]"
                         }`}
-                        title="Mostrar/ocultar Raio-X da empresa"
+                        title={showSidePanel ? "Minimizar Raio-X da empresa" : "Expandir Raio-X da empresa"}
                       >
-                        <PanelRight size={15} />
+                        {showSidePanel ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
+                        <span className="hidden xl:inline">{showSidePanel ? "Ocultar Raio-X" : "Raio-X"}</span>
                       </button>
                     </div>
                   </div>
 
                   {/* PAINEL RETRÁTIL DO COPILOTO IA DE ATENDIMENTO HÍBRIDO */}
                   {isCopilotOpen && (
-                    <div className="border-b border-cyan-500/30 bg-gradient-to-r from-[#081528] via-[#0b1b36] to-[#081528] p-4 z-10 shadow-lg relative animate-fadeIn shrink-0">
-                      <div className="flex items-center justify-between pb-2 mb-2 border-b border-cyan-500/20">
+                    <div className="border-b border-[#00a884]/30 bg-gradient-to-r from-[#0c1f24] via-[#112d34] to-[#0c1f24] p-4 z-10 shadow-lg relative animate-fadeIn shrink-0">
+                      <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#00a884]/20">
                         <div className="flex items-center gap-2">
-                          <div className="p-1 rounded-md bg-cyan-400 text-slate-950 font-bold">
+                          <div className="p-1 rounded-md bg-[#00a884] text-slate-950 font-bold">
                             <Sparkles size={14} />
                           </div>
                           <span className="text-xs font-bold text-white tracking-wide">
                             Copiloto IA de Atendimento Híbrido
                           </span>
-                          <span className="text-[10px] bg-cyan-400/10 text-cyan-300 border border-cyan-400/30 px-2 py-0.2 rounded-full font-mono">
+                          <span className="text-[10px] bg-[#00a884]/10 text-emerald-300 border border-[#00a884]/30 px-2 py-0.2 rounded-full font-mono">
                             Sugestão Técnica para o Atendente
                           </span>
                         </div>
@@ -946,14 +1024,14 @@ function SuperAdminSupportContent() {
                           <button
                             onClick={handleTriggerAiCopilot}
                             disabled={copilotLoading}
-                            className="flex items-center gap-1 text-[11px] font-bold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30"
+                            className="flex items-center gap-1 text-[11px] font-bold text-[#00a884] hover:text-emerald-300 transition-colors cursor-pointer px-2 py-0.5 rounded bg-[#111b21] border border-[#00a884]/30"
                           >
                             <RefreshCw size={11} className={copilotLoading ? "animate-spin" : ""} />
                             <span>{copilotLoading ? "Analisando..." : "Regerar Sugestão"}</span>
                           </button>
                           <button
                             onClick={() => setIsCopilotOpen(false)}
-                            className="text-slate-400 hover:text-white p-1 rounded transition-colors cursor-pointer"
+                            className="text-[#8696a0] hover:text-white p-1 rounded transition-colors cursor-pointer"
                             title="Fechar Copiloto"
                           >
                             <X size={15} />
@@ -962,21 +1040,21 @@ function SuperAdminSupportContent() {
                       </div>
 
                       {copilotLoading ? (
-                        <div className="py-6 text-center text-cyan-300 text-xs flex flex-col items-center justify-center gap-2">
-                          <Loader2 size={20} className="animate-spin text-cyan-400" />
+                        <div className="py-6 text-center text-emerald-300 text-xs flex flex-col items-center justify-center gap-2">
+                          <Loader2 size={20} className="animate-spin text-[#00a884]" />
                           <span>O Copiloto IA está analisando a dúvida técnica e histórico do cliente...</span>
                         </div>
                       ) : copilotData ? (
                         <div className="space-y-3 text-xs">
                           {/* Diagnóstico em 1 frase */}
                           {copilotData.summary && (
-                            <div className="text-[11px] text-slate-300 bg-cyan-950/40 border border-cyan-500/20 p-2 rounded-lg">
-                              <strong className="text-cyan-300 font-semibold">Resumo do Diagnóstico:</strong> {copilotData.summary}
+                            <div className="text-[11px] text-[#e9edef] bg-[#111b21]/70 border border-[#00a884]/20 p-2 rounded-lg">
+                              <strong className="text-[#00a884] font-semibold">Resumo do Diagnóstico:</strong> {copilotData.summary}
                             </div>
                           )}
 
                           {/* Caixa da Resposta Sugerida */}
-                          <div className="bg-[#070D1B] border border-cyan-500/30 rounded-xl p-3 text-slate-100 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto custom-scrollbar font-normal">
+                          <div className="bg-[#111b21] border border-[#00a884]/30 rounded-xl p-3 text-[#e9edef] whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto custom-scrollbar font-normal">
                             {copilotData.suggestedResponse}
                           </div>
 
@@ -984,15 +1062,15 @@ function SuperAdminSupportContent() {
                           <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                             <div className="flex items-center gap-2">
                               {copilotData.recommendedStatus && (
-                                <div className="flex items-center gap-1.5 text-[11px] text-slate-300">
-                                  <span className="text-slate-400">Status Recomendado:</span>
-                                  <span className="font-bold text-cyan-300 font-mono">
+                                <div className="flex items-center gap-1.5 text-[11px] text-[#8696a0]">
+                                  <span>Status Recomendado:</span>
+                                  <span className="font-bold text-[#00a884] font-mono">
                                     {STATUS_CONFIG[copilotData.recommendedStatus]?.label || copilotData.recommendedStatus}
                                   </span>
                                   <button
                                     type="button"
                                     onClick={handleApplyAiStatus}
-                                    className="px-2 py-0.5 rounded bg-blue-600/30 text-blue-300 hover:bg-blue-600/50 border border-blue-500/40 text-[10px] font-bold cursor-pointer transition-colors"
+                                    className="px-2 py-0.5 rounded bg-[#00a884]/20 text-[#00a884] hover:bg-[#00a884]/30 border border-[#00a884]/40 text-[10px] font-bold cursor-pointer transition-colors"
                                   >
                                     Aplicar Status
                                   </button>
@@ -1003,7 +1081,7 @@ function SuperAdminSupportContent() {
                             <button
                               type="button"
                               onClick={handleApplyAiSuggestion}
-                              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black transition-all cursor-pointer shadow-md"
+                              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#00a884] hover:bg-[#00b894] text-slate-950 text-xs font-black transition-all cursor-pointer shadow-md active:scale-95"
                             >
                               <Sparkles size={14} />
                               <span>Usar Sugestão no Chat</span>
@@ -1011,7 +1089,7 @@ function SuperAdminSupportContent() {
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center py-4 text-slate-400 text-xs">
+                        <div className="text-center py-4 text-[#8696a0] text-xs">
                           Clique em &quot;Regerar Sugestão&quot; para acionar o copiloto.
                         </div>
                       )}
@@ -1024,8 +1102,8 @@ function SuperAdminSupportContent() {
                     {/* MENSAGEM FIXADA NO TOPO: SOLICITAÇÃO ORIGINAL DO CLIENTE */}
                     {selectedTicket.description && (
                       <div className="flex justify-center mb-4">
-                        <div className="w-full max-w-2xl bg-[#0F172A]/90 border border-blue-900/40 rounded-xl p-3.5 shadow-md backdrop-blur-sm">
-                          <div className="flex items-center justify-between text-xs font-bold text-blue-400 border-b border-blue-900/40 pb-1.5 mb-2">
+                        <div className="w-full max-w-2xl bg-[#111b21]/95 border border-[#222d34] rounded-xl p-3.5 shadow-md backdrop-blur-sm">
+                          <div className="flex items-center justify-between text-xs font-bold text-[#00a884] border-b border-[#222d34] pb-1.5 mb-2">
                             <span className="flex items-center gap-1.5">
                               <FileText size={14} />
                               <span>Solicitação Original #{selectedTicket.ticketNumber} ({selectedTicket.user?.name || "Cliente"})</span>
@@ -1033,20 +1111,20 @@ function SuperAdminSupportContent() {
                             <button
                               type="button"
                               onClick={() => setIsDetailModalOpen(true)}
-                              className="text-[11px] text-blue-300 hover:text-white underline flex items-center gap-1 cursor-pointer"
+                              className="text-[11px] text-emerald-300 hover:text-white underline flex items-center gap-1 cursor-pointer"
                             >
                               <Maximize2 size={11} />
                               <span>Expandir</span>
                             </button>
                           </div>
 
-                          <p className="text-xs text-slate-200 whitespace-pre-wrap leading-relaxed">
+                          <p className="text-xs text-[#e9edef] whitespace-pre-wrap leading-relaxed">
                             {selectedTicket.description}
                           </p>
 
-                          <div className="flex items-center justify-between pt-2 text-[10px] text-slate-500">
+                          <div className="flex items-center justify-between pt-2 text-[10px] text-[#8696a0]">
                             <span>Aberto em: {new Date(selectedTicket.createdAt).toLocaleString("pt-BR")}</span>
-                            <span className="font-semibold text-blue-400">{selectedTicket.subject}</span>
+                            <span className="font-semibold text-[#00a884]">{selectedTicket.subject}</span>
                           </div>
                         </div>
                       </div>
@@ -1054,9 +1132,9 @@ function SuperAdminSupportContent() {
 
                     {/* LISTAGEM DE MENSAGENS PÚBLICAS NO PADRÃO WHATSAPP */}
                     {publicMessages.length === 0 ? (
-                      <div className="py-12 text-center text-slate-500 text-xs flex flex-col items-center">
-                        <MessageSquare size={32} className="opacity-30 mb-2" />
-                        <p className="text-slate-400 font-semibold">Inicie a conversa com o cliente.</p>
+                      <div className="py-12 text-center text-[#8696a0] text-xs flex flex-col items-center">
+                        <MessageSquare size={32} className="opacity-30 mb-2 text-[#00a884]" />
+                        <p className="text-[#e9edef] font-semibold">Inicie a conversa com o cliente.</p>
                         <p>Digite uma resposta humanizada ou use o Copiloto IA para sugerir uma solução técnica pronta.</p>
                       </div>
                     ) : (
@@ -1075,64 +1153,64 @@ function SuperAdminSupportContent() {
                             {/* Pílula de Data WhatsApp */}
                             {showDateDivider && (
                               <div className="flex justify-center my-2">
-                                <div className="bg-[#111A2E]/95 text-slate-300 text-[10px] font-medium px-3 py-0.5 rounded-lg shadow-sm border border-slate-800/80 backdrop-blur-sm uppercase tracking-wide">
+                                <div className="bg-[#182229] text-[#8696a0] text-[10px] font-medium px-3 py-0.5 rounded-lg shadow-sm border border-[#222d34] uppercase tracking-wide">
                                   {currentDateLabel}
                                 </div>
                               </div>
                             )}
 
                             {/* Balão de Mensagem WhatsApp com Cauda SVG */}
-                            <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isOperator ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5`}>
-                              <div className={`text-xs shadow-sm relative pt-2 pb-2 px-3.5 min-w-[100px] leading-relaxed ${
+                            <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isOperator ? 'self-end items-end' : 'self-start items-start'} relative group my-1`}>
+                              <div className={`text-xs shadow-md relative pt-2 pb-2 px-3.5 min-w-[120px] leading-relaxed ${
                                 isAi
-                                  ? 'bg-[#0e223b] text-slate-100 rounded-lg rounded-tr-none border border-cyan-500/40 shadow-cyan-950/30'
+                                  ? 'bg-[#005c4b] text-[#e9edef] rounded-lg rounded-tr-none border border-emerald-600/30'
                                   : isOperator
-                                  ? 'bg-[#17253D] text-slate-100 rounded-lg rounded-tr-none border border-blue-900/30'
-                                  : 'bg-[#1E293B] text-slate-100 rounded-lg rounded-tl-none border border-slate-700/40'
+                                  ? 'bg-[#005c4b] text-[#e9edef] rounded-lg rounded-tr-none border border-emerald-600/30'
+                                  : 'bg-[#202c33] text-[#e9edef] rounded-lg rounded-tl-none border border-[#2a3942]'
                               }`}>
                                 
                                 {/* Cauda SVG do Balão WhatsApp */}
                                 {isOperator ? (
-                                  <svg className={`absolute -top-[0.5px] -right-2 pointer-events-none drop-shadow-sm ${isAi ? 'text-[#0e223b]' : 'text-[#17253D]'}`} width="9" height="13" viewBox="0 0 9 13">
+                                  <svg className="absolute -top-[0.5px] -right-2 pointer-events-none drop-shadow-sm text-[#005c4b]" width="9" height="13" viewBox="0 0 9 13">
                                     <path fill="currentColor" d="M0 0h6.5c1.1 0 1.8.9 1.3 1.9l-5.2 9.8c-.7 1.4-2.6.8-2.6-.8V0z" />
                                   </svg>
                                 ) : (
-                                  <svg className="absolute -top-[0.5px] -left-2 text-[#1E293B] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
+                                  <svg className="absolute -top-[0.5px] -left-2 text-[#202c33] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
                                     <path fill="currentColor" d="M9 0H2.5C1.4 0 .7.9 1.2 1.9l5.2 9.8c.7 1.4 2.6.8 2.6-.8V0z" />
                                   </svg>
                                 )}
 
                                 {/* Nome do Remetente */}
-                                <div className="flex items-center justify-between gap-3 text-[10px] font-bold mb-1 pb-0.5 border-b border-white/5">
-                                  <span className={isAi ? "text-cyan-300 flex items-center gap-1.5" : isOperator ? "text-cyan-300" : "text-blue-400"}>
-                                    {isAi && <Bot size={12} className="text-cyan-400 shrink-0" />}
+                                <div className="flex items-center justify-between gap-3 text-[10px] font-bold mb-1 pb-0.5 border-b border-white/10">
+                                  <span className={isAi ? "text-emerald-300 flex items-center gap-1.5" : isOperator ? "text-emerald-300" : "text-[#00a884]"}>
+                                    {isAi && <Bot size={12} className="text-emerald-300 shrink-0" />}
                                     {msg.senderName || (isAi ? "Sofia - Suporte Vallor" : isOperator ? "Suporte Vallor" : "Cliente")}
                                   </span>
                                   <span className={`font-mono text-[9px] px-1 py-0.2 rounded uppercase ${
                                     isAi 
-                                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30" 
+                                      ? "bg-emerald-900/60 text-emerald-200 border border-emerald-500/40" 
                                       : isOperator 
-                                      ? "text-slate-400" 
-                                      : "text-slate-400"
+                                      ? "text-emerald-200/80" 
+                                      : "text-[#8696a0]"
                                   }`}>
                                     {isAi ? "IA Autônoma" : isOperator ? "Operador" : "Cliente"}
                                   </span>
                                 </div>
 
                                 {/* Texto da Mensagem */}
-                                <p className="whitespace-pre-wrap">{msg.content}</p>
+                                <p className="whitespace-pre-wrap leading-relaxed text-[#e9edef] font-normal">{msg.content}</p>
 
-                                {/* Horário e Duplo Check em Ciano ou Sparkles para IA */}
-                                <div className="flex items-center justify-end gap-1 text-[10px] text-slate-400 mt-1">
-                                  <span>
+                                {/* Horário e Duplo Check Azul WhatsApp ou Sparkles para IA */}
+                                <div className="flex items-center justify-end gap-1 text-[10px] text-[#8696a0] mt-1">
+                                  <span className="text-emerald-100/70">
                                     {new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                                   </span>
                                   {isAi ? (
                                     <span title="Gerado por IA Autônoma">
-                                      <Sparkles size={12} className="text-cyan-400" />
+                                      <Sparkles size={12} className="text-cyan-300" />
                                     </span>
                                   ) : isOperator ? (
-                                    <CheckCheck size={13} className="text-cyan-400" />
+                                    <CheckCheck size={13} className="text-[#53bdeb]" />
                                   ) : null}
                                 </div>
                               </div>
@@ -1144,12 +1222,12 @@ function SuperAdminSupportContent() {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* 4. COMPOSER ESTILO WHATSAPP WEB (CÁPSULA COM EMOJIS & ENVIO RÁPIDO) */}
-                  <div className="p-3 border-t border-slate-800/90 bg-[#070D1B] z-10 relative shrink-0">
+                  {/* 4. COMPOSER ESTILO WHATSAPP WEB */}
+                  <div className="p-3 border-t border-[#2a3942] bg-[#202c33] z-10 relative shrink-0">
                     
                     {/* Popover Rápido de Emojis */}
                     {showEmojiPicker && (
-                      <div className="absolute bottom-16 left-4 bg-[#0F172A] border border-slate-700 rounded-xl p-2 shadow-2xl z-30 flex flex-wrap gap-1.5 max-w-xs animate-fadeIn">
+                      <div className="absolute bottom-16 left-4 bg-[#111b21] border border-[#2a3942] rounded-xl p-2 shadow-2xl z-30 flex flex-wrap gap-1.5 max-w-xs animate-fadeIn">
                         {QUICK_EMOJIS.map((emoji, idx) => (
                           <button
                             key={idx}
@@ -1158,7 +1236,7 @@ function SuperAdminSupportContent() {
                               setClientMessage(prev => prev + emoji);
                               setShowEmojiPicker(false);
                             }}
-                            className="w-8 h-8 rounded-lg hover:bg-slate-800 flex items-center justify-center text-base transition-transform hover:scale-110 cursor-pointer"
+                            className="w-8 h-8 rounded-lg hover:bg-[#2a3942] flex items-center justify-center text-base transition-colors cursor-pointer"
                           >
                             {emoji}
                           </button>
@@ -1166,33 +1244,34 @@ function SuperAdminSupportContent() {
                       </div>
                     )}
 
-                    <form onSubmit={handleSendClientMessage} className="space-y-2">
-                      <div className="flex items-end gap-2 bg-[#0B1224] border border-slate-800 rounded-2xl p-1.5 focus-within:border-blue-500 transition-all">
-                        
+                    {/* Formulário de Envio WhatsApp */}
+                    <form onSubmit={handleSendClientMessage} className="space-y-1.5">
+                      <div className="flex items-center gap-2">
                         {/* Botão Emoji */}
                         <button
                           type="button"
                           onClick={() => setShowEmojiPicker(prev => !prev)}
-                          className={`p-2 rounded-xl text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0 ${
-                            showEmojiPicker ? "text-amber-400 bg-amber-400/10" : ""
+                          className={`p-2 rounded-lg transition-colors cursor-pointer shrink-0 ${
+                            showEmojiPicker ? "text-[#00a884] bg-[#2a3942]" : "text-[#8696a0] hover:text-[#e9edef] hover:bg-[#2a3942]"
                           }`}
                           title="Inserir emoji"
                         >
-                          <Smile size={18} />
+                          <Smile size={20} />
                         </button>
 
-                        {/* Botão Rápido Copiloto IA dentro da cápsula */}
+                        {/* Botão Copiloto IA (Sugerir IA) */}
                         <button
                           type="button"
                           onClick={handleTriggerAiCopilot}
-                          className="px-2 py-1 rounded-lg text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/60 text-[11px] font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1 border border-cyan-500/20"
-                          title="Pedir sugestão de resposta técnica à IA"
+                          disabled={copilotLoading}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#111b21] hover:bg-[#2a3942] border border-[#00a884]/40 text-xs font-semibold text-[#00a884] transition-all cursor-pointer shrink-0 shadow-sm"
+                          title="Pedir para o Copiloto IA formular a resposta técnica"
                         >
-                          <Sparkles size={12} />
-                          <span className="hidden md:inline">Sugerir IA</span>
+                          <Sparkles size={14} className={copilotLoading ? "animate-spin" : ""} />
+                          <span className="hidden sm:inline">Sugerir IA</span>
                         </button>
 
-                        {/* Input Textarea Expansível */}
+                        {/* Caixa de Texto Pill WhatsApp */}
                         <textarea
                           ref={textareaRef}
                           value={clientMessage}
@@ -1203,100 +1282,110 @@ function SuperAdminSupportContent() {
                               handleSendClientMessage();
                             }
                           }}
-                          placeholder="Digite uma resposta para o cliente..."
+                          placeholder="Digite uma mensagem para o cliente..."
                           rows={1}
-                          className="flex-1 bg-transparent py-1.5 px-2 text-xs text-white placeholder:text-slate-500 outline-none resize-none max-h-32 custom-scrollbar"
+                          className="flex-1 bg-[#2a3942] py-2 px-3 text-xs text-[#e9edef] placeholder:text-[#8696a0] rounded-xl outline-none resize-none max-h-32 custom-scrollbar focus:ring-1 focus:ring-[#00a884]/50 transition-all"
                         />
 
-                        {/* Botão Enviar Circular */}
+                        {/* Botão Enviar Circular Verde WhatsApp */}
                         <button
                           type="submit"
                           disabled={sendingClientMessage || !clientMessage.trim()}
-                          className="w-9 h-9 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center transition-all disabled:opacity-30 shrink-0 cursor-pointer shadow-md"
+                          className="w-10 h-10 rounded-full bg-[#00a884] hover:bg-[#00b894] text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0 cursor-pointer shadow-lg active:scale-95"
                           title="Enviar resposta ao cliente (Enter)"
                         >
                           {sendingClientMessage ? (
-                            <Loader2 size={15} className="animate-spin" />
+                            <Loader2 size={16} className="animate-spin" />
                           ) : (
-                            <Send size={15} className="ml-0.5" />
+                            <Send size={16} className="ml-0.5" />
                           )}
                         </button>
                       </div>
 
-                      <div className="flex items-center justify-between px-2 text-[10px] text-slate-500">
-                        <span>💬 Canal Oficial • A mensagem será entregue diretamente ao cliente solicitante.</span>
+                      <div className="flex items-center justify-between px-2 text-[10px] text-[#8696a0]">
+                        <span>💬 Canal Oficial • A mensagem será entregue diretamente ao cliente solicitante no WhatsApp.</span>
                         <span className="hidden sm:inline">Enter para enviar • Shift + Enter para nova linha</span>
                       </div>
                     </form>
                   </div>
                 </>
               ) : loadingTicket ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 text-xs p-8 gap-3 z-10">
-                  <Loader2 size={36} className="animate-spin text-blue-500" />
-                  <p className="font-semibold text-slate-300 text-sm">Abrindo chamado...</p>
-                  <p className="text-slate-500">Buscando mensagens e histórico de atendimento.</p>
+                <div className="flex-1 flex flex-col items-center justify-center text-[#8696a0] text-xs p-8 gap-3 z-10">
+                  <Loader2 size={36} className="animate-spin text-[#00a884]" />
+                  <p className="font-semibold text-[#e9edef] text-sm">Abrindo chamado...</p>
+                  <p className="text-[#8696a0]">Buscando mensagens e histórico de atendimento.</p>
                 </div>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-500 text-xs p-8 gap-2 z-10">
-                  <Headphones size={38} className="text-slate-600" />
-                  <p className="font-semibold text-slate-400 text-sm">Nenhum chamado selecionado</p>
+                <div className="flex-1 flex flex-col items-center justify-center text-[#8696a0] text-xs p-8 gap-2 z-10">
+                  <Headphones size={38} className="text-[#8696a0]/50" />
+                  <p className="font-semibold text-[#e9edef] text-sm">Nenhum chamado selecionado</p>
                   <p>Escolha um chamado na fila lateral para iniciar o atendimento ao cliente no padrão WhatsApp.</p>
                 </div>
               )}
             </div>
 
-            {/* COLUNA 3: PAINEL LATERAL RAIO-X DA EMPRESA (300px) */}
+            {/* COLUNA 3: PAINEL LATERAL RAIO-X DA EMPRESA (Minimizável) */}
             {showSidePanel && selectedTicket?.tenant && (
-              <div className="hidden xl:flex w-72 bg-[#0B1224] border border-slate-800 rounded-xl flex-col overflow-hidden shrink-0 shadow-md animate-fadeIn">
-                <div className="p-3 border-b border-slate-800 bg-[#070D1B] flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <Building2 size={13} className="text-blue-400" />
+              <div className="hidden xl:flex w-72 lg:w-80 bg-[#111b21] border border-[#222d34] rounded-xl flex-col overflow-hidden shrink-0 shadow-xl animate-fadeIn transition-all duration-200">
+                <div className="p-3 border-b border-[#222d34] bg-[#202c33] flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-[#e9edef] uppercase tracking-wider flex items-center gap-1.5">
+                    <Building2 size={13} className="text-[#00a884]" />
                     Raio-X da Empresa
                   </h3>
 
-                  <button
-                    onClick={() => setIsXRayOpen(true)}
-                    className="text-[11px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>Expandir</span>
-                    <ExternalLink size={11} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setIsXRayOpen(true)}
+                      className="text-[11px] font-bold text-[#00a884] hover:text-emerald-300 flex items-center gap-1 cursor-pointer p-1 rounded hover:bg-[#2a3942]"
+                      title="Abrir detalhes completos em tela cheia"
+                    >
+                      <span>Expandir</span>
+                      <ExternalLink size={11} />
+                    </button>
+                    <button
+                      onClick={toggleSidePanel}
+                      className="text-[#8696a0] hover:text-[#e9edef] cursor-pointer p-1 rounded hover:bg-[#2a3942]"
+                      title="Minimizar Raio-X"
+                    >
+                      <PanelRightClose size={15} />
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-3.5 space-y-3 custom-scrollbar text-xs">
+                <div className="flex-1 overflow-y-auto p-3.5 space-y-3 custom-scrollbar text-xs bg-[#111b21]">
                   {/* Card Empresa */}
-                  <div className="p-3 rounded-xl bg-[#070D1B] border border-slate-800 space-y-1.5">
-                    <h4 className="font-bold text-white truncate text-sm">{selectedTicket.tenant.name}</h4>
-                    <span className="text-[10px] text-slate-400 font-mono block">
+                  <div className="p-3 rounded-xl bg-[#202c33] border border-[#2a3942] space-y-1.5">
+                    <h4 className="font-bold text-[#e9edef] truncate text-sm">{selectedTicket.tenant.name}</h4>
+                    <span className="text-[10px] text-[#8696a0] font-mono block">
                       {selectedTicket.tenant.cnpj || "Sem CNPJ cadastrado"}
                     </span>
                     <div className="flex items-center gap-1.5 pt-1">
                       <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase">
                         Conta Ativa
                       </span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700 uppercase">
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#111b21] text-[#d1d7db] border border-[#2a3942] uppercase">
                         {selectedTicket.tenant.plan?.name || "Standard"}
                       </span>
                     </div>
                   </div>
 
                   {/* Contatos */}
-                  <div className="space-y-1.5 text-[11px] p-2.5 rounded-lg bg-[#070D1B] border border-slate-800">
-                    <div className="flex items-center gap-2 text-slate-300">
-                      <Mail size={12} className="text-slate-500 shrink-0" />
+                  <div className="space-y-1.5 text-[11px] p-2.5 rounded-lg bg-[#202c33] border border-[#2a3942]">
+                    <div className="flex items-center gap-2 text-[#d1d7db]">
+                      <Mail size={12} className="text-[#8696a0] shrink-0" />
                       <span className="truncate">{selectedTicket.tenant.email || "E-mail não informado"}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-slate-300">
-                      <PhoneCall size={12} className="text-slate-500 shrink-0" />
+                    <div className="flex items-center gap-2 text-[#d1d7db]">
+                      <PhoneCall size={12} className="text-[#8696a0] shrink-0" />
                       <span>{selectedTicket.tenant.phone || "Telefone não informado"}</span>
                     </div>
                   </div>
 
                   {/* Solicitante */}
-                  <div className="p-2.5 rounded-lg bg-[#070D1B] border border-slate-800 space-y-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Operador Solicitante</span>
-                    <p className="font-semibold text-white truncate">{selectedTicket.user?.name}</p>
-                    <p className="text-[10px] text-slate-400 font-mono truncate">{selectedTicket.user?.email}</p>
+                  <div className="p-2.5 rounded-lg bg-[#202c33] border border-[#2a3942] space-y-1">
+                    <span className="text-[10px] font-bold text-[#8696a0] uppercase block">Operador Solicitante</span>
+                    <p className="font-semibold text-[#e9edef] truncate">{selectedTicket.user?.name}</p>
+                    <p className="text-[10px] text-[#8696a0] font-mono truncate">{selectedTicket.user?.email}</p>
                   </div>
                 </div>
               </div>

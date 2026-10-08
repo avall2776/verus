@@ -918,6 +918,13 @@ let ChatService = ChatService_1 = class ChatService {
             if (!instances.length) {
                 return { syncedCount: 0, updatedCount: 0 };
             }
+            const evolutionInstances = instances.filter(inst => {
+                const isMeta = (inst.token && inst.token.startsWith('EAA')) || Boolean(inst.phoneNumberId && (!inst.settings || inst.settings.provider !== 'evolution'));
+                return !isMeta;
+            });
+            if (!evolutionInstances.length) {
+                return { syncedCount: 0, updatedCount: 0 };
+            }
             const { serverUrl, apiKey } = this.whatsappService.getEvolutionConfig();
             const cutoffTimestamp = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
             let syncedCount = 0;
@@ -931,19 +938,21 @@ let ChatService = ChatService_1 = class ChatService {
                 allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
             }
             catch { }
-            for (const inst of instances) {
-                let cleanName = (inst.name || '').replace(' (WhatsApp Web)', '').trim();
-                if (!cleanName)
+            for (const inst of evolutionInstances) {
+                const targetInstanceName = inst.settings?.instanceName || (inst.name || '').replace(' (WhatsApp Web)', '').trim();
+                if (!targetInstanceName)
                     continue;
-                for (const item of allInstances) {
+                const matched = allInstances.find(item => {
                     const instObj = item.instance || item;
                     const rName = instObj.instanceName || instObj.name;
                     const status = instObj.status || instObj.connectionStatus;
-                    if (rName && (status === 'open' || status === 'connected')) {
-                        cleanName = rName;
-                        break;
-                    }
+                    return rName === targetInstanceName && (status === 'open' || status === 'connected');
+                });
+                if (!matched) {
+                    this.logger.debug(`[Offline Sync] Instância [${targetInstanceName}] não encontrada ou desconectada na Evolution API. Pulando.`);
+                    continue;
                 }
+                const cleanName = targetInstanceName;
                 let recentMessages = [];
                 try {
                     const res = await axios_1.default.post(`${serverUrl}/chat/findMessages/${cleanName}`, {}, {

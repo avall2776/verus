@@ -1,4 +1,5 @@
 export declare class UpdateSupportAiConfigDto {
+    id?: string;
     name?: string;
     model?: string;
     prompt?: string;
@@ -7,4 +8,6 @@ export declare class UpdateSupportAiConfigDto {
     isActive?: boolean;
     autoHandoffCrm?: boolean;
     autoCloseSolved?: boolean;
+    createdAt?: any;
+    updatedAt?: any;
 }

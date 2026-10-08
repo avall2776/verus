@@ -307,12 +307,15 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                 data: { isDefault: false }
             });
         }
+        const cleanPhoneId = data.phoneNumberId !== undefined && data.phoneNumberId !== null
+            ? String(data.phoneNumberId).replace(/\D/g, '').trim()
+            : null;
         const instance = await this.prisma.whatsAppInstance.create({
             data: {
                 tenantId,
                 name: data.name || "Nova Linha WhatsApp",
                 phoneNumber: data.phoneNumber || null,
-                phoneNumberId: data.phoneNumberId || null,
+                phoneNumberId: cleanPhoneId || null,
                 token: data.token || null,
                 profileName: data.profileName || null,
                 profilePicUrl: data.profilePicUrl || null,
@@ -351,8 +354,10 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             updateData.name = data.name;
         if (data.phoneNumber !== undefined)
             updateData.phoneNumber = data.phoneNumber;
-        if (data.phoneNumberId !== undefined)
-            updateData.phoneNumberId = data.phoneNumberId;
+        if (data.phoneNumberId !== undefined) {
+            const sanitizedPhoneId = data.phoneNumberId ? String(data.phoneNumberId).replace(/\D/g, '').trim() : null;
+            updateData.phoneNumberId = sanitizedPhoneId;
+        }
         if (data.profileName !== undefined)
             updateData.profileName = data.profileName;
         if (data.profilePicUrl !== undefined)
@@ -1021,23 +1026,26 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                     return inst.name.replace(' (WhatsApp Web)', '').trim();
             }
         }
-        try {
-            const { serverUrl, apiKey } = this.getEvolutionConfig();
-            const allInstRes = await axios_1.default.get(`${serverUrl}/instance/fetchInstances`, {
-                headers: { apikey: apiKey },
-                timeout: 3000,
-            });
-            const allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
-            for (const item of allInstances) {
-                const instObj = item.instance || item;
-                const realName = instObj.instanceName || instObj.name;
-                const status = instObj.status || instObj.connectionStatus;
-                if (realName && (status === 'open' || status === 'connected')) {
-                    return realName;
+        if (tenantId) {
+            const cleanTenant = tenantId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+            try {
+                const { serverUrl, apiKey } = this.getEvolutionConfig();
+                const allInstRes = await axios_1.default.get(`${serverUrl}/instance/fetchInstances`, {
+                    headers: { apikey: apiKey },
+                    timeout: 3000,
+                });
+                const allInstances = Array.isArray(allInstRes.data) ? allInstRes.data : [];
+                for (const item of allInstances) {
+                    const instObj = item.instance || item;
+                    const realName = instObj.instanceName || instObj.name;
+                    const status = instObj.status || instObj.connectionStatus;
+                    if (realName && realName.startsWith(`versus_${cleanTenant}_`) && (status === 'open' || status === 'connected')) {
+                        return realName;
+                    }
                 }
             }
+            catch { }
         }
-        catch { }
         return fallbackInstanceName ? fallbackInstanceName.replace(' (WhatsApp Web)', '').trim() : '';
     }
     async fetchProfileFromEvolution(instanceName, number, tenantId) {

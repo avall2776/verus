@@ -139,6 +139,55 @@ export class SupportAiService {
     });
   }
 
+  private formatAiResponseToString(parsed: any, rawFallback: string): string {
+    if (typeof parsed?.responseMessage === 'string' && parsed.responseMessage.trim()) {
+      return parsed.responseMessage.trim();
+    }
+    if (typeof parsed?.message === 'string' && parsed.message.trim()) {
+      return parsed.message.trim();
+    }
+    if (typeof parsed?.response === 'string' && parsed.response.trim()) {
+      return parsed.response.trim();
+    }
+    if (typeof parsed === 'string' && parsed.trim()) {
+      return parsed.trim();
+    }
+    if (parsed && typeof parsed === 'object') {
+      const target = (typeof parsed.response === 'object' && parsed.response !== null) ? parsed.response : parsed;
+      const parts: string[] = [];
+      if (typeof target.greeting === 'string' && target.greeting.trim()) {
+        parts.push(target.greeting.trim());
+      }
+      if (typeof target.understanding === 'string' && target.understanding.trim()) {
+        parts.push(target.understanding.trim());
+      }
+      if (Array.isArray(target.instructions)) {
+        parts.push(target.instructions.map((it: any) => {
+          if (typeof it === 'string') return it;
+          if (typeof it === 'object' && it !== null) {
+            return Object.values(it).join(' ');
+          }
+          return String(it);
+        }).join('\n'));
+      } else if (typeof target.instructions === 'string' && target.instructions.trim()) {
+        parts.push(target.instructions.trim());
+      }
+      if (typeof target.closing === 'string' && target.closing.trim()) {
+        parts.push(target.closing.trim());
+      }
+      if (parts.length > 0) {
+        return parts.join('\n\n');
+      }
+      if (typeof target.answer === 'string') return target.answer.trim();
+      if (typeof target.text === 'string') return target.text.trim();
+      if (typeof target.content === 'string') return target.content.trim();
+    }
+    if (typeof rawFallback === 'string' && rawFallback.trim()) {
+      return rawFallback.trim();
+    }
+    return typeof parsed === 'object' ? JSON.stringify(parsed, null, 2) : String(parsed || '');
+  }
+
   /**
    * Processa imediatamente a abertura de um novo chamado
    */
@@ -183,7 +232,11 @@ Gere uma resposta inicial acolhedora, humana e empática:
 2. Demonstre que compreendeu com clareza o problema relatado sobre "${ticket.subject}".
 3. Se for uma dúvida operacional de uso comum do VERSUS descrita na base de conhecimento, já ofereça o passo a passo direto para solucionar agora.
 4. Se for algo que exija investigação técnica profunda ou envio de mais evidências, oriente o cliente sobre os dados necessários ou informe que está verificando.
-5. Retorne a resposta em formato estruturado JSON.`;
+
+RETORNE RIGOROSAMENTE APENAS UM JSON NO FORMATO:
+{
+  "responseMessage": "Texto humanizado e formatado em Markdown para o cliente, contendo saudação, orientação clara e encerramento acolhedor."
+}`;
 
       const response = await this.openai.chat.completions.create({
         model: config.model || 'gpt-4o-mini',
@@ -205,7 +258,7 @@ Gere uma resposta inicial acolhedora, humana e empática:
         parsed = { responseMessage: rawContent };
       }
 
-      const responseText = parsed.responseMessage || parsed.message || parsed.response || rawContent;
+      const responseText = this.formatAiResponseToString(parsed, rawContent);
 
       // Salva a mensagem como IA Oficial de Atendimento
       const aiMessage = await this.prisma.ticketMessage.create({
@@ -343,7 +396,7 @@ RETORNE RIGOROSAMENTE APENAS UM JSON VÁLIDO:
         parsed = { responseMessage: rawContent, isResolved: false };
       }
 
-      const responseText = parsed.responseMessage || rawContent;
+      const responseText = this.formatAiResponseToString(parsed, rawContent);
       const isResolved = Boolean(parsed.isResolved || parsed.intent === 'CLOSE_TICKET');
 
       // Se houver handoff e o sistema estiver configurado para auto-handoff

@@ -27,9 +27,19 @@ let SupportController = class SupportController {
     constructor(supportService) {
         this.supportService = supportService;
     }
+    getEffectiveTenantId(req, explicitTenantId) {
+        const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
+        if (isSuperAdmin) {
+            const targetTenant = req.headers['x-target-tenant-id'] || req.headers['x-tenant-id'] || explicitTenantId || req.query?.tenantId;
+            if (targetTenant && typeof targetTenant === 'string' && targetTenant.trim()) {
+                return targetTenant.trim();
+            }
+        }
+        return req.user.tenantId;
+    }
     async findAll(req, query) {
         const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-        const tenantId = req.user.tenantId;
+        const tenantId = this.getEffectiveTenantId(req, query.tenantId);
         const userId = query.myOnly === 'true' ? (req.user.id || req.user.userId) : undefined;
         return this.supportService.findAll(tenantId, {
             status: query.status,
@@ -42,28 +52,28 @@ let SupportController = class SupportController {
         });
     }
     async getNotices(req) {
-        const tenantId = req.user.tenantId;
+        const tenantId = this.getEffectiveTenantId(req);
         return this.supportService.getNotices(tenantId);
     }
     async findOne(req, id) {
         const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-        const tenantId = req.user.tenantId;
+        const tenantId = this.getEffectiveTenantId(req);
         return this.supportService.findOne(id, tenantId, isSuperAdmin);
     }
     async create(req, dto) {
-        const tenantId = req.user.tenantId;
+        const tenantId = this.getEffectiveTenantId(req, dto?.tenantId);
         const userId = req.user.id || req.user.userId;
         return this.supportService.create(tenantId, userId, dto);
     }
     async addMessage(req, id, dto) {
         const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-        const tenantId = req.user.tenantId;
+        const tenantId = this.getEffectiveTenantId(req);
         const userId = req.user.id || req.user.userId;
         return this.supportService.addMessage(id, tenantId, userId, dto, isSuperAdmin);
     }
     async updateStatus(req, id, body) {
         const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-        const tenantId = req.user.tenantId;
+        const tenantId = this.getEffectiveTenantId(req);
         if (!body?.status) {
             throw new common_1.BadRequestException('Status é obrigatório.');
         }
@@ -71,12 +81,12 @@ let SupportController = class SupportController {
     }
     async assign(req, id, body) {
         const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-        const tenantId = req.user.tenantId;
+        const tenantId = this.getEffectiveTenantId(req);
         return this.supportService.assign(id, tenantId, body?.assignedToId ?? null, isSuperAdmin);
     }
     async getAiCopilotSuggestion(req, id) {
         const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-        const tenantId = req.user.tenantId;
+        const tenantId = this.getEffectiveTenantId(req);
         return this.supportService.generateCopilotSuggestion(id, tenantId, isSuperAdmin);
     }
     async getAiConfig() {
@@ -87,7 +97,7 @@ let SupportController = class SupportController {
     }
     async toggleTicketAi(req, id, dto) {
         const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
-        const tenantId = req.user.tenantId;
+        const tenantId = this.getEffectiveTenantId(req);
         return this.supportService.toggleTicketAi(id, dto.isPaused, tenantId, isSuperAdmin);
     }
     async submitCsat(req, id, dto) {

@@ -35,6 +35,7 @@ export declare class SupportAiService {
         autoHandoffCrm: boolean;
         autoCloseSolved: boolean;
     }>;
+    private formatAiResponseToString;
     handleTicketCreated(ticketId: string): Promise<void>;
     handleIncomingClientMessage(ticketId: string, clientMessageContent: string, senderName: string): Promise<void>;
 }

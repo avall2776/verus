@@ -21,4 +21,8 @@ export class CreateTicketDto {
   @IsOptional()
   @IsString()
   contactId?: string;
+
+  @IsOptional()
+  @IsString()
+  tenantId?: string;
 }

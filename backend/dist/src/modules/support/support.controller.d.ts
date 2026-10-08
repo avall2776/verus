@@ -7,6 +7,7 @@ import { SubmitCsatDto } from './dto/submit-csat.dto';
 export declare class SupportController {
     private readonly supportService;
     constructor(supportService: SupportService);
+    private getEffectiveTenantId;
     findAll(req: any, query: {
         status?: string;
         priority?: string;

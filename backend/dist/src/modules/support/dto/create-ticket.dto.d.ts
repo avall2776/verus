@@ -4,4 +4,5 @@ export declare class CreateTicketDto {
     category?: string;
     priority?: string;
     contactId?: string;
+    tenantId?: string;
 }
