@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense, useRef, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { 
   Search, Filter, MoreVertical, Send, Paperclip, Bot, User, Phone, Mail, Tag, 
   BrainCircuit, Lock, Image as ImageIcon, FileText, Mic, X, ArrowRightLeft, Network,
@@ -1931,7 +1932,7 @@ function InboxContent() {
             <div className="bg-[#0F172A] border-b border-slate-800/80 p-2.5 z-30 animate-in fade-in slide-in-from-top-1 relative shadow-2xl">
               <div className="px-2 py-1 text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center justify-between mb-1.5">
                 <span>Linhas / Instâncias WhatsApp</span>
-                <a href="/settings/whatsapp" className="text-cyan-400 hover:underline text-[10px]">Configurar</a>
+                <Link href="/settings/whatsapp" className="text-cyan-400 hover:underline text-[10px]">Configurar</Link>
               </div>
               <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
                 {instances && instances.length > 0 ? (
