@@ -3,6 +3,10 @@ import { IsString, IsOptional, IsBoolean } from 'class-validator';
 export class UpdateSupportAiConfigDto {
   @IsOptional()
   @IsString()
+  id?: string;
+
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @IsOptional()
@@ -32,4 +36,10 @@ export class UpdateSupportAiConfigDto {
   @IsOptional()
   @IsBoolean()
   autoCloseSolved?: boolean;
+
+  @IsOptional()
+  createdAt?: any;
+
+  @IsOptional()
+  updatedAt?: any;
 }

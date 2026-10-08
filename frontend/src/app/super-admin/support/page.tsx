@@ -307,7 +307,8 @@ function SuperAdminSupportContent() {
     e.preventDefault();
     setSavingAiConfig(true);
     try {
-      const res = await api.patch("/support/ai/config", aiConfig);
+      const { id, createdAt, updatedAt, ...cleanPayload } = aiConfig as any;
+      const res = await api.patch("/support/ai/config", cleanPayload);
       setAiConfig(res.data);
       toast.success("Configuração do Agente IA salva com sucesso!");
     } catch (err: any) {
