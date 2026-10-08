@@ -2,6 +2,9 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Caminho base para arquitetura multi-produto (ex: avallmarketing.com.br/vallor)
+  basePath: '/vallor',
+
   // Desativação total de Source Maps no navegador do cliente em produção
   productionBrowserSourceMaps: false,
 
@@ -51,6 +54,16 @@ const nextConfig = {
       {
         source: '/socket.io/:path*',
         destination: 'http://187.127.10.166:3001/socket.io/:path*',
+      },
+      {
+        source: '/api-backend/:path*',
+        destination: 'http://187.127.10.166:3001/:path*',
+        basePath: false,
+      },
+      {
+        source: '/socket.io/:path*',
+        destination: 'http://187.127.10.166:3001/socket.io/:path*',
+        basePath: false,
       },
     ];
   },
