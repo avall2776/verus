@@ -65,11 +65,6 @@ const nextConfig = {
         destination: 'http://187.127.10.166:3001/socket.io/:path*',
         basePath: false,
       },
-      {
-        source: '/:file((?:Logo_valor_01\\.svg|Logo_valor_02\\.svg|Favicon_vallor\\.svg|favicon\\.ico|favicon\\.svg|icon\\.svg|manifest\\.json))',
-        destination: '/vallor/:file',
-        basePath: false,
-      },
     ];
   },
 
