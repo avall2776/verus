@@ -119,7 +119,7 @@ api.interceptors.response.use(
 
           // Se estiver navegando em Modo Suporte, um 401 numa agência JAMAIS deve deslogar o Super Admin
           if (targetTenantId) {
-            console.warn('[VERSUS API] 401 recebido durante Modo Suporte. Sessão de Super Admin preservada.', data);
+            console.warn('[Vallor API] 401 recebido durante Modo Suporte. Sessão de Super Admin preservada.', data);
             return Promise.reject(error);
           }
 

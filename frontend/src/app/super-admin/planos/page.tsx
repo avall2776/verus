@@ -349,7 +349,7 @@ export default function SuperAdminPlansPage() {
         <ShieldAlert size={18} className="text-blue-400 shrink-0 mt-0.5" />
         <div className="text-xs text-blue-300 leading-relaxed">
           <strong className="block text-white mb-0.5">Governança Master & Persistência em Tempo Real:</strong>
-          As permissões e módulos definidos aqui governam diretamente o que os operadores das empresas (tenants) conseguem acessar no VERSUS. A desativação de um módulo bloqueia o recurso no respectivo tenant.
+          As permissões e módulos definidos aqui governam diretamente o que os operadores das empresas (tenants) conseguem acessar no Vallor. A desativação de um módulo bloqueia o recurso no respectivo tenant.
         </div>
       </div>
 

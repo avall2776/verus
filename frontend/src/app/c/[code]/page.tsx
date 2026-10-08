@@ -144,7 +144,7 @@ export default function PublicContractSignPage() {
               )}
               <div>
                 <h1 className="text-lg font-bold text-white tracking-tight">
-                  {contract.issuer?.name || "VERSUS Tecnologia"}
+                  {contract.issuer?.name || "Vallor Tecnologia"}
                 </h1>
                 <p className="text-xs text-slate-400">
                   {contract.issuer?.document ? `CNPJ: ${contract.issuer.document} • ` : ""}
@@ -195,7 +195,7 @@ export default function PublicContractSignPage() {
               <Building2 className="w-3.5 h-3.5 text-cyan-400" /> Contratada (Emitente)
             </span>
             <div className="font-bold text-sm text-white">
-              {contract.issuer?.name || "VERSUS Tecnologia & Inteligência Comercial"}
+              {contract.issuer?.name || "Vallor Tecnologia & Inteligência Comercial"}
             </div>
             <div className="text-xs text-slate-400 space-y-0.5">
               {contract.issuer?.document && <div>CNPJ: {contract.issuer.document}</div>}
@@ -296,7 +296,7 @@ export default function PublicContractSignPage() {
 
               <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
                 <div className="font-semibold text-slate-300">Assinatura da Contratada:</div>
-                <div className="text-white font-bold mt-1">{contract.issuer?.name || "VERSUS Tecnologia"}</div>
+                <div className="text-white font-bold mt-1">{contract.issuer?.name || "Vallor Tecnologia"}</div>
                 {contract.issuer?.document && <div className="text-slate-400 text-[11px]">CNPJ: {contract.issuer.document}</div>}
                 <div className="text-emerald-400 font-mono text-[11px] mt-2 flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Autenticado pelo Emitente
@@ -391,7 +391,7 @@ export default function PublicContractSignPage() {
 
         {/* Footer Legal */}
         <div className="text-center py-6 text-[11px] text-slate-500 border-t border-slate-800/80">
-          Documento gerado e autenticado pela infraestrutura segura do VERSUS • Todos os direitos reservados.
+          Documento gerado e autenticado pela infraestrutura segura do Vallor • Todos os direitos reservados.
         </div>
       </div>
     </div>

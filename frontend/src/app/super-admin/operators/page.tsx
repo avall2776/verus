@@ -704,7 +704,7 @@ export default function SuperAdminOperatorsPage() {
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="lucas@versus.com"
+                      placeholder="lucas@vallor.com"
                       className="w-full p-2.5 rounded-xl text-xs bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>

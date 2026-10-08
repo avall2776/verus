@@ -101,7 +101,7 @@ export function ProposalPreviewModal({
 
   // Dados do emitente
   const issuer = {
-    name: proposal.issuer?.name || "VERSUS Tecnologia & Soluções",
+    name: proposal.issuer?.name || "Vallor Tecnologia & Soluções",
     document: proposal.issuer?.document || "",
     phone: proposal.issuer?.phone || "",
     email: proposal.issuer?.email || "",

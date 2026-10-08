@@ -1,5 +1,5 @@
 # =====================================================================
-# VERSUS PLATFORM - ROBOTS.TXT
+# VALLOR PLATFORM - ROBOTS.TXT
 # Diretrizes rígidas de proteção de propriedade intelectual e anti-IA
 # =====================================================================
 

@@ -86,7 +86,7 @@ export default function SuperAdminLayout({
                 <Layers size={18} />
               </div>
               <div className="hidden md:flex flex-col">
-                <span className="font-black text-white text-sm tracking-wider uppercase">VERSUS MASTER</span>
+                <span className="font-black text-white text-sm tracking-wider uppercase">VALLOR MASTER</span>
                 <span className="text-[10px] text-blue-400 font-semibold tracking-wider uppercase">Super Admin Console</span>
               </div>
             </div>
@@ -156,7 +156,7 @@ export default function SuperAdminLayout({
                   </span>
                   <Edit2 size={10} className="text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                 </div>
-                <span className="text-[10px] text-slate-400 truncate" suppressHydrationWarning>{currentUser?.email || "admin@versus.com"}</span>
+                <span className="text-[10px] text-slate-400 truncate" suppressHydrationWarning>{currentUser?.email || "admin@vallor.com"}</span>
               </div>
             </div>
             <button

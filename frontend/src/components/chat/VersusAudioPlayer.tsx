@@ -11,7 +11,7 @@ interface VersusAudioPlayerProps {
 
 export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
   src,
-  downloadName = 'audio_versus.ogg',
+  downloadName = 'audio_vallor.ogg',
   className = '',
 }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -152,7 +152,7 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
             className="relative h-2 w-full bg-slate-800/90 hover:h-2.5 rounded-full cursor-pointer transition-all overflow-hidden group/bar"
             title="Clique para avançar ou retroceder"
           >
-            {/* Barra preenchida com gradiente monocromático ciano/azul do VERSUS */}
+            {/* Barra preenchida com gradiente monocromático ciano/azul do Vallor */}
             <div
               className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all group-hover/bar:brightness-125"
               style={{ width: `${progressPercent}%` }}

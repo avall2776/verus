@@ -406,7 +406,7 @@ export default function AiSettingsTab() {
             <span className="w-6 h-6 rounded-lg bg-slate-800 text-slate-300 font-mono text-xs font-bold flex items-center justify-center">
               4
             </span>
-            <h4 className="text-xs font-bold text-white">Ative no VERSUS</h4>
+            <h4 className="text-xs font-bold text-white">Ative no Vallor</h4>
             <p className="text-[11px] text-slate-400 leading-relaxed">
               Cole a chave <span className="font-mono text-slate-300">sk-...</span> no campo acima e clique em <span className="text-emerald-400 font-semibold">Salvar e Ativar</span>.
             </p>

@@ -72,7 +72,7 @@ export default function IntegrationsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-black text-white tracking-wide">Integrações</h1>
-        <p className="text-sm text-text-secondary mt-1">Conecte o VERSUS aos seus canais de atendimento e sistemas favoritos.</p>
+        <p className="text-sm text-text-secondary mt-1">Conecte o Vallor aos seus canais de atendimento e sistemas favoritos.</p>
       </div>
 
       {/* Grid de Integrações */}

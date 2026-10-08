@@ -48,7 +48,7 @@ interface WorkspaceManagerModalProps {
 }
 
 const PRESET_THEME_COLORS = [
-  { name: "Azul VERSUS (Padrão)", color: "#2563EB" },
+  { name: "Azul Vallor (Padrão)", color: "#2563EB" },
   { name: "Slate Corporativo", color: "#475569" },
   { name: "Índigo Executivo", color: "#4F46E5" },
   { name: "Ciano Enterprise", color: "#0891B2" },
@@ -612,7 +612,7 @@ export default function WorkspaceManagerModal({
                         </div>
 
                         <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
-                          {ws.description || "Unidade operacional VERSUS."}
+                          {ws.description || "Unidade operacional Vallor."}
                         </p>
                       </div>
                     </div>

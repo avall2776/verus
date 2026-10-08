@@ -50,7 +50,7 @@ export default function LegacyAgentRedirectPage() {
           Gestão Restrita de Agentes de IA
         </h1>
         <p className="text-xs text-slate-400 leading-relaxed pt-1">
-          Para garantir a máxima estabilidade operacional e evitar interrupções nos atendimentos automáticos do WhatsApp, as configurações cognitivas, prompts e bases de conhecimento (RAG) foram migradas exclusivamente para o painel do <strong>VERSUS Master Super Admin</strong>.
+          Para garantir a máxima estabilidade operacional e evitar interrupções nos atendimentos automáticos do WhatsApp, as configurações cognitivas, prompts e bases de conhecimento (RAG) foram migradas exclusivamente para o painel do <strong>Vallor Master Super Admin</strong>.
         </p>
       </div>
 

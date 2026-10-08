@@ -809,7 +809,7 @@ export default function SupportPage() {
                                 {isAi ? (
                                   <>
                                     <Bot size={13} className="text-cyan-400 shrink-0" />
-                                    <span className="text-cyan-300 font-bold">{msg.senderName || "Sofia - Suporte VERSUS"}</span>
+                                    <span className="text-cyan-300 font-bold">{msg.senderName || "Sofia - Suporte Vallor"}</span>
                                     <span className="px-1.5 py-0.2 rounded text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold font-mono uppercase">
                                       IA de Suporte
                                     </span>

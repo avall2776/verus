@@ -197,7 +197,7 @@ export default function EmailInboxPage() {
   // Excluir Permanentemente (quando já estiver na lixeira)
   const handlePermanentDelete = async (emailId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (!window.confirm("Deseja realmente excluir este e-mail definitivamente? A mensagem será apagada permanentemente do VERSUS e do servidor do seu e-mail.")) {
+    if (!window.confirm("Deseja realmente excluir este e-mail definitivamente? A mensagem será apagada permanentemente do Vallor e do servidor do seu e-mail.")) {
       return;
     }
     try {
@@ -701,7 +701,7 @@ export default function EmailInboxPage() {
                         <button
                           onClick={(e) => handlePermanentDelete(selectedEmail.id, e)}
                           className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-400 text-xs font-semibold border border-red-800/60 transition-colors"
-                          title="Excluir definitivamente do VERSUS e do servidor de e-mail"
+                          title="Excluir definitivamente do Vallor e do servidor de e-mail"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           Excluir Definitivamente

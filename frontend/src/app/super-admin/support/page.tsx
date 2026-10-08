@@ -119,7 +119,7 @@ function SuperAdminSupportContent() {
     autoHandoffCrm: boolean;
     autoCloseSolved: boolean;
   }>({
-    name: "Sofia - Suporte VERSUS",
+    name: "Sofia - Suporte Vallor",
     model: "gpt-4o-mini",
     prompt: "",
     knowledgeBase: "",
@@ -1072,7 +1072,7 @@ function SuperAdminSupportContent() {
                                 <div className="flex items-center justify-between gap-3 text-[10px] font-bold mb-1 pb-0.5 border-b border-white/5">
                                   <span className={isAi ? "text-cyan-300 flex items-center gap-1.5" : isOperator ? "text-cyan-300" : "text-blue-400"}>
                                     {isAi && <Bot size={12} className="text-cyan-400 shrink-0" />}
-                                    {msg.senderName || (isAi ? "Sofia - Suporte VERSUS" : isOperator ? "Suporte VERSUS" : "Cliente")}
+                                    {msg.senderName || (isAi ? "Sofia - Suporte Vallor" : isOperator ? "Suporte Vallor" : "Cliente")}
                                   </span>
                                   <span className={`font-mono text-[9px] px-1 py-0.2 rounded uppercase ${
                                     isAi 
@@ -1381,7 +1381,7 @@ function SuperAdminSupportContent() {
                 </div>
 
                 <div className="flex items-center justify-between text-[10px] text-purple-400/80 px-2">
-                  <span>🔒 Visível exclusivamente para operadores master e atendentes cadastrados no VERSUS.</span>
+                  <span>🔒 Visível exclusivamente para operadores master e atendentes cadastrados no Vallor.</span>
                   <span>Enter para registrar • Shift + Enter para quebra de linha</span>
                 </div>
               </form>
@@ -1413,7 +1413,7 @@ function SuperAdminSupportContent() {
                     </span>
                   </h2>
                   <p className="text-xs text-slate-400">
-                    Acolhimento imediato, solução com base nos manuais do VERSUS, cancelas de segurança e handoff ao CRM.
+                    Acolhimento imediato, solução com base nos manuais do Vallor, cancelas de segurança e handoff ao CRM.
                   </p>
                 </div>
               </div>
@@ -1539,7 +1539,7 @@ function SuperAdminSupportContent() {
                         type="text"
                         value={aiConfig.name}
                         onChange={(e) => setAiConfig(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Ex: Sofia - Suporte VERSUS"
+                        placeholder="Ex: Sofia - Suporte Vallor"
                         className="w-full bg-[#070D1B] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors"
                       />
                     </div>
@@ -1582,12 +1582,12 @@ function SuperAdminSupportContent() {
                   />
                 </div>
 
-                {/* 4. Base de Conhecimento RAG do VERSUS */}
+                {/* 4. Base de Conhecimento RAG do Vallor */}
                 <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 space-y-2">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
                       <FileText size={14} className="text-blue-400" />
-                      <span>Base de Conhecimento do VERSUS (Manual dos Módulos)</span>
+                      <span>Base de Conhecimento do Vallor (Manual dos Módulos)</span>
                     </h3>
                     <span className="text-[10px] text-slate-500">Manual operacional completo</span>
                   </div>

@@ -537,11 +537,11 @@ export default function UsersSettingsTab() {
                   type="password"
                   value={invitePassword}
                   onChange={(e) => setInvitePassword(e.target.value)}
-                  placeholder="Padrão: Versus@123"
+                  placeholder="Padrão: Vallor@123"
                   className="w-full p-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
                 />
                 <span className="text-[10px] text-slate-500">
-                  Deixe em branco para usar a senha padrão segura (Versus@123).
+                  Deixe em branco para usar a senha padrão segura (Vallor@123).
                 </span>
               </div>
 

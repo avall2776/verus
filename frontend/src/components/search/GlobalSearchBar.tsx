@@ -364,7 +364,7 @@ export default function GlobalSearchBar() {
           {/* Rodapé do Dropdown */}
           <div className="px-3 py-2 border-t border-slate-800/80 bg-[#0B1224]/80 flex items-center justify-between text-[10px] text-slate-400 rounded-b-xl">
             <span>Pressione <kbd className="px-1 bg-slate-800 rounded text-slate-300 font-mono">Esc</kbd> para fechar</span>
-            <span className="text-slate-500">Busca Global VERSUS</span>
+            <span className="text-slate-500">Busca Global Vallor</span>
           </div>
         </div>
       )}

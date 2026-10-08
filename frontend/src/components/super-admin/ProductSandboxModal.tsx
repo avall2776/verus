@@ -763,7 +763,7 @@ export default function ProductSandboxModal({
                     </h3>
                     <p className="text-xs text-slate-400 mt-1">
                       {product.isIntegrated
-                        ? `Este recurso foi validado no laboratório sandbox e liberado para os clientes da VERSUS em ${new Date(product.integratedAt).toLocaleString("pt-BR")}.`
+                        ? `Este recurso foi validado no laboratório sandbox e liberado para os clientes da Vallor em ${new Date(product.integratedAt).toLocaleString("pt-BR")}.`
                         : "Após validação técnica das APIs e testes no laboratório, você pode promover esta tecnologia diretamente para produção."}
                     </p>
                   </div>

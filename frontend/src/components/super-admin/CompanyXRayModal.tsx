@@ -920,7 +920,7 @@ export default function CompanyXRayModal({
                       </label>
                       <button
                         type="button"
-                        onClick={() => setNewPasswordInput(`Versus@${Math.floor(100000 + Math.random() * 900000)}`)}
+                        onClick={() => setNewPasswordInput(`Vallor@${Math.floor(100000 + Math.random() * 900000)}`)}
                         className="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium transition-colors cursor-pointer"
                       >
                         <RefreshCw size={11} /> Gerar Automática

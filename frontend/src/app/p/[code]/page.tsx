@@ -123,7 +123,7 @@ export default function PublicProposalViewPage() {
               )}
               <div>
                 <h1 className="text-lg font-bold text-white print:text-black tracking-tight">
-                  {proposal.issuer?.name || "VERSUS Comercial"}
+                  {proposal.issuer?.name || "Vallor Comercial"}
                 </h1>
                 <p className="text-xs text-slate-400 print:text-slate-600">
                   {proposal.issuer?.document ? `CNPJ: ${proposal.issuer.document} • ` : ""}

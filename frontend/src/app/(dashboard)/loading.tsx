@@ -17,7 +17,7 @@ export default function DashboardLoading() {
         {/* Título e Subtítulo */}
         <div className="space-y-1">
           <h3 className="text-sm font-black text-white tracking-widest uppercase">
-            VERSUS ENTERPRISE
+            VALLOR ENTERPRISE
           </h3>
           <p className="text-xs text-slate-400 font-mono flex items-center justify-center gap-1.5">
             <Sparkles className="w-3 h-3 text-cyan-400 animate-spin" />

@@ -84,7 +84,7 @@ export default function EmailComposerModal({
 
   const handleAddSampleAttachment = () => {
     const newAttach: EmailAttachment = {
-      name: `Apresentacao_VERSUS_Enterprise_${Date.now().toString().slice(-4)}.pdf`,
+      name: `Apresentacao_Vallor_Enterprise_${Date.now().toString().slice(-4)}.pdf`,
       url: "https://verus-alpha.vercel.app/docs/apresentacao.pdf",
       size: 380000,
       type: "application/pdf",
@@ -222,7 +222,7 @@ export default function EmailComposerModal({
                   type="text"
                   value={bcc}
                   onChange={(e) => setBcc(e.target.value)}
-                  placeholder="auditoria@versus.com.br"
+                  placeholder="auditoria@vallor.com.br"
                   className="w-full px-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>

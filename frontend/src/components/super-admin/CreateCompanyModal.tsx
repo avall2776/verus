@@ -105,7 +105,7 @@ export default function CreateCompanyModal({
 
   const generateRandomPassword = () => {
     const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%";
-    let pass = "Versus@";
+    let pass = "Vallor@";
     for (let i = 0; i < 6; i++) {
       pass += chars.charAt(Math.floor(Math.random() * chars.length));
     }

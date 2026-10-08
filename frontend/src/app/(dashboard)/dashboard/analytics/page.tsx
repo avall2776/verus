@@ -24,7 +24,7 @@ import {
 import ChannelDetailModal from "@/components/analytics/ChannelDetailModal";
 import BottleneckAuditModal from "@/components/analytics/BottleneckAuditModal";
 
-// Custom Tooltip para o Dark Glassmorphism do VERSUS
+// Custom Tooltip para o Dark Glassmorphism do Vallor
 function CustomChartTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
@@ -120,7 +120,7 @@ export default function AnalyticsPage() {
     }
 
     const lines = [
-      "\uFEFF=== VERSUS OMNICHANNEL AI PLATFORM - RELATORIO ANALITICO CONSOLIDADO ===",
+      "\uFEFF=== VALLOR OMNICHANNEL AI PLATFORM - RELATORIO ANALITICO CONSOLIDADO ===",
       `Data de Emissao: ${new Date().toLocaleString("pt-BR")}`,
       `Periodo Analisado: ${selectedPeriod === "7d" ? "Ultimos 7 Dias" : selectedPeriod === "30d" ? "Ultimos 30 Dias" : "Ultimo Trimestre (90d)"}`,
       "",
@@ -163,7 +163,7 @@ export default function AnalyticsPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `versus-analytics-${selectedPeriod}-${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute("download", `vallor-analytics-${selectedPeriod}-${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -682,7 +682,7 @@ export default function AnalyticsPage() {
                 <Sparkles className="w-4 h-4 text-amber-400" />
                 <span>Sugestão de Otimização Operacional</span>
               </div>
-              <span className="text-[10px] font-mono text-slate-400">VERSUS AI Insights</span>
+              <span className="text-[10px] font-mono text-slate-400">Vallor AI Insights</span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
               {bottlenecksData?.criticalBottleneck}. Recomendamos alocar 1 operador temporário de contingência no Comercial durante a tarde para manter o FRT abaixo de 2.5 minutos.

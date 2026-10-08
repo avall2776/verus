@@ -33,7 +33,7 @@ export default function ResetAdminPasswordModal({
   if (!isOpen || !tenantId) return null;
 
   const handleGenerateRandom = () => {
-    const random = `Versus@${Math.floor(100000 + Math.random() * 900000)}`;
+    const random = `Vallor@${Math.floor(100000 + Math.random() * 900000)}`;
     setNewPassword(random);
   };
 

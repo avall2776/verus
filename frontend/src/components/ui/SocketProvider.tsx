@@ -305,7 +305,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       triggerTabBlink("🚨 [1] LEAD QUALIFICADO!");
       
       if (document.hidden || !document.hasFocus()) {
-        dispatchDesktopNotification("🚨 VERSUS · Lead Qualificado!", {
+        dispatchDesktopNotification("🚨 Vallor · Lead Qualificado!", {
           body: "Um novo lead atingiu critérios de qualificação e aguarda contato humano.",
           tag: `deal_${deal?.id || 'alert'}`,
           url: "/crm"
@@ -362,7 +362,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         // Se aba em background / minimizada, dispara Web Push Notification e pisca a aba
         if (typeof document !== 'undefined' && (document.hidden || !document.hasFocus())) {
           triggerTabBlink(`💬 [1] ${contactName}`);
-          dispatchDesktopNotification(`VERSUS · ${contactName}`, {
+          dispatchDesktopNotification(`Vallor · ${contactName}`, {
             body: content.length > 80 ? `${content.substring(0, 80)}...` : content || 'Enviou uma nova mensagem',
             tag: `msg_${convId || 'general'}`,
             url: convId ? `/inbox?conversationId=${convId}` : '/inbox'
@@ -400,7 +400,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Web Push Notification se em segundo plano
       if (typeof document !== 'undefined' && (document.hidden || !document.hasFocus())) {
-        dispatchDesktopNotification(`⚡ VERSUS · Lead Transferido para Você!`, {
+        dispatchDesktopNotification(`⚡ Vallor · Lead Transferido para Você!`, {
           body: `${contactName} foi transferido para ${departmentName} por ${transferredBy}. Clique para assumir.`,
           tag: `transfer_${convId || 'general'}`,
           url: convId ? `/inbox?conversationId=${convId}` : '/inbox'

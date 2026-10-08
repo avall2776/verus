@@ -354,7 +354,7 @@ export default function FloatingSupportWidget() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-white tracking-wide">Suporte Versus</h3>
+                  <h3 className="text-sm font-bold text-white tracking-wide">Suporte Vallor</h3>
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     Online
@@ -701,11 +701,11 @@ export default function FloatingSupportWidget() {
       <button
         onPointerDown={handlePointerDown}
         onClick={handleToggleOpen}
-        aria-label="Abrir Suporte Versus"
+        aria-label="Abrir Suporte Vallor"
         title={
           isDragging 
             ? "Solte para fixar a posição" 
-            : "Suporte Versus (Clique para abrir, segure e arraste para mover)"
+            : "Suporte Vallor (Clique para abrir, segure e arraste para mover)"
         }
         className={`group relative flex items-center justify-center w-12 h-12 rounded-2xl shadow-xl transition-all duration-150 touch-none select-none ${
           isDragging 

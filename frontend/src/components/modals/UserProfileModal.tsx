@@ -282,7 +282,7 @@ export default function UserProfileModal({
               </label>
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#070D1B] border border-slate-800 text-xs text-slate-300">
                 <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span className="truncate">{currentUser?.email || "usuario@versus.com.br"}</span>
+                <span className="truncate">{currentUser?.email || "usuario@vallor.com.br"}</span>
               </div>
             </div>
 

@@ -147,7 +147,7 @@ const WelcomeParticlesBackground = () => {
 export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: WelcomeDashboardProps) {
   const [userName, setUserName] = useState<string>("Operador");
   const [userRole, setUserRole] = useState<string>("Atendente");
-  const [companyName, setCompanyName] = useState<string>("VERSUS");
+  const [companyName, setCompanyName] = useState<string>("Vallor");
   const [showPreloader, setShowPreloader] = useState<boolean>(false);
   const [forcePlayPreloader, setForcePlayPreloader] = useState<boolean>(false);
 
@@ -293,7 +293,7 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
               <div className="flex flex-wrap items-center gap-2.5">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-600/15 border border-blue-500/30 text-blue-400 text-xs font-bold tracking-wide">
                   <Cpu className="w-3.5 h-3.5" />
-                  <span>VERSUS ENTERPRISE CORE</span>
+                  <span>VALLOR ENTERPRISE CORE</span>
                 </span>
                 
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#070D1B] border border-slate-700/80 text-slate-300 text-xs font-semibold">

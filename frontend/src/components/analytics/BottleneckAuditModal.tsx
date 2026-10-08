@@ -195,7 +195,7 @@ export default function BottleneckAuditModal({
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-cyan-400" />
-              Plano de Ação Recomendado pelo VERSUS AI
+              Plano de Ação Recomendado pelo Vallor AI
             </h4>
             <div className="space-y-2">
               {data.recommendations.map((rec) => (

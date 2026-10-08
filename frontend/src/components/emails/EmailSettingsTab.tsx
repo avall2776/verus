@@ -478,7 +478,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                   <ExternalLink className="w-3 h-3 inline" />
                 </a>
               </li>
-              <li>Crie uma senha com o nome <strong>VERSUS</strong> e copie o código amarelo de 16 letras gerado.</li>
+              <li>Crie uma senha com o nome <strong>Vallor</strong> e copie o código amarelo de 16 letras gerado.</li>
               <li>Cole o e-mail completo e a senha de 16 dígitos nos campos abaixo e clique em <strong>Testar Conexão</strong>.</li>
             </ol>
           </div>
@@ -637,7 +637,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                   type="text"
                   value={formData.fromName || ""}
                   onChange={(e) => setFormData({ ...formData, fromName: e.target.value })}
-                  placeholder="Ex: VERSUS Comercial ou Agência 26"
+                  placeholder="Ex: Vallor Comercial ou Agência 26"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>

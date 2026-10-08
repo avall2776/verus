@@ -22,7 +22,7 @@ export default function PlanGuardWrapper({ children }: PlanGuardWrapperProps) {
     localStorage.removeItem("versus_user");
     sessionStorage.setItem(
       "versus_blocked_reason",
-      message || "Acesso suspenso: sua empresa foi bloqueada pela administração do VERSUS."
+      message || "Acesso suspenso: sua empresa foi bloqueada pela administração do Vallor."
     );
     window.location.href = "/blocked";
   }, []);

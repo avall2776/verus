@@ -190,7 +190,7 @@ export default function Sidebar() {
           localStorage.removeItem('token');
           localStorage.removeItem('auth_token');
           localStorage.removeItem('versus_user');
-          sessionStorage.setItem('versus_blocked_reason', 'O acesso desta empresa foi bloqueado pela administração do VERSUS.');
+          sessionStorage.setItem('versus_blocked_reason', 'O acesso desta empresa foi bloqueado pela administração do Vallor.');
           window.location.href = '/blocked';
           return;
         }
@@ -532,7 +532,7 @@ export default function Sidebar() {
                   )}
                 </div>
                 <span className="text-[10px] text-gray-400 truncate">
-                  {targetTenantName ? `${targetTenantName} (Suporte)` : (currentUser?.tenantName ? `${currentUser.tenantName}` : "VERSUS INC.")}
+                  {targetTenantName ? `${targetTenantName} (Suporte)` : (currentUser?.tenantName ? `${currentUser.tenantName}` : "VALLOR INC.")}
                 </span>
               </div>
               <ChevronDown 
@@ -804,7 +804,7 @@ export default function Sidebar() {
                   </div>
                   <div className="flex flex-col min-w-0 flex-1">
                     <span className="text-xs font-bold text-white truncate">{currentUser?.name || "Operador"}</span>
-                    <span className="text-[10px] text-slate-400 truncate">{currentUser?.email || "operador@versus.com.br"}</span>
+                    <span className="text-[10px] text-slate-400 truncate">{currentUser?.email || "operador@vallor.com.br"}</span>
                   </div>
                   <span className="px-1.5 py-0.5 rounded text-[9px] font-mono uppercase bg-blue-600/15 text-blue-400 border border-blue-500/30 shrink-0">
                     {currentUser?.role === 'ADMIN' ? 'Admin' : 'Operador'}

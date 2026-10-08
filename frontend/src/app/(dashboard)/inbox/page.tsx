@@ -361,7 +361,7 @@ function InboxContent() {
     if (!activeContactData) return;
     const lines = [
       "=================================================================",
-      "VERSUS OMNICHANNEL - TRANSCRIÇÃO OFICIAL DE CONVERSA",
+      "VALLOR OMNICHANNEL - TRANSCRIÇÃO OFICIAL DE CONVERSA",
       `Contato: ${activeContactData.name || 'Cliente'}`,
       `Telefone: ${activeContactData.phone || 'Não informado'}`,
       `Data de Exportação: ${new Date().toLocaleString('pt-BR')}`,
@@ -424,7 +424,7 @@ function InboxContent() {
       const ext = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(cleanExt) ? cleanExt : 'jpg';
       const cleanTitle = (title && title !== 'Imagem' && title !== 'Anexo') 
         ? title.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 30)
-        : `versus_midia_${Date.now()}`;
+        : `vallor_midia_${Date.now()}`;
       link.download = cleanTitle.endsWith(`.${ext}`) ? cleanTitle : `${cleanTitle}.${ext}`;
       document.body.appendChild(link);
       link.click();
@@ -434,7 +434,7 @@ function InboxContent() {
       // Fallback padrão
       const link = document.createElement('a');
       link.href = url;
-      link.download = `versus_midia_${Date.now()}.jpg`;
+      link.download = `vallor_midia_${Date.now()}.jpg`;
       link.target = '_blank';
       document.body.appendChild(link);
       link.click();
@@ -4283,7 +4283,7 @@ function InboxContent() {
                   <div className="relative">
                     <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-4 ring-[#0F172A]" />
                     <p className="font-semibold text-white text-xs">Atendimento Ativo</p>
-                    <p className="text-[11px] text-slate-400">Atribuído a {currentUserName} no Inbox VERSUS</p>
+                    <p className="text-[11px] text-slate-400">Atribuído a {currentUserName} no Inbox Vallor</p>
                   </div>
                   <div className="relative">
                     <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-blue-400 ring-4 ring-[#0F172A]" />

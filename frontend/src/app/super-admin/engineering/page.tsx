@@ -1612,7 +1612,7 @@ export default function EngineeringDashboard() {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-xs md:text-sm font-bold text-white tracking-wide">
-                    Engenheiro de Software Chefe (VERSUS AI Architect)
+                    Engenheiro de Software Chefe (Vallor AI Architect)
                   </h3>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold">
                     Agente Agêntico Ativo
@@ -1649,7 +1649,7 @@ export default function EngineeringDashboard() {
                   </div>
 
                   <h2 className="text-lg md:text-xl font-black text-white tracking-tight mb-2">
-                    Como posso ajudar na engenharia do VERSUS hoje?
+                    Como posso ajudar na engenharia do Vallor hoje?
                   </h2>
                   <p className="text-xs md:text-sm text-slate-400 max-w-xl leading-relaxed mb-8">
                     Converse com o Engenheiro Chefe para desenhar novas ferramentas, planejar integrações de APIs ou desmembrar chamados de suporte em tarefas técnicas. Quando estiver pronto, gere o Card no Kanban com 1 clique!
@@ -1688,7 +1688,7 @@ export default function EngineeringDashboard() {
                     </button>
 
                     <button
-                      onClick={() => handleSendChatMessage("Projete a arquitetura de uma nova API RESTful e Webhook para integração de novos canais de mensageria no VERSUS.")}
+                      onClick={() => handleSendChatMessage("Projete a arquitetura de uma nova API RESTful e Webhook para integração de novos canais de mensageria no Vallor.")}
                       className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800 hover:border-blue-500/50 hover:bg-[#0E172E] transition-all group cursor-pointer text-left flex flex-col gap-1.5 shadow-sm"
                     >
                       <div className="flex items-center justify-between">
@@ -1738,7 +1738,7 @@ export default function EngineeringDashboard() {
                       💡 Priorizar Backlog
                     </button>
                     <button
-                      onClick={() => handleSendChatMessage("Projete a arquitetura de uma nova API RESTful e Webhook para integração de novos canais de mensageria no VERSUS.")}
+                      onClick={() => handleSendChatMessage("Projete a arquitetura de uma nova API RESTful e Webhook para integração de novos canais de mensageria no Vallor.")}
                       className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0B1224] border border-slate-800 hover:border-blue-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
                     >
                       🔌 Arquitetar API & Webhook
@@ -1766,7 +1766,7 @@ export default function EngineeringDashboard() {
                         <div className={`flex flex-col gap-2 ${isAI ? "flex-1 min-w-0" : "max-w-2xl"}`}>
                           {/* Nome e Hora */}
                           <div className={`flex items-center gap-2 text-[11px] ${isAI ? "text-purple-300" : "justify-end text-slate-400"}`}>
-                            <span className="font-bold">{isAI ? "VERSUS AI Architect" : "Você"}</span>
+                            <span className="font-bold">{isAI ? "Vallor AI Architect" : "Você"}</span>
                             {isAI && (
                               <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold">
                                 Engenheiro Chefe
@@ -1953,7 +1953,7 @@ export default function EngineeringDashboard() {
               )}
 
               <p className="text-[10px] text-slate-500 text-center mt-2">
-                O VERSUS AI Architect utiliza inteligência artificial com raciocínio de engenharia e transcrição de áudio Whisper.
+                O Vallor AI Architect utiliza inteligência artificial com raciocínio de engenharia e transcrição de áudio Whisper.
               </p>
             </div>
           </div>

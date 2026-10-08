@@ -370,7 +370,7 @@ export default function ProposalsPage() {
           </div>
         </div>
 
-        {/* Botão Padronizado com Azul Sólido Oficial do VERSUS */}
+        {/* Botão Padronizado com Azul Sólido Oficial do Vallor */}
         <button
           onClick={() => {
             setEditingProposal(null);

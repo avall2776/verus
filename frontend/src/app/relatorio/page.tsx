@@ -199,7 +199,7 @@ export default function RelatorioPage() {
             <Cpu className="text-white w-6 h-6 animate-spin" />
           </div>
           <div className="text-center">
-            <h2 className="text-base font-bold text-white tracking-wide">VERSUS Relatório Executivo</h2>
+            <h2 className="text-base font-bold text-white tracking-wide">Vallor Relatório Executivo</h2>
             <p className="text-xs text-slate-400 mt-1">Carregando sincronização em tempo real com o repositório...</p>
           </div>
         </div>
@@ -242,7 +242,7 @@ export default function RelatorioPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base sm:text-lg font-black tracking-tight text-white print:text-black">
-                  VERSUS <span className="text-cyan-400 font-semibold print:text-black">· Relatório de Gestão</span>
+                  Vallor <span className="text-cyan-400 font-semibold print:text-black">· Relatório de Gestão</span>
                 </h1>
                 <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 print:hidden">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -878,7 +878,7 @@ export default function RelatorioPage() {
 
       {/* 3. RODAPÉ EXECUTIVO */}
       <footer className="border-t border-slate-800/80 mt-12 py-6 bg-[#0B1224] text-center text-xs text-slate-500 print:hidden">
-        <p className="font-semibold text-slate-400">VERSUS · Sistema Omnichannel com IA e CRM Integrado</p>
+        <p className="font-semibold text-slate-400">Vallor · Sistema Omnichannel com IA e CRM Integrado</p>
         <p className="mt-1 text-[11px]">Relatório gerado automaticamente a partir do repositório oficial.</p>
       </footer>
 

@@ -36,7 +36,7 @@ const DYNAMIC_VARIABLES: DynamicVariable[] = [
   { tag: "{{proposalCode}}", label: "Cód. Proposta", example: "PROP-8821" },
   { tag: "{{dealTitle}}", label: "Título do Negócio", example: "Implementação Enterprise" },
   { tag: "{{value}}", label: "Valor Total", example: "R$ 15.000,00" },
-  { tag: "{{userEmail}}", label: "E-mail do Consultor", example: "comercial@versus.io" },
+  { tag: "{{userEmail}}", label: "E-mail do Consultor", example: "comercial@vallor.com" },
   { tag: "{{phone}}", label: "Telefone do Cliente", example: "+55 11 98765-4321" },
   { tag: "{{companyName}}", label: "Empresa do Cliente", example: "Santos & Associados" }
 ];

@@ -158,7 +158,7 @@ export function ContractPreviewModal({
                 <Building2 className="w-3.5 h-3.5 text-cyan-400" /> Contratada (Emitente)
               </span>
               <div className="font-bold text-sm text-white">
-                {contract.issuer?.name || "VERSUS Tecnologia & Inteligência Comercial"}
+                {contract.issuer?.name || "Vallor Tecnologia & Inteligência Comercial"}
               </div>
               <div className="text-xs text-slate-400 space-y-0.5">
                 {contract.issuer?.document && <div>CNPJ: {contract.issuer.document}</div>}
@@ -234,7 +234,7 @@ export function ContractPreviewModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
                 <div className="font-semibold text-slate-200">Pela Contratada:</div>
-                <div className="text-slate-400 mt-1">{contract.issuer?.name || "VERSUS Tecnologia"}</div>
+                <div className="text-slate-400 mt-1">{contract.issuer?.name || "Vallor Tecnologia"}</div>
                 <div className="text-emerald-400 font-mono text-[11px] mt-1 flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Assinado pelo Emitente
                 </div>

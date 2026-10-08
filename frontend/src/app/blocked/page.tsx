@@ -243,10 +243,10 @@ export default function BlockedPage() {
               <ShieldAlert size={24} className="text-red-400" />
             </div>
 
-            {/* Logotipo VERSUS */}
+            {/* Logotipo Vallor */}
             <div className="flex justify-center py-1 mb-1">
               <h1 className="text-3xl md:text-[2.2rem] font-black tracking-[0.2em] text-white">
-                VERSUS
+                Vallor
               </h1>
             </div>
 
@@ -291,9 +291,9 @@ export default function BlockedPage() {
 
           {/* Rodapé Idêntico ao do Login */}
           <div className="flex justify-between items-center text-xs text-slate-500 mt-7 relative z-10">
-            <span>suporte@versus.com.br</span>
+            <span>suporte@vallor.com.br</span>
             <a 
-              href="mailto:suporte@versus.com.br" 
+              href="mailto:suporte@vallor.com.br" 
               className="hover:text-slate-300 transition-colors"
             >
               Canal de Suporte

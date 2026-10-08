@@ -181,7 +181,7 @@ export default function PlanSettingsTab() {
             Plano {plan.name}
           </h3>
           <p className="text-xs text-slate-400 max-w-xl">
-            Ambiente corporativo provisionado no VERSUS com acesso aos módulos liberados para sua operação comercial.
+            Ambiente corporativo provisionado no Vallor com acesso aos módulos liberados para sua operação comercial.
           </p>
         </div>
 
