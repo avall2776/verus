@@ -16,7 +16,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import api, { getEffectiveTenantContext } from "@/lib/api";
 import WelcomeDashboard from "@/components/dashboard/WelcomeDashboard";
 
 function DashboardInner() {
@@ -24,9 +24,11 @@ function DashboardInner() {
   const searchParams = useSearchParams();
   const initialView = searchParams.get("view") === "metrics" ? "metrics" : "welcome";
   const [viewMode, setViewMode] = useState<"welcome" | "metrics">(initialView);
+  const { tenantId: effectiveTenantId } = getEffectiveTenantContext();
+  const tenantKey = effectiveTenantId || "default_tenant";
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["dashboardMetrics"],
+    queryKey: ["dashboardMetrics", tenantKey],
     queryFn: async () => {
       const res = await api.get("/metrics/dashboard");
       return res.data;

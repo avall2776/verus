@@ -111,7 +111,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { hasGlobalUnread } = useSocket();
-  const { status: waStatus } = useWhatsApp();
+  const { status: waStatus, refreshStatus: refreshWaStatus } = useWhatsApp();
   const { isOpen: isMobileOpen, closeMenu: closeMobileMenu } = useMobileMenu();
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
@@ -320,10 +320,34 @@ export default function Sidebar() {
   };
 
   const handleLogout = () => {
+    // 1. Limpeza profunda de tokens, credenciais e contextos de tenant
+    localStorage.removeItem('versus_auth_token');
     localStorage.removeItem('versus_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('auth_token');
     localStorage.removeItem('versus_user');
-    router.push('/login');
+    localStorage.removeItem('versus_target_tenant_id');
+    localStorage.removeItem('tenantId');
+    localStorage.removeItem('versus_muted_chats');
+    localStorage.removeItem('versus_scheduled_messages');
+    localStorage.removeItem('crm_columns');
+    localStorage.removeItem('crm_columns_widths');
+    localStorage.removeItem('crm_funnel_name');
+    sessionStorage.clear();
+
+    // 2. Redirecionamento completo para /login para descarregar a memória RAM da aba (evitando resquício de cache entre contas)
+    window.location.href = '/login';
   };
+
+  // Garante que o status do WhatsApp seja sincronizado ao montar a Sidebar em tela autenticada
+  useEffect(() => {
+    if (waStatus.status === 'disconnected') {
+      const token = localStorage.getItem('versus_auth_token') || localStorage.getItem('versus_token');
+      if (token) {
+        refreshWaStatus();
+      }
+    }
+  }, [waStatus.status, refreshWaStatus]);
 
   useEffect(() => {
     const stored = localStorage.getItem('sidebar_expanded');

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
-import api from '@/lib/api';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { usePathname } from 'next/navigation';
+import api, { getStoredToken } from '@/lib/api';
 
 export interface WhatsAppInstance {
   id: string;
@@ -98,7 +99,24 @@ export const WhatsAppProvider = ({ children }: { children: React.ReactNode }) =>
     }
   }, []);
 
+  const pathname = usePathname();
+  const isRefreshingRef = useRef(false);
+
   const refreshStatus = useCallback(async () => {
+    // 1. Evita disparos desnecessários com erro 401 caso o usuário ainda esteja deslogado
+    const token = getStoredToken();
+    const currentPath = (pathname || (typeof window !== 'undefined' ? window.location.pathname : '')).toLowerCase();
+    const isAuthRoute = currentPath.includes('/login') || currentPath.includes('/register') || currentPath.includes('/forgot');
+
+    if (!token || isAuthRoute) {
+      setStatus({ hasToken: false, status: 'disconnected' });
+      setIsLoading(false);
+      return;
+    }
+
+    if (isRefreshingRef.current) return;
+    isRefreshingRef.current = true;
+
     try {
       const res = await api.get('/whatsapp/config');
       setStatus({
@@ -114,24 +132,32 @@ export const WhatsAppProvider = ({ children }: { children: React.ReactNode }) =>
       setStatus({ hasToken: false, status: 'disconnected' });
     } finally {
       setIsLoading(false);
+      isRefreshingRef.current = false;
     }
-  }, [refreshInstances]);
+  }, [pathname, refreshInstances]);
 
+  // Revalida automaticamente na montagem e em cada transição de rota (ex: login -> dashboard)
   useEffect(() => {
     refreshStatus();
-  }, [refreshStatus]);
+  }, [refreshStatus, pathname]);
 
-  // Limpa e recarrega conexões de forma reativa quando o Super Admin alternar de tenant
+  // Limpa e recarrega conexões de forma reativa no login ou quando o Super Admin alternar de tenant
   useEffect(() => {
-    const handleTenantSwitched = () => {
+    const handleSync = () => {
       setInstances([]);
       setActiveInstance(null);
       setStatus({ hasToken: false, status: 'disconnected' });
       refreshStatus();
     };
 
-    window.addEventListener('tenant_switched', handleTenantSwitched);
-    return () => window.removeEventListener('tenant_switched', handleTenantSwitched);
+    window.addEventListener('tenant_switched', handleSync);
+    window.addEventListener('auth_login', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('tenant_switched', handleSync);
+      window.removeEventListener('auth_login', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
   }, [refreshStatus]);
 
   const contextValue = useMemo(() => ({

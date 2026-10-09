@@ -171,6 +171,13 @@ export default function LoginPage() {
 
       localStorage.setItem("versus_auth_token", data.access_token);
       localStorage.setItem("versus_user", JSON.stringify(data.user));
+      if (data.user?.tenantId) {
+        localStorage.setItem("tenantId", data.user.tenantId);
+      }
+      try {
+        window.dispatchEvent(new Event("auth_login"));
+        window.dispatchEvent(new Event("tenant_switched"));
+      } catch (e) {}
 
       // Extrai o primeiro nome real do usuário autenticado (ex: "Felipe")
       const rawName = data.user?.name || "";

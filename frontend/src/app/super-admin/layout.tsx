@@ -106,8 +106,13 @@ export default function SuperAdminLayout({
   const handleLogout = () => {
     localStorage.removeItem("versus_auth_token");
     localStorage.removeItem("versus_token");
+    localStorage.removeItem("token");
+    localStorage.removeItem("auth_token");
     localStorage.removeItem("versus_user");
-    router.push("/login");
+    localStorage.removeItem("versus_target_tenant_id");
+    localStorage.removeItem("tenantId");
+    sessionStorage.clear();
+    window.location.href = "/login";
   };
 
   return (

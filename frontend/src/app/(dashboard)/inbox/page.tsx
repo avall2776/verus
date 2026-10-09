@@ -16,7 +16,7 @@ import {
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
 import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
+import api, { getEffectiveTenantContext } from "@/lib/api";
 import toast from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 import ScheduleModal from "@/components/inbox/ScheduleModal";
@@ -1042,8 +1042,11 @@ function InboxContent() {
     return () => { isMounted = false; };
   }, [contactIdParam, conversationIdParam]);
 
+  const { tenantId: effectiveTenantId } = getEffectiveTenantContext();
+  const tenantKey = effectiveTenantId || 'default_tenant';
+
   const { data: tabCounts, refetch: refetchCounts } = useQuery({
-    queryKey: ['conversationCounts'],
+    queryKey: ['conversationCounts', tenantKey],
     queryFn: async () => {
       try {
         const { data } = await api.get('/conversations/counts');
@@ -1059,7 +1062,7 @@ function InboxContent() {
   });
 
   const { data: productivityData, refetch: refetchProductivity } = useQuery({
-    queryKey: ['operatorProductivity'],
+    queryKey: ['operatorProductivity', tenantKey],
     queryFn: async () => {
       try {
         const { data } = await api.get('/conversations/operator-productivity');
@@ -1075,7 +1078,7 @@ function InboxContent() {
   });
 
   const { data: directoryContacts = [] } = useQuery({
-    queryKey: ['directoryContacts'],
+    queryKey: ['directoryContacts', tenantKey],
     queryFn: async () => {
       try {
         const { data } = await api.get('/contacts');
@@ -1098,7 +1101,7 @@ function InboxContent() {
   const queryTab = (activeFilterTab === 'unread' || activeFilterTab === 'all') ? 'all' : activeFilterTab;
 
   const { data: initialContacts, isLoading, error: fetchErrorQuery, refetch: refetchConversations } = useQuery({
-    queryKey: ['conversations', activeFilterTab],
+    queryKey: ['conversations', tenantKey, activeFilterTab],
     queryFn: async () => {
       const { data } = await api.get(`/conversations?tab=${queryTab}`);
       return data.map((conv: any) => {
@@ -1123,7 +1126,6 @@ function InboxContent() {
       });
     },
     staleTime: 30000,
-    placeholderData: (prev) => prev,
     retry: false,
     refetchOnWindowFocus: false,
   });
