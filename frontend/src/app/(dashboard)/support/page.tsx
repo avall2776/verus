@@ -9,6 +9,7 @@ import {
   Star, Sparkles, Loader2
 } from "lucide-react";
 import api from "@/lib/api";
+import { useSocket } from "@/components/ui/SocketProvider";
 import toast from "react-hot-toast";
 
 interface TicketMessage {
@@ -107,6 +108,7 @@ const STATUS_BADGES: Record<string, { label: string; bg: string; text: string; b
 };
 
 export default function SupportPage() {
+  const { socket } = useSocket();
   const [activeTab, setActiveTab] = useState<"troubleshooting" | "my_tickets" | "admin_triage">("troubleshooting");
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [counts, setCounts] = useState({
@@ -189,6 +191,69 @@ export default function SupportPage() {
     }
   };
 
+  // Sincronização em tempo real via WebSocket
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleTicketUpdated = (updatedTicket: any) => {
+      if (!updatedTicket || !updatedTicket.id) return;
+
+      setSelectedTicket((prev) => {
+        if (prev && prev.id === updatedTicket.id) {
+          return {
+            ...prev,
+            ...updatedTicket,
+            messages: updatedTicket.messages || prev.messages,
+          };
+        }
+        return prev;
+      });
+
+      setTickets((prev) => {
+        const exists = prev.some((t) => t.id === updatedTicket.id);
+        if (exists) {
+          return prev.map((t) => (t.id === updatedTicket.id ? { ...t, ...updatedTicket } : t));
+        }
+        return [updatedTicket, ...prev];
+      });
+    };
+
+    socket.on("ticketUpdated", handleTicketUpdated);
+    socket.on("adminTicketUpdated", handleTicketUpdated);
+
+    return () => {
+      socket.off("ticketUpdated", handleTicketUpdated);
+      socket.off("adminTicketUpdated", handleTicketUpdated);
+    };
+  }, [socket]);
+
+  // Polling inteligente quando o chamado está ativo (garante que a resposta da IA e do suporte apareçam sem reload)
+  useEffect(() => {
+    if (!selectedTicket?.id) return;
+    if (selectedTicket.status === "CLOSED") return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await api.get(`/support/tickets/${selectedTicket.id}`);
+        if (res.data) {
+          setSelectedTicket((prev) => {
+            if (!prev || prev.id !== res.data.id) return prev;
+            const currentMsgs = prev.messages?.length || 0;
+            const newMsgs = res.data.messages?.length || 0;
+            if (currentMsgs !== newMsgs || prev.status !== res.data.status) {
+              return res.data;
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        // silencioso
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [selectedTicket?.id, selectedTicket?.status]);
+
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSubject.trim() || !newDescription.trim()) {
@@ -211,7 +276,20 @@ export default function SupportPage() {
       setNewDescription("");
       setActiveTab("my_tickets");
       fetchTickets();
-      if (res.data) handleSelectTicket(res.data);
+      if (res.data) {
+        handleSelectTicket(res.data);
+        // Agendamento de re-consultas para carregar a resposta da Sofia IA instantaneamente
+        setTimeout(() => {
+          api.get(`/support/tickets/${res.data.id}`).then((r) => {
+            if (r.data) setSelectedTicket(r.data);
+          }).catch(() => {});
+        }, 3000);
+        setTimeout(() => {
+          api.get(`/support/tickets/${res.data.id}`).then((r) => {
+            if (r.data) setSelectedTicket(r.data);
+          }).catch(() => {});
+        }, 6500);
+      }
     } catch (e) {
       console.error(e);
       toast.error("Erro ao abrir chamado de suporte.");
@@ -243,6 +321,13 @@ export default function SupportPage() {
       setIsInternalNote(false);
       toast.success(isInternalNote ? "Nota interna registrada!" : "Resposta enviada!");
       fetchTickets();
+
+      // Checagem em 3.5s para capturar resposta da IA ao comentário
+      setTimeout(() => {
+        api.get(`/support/tickets/${selectedTicket.id}`).then((r) => {
+          if (r.data) setSelectedTicket(r.data);
+        }).catch(() => {});
+      }, 3500);
     } catch (e) {
       console.error(e);
       toast.error("Erro ao enviar mensagem.");
@@ -773,6 +858,19 @@ export default function SupportPage() {
                       >
                         <Lock className="w-3.5 h-3.5" />
                         <span>Nota Técnica Privada</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedTicket) handleSelectTicket(selectedTicket);
+                        }}
+                        disabled={loadingDetails}
+                        className="px-2 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 border border-slate-800 transition-colors cursor-pointer flex items-center gap-1.5"
+                        title="Sincronizar mensagens agora"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${loadingDetails ? "animate-spin text-blue-400" : ""}`} />
+                        <span className="text-[11px] hidden sm:inline">Sincronizar</span>
                       </button>
                     </div>
 
