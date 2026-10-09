@@ -5,7 +5,7 @@ export declare const AiResponseSchema: z.ZodObject<{
     motivo_transferencia: z.ZodString;
     resumo_atendimento: z.ZodString;
     nome_cliente: z.ZodString;
-    telefone_cliente: z.ZodOptional<z.ZodString>;
+    telefone_cliente: z.ZodNullable<z.ZodString>;
     produto_interesse: z.ZodString;
 }, "strip", z.ZodTypeAny, {
     resposta_cliente?: string;

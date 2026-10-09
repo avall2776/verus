@@ -22,6 +22,30 @@ export interface LeadMessageToastProps {
   onClose: () => void;
 }
 
+// Helper de isolamento estrito contra vazamento de dados em telas deslogadas ou públicas
+export function isBlockedNotificationContext(): boolean {
+  if (typeof window === 'undefined') return true;
+  const path = (window.location.pathname || '').toLowerCase();
+  const token = localStorage.getItem('versus_token') || sessionStorage.getItem('versus_token');
+  
+  // 1. Deslogado sem token
+  if (!token) return true;
+
+  // 2. Tela de login, recuperação, cadastro ou Super Admin
+  if (
+    path.includes('/login') ||
+    path.includes('/auth') ||
+    path.includes('/register') ||
+    path.includes('/forgot') ||
+    path.includes('/reset-password') ||
+    path.includes('/super-admin')
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
   toastId,
   conversationId,
@@ -34,8 +58,8 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
   onOpen,
   onClose
 }) => {
-  // Isolamento estrito: Nunca renderizar notificações operacionais no console Super Admin
-  if (typeof window !== 'undefined' && window.location.pathname.toLowerCase().includes('/super-admin')) {
+  // Isolamento estrito: NUNCA renderizar notificações operacionais no console Super Admin ou em telas deslogadas/login
+  if (isBlockedNotificationContext()) {
     return null;
   }
 
@@ -187,8 +211,8 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
   onOpen,
   onClose
 }) => {
-  // Isolamento estrito: Nunca renderizar alertas operacionais no console Super Admin
-  if (typeof window !== 'undefined' && window.location.pathname.toLowerCase().includes('/super-admin')) {
+  // Isolamento estrito: Nunca renderizar alertas operacionais no console Super Admin ou em telas deslogadas/login
+  if (isBlockedNotificationContext()) {
     return null;
   }
 
@@ -312,12 +336,9 @@ export function showLeadMessageToast(
   },
   router: any
 ) {
-  // Isolamento estrito: Se o usuário estiver no console Super Admin, silencia imediatamente
-  if (typeof window !== 'undefined') {
-    const currentPath = (window.location.pathname || '').toLowerCase();
-    if (currentPath.includes('/super-admin')) {
-      return;
-    }
+  // Isolamento estrito: Se o usuário estiver na tela de login, deslogado ou no console Super Admin, silencia imediatamente
+  if (isBlockedNotificationContext()) {
+    return;
   }
 
   // Chave única e estável por conversa/contato: mantém apenas 1 card flutuante ativo atualizando o conteúdo
@@ -369,12 +390,9 @@ export function showTransferAlertToast(
   router: any,
   onTakeoverSuccess?: (conversationId: string) => void
 ) {
-  // Isolamento estrito: Se o usuário estiver no console Super Admin, silencia imediatamente
-  if (typeof window !== 'undefined') {
-    const currentPath = (window.location.pathname || '').toLowerCase();
-    if (currentPath.includes('/super-admin')) {
-      return;
-    }
+  // Isolamento estrito: Se o usuário estiver na tela de login, deslogado ou no console Super Admin, silencia imediatamente
+  if (isBlockedNotificationContext()) {
+    return;
   }
 
   const stableTransferKey = data.conversationId || (data.contactPhone ? data.contactPhone.replace(/\D/g, '') : 'default_transfer');

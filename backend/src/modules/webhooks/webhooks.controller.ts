@@ -24,6 +24,26 @@ export class WebhooksController {
   // 1. META CLOUD API (GET - Validação & POST - Eventos / Status)
   // -------------------------------------------------------------
 
+  @Get('meta')
+  verifyMetaWebhookRoot(
+    @Query('hub.mode') mode: string,
+    @Query('hub.verify_token') token: string,
+    @Query('hub.challenge') challenge: string,
+    @Res() res: Response
+  ) {
+    if (mode === 'subscribe' && token === this.META_VERIFY_TOKEN) {
+      this.logger.log('Webhook Meta (Root) verificado com sucesso!');
+      return res.status(200).send(challenge);
+    }
+    return res.sendStatus(403);
+  }
+
+  @Post('meta')
+  @HttpCode(HttpStatus.OK)
+  async handleMetaWebhookRoot(@Body() payload: any) {
+    return this.handleMetaWebhook('auto', payload);
+  }
+
   @Get('meta/:tenantId')
   verifyMetaWebhook(
     @Query('hub.mode') mode: string,
@@ -44,22 +64,49 @@ export class WebhooksController {
     @Param('tenantId') tenantId: string,
     @Body() payload: any,
   ) {
-    this.logger.log(`Recebendo POST da Meta para o tenant: ${tenantId}`);
-
-    // Trava de Segurança: Verifica se o Tenant está ativo antes de processar
-    const metaTenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { id: true, name: true, isActive: true },
-    });
-
-    if (!metaTenant || metaTenant.isActive === false) {
-      this.logger.warn(`Webhook Meta ignorado: Empresa [${metaTenant?.name || tenantId}] está BLOQUEADA/INATIVA.`);
-      return { status: 'tenant_inactive_ignored' };
-    }
-
     const entry = payload.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
+    const phoneNumberId = value?.metadata?.phone_number_id ? String(value.metadata.phone_number_id).trim() : null;
+
+    // Identifica todos os tenants ativos vinculados a este número oficial da Meta
+    const targetTenantsSet = new Set<string>();
+
+    if (phoneNumberId) {
+      const matchingTenants = await this.prisma.tenant.findMany({
+        where: {
+          OR: [
+            { metaPhoneNumberId: phoneNumberId },
+            { whatsappInstances: { some: { phoneNumberId } } },
+          ],
+          isActive: true,
+        },
+        select: { id: true, name: true },
+      });
+
+      for (const mt of matchingTenants) {
+        targetTenantsSet.add(mt.id);
+      }
+    }
+
+    if (tenantId && tenantId !== 'auto') {
+      const metaTenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { id: true, isActive: true },
+      });
+      if (metaTenant && metaTenant.isActive) {
+        targetTenantsSet.add(tenantId);
+      }
+    }
+
+    const targetTenants = Array.from(targetTenantsSet);
+
+    if (targetTenants.length === 0) {
+      this.logger.warn(`Webhook Meta ignorado: Nenhum tenant ativo associado ao Phone ID [${phoneNumberId}] ou Tenant [${tenantId}].`);
+      return { status: 'no_active_tenants' };
+    }
+
+    this.logger.log(`Recebendo POST Meta (Phone ID: ${phoneNumberId || 'N/A'}). Roteando para ${targetTenants.length} tenant(s): [${targetTenants.join(', ')}]`);
 
     // 1. Processamento de Status de Entrega / Leitura da Meta
     const statuses = value?.statuses;
@@ -74,45 +121,46 @@ export class WebhooksController {
           this.logger.error(`Erro retornado pela Meta para a mensagem ${externalId}: ${JSON.stringify(st.errors)}`);
         }
 
-        try {
-          const msg = await this.prisma.message.findFirst({
-            where: {
-              tenantId,
-              providerMessageId: externalId,
-            },
-          });
-
-          if (msg) {
-            // Evita retroceder status (ex: não passar de read para delivered)
-            const statusWeight: Record<string, number> = {
-              pending: 1,
-              sent: 2,
-              delivered: 3,
-              read: 4,
-              failed: 5,
-            };
-
-            const currentWeight = statusWeight[msg.status] || 0;
-            const newWeight = statusWeight[mappedStatus] || 0;
-
-            if (newWeight >= currentWeight || mappedStatus === 'failed') {
-              await this.prisma.message.update({
-                where: { id: msg.id },
-                data: { status: mappedStatus },
-              });
-
-              this.chatGateway.emitMessageStatusUpdated(tenantId, {
-                messageId: msg.id,
+        for (const tId of targetTenants) {
+          try {
+            const msg = await this.prisma.message.findFirst({
+              where: {
+                tenantId: tId,
                 providerMessageId: externalId,
-                status: mappedStatus,
-                conversationId: msg.conversationId,
-              });
+              },
+            });
 
-              this.logger.log(`Status Meta atualizado: msg [${msg.id}] -> ${mappedStatus}`);
+            if (msg) {
+              const statusWeight: Record<string, number> = {
+                pending: 1,
+                sent: 2,
+                delivered: 3,
+                read: 4,
+                failed: 5,
+              };
+
+              const currentWeight = statusWeight[msg.status] || 0;
+              const newWeight = statusWeight[mappedStatus] || 0;
+
+              if (newWeight >= currentWeight || mappedStatus === 'failed') {
+                await this.prisma.message.update({
+                  where: { id: msg.id },
+                  data: { status: mappedStatus },
+                });
+
+                this.chatGateway.emitMessageStatusUpdated(tId, {
+                  messageId: msg.id,
+                  providerMessageId: externalId,
+                  status: mappedStatus,
+                  conversationId: msg.conversationId,
+                });
+
+                this.logger.log(`Status Meta atualizado no tenant [${tId}]: msg [${msg.id}] -> ${mappedStatus}`);
+              }
             }
+          } catch (statusErr: any) {
+            this.logger.error(`Erro ao atualizar status Meta da mensagem ${externalId} no tenant [${tId}]: ${statusErr.message}`);
           }
-        } catch (statusErr: any) {
-          this.logger.error(`Erro ao atualizar status Meta da mensagem ${externalId}: ${statusErr.message}`);
         }
       }
 
@@ -125,21 +173,24 @@ export class WebhooksController {
       return { status: 'ignored', reason: 'Not a message or status event' };
     }
 
-    // Despacho assíncrono para fila (Redis)
-    await this.ingressQueue.add(
-      'process-meta-message',
-      {
-        tenantId,
-        webhookData: payload,
-      },
-      {
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 },
-        jobId: `msg_${message.id}`,
-      }
-    );
+    // Despacho assíncrono para fila (Redis) para todos os tenants vinculados a esta linha
+    for (const tId of targetTenants) {
+      await this.ingressQueue.add(
+        'process-meta-message',
+        {
+          tenantId: tId,
+          webhookData: payload,
+        },
+        {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 1000 },
+          jobId: `msg_${tId}_${message.id}`,
+        }
+      );
+      this.logger.log(`Mensagem Meta [${message.id}] enfileirada para tenant [${tId}].`);
+    }
 
-    return { status: 'queued' };
+    return { status: 'queued', tenantsTargeted: targetTenants.length };
   }
 
   // -------------------------------------------------------------

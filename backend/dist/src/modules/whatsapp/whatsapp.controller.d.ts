@@ -95,9 +95,11 @@ export declare class WhatsappController {
         status: string;
         qrCode: string;
         message: string;
+        metaInfo?: undefined;
     } | {
         status: string;
         message: string;
+        metaInfo: any;
         qrCode?: undefined;
     }>;
     disconnectInstance(tenantId: string, id: string): Promise<{

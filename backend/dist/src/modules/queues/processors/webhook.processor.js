@@ -476,7 +476,14 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 });
             }
         }
-        else if (conversation.status === 'bot_active') {
+        else if (conversation.status === 'bot_active' || (conversation.status === 'waiting' && !conversation.assignedTo)) {
+            if (conversation.status === 'waiting') {
+                conversation = await this.prisma.conversation.update({
+                    where: { id: conversation.id },
+                    data: { status: 'bot_active' }
+                });
+                this.chatGateway.emitConversationUpdated(tenantId, conversation);
+            }
             const connectedInst = await this.prisma.whatsAppInstance.findFirst({
                 where: { tenantId, status: 'connected' }
             });
@@ -524,11 +531,11 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 contactId: contact.id,
             }, {
                 jobId,
-                delay: 10000,
+                delay: 3000,
                 attempts: 2,
                 backoff: { type: 'fixed', delay: 2000 }
             });
-            this.logger.log(`Conversa [${conversation.id}] agendada para IA em 10 segundos (Buffer).`);
+            this.logger.log(`Conversa [${conversation.id}] agendada para IA em 3 segundos (Buffer).`);
         }
         else {
             this.logger.log(`Conversa [${conversation.id}] ignorada pela IA. O status atual é Humano (${conversation.status}).`);

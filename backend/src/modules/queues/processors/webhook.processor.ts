@@ -533,7 +533,16 @@ export class WebhookProcessor extends WorkerHost {
           data: { status: 'waiting' }
         });
       }
-    } else if (conversation.status === 'bot_active') {
+    } else if (conversation.status === 'bot_active' || (conversation.status === 'waiting' && !conversation.assignedTo)) {
+      // Se a conversa estava em waiting sem operador e a IA está ligada, ativa a IA para atender imediatamente
+      if (conversation.status === 'waiting') {
+        conversation = await this.prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { status: 'bot_active' }
+        });
+        this.chatGateway.emitConversationUpdated(tenantId, conversation);
+      }
+
       // Verifica se há instância de WhatsApp conectada no tenant
       const connectedInst = await this.prisma.whatsAppInstance.findFirst({
         where: { tenantId, status: 'connected' }
@@ -585,7 +594,7 @@ export class WebhookProcessor extends WorkerHost {
         }
       }
 
-      // Adiciona o novo job com delay de 10 segundos
+      // Adiciona o novo job com delay ágil de 3 segundos (Buffer inteligente)
       await this.aiQueue.add(
         'generate-reply',
         {
@@ -595,12 +604,12 @@ export class WebhookProcessor extends WorkerHost {
         },
         { 
           jobId, 
-          delay: 10000, // 10 segundos de buffer
+          delay: 3000, // 3 segundos de buffer ágil
           attempts: 2, 
           backoff: { type: 'fixed', delay: 2000 } 
         }
       );
-      this.logger.log(`Conversa [${conversation.id}] agendada para IA em 10 segundos (Buffer).`);
+      this.logger.log(`Conversa [${conversation.id}] agendada para IA em 3 segundos (Buffer).`);
     } else {
       this.logger.log(`Conversa [${conversation.id}] ignorada pela IA. O status atual é Humano (${conversation.status}).`);
     }

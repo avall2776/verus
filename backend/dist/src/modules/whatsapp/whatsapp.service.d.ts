@@ -105,9 +105,11 @@ export declare class WhatsappService {
         status: string;
         qrCode: string;
         message: string;
+        metaInfo?: undefined;
     } | {
         status: string;
         message: string;
+        metaInfo: any;
         qrCode?: undefined;
     }>;
     pairInstance(tenantId: string, id: string, phoneNumber?: string): Promise<{

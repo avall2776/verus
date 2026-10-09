@@ -492,27 +492,51 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                 message: 'Aponte a câmera do WhatsApp para o QR Code gerado'
             };
         }
-        if (!instance.token && !instance.phoneNumberId) {
+        if (!instance.token || !instance.phoneNumberId) {
             throw new common_1.BadRequestException('Informe o Access Token e Phone Number ID para conectar via Meta API.');
         }
+        let metaInfo = null;
+        try {
+            const response = await axios_1.default.get(`https://graph.facebook.com/v19.0/${instance.phoneNumberId}`, {
+                headers: {
+                    Authorization: `Bearer ${instance.token}`
+                },
+                timeout: 10000,
+            });
+            metaInfo = response.data;
+        }
+        catch (metaErr) {
+            const errorMsg = metaErr.response?.data?.error?.message || metaErr.message;
+            this.logger.error(`Erro ao validar credenciais da Meta API [${instance.phoneNumberId}]: ${errorMsg}`);
+            throw new common_1.BadRequestException(`Erro na Meta Cloud API: ${errorMsg}`);
+        }
+        const currentSettings = instance.settings || {};
         const updated = await this.prisma.whatsAppInstance.update({
             where: { id },
             data: {
                 status: 'connected',
-                lastConnectedAt: new Date()
+                lastConnectedAt: new Date(),
+                phoneNumber: metaInfo?.display_phone_number?.replace(/\D/g, '') || instance.phoneNumber,
+                settings: {
+                    ...currentSettings,
+                    verifiedName: metaInfo?.verified_name || currentSettings.verifiedName,
+                    qualityRating: metaInfo?.quality_rating || currentSettings.qualityRating,
+                    codeVerificationStatus: metaInfo?.code_verification_status || currentSettings.codeVerificationStatus,
+                }
             }
         });
         await this.prisma.whatsAppConnectionHistory.create({
             data: {
                 instanceId: id,
                 status: 'connected',
-                details: 'Conexão restabelecida com a Graph API do WhatsApp'
+                details: `Conexão autenticada via Meta Graph API (${metaInfo?.verified_name || 'Verificado'} - ${metaInfo?.display_phone_number || instance.phoneNumberId})`
             }
         });
         this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
         return {
             status: 'connected',
-            message: 'Instância conectada com sucesso!'
+            message: `Meta Cloud API conectada com sucesso! (${metaInfo?.verified_name || 'Número Verificado'})`,
+            metaInfo
         };
     }
     async pairInstance(tenantId, id, phoneNumber) {

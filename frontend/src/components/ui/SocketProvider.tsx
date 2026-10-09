@@ -80,11 +80,35 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     return () => window.removeEventListener('click', handleFirstInteraction);
   }, []);
 
+  // Helper de segurança estrita: NUNCA permitir dados ou notificações em rotas de login, públicas ou sessões sem token
+  const isUnauthenticatedOrPublic = useCallback(() => {
+    if (typeof window === 'undefined') return true;
+    const p = (window.location.pathname || '').toLowerCase();
+    const token = localStorage.getItem('versus_token') || sessionStorage.getItem('versus_token');
+    
+    // Sem token = categoricamente deslogado
+    if (!token) return true;
+
+    // Rotas de login, autenticação ou Super Admin Console (que tem isolamento próprio)
+    if (
+      p.includes('/login') || 
+      p.includes('/auth') || 
+      p.includes('/register') || 
+      p.includes('/forgot') || 
+      p.includes('/reset-password') ||
+      p.includes('/super-admin')
+    ) {
+      return true;
+    }
+
+    return false;
+  }, []);
+
   // Dispara áudio de notificação profissional (Arquivos Acústicos Reais + Fallback Sintetizado)
   const playNotificationSound = useCallback((isHighPriority = false) => {
     try {
       if (typeof window === 'undefined') return;
-      if (window.location.pathname.startsWith('/super-admin')) return;
+      if (isUnauthenticatedOrPublic()) return;
 
       // 1. Tenta reproduzir arquivo de áudio acústico de alta qualidade
       const preset = localStorage.getItem('versus_sound_preset') || 'glass';
@@ -111,7 +135,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (e) {
       playSynthesizedFallback(isHighPriority);
     }
-  }, []);
+  }, [isUnauthenticatedOrPublic]);
 
   const playSynthesizedFallback = (isHighPriority = false) => {
     try {
@@ -171,7 +195,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const triggerVibration = useCallback((isHighPriority = false) => {
     try {
       if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-        if (isSuperAdminRoute()) return;
+        if (isUnauthenticatedOrPublic()) return;
         if (isHighPriority) {
           navigator.vibrate([120, 60, 120, 60, 200]);
         } else {
@@ -179,12 +203,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
     } catch (e) {}
-  }, [isSuperAdminRoute]);
+  }, [isUnauthenticatedOrPublic]);
 
   // Disparo de Desktop / Web Push Notifications
   const dispatchDesktopNotification = useCallback((title: string, options: { body: string; tag?: string; url?: string }) => {
     try {
-      if (isSuperAdminRoute()) return;
+      if (isUnauthenticatedOrPublic()) return;
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
         const notif = new Notification(title, {
           body: options.body,
@@ -203,11 +227,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (err) {
       console.warn('[Desktop Notification] Erro ao disparar:', err);
     }
-  }, [router, isSuperAdminRoute]);
+  }, [router, isUnauthenticatedOrPublic]);
 
   // Efeito de piscar a aba do navegador
   const triggerTabBlink = useCallback((titleText: string) => {
-    if (isSuperAdminRoute()) return;
+    if (isUnauthenticatedOrPublic()) return;
     let isBlinking = false;
     const originalTitle = "Vallor - Motor Omnichannel";
     const blinkInterval = setInterval(() => {
@@ -224,7 +248,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     window.addEventListener('focus', stopBlinking);
     window.addEventListener('mousemove', stopBlinking);
-  }, [isSuperAdminRoute]);
+  }, [isUnauthenticatedOrPublic]);
 
   useEffect(() => {
     // Conexão resiliente: detecta se está rodando na Vercel (onde WebSocket upgrade via rewrite falha)
@@ -245,15 +269,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       setIsConnected(true);
       console.log('📡 [WebSockets] Conectado ao Servidor em Tempo Real!', socketInstance.id);
       
-      const isSuperAdmin = typeof window !== 'undefined' && (window.location.pathname || '').toLowerCase().includes('/super-admin');
-      if (isSuperAdmin) {
-        console.log('🛡️ [WebSockets] Super Admin ativo: isolando socket de todas as salas operacionais.');
+      // Isolamento estrito imediato se deslogado ou tela de login
+      if (isUnauthenticatedOrPublic()) {
+        console.log('🛡️ [WebSockets] Sessão deslogada/pública ou tela de login: isolando socket.');
         socketInstance.emit('leaveTenant');
-        socketInstance.emit('joinTenant', 'super_admin_isolated');
+        socketInstance.emit('joinTenant', 'unauthenticated_isolated');
         return;
       }
 
-      let tenantId = 'tenant_123';
+      let tenantId: string | null = null;
       try {
         const targetTenant = localStorage.getItem('versus_target_tenant_id');
         if (targetTenant) {
@@ -264,18 +288,28 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             const user = JSON.parse(userStr);
             if (user.tenantId) tenantId = user.tenantId;
           }
-          if (!tenantId || tenantId === 'tenant_123') {
+          if (!tenantId) {
             const savedTenant = localStorage.getItem('tenantId');
             if (savedTenant) tenantId = savedTenant;
           }
         }
       } catch (e) {}
 
-      socketInstance.emit('joinTenant', tenantId);
+      if (tenantId) {
+        socketInstance.emit('joinTenant', tenantId);
+      } else {
+        socketInstance.emit('leaveTenant');
+        socketInstance.emit('joinTenant', 'unauthenticated_isolated');
+      }
     });
 
     const handleTenantSwitched = () => {
       if (socketInstance && socketInstance.connected) {
+        if (isUnauthenticatedOrPublic()) {
+          socketInstance.emit('leaveTenant');
+          socketInstance.emit('joinTenant', 'unauthenticated_isolated');
+          return;
+        }
         const target = localStorage.getItem('versus_target_tenant_id') || localStorage.getItem('tenantId');
         if (target) {
           socketInstance.emit('leaveTenant');
@@ -293,8 +327,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Escuta global para Alerta de Handoff da IA (Lead Qualificado)
     socketInstance.on('dealUpdated', (deal) => {
-      // Suprime notificações no console Master Super Admin (/super-admin)
-      if (isSuperAdminRoute()) return;
+      // Suprime absolutamente notificações em login, público, deslogado ou super-admin
+      if (isUnauthenticatedOrPublic()) return;
 
       toast.error(`🚨 Lead Qualificado pela IA!\nUm novo lead precisa de atendimento humano.\nAcesse o Pipeline CRM.`, {
         duration: 8000,
@@ -316,8 +350,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Escuta global para novas mensagens recebidas de Leads (INBOUND)
     socketInstance.on('newMessage', (msg) => {
-      // Suprime notificações no console Master Super Admin (/super-admin)
-      if (isSuperAdminRoute()) return;
+      // Suprime absolutamente notificações em login, público, deslogado ou super-admin
+      if (isUnauthenticatedOrPublic()) return;
 
       if (msg.direction === 'INBOUND') {
         const convId = msg.conversationId || msg.contact?.conversationId || (msg.contactId ? `conv_${msg.contactId}` : null);
@@ -374,8 +408,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Escuta global para Atendimentos Transferidos (Padrão Lero / Transfer Alert)
     socketInstance.on('conversationTransferred', (data) => {
-      // Suprime notificações no console Master Super Admin (/super-admin)
-      if (isSuperAdminRoute()) return;
+      // Suprime absolutamente notificações em login, público, deslogado ou super-admin
+      if (isUnauthenticatedOrPublic()) return;
 
       console.log('⚡ [WebSockets] Atendimento transferido recebido:', data);
       const convId = data.conversationId;
@@ -415,41 +449,44 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       window.removeEventListener('tenant_switched', handleTenantSwitched);
       socketInstance.disconnect();
     };
-  }, [router, playNotificationSound, triggerVibration, dispatchDesktopNotification, triggerTabBlink]);
+  }, [router, playNotificationSound, triggerVibration, dispatchDesktopNotification, triggerTabBlink, isUnauthenticatedOrPublic]);
 
-  // Observa mudanças de rota do Next.js para alternar o isolamento do Super Admin vs Operacional
+  // Observa mudanças de rota do Next.js para alternar o isolamento do Super Admin vs Operacional vs Deslogado
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    const isSuperAdmin = (pathname || '').toLowerCase().includes('/super-admin') || 
-      (typeof window !== 'undefined' && (window.location.pathname || '').toLowerCase().includes('/super-admin'));
-
-    if (isSuperAdmin) {
-      console.log('🛡️ [WebSockets] Rota Super Admin ativa: isolando socket de todas as salas de tenant.');
+    if (isUnauthenticatedOrPublic()) {
+      console.log('🛡️ [WebSockets] Rota deslogada/pública ativa: isolando socket de todas as salas operacionais.');
       socket.emit('leaveTenant');
-      socket.emit('joinTenant', 'super_admin_isolated');
-    } else {
-      let tenantId = 'tenant_123';
-      try {
-        const targetTenant = localStorage.getItem('versus_target_tenant_id');
-        if (targetTenant) {
-          tenantId = targetTenant;
-        } else {
-          const userStr = localStorage.getItem('versus_user');
-          if (userStr) {
-            const user = JSON.parse(userStr);
-            if (user.tenantId) tenantId = user.tenantId;
-          }
-          if (!tenantId || tenantId === 'tenant_123') {
-            const savedTenant = localStorage.getItem('tenantId');
-            if (savedTenant) tenantId = savedTenant;
-          }
-        }
-      } catch (e) {}
-
-      socket.emit('joinTenant', tenantId);
+      socket.emit('joinTenant', 'unauthenticated_isolated');
+      return;
     }
-  }, [pathname, socket, isConnected]);
+
+    let tenantId: string | null = null;
+    try {
+      const targetTenant = localStorage.getItem('versus_target_tenant_id');
+      if (targetTenant) {
+        tenantId = targetTenant;
+      } else {
+        const userStr = localStorage.getItem('versus_user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          if (user.tenantId) tenantId = user.tenantId;
+        }
+        if (!tenantId) {
+          const savedTenant = localStorage.getItem('tenantId');
+          if (savedTenant) tenantId = savedTenant;
+        }
+      }
+    } catch (e) {}
+
+    if (tenantId) {
+      socket.emit('joinTenant', tenantId);
+    } else {
+      socket.emit('leaveTenant');
+      socket.emit('joinTenant', 'unauthenticated_isolated');
+    }
+  }, [pathname, socket, isConnected, isUnauthenticatedOrPublic]);
 
   const contextValue = useMemo(() => ({
     socket,
