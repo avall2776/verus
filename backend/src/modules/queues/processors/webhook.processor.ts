@@ -594,7 +594,7 @@ export class WebhookProcessor extends WorkerHost {
         }
       }
 
-      // Adiciona o novo job com delay ágil de 3 segundos (Buffer inteligente)
+      // Adiciona o novo job com delay ágil de 800ms (Buffer ultra-rápido)
       await this.aiQueue.add(
         'generate-reply',
         {
@@ -604,12 +604,12 @@ export class WebhookProcessor extends WorkerHost {
         },
         { 
           jobId, 
-          delay: 3000, // 3 segundos de buffer ágil
+          delay: 800, // 800ms de buffer ágil
           attempts: 2, 
           backoff: { type: 'fixed', delay: 2000 } 
         }
       );
-      this.logger.log(`Conversa [${conversation.id}] agendada para IA em 3 segundos (Buffer).`);
+      this.logger.log(`Conversa [${conversation.id}] agendada para IA em 800ms (Buffer).`);
     } else {
       this.logger.log(`Conversa [${conversation.id}] ignorada pela IA. O status atual é Humano (${conversation.status}).`);
     }

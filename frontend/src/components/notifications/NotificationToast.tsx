@@ -7,7 +7,7 @@ import {
   Sparkles, Eye, Mic, Image as ImageIcon, FileText, 
   CheckCircle2, Loader2, PhoneForwarded
 } from "lucide-react";
-import api from "@/lib/api";
+import api, { getStoredToken } from "@/lib/api";
 
 export interface LeadMessageToastProps {
   toastId: string | number;
@@ -26,7 +26,7 @@ export interface LeadMessageToastProps {
 export function isBlockedNotificationContext(): boolean {
   if (typeof window === 'undefined') return true;
   const path = (window.location.pathname || '').toLowerCase();
-  const token = localStorage.getItem('versus_token') || sessionStorage.getItem('versus_token');
+  const token = getStoredToken();
   
   // 1. Deslogado sem token
   if (!token) return true;

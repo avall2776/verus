@@ -531,11 +531,11 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 contactId: contact.id,
             }, {
                 jobId,
-                delay: 3000,
+                delay: 800,
                 attempts: 2,
                 backoff: { type: 'fixed', delay: 2000 }
             });
-            this.logger.log(`Conversa [${conversation.id}] agendada para IA em 3 segundos (Buffer).`);
+            this.logger.log(`Conversa [${conversation.id}] agendada para IA em 800ms (Buffer).`);
         }
         else {
             this.logger.log(`Conversa [${conversation.id}] ignorada pela IA. O status atual é Humano (${conversation.status}).`);

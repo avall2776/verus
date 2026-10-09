@@ -7,6 +7,8 @@ import toast from 'react-hot-toast';
 import { showLeadMessageToast, showTransferAlertToast } from '@/components/notifications/NotificationToast';
 import { sanitizeAvatarUrl } from '@/lib/avatarUtils';
 
+import { getStoredToken } from '@/lib/api';
+
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
@@ -84,7 +86,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const isUnauthenticatedOrPublic = useCallback(() => {
     if (typeof window === 'undefined') return true;
     const p = (window.location.pathname || '').toLowerCase();
-    const token = localStorage.getItem('versus_token') || sessionStorage.getItem('versus_token');
+    const token = getStoredToken();
     
     // Sem token = categoricamente deslogado
     if (!token) return true;
