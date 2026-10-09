@@ -639,7 +639,7 @@ DIRETRIZES DE RESPOSTA:
       this.logger.error(`Erro no chat com IA de engenharia: ${error.message}`);
       
       const fallbackReply = `
-Olá! Como Engenheiro de Software Chefe do VERSUS, registrei sua solicitação: "${dto.message}".
+Olá! Como Engenheiro de Software Chefe do Vallor, registrei sua solicitação: "${dto.message}".
 No momento a API OpenAI retornou uma indisponibilidade temporária.
 Recomendo verificar a configuração de \`OPENAI_API_KEY\` no servidor. Enquanto isso, posso estruturar sua demanda diretamente criando uma nova iniciativa no Kanban.
       `.trim();
@@ -750,7 +750,7 @@ Recomendo verificar a configuração de \`OPENAI_API_KEY\` no servidor. Enquanto
         lastTestStatus: 'PASS',
         stabilityScore: 97,
         isIntegrated: false,
-        description: 'Agente conversacional por voz com baixa latência, detecção de interrupção (VAD), síntese neural e integração nativa com o CRM do VERSUS.',
+        description: 'Agente conversacional por voz com baixa latência, detecção de interrupção (VAD), síntese neural e integração nativa com o CRM do Vallor.',
         architectureDetails: [
           'Streaming bi-direcional de áudio PCM16 24kHz via WebSocket seguro',
           'Detecção de voz ativa (VAD) para interrupção natural de fala do usuário',
@@ -768,7 +768,7 @@ Recomendo verificar a configuração de \`OPENAI_API_KEY\` no servidor. Enquanto
           {
             id: 'init-1',
             role: 'assistant',
-            content: 'Olá! Sou o Copilot Técnico especializado no Voice AI Agent do VERSUS. Posso orientar a programação do streaming PCM16, parâmetros de VAD e redução de latência no WebSockets. O que deseja programar agora?',
+            content: 'Olá! Sou o Copilot Técnico especializado no Voice AI Agent do Vallor. Posso orientar a programação do streaming PCM16, parâmetros de VAD e redução de latência no WebSockets. O que deseja programar agora?',
             createdAt: new Date().toISOString()
           }
         ],
@@ -1407,7 +1407,7 @@ Entendido! Registrei seu avanço sobre: "${dto.message}".
     const integrationLog: ProductLog = {
       timestamp: new Date().toISOString(),
       level: 'SUCCESS',
-      message: `[PRODUÇÃO] Módulo '${product.name}' foi homologado nos testes de Sandbox e integrado com sucesso ao sistema VERSUS!`
+      message: `[PRODUÇÃO] Módulo '${product.name}' foi homologado nos testes de Sandbox e integrado com sucesso ao sistema Vallor!`
     };
     product.logs.unshift(integrationLog);
 

@@ -298,7 +298,7 @@ export class AiProcessor extends WorkerHost {
         `📝 *Resumo do Atendimento:*\n${aiResponse.resumo_atendimento}`;
 
       if (!phoneInfo.isRealPhone) {
-        alertMsg += `\n\n💡 *Ação:* Responda diretamente pela central de atendimento (Inbox) no VERSUS.`;
+        alertMsg += `\n\n💡 *Ação:* Responda diretamente pela central de atendimento (Inbox) no Vallor.`;
       }
 
       // 5.4 Envio Multi-Tenant do Alerta (para o Gerente Comercial ou Grupo do Tenant)

@@ -174,7 +174,7 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
                 id: sysNoticeId,
                 type: 'SYSTEM',
                 title: 'Versão 2.4 Lançada com Êxito',
-                description: 'Widget de Suporte Versus e Central de Notificações integrados à plataforma.',
+                description: 'Widget de Suporte Vallor e Central de Notificações integrados à plataforma.',
                 createdAt: releaseDate.toISOString(),
                 isRead: readNotificationIds.includes(sysNoticeId) || releaseDate.getTime() <= lastReadNotificationsAt,
                 link: '/support',

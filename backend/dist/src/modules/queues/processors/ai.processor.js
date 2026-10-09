@@ -240,7 +240,7 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
                 `📌 *Motivo:* ${aiResponse.motivo_transferencia}\n\n` +
                 `📝 *Resumo do Atendimento:*\n${aiResponse.resumo_atendimento}`;
             if (!phoneInfo.isRealPhone) {
-                alertMsg += `\n\n💡 *Ação:* Responda diretamente pela central de atendimento (Inbox) no VERSUS.`;
+                alertMsg += `\n\n💡 *Ação:* Responda diretamente pela central de atendimento (Inbox) no Vallor.`;
             }
             const tenant = conversation.contact.tenant;
             const targetRecipient = tenant?.leadNotificationPhone ||

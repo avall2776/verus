@@ -23,6 +23,7 @@ const create_ticket_message_dto_1 = require("./dto/create-ticket-message.dto");
 const update_support_ai_config_dto_1 = require("./dto/update-support-ai-config.dto");
 const toggle_ticket_ai_dto_1 = require("./dto/toggle-ticket-ai.dto");
 const submit_csat_dto_1 = require("./dto/submit-csat.dto");
+const coach_support_ai_dto_1 = require("./dto/coach-support-ai.dto");
 let SupportController = class SupportController {
     constructor(supportService) {
         this.supportService = supportService;
@@ -103,6 +104,11 @@ let SupportController = class SupportController {
     async submitCsat(req, id, dto) {
         const tenantId = req.user.tenantId;
         return this.supportService.submitCsat(id, tenantId, dto);
+    }
+    async coachSupportAi(req, id, dto) {
+        const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
+        const userId = req.user.id || req.user.userId;
+        return this.supportService.coachSupportAi(id, dto, userId, isSuperAdmin);
     }
 };
 exports.SupportController = SupportController;
@@ -203,6 +209,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, submit_csat_dto_1.SubmitCsatDto]),
     __metadata("design:returntype", Promise)
 ], SupportController.prototype, "submitCsat", null);
+__decorate([
+    (0, common_1.Post)('tickets/:id/coach-ai'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, coach_support_ai_dto_1.CoachSupportAiDto]),
+    __metadata("design:returntype", Promise)
+], SupportController.prototype, "coachSupportAi", null);
 exports.SupportController = SupportController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
     (0, require_module_decorator_1.RequireModule)('support'),

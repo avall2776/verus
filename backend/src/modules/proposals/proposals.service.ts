@@ -54,7 +54,7 @@ export class ProposalsService {
       publicLink: `${baseUrl}/p/${(p.code || p.id).toLowerCase()}`,
       items: formattedItems,
       issuer: {
-        name: p.tenant?.name || 'VERSUS Soluções',
+        name: p.tenant?.name || 'Vallor Soluções',
         document: p.tenant?.cnpj || '',
         phone: p.tenant?.phone || '',
         email: p.tenant?.email || '',
@@ -560,7 +560,7 @@ export class ProposalsService {
           <div style="display: flex; align-items: center; gap: 16px;">
             ${tenant?.logoUrl ? `<img src="${tenant.logoUrl}" alt="${tenant.name}" style="max-height: 55px; max-width: 160px; object-fit: contain;" />` : ''}
             <div>
-              <div class="title">${tenant?.name || 'VERSUS Commercial'}</div>
+              <div class="title">${tenant?.name || 'Vallor Commercial'}</div>
               <div style="color: #718096; font-size: 13px;">
                 ${tenant?.cnpj ? `<span>CNPJ: ${tenant.cnpj}</span> • ` : ''}
                 ${tenant?.email || tenant?.phone ? `<span>${tenant.email || tenant.phone}</span>` : ''}
@@ -602,7 +602,7 @@ export class ProposalsService {
         </div>
 
         <div class="footer">
-          Documento gerado automaticamente pela plataforma VERSUS • Todos os direitos reservados.
+          Documento gerado automaticamente pela plataforma Vallor • Todos os direitos reservados.
         </div>
       </body>
       </html>

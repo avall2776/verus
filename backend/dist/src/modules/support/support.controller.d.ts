@@ -4,6 +4,7 @@ import { CreateTicketMessageDto } from './dto/create-ticket-message.dto';
 import { UpdateSupportAiConfigDto } from './dto/update-support-ai-config.dto';
 import { ToggleTicketAiDto } from './dto/toggle-ticket-ai.dto';
 import { SubmitCsatDto } from './dto/submit-csat.dto';
+import { CoachSupportAiDto } from './dto/coach-support-ai.dto';
 export declare class SupportController {
     private readonly supportService;
     constructor(supportService: SupportService);
@@ -494,6 +495,53 @@ export declare class SupportController {
             satisfactionRating: number | null;
             satisfactionFeedback: string | null;
             aiHandoffDemandId: string | null;
+        };
+    }>;
+    coachSupportAi(req: any, id: string, dto: CoachSupportAiDto): Promise<{
+        success: boolean;
+        parsedResult: any;
+        updatedConfig: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
+            model: string;
+            prompt: string;
+            knowledgeBase: string;
+            guardrails: string;
+            autoHandoffCrm: boolean;
+            autoCloseSolved: boolean;
+        };
+        aiResponseMessage: {
+            id: string;
+            createdAt: Date;
+            content: string;
+            isInternal: boolean;
+            senderName: string | null;
+            attachments: import("@prisma/client/runtime/library").JsonValue | null;
+            senderId: string | null;
+            ticketId: string;
+            senderRole: string;
+        };
+        adminMessage: {
+            sender: {
+                id: string;
+                name: string;
+                email: string;
+                avatarUrl: string;
+                role: string;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            content: string;
+            isInternal: boolean;
+            senderName: string | null;
+            attachments: import("@prisma/client/runtime/library").JsonValue | null;
+            senderId: string | null;
+            ticketId: string;
+            senderRole: string;
         };
     }>;
 }

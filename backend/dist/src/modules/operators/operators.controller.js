@@ -39,7 +39,7 @@ let OperatorsController = class OperatorsController {
     }
     async create(req, dto) {
         this.checkSuperAdmin(req);
-        const inviterName = req.user?.name || 'Super Admin VERSUS';
+        const inviterName = req.user?.name || 'Super Admin Vallor';
         return this.operatorsService.createOperator(dto, inviterName);
     }
     async update(req, id, dto) {

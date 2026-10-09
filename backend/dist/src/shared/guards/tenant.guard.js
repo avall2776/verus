@@ -55,7 +55,7 @@ let TenantGuard = class TenantGuard {
         if (!isTenantActive) {
             throw new common_1.UnauthorizedException({
                 code: 'TENANT_BLOCKED',
-                message: 'Acesso suspenso: sua empresa está bloqueada pela administração do VERSUS.',
+                message: 'Acesso suspenso: sua empresa está bloqueada pela administração do Vallor.',
             });
         }
         return true;

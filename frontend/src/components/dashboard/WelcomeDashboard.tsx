@@ -209,7 +209,7 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
     },
     {
       title: "Central de Suporte",
-      description: "Chamados técnicos, autoatendimento inteligente estilo Lero e base de conhecimento.",
+      description: "Chamados técnicos, autoatendimento inteligente e base de conhecimento.",
       href: "/support",
       icon: LifeBuoy,
       badge: "Suporte Corporativo",

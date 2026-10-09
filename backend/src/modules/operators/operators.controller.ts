@@ -43,7 +43,7 @@ export class OperatorsController {
   @Post()
   async create(@Request() req, @Body() dto: CreateOperatorDto) {
     this.checkSuperAdmin(req);
-    const inviterName = req.user?.name || 'Super Admin VERSUS';
+    const inviterName = req.user?.name || 'Super Admin Vallor';
     return this.operatorsService.createOperator(dto, inviterName);
   }
 

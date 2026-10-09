@@ -32,7 +32,6 @@ import {
   Tag, 
   Cpu,
   Sparkles,
-  Smile,
   MessageCircle,
   Eye,
   PanelRight,
@@ -45,11 +44,16 @@ import {
   Sliders,
   ShieldAlert,
   ArrowLeft,
+  ArrowRight,
   PanelLeftClose,
   PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
-  Paperclip
+  Paperclip,
+  GraduationCap,
+  BookOpen,
+  Wand2,
+  Settings
 } from "lucide-react";
 import api from "@/lib/api";
 import { useSocket } from "@/components/ui/SocketProvider";
@@ -82,12 +86,6 @@ const CATEGORY_CONFIG: Record<string, string> = {
   OUTROS: "Outros",
 };
 
-// Emojis Populares para Atendimento Rápido
-const QUICK_EMOJIS = [
-  '👍', '🤝', '😊', '🙏', '👋', '✅', '🚀', '💡', '💬', '✨',
-  '🔥', '🎯', '⭐', '👏', '🙂', '😉', '🙌', '💪', '📞', '⏳'
-];
-
 function getChatDateLabel(dateInput?: string | number | Date): string {
   if (!dateInput) return 'Hoje';
   const date = new Date(dateInput);
@@ -118,6 +116,10 @@ function SuperAdminSupportContent() {
 
     const handleTicketUpdated = (updatedTicket: any) => {
       if (!updatedTicket || !updatedTicket.id) return;
+
+      if (updatedTicket.updatedConfig) {
+        setAiConfig(updatedTicket.updatedConfig);
+      }
 
       setSelectedTicket((prev: any) => {
         if (prev && prev.id === updatedTicket.id) {
@@ -210,6 +212,11 @@ function SuperAdminSupportContent() {
   // Mensagens do Chat Interno da Equipe
   const [teamMessage, setTeamMessage] = useState("");
   const [sendingTeamMessage, setSendingTeamMessage] = useState(false);
+
+  // Mentoria & Treinamento da IA (Sofia) no Chat Interno
+  const [internalMode, setInternalMode] = useState<'note' | 'coach_ai'>('coach_ai');
+  const [quotedCoachMessage, setQuotedCoachMessage] = useState<any | null>(null);
+  const [coachingAi, setCoachingAi] = useState(false);
 
   // Copiloto IA de Atendimento Híbrido
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
@@ -457,6 +464,58 @@ function SuperAdminSupportContent() {
     }
   };
 
+  // Iniciar mentoria a partir de uma resposta específica da Sofia no chat
+  const handleStartCoachingFromMessage = (msg: any) => {
+    setQuotedCoachMessage(msg);
+    setInternalMode('coach_ai');
+    setActiveSubView('team_chat');
+  };
+
+  // Enviar instrução de mentoria e treinamento para a Sofia
+  const handleCoachSupportAi = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!teamMessage.trim() || !selectedTicket || coachingAi) return;
+
+    setCoachingAi(true);
+    try {
+      const res = await api.post(`/support/tickets/${selectedTicket.id}/coach-ai`, {
+        feedback: teamMessage.trim(),
+        targetMessageId: quotedCoachMessage?.id || undefined,
+        quotedText: quotedCoachMessage?.content || undefined,
+      });
+
+      const { parsedResult, updatedConfig, aiResponseMessage, adminMessage } = res.data;
+
+      setSelectedTicket((prev: any) => ({
+        ...prev,
+        messages: [
+          ...(prev.messages || []),
+          adminMessage,
+          aiResponseMessage,
+        ],
+      }));
+
+      if (updatedConfig) {
+        setAiConfig(updatedConfig);
+      }
+
+      setTeamMessage("");
+      setQuotedCoachMessage(null);
+      toast.success(
+        `Diretriz assimilada pela Sofia com sucesso na camada: ${parsedResult?.categoryLabel || "Base de Conhecimento"}`
+      );
+
+      setTimeout(() => {
+        teamMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Erro ao processar mentoria com a IA.");
+    } finally {
+      setCoachingAi(false);
+    }
+  };
+
   // Envio de Mensagem Privada no Chat da Equipe
   const handleSendTeamMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -486,6 +545,15 @@ function SuperAdminSupportContent() {
     } finally {
       setSendingTeamMessage(false);
     }
+  };
+
+  // Roteador de envio do chat interno (Nota Técnica vs Treinamento IA)
+  const handleSendTeamAction = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (internalMode === 'coach_ai') {
+      return handleCoachSupportAi(e);
+    }
+    return handleSendTeamMessage(e);
   };
 
   // Acionar Copiloto IA de Atendimento Híbrido
@@ -1238,6 +1306,24 @@ function SuperAdminSupportContent() {
                                     <CheckCheck size={13} className="text-blue-400" />
                                   ) : null}
                                 </div>
+
+                                {/* Botão Executivo de Mentoria sobre a Resposta da Sofia */}
+                                {isAi && (
+                                  <div className="pt-1.5 mt-1.5 border-t border-cyan-500/20 flex items-center justify-between gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStartCoachingFromMessage(msg)}
+                                      className="text-[10px] font-semibold text-cyan-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer py-0.5 px-1.5 rounded bg-cyan-950/60 hover:bg-cyan-900/70 border border-cyan-500/30"
+                                      title="Orientar a Sofia sobre esta resposta no canal interno de treinamento"
+                                    >
+                                      <GraduationCap size={11} className="text-cyan-400" />
+                                      <span>Orientar / Treinar Sofia</span>
+                                    </button>
+                                    <span className="text-[9px] text-cyan-400/80 font-mono">
+                                      Resposta Autônoma
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1247,41 +1333,23 @@ function SuperAdminSupportContent() {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* 4. COMPOSER NO PADRÃO DO LAYOUT */}
+                  {/* 4. COMPOSER NO PADRÃO DO LAYOUT (SEM EMOJIS INFORMÁIS) */}
                   <div className="p-3 border-t border-slate-800 bg-[#070D1B] z-10 relative shrink-0">
-                    
-                    {/* Popover Rápido de Emojis */}
-                    {showEmojiPicker && (
-                      <div className="absolute bottom-16 left-4 bg-[#0B1224] border border-slate-800 rounded-xl p-2 shadow-2xl z-30 flex flex-wrap gap-1.5 max-w-xs animate-fadeIn">
-                        {QUICK_EMOJIS.map((emoji, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              setClientMessage(prev => prev + emoji);
-                              setShowEmojiPicker(false);
-                            }}
-                            className="w-8 h-8 rounded-lg hover:bg-slate-800 flex items-center justify-center text-base transition-colors cursor-pointer"
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
                     {/* Formulário de Envio */}
                     <form onSubmit={handleSendClientMessage} className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        {/* Botão Emoji */}
+                        {/* Botão Treinar IA */}
                         <button
                           type="button"
-                          onClick={() => setShowEmojiPicker(prev => !prev)}
-                          className={`p-2 rounded-lg transition-colors cursor-pointer shrink-0 ${
-                            showEmojiPicker ? "text-blue-400 bg-slate-800" : "text-slate-400 hover:text-white hover:bg-slate-800"
-                          }`}
-                          title="Inserir emoji"
+                          onClick={() => {
+                            setInternalMode('coach_ai');
+                            setActiveSubView('team_chat');
+                          }}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-950/40 hover:bg-blue-900/50 border border-blue-500/30 text-xs font-semibold text-blue-300 transition-all cursor-pointer shrink-0 shadow-sm"
+                          title="Abrir o canal de treinamento da equipe para orientar a Sofia"
                         >
-                          <Smile size={20} />
+                          <Bot size={14} className="text-cyan-400" />
+                          <span className="hidden sm:inline">Treinar IA</span>
                         </button>
 
                         {/* Botão Copiloto IA (Sugerir IA) */}
@@ -1419,47 +1487,47 @@ function SuperAdminSupportContent() {
         )}
 
         {/* ========================================================================= */}
-        {/* SUB-ABA 2: CHAT INTERNO DA EQUIPE (SUBCATEGORIA DE OPERADORES)           */}
+        {/* SUB-ABA 2: CHAT INTERNO DA EQUIPE & MENTORIA DA IA (SOFIA)               */}
         {/* ========================================================================= */}
         {activeSubView === 'team_chat' && (
           <div className="flex-1 bg-[#0B1224] border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-xl">
             
             {/* Header da Subcategoria da Equipe */}
-            <div className="p-4 border-b border-purple-500/30 bg-gradient-to-r from-[#120D24] to-[#0B1224] flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="p-4 border-b border-slate-800 bg-gradient-to-r from-[#0F172A] to-[#0B1224] flex flex-wrap items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-300 shrink-0">
-                  <Users size={20} />
+                <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-300 shrink-0">
+                  <Bot size={20} className="text-cyan-400" />
                 </div>
                 <div>
                   <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                    Canal Interno da Equipe de Atendimento
-                    <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.2 rounded-full font-mono uppercase">
-                      🔒 Confidencial
+                    Canal Interno & Mentoria da IA de Suporte
+                    <span className="text-[10px] bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded-full font-mono uppercase flex items-center gap-1 font-bold">
+                      <Lock size={10} /> Confidencial
                     </span>
                   </h2>
                   <p className="text-xs text-slate-400">
-                    Alinhamentos técnicos e notas entre operadores master e atendentes. <strong>100% invisível para o cliente.</strong>
+                    Alinhamentos técnicos da equipe e mentoria direta para treinar e ajustar as diretrizes da Sofia. <strong>100% invisível para o cliente.</strong>
                   </p>
                 </div>
               </div>
 
               {selectedTicket && (
-                <div className="flex items-center gap-2 bg-[#070D1B] border border-purple-500/30 px-3 py-1.5 rounded-xl text-xs">
+                <div className="flex items-center gap-2 bg-[#070D1B] border border-slate-800 px-3 py-1.5 rounded-xl text-xs">
                   <span className="text-slate-400">Chamado Vinculado:</span>
-                  <span className="font-mono text-purple-300 font-bold">#{selectedTicket.ticketNumber}</span>
+                  <span className="font-mono text-cyan-400 font-bold">#{selectedTicket.ticketNumber}</span>
                   <span className="text-white font-semibold truncate max-w-xs">{selectedTicket.tenant?.name}</span>
                 </div>
               )}
             </div>
 
             {/* Banner de Garantia e Blindagem */}
-            <div className="px-4 py-2 bg-purple-950/30 border-b border-purple-500/20 flex items-center justify-between text-xs text-purple-200">
+            <div className="px-4 py-2 bg-slate-900/60 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300">
               <div className="flex items-center gap-2">
-                <ShieldCheck size={15} className="text-purple-400" />
-                <span>Ambiente Seguro: Nenhuma mensagem postada nesta aba é transmitida para o cliente ou para fora da equipe.</span>
+                <ShieldCheck size={15} className="text-blue-400 shrink-0" />
+                <span>Ambiente Seguro: Nenhuma anotação ou instrução de treinamento postada nesta aba é transmitida para o cliente.</span>
               </div>
-              <span className="text-[10px] font-mono text-purple-400 font-bold hidden sm:inline">
-                {teamMessages.length} mensagem(ns) interna(s)
+              <span className="text-[10px] font-mono text-slate-400 font-bold hidden sm:inline">
+                {teamMessages.length} registro(s) interno(s)
               </span>
             </div>
 
@@ -1467,76 +1535,230 @@ function SuperAdminSupportContent() {
             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-[#070D1B]/50">
               {teamMessages.length === 0 ? (
                 <div className="py-16 text-center text-slate-500 text-xs flex flex-col items-center max-w-md mx-auto">
-                  <Lock size={32} className="opacity-30 mb-2 text-purple-400" />
-                  <p className="text-slate-300 font-bold text-sm mb-1">Nenhuma anotação de equipe registrada ainda.</p>
+                  <Lock size={32} className="opacity-30 mb-2 text-slate-400" />
+                  <p className="text-slate-300 font-bold text-sm mb-1">Nenhum registro interno ainda.</p>
                   <p className="text-slate-400">
-                    Use o campo abaixo para registrar notas técnicas, alinhamentos confidenciais ou trocar instruções com os demais operadores sobre o atendimento deste chamado.
+                    Use o campo abaixo para registrar notas técnicas ou orientar a Sofia sobre correções, novas regras e postura para este chamado.
                   </p>
                 </div>
               ) : (
-                teamMessages.map((msg: any, idx: number) => (
-                  <div key={msg.id || idx} className="max-w-2xl mx-auto w-full">
-                    <div className="p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/30 space-y-1.5 shadow-sm">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-purple-300 border-b border-purple-500/20 pb-1">
-                        <div className="flex items-center gap-2">
-                          <User size={13} className="text-purple-400" />
-                          <span>{msg.senderName || "Operador"}</span>
-                          <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.2 rounded font-mono uppercase">
-                            {msg.senderRole || "OPERADOR"}
+                teamMessages.map((msg: any, idx: number) => {
+                  const isSofiaResponse = msg.senderRole === "AI_AGENT";
+                  const isCoachingPrompt = msg.content?.startsWith("[ORIENTAÇÃO IA]:");
+                  const quoteAttachment = Array.isArray(msg.attachments) ? msg.attachments.find((a: any) => a.type === 'quote') : null;
+
+                  if (isSofiaResponse) {
+                    return (
+                      <div key={msg.id || idx} className="max-w-2xl mx-auto w-full animate-fadeIn">
+                        <div className="p-4 rounded-xl bg-gradient-to-br from-[#0c223c]/90 to-[#081729]/95 border border-cyan-500/40 space-y-2 shadow-lg ring-1 ring-cyan-500/20">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-cyan-300 border-b border-cyan-500/20 pb-1.5">
+                            <div className="flex items-center gap-2">
+                              <Bot size={15} className="text-cyan-400 shrink-0" />
+                              <span className="text-white">{msg.senderName || "Sofia - Suporte Vallor"}</span>
+                              <span className="text-[9px] bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-1.5 py-0.2 rounded font-mono font-bold uppercase">
+                                Diretriz Assimilada
+                              </span>
+                            </div>
+                            <span className="text-slate-400 font-mono text-[10px]">
+                              {new Date(msg.createdAt).toLocaleString("pt-BR")}
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-slate-100 whitespace-pre-wrap leading-relaxed font-mono text-[11px]">
+                            {msg.content}
+                          </p>
+
+                          <div className="pt-2 border-t border-cyan-500/20 flex items-center justify-between">
+                            <span className="text-[10px] text-cyan-400 font-medium">
+                              Configuração atualizada no banco de dados e em vigor.
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveSubView('ai_config');
+                                fetchAiConfig();
+                              }}
+                              className="text-[11px] font-bold text-cyan-300 hover:text-white flex items-center gap-1.5 hover:underline cursor-pointer"
+                            >
+                              <Settings size={12} />
+                              <span>Ver no Painel da IA</span>
+                              <ArrowRight size={11} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (isCoachingPrompt) {
+                    return (
+                      <div key={msg.id || idx} className="max-w-2xl mx-auto w-full animate-fadeIn">
+                        <div className="p-3.5 rounded-xl bg-blue-950/25 border border-blue-500/40 space-y-2 shadow-sm">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-blue-300 border-b border-blue-500/20 pb-1">
+                            <div className="flex items-center gap-2">
+                              <GraduationCap size={14} className="text-blue-400 shrink-0" />
+                              <span className="text-white">{msg.senderName || "Super Admin"}</span>
+                              <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.2 rounded font-mono uppercase font-bold">
+                                Treinamento / Mentoria
+                              </span>
+                            </div>
+                            <span className="text-slate-400 font-mono text-[10px]">
+                              {new Date(msg.createdAt).toLocaleString("pt-BR")}
+                            </span>
+                          </div>
+
+                          {quoteAttachment?.text && (
+                            <div className="p-2 rounded-lg bg-[#070D1B] border border-blue-500/20 text-[11px] text-slate-300 italic border-l-2 border-l-cyan-400">
+                              <span className="text-[10px] text-cyan-400 font-bold block not-italic uppercase mb-0.5">Resposta do Chamado:</span>
+                              &ldquo;{quoteAttachment.text}&rdquo;
+                            </div>
+                          )}
+
+                          <p className="text-xs text-slate-100 whitespace-pre-wrap leading-relaxed">
+                            {msg.content.replace("[ORIENTAÇÃO IA]:", "").trim()}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={msg.id || idx} className="max-w-2xl mx-auto w-full">
+                      <div className="p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/30 space-y-1.5 shadow-sm">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-purple-300 border-b border-purple-500/20 pb-1">
+                          <div className="flex items-center gap-2">
+                            <User size={13} className="text-purple-400 shrink-0" />
+                            <span>{msg.senderName || "Operador"}</span>
+                            <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.2 rounded font-mono uppercase">
+                              {msg.senderRole || "OPERADOR"}
+                            </span>
+                          </div>
+                          <span className="text-slate-400 font-mono text-[10px]">
+                            {new Date(msg.createdAt).toLocaleString("pt-BR")}
                           </span>
                         </div>
-                        <span className="text-slate-400 font-mono text-[10px]">
-                          {new Date(msg.createdAt).toLocaleString("pt-BR")}
-                        </span>
-                      </div>
 
-                      <p className="text-xs text-slate-100 whitespace-pre-wrap leading-relaxed">
-                        {msg.content}
-                      </p>
+                        <p className="text-xs text-slate-100 whitespace-pre-wrap leading-relaxed">
+                          {msg.content}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
               <div ref={teamMessagesEndRef} />
             </div>
 
-            {/* Composer Privativo da Equipe */}
-            <div className="p-4 border-t border-purple-500/30 bg-[#070D1B]">
-              <form onSubmit={handleSendTeamMessage} className="space-y-2 max-w-3xl mx-auto">
-                <div className="flex items-end gap-2 bg-[#0B1224] border border-purple-500/40 rounded-2xl p-2 focus-within:border-purple-400 focus-within:ring-1 focus-within:ring-purple-400/30 transition-all">
+            {/* Composer Privativo da Equipe & Mentoria */}
+            <div className="p-4 border-t border-slate-800 bg-[#070D1B]">
+              <form onSubmit={handleSendTeamAction} className="space-y-2.5 max-w-3xl mx-auto">
+                {/* Alternador de Modo: Nota Técnica vs Mentoria da IA */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center bg-[#0B1224] p-1 rounded-xl border border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setInternalMode('coach_ai')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        internalMode === 'coach_ai'
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <Bot size={13} className={internalMode === 'coach_ai' ? 'text-cyan-300' : 'text-slate-500'} />
+                      <span>Treinar & Orientar Sofia (IA)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setInternalMode('note')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        internalMode === 'note'
+                          ? 'bg-purple-600 text-white shadow-sm'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <Lock size={12} className={internalMode === 'note' ? 'text-purple-200' : 'text-slate-500'} />
+                      <span>Nota Técnica Interna</span>
+                    </button>
+                  </div>
+
+                  <span className="text-[10px] text-slate-500 font-mono hidden md:inline">
+                    {internalMode === 'coach_ai' ? "Modo Curadoria Ativo" : "Modo Alinhamento da Equipe"}
+                  </span>
+                </div>
+
+                {/* Banner de Mensagem Citada (se vindo do chat do cliente) */}
+                {quotedCoachMessage && (
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-blue-950/40 border border-blue-500/40 text-xs text-blue-200 animate-fadeIn">
+                    <div className="flex items-center gap-2 truncate">
+                      <GraduationCap size={14} className="text-cyan-400 shrink-0" />
+                      <span className="font-bold text-white shrink-0">Orientando sobre resposta da Sofia:</span>
+                      <span className="truncate italic text-slate-300 text-[11px]">&ldquo;{quotedCoachMessage.content}&rdquo;</span>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => setQuotedCoachMessage(null)}
+                      className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors shrink-0 ml-2 cursor-pointer"
+                      title="Remover citação"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Caixa de Texto */}
+                <div className={`flex items-end gap-2 bg-[#0B1224] border rounded-2xl p-2.5 transition-all ${
+                  internalMode === 'coach_ai'
+                    ? 'border-blue-500/50 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400/30'
+                    : 'border-purple-500/40 focus-within:border-purple-400 focus-within:ring-1 focus-within:ring-purple-400/30'
+                }`}>
                   <textarea
                     value={teamMessage}
                     onChange={(e) => setTeamMessage(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
-                        handleSendTeamMessage();
+                        handleSendTeamAction();
                       }
                     }}
-                    placeholder="Escreva um alinhamento interno ou nota técnica para os operadores..."
+                    placeholder={
+                      internalMode === 'coach_ai'
+                        ? "Diga à Sofia o que ela deve ajustar, retirar, acrescentar na base ou como conduzir melhor este tipo de chamado..."
+                        : "Escreva um alinhamento interno ou nota técnica para os operadores..."
+                    }
                     rows={2}
                     className="flex-1 bg-transparent py-1 px-2 text-xs text-white placeholder:text-slate-500 outline-none resize-none max-h-32 custom-scrollbar"
                   />
 
                   <button
                     type="submit"
-                    disabled={sendingTeamMessage || !teamMessage.trim()}
-                    className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 shrink-0 cursor-pointer shadow-md"
+                    disabled={coachingAi || sendingTeamMessage || !teamMessage.trim()}
+                    className={`px-4 py-2.5 rounded-xl text-white font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 shrink-0 cursor-pointer shadow-md ${
+                      internalMode === 'coach_ai'
+                        ? 'bg-blue-600 hover:bg-blue-500'
+                        : 'bg-purple-600 hover:bg-purple-500'
+                    }`}
                   >
-                    {sendingTeamMessage ? (
-                      <Loader2 size={14} className="animate-spin" />
+                    {coachingAi || sendingTeamMessage ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        <span>{internalMode === 'coach_ai' ? "Sintetizando..." : "Registrando..."}</span>
+                      </>
                     ) : (
                       <>
-                        <Users size={14} />
-                        <span>Registrar na Equipe</span>
+                        {internalMode === 'coach_ai' ? <Bot size={14} /> : <Lock size={13} />}
+                        <span>{internalMode === 'coach_ai' ? "Ensinar Sofia" : "Registrar na Equipe"}</span>
                       </>
                     )}
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between text-[10px] text-purple-400/80 px-2">
-                  <span>🔒 Visível exclusivamente para operadores master e atendentes cadastrados no Vallor.</span>
-                  <span>Enter para registrar • Shift + Enter para quebra de linha</span>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 px-2">
+                  <span className="flex items-center gap-1">
+                    <Lock size={11} className="text-slate-500 shrink-0" />
+                    <span>Visível exclusivamente para operadores master do Vallor.</span>
+                  </span>
+                  <span>Enter para enviar • Shift + Enter para quebra de linha</span>
                 </div>
               </form>
             </div>

@@ -60,7 +60,7 @@ export class TenantGuard implements CanActivate {
     if (!isTenantActive) {
       throw new UnauthorizedException({
         code: 'TENANT_BLOCKED',
-        message: 'Acesso suspenso: sua empresa está bloqueada pela administração do VERSUS.',
+        message: 'Acesso suspenso: sua empresa está bloqueada pela administração do Vallor.',
       });
     }
 

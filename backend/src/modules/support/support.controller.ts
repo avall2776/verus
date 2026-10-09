@@ -11,6 +11,7 @@ import { CreateTicketMessageDto } from './dto/create-ticket-message.dto';
 import { UpdateSupportAiConfigDto } from './dto/update-support-ai-config.dto';
 import { ToggleTicketAiDto } from './dto/toggle-ticket-ai.dto';
 import { SubmitCsatDto } from './dto/submit-csat.dto';
+import { CoachSupportAiDto } from './dto/coach-support-ai.dto';
 
 @UseGuards(JwtAuthGuard, PlanGuard)
 @RequireModule('support')
@@ -148,5 +149,16 @@ export class SupportController {
   ) {
     const tenantId = req.user.tenantId;
     return this.supportService.submitCsat(id, tenantId, dto);
+  }
+
+  @Post('tickets/:id/coach-ai')
+  async coachSupportAi(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() dto: CoachSupportAiDto,
+  ) {
+    const isSuperAdmin = Boolean(req.user?.isSuperAdmin || req.user?.role === 'SUPER_ADMIN');
+    const userId = req.user.id || req.user.userId;
+    return this.supportService.coachSupportAi(id, dto, userId, isSuperAdmin);
   }
 }

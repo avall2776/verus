@@ -2398,6 +2398,48 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
   - [x] `npx prisma db push` e `npx prisma generate` sincronizados com o Supabase.
   - [x] `npx tsc --noEmit` e `npm run build` aprovados com 0 erros no backend e frontend.
 
+- [x] **[09/10/2026 - 10:15]** [IDE 1] Conclusão: Treinamento e Mentoria Interativa da IA de Suporte via Chat Interno (Fase 84):
+  - **Status**: Concluído com Sucesso, Homologado e Deployed em Produção.
+  - **Motor de Mentoria e Curadoria Neural da IA**:
+    - DTO `CoachSupportAiDto` implementado para envio estruturado de feedbacks e citações de mensagens.
+    - Método `coachFromFeedback` no `SupportAiService` com categorização neural em 3 camadas (`PERSONALITY_PROMPT`, `KNOWLEDGE_BASE`, `GUARDRAILS`).
+    - Atualização transacional da tabela `SupportAiConfig` no banco de dados sem sobrescrever diretrizes válidas preexistentes.
+    - Persistência da instrução do administrador e do parecer de confirmação de aprendizado no histórico interno do chamado (`TicketMessage` interno).
+    - Endpoint seguro `POST /support/tickets/:id/coach-ai` no `SupportController`.
+  - **Interface de Mentoria no Chat Interno da Equipe**:
+    - Alternador de modo de envio no compositor do Chat Interno: Modo Padrão (Nota Técnica Interna) vs Modo Mentoria (Treinar Sofia - IA).
+    - Design executivo monocromático VERSUS / Vallor com ícones vetoriais SVG de alto padrão (`lucide-react`), sem qualquer emoji de rede social.
+    - Exibição de cards formais de assimilação de diretrizes com indicação da camada atualizada e resumo da regra aprendida.
+  - **Atalho de Treinamento Direto no Atendimento ao Cliente**:
+    - Botão de ação executivo "Orientar / Treinar Sofia" diretamente em cada resposta da IA na aba de Atendimento ao Cliente.
+    - Citação automática do trecho da mensagem no compositor de mentoria da equipe.
+  - **Sincronização em Tempo Real (WebSocket)**:
+    - Emissão de evento via `ChatGateway` com `isAiCoachingUpdate: true` e a configuração atualizada `updatedConfig`.
+    - Atualização reativa imediata dos campos da aba "Agente IA de Suporte" sem necessidade de recarregar a página.
+  - **Compilação e Homologação**:
+    - Backend (`nest build`) aprovado com código 0.
+    - Frontend Next.js (`npm run build`) aprovado com código 0 em todas as 47 rotas.
+
+### Fase 84: Treinamento e Mentoria Interativa da IA de Suporte via Chat Interno (09/10/2026 - Manhã)
+- [x] **1. Backend - Motor de Mentoria e Curadoria Neural da IA**:
+  - [x] Criação do DTO `CoachSupportAiDto` para recepção de orientações de melhoria do Super Admin.
+  - [x] Implementação do método `coachFromFeedback` no `SupportAiService` com análise neural estruturada.
+  - [x] Classificação e atualização automática das 3 camadas: Prompt de Personalidade, Base de Conhecimento e Cancelas de Segurança.
+  - [x] Registro da confirmação de aprendizado no histórico interno do chamado (`TicketMessage` com `isInternal: true`, `senderRole: 'AI_AGENT'`).
+  - [x] Endpoint seguro no `SupportController`: `POST /support/tickets/:id/coach-ai`.
+- [x] **2. Frontend - Interface de Mentoria no Chat Interno da Equipe**:
+  - [x] Alternador corporativo de modo de envio no Chat Interno: `Nota Interna` vs `Treinamento da IA (Sofia)`.
+  - [x] Padrão estético corporativo monocromático e executivo, utilizando exclusivamente ícones vetoriais de alto padrão (sem emojis de redes sociais).
+  - [x] Exibição das confirmações de aprendizado da Sofia no histórico com formatação formal e detalhes do que foi incorporado.
+- [x] **3. Frontend - Atalho de Treinamento Direto no Chat do Cliente**:
+  - [x] Ação de mentoria direta em respostas da IA na aba de Atendimento ao Cliente para correção ágil de falhas ou termos.
+  - [x] Vinculação do contexto da mensagem do chamado na instrução enviada à IA.
+- [x] **4. Sincronização em Tempo Real e Persistência**:
+  - [x] Transmissão de eventos WebSocket para atualização instantânea dos campos da aba `Agente IA de Suporte` (`prompt`, `knowledgeBase`, `guardrails`).
+- [x] **5. Compilação, Validação e Deploy**:
+  - [x] Validação de tipos (`tsc`) e compilação de produção no backend e frontend.
+  - [x] Deploy e reinicialização de serviços na VPS e na nuvem.
+
 ---
 
 ## 📅 Próxima Sprint (Segunda-feira)
@@ -2428,9 +2470,4 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ---
 
-## 🌐 Backlog de Inovação e Expansão (Multi-Nicho)
-*Arquitetura agnóstica para expansão horizontal pós-consolidação do Agronegócio (SIGEF/CAR), mantendo o painel e o motor de IA e implementando novos adaptadores de fontes de dados por nicho.*
 
-- [ ] **Vertical Imobiliária:** Construir adaptadores para APIs de Geocodificação Reversa, ONR (Registro de Imóveis) e dados públicos de IPTU/Prefeituras para identificação de proprietários urbanos.
-- [ ] **Vertical Engenharia Civil:** Construir adaptadores para extração de Alvarás de Construção, dados do CREA, e portais de transparência para mapeamento de novas obras e responsáveis técnicos.
-- [ ] **Vertical Advocacia (Legal Tech):** Construir adaptadores para Diários Oficiais da União/Estados, CNJ e tribunais para mapear distribuição de processos, litígios corporativos e oportunidades tributárias.

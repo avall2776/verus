@@ -420,7 +420,7 @@ let SupportService = SupportService_1 = class SupportService {
                 },
                 {
                     id: 'cloud-infra',
-                    name: 'Infraestrutura Cloud VERSUS',
+                    name: 'Infraestrutura Cloud Vallor',
                     status: 'OPERATIONAL',
                     label: 'Latência Estável • 99.9% Uptime',
                     indicator: 'healthy'
@@ -432,7 +432,7 @@ let SupportService = SupportService_1 = class SupportService {
                     title: 'Versão 2.4: Suporte Flutuante & Suíte Comercial',
                     badge: 'Novidade',
                     date: '17/09/2026',
-                    description: 'Widget de Suporte Versus agora integrado em todas as telas da plataforma para consulta de chamados, status do ecossistema e suporte imediato.'
+                    description: 'Widget de Suporte Vallor agora integrado em todas as telas da plataforma para consulta de chamados, status do ecossistema e suporte imediato.'
                 },
                 {
                     id: 'quick-tips',
@@ -479,7 +479,7 @@ let SupportService = SupportService_1 = class SupportService {
             .map(m => `[${m.isInternal ? 'NOTA INTERNA' : m.senderRole} - ${m.senderName}]: ${m.content}`)
             .join('\n');
         const prompt = `
-Você é o Copiloto IA de Atendimento ao Cliente e Suporte Técnico da plataforma VERSUS (SaaS corporativo de CRM Omnichannel, IA de Vendas Vitor, WhatsApp Cloud API, Assinaturas Digitais e Métricas Comerciais).
+Você é o Copiloto IA de Atendimento ao Cliente e Suporte Técnico da plataforma Vallor (SaaS corporativo de CRM Omnichannel, IA de Vendas Vitor, WhatsApp Cloud API, Assinaturas Digitais e Métricas Comerciais).
 Sua missão é atuar como copiloto do atendente humano, gerando uma resposta técnica de alto nível, precisa, acolhedora e empática para que o operador humano revise e envie no chat ao vivo.
 
 DADOS DO CHAMADO:
@@ -534,7 +534,7 @@ INSTRUÇÕES PARA O COPILOTO:
         const firstName = clientName.split(' ')[0];
         return {
             summary: `Atendimento sobre ${ticket.subject} (${ticket.category})`,
-            suggestedResponse: `Olá, ${firstName}! Tudo bem?\n\nAnalisamos a sua solicitação sobre "${ticket.subject}". Já realizamos as verificações no ambiente e orientamos seguir os passos indicados no painel VERSUS.\n\nFicamos no aguardo da sua confirmação ou caso surja qualquer outra dúvida técnica. Nossa equipe está à total disposição!\n\nAtenciosamente,\nEquipe de Atendimento VERSUS`,
+            suggestedResponse: `Olá, ${firstName}! Tudo bem?\n\nAnalisamos a sua solicitação sobre "${ticket.subject}". Já realizamos as verificações no ambiente e orientamos seguir os passos indicados no painel Vallor.\n\nFicamos no aguardo da sua confirmação ou caso surja qualquer outra dúvida técnica. Nossa equipe está à total disposição!\n\nAtenciosamente,\nEquipe de Atendimento Vallor`,
             recommendedStatus: 'WAITING_CLIENT',
             recommendedStatusReason: 'Aguardando validação do cliente após orientação técnica.',
             keyActions: [
@@ -548,6 +548,16 @@ INSTRUÇÕES PARA O COPILOTO:
     }
     async updateAiConfig(dto) {
         return this.supportAiService.updateConfig(dto);
+    }
+    async coachSupportAi(ticketId, dto, userId, isSuperAdmin) {
+        if (!isSuperAdmin) {
+            throw new common_1.BadRequestException('Apenas operadores administradores master podem orientar a inteligência artificial.');
+        }
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true },
+        });
+        return this.supportAiService.coachFromFeedback(ticketId, dto, userId, user?.name);
     }
     async toggleTicketAi(ticketId, isPaused, tenantId, isSuperAdmin) {
         const where = isSuperAdmin ? { id: ticketId } : { id: ticketId, tenantId };

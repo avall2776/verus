@@ -91,7 +91,7 @@ export default function SoftphoneModal({
     providerName: "Direct Call Telecom",
     sipHost: "187.127.10.166",
     sipPort: 5060,
-    sipUsername: "versus_trunk_01",
+    sipUsername: "vallor_trunk_01",
     sipPassword: "••••••••",
     webrtcWssUrl: "wss://187.127.10.166:7443",
     autoRecord: true,

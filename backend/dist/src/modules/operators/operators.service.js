@@ -222,7 +222,7 @@ let OperatorsService = OperatorsService_1 = class OperatorsService {
                     recipientName: newOperator.name,
                     role: dto.roleTitle || 'Atendente de Suporte',
                     initialPassword: rawPass,
-                    inviterName: inviterName || 'Super Admin VERSUS',
+                    inviterName: inviterName || 'Super Admin Vallor',
                 });
                 emailSent = inviteRes.sent;
                 emailError = inviteRes.error;
