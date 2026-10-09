@@ -14,8 +14,8 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
-
 import { DealModal } from "@/components/crm/DealModal";
+import { useSocket } from "@/components/ui/SocketProvider";
 
 const DEFAULT_COLUMNS = [
   { id: "seed", title: "LEADS SEED", color: "text-gray-400", bgLight: "bg-gray-500/10", borderLight: "border-gray-500/30", borderColor: "border-t-gray-500" },
@@ -193,6 +193,33 @@ function CrmContent() {
   useEffect(() => {
     fetchDeals();
   }, []);
+
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleDealUpdated = (updatedDeal: any) => {
+      if (!updatedDeal?.id) return;
+      setDeals(prev => {
+        const exists = prev.some(d => d.id === updatedDeal.id);
+        if (exists) {
+          return prev.map(d => d.id === updatedDeal.id ? { ...d, ...updatedDeal } : d);
+        }
+        return [updatedDeal, ...prev];
+      });
+      setSelectedDeal((curr: any) => {
+        if (curr && curr.id === updatedDeal.id) {
+          return { ...curr, ...updatedDeal };
+        }
+        return curr;
+      });
+    };
+
+    socket.on('dealUpdated', handleDealUpdated);
+    return () => {
+      socket.off('dealUpdated', handleDealUpdated);
+    };
+  }, [socket]);
 
   const [dealAction, setDealAction] = useState<'task' | 'event' | 'chat' | null>(null);
 
@@ -1442,7 +1469,7 @@ function CrmContent() {
                                       </span>
                                     </div>
                                     <p className={`text-xs text-gray-300 leading-relaxed ${isDescExpanded ? 'whitespace-pre-wrap' : 'line-clamp-1'}`}>
-                                      {deal.notes || deal.description || "Lead recebido pelo formulário nativo Meta Ads solicitando contato urgente."}
+                                      {deal.notes || deal.metadata?.resumo || deal.description || ""}
                                     </p>
                                     <button
                                       type="button"
@@ -1941,19 +1968,38 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
 
           {/* CAIXA CINZA DE METADADOS & ACCORDION */}
           <div className="rounded-lg bg-[#0d1117] p-3 text-xs text-slate-300 border border-slate-800/60" onClick={(e) => e.stopPropagation()}>
-            <p className="font-bold text-slate-200">ORIGEM: [{deal.contact?.source || 'ORGÂNICO'}]</p>
-            <p className="font-semibold text-slate-400">FORMULÁRIO: VERSÁTIL</p>
-            <p className="mt-1 text-slate-400 line-clamp-2">
-              Lead recebido pelo formulário nativo da Meta Ads solicitando contato comercial urgente.
-            </p>
+            <p className="font-bold text-slate-200">ORIGEM: [{deal.contact?.source || deal.metadata?.source || 'WHATSAPP'}]</p>
+            {Boolean(deal.metadata?.formName || deal.metadata?.campaign) && (
+              <p className="font-semibold text-slate-400">FORMULÁRIO: {deal.metadata?.formName || deal.metadata?.campaign}</p>
+            )}
+            {deal.notes ? (
+              <p className="mt-1 text-slate-400 line-clamp-2">
+                {deal.notes}
+              </p>
+            ) : null}
 
             {/* CONTEÚDO EXPANSÍVEL */}
             {isExpanded && (
               <div className="mt-2.5 space-y-1.5 border-t border-slate-800/80 pt-2 text-slate-300 text-[11px] animate-in slide-in-from-top-2">
-                <p className="font-bold text-slate-200">RESPOSTAS DO FORMULÁRIO:</p>
-                <p>• <span className="text-slate-400">Qual modelo:</span> Versátil Tractor</p>
-                <p>• <span className="text-slate-400">Cidade:</span> São Paulo - SP</p>
-                <p>• <span className="text-slate-400">E-mail:</span> {deal.contact?.email || "contato@email.com"}</p>
+                <p className="font-bold text-slate-200">RESPOSTAS DO FORMULÁRIO & METADADOS:</p>
+                {(deal.metadata?.model || deal.metadata?.product || (deal.title && !['Atendimento Comercial', 'Novo Lead', 'Nova Oportunidade', deal.contact?.name].includes(deal.title))) && (
+                  <p>• <span className="text-slate-400">Interesse:</span> {deal.metadata?.model || deal.metadata?.product || deal.title}</p>
+                )}
+                {(deal.metadata?.city || deal.contact?.city || deal.contact?.address) && (
+                  <p>• <span className="text-slate-400">Cidade:</span> {deal.metadata?.city || deal.contact?.city || deal.contact?.address}</p>
+                )}
+                {(deal.contact?.email || deal.metadata?.email) && (
+                  <p>• <span className="text-slate-400">E-mail:</span> {deal.contact?.email || deal.metadata?.email}</p>
+                )}
+                {deal.metadata?.company && (
+                  <p>• <span className="text-slate-400">Empresa:</span> {deal.metadata.company}</p>
+                )}
+                {deal.metadata?.role && (
+                  <p>• <span className="text-slate-400">Cargo:</span> {deal.metadata.role}</p>
+                )}
+                {!deal.metadata?.model && !deal.metadata?.product && !deal.metadata?.city && !deal.contact?.email && !deal.metadata?.email && !deal.metadata?.formName && (
+                  <p className="text-slate-500 italic">Sem metadados adicionais.</p>
+                )}
               </div>
             )}
 

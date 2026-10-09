@@ -27,7 +27,7 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
         this.logger = new common_1.Logger(AiProcessor_1.name);
     }
     async process(job) {
-        const { tenantId, conversationId, contactId } = job.data;
+        const { tenantId, conversationId, contactId, formName, source } = job.data;
         this.logger.debug(`Iniciando orquestração de IA para a conversa [${conversationId}]`);
         const conversation = await this.prisma.conversation.findUnique({
             where: { id: conversationId },
@@ -170,6 +170,72 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
                 contact: { phone: conversation.contact.phone, name: conversation.contact.name }
             });
         }
+        try {
+            const contactUpdateData = {};
+            if (aiResponse.email_cliente && !conversation.contact.email) {
+                contactUpdateData.email = aiResponse.email_cliente;
+            }
+            if (aiResponse.nome_cliente &&
+                aiResponse.nome_cliente !== 'Não informado' &&
+                (!conversation.contact.name ||
+                    conversation.contact.name === 'Cliente WhatsApp' ||
+                    conversation.contact.name.includes('@lid') ||
+                    conversation.contact.name.startsWith('WhatsApp'))) {
+                contactUpdateData.name = aiResponse.nome_cliente;
+            }
+            if (Object.keys(contactUpdateData).length > 0) {
+                await this.prisma.contact.update({
+                    where: { id: contactId },
+                    data: contactUpdateData,
+                }).catch(() => { });
+            }
+            const existingDeal = await this.prisma.deal.findFirst({
+                where: { tenantId, contactId },
+                orderBy: { updatedAt: 'desc' },
+                include: { contact: true, assignee: true },
+            });
+            const currentMeta = existingDeal?.metadata || {};
+            const updatedMeta = {
+                ...currentMeta,
+                ...(aiResponse.produto_interesse &&
+                    aiResponse.produto_interesse !== 'Não informado' &&
+                    aiResponse.produto_interesse !== 'Atendimento Comercial' &&
+                    aiResponse.produto_interesse !== 'Atendimento Geral'
+                    ? { model: aiResponse.produto_interesse, product: aiResponse.produto_interesse }
+                    : {}),
+                ...(aiResponse.cidade_uf ? { city: aiResponse.cidade_uf } : {}),
+                ...(aiResponse.email_cliente ? { email: aiResponse.email_cliente } : {}),
+                ...(aiResponse.empresa_cliente ? { company: aiResponse.empresa_cliente } : {}),
+                ...(aiResponse.cargo_cliente ? { role: aiResponse.cargo_cliente } : {}),
+                ...(aiResponse.formulario_origem || formName ? { formName: aiResponse.formulario_origem || formName } : {}),
+                source: source || conversation.contact.source || currentMeta.source || 'WhatsApp',
+            };
+            if (existingDeal && !aiResponse.transferir_vendedor) {
+                const updatedDeal = await this.prisma.deal.update({
+                    where: { id: existingDeal.id },
+                    data: {
+                        ...(aiResponse.produto_interesse &&
+                            aiResponse.produto_interesse !== 'Não informado' &&
+                            aiResponse.produto_interesse !== 'Atendimento Comercial' &&
+                            (!existingDeal.title ||
+                                existingDeal.title === 'Atendimento Comercial' ||
+                                existingDeal.title === 'Novo Lead' ||
+                                existingDeal.title === existingDeal.contact?.name)
+                            ? { title: aiResponse.produto_interesse }
+                            : {}),
+                        ...(aiResponse.resumo_atendimento ? { notes: aiResponse.resumo_atendimento } : {}),
+                        metadata: updatedMeta,
+                    },
+                    include: { contact: true, assignee: true },
+                }).catch(() => null);
+                if (updatedDeal) {
+                    this.chatGateway.emitHandoff(tenantId, updatedDeal);
+                }
+            }
+        }
+        catch (enrichErr) {
+            this.logger.warn(`Falha não-bloqueante no auto-enriquecimento do Lead pela IA: ${enrichErr.message}`);
+        }
         if (aiResponse.transferir_vendedor) {
             this.logger.log(`Lead solicitou atendimento humano. Executando protocolo de Transbordo...`);
             let assignedTo = null;
@@ -192,21 +258,60 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
                 where: { id: conversationId },
                 data: { status: 'human_takeover', assignedTo }
             });
-            const dealData = {
-                tenantId,
-                contactId,
-                title: aiResponse.produto_interesse || 'Atendimento Comercial',
-                value: 0,
-                status: 'new',
-                notes: aiResponse.resumo_atendimento,
-            };
-            const updatedDeal = await this.prisma.deal.upsert({
-                where: { id: `deal_${conversationId}` },
-                create: dealData,
-                update: dealData
-            }).catch(async () => {
-                return await this.prisma.deal.create({ data: dealData });
+            const existingDealForHandoff = await this.prisma.deal.findFirst({
+                where: { tenantId, contactId },
+                orderBy: { updatedAt: 'desc' },
             });
+            const currentMetaHandoff = existingDealForHandoff?.metadata || {};
+            const fullMeta = {
+                ...currentMetaHandoff,
+                ...(aiResponse.produto_interesse &&
+                    aiResponse.produto_interesse !== 'Não informado' &&
+                    aiResponse.produto_interesse !== 'Atendimento Geral'
+                    ? { model: aiResponse.produto_interesse, product: aiResponse.produto_interesse }
+                    : {}),
+                ...(aiResponse.cidade_uf ? { city: aiResponse.cidade_uf } : {}),
+                ...(aiResponse.email_cliente ? { email: aiResponse.email_cliente } : {}),
+                ...(aiResponse.empresa_cliente ? { company: aiResponse.empresa_cliente } : {}),
+                ...(aiResponse.cargo_cliente ? { role: aiResponse.cargo_cliente } : {}),
+                ...(aiResponse.formulario_origem || formName ? { formName: aiResponse.formulario_origem || formName } : {}),
+                source: source || conversation.contact.source || currentMetaHandoff.source || 'WhatsApp',
+            };
+            let updatedDeal;
+            if (existingDealForHandoff) {
+                updatedDeal = await this.prisma.deal.update({
+                    where: { id: existingDealForHandoff.id },
+                    data: {
+                        title: aiResponse.produto_interesse &&
+                            aiResponse.produto_interesse !== 'Não informado' &&
+                            aiResponse.produto_interesse !== 'Atendimento Comercial' &&
+                            aiResponse.produto_interesse !== 'Atendimento Geral'
+                            ? aiResponse.produto_interesse
+                            : existingDealForHandoff.title,
+                        notes: aiResponse.resumo_atendimento || existingDealForHandoff.notes,
+                        metadata: fullMeta,
+                    },
+                    include: { contact: true, assignee: true },
+                });
+            }
+            else {
+                updatedDeal = await this.prisma.deal.create({
+                    data: {
+                        tenantId,
+                        contactId,
+                        title: aiResponse.produto_interesse &&
+                            aiResponse.produto_interesse !== 'Não informado' &&
+                            aiResponse.produto_interesse !== 'Atendimento Geral'
+                            ? aiResponse.produto_interesse
+                            : 'Atendimento Comercial',
+                        value: 0,
+                        status: 'new',
+                        notes: aiResponse.resumo_atendimento,
+                        metadata: fullMeta,
+                    },
+                    include: { contact: true, assignee: true },
+                });
+            }
             this.chatGateway.emitHandoff(tenantId, updatedDeal);
             let rawCandidatePhone = aiResponse.telefone_cliente || conversation.contact.phone;
             if (rawCandidatePhone && rawCandidatePhone.includes('@lid')) {

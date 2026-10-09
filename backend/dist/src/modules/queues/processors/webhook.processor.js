@@ -50,7 +50,13 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
         const remoteJid = message.from;
         const fromMe = Boolean(evolutionMetadata?.fromMe || message.fromMe || false);
         const pushName = contactInfo?.profile?.name || remoteJid;
-        this.logger.debug(`Processando job [${job.id}] - Mensagem ${fromMe ? 'OUTBOUND (do celular)' : 'INBOUND'} de/para ${remoteJid} (Tenant: ${tenantId})`);
+        const adReferral = message?.referral ||
+            evolutionMetadata?.contextInfo?.externalAdReply ||
+            message?.contextInfo?.externalAdReply ||
+            message?.message?.extendedTextMessage?.contextInfo?.externalAdReply;
+        const adCampaignName = adReferral?.headline || adReferral?.title || null;
+        const detectedSource = adReferral ? 'Meta Ads' : 'WhatsApp';
+        this.logger.debug(`Processando job [${job.id}] - Mensagem ${fromMe ? 'OUTBOUND (do celular)' : 'INBOUND'} de/para ${remoteJid} (Tenant: ${tenantId}, Origem: ${detectedSource})`);
         const existingMessage = await this.prisma.message.findUnique({
             where: {
                 tenantId_providerMessageId: {
@@ -338,7 +344,7 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                     phone: targetPhone,
                     whatsappLid: lidId || (isLid ? remoteJid : null),
                     name: cleanName,
-                    source: 'WhatsApp',
+                    source: detectedSource,
                     avatarUrl: (evolutionMetadata?.profilePictureUrl && !evolutionMetadata.profilePictureUrl.includes('unsplash.com')) ? evolutionMetadata.profilePictureUrl : null,
                 },
             });
@@ -529,6 +535,8 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 tenantId,
                 conversationId: conversation.id,
                 contactId: contact.id,
+                formName: adCampaignName,
+                source: detectedSource,
             }, {
                 jobId,
                 delay: 800,

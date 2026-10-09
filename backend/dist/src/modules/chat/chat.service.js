@@ -174,36 +174,16 @@ let ChatService = ChatService_1 = class ChatService {
         const whereClause = { tenantId };
         const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
         if (tab === 'all' || tab === 'unread') {
-            if (!isMaster && userRole === 'AGENT') {
-                const userDepts = await this.prisma.userDepartment.findMany({ where: { userId } });
-                const deptIds = userDepts.map(d => d.departmentId);
-                whereClause.OR = [
-                    { assignedTo: userId },
-                    { departmentId: { in: deptIds } },
-                    { departmentId: null }
-                ];
-            }
         }
         else if (tab === 'resolved') {
             whereClause.status = { in: ['resolved', 'closed'] };
         }
         else if (tab === 'mine') {
             whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
-            if (!isMaster) {
-                whereClause.assignedTo = userId;
-            }
+            whereClause.assignedTo = userId;
         }
         else {
             whereClause.status = { in: ['waiting', 'bot_active'] };
-            whereClause.assignedTo = null;
-            if (userRole === 'AGENT') {
-                const userDepts = await this.prisma.userDepartment.findMany({ where: { userId } });
-                const deptIds = userDepts.map(d => d.departmentId);
-                whereClause.OR = [
-                    { departmentId: { in: deptIds } },
-                    { departmentId: null }
-                ];
-            }
         }
         const conversations = await this.prisma.conversation.findMany({
             where: whereClause,

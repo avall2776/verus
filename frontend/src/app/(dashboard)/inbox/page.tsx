@@ -515,22 +515,12 @@ function InboxContent() {
   };
 
   const getContactDisplayName = (name?: string | null, phone?: string | null, overrideOperatorName?: string | null) => {
-    const opName = overrideOperatorName || getLoggedInUserName();
     const cleanName = (name || '').trim();
     const cleanPhone = (phone || '').trim();
 
-    // Se o nome vier idêntico ou contiver indicação de que é o operador logado, nunca exibir como nome do cliente
-    const isOperatorMatch = Boolean(
-      opName &&
-      cleanName &&
-      (cleanName.toLowerCase() === opName.toLowerCase() ||
-       cleanName.toLowerCase().includes('(você)') ||
-       cleanName.toLowerCase() === 'você')
-    );
-
+    // Se o contato tiver um nome salvo/real, SEMPRE exibir o nome do contato!
     const isGenericOrMasked = 
       !cleanName ||
-      isOperatorMatch ||
       cleanName === 'Cliente WhatsApp' ||
       cleanName.includes('@lid') ||
       cleanName.includes('@s.whatsapp.net') ||
@@ -542,12 +532,6 @@ function InboxContent() {
       if (cleanPhone && !cleanPhone.includes('@lid')) {
         const formatted = formatPhoneNumber(cleanPhone);
         if (formatted) return formatted;
-      }
-      if (!isOperatorMatch && cleanName && !cleanName.includes('@lid') && cleanName !== 'Cliente WhatsApp') {
-        return cleanName;
-      }
-      if (cleanPhone && !cleanPhone.includes('@lid')) {
-        return formatPhoneNumber(cleanPhone);
       }
       return 'Cliente WhatsApp';
     }
@@ -1121,7 +1105,8 @@ function InboxContent() {
           updatedAt: conv.updatedAt,
           isAi: conv.status === 'bot_active',
           unread: 0,
-          status: conv.status
+          status: conv.status,
+          assignedTo: conv.assignedTo
         };
       });
     },
@@ -1311,7 +1296,8 @@ function InboxContent() {
                 isAi: conv.status === 'bot_active',
                 unread: conv.id === data.conversationId ? 1 : (existing?.unread || 0),
                 hasNewMessage: conv.id === data.conversationId ? true : (existing?.hasNewMessage || false),
-                status: conv.status
+                status: conv.status,
+                assignedTo: conv.assignedTo
               };
             });
             setContacts(mapped);
@@ -1382,7 +1368,8 @@ function InboxContent() {
             lastMsg: lastMsg,
             time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             isAi: conv.status === 'bot_active',
-            status: conv.status
+            status: conv.status,
+            assignedTo: conv.assignedTo
           };
         });
         

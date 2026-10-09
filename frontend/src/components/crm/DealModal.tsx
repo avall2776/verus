@@ -160,23 +160,20 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
         phone: c.phone || "",
         birthDate: c.birthDate || "",
         email: c.email || deal.metadata?.email || "",
-        role: c.role || c.jobTitle || deal.metadata?.role || "Produtor Rural / Decisor",
+        role: c.role || c.jobTitle || deal.metadata?.role || "",
         document: c.document || c.cpfCnpj || deal.metadata?.document || "",
         type: c.type || "Lead",
-        address: c.address || deal.metadata?.city || "São Paulo - SP",
-        company: c.company || deal.metadata?.company || "Versátil Agro & Grãos Ltda",
+        address: c.address || deal.metadata?.city || "",
+        company: c.company || deal.metadata?.company || "",
         notes: c.notes || deal.notes || "",
-        campaign: c.campaign || deal.metadata?.formName || "Campanha Safra 2026",
-        source: c.source || deal.contact?.source || deal.metadata?.source || "Meta Ads (Facebook/Instagram)"
+        campaign: c.campaign || deal.metadata?.formName || "",
+        source: c.source || deal.contact?.source || deal.metadata?.source || ""
       });
 
       // Carregar anexos existentes com proteção
       const existingAttachments = Array.isArray(deal.metadata?.attachments) 
         ? deal.metadata.attachments 
-        : [
-            { id: "att-1", name: "Proposta_Comercial_Safra2026.pdf", size: "1.8 MB", date: "Ontem às 16:40" },
-            { id: "att-2", name: "Comprovante_Residencia_CNH.pdf", size: "840 KB", date: "11/09/2026" }
-          ];
+        : [];
       setAttachments(existingAttachments);
 
       // Carregar Timeline (suporta deal.timeline ou deal.metadata.timeline) com proteção
@@ -190,7 +187,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
           type: "created",
           title: "Oportunidade Criada",
           stage: deal.status || "new",
-          author: deal.assignedTo?.name || deal.assignee?.name || "Sistema (Meta Ads)",
+          author: deal.assignedTo?.name || deal.assignee?.name || "Sistema",
           date: deal.createdAt || new Date().toISOString()
         }
       ];
@@ -883,21 +880,21 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                 <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
                   <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">WhatsApp / Telefone</span>
                   <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
-                    <span>🟢</span> {deal.contact?.phone || "Não informado"}
+                    <span>🟢</span> {deal.contact?.phone || ""}
                   </span>
                 </div>
 
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl min-h-[58px]">
                   <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">E-mail</span>
                   <span className="text-xs font-semibold text-gray-300 truncate block">
-                    {deal.contact?.email || deal.metadata?.contact?.email || "contato@cliente.com.br"}
+                    {deal.contact?.email || deal.metadata?.contact?.email || deal.metadata?.email || ""}
                   </span>
                 </div>
 
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl min-h-[58px]">
                   <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Cargo & Empresa</span>
                   <span className="text-xs font-semibold text-gray-300 truncate block">
-                    {deal.contact?.role || deal.metadata?.contact?.role || "Decisor Comercial"} • {deal.contact?.company || deal.metadata?.contact?.company || "Empresa Agro"}
+                    {[deal.contact?.role || deal.metadata?.contact?.role || deal.metadata?.role, deal.contact?.company || deal.metadata?.contact?.company || deal.metadata?.company].filter(Boolean).join(' • ') || ""}
                   </span>
                 </div>
               </div>
@@ -910,34 +907,34 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                   <ExternalLink size={14} className="text-gray-400" /> Respostas de Formulário & Metadados
                 </h3>
                 <span className="text-[10px] font-medium text-gray-400 bg-[#0d1117] border border-gray-800/80 px-2.5 py-0.5 rounded-md uppercase">
-                  Origem: {deal.contact?.source || 'Meta Ads (Facebook/Instagram)'}
+                  Origem: {deal.contact?.source || deal.metadata?.source || 'WhatsApp'}
                 </span>
               </div>
 
               {/* Grid Formatado de Respostas Meta Ads */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl min-h-[58px]">
                   <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Formulário de Captação</span>
                   <span className="text-xs font-semibold text-white">
-                    {deal.metadata?.formName || "Versátil Tractor - Campanha Safra 2026"}
+                    {deal.metadata?.formName || deal.metadata?.campaign || deal.contact?.campaign || ""}
                   </span>
                 </div>
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl min-h-[58px]">
                   <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Modelo de Interesse</span>
                   <span className="text-xs font-semibold text-gray-200">
-                    {deal.metadata?.model || "Versátil Tractor 80cv Cabinada"}
+                    {deal.metadata?.model || deal.metadata?.product || (deal.title && !['Atendimento Comercial', 'Novo Lead', 'Nova Oportunidade', deal.contact?.name].includes(deal.title) ? deal.title : '') || ""}
                   </span>
                 </div>
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl min-h-[58px]">
                   <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Cidade / UF</span>
                   <span className="text-xs font-semibold text-gray-300">
-                    {deal.metadata?.city || "São Paulo - SP"}
+                    {deal.metadata?.city || deal.contact?.city || deal.contact?.address || ""}
                   </span>
                 </div>
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
+                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl min-h-[58px]">
                   <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">E-mail Cadastrado</span>
                   <span className="text-xs font-semibold text-gray-300 truncate block">
-                    {deal.contact?.email || 'contato@cliente.com.br'}
+                    {deal.contact?.email || deal.metadata?.email || ""}
                   </span>
                 </div>
               </div>
@@ -990,7 +987,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                 </div>
               ) : (
                 <div className="bg-[#0d1117] border border-gray-800/60 rounded-xl p-3.5 text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">
-                  {deal.notes || "Lead recebido pelo formulário nativo da Meta Ads solicitando contato comercial urgente com equipe de vendas."}
+                  {deal.notes || deal.metadata?.resumo || ""}
                 </div>
               )}
             </div>

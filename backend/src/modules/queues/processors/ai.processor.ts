@@ -20,7 +20,7 @@ export class AiProcessor extends WorkerHost {
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
-    const { tenantId, conversationId, contactId } = job.data;
+    const { tenantId, conversationId, contactId, formName, source } = job.data;
     
     this.logger.debug(`Iniciando orquestração de IA para a conversa [${conversationId}]`);
 
@@ -207,6 +207,81 @@ export class AiProcessor extends WorkerHost {
       });
     }
 
+    // 4.5 Enriquecimento contínuo de Contato e Deal a partir da inteligência extraída pela IA
+    try {
+      const contactUpdateData: any = {};
+      if (aiResponse.email_cliente && !conversation.contact.email) {
+        contactUpdateData.email = aiResponse.email_cliente;
+      }
+      if (
+        aiResponse.nome_cliente &&
+        aiResponse.nome_cliente !== 'Não informado' &&
+        (!conversation.contact.name ||
+          conversation.contact.name === 'Cliente WhatsApp' ||
+          conversation.contact.name.includes('@lid') ||
+          conversation.contact.name.startsWith('WhatsApp'))
+      ) {
+        contactUpdateData.name = aiResponse.nome_cliente;
+      }
+
+      if (Object.keys(contactUpdateData).length > 0) {
+        await this.prisma.contact.update({
+          where: { id: contactId },
+          data: contactUpdateData,
+        }).catch(() => {});
+      }
+
+      // Buscar deal existente associado a este contato no tenant
+      const existingDeal = await this.prisma.deal.findFirst({
+        where: { tenantId, contactId },
+        orderBy: { updatedAt: 'desc' },
+        include: { contact: true, assignee: true },
+      });
+
+      const currentMeta = (existingDeal?.metadata as Record<string, any>) || {};
+      const updatedMeta = {
+        ...currentMeta,
+        ...(aiResponse.produto_interesse &&
+        aiResponse.produto_interesse !== 'Não informado' &&
+        aiResponse.produto_interesse !== 'Atendimento Comercial' &&
+        aiResponse.produto_interesse !== 'Atendimento Geral'
+          ? { model: aiResponse.produto_interesse, product: aiResponse.produto_interesse }
+          : {}),
+        ...(aiResponse.cidade_uf ? { city: aiResponse.cidade_uf } : {}),
+        ...(aiResponse.email_cliente ? { email: aiResponse.email_cliente } : {}),
+        ...(aiResponse.empresa_cliente ? { company: aiResponse.empresa_cliente } : {}),
+        ...(aiResponse.cargo_cliente ? { role: aiResponse.cargo_cliente } : {}),
+        ...(aiResponse.formulario_origem || formName ? { formName: aiResponse.formulario_origem || formName } : {}),
+        source: source || conversation.contact.source || currentMeta.source || 'WhatsApp',
+      };
+
+      if (existingDeal && !aiResponse.transferir_vendedor) {
+        const updatedDeal = await this.prisma.deal.update({
+          where: { id: existingDeal.id },
+          data: {
+            ...(aiResponse.produto_interesse &&
+            aiResponse.produto_interesse !== 'Não informado' &&
+            aiResponse.produto_interesse !== 'Atendimento Comercial' &&
+            (!existingDeal.title ||
+              existingDeal.title === 'Atendimento Comercial' ||
+              existingDeal.title === 'Novo Lead' ||
+              existingDeal.title === existingDeal.contact?.name)
+              ? { title: aiResponse.produto_interesse }
+              : {}),
+            ...(aiResponse.resumo_atendimento ? { notes: aiResponse.resumo_atendimento } : {}),
+            metadata: updatedMeta,
+          },
+          include: { contact: true, assignee: true },
+        }).catch(() => null);
+
+        if (updatedDeal) {
+          this.chatGateway.emitHandoff(tenantId, updatedDeal);
+        }
+      }
+    } catch (enrichErr: any) {
+      this.logger.warn(`Falha não-bloqueante no auto-enriquecimento do Lead pela IA: ${enrichErr.message}`);
+    }
+
     // 5. Analisar Handoff (Transferência)
     if (aiResponse.transferir_vendedor) {
       this.logger.log(`Lead solicitou atendimento humano. Executando protocolo de Transbordo...`);
@@ -237,23 +312,64 @@ export class AiProcessor extends WorkerHost {
         data: { status: 'human_takeover', assignedTo }
       });
 
-      // 5.2 Atualizar/Criar o Deal no CRM
-      const dealData = {
-        tenantId,
-        contactId,
-        title: aiResponse.produto_interesse || 'Atendimento Comercial',
-        value: 0,
-        status: 'new', // Kanban vai colocar em "Aguardando"
-        notes: aiResponse.resumo_atendimento,
+      // 5.2 Atualizar/Criar o Deal no CRM com Metadados Completos
+      const existingDealForHandoff = await this.prisma.deal.findFirst({
+        where: { tenantId, contactId },
+        orderBy: { updatedAt: 'desc' },
+      });
+
+      const currentMetaHandoff = (existingDealForHandoff?.metadata as Record<string, any>) || {};
+      const fullMeta = {
+        ...currentMetaHandoff,
+        ...(aiResponse.produto_interesse &&
+        aiResponse.produto_interesse !== 'Não informado' &&
+        aiResponse.produto_interesse !== 'Atendimento Geral'
+          ? { model: aiResponse.produto_interesse, product: aiResponse.produto_interesse }
+          : {}),
+        ...(aiResponse.cidade_uf ? { city: aiResponse.cidade_uf } : {}),
+        ...(aiResponse.email_cliente ? { email: aiResponse.email_cliente } : {}),
+        ...(aiResponse.empresa_cliente ? { company: aiResponse.empresa_cliente } : {}),
+        ...(aiResponse.cargo_cliente ? { role: aiResponse.cargo_cliente } : {}),
+        ...(aiResponse.formulario_origem || formName ? { formName: aiResponse.formulario_origem || formName } : {}),
+        source: source || conversation.contact.source || currentMetaHandoff.source || 'WhatsApp',
       };
 
-      const updatedDeal = await this.prisma.deal.upsert({
-        where: { id: `deal_${conversationId}` } as any, // Mock simples para o id único por contato/conversa
-        create: dealData,
-        update: dealData
-      }).catch(async () => {
-         return await this.prisma.deal.create({ data: dealData });
-      });
+      let updatedDeal;
+      if (existingDealForHandoff) {
+        updatedDeal = await this.prisma.deal.update({
+          where: { id: existingDealForHandoff.id },
+          data: {
+            title:
+              aiResponse.produto_interesse &&
+              aiResponse.produto_interesse !== 'Não informado' &&
+              aiResponse.produto_interesse !== 'Atendimento Comercial' &&
+              aiResponse.produto_interesse !== 'Atendimento Geral'
+                ? aiResponse.produto_interesse
+                : existingDealForHandoff.title,
+            notes: aiResponse.resumo_atendimento || existingDealForHandoff.notes,
+            metadata: fullMeta,
+          },
+          include: { contact: true, assignee: true },
+        });
+      } else {
+        updatedDeal = await this.prisma.deal.create({
+          data: {
+            tenantId,
+            contactId,
+            title:
+              aiResponse.produto_interesse &&
+              aiResponse.produto_interesse !== 'Não informado' &&
+              aiResponse.produto_interesse !== 'Atendimento Geral'
+                ? aiResponse.produto_interesse
+                : 'Atendimento Comercial',
+            value: 0,
+            status: 'new', // Kanban vai colocar em "Aguardando" / LEADS SEED
+            notes: aiResponse.resumo_atendimento,
+            metadata: fullMeta,
+          },
+          include: { contact: true, assignee: true },
+        });
+      }
 
       // Emitir para o front-end (Kanban)
       this.chatGateway.emitHandoff(tenantId, updatedDeal);

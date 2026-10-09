@@ -32,5 +32,10 @@ export declare class AgentController {
         nome_cliente?: string;
         telefone_cliente?: string;
         produto_interesse?: string;
+        cidade_uf?: string;
+        email_cliente?: string;
+        empresa_cliente?: string;
+        cargo_cliente?: string;
+        formulario_origem?: string;
     }>;
 }
