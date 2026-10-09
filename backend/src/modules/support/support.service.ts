@@ -367,7 +367,7 @@ export class SupportService {
     });
 
     // Se a mensagem for do cliente e não for interna, aciona a IA de atendimento
-    if (!isInternal && !isSuperAdmin && (senderRole === 'USER' || sender?.role === 'USER')) {
+    if (!isInternal && !isSuperAdmin && senderRole !== 'SUPER_ADMIN' && senderRole !== 'AI_AGENT') {
       setTimeout(() => {
         this.supportAiService.handleIncomingClientMessage(
           ticketId,

@@ -246,6 +246,9 @@ let SupportService = SupportService_1 = class SupportService {
                 user: {
                     select: { id: true, name: true, email: true, role: true, avatarUrl: true }
                 },
+                tenant: {
+                    select: { id: true, name: true }
+                },
                 messages: true
             }
         });
@@ -308,12 +311,21 @@ let SupportService = SupportService_1 = class SupportService {
                 updatedAt: new Date()
             }
         });
+        const fullTicket = await this.prisma.supportTicket.findUnique({
+            where: { id: ticketId },
+            include: {
+                user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+                tenant: { select: { id: true, name: true } },
+                messages: { orderBy: { createdAt: 'desc' }, take: 10 }
+            }
+        });
         this.chatGateway.emitTicketUpdate(ticket.tenantId, {
+            ...fullTicket,
             ticketId,
             message,
             status: nextStatus,
         });
-        if (!isInternal && !isSuperAdmin && (senderRole === 'USER' || sender?.role === 'USER')) {
+        if (!isInternal && !isSuperAdmin && senderRole !== 'SUPER_ADMIN' && senderRole !== 'AI_AGENT') {
             setTimeout(() => {
                 this.supportAiService.handleIncomingClientMessage(ticketId, dto.content.trim(), sender?.name || 'Cliente').catch((err) => {
                     this.logger.error(`Erro ao disparar IA para resposta no chamado #${ticket.ticketNumber}: ${err?.message}`);

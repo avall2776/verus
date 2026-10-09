@@ -352,6 +352,14 @@ function SuperAdminSupportContent() {
     }
   };
 
+  // Quando a URL contiver ticketId (ex: clicou em "Atender Chamado" na notificação)
+  useEffect(() => {
+    if (initialTicketId) {
+      setActiveSubView('customer_service');
+      loadTicketDetails(initialTicketId);
+    }
+  }, [initialTicketId]);
+
   // Carregar Configuração do Agente IA
   const fetchAiConfig = useCallback(async () => {
     setLoadingAiConfig(true);

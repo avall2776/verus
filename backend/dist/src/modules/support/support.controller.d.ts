@@ -117,6 +117,10 @@ export declare class SupportController {
         aiHandoffDemandId: string | null;
     }>;
     create(req: any, dto: CreateTicketDto): Promise<{
+        tenant: {
+            id: string;
+            name: string;
+        };
         messages: {
             id: string;
             createdAt: Date;

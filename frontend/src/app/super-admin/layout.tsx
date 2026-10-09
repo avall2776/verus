@@ -156,6 +156,11 @@ export default function SuperAdminLayout({
                   <span className={`hidden md:block text-xs ${isActive ? 'text-white' : ''}`}>
                     {item.name}
                   </span>
+                  {item.href === "/super-admin/support" && unreadSupportCount > 0 && (
+                    <span className="ml-auto hidden md:inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500 text-white animate-pulse shadow-sm shadow-rose-500/50">
+                      {unreadSupportCount > 9 ? "9+" : unreadSupportCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -296,6 +301,11 @@ export default function SuperAdminLayout({
                       <span className={`text-xs ${isActive ? 'text-white' : ''}`}>
                         {item.name}
                       </span>
+                      {item.href === "/super-admin/support" && unreadSupportCount > 0 && (
+                        <span className="ml-auto inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500 text-white animate-pulse shadow-sm shadow-rose-500/50">
+                          {unreadSupportCount > 9 ? "9+" : unreadSupportCount}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}
@@ -359,6 +369,9 @@ export default function SuperAdminLayout({
         currentUser={currentUser}
         onUserUpdated={(updated) => setCurrentUser(updated)}
       />
+
+      {/* Notificador Flutuante em Tempo Real com Som de Suporte */}
+      <SuperAdminSupportNotifier />
     </div>
   );
 }
