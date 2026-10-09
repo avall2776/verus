@@ -5,16 +5,16 @@
   "background_color": "#050814",
   "display": "standalone",
   "orientation": "portrait",
-  "scope": "/",
-  "start_url": "/chat",
+  "scope": "/vallor/",
+  "start_url": "/vallor/chat",
   "icons": [
     {
-      "src": "/icon-192x192.png",
+      "src": "/vallor/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-512x512.png",
+      "src": "/vallor/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

@@ -94,18 +94,13 @@ export default function SuperAdminSupportNotifier() {
     try {
       if (typeof window === "undefined") return;
 
-      const audio = new Audio("/sounds/notification-glass.wav");
+      const audio = new Audio("/vallor/sounds/notification-glass.wav");
       audio.volume = 0.85;
       const promise = audio.play();
 
       if (promise !== undefined) {
         promise.catch(() => {
-          // Se arquivo padrão for bloqueado, tenta caminho alternativo ou sintetizador
-          const altAudio = new Audio("/vallor/sounds/notification-glass.wav");
-          altAudio.volume = 0.85;
-          altAudio.play().catch(() => {
-            playSynthesizedChime();
-          });
+          playSynthesizedChime();
         });
       }
     } catch {

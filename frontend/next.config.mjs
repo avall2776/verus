@@ -71,6 +71,24 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/icon-192x192.png',
+        destination: '/vallor/icon-192x192.png',
+        basePath: false,
+        permanent: false,
+      },
+      {
+        source: '/icon-512x512.png',
+        destination: '/vallor/icon-512x512.png',
+        basePath: false,
+        permanent: false,
+      },
+      {
+        source: '/sounds/:path*',
+        destination: '/vallor/sounds/:path*',
+        basePath: false,
+        permanent: false,
+      },
+      {
         source: '/',
         destination: '/vallor',
         basePath: false,

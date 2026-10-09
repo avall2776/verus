@@ -228,7 +228,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Conexão resiliente: detecta se está rodando na Vercel (onde WebSocket upgrade via rewrite falha)
-    const isVercelHost = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+    const isVercelHost = typeof window !== 'undefined' && 
+      (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('avallmarketing.com.br'));
     const directSocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || undefined;
 
     const socketInstance = io(directSocketUrl || undefined, {
