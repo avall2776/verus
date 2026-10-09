@@ -553,6 +553,10 @@ export declare class ChatService {
         success: boolean;
         messageId: string;
     }>;
+    deleteConversation(tenantId: string, conversationId: string): Promise<{
+        success: boolean;
+        conversationId: string;
+    }>;
     syncOfflineMessages(tenantId: string, force?: boolean): Promise<{
         syncedCount: number;
         updatedCount: number;

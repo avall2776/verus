@@ -215,6 +215,10 @@ export declare class ChatController {
         assignedTo: string | null;
         status: string;
     }>;
+    deleteConversation(tenantId: string, conversationId: string): Promise<{
+        success: boolean;
+        conversationId: string;
+    }>;
     takeover(tenantId: string, conversationId: string, req: any): Promise<{
         id: string;
         tenantId: string;

@@ -1081,6 +1081,40 @@ export class ChatService {
     return { success: true, messageId: message.id };
   }
 
+  async deleteConversation(tenantId: string, conversationId: string) {
+    const conversation = await this.prisma.conversation.findFirst({
+      where: { id: conversationId, tenantId },
+      include: { contact: true },
+    });
+
+    if (!conversation) {
+      throw new NotFoundException('Conversa não encontrada');
+    }
+
+    // 1. Apaga todas as mensagens da conversa
+    await this.prisma.message.deleteMany({
+      where: { conversationId, tenantId },
+    });
+
+    // 2. Remove pesquisas CSAT vinculadas se houver
+    try {
+      await this.prisma.csatSurvey.deleteMany({
+        where: { conversationId },
+      });
+    } catch (e) {}
+
+    // 3. Remove a conversa em si
+    await this.prisma.conversation.delete({
+      where: { id: conversationId },
+    });
+
+    // 4. Emite evento via WebSocket em tempo real para todos os operadores
+    this.chatGateway.emitConversationDeleted(tenantId, { conversationId });
+
+    this.logger.log(`Conversa [${conversationId}] apagada com sucesso no tenant [${tenantId}]`);
+    return { success: true, conversationId };
+  }
+
   /**
    * Sincroniza retroativamente mensagens offline das últimas 24 horas a partir da Evolution API.
    * Evita perda de mensagens quando o operador estava desconectado e recupera mídias pendentes.

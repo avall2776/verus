@@ -898,6 +898,30 @@ let ChatService = ChatService_1 = class ChatService {
         this.logger.log(`Mensagem [${message.id}] apagada com sucesso na conversa [${conversationId}]`);
         return { success: true, messageId: message.id };
     }
+    async deleteConversation(tenantId, conversationId) {
+        const conversation = await this.prisma.conversation.findFirst({
+            where: { id: conversationId, tenantId },
+            include: { contact: true },
+        });
+        if (!conversation) {
+            throw new common_1.NotFoundException('Conversa não encontrada');
+        }
+        await this.prisma.message.deleteMany({
+            where: { conversationId, tenantId },
+        });
+        try {
+            await this.prisma.csatSurvey.deleteMany({
+                where: { conversationId },
+            });
+        }
+        catch (e) { }
+        await this.prisma.conversation.delete({
+            where: { id: conversationId },
+        });
+        this.chatGateway.emitConversationDeleted(tenantId, { conversationId });
+        this.logger.log(`Conversa [${conversationId}] apagada com sucesso no tenant [${tenantId}]`);
+        return { success: true, conversationId };
+    }
     async syncOfflineMessages(tenantId, force = false) {
         if (ChatService_1.activeSyncs.has(tenantId)) {
             this.logger.log(`[Offline Sync] Ignorado: sincronização já em andamento para o tenant [${tenantId}].`);

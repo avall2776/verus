@@ -55,6 +55,9 @@ let ChatController = class ChatController {
     async getConversation(tenantId, conversationId) {
         return this.chatService.getConversationById(tenantId, conversationId);
     }
+    async deleteConversation(tenantId, conversationId) {
+        return this.chatService.deleteConversation(tenantId, conversationId);
+    }
     async takeover(tenantId, conversationId, req) {
         return this.chatService.takeoverConversation(tenantId, conversationId, req.user.id);
     }
@@ -211,6 +214,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "getConversation", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "deleteConversation", null);
 __decorate([
     (0, common_1.Patch)(':id/takeover'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

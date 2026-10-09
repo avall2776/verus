@@ -94,6 +94,14 @@ export class ChatController {
     return this.chatService.getConversationById(tenantId, conversationId);
   }
 
+  @Delete(':id')
+  async deleteConversation(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+  ) {
+    return this.chatService.deleteConversation(tenantId, conversationId);
+  }
+
   @Patch(':id/takeover')
   async takeover(
     @CurrentTenant() tenantId: string,

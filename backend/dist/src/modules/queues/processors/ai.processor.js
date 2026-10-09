@@ -142,10 +142,11 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
         this.logger.log(`Enviando ${historyForAi.length} mensagens de histórico para a OpenAI (Tenant: ${conversation.contact.tenant.name})...`);
         const aiResponse = await this.aiService.processConversation(historyForAi, conversation.contact.tenant, dynamicContext);
         if (aiResponse.resposta_cliente) {
+            const cleanContent = aiResponse.resposta_cliente.replace(/\*/g, '').trim();
             const sendRes = await this.messagingService.sendText({
                 tenantId,
                 phone: conversation.contact.phone,
-                content: aiResponse.resposta_cliente
+                content: cleanContent
             });
             const messageStatus = sendRes?.success ? 'delivered' : 'failed';
             const providerMsgId = sendRes?.messageId || `out_${Date.now()}`;
@@ -158,7 +159,7 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
                     conversationId,
                     contactId,
                     providerMessageId: providerMsgId,
-                    content: aiResponse.resposta_cliente,
+                    content: cleanContent,
                     direction: 'OUTBOUND',
                     senderType: 'system',
                     status: messageStatus,

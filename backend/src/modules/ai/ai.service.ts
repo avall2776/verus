@@ -294,9 +294,10 @@ Responda de forma concisa e factual em português (máximo de 3 a 4 linhas).`;
       const basePrompt = tenantConfig?.aiPrompt || this.fallbackPrompt;
       
       // Diretriz Multimodal Obrigatória (injetada em qualquer prompt, garantindo que o agente nunca recuse mídias)
-      const multimodalDirective = `\n\n=== REGRAS DE CAPACIDADE MULTIMODAL ATIVA ===
+      const multimodalDirective = `\n\n=== REGRAS DE CAPACIDADE MULTIMODAL E FORMATAÇÃO ===
 - Você possui capacidade multimodal total: ouve áudios perfeitamente (chegam como '🎤 [Áudio]: ...'), analisa imagens e comprovantes (chegam como '📷 [Análise da Imagem]: ...') e lê documentos/PDFs (chegam como '📄 [Documento PDF]: ...').
-- É ESTRITAMENTE PROIBIDO dizer que 'não pode ouvir áudios', 'não pode receber fotos/arquivos' ou pedir para o cliente mandar em texto. O conteúdo das mídias já está legível para você. Responda diretamente e com naturalidade ao que o cliente falou, mandou ou perguntou.`;
+- É ESTRITAMENTE PROIBIDO dizer que 'não pode ouvir áudios', 'não pode receber fotos/arquivos' ou pedir para o cliente mandar em texto. O conteúdo das mídias já está legível para você. Responda diretamente e com naturalidade ao que o cliente falou, mandou ou perguntou.
+- REGRA ESTRITA DE FORMATAÇÃO: É TERMINANTEMENTE PROIBIDO USAR ASTERISCOS (*) EM SUAS RESPOSTAS (como *negrito*, **destaque** ou *listas*). Escreva sempre em texto puro, limpo, humanizado e direto, sem asteriscos, como uma pessoa real digitando no WhatsApp.`;
 
       let knowledgeBase = tenantConfig?.aiKnowledgeBase ? `\n\n=== BASE DE CONHECIMENTO MANUAL ===\nUse os dados abaixo para responder o cliente:\n${tenantConfig.aiKnowledgeBase}` : '';
       
@@ -346,6 +347,13 @@ Responda de forma concisa e factual em português (máximo de 3 a 4 linhas).`;
 
       if (!parsedResponse) {
         throw new Error('A OpenAI retornou uma resposta nula na estrutura.');
+      }
+
+      // Sanitização estrita: Remove qualquer asterisco (*) de formatação para WhatsApp limpo e natural
+      if (parsedResponse.resposta_cliente) {
+        parsedResponse.resposta_cliente = parsedResponse.resposta_cliente
+          .replace(/\*/g, '')
+          .trim();
       }
 
       return parsedResponse;

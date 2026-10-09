@@ -179,6 +179,8 @@ function InboxContent() {
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
   const [showLeftHeaderMenu, setShowLeftHeaderMenu] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showDeleteConvModal, setShowDeleteConvModal] = useState(false);
+  const [isDeletingConv, setIsDeletingConv] = useState(false);
 
   // Estados para Ação Manual no Funil do CRM
   const [crmStages, setCrmStages] = useState(DEFAULT_CRM_STAGES);
@@ -811,17 +813,38 @@ function InboxContent() {
 
   const handleDeleteMessage = async (messageId: string) => {
     if (!activeChat) return;
-    if (!confirm("Deseja apagar esta mensagem para todos? Esta ação removerá a mensagem do painel e apagará para o cliente no WhatsApp.")) {
+    if (!confirm("Deseja apagar esta mensagem? Esta ação removerá a mensagem do histórico.")) {
       return;
     }
 
     try {
       await api.delete(`/conversations/${activeChat}/messages/${messageId}`);
       setMessages(prev => prev.filter(m => m.id !== messageId));
-      toast.success("Mensagem apagada para todos com sucesso!");
+      toast.success("Mensagem apagada com sucesso!");
     } catch (err: any) {
       console.error("Erro ao apagar mensagem:", err);
       toast.error(err.response?.data?.message || "Erro ao apagar mensagem.");
+    }
+  };
+
+  const handleDeleteConversation = async () => {
+    if (!activeChat) return;
+    try {
+      setIsDeletingConv(true);
+      await api.delete(`/conversations/${activeChat}`);
+      const chatToDelete = activeChat;
+      setMessages([]);
+      setContacts(prev => prev.filter(c => c.id !== chatToDelete));
+      delete messagesCacheRef.current[chatToDelete];
+      setActiveChat(null);
+      setShowDeleteConvModal(false);
+      setShowChatOptionsMenu(false);
+      toast.success("Conversa apagada com sucesso!");
+    } catch (err: any) {
+      console.error("Erro ao apagar conversa:", err);
+      toast.error(err.response?.data?.message || "Erro ao apagar conversa.");
+    } finally {
+      setIsDeletingConv(false);
     }
   };
 
@@ -1412,11 +1435,22 @@ function InboxContent() {
       }
     };
 
+    const handleConversationDeleted = (data: { conversationId: string }) => {
+      console.log('Conversation Deleted via WebSocket:', data);
+      setContacts((prev) => prev.filter((c) => c.id !== data.conversationId));
+      delete messagesCacheRef.current[data.conversationId];
+      if (data.conversationId === activeChat) {
+        setActiveChat(null);
+        setMessages([]);
+      }
+    };
+
     socket.on('newMessage', handleNewMessage);
     socket.on('conversationUpdated', handleConversationUpdated);
     socket.on('contactUpdated', handleContactUpdated);
     socket.on('messageStatusUpdated', handleMessageStatusUpdated);
     socket.on('messageDeleted', handleMessageDeleted);
+    socket.on('conversationDeleted', handleConversationDeleted);
 
     return () => {
       socket.off('newMessage', handleNewMessage);
@@ -1424,6 +1458,7 @@ function InboxContent() {
       socket.off('contactUpdated', handleContactUpdated);
       socket.off('messageStatusUpdated', handleMessageStatusUpdated);
       socket.off('messageDeleted', handleMessageDeleted);
+      socket.off('conversationDeleted', handleConversationDeleted);
     };
   }, [socket, activeChat, activeTab, activeFilterTab]);
 
@@ -2689,6 +2724,29 @@ function InboxContent() {
                           </div>
                         </button>
                       </div>
+
+                      <div className="py-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowChatOptionsMenu(false);
+                            setShowDeleteConvModal(true);
+                          }}
+                          className="w-full px-4 py-2.5 text-left hover:bg-rose-500/15 flex items-center gap-3 transition-colors cursor-pointer group text-rose-400"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0 group-hover:bg-rose-500/25 transition-colors">
+                            <Trash2 size={16} />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-semibold text-rose-400 group-hover:text-rose-300 transition-colors">
+                              Apagar Conversa
+                            </span>
+                            <span className="text-[11px] text-slate-400 leading-tight">
+                              Limpar histórico e excluir mensagens
+                            </span>
+                          </div>
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}
@@ -2797,13 +2855,13 @@ function InboxContent() {
 
                       {/* Balão de Mensagem WhatsApp */}
                       <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5`}>
-                        {/* Botão Apagar Mensagem (Apagar para todos no WhatsApp) */}
-                        {isMe && !msg.isInternal && (
+                        {/* Botão Apagar Mensagem (WhatsApp Web Hover) */}
+                        {!msg.isInternal && (
                           <button
                             type="button"
                             onClick={() => handleDeleteMessage(msg.id)}
-                            title="Apagar mensagem para todos no WhatsApp"
-                            className="absolute -top-2 -left-6 p-1 rounded-full bg-slate-900/90 border border-slate-700/80 text-slate-400 hover:text-rose-400 hover:border-rose-500/60 opacity-0 group-hover:opacity-100 transition-all shadow-md z-10 cursor-pointer"
+                            title={isMe ? "Apagar mensagem para todos no WhatsApp" : "Apagar mensagem do histórico"}
+                            className={`absolute -top-2 ${isMe ? '-left-6' : '-right-6'} p-1 rounded-full bg-slate-900/90 border border-slate-700/80 text-slate-400 hover:text-rose-400 hover:border-rose-500/60 opacity-0 group-hover:opacity-100 transition-all shadow-md z-10 cursor-pointer`}
                           >
                             <Trash2 size={11} />
                           </button>
@@ -4335,6 +4393,53 @@ function InboxContent() {
                   Fechar
                 </button>
               </div>
+            </div>
+          </div>
+      {/* Modal de Confirmação: Apagar Conversa Inteira */}
+      {showDeleteConvModal && activeContactData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-[#0B1224] border border-rose-500/40 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                <Trash2 size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white">Apagar Conversa?</h3>
+                <p className="text-xs text-slate-400">Esta ação não pode ser desfeita</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Deseja realmente apagar a conversa com <strong className="text-white">{activeContactData.name || activeContactData.phone}</strong>? Todas as mensagens, mídias e o histórico deste atendimento serão permanentemente excluídos.
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                disabled={isDeletingConv}
+                onClick={() => setShowDeleteConvModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingConv}
+                onClick={handleDeleteConversation}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-lg shadow-rose-600/30 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isDeletingConv ? (
+                  <>
+                    <RefreshCw size={13} className="animate-spin" />
+                    <span>Apagando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={13} />
+                    <span>Apagar Conversa</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

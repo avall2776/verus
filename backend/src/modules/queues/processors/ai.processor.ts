@@ -169,11 +169,14 @@ export class AiProcessor extends WorkerHost {
 
     // 4. Despachar a resposta para o Lead
     if (aiResponse.resposta_cliente) {
+      // Remove estritamente qualquer asterisco de markdown para formatação natural do WhatsApp
+      const cleanContent = aiResponse.resposta_cliente.replace(/\*/g, '').trim();
+
       // O MessagingService se encarrega de disparar via driver compatível (Evolution API ou Meta API)
       const sendRes = await this.messagingService.sendText({
         tenantId,
         phone: conversation.contact.phone,
-        content: aiResponse.resposta_cliente
+        content: cleanContent
       });
 
       const messageStatus = sendRes?.success ? 'delivered' : 'failed';
@@ -190,7 +193,7 @@ export class AiProcessor extends WorkerHost {
           conversationId,
           contactId,
           providerMessageId: providerMsgId,
-          content: aiResponse.resposta_cliente,
+          content: cleanContent,
           direction: 'OUTBOUND',
           senderType: 'system',
           status: messageStatus, 
