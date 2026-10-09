@@ -20,7 +20,9 @@ import {
   X
 } from "lucide-react";
 import { toast } from "sonner";
+import api from "@/lib/api";
 import UserProfileModal from "@/components/modals/UserProfileModal";
+import SuperAdminSupportNotifier from "@/components/support/SuperAdminSupportNotifier";
 
 const ADMIN_MENU = [
   { name: "Métricas Globais", icon: BarChart4, href: "/super-admin" },
@@ -42,6 +44,38 @@ export default function SuperAdminLayout({
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [unreadSupportCount, setUnreadSupportCount] = useState<number>(0);
+
+  // Busca contagem inicial de chamados pendentes
+  const fetchPendingSupportCount = () => {
+    api.get("/support/tickets")
+      .then((res) => {
+        const counts = res.data?.counts;
+        const pending = (counts?.open || 0) + (counts?.waitingClient || 0);
+        setUnreadSupportCount(pending);
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetchPendingSupportCount();
+  }, []);
+
+  // Escuta novos chamados de suporte para atualizar badge em tempo real
+  useEffect(() => {
+    const handleNewTicket = () => {
+      setUnreadSupportCount((prev) => prev + 1);
+    };
+    window.addEventListener("super_admin_new_support_ticket", handleNewTicket);
+    return () => window.removeEventListener("super_admin_new_support_ticket", handleNewTicket);
+  }, []);
+
+  // Ao acessar a Central de Atendimento, zera o contador do badge
+  useEffect(() => {
+    if (pathname === "/super-admin/support") {
+      setUnreadSupportCount(0);
+    }
+  }, [pathname]);
 
   // Isolamento estrito do Super Admin: limpa e descarta imediatamente quaisquer toasts ativos
   useEffect(() => {

@@ -265,6 +265,9 @@ export class SupportService {
         user: {
           select: { id: true, name: true, email: true, role: true, avatarUrl: true }
         },
+        tenant: {
+          select: { id: true, name: true }
+        },
         messages: true
       }
     });
@@ -346,8 +349,18 @@ export class SupportService {
       }
     });
 
+    const fullTicket = await this.prisma.supportTicket.findUnique({
+      where: { id: ticketId },
+      include: {
+        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        tenant: { select: { id: true, name: true } },
+        messages: { orderBy: { createdAt: 'desc' }, take: 10 }
+      }
+    });
+
     // Emite atualização no WebSocket
     this.chatGateway.emitTicketUpdate(ticket.tenantId, {
+      ...fullTicket,
       ticketId,
       message,
       status: nextStatus,
