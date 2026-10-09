@@ -417,6 +417,28 @@ export declare class TenantsService {
             isOnline: boolean;
         };
     }>;
+    createTenantUser(tenantId: string, dto: {
+        name: string;
+        email: string;
+        role?: string;
+        password?: string;
+        isActive?: boolean;
+    }): Promise<{
+        message: string;
+        user: {
+            savedPassword: string;
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
+            role: string;
+            isSuperAdmin: boolean;
+            isOnline: boolean;
+        };
+    }>;
     resetTenantUserPassword(tenantId: string, userId: string, dto: {
         newPassword?: string;
         sendEmail?: boolean;

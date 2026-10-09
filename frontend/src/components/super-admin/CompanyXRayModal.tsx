@@ -27,7 +27,8 @@ import {
   Copy,
   AlertTriangle,
   Eye,
-  EyeOff
+  EyeOff,
+  UserPlus
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -77,6 +78,74 @@ export default function CompanyXRayModal({
     isActive: true,
   });
   const [userSaving, setUserSaving] = useState(false);
+
+  // Estados para Criação de Novo Usuário / Operador
+  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+  const [newUserFormData, setNewUserFormData] = useState({
+    name: "",
+    email: "",
+    role: "AGENT",
+    password: "",
+    isActive: true,
+  });
+  const [newUserSaving, setNewUserSaving] = useState(false);
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tenantId) return;
+
+    if (!newUserFormData.name.trim()) {
+      toast.error("O nome do operador é obrigatório.");
+      return;
+    }
+
+    if (!newUserFormData.email.trim() || !newUserFormData.email.includes("@")) {
+      toast.error("Informe um e-mail válido.");
+      return;
+    }
+
+    if (!newUserFormData.password || newUserFormData.password.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    setNewUserSaving(true);
+    try {
+      const res = await api.post(`/tenants/${tenantId}/users`, {
+        name: newUserFormData.name.trim(),
+        email: newUserFormData.email.trim().toLowerCase(),
+        role: newUserFormData.role,
+        password: newUserFormData.password,
+        isActive: newUserFormData.isActive,
+      });
+
+      const createdUser = res.data.user;
+
+      setData((prev: any) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          users: [...(prev.users || []), createdUser],
+        };
+      });
+
+      setIsCreateUserOpen(false);
+      setNewUserFormData({
+        name: "",
+        email: "",
+        role: "AGENT",
+        password: "",
+        isActive: true,
+      });
+
+      toast.success(res.data.message || `Usuário "${createdUser.name}" cadastrado com sucesso!`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Erro ao cadastrar novo usuário.");
+    } finally {
+      setNewUserSaving(false);
+    }
+  };
 
   // Formulário de Redefinição de Senha
   const [newPasswordInput, setNewPasswordInput] = useState("");
@@ -371,13 +440,32 @@ export default function CompanyXRayModal({
 
                   {/* Usuários Cadastrados */}
                   <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                        <Users size={14} className="text-blue-400" /> Operadores & Usuários Cadastrados ({data.users?.length || 0})
-                      </h3>
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        Gestão de acessos, credenciais e permissões do tenant
-                      </span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div>
+                        <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                          <Users size={14} className="text-blue-400" /> Operadores & Usuários Cadastrados ({data.users?.length || 0})
+                        </h3>
+                        <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                          Gestão de acessos, credenciais e permissões do tenant
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCreateUserOpen(true);
+                          setNewUserFormData({
+                            name: "",
+                            email: "",
+                            role: "AGENT",
+                            password: `Vallor@${Math.floor(100000 + Math.random() * 900000)}`,
+                            isActive: true,
+                          });
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white transition-colors shadow-sm self-start sm:self-auto cursor-pointer"
+                      >
+                        <UserPlus size={13} />
+                        <span>Novo Usuário</span>
+                      </button>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs border-collapse">
@@ -1087,6 +1175,134 @@ export default function CompanyXRayModal({
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Sub-modal: Cadastrar Novo Usuário do Tenant */}
+      {isCreateUserOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div 
+            className="bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden text-slate-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-[#070D1B]">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                  <UserPlus size={16} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Cadastrar Novo Usuário</h3>
+                  <p className="text-[11px] text-slate-400">Adicionar operador para {data?.company?.name || "esta empresa"}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsCreateUserOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Nome do Operador *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newUserFormData.name}
+                  onChange={(e) => setNewUserFormData({ ...newUserFormData, name: e.target.value })}
+                  placeholder="Ex: João da Silva"
+                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  E-mail de Acesso *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={newUserFormData.email}
+                  onChange={(e) => setNewUserFormData({ ...newUserFormData, email: e.target.value })}
+                  placeholder="Ex: joao@empresa.com.br"
+                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all font-mono"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Nível de Acesso (ROLE)
+                  </label>
+                  <select
+                    value={newUserFormData.role}
+                    onChange={(e) => setNewUserFormData({ ...newUserFormData, role: e.target.value })}
+                    className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition-all"
+                  >
+                    <option value="AGENT">Atendente (AGENT)</option>
+                    <option value="ADMIN">Administrador (ADMIN)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Status da Conta
+                  </label>
+                  <select
+                    value={newUserFormData.isActive ? "true" : "false"}
+                    onChange={(e) => setNewUserFormData({ ...newUserFormData, isActive: e.target.value === "true" })}
+                    className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition-all"
+                  >
+                    <option value="true">Ativo</option>
+                    <option value="false">Bloqueado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-slate-300">
+                    Senha de Acesso Inicial *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setNewUserFormData({ ...newUserFormData, password: `Vallor@${Math.floor(100000 + Math.random() * 900000)}` })}
+                    className="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium transition-colors cursor-pointer"
+                  >
+                    <RefreshCw size={11} /> Gerar Automática
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={newUserFormData.password}
+                  onChange={(e) => setNewUserFormData({ ...newUserFormData, password: e.target.value })}
+                  placeholder="Digite a senha (mínimo 6 caracteres)"
+                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all font-mono"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateUserOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={newUserSaving}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-xs font-semibold text-white transition-colors cursor-pointer"
+                >
+                  {newUserSaving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                  <span>Cadastrar Operador</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

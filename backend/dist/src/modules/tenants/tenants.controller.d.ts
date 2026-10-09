@@ -454,6 +454,28 @@ export declare class TenantsController {
         temporaryPassword: string;
         savedPassword: string;
     }>;
+    createTenantUser(req: any, tenantId: string, body: {
+        name: string;
+        email: string;
+        role?: string;
+        password?: string;
+        isActive?: boolean;
+    }): Promise<{
+        message: string;
+        user: {
+            savedPassword: string;
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
+            role: string;
+            isSuperAdmin: boolean;
+            isOnline: boolean;
+        };
+    }>;
     updateTenantUser(req: any, tenantId: string, userId: string, body: {
         name?: string;
         email?: string;

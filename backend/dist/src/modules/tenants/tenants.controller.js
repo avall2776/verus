@@ -101,6 +101,9 @@ let TenantsController = class TenantsController {
     async resetAdminPassword(req, id, body) {
         return this.tenantsService.resetAdminPassword(id, body?.newPassword);
     }
+    async createTenantUser(req, tenantId, body) {
+        return this.tenantsService.createTenantUser(tenantId, body);
+    }
     async updateTenantUser(req, tenantId, userId, body) {
         return this.tenantsService.updateTenantUser(tenantId, userId, body);
     }
@@ -274,6 +277,16 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, reset_admin_password_dto_1.ResetAdminPasswordDto]),
     __metadata("design:returntype", Promise)
 ], TenantsController.prototype, "resetAdminPassword", null);
+__decorate([
+    (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
+    (0, common_1.Post)(':tenantId/users'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('tenantId')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", Promise)
+], TenantsController.prototype, "createTenantUser", null);
 __decorate([
     (0, common_1.UseGuards)(super_admin_guard_1.SuperAdminGuard),
     (0, common_1.Patch)(':tenantId/users/:userId'),

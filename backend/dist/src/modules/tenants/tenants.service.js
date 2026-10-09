@@ -910,6 +910,7 @@ let TenantsService = TenantsService_1 = class TenantsService {
                 throw new common_1.BadRequestException('Papel inválido. Escolha ADMIN ou AGENT.');
             }
             data.role = role;
+            data.isSuperAdmin = false;
         }
         if (dto.isActive !== undefined) {
             data.isActive = Boolean(dto.isActive);
@@ -937,6 +938,60 @@ let TenantsService = TenantsService_1 = class TenantsService {
         return {
             message: `Usuário '${updated.name}' atualizado com sucesso!`,
             user: updated,
+        };
+    }
+    async createTenantUser(tenantId, dto) {
+        const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+        if (!tenant) {
+            throw new common_1.NotFoundException('Empresa não encontrada.');
+        }
+        const name = dto.name?.trim();
+        if (!name) {
+            throw new common_1.BadRequestException('O nome do usuário é obrigatório.');
+        }
+        const email = dto.email?.trim().toLowerCase();
+        if (!email || !email.includes('@')) {
+            throw new common_1.BadRequestException('E-mail informado é inválido.');
+        }
+        const existing = await this.prisma.user.findUnique({ where: { email } });
+        if (existing) {
+            throw new common_1.BadRequestException('Já existe um usuário cadastrado com este e-mail no sistema.');
+        }
+        const rawRole = (dto.role || 'AGENT').toUpperCase();
+        const role = rawRole === 'ADMIN' ? 'ADMIN' : 'AGENT';
+        const rawPassword = dto.password?.trim() || `Vallor@${Math.floor(100000 + Math.random() * 900000)}`;
+        const hashedPassword = await bcrypt.hash(rawPassword, 10);
+        const rawPasswordEncrypted = (0, crypto_util_1.encryptApiKey)(rawPassword);
+        const user = await this.prisma.user.create({
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+                rawPasswordEncrypted,
+                role,
+                isActive: dto.isActive !== false,
+                isSuperAdmin: false,
+                tenantId,
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                isActive: true,
+                isSuperAdmin: true,
+                avatarUrl: true,
+                isOnline: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+        return {
+            message: `Usuário '${user.name}' cadastrado com sucesso na empresa!`,
+            user: {
+                ...user,
+                savedPassword: rawPassword,
+            },
         };
     }
     async resetTenantUserPassword(tenantId, userId, dto) {

@@ -177,6 +177,16 @@ export class TenantsController {
   }
 
   @UseGuards(SuperAdminGuard)
+  @Post(':tenantId/users')
+  async createTenantUser(
+    @Request() req,
+    @Param('tenantId') tenantId: string,
+    @Body() body: { name: string; email: string; role?: string; password?: string; isActive?: boolean }
+  ) {
+    return this.tenantsService.createTenantUser(tenantId, body);
+  }
+
+  @UseGuards(SuperAdminGuard)
   @Patch(':tenantId/users/:userId')
   async updateTenantUser(
     @Request() req,

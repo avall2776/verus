@@ -1000,6 +1000,7 @@ export class TenantsService {
         throw new BadRequestException('Papel inválido. Escolha ADMIN ou AGENT.');
       }
       data.role = role;
+      data.isSuperAdmin = false;
     }
 
     if (dto.isActive !== undefined) {
@@ -1031,6 +1032,75 @@ export class TenantsService {
     return {
       message: `Usuário '${updated.name}' atualizado com sucesso!`,
       user: updated,
+    };
+  }
+
+  /**
+   * Cadastra um novo operador/usuário para um tenant específico diretamente pelo Super Admin.
+   * Restringe estritamente: clientes e operadores NUNCA podem ter permissão de SUPER_ADMIN.
+   */
+  async createTenantUser(
+    tenantId: string,
+    dto: { name: string; email: string; role?: string; password?: string; isActive?: boolean }
+  ) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
+    const name = dto.name?.trim();
+    if (!name) {
+      throw new BadRequestException('O nome do usuário é obrigatório.');
+    }
+
+    const email = dto.email?.trim().toLowerCase();
+    if (!email || !email.includes('@')) {
+      throw new BadRequestException('E-mail informado é inválido.');
+    }
+
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      throw new BadRequestException('Já existe um usuário cadastrado com este e-mail no sistema.');
+    }
+
+    const rawRole = (dto.role || 'AGENT').toUpperCase();
+    const role = rawRole === 'ADMIN' ? 'ADMIN' : 'AGENT'; // Bloqueio estrito: jamais SUPER_ADMIN
+
+    const rawPassword = dto.password?.trim() || `Vallor@${Math.floor(100000 + Math.random() * 900000)}`;
+    const hashedPassword = await bcrypt.hash(rawPassword, 10);
+    const rawPasswordEncrypted = encryptApiKey(rawPassword);
+
+    const user = await this.prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        rawPasswordEncrypted,
+        role,
+        isActive: dto.isActive !== false,
+        isSuperAdmin: false, // Segurança estrita: clientes são sempre isSuperAdmin: false
+        tenantId,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        isSuperAdmin: true,
+        avatarUrl: true,
+        isOnline: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return {
+      message: `Usuário '${user.name}' cadastrado com sucesso na empresa!`,
+      user: {
+        ...user,
+        savedPassword: rawPassword,
+      },
     };
   }
 
