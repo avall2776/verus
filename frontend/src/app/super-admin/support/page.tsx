@@ -386,6 +386,13 @@ function SuperAdminSupportContent() {
     fetchAiConfig();
   }, [fetchAiConfig]);
 
+  // Recarrega dados frescos sempre que o Super Admin alternar para a aba do Agente IA
+  useEffect(() => {
+    if (activeSubView === 'ai_config') {
+      fetchAiConfig();
+    }
+  }, [activeSubView, fetchAiConfig]);
+
   // Salvar Configuração do Agente IA
   const handleSaveAiConfig = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1936,6 +1943,46 @@ function SuperAdminSupportContent() {
                     </div>
                   </div>
                 </div>
+
+                {/* 2.1 Card de Diretrizes Aprendidas via Mentoria (Visual & Imediato) */}
+                {(() => {
+                  const allText = `${aiConfig.prompt || ''}\n${aiConfig.knowledgeBase || ''}\n${aiConfig.guardrails || ''}`;
+                  const mentorRules: string[] = [];
+                  const lines = allText.split('\n');
+                  lines.forEach(l => {
+                    const trimmed = l.trim();
+                    if (trimmed.startsWith('- [CHAMADO') || trimmed.startsWith('- [REGRA ESTRITA - CHAMADO')) {
+                      mentorRules.push(trimmed.replace(/^-\s*/, ''));
+                    }
+                  });
+
+                  if (mentorRules.length === 0) return null;
+
+                  return (
+                    <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-[#0B1224] border border-cyan-500/40 space-y-2 shadow-lg">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-2">
+                          <CheckCircle2 size={15} className="text-cyan-400" />
+                          <span>Diretrizes Aprendidas via Mentoria em Tempo Real</span>
+                        </h3>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-bold border border-cyan-500/30">
+                          {mentorRules.length} regra(s) ativa(s)
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        Orientações assimiladas pela Sofia durante os chamados da Central. Elas estão incorporadas às instruções ativas e já são seguidas nos próximos atendimentos.
+                      </p>
+                      <div className="space-y-1.5 pt-1">
+                        {mentorRules.map((rule, idx) => (
+                          <div key={idx} className="flex items-start gap-2 p-2.5 rounded-lg bg-[#070D1B]/90 border border-cyan-500/20 text-xs text-slate-200">
+                            <span className="w-2 h-2 rounded-full bg-cyan-400 mt-1 shrink-0 animate-pulse" />
+                            <span className="font-mono text-xs leading-relaxed text-cyan-100">{rule}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* 3. Prompt do Sistema / Tom de Voz */}
                 <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 space-y-2">

@@ -608,16 +608,83 @@ ATENÇÃO: É ESTRITAMENTE PROIBIDO O USO DE QUALQUER EMOJI nas saídas de texto
       };
     }
 
-    // Persiste atualizações no banco de dados
+    // Injeção Determinística Blindada de Diretrizes de Treinamento
+    const finalRule = (parsedResult.learnedRule || dto.feedback).trim();
+    const targetCat = String(parsedResult.targetCategory || 'PERSONALITY_PROMPT').toUpperCase();
+
     const updateData: any = {};
-    if (parsedResult.updatedPrompt && typeof parsedResult.updatedPrompt === 'string') {
-      updateData.prompt = parsedResult.updatedPrompt.trim();
+
+    if (targetCat === 'PERSONALITY_PROMPT' || targetCat.includes('PERSONALITY') || targetCat === 'MULTIPLE') {
+      let promptText = (parsedResult.updatedPrompt && typeof parsedResult.updatedPrompt === 'string' && parsedResult.updatedPrompt.length > 30)
+        ? parsedResult.updatedPrompt.trim()
+        : (config.prompt || '');
+
+      promptText = promptText.replace(/---\s*INÍCIO PROMPT DE PERSONALIDADE\s*---/gi, '')
+                             .replace(/---\s*FIM PROMPT DE PERSONALIDADE\s*---/gi, '')
+                             .trim();
+
+      // Injeta de forma garantida se a LLM não tiver incluído no texto completo
+      if (!promptText.toLowerCase().includes(finalRule.toLowerCase())) {
+        const header = '\n\n### DIRETRIZES APRENDIDAS VIA MENTORIA:';
+        if (promptText.includes('### DIRETRIZES APRENDIDAS VIA MENTORIA:')) {
+          promptText += `\n- [CHAMADO #${ticket.ticketNumber}]: ${finalRule}`;
+        } else {
+          promptText += `${header}\n- [CHAMADO #${ticket.ticketNumber}]: ${finalRule}`;
+        }
+      }
+      updateData.prompt = promptText;
     }
-    if (parsedResult.updatedKnowledgeBase && typeof parsedResult.updatedKnowledgeBase === 'string') {
-      updateData.knowledgeBase = parsedResult.updatedKnowledgeBase.trim();
+
+    if (targetCat === 'KNOWLEDGE_BASE' || targetCat.includes('KNOWLEDGE') || targetCat === 'MULTIPLE') {
+      let kbText = (parsedResult.updatedKnowledgeBase && typeof parsedResult.updatedKnowledgeBase === 'string' && parsedResult.updatedKnowledgeBase.length > 30)
+        ? parsedResult.updatedKnowledgeBase.trim()
+        : (config.knowledgeBase || '');
+
+      kbText = kbText.replace(/---\s*INÍCIO BASE DE CONHECIMENTO\s*---/gi, '')
+                     .replace(/---\s*FIM BASE DE CONHECIMENTO\s*---/gi, '')
+                     .trim();
+
+      if (!kbText.toLowerCase().includes(finalRule.toLowerCase())) {
+        const header = '\n\n### DIRETRIZES TÉCNICAS INCORPORADAS VIA MENTORIA:';
+        if (kbText.includes('### DIRETRIZES TÉCNICAS INCORPORADAS VIA MENTORIA:')) {
+          kbText += `\n- [CHAMADO #${ticket.ticketNumber}]: ${finalRule}`;
+        } else {
+          kbText += `${header}\n- [CHAMADO #${ticket.ticketNumber}]: ${finalRule}`;
+        }
+      }
+      updateData.knowledgeBase = kbText;
     }
-    if (parsedResult.updatedGuardrails && typeof parsedResult.updatedGuardrails === 'string') {
-      updateData.guardrails = parsedResult.updatedGuardrails.trim();
+
+    if (targetCat === 'GUARDRAILS' || targetCat.includes('GUARD') || targetCat === 'MULTIPLE') {
+      let guardText = (parsedResult.updatedGuardrails && typeof parsedResult.updatedGuardrails === 'string' && parsedResult.updatedGuardrails.length > 30)
+        ? parsedResult.updatedGuardrails.trim()
+        : (config.guardrails || '');
+
+      guardText = guardText.replace(/---\s*INÍCIO CANCELAS DE SEGURANÇA\s*---/gi, '')
+                           .replace(/---\s*FIM CANCELAS DE SEGURANÇA\s*---/gi, '')
+                           .trim();
+
+      if (!guardText.toLowerCase().includes(finalRule.toLowerCase())) {
+        const header = '\n\n### CANCELAS ADICIONADAS VIA MENTORIA:';
+        if (guardText.includes('### CANCELAS ADICIONADAS VIA MENTORIA:')) {
+          guardText += `\n- [REGRA ESTRITA - CHAMADO #${ticket.ticketNumber}]: ${finalRule}`;
+        } else {
+          guardText += `${header}\n- [REGRA ESTRITA - CHAMADO #${ticket.ticketNumber}]: ${finalRule}`;
+        }
+      }
+      updateData.guardrails = guardText;
+    }
+
+    // Fallback: se nenhuma categoria bateu, injeta no prompt de personalidade
+    if (Object.keys(updateData).length === 0) {
+      let promptText = config.prompt || '';
+      const header = '\n\n### DIRETRIZES APRENDIDAS VIA MENTORIA:';
+      if (promptText.includes('### DIRETRIZES APRENDIDAS VIA MENTORIA:')) {
+        promptText += `\n- [CHAMADO #${ticket.ticketNumber}]: ${finalRule}`;
+      } else {
+        promptText += `${header}\n- [CHAMADO #${ticket.ticketNumber}]: ${finalRule}`;
+      }
+      updateData.prompt = promptText;
     }
 
     let updatedConfig = config;
