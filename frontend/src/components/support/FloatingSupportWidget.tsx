@@ -8,6 +8,7 @@ import {
   Smartphone, Mail, Bot, ShieldCheck, Sparkles, AlertTriangle
 } from "lucide-react";
 import api from "@/lib/api";
+import { useSocket } from "@/components/ui/SocketProvider";
 import toast from "react-hot-toast";
 
 interface SupportTicket {
@@ -57,6 +58,7 @@ const CATEGORY_OPTIONS = [
 export default function FloatingSupportWidget() {
   const router = useRouter();
   const pathname = usePathname();
+  const { socket } = useSocket();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"support" | "notices">("support");
   const [currentView, setCurrentView] = useState<"list" | "new_ticket">("list");
@@ -252,6 +254,23 @@ export default function FloatingSupportWidget() {
   useEffect(() => {
     fetchMyTickets();
   }, [fetchMyTickets]);
+
+  // Atualização em tempo real via WebSocket
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUpdate = () => {
+      fetchMyTickets();
+    };
+
+    socket.on("ticketUpdated", handleUpdate);
+    socket.on("adminTicketUpdated", handleUpdate);
+
+    return () => {
+      socket.off("ticketUpdated", handleUpdate);
+      socket.off("adminTicketUpdated", handleUpdate);
+    };
+  }, [socket, fetchMyTickets]);
 
   // Fechamento com tecla ESC e clique fora
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import OpenAI from 'openai';
 import { ConfigService } from '@nestjs/config';
@@ -21,7 +21,17 @@ export class RagService {
     this.logger.log(`Processando PDF ${filename} para o tenant ${tenantId}...`);
     
     // 1. Extrair Texto
-    const text = await PdfLoader.extractText(fileBuffer);
+    let text = '';
+    try {
+      text = await PdfLoader.extractText(fileBuffer);
+    } catch (err: any) {
+      this.logger.error(`Erro ao extrair texto do PDF ${filename}: ${err.message}`);
+      throw new BadRequestException(`Falha ao processar o PDF: ${err.message || 'arquivo corrompido ou protegido'}`);
+    }
+
+    if (!text || !text.trim()) {
+      throw new BadRequestException('Não foi possível extrair texto deste PDF. O arquivo pode ser uma imagem digitalizada sem camada de texto (OCR) ou estar vazio.');
+    }
     
     // 2. Criar o Documento Pai
     const document = await this.prisma.knowledgeDocument.create({

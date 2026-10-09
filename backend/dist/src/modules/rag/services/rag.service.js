@@ -26,7 +26,17 @@ let RagService = RagService_1 = class RagService {
     }
     async processAndSavePdf(tenantId, filename, fileBuffer) {
         this.logger.log(`Processando PDF ${filename} para o tenant ${tenantId}...`);
-        const text = await pdf_loader_1.PdfLoader.extractText(fileBuffer);
+        let text = '';
+        try {
+            text = await pdf_loader_1.PdfLoader.extractText(fileBuffer);
+        }
+        catch (err) {
+            this.logger.error(`Erro ao extrair texto do PDF ${filename}: ${err.message}`);
+            throw new common_1.BadRequestException(`Falha ao processar o PDF: ${err.message || 'arquivo corrompido ou protegido'}`);
+        }
+        if (!text || !text.trim()) {
+            throw new common_1.BadRequestException('Não foi possível extrair texto deste PDF. O arquivo pode ser uma imagem digitalizada sem camada de texto (OCR) ou estar vazio.');
+        }
         const document = await this.prisma.knowledgeDocument.create({
             data: {
                 tenantId,

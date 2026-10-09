@@ -387,11 +387,10 @@ export default function SuperAdminAiAgentsPage() {
     formData.append("file", file);
 
     try {
-      const headers = { 
+      const headers: Record<string, string> = { 
         "x-target-tenant-id": selectedTenantId,
-        "Content-Type": "multipart/form-data"
       };
-      await api.post("/agent/upload-knowledge", formData, { headers });
+      await api.post("/agent/documents/upload", formData, { headers });
       toast.success(`Documento "${file.name}" indexado com sucesso no pgvector!`);
       // Recarrega documentos
       const docsRes = await api.get("/agent/documents", { headers: { "x-target-tenant-id": selectedTenantId } });

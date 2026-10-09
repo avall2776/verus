@@ -212,6 +212,10 @@ export default function NotificationsPopover() {
     setIsOpen(false);
     if (item.link) {
       router.push(item.link);
+    } else if (item.type === 'SUPPORT' && item.metadata?.ticketId) {
+      router.push(`/support?ticketId=${item.metadata.ticketId}`);
+    } else if (item.type === 'SUPPORT') {
+      router.push('/support');
     }
   };
 
@@ -449,11 +453,15 @@ export default function NotificationsPopover() {
             <button
               onClick={() => {
                 setIsOpen(false);
-                router.push('/chat-interno');
+                if (activeFilter === 'SUPPORT') {
+                  router.push('/support');
+                } else {
+                  router.push('/chat-interno');
+                }
               }}
               className="text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
             >
-              Abrir chat
+              {activeFilter === 'SUPPORT' ? 'Central de Suporte' : 'Abrir chat'}
             </button>
           </div>
         </div>

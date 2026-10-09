@@ -141,7 +141,7 @@ export class NotificationsService {
           description,
           createdAt: itemTime.toISOString(),
           isRead: readNotificationIds.includes(id) || itemTime.getTime() <= lastReadNotificationsAt,
-          link: '/support',
+          link: `/support?ticketId=${ticket.id}`,
           priority: ticket.priority === 'URGENT' || ticket.priority === 'HIGH' ? 'HIGH' : 'NORMAL',
           metadata: {
             ticketId: ticket.id,

@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { 
   LifeBuoy, MessageSquare, ShieldCheck, AlertCircle, CheckCircle2, 
   Clock, Plus, Search, Filter, RefreshCw, Send, Lock, User, 
-  ExternalLink, ChevronRight, HelpCircle, Smartphone, Mail, 
+  ExternalLink, ChevronRight, ChevronDown, ChevronUp, HelpCircle, Smartphone, Mail, 
   Target, Bot, Zap, ArrowRight, X, AlertTriangle, Eye, Building2,
-  Star, Sparkles, Loader2
+  Star, Sparkles, Loader2, PanelLeftClose, PanelLeft, FileText, Maximize2
 } from "lucide-react";
 import api from "@/lib/api";
 import { useSocket } from "@/components/ui/SocketProvider";
@@ -107,8 +108,12 @@ const STATUS_BADGES: Record<string, { label: string; bg: string; text: string; b
   CLOSED: { label: "Encerrado", bg: "bg-slate-800/80", text: "text-slate-400", border: "border-slate-700" },
 };
 
-export default function SupportPage() {
+function SupportPageContent() {
   const { socket } = useSocket();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const urlTicketId = searchParams.get("ticketId");
+
   const [activeTab, setActiveTab] = useState<"troubleshooting" | "my_tickets" | "admin_triage">("troubleshooting");
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [counts, setCounts] = useState({
@@ -122,6 +127,11 @@ export default function SupportPage() {
   const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+
+  // Layout Responsivo & Amplo
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showCompanyDetails, setShowCompanyDetails] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Filtros
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -148,6 +158,16 @@ export default function SupportPage() {
 
   // Autoatendimento - Busca Instantânea
   const [knowledgeSearch, setKnowledgeSearch] = useState("");
+
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  };
+
+  useEffect(() => {
+    if (selectedTicket?.messages?.length) {
+      scrollToBottom();
+    }
+  }, [selectedTicket?.messages?.length]);
 
   const fetchTickets = useCallback(async () => {
     setLoading(true);
@@ -180,6 +200,9 @@ export default function SupportPage() {
   const handleSelectTicket = async (ticket: SupportTicket) => {
     setSelectedTicket(ticket);
     setLoadingDetails(true);
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", `/support?ticketId=${ticket.id}`);
+    }
     try {
       const res = await api.get(`/support/tickets/${ticket.id}`);
       setSelectedTicket(res.data);
@@ -190,6 +213,26 @@ export default function SupportPage() {
       setLoadingDetails(false);
     }
   };
+
+  // Deep-linking: ao carregar com ?ticketId=xxx na URL, ativa a aba "my_tickets" e carrega o chamado
+  useEffect(() => {
+    if (urlTicketId) {
+      setActiveTab("my_tickets");
+      setLoadingDetails(true);
+      api.get(`/support/tickets/${urlTicketId}`)
+        .then((res) => {
+          if (res.data) {
+            setSelectedTicket(res.data);
+          }
+        })
+        .catch((err) => {
+          console.warn("Falha ao buscar chamado por URL:", err);
+        })
+        .finally(() => {
+          setLoadingDetails(false);
+        });
+    }
+  }, [urlTicketId]);
 
   // Sincronização em tempo real via WebSocket
   useEffect(() => {
@@ -671,9 +714,23 @@ export default function SupportPage() {
           </div>
 
           {/* Grid Split View: Lista de Chamados à esquerda e Detalhes/Chat à direita */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[580px]">
-            {/* Coluna 1: Lista de Chamados (col-span-5) */}
-            <div className="lg:col-span-5 rounded-2xl bg-[#0B1224] border border-slate-800 p-3 space-y-2 overflow-y-auto max-h-[640px]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-[calc(100vh-14rem)] min-h-[720px]">
+            {/* Coluna 1: Lista de Chamados (lg:col-span-4 / oculta quando expandido) */}
+            <div className={`${
+              isSidebarCollapsed ? "hidden" : "lg:col-span-4 xl:col-span-4"
+            } rounded-2xl bg-[#0B1224] border border-slate-800 p-3 flex flex-col h-full overflow-hidden transition-all shadow-lg`}>
+              <div className="flex items-center justify-between px-1.5 pb-2.5 border-b border-slate-800/80 mb-2">
+                <span className="text-xs font-bold text-slate-300">Chamados ({tickets.length})</span>
+                <button
+                  type="button"
+                  onClick={() => setIsSidebarCollapsed(true)}
+                  title="Recolher lista e expandir chat"
+                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <PanelLeftClose size={15} />
+                </button>
+              </div>
+
               {loading ? (
                 <div className="p-12 text-center text-xs text-slate-400 flex flex-col items-center gap-2">
                   <RefreshCw className="w-5 h-5 animate-spin text-blue-400" />
@@ -684,152 +741,175 @@ export default function SupportPage() {
                   Nenhum chamado encontrado com os filtros selecionados.
                 </div>
               ) : (
-                tickets.map((t) => {
-                  const statusCfg = STATUS_BADGES[t.status] || STATUS_BADGES.OPEN;
-                  const priorityCfg = PRIORITY_BADGES[t.priority] || PRIORITY_BADGES.MEDIUM;
-                  const isSelected = selectedTicket?.id === t.id;
+                <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                  {tickets.map((t) => {
+                    const statusCfg = STATUS_BADGES[t.status] || STATUS_BADGES.OPEN;
+                    const priorityCfg = PRIORITY_BADGES[t.priority] || PRIORITY_BADGES.MEDIUM;
+                    const isSelected = selectedTicket?.id === t.id;
 
-                  return (
-                    <div
-                      key={t.id}
-                      onClick={() => handleSelectTicket(t)}
-                      className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
-                        isSelected
-                          ? "bg-slate-800/80 border-blue-500 shadow-md ring-1 ring-blue-500/20"
-                          : "bg-[#070D1B] border-slate-800/80 hover:border-slate-700 hover:bg-slate-800/40"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] font-mono text-slate-400 font-bold">
-                          #{t.ticketNumber}
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${priorityCfg.bg} ${priorityCfg.text} ${priorityCfg.border}`}>
-                            {priorityCfg.label}
+                    return (
+                      <div
+                        key={t.id}
+                        onClick={() => handleSelectTicket(t)}
+                        className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                          isSelected
+                            ? "bg-slate-800/90 border-blue-500 shadow-md ring-1 ring-blue-500/30"
+                            : "bg-[#070D1B] border-slate-800/80 hover:border-slate-700 hover:bg-slate-800/50"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[10px] font-mono text-blue-400 font-bold">
+                            #{t.ticketNumber}
                           </span>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
-                            {statusCfg.label}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${priorityCfg.bg} ${priorityCfg.text} ${priorityCfg.border}`}>
+                              {priorityCfg.label}
+                            </span>
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
+                              {statusCfg.label}
+                            </span>
+                          </div>
+                        </div>
+
+                        <h4 className="text-xs font-bold text-white line-clamp-1 mb-1">
+                          {t.subject}
+                        </h4>
+                        <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed mb-2">
+                          {t.description}
+                        </p>
+
+                        <div className="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-800/60 pt-1.5">
+                          <span>{CATEGORY_LABELS[t.category] || t.category}</span>
+                          <span>{new Date(t.updatedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
                         </div>
                       </div>
-
-                      <h4 className="text-xs font-bold text-white line-clamp-1 mb-1">
-                        {t.subject}
-                      </h4>
-                      <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed mb-2.5">
-                        {t.description}
-                      </p>
-
-                      <div className="flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-800/60 pt-2">
-                        <span>{CATEGORY_LABELS[t.category] || t.category}</span>
-                        <span>{new Date(t.updatedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
-                      </div>
-                    </div>
-                  );
-                })
+                    );
+                  })}
+                </div>
               )}
             </div>
 
-            {/* Coluna 2: Detalhes do Chamado & Chat Bidirecional (col-span-7) */}
-            <div className="lg:col-span-7 rounded-2xl bg-[#0B1224] border border-slate-800 p-5 flex flex-col justify-between max-h-[640px]">
+            {/* Coluna 2: Detalhes do Chamado & Chat Completo e Amplo (lg:col-span-8 ou 12) */}
+            <div className={`${
+              isSidebarCollapsed ? "lg:col-span-12" : "lg:col-span-8 xl:col-span-8"
+            } rounded-2xl bg-[#0B1224] border border-slate-800 flex flex-col h-full overflow-hidden transition-all shadow-xl`}>
               {selectedTicket ? (
-                <>
+                <div className="flex flex-col h-full overflow-hidden">
                   {/* Cabeçalho do Chamado Selecionado */}
-                  <div className="border-b border-slate-800 pb-4 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-mono font-bold text-blue-400">
-                            Chamado #{selectedTicket.ticketNumber}
-                          </span>
-                          <span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                            {CATEGORY_LABELS[selectedTicket.category] || selectedTicket.category}
-                          </span>
+                  <div className="p-4 border-b border-slate-800 bg-[#070D1B]/80 flex flex-col gap-2 shrink-0">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {isSidebarCollapsed && (
+                          <button
+                            type="button"
+                            onClick={() => setIsSidebarCollapsed(false)}
+                            title="Expandir lista de chamados"
+                            className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors shrink-0"
+                          >
+                            <PanelLeft size={16} />
+                          </button>
+                        )}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-mono font-bold text-blue-400 shrink-0">
+                              Chamado #{selectedTicket.ticketNumber}
+                            </span>
+                            <span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 shrink-0">
+                              {CATEGORY_LABELS[selectedTicket.category] || selectedTicket.category}
+                            </span>
+                            {selectedTicket.priority && PRIORITY_BADGES[selectedTicket.priority] && (
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border shrink-0 ${PRIORITY_BADGES[selectedTicket.priority].bg} ${PRIORITY_BADGES[selectedTicket.priority].text} ${PRIORITY_BADGES[selectedTicket.priority].border}`}>
+                                {PRIORITY_BADGES[selectedTicket.priority].label}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-base font-bold text-white truncate mt-0.5 leading-snug" title={selectedTicket.subject}>
+                            {selectedTicket.subject}
+                          </h3>
                         </div>
-                        <h3 className="text-sm font-bold text-white leading-tight">
-                          {selectedTicket.subject}
-                        </h3>
                       </div>
 
-                      {/* Transição de Status */}
-                      <select
-                        value={selectedTicket.status}
-                        onChange={(e) => handleUpdateStatus(e.target.value)}
-                        className="px-2.5 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500"
-                      >
-                        <option value="OPEN">Aberto</option>
-                        <option value="IN_PROGRESS">Em Atendimento</option>
-                        <option value="WAITING_CLIENT">Aguardando Resposta</option>
-                        <option value="RESOLVED">Marcar como Resolvido</option>
-                        <option value="CLOSED">Encerrar Chamado</option>
-                      </select>
+                      {/* Transição de Status e Sincronização */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <select
+                          value={selectedTicket.status}
+                          onChange={(e) => handleUpdateStatus(e.target.value)}
+                          className="px-2.5 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500 font-semibold cursor-pointer"
+                        >
+                          <option value="OPEN">Aberto</option>
+                          <option value="IN_PROGRESS">Em Atendimento</option>
+                          <option value="WAITING_CLIENT">Aguardando Resposta</option>
+                          <option value="RESOLVED">Marcar como Resolvido</option>
+                          <option value="CLOSED">Encerrar Chamado</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectTicket(selectedTicket)}
+                          disabled={loadingDetails}
+                          className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors"
+                          title="Atualizar mensagens agora"
+                        >
+                          <RefreshCw size={14} className={loadingDetails ? "animate-spin text-blue-400" : ""} />
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
-                      <span>Solicitante: <strong className="text-slate-200">{selectedTicket.user?.name || "Usuário"}</strong></span>
-                      <span>Criado em: {new Date(selectedTicket.createdAt).toLocaleDateString("pt-BR")}</span>
-                      {selectedTicket.assignedTo && (
-                        <span>Atendente: <strong className="text-blue-300">{selectedTicket.assignedTo.name}</strong></span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Card de Dados Cadastrais da Empresa */}
-                  {selectedTicket.tenant && (
-                    <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2.5 my-1">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-lg bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                            <Building2 className="w-3.5 h-3.5" />
-                          </div>
-                          <span className="text-xs font-bold text-white">
-                            {selectedTicket.tenant.name}
-                          </span>
-                          {selectedTicket.tenant.plan && (
-                            <span className="px-2 py-0.5 rounded-md bg-blue-600/10 border border-blue-500/20 text-[10px] font-semibold text-blue-300">
-                              Plano {selectedTicket.tenant.plan.name}
-                            </span>
-                          )}
-                        </div>
-
-                        {selectedTicket.tenant.cnpj && (
-                          <span className="text-[10px] font-mono text-slate-400">
-                            CNPJ: {selectedTicket.tenant.cnpj}
-                          </span>
+                    {/* Sub-barra: Solicitante + Chip da Empresa (Compacto & Retrátil) */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-800/50 text-[11px] text-slate-400">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span>Solicitante: <strong className="text-slate-200">{selectedTicket.user?.name || "Usuário"}</strong></span>
+                        <span>Criado em: {new Date(selectedTicket.createdAt).toLocaleDateString("pt-BR")}</span>
+                        {selectedTicket.assignedTo && (
+                          <span>Atendente: <strong className="text-cyan-300">{selectedTicket.assignedTo.name}</strong></span>
                         )}
                       </div>
 
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-800/60 text-[11px]">
+                      {selectedTicket.tenant && (
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-950/40 border border-blue-800/40 text-blue-300 text-[10px] font-semibold">
+                            <Building2 size={12} className="text-blue-400" />
+                            <span>{selectedTicket.tenant.name}</span>
+                            {selectedTicket.tenant.plan && (
+                              <span className="text-blue-400/80 font-mono">• {selectedTicket.tenant.plan.name}</span>
+                            )}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setShowCompanyDetails(prev => !prev)}
+                            className="text-[10px] text-slate-400 hover:text-slate-200 underline cursor-pointer flex items-center gap-0.5"
+                          >
+                            <span>{showCompanyDetails ? "Ocultar dados" : "Ver dados da conta"}</span>
+                            {showCompanyDetails ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Gaveta Retrátil de Dados Cadastrais da Empresa */}
+                    {showCompanyDetails && selectedTicket.tenant && (
+                      <div className="mt-1 p-3 rounded-xl bg-[#0B1224] border border-slate-700/80 text-[11px] grid grid-cols-2 sm:grid-cols-4 gap-2 animate-in fade-in duration-150">
                         <div>
                           <span className="text-[10px] text-slate-500 block">E-mail:</span>
-                          <span className="text-slate-300 truncate block font-medium" title={selectedTicket.tenant.email}>
-                            {selectedTicket.tenant.email || "Não cadastrado"}
-                          </span>
+                          <span className="text-slate-300 truncate block font-medium">{selectedTicket.tenant.email || "Não cadastrado"}</span>
                         </div>
                         <div>
                           <span className="text-[10px] text-slate-500 block">Telefone:</span>
-                          <span className="text-slate-300 truncate block font-medium">
-                            {selectedTicket.tenant.phone || "Não cadastrado"}
-                          </span>
+                          <span className="text-slate-300 truncate block font-medium">{selectedTicket.tenant.phone || "Não cadastrado"}</span>
                         </div>
                         <div>
                           <span className="text-[10px] text-slate-500 block">Usuários no Tenant:</span>
-                          <span className="text-slate-300 font-semibold">
-                            {selectedTicket.tenant._count?.users ?? "—"}
-                          </span>
+                          <span className="text-slate-300 font-semibold">{selectedTicket.tenant._count?.users ?? "—"}</span>
                         </div>
                         <div>
                           <span className="text-[10px] text-slate-500 block">Total de Chamados:</span>
-                          <span className="text-slate-300 font-semibold">
-                            {selectedTicket.tenant._count?.supportTickets ?? "—"}
-                          </span>
+                          <span className="text-slate-300 font-semibold">{selectedTicket.tenant._count?.supportTickets ?? "—"}</span>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
-                  {/* Barra de Abas Superiores com Sincronização Bidirecional */}
-                  <div className="py-2 px-1 border-b border-slate-800 flex items-center justify-between gap-2">
+                  {/* Barra de Abas Superiores com Controles de Canal */}
+                  <div className="py-2 px-4 border-b border-slate-800/80 bg-[#0B1224] flex items-center justify-between gap-2 shrink-0">
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
@@ -859,89 +939,137 @@ export default function SupportPage() {
                         <Lock className="w-3.5 h-3.5" />
                         <span>Nota Técnica Privada</span>
                       </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (selectedTicket) handleSelectTicket(selectedTicket);
-                        }}
-                        disabled={loadingDetails}
-                        className="px-2 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 border border-slate-800 transition-colors cursor-pointer flex items-center gap-1.5"
-                        title="Sincronizar mensagens agora"
-                      >
-                        <RefreshCw className={`w-3.5 h-3.5 ${loadingDetails ? "animate-spin text-blue-400" : ""}`} />
-                        <span className="text-[11px] hidden sm:inline">Sincronizar</span>
-                      </button>
                     </div>
 
                     <span className="text-[10px] text-slate-400 hidden sm:inline">
-                      {isInternalNote ? "🔒 Modo Confidencial Ativo" : "💬 Canal Oficial com o Solicitante"}
+                      {isInternalNote ? "🔒 Modo Confidencial Ativo (Oculto ao Cliente)" : "💬 Canal Oficial com o Suporte"}
                     </span>
                   </div>
 
-                  {/* Mensagens do Chamado (Timeline) */}
-                  <div className="flex-1 overflow-y-auto space-y-3 py-4 pr-1">
-                    {loadingDetails ? (
-                      <div className="p-8 text-center text-xs text-slate-400">
-                        Carregando mensagens...
+                  {/* Mensagens do Chamado (Timeline Ampla, Clara e Confortável) */}
+                  <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar bg-[#080E1C]/60">
+                    {/* CARD FIXADO NO TOPO: SOLICITAÇÃO ORIGINAL DO CLIENTE */}
+                    {selectedTicket.description && (
+                      <div className="mx-auto max-w-3xl bg-[#0B1224] border border-slate-800 rounded-xl p-3.5 shadow-sm">
+                        <div className="flex items-center justify-between text-xs font-bold text-blue-400 border-b border-slate-800/80 pb-1.5 mb-2">
+                          <span className="flex items-center gap-1.5">
+                            <FileText size={14} className="text-blue-400" />
+                            <span>Descrição Inicial do Chamado #{selectedTicket.ticketNumber}</span>
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            {new Date(selectedTicket.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">
+                          {selectedTicket.description}
+                        </p>
                       </div>
-                    ) : (
-                      selectedTicket.messages?.map((msg) => {
+                    )}
+
+                    {/* DIVISOR DE HISTÓRICO */}
+                    <div className="flex items-center justify-center my-2">
+                      <span className="text-[10px] text-slate-500 bg-[#0B1224] px-3 py-1 rounded-full border border-slate-800 font-mono uppercase tracking-wider">
+                        Histórico de Mensagens
+                      </span>
+                    </div>
+
+                    {loadingDetails ? (
+                      <div className="py-12 text-center text-xs text-slate-400 flex flex-col items-center gap-2">
+                        <RefreshCw className="w-5 h-5 animate-spin text-blue-400" />
+                        <span>Carregando mensagens...</span>
+                      </div>
+                    ) : selectedTicket.messages && selectedTicket.messages.length > 0 ? (
+                      selectedTicket.messages.map((msg) => {
                         const isAi = msg.senderRole === "AI_AGENT";
-                        const isAgentOrAdmin = msg.senderRole === "AGENT" || msg.senderRole === "ADMIN" || msg.senderRole === "SUPER_ADMIN" || isAi;
+                        const isOperator = msg.senderRole === "AGENT" || msg.senderRole === "ADMIN" || msg.senderRole === "SUPER_ADMIN";
+                        const isClient = !isAi && !isOperator;
+
                         return (
-                          <div 
+                          <div
                             key={msg.id}
-                            className={`p-3.5 rounded-xl border text-xs leading-relaxed max-w-[90%] shadow-sm ${
-                              msg.isInternal
-                                ? "bg-amber-950/20 border-amber-500/30 text-amber-200 ml-auto"
-                                : isAi
-                                ? "bg-gradient-to-br from-[#0c1f36] to-[#071322] border-cyan-500/40 text-slate-100 mr-auto ring-1 ring-cyan-500/20 shadow-cyan-950/20"
-                                : isAgentOrAdmin
-                                ? "bg-slate-800/80 border-slate-700 text-slate-200 mr-auto"
-                                : "bg-blue-600/10 border-blue-500/30 text-slate-200 ml-auto"
-                            }`}
+                            className={`flex flex-col ${isClient ? "items-end" : "items-start"} max-w-full`}
                           >
-                            <div className="flex items-center justify-between gap-3 mb-1.5 pb-1 border-b border-white/5">
-                              <span className="font-bold text-[11px] text-white flex items-center gap-1.5">
-                                {isAi ? (
-                                  <>
-                                    <Bot size={13} className="text-cyan-400 shrink-0" />
-                                    <span className="text-cyan-300 font-bold">{msg.senderName || "Sofia - Suporte Vallor"}</span>
-                                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold font-mono uppercase">
-                                      IA de Suporte
-                                    </span>
-                                  </>
-                                ) : (
-                                  <>
-                                    {msg.senderName || msg.sender?.name || "Atendente"}
-                                    {msg.isInternal && (
-                                      <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold">
-                                        Nota Interna
+                            <div 
+                              className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed max-w-[85%] md:max-w-[75%] shadow-md transition-all ${
+                                msg.isInternal
+                                  ? "bg-amber-950/25 border border-amber-500/40 text-amber-200"
+                                  : isAi
+                                  ? "bg-gradient-to-br from-[#0c1f36] via-[#091626] to-[#071322] border border-cyan-500/40 text-slate-100 ring-1 ring-cyan-500/20 shadow-cyan-950/20"
+                                  : isOperator
+                                  ? "bg-[#0F172A] border border-slate-700/80 text-slate-100 shadow-slate-950/40"
+                                  : "bg-blue-600/25 border border-blue-500/40 text-white shadow-blue-950/30"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-4 mb-2 pb-1.5 border-b border-white/10">
+                                <div className="flex items-center gap-1.5">
+                                  {isAi ? (
+                                    <>
+                                      <div className="w-5 h-5 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center">
+                                        <Bot size={12} className="text-cyan-400" />
+                                      </div>
+                                      <span className="text-cyan-300 font-bold text-xs">{msg.senderName || "Sofia - Suporte Vallor"}</span>
+                                      <span className="px-1.5 py-0.2 rounded text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold font-mono uppercase">
+                                        IA de Suporte
                                       </span>
-                                    )}
-                                  </>
-                                )}
-                              </span>
-                              <div className="flex items-center gap-1 text-[10px] text-slate-400 font-mono">
-                                <span>
-                                  {new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                                </span>
-                                {isAi && <Sparkles size={11} className="text-cyan-400" />}
+                                    </>
+                                  ) : isOperator ? (
+                                    <>
+                                      <div className="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+                                        <ShieldCheck size={12} className="text-indigo-400" />
+                                      </div>
+                                      <span className="text-slate-100 font-bold text-xs">{msg.senderName || msg.sender?.name || "Suporte Vallor"}</span>
+                                      <span className="px-1.5 py-0.2 rounded text-[9px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold font-mono uppercase">
+                                        Atendente
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div className="w-5 h-5 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
+                                        <User size={12} className="text-blue-300" />
+                                      </div>
+                                      <span className="text-white font-bold text-xs">{msg.senderName || msg.sender?.name || "Você"}</span>
+                                      <span className="px-1.5 py-0.2 rounded text-[9px] bg-blue-500/20 text-blue-300 border border-blue-500/30 font-semibold font-mono uppercase">
+                                        Solicitante
+                                      </span>
+                                    </>
+                                  )}
+
+                                  {msg.isInternal && (
+                                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold">
+                                      Nota Interna
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-1 text-[10px] text-slate-400 font-mono">
+                                  <span>
+                                    {new Date(msg.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                  </span>
+                                  {isAi && <Sparkles size={11} className="text-cyan-400" />}
+                                </div>
                               </div>
+                              <p className="whitespace-pre-wrap leading-relaxed select-text font-normal">
+                                {msg.content}
+                              </p>
                             </div>
-                            <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                           </div>
                         );
                       })
+                    ) : (
+                      <div className="py-12 text-center text-xs text-slate-400">
+                        Nenhuma mensagem ainda neste chamado. Escreva abaixo para interagir.
+                      </div>
                     )}
+
+                    {/* Scroll to bottom anchor */}
+                    <div ref={messagesEndRef} />
                   </div>
 
                   {/* Card de Pesquisa de Satisfação (CSAT) quando o chamado estiver Resolvido ou Fechado */}
                   {(selectedTicket.status === 'RESOLVED' || selectedTicket.status === 'CLOSED') && (
-                    <div className="mt-2 mb-3">
+                    <div className="p-3 bg-[#070D1B] border-t border-slate-800 shrink-0">
                       {selectedTicket.satisfactionRating ? (
-                        <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs shadow-sm">
+                        <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs shadow-sm">
                           <div className="flex items-center gap-3">
                             <div className="flex items-center text-amber-400">
                               {[1, 2, 3, 4, 5].map((star) => (
@@ -966,11 +1094,11 @@ export default function SupportPage() {
                           </span>
                         </div>
                       ) : (
-                        <div className="p-4 rounded-xl bg-[#070D1B] border border-blue-500/30 space-y-3 shadow-md">
+                        <div className="p-3 rounded-xl bg-[#0B1224] border border-blue-500/30 space-y-2.5 shadow-md">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Star size={16} className="text-amber-400 fill-amber-400" />
-                              <h4 className="text-xs font-bold text-white">Como foi sua experiência com a resolução deste chamado?</h4>
+                              <h4 className="text-xs font-bold text-white">Como foi sua experiência com este chamado?</h4>
                             </div>
                             <span className="text-[10px] bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30 font-semibold">
                               Pesquisa de Satisfação
@@ -989,7 +1117,7 @@ export default function SupportPage() {
                                     : "bg-slate-800/60 border-slate-700 text-slate-500 hover:text-amber-300"
                                 }`}
                               >
-                                <Star size={20} className={csatRating >= star ? "fill-amber-400" : ""} />
+                                <Star size={18} className={csatRating >= star ? "fill-amber-400" : ""} />
                               </button>
                             ))}
                             <span className="text-xs text-slate-300 ml-2 font-semibold">
@@ -1001,23 +1129,22 @@ export default function SupportPage() {
                             </span>
                           </div>
 
-                          <textarea
-                            rows={2}
-                            value={csatFeedback}
-                            onChange={(e) => setCsatFeedback(e.target.value)}
-                            placeholder="Deixe um comentário sobre a agilidade e clareza da resposta recebida (opcional)..."
-                            className="w-full p-2.5 rounded-xl text-xs bg-[#0B1224] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors resize-none"
-                          />
-
-                          <div className="flex justify-end">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={csatFeedback}
+                              onChange={(e) => setCsatFeedback(e.target.value)}
+                              placeholder="Deixe um comentário sobre o atendimento (opcional)..."
+                              className="flex-1 p-2 rounded-xl text-xs bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+                            />
                             <button
                               type="button"
                               onClick={handleSubmitCsat}
                               disabled={csatRating === 0 || isSubmittingCsat}
-                              className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 cursor-pointer shadow-md"
+                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 cursor-pointer shadow-md shrink-0"
                             >
                               {isSubmittingCsat ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
-                              <span>Enviar Avaliação</span>
+                              <span>Avaliar</span>
                             </button>
                           </div>
                         </div>
@@ -1025,92 +1152,45 @@ export default function SupportPage() {
                     </div>
                   )}
 
-                  {/* Caixa de Resposta com Sincronização & Blindagem Contra Envio Acidental */}
-                  <form onSubmit={handleSendReply} className="border-t border-slate-800 pt-3 space-y-2.5">
-                    {/* Seletor Inferior */}
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setIsInternalNote(false)}
-                          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                            !isInternalNote
-                              ? "bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/40"
-                              : "text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800"
-                          }`}
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                          <span>💬 Resposta Pública ao Solicitante</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setIsInternalNote(true)}
-                          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                            isInternalNote
-                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm ring-1 ring-amber-500/30"
-                              : "text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800"
-                          }`}
-                        >
-                          <Lock className="w-3.5 h-3.5" />
-                          <span>🔒 Nota Técnica Privada</span>
-                        </button>
-                      </div>
-
-                      <span className="text-[10px] text-slate-500 hidden sm:inline">
-                        Shift + Enter para pular linha
-                      </span>
-                    </div>
-
-                    {/* BANNER DE BLINDAGEM VISUAL CONTRA ENVIO ACIDENTAL */}
-                    {isInternalNote ? (
-                      <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#0B1224] border border-amber-500/50 text-[11px] text-amber-300 shadow-md ring-1 ring-amber-500/20">
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
-                          <div>
-                            <span className="font-bold text-amber-400 uppercase tracking-wide">🛡️ Blindagem Ativa • Nota Técnica:</span>{" "}
-                            <span className="text-slate-200">Registro restrito à auditoria e equipe técnica. </span>
-                            <strong className="text-amber-300 underline underline-offset-2">Esta mensagem NÃO será enviada ao cliente final.</strong>
-                          </div>
+                  {/* Caixa de Resposta (Composer Amplo e Confortável) */}
+                  <form onSubmit={handleSendReply} className="p-3.5 border-t border-slate-800 bg-[#070D1B] space-y-2 shrink-0">
+                    {/* Alerta de Confidencialidade se Nota Interna estiver ativa */}
+                    {isInternalNote && (
+                      <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-amber-950/30 border border-amber-500/40 text-[11px] text-amber-300">
+                        <div className="flex items-center gap-1.5">
+                          <Lock size={13} className="text-amber-400" />
+                          <span><strong>Nota Técnica Privada:</strong> Visível apenas para administradores internos da equipe.</span>
                         </div>
-                        <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/40 uppercase font-mono font-bold shrink-0">
-                          🔒 100% Confidencial
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-blue-950/20 border border-blue-800/40 text-[11px] text-blue-300">
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                          <span>
-                            <strong className="text-blue-200 uppercase font-semibold text-[10px]">Canal Externo:</strong> A mensagem digitada abaixo será enviada e visualizada diretamente pelo solicitante.
-                          </span>
-                        </div>
-                        <span className="text-[10px] bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30 uppercase font-mono font-bold shrink-0 hidden sm:inline">
-                          Público
-                        </span>
+                        <span className="text-[10px] uppercase font-mono font-bold text-amber-400">Confidencial</span>
                       </div>
                     )}
 
-                    <div className="flex items-end gap-2">
+                    <div className="flex items-end gap-2.5">
                       <textarea 
                         rows={2}
                         value={replyContent}
                         onChange={(e) => setReplyContent(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendReply(e);
+                          }
+                        }}
                         placeholder={
                           isInternalNote 
-                            ? "🔒 [Nota Técnica] Registre anotação de auditoria técnica... (Oculto para o cliente)" 
-                            : "💬 [Resposta Oficial] Escreva a mensagem que será enviada diretamente ao solicitante..."
+                            ? "🔒 [Nota Técnica] Registre anotação de auditoria técnica... (Enter para enviar, Shift+Enter para pular linha)" 
+                            : "💬 Escreva sua mensagem para o suporte... (Pressione Enter para enviar, Shift+Enter para quebra de linha)"
                         }
-                        className={`flex-1 p-2.5 rounded-xl text-xs outline-none transition-all resize-none text-white placeholder-slate-500 ${
+                        className={`flex-1 p-3 rounded-xl text-xs sm:text-sm outline-none transition-all resize-none text-white placeholder-slate-500 custom-scrollbar ${
                           isInternalNote
-                            ? "bg-[#070D1B] border border-amber-500/50 focus:border-amber-400 ring-1 ring-amber-500/20"
-                            : "bg-[#070D1B] border border-slate-700 focus:border-blue-500"
+                            ? "bg-[#0B1224] border border-amber-500/50 focus:border-amber-400 ring-1 ring-amber-500/20"
+                            : "bg-[#0B1224] border border-slate-700 focus:border-blue-500"
                         }`}
                       />
                       <button
                         type="submit"
                         disabled={isSendingReply || !replyContent.trim()}
-                        className={`px-3.5 py-2.5 rounded-xl font-bold text-xs text-white transition-all disabled:opacity-40 shrink-0 cursor-pointer flex items-center gap-1.5 shadow-sm ${
+                        className={`px-4 py-3 rounded-xl font-bold text-xs sm:text-sm text-white transition-all disabled:opacity-40 shrink-0 cursor-pointer flex items-center gap-1.5 shadow-lg active:scale-95 ${
                           isInternalNote 
                             ? "bg-amber-600 hover:bg-amber-500 shadow-amber-900/30" 
                             : "bg-blue-600 hover:bg-blue-500 shadow-blue-900/30"
@@ -1120,23 +1200,28 @@ export default function SupportPage() {
                           <RefreshCw className="w-4 h-4 animate-spin" />
                         ) : isInternalNote ? (
                           <>
-                            <Lock className="w-3.5 h-3.5" />
+                            <Lock className="w-4 h-4" />
                             <span>Salvar Nota</span>
                           </>
                         ) : (
                           <>
-                            <Send className="w-3.5 h-3.5" />
+                            <Send className="w-4 h-4" />
                             <span>Enviar</span>
                           </>
                         )}
                       </button>
                     </div>
                   </form>
-                </>
+                </div>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-slate-400 text-xs py-20 space-y-2">
-                  <MessageSquare className="w-8 h-8 text-slate-600" />
-                  <p>Selecione um chamado ao lado para visualizar a conversa e histórico completo.</p>
+                <div className="flex flex-col items-center justify-center h-full text-slate-400 text-xs py-20 space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-500">
+                    <MessageSquare className="w-6 h-6 text-slate-400" />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-300">Selecione um chamado ao lado</p>
+                  <p className="text-xs text-slate-500 max-w-sm text-center">
+                    Clique em qualquer chamado da lista para acompanhar a resposta em tempo real, interagir com a Sofia IA ou com nossa equipe humana.
+                  </p>
                 </div>
               )}
             </div>
@@ -1267,3 +1352,12 @@ export default function SupportPage() {
     </div>
   );
 }
+
+export default function SupportPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-slate-950 text-slate-400">Carregando suporte...</div>}>
+      <SupportPageContent />
+    </Suspense>
+  );
+}
+

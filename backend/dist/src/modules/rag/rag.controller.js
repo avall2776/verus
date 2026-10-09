@@ -26,9 +26,9 @@ let RagController = class RagController {
     }
     async uploadDocument(tenantId, file) {
         if (!file)
-            throw new Error('No file provided');
+            throw new common_1.BadRequestException('Nenhum arquivo enviado.');
         if (file.mimetype !== 'application/pdf')
-            throw new Error('Only PDF files are supported');
+            throw new common_1.BadRequestException('Apenas arquivos PDF são suportados.');
         return this.ragService.processAndSavePdf(tenantId, file.originalname, file.buffer);
     }
     async getDocuments(tenantId) {
@@ -40,7 +40,7 @@ let RagController = class RagController {
 };
 exports.RagController = RagController;
 __decorate([
-    (0, common_1.Post)('upload'),
+    (0, common_1.Post)(['documents/upload', 'upload-knowledge']),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.UploadedFile)()),
@@ -49,14 +49,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], RagController.prototype, "uploadDocument", null);
 __decorate([
-    (0, common_1.Get)(),
+    (0, common_1.Get)('documents'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], RagController.prototype, "getDocuments", null);
 __decorate([
-    (0, common_1.Delete)(':id'),
+    (0, common_1.Delete)('documents/:id'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -66,7 +66,7 @@ __decorate([
 exports.RagController = RagController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
     (0, require_module_decorator_1.RequireModule)('aiAgent'),
-    (0, common_1.Controller)('agent/documents'),
+    (0, common_1.Controller)('agent'),
     __metadata("design:paramtypes", [rag_service_1.RagService])
 ], RagController);
 //# sourceMappingURL=rag.controller.js.map
