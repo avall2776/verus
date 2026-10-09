@@ -2574,6 +2574,16 @@ function InboxContent() {
                   <Search size={19} />
                 </button>
 
+                {/* Botão Rápido: Apagar Conversa Inteira */}
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConvModal(true)}
+                  className="p-2 rounded-full text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition-colors cursor-pointer"
+                  title="Apagar conversa inteira"
+                >
+                  <Trash2 size={19} />
+                </button>
+
                 {/* Ícone 2: Menu Mais Opções (WhatsApp Web) */}
                 <div className="relative">
                   <button 
