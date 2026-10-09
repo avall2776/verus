@@ -2867,17 +2867,6 @@ function InboxContent() {
 
                       {/* Balão de Mensagem WhatsApp */}
                       <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5`}>
-                        {/* Botão Apagar Mensagem (WhatsApp Web Hover) */}
-                        {!msg.isInternal && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteMessage(msg.id)}
-                            title={isMe ? "Apagar mensagem para todos no WhatsApp" : "Apagar mensagem do histórico"}
-                            className={`absolute -top-2 ${isMe ? '-left-6' : '-right-6'} p-1 rounded-full bg-slate-900/90 border border-slate-700/80 text-slate-400 hover:text-rose-400 hover:border-rose-500/60 opacity-0 group-hover:opacity-100 transition-all shadow-md z-10 cursor-pointer`}
-                          >
-                            <Trash2 size={11} />
-                          </button>
-                        )}
                         <div className={`text-sm shadow-sm relative transition-all pt-1.5 pb-1.5 px-3 min-w-[85px] ${
                           msg.isInternal
                             ? 'bg-[#281b0a] text-amber-100 rounded-lg rounded-tr-none border border-amber-500/30'
@@ -2885,6 +2874,20 @@ function InboxContent() {
                               ? 'bg-[#17253D] text-slate-100 rounded-lg rounded-tr-none border border-blue-900/30'
                               : 'bg-[#1E293B] text-slate-100 rounded-lg rounded-tl-none border border-slate-700/40'
                         }`}>
+                          {/* Botão de Excluir Mensagem no Hover (Padrão WhatsApp Web) */}
+                          {!msg.isInternal && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteMessage(msg.id);
+                              }}
+                              title={isMe ? "Apagar mensagem para todos no WhatsApp" : "Apagar mensagem do histórico"}
+                              className="absolute -top-2 -right-2 p-1.5 rounded-full bg-[#0F172A] border border-slate-700/80 text-slate-400 hover:text-rose-400 hover:border-rose-500/60 opacity-0 group-hover:opacity-100 transition-all shadow-lg z-20 cursor-pointer"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
                           {/* Cauda SVG do Balão WhatsApp */}
                           {msg.isInternal ? (
                             <svg className="absolute -top-[0.5px] -right-2 text-[#281b0a] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
