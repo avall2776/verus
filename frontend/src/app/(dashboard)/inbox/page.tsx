@@ -3209,7 +3209,7 @@ function InboxContent() {
                     )}
 
                     {/* Barra de Input Flutuante Nativa Padrão WhatsApp Web */}
-                    <div className="p-2.5 px-3 flex items-center gap-2 relative bg-[#0B1224]">
+                    <div className="p-2 sm:p-2.5 px-2.5 sm:px-3 flex items-center gap-1.5 sm:gap-2 relative bg-[#0B1224] w-full max-w-full overflow-hidden shrink-0">
                       {isRecording ? (
                         /* Painel de Gravação de Áudio WhatsApp */
                         <div className="flex-1 bg-[#11192A] border border-rose-500/40 rounded-xl px-4 py-2 flex items-center justify-between animate-in fade-in duration-200 min-h-[44px]">
@@ -3259,8 +3259,8 @@ function InboxContent() {
                         </div>
                       ) : (
                         <>
-                          {/* 1. Botão Emoji WhatsApp (Lado Esquerdo) */}
-                          <div className="relative">
+                          {/* 1. Botão Emoji WhatsApp (Oculto em telas pequenas onde o teclado nativo já tem emojis) */}
+                          <div className="relative hidden sm:flex shrink-0">
                             <button
                               type="button"
                               onClick={() => setShowEmojiPicker(prev => !prev)}
@@ -3269,7 +3269,7 @@ function InboxContent() {
                               }`}
                               title="Emojis"
                             >
-                              <Smile size={22} />
+                              <Smile size={20} />
                             </button>
 
                             {showEmojiPicker && (
@@ -3300,19 +3300,19 @@ function InboxContent() {
                             )}
                           </div>
 
-                          {/* 2. Botão Clipes/Anexo WhatsApp (Lado Esquerdo) */}
-                          <div className="relative">
+                          {/* 2. Botão Clipes/Anexo WhatsApp */}
+                          <div className="relative shrink-0">
                             <button 
                               type="button"
                               onClick={() => setShowAttachments(!showAttachments)}
-                              className="p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors cursor-pointer"
-                              title="Anexar arquivo"
+                              className="p-1.5 sm:p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors cursor-pointer shrink-0"
+                              title="Anexar arquivo ou atalhos"
                             >
-                              <Paperclip size={22} />
+                              <Paperclip size={20} />
                             </button>
                             
                             {showAttachments && (
-                              <div className="absolute bottom-12 left-0 bg-[#0F172A] border border-slate-700/90 shadow-[0_15px_35px_rgba(0,0,0,0.8)] rounded-2xl p-2 flex flex-col gap-1 w-52 z-50 animate-in slide-in-from-bottom-2">
+                              <div className="absolute bottom-12 left-0 bg-[#0F172A] border border-slate-700/90 shadow-[0_15px_35px_rgba(0,0,0,0.8)] rounded-2xl p-2 flex flex-col gap-1 w-56 z-50 animate-in slide-in-from-bottom-2">
                                 <label className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl cursor-pointer transition-colors">
                                   <ImageIcon size={16} className="text-blue-400" /> Foto / Vídeo
                                   <input ref={fileInputImageRef} type="file" className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
@@ -3329,14 +3329,26 @@ function InboxContent() {
                                   }}
                                   className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors text-left w-full cursor-pointer"
                                 >
-                                  <Mic size={16} className="text-blue-400" /> Gravar Áudio
+                                  <Mic size={16} className="text-rose-400" /> Gravar Áudio
+                                </button>
+                                <button 
+                                  type="button"
+                                  onClick={() => {
+                                    setShowAttachments(false);
+                                    setInputText('/');
+                                    setShowQuickReplies(true);
+                                    setTimeout(() => textareaRef.current?.focus(), 50);
+                                  }}
+                                  className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors text-left w-full cursor-pointer sm:hidden"
+                                >
+                                  <Zap size={16} className="text-amber-400" /> Respostas Rápidas (/)
                                 </button>
                               </div>
                             )}
                           </div>
 
-                          {/* Botão de Atalho Rápido / (Respostas Rápidas e Ações) */}
-                          <div className="relative">
+                          {/* Botão de Atalho Rápido / (Oculto em telas pequenas pois digitar '/' no campo já abre as respostas) */}
+                          <div className="relative hidden sm:flex shrink-0">
                             <button 
                               type="button"
                               onClick={() => {
@@ -3365,7 +3377,7 @@ function InboxContent() {
                           </div>
 
                           {/* 3. Cápsula de Texto WhatsApp com Cantos Arredondados */}
-                          <div className={`flex-1 bg-[#1E293B] border rounded-lg px-4 py-2.5 min-h-[44px] max-h-36 flex items-center transition-all shadow-inner relative ${
+                          <div className={`flex-1 min-w-0 bg-[#1E293B] border rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 min-h-[42px] sm:min-h-[44px] max-h-36 flex items-center transition-all shadow-inner relative ${
                             isInternalMode 
                               ? 'border-amber-500/50 bg-amber-950/15 focus-within:border-amber-500' 
                               : 'border-slate-700/60 focus-within:border-blue-500/80 focus-within:ring-1 focus-within:ring-blue-500/20'
@@ -3373,7 +3385,7 @@ function InboxContent() {
                             <textarea 
                               ref={textareaRef}
                               placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem (ou '/' para atalhos e catálogo)"} 
-                              className={`flex-1 bg-transparent text-[0.93rem] resize-none outline-none py-0.5 max-h-32 
+                              className={`w-full flex-1 min-w-0 bg-transparent text-[0.93rem] resize-none outline-none py-0.5 max-h-32 
                                 ${isInternalMode ? 'text-amber-100 placeholder:text-amber-500/50' : 'text-slate-100 placeholder:text-slate-400'}
                               `}
                               rows={1}

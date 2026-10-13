@@ -1,0 +1,22 @@
+{
+  "name": "Vallor Omnichannel",
+  "short_name": "Vallor",
+  "theme_color": "#050814",
+  "background_color": "#050814",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/vallor/inbox",
+  "icons": [
+    {
+      "src": "/vallor/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/vallor/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

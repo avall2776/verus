@@ -5,8 +5,8 @@
   "background_color": "#050814",
   "display": "standalone",
   "orientation": "portrait",
-  "scope": "/vallor/",
-  "start_url": "/vallor/chat",
+  "scope": "/",
+  "start_url": "/vallor/inbox",
   "icons": [
     {
       "src": "/vallor/icon-192x192.png",
