@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Body, UseGuards, Request } from '@nestjs/common';
 import { AgentService } from './agent.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { PlanGuard } from '../../shared/guards/plan.guard';
@@ -28,6 +28,22 @@ export class AgentController {
     return this.agentService.updateConfig(tenantId, body);
   }
 
+  @Get('training-logs')
+  async getTrainingLogs(@CurrentTenant() tenantId: string) {
+    return this.agentService.getTrainingLogs(tenantId);
+  }
+
+  @Post('coach')
+  async coachAgent(
+    @CurrentTenant() tenantId: string,
+    @Body() body: { feedback: string; quotedText?: string },
+    @Request() req: any
+  ) {
+    const user = req.user;
+    const userName = user?.name || (user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Administrador');
+    return this.agentService.coachAgent(tenantId, body, user?.id, userName);
+  }
+
   @Post('playground')
   async testPlayground(
     @CurrentTenant() tenantId: string,
@@ -37,9 +53,13 @@ export class AgentController {
     const rawTemp = body.config?.aiTemperature !== undefined ? Number(body.config.aiTemperature) : 0.7;
     const safeTemp = isNaN(rawTemp) ? 0.7 : Math.min(Math.max(rawTemp, 0), 1.5);
 
+    const tenant = await this.agentService.getConfig(tenantId);
+
     const configWithTenant = {
       ...body.config,
       id: tenantId,
+      name: (tenant as any)?.name,
+      aiName: body.config?.aiName?.trim() || tenant?.aiName || 'Sofia',
       aiTemperature: safeTemp,
     };
     const result = await this.aiService.processConversation(body.messages, configWithTenant);

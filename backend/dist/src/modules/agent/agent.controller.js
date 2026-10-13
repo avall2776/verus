@@ -31,12 +31,23 @@ let AgentController = class AgentController {
     async updateConfig(tenantId, body) {
         return this.agentService.updateConfig(tenantId, body);
     }
+    async getTrainingLogs(tenantId) {
+        return this.agentService.getTrainingLogs(tenantId);
+    }
+    async coachAgent(tenantId, body, req) {
+        const user = req.user;
+        const userName = user?.name || (user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Administrador');
+        return this.agentService.coachAgent(tenantId, body, user?.id, userName);
+    }
     async testPlayground(tenantId, body) {
         const rawTemp = body.config?.aiTemperature !== undefined ? Number(body.config.aiTemperature) : 0.7;
         const safeTemp = isNaN(rawTemp) ? 0.7 : Math.min(Math.max(rawTemp, 0), 1.5);
+        const tenant = await this.agentService.getConfig(tenantId);
         const configWithTenant = {
             ...body.config,
             id: tenantId,
+            name: tenant?.name,
+            aiName: body.config?.aiName?.trim() || tenant?.aiName || 'Sofia',
             aiTemperature: safeTemp,
         };
         const result = await this.aiService.processConversation(body.messages, configWithTenant);
@@ -59,6 +70,22 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AgentController.prototype, "updateConfig", null);
+__decorate([
+    (0, common_1.Get)('training-logs'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AgentController.prototype, "getTrainingLogs", null);
+__decorate([
+    (0, common_1.Post)('coach'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], AgentController.prototype, "coachAgent", null);
 __decorate([
     (0, common_1.Post)('playground'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

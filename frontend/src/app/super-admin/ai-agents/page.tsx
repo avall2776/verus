@@ -26,6 +26,9 @@ import {
   Clock,
   Zap,
   AlertTriangle,
+  GraduationCap,
+  Lock,
+  X,
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -103,7 +106,7 @@ export default function SuperAdminAiAgentsPage() {
 
   // Estados de Configuração da IA
   const [config, setConfig] = useState<AiConfigState>({
-    aiName: "Vitor (IA)",
+    aiName: "Sofia",
     aiModel: "gpt-4o-mini",
     aiPrompt: "",
     aiKnowledgeBase: "",
@@ -111,6 +114,24 @@ export default function SuperAdminAiAgentsPage() {
   });
   const [loadingConfig, setLoadingConfig] = useState<boolean>(true);
   const [saving, setSaving] = useState(false);
+
+  // Estados de Treinamento & Mentoria do Agente
+  const [trainingLogs, setTrainingLogs] = useState<{
+    id: string;
+    userName?: string;
+    feedback: string;
+    quotedText?: string;
+    targetCategory: string;
+    categoryLabel: string;
+    explanation: string;
+    learnedRule: string;
+    createdAt: string;
+  }[]>([]);
+  const [loadingTrainingLogs, setLoadingTrainingLogs] = useState(false);
+  const [trainingFeedback, setTrainingFeedback] = useState("");
+  const [quotedTrainingText, setQuotedTrainingText] = useState<string | null>(null);
+  const [trainingAi, setTrainingAi] = useState(false);
+  const trainingInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Documentos RAG
   const [documents, setDocuments] = useState<{ id: string; filename: string; createdAt?: string }[]>([]);
@@ -261,6 +282,85 @@ export default function SuperAdminAiAgentsPage() {
     }
   };
 
+  const fetchTrainingLogs = useCallback(async (tenantId: string) => {
+    if (!tenantId) return;
+    setLoadingTrainingLogs(true);
+    try {
+      const headers = { "x-target-tenant-id": tenantId };
+      const res = await api.get("/agent/training-logs", { headers });
+      setTrainingLogs(res.data || []);
+    } catch (err) {
+      console.error("Erro ao carregar histórico de treinamentos do agente:", err);
+    } finally {
+      setLoadingTrainingLogs(false);
+    }
+  }, []);
+
+  const handleCoachAgent = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!trainingFeedback.trim() || !selectedTenantId || trainingAi) return;
+
+    setTrainingAi(true);
+    try {
+      const headers = { "x-target-tenant-id": selectedTenantId };
+      const res = await api.post(
+        "/agent/coach",
+        {
+          feedback: trainingFeedback.trim(),
+          quotedText: quotedTrainingText || undefined,
+        },
+        { headers }
+      );
+
+      const { updatedConfig, log, confirmationMessage, parsedResult } = res.data;
+
+      if (updatedConfig) {
+        setConfig((prev) => ({
+          ...prev,
+          aiPrompt: updatedConfig.aiPrompt !== undefined ? updatedConfig.aiPrompt : prev.aiPrompt,
+          aiKnowledgeBase: updatedConfig.aiKnowledgeBase !== undefined ? updatedConfig.aiKnowledgeBase : prev.aiKnowledgeBase,
+          aiName: updatedConfig.aiName || prev.aiName,
+        }));
+        try {
+          sessionStorage.setItem(
+            `versus_super_ai_config_${selectedTenantId}`,
+            JSON.stringify({
+              ...config,
+              aiPrompt: updatedConfig.aiPrompt !== undefined ? updatedConfig.aiPrompt : config.aiPrompt,
+              aiKnowledgeBase: updatedConfig.aiKnowledgeBase !== undefined ? updatedConfig.aiKnowledgeBase : config.aiKnowledgeBase,
+              aiName: updatedConfig.aiName || config.aiName,
+            })
+          );
+        } catch {}
+      }
+
+      if (log) {
+        setTrainingLogs((prev) => [log, ...prev]);
+      }
+
+      setTrainingFeedback("");
+      setQuotedTrainingText(null);
+      toast.success(
+        confirmationMessage ||
+          `Diretriz assimilada com sucesso na camada: ${parsedResult?.categoryLabel || "Base de Conhecimento"}`
+      );
+    } catch (err: any) {
+      console.error("Erro ao enviar treinamento do agente:", err);
+      toast.error(err?.response?.data?.message || "Erro ao processar mentoria com o agente.");
+    } finally {
+      setTrainingAi(false);
+    }
+  };
+
+  const handleStartTrainingFromMessage = (messageContent: string) => {
+    setQuotedTrainingText(messageContent);
+    toast.info("Trecho citado do simulador! Digite abaixo o que a IA deve ajustar.");
+    setTimeout(() => {
+      trainingInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      trainingInputRef.current?.focus();
+    }, 150);
+  };
+
   // Carregar Configuração e Documentos do Tenant Selecionado
   const loadTenantConfig = useCallback(async (tenantId: string) => {
     if (!tenantId) return;
@@ -279,6 +379,7 @@ export default function SuperAdminAiAgentsPage() {
         api.get("/agent/documents", { headers }).catch(() => ({ data: [] })),
       ]);
       fetchTenantAiStatus(tenantId);
+      fetchTrainingLogs(tenantId);
 
       if (configRes.data) {
         const rawTemp = typeof configRes.data.aiTemperature === "number" 
@@ -286,7 +387,7 @@ export default function SuperAdminAiAgentsPage() {
           : parseFloat(configRes.data.aiTemperature);
 
         const newCfg = {
-          aiName: configRes.data.aiName || "Vitor (IA)",
+          aiName: configRes.data.aiName || "Sofia",
           aiModel: configRes.data.aiModel === "gpt-4o" ? "gpt-4o" : "gpt-4o-mini",
           aiPrompt: configRes.data.aiPrompt || "",
           aiKnowledgeBase: configRes.data.aiKnowledgeBase || "",
@@ -306,7 +407,7 @@ export default function SuperAdminAiAgentsPage() {
     } finally {
       setLoadingConfig(false);
     }
-  }, [fetchTenantAiStatus]);
+  }, [fetchTenantAiStatus, fetchTrainingLogs]);
 
   useEffect(() => {
     if (selectedTenantId) {
@@ -348,7 +449,7 @@ export default function SuperAdminAiAgentsPage() {
       await api.patch(
         "/agent/config",
         {
-          aiName: config.aiName.trim() || "Vitor (IA)",
+          aiName: config.aiName.trim() || "Sofia",
           aiModel: config.aiModel,
           aiPrompt: config.aiPrompt,
           aiKnowledgeBase: config.aiKnowledgeBase,
@@ -356,6 +457,17 @@ export default function SuperAdminAiAgentsPage() {
         },
         { headers }
       );
+
+      try {
+        sessionStorage.setItem(
+          `versus_super_ai_config_${selectedTenantId}`,
+          JSON.stringify({
+            ...config,
+            aiName: config.aiName.trim() || "Sofia",
+            aiTemperature: safeTemp,
+          })
+        );
+      } catch {}
 
       toast.success("Diretrizes da IA salvas e sincronizadas com sucesso!");
     } catch (err: any) {
@@ -475,6 +587,8 @@ export default function SuperAdminAiAgentsPage() {
     if (val <= 0.75) return "Equilibrado Corporativo (Padrão recomendado para atendimento humanizado)";
     return "Criativo & Persuasivo (Maior flexibilidade no vocabulário e condução consultiva)";
   };
+
+  const selectedTenant = tenants.find((t) => t.id === selectedTenantId);
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8 pb-16 font-sans text-slate-100">
@@ -738,6 +852,171 @@ export default function SuperAdminAiAgentsPage() {
               </div>
             </div>
 
+            {/* SEÇÃO 1.5: CANAL DE TREINAMENTO & MENTORIA DA IA DO CLIENTE */}
+            <div className="rounded-2xl bg-[#0B1224] border border-cyan-500/40 p-6 space-y-5 shadow-xl shadow-cyan-950/20 ring-1 ring-cyan-500/20">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-cyan-500/20 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-300 shrink-0">
+                    <GraduationCap size={22} className="text-cyan-400" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                        Treinamento & Mentoria do Agente
+                      </h2>
+                      <span className="text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded-full font-mono uppercase flex items-center gap-1 font-bold">
+                        <Lock size={10} /> Canal Interno
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Ensine e oriente <strong>{config.aiName || "Sofia"}</strong> para a empresa <strong>{selectedTenant?.name || "selecionada"}</strong>. As diretrizes são assimiladas na camada ideal (Roteiro, Conhecimento ou Cancelas) e passam a valer imediatamente no WhatsApp e no Simulador.
+                    </p>
+                  </div>
+                </div>
+
+                <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/80 border border-cyan-500/40 px-3 py-1 rounded-xl shrink-0 font-bold">
+                  {trainingLogs.length} diretriz(es) aprendida(s)
+                </span>
+              </div>
+
+              {/* Banner de Garantia */}
+              <div className="px-3.5 py-2 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between text-xs text-slate-300">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={14} className="text-cyan-400 shrink-0" />
+                  <span>Ambiente de Curadoria: O Curador Neural distribui seu alinhamento entre Persona, Base de Conhecimento e Cancelas de forma segura sem apagar o conteúdo existente.</span>
+                </div>
+              </div>
+
+              {/* Caixa de Entrada de Treinamento */}
+              <form onSubmit={handleCoachAgent} className="space-y-3">
+                {quotedTrainingText && (
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/40 text-xs text-cyan-200 animate-fadeIn">
+                    <div className="flex items-center gap-2 truncate">
+                      <GraduationCap size={14} className="text-cyan-400 shrink-0" />
+                      <span className="font-bold text-white shrink-0">Orientando sobre resposta do simulador:</span>
+                      <span className="truncate italic text-slate-300 text-[11px]">&ldquo;{quotedTrainingText}&rdquo;</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setQuotedTrainingText(null)}
+                      className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors shrink-0 ml-2 cursor-pointer"
+                      title="Remover citação"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-2.5 bg-[#070D1B] border border-cyan-500/40 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400/30 rounded-2xl p-3 transition-all">
+                  <textarea
+                    ref={trainingInputRef}
+                    value={trainingFeedback}
+                    onChange={(e) => setTrainingFeedback(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleCoachAgent();
+                      }
+                    }}
+                    placeholder={`Diga à ${config.aiName || "Sofia"} o que ela deve ajustar, retirar, acrescentar na base ou como conduzir melhor o atendimento aos leads desta empresa...`}
+                    rows={3}
+                    className="w-full bg-transparent py-1 px-2 text-xs text-white placeholder:text-slate-500 outline-none resize-none custom-scrollbar"
+                  />
+
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
+                    <span className="text-[10px] text-slate-500">
+                      Pressione <kbd className="px-1.5 py-0.5 rounded bg-slate-800 font-mono text-[9px] text-slate-300">Enter</kbd> para enviar ou <kbd className="px-1.5 py-0.5 rounded bg-slate-800 font-mono text-[9px] text-slate-300">Shift+Enter</kbd> para quebra de linha
+                    </span>
+
+                    <button
+                      type="submit"
+                      disabled={trainingAi || !trainingFeedback.trim()}
+                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-40 flex items-center gap-1.5 cursor-pointer shadow-md shrink-0"
+                    >
+                      {trainingAi ? (
+                        <>
+                          <Loader2 size={13} className="animate-spin" />
+                          <span>Assimilando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={13} className="text-cyan-200" />
+                          <span>Ensinar {config.aiName || "Sofia"}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              {/* Histórico de Diretrizes Aprendidas */}
+              {loadingTrainingLogs ? (
+                <div className="py-6 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
+                  <Loader2 size={14} className="animate-spin text-cyan-400" />
+                  <span>Carregando histórico de aprendizado do robô...</span>
+                </div>
+              ) : trainingLogs.length > 0 ? (
+                <div className="space-y-3 pt-2">
+                  <span className="block text-xs font-semibold text-slate-300">
+                    Diretrizes Recentes Assimiladas por este Agente
+                  </span>
+
+                  <div className="space-y-3 max-h-[380px] overflow-y-auto custom-scrollbar pr-1">
+                    {trainingLogs.map((log) => (
+                      <div
+                        key={log.id}
+                        className="p-3.5 rounded-xl bg-gradient-to-br from-[#0c223c]/80 to-[#081729]/90 border border-cyan-500/30 space-y-2 shadow-sm"
+                      >
+                        <div className="flex items-center justify-between text-[11px] font-bold text-cyan-300 border-b border-cyan-500/20 pb-1.5">
+                          <div className="flex items-center gap-2">
+                            <Bot size={14} className="text-cyan-400 shrink-0" />
+                            <span className="text-white">{config.aiName || "Sofia"}</span>
+                            <span className="text-[9px] bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-1.5 py-0.5 rounded font-mono uppercase font-bold">
+                              {log.categoryLabel || "Diretriz Assimilada"}
+                            </span>
+                          </div>
+                          <span className="text-slate-400 font-mono text-[10px]" suppressHydrationWarning>
+                            {new Date(log.createdAt).toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+
+                        {log.quotedText && (
+                          <div className="p-2 rounded-lg bg-[#070D1B] border border-cyan-500/20 text-[11px] text-slate-300 italic border-l-2 border-l-cyan-400">
+                            <span className="text-[10px] text-cyan-400 font-bold block not-italic uppercase mb-0.5">
+                              Trecho Discutido:
+                            </span>
+                            &ldquo;{log.quotedText}&rdquo;
+                          </div>
+                        )}
+
+                        <div className="text-xs text-slate-100 space-y-1">
+                          <p className="font-semibold text-cyan-200 text-[11px]">
+                            Orientação: &ldquo;{log.feedback}&rdquo;
+                          </p>
+                          <p className="text-[11px] text-slate-300 leading-relaxed font-mono whitespace-pre-wrap">
+                            {log.explanation}
+                          </p>
+                        </div>
+
+                        <div className="pt-1.5 border-t border-cyan-500/20 flex items-center justify-between text-[10px] text-cyan-400">
+                          <span>Diretriz ativa: &ldquo;{log.learnedRule}&rdquo;</span>
+                          <span className="text-slate-500 font-mono">{log.userName || "Super Admin"}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="py-6 text-center text-slate-500 text-xs flex flex-col items-center max-w-md mx-auto">
+                  <Lock size={22} className="opacity-30 mb-1.5 text-slate-400" />
+                  <p className="text-slate-300 font-semibold mb-0.5">Nenhuma diretriz cadastrada ainda para este agente.</p>
+                  <p className="text-slate-500 text-[11px]">
+                    Use o campo acima ou o simulador ao lado para orientar a IA sobre novas regras de negócio, correções e conduta de atendimento.
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* SEÇÃO 2: INSTRUÇÕES DO SISTEMA (SYSTEM PROMPT) */}
             <div className="rounded-2xl bg-[#0B1224] border border-slate-800 p-6 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-4">
@@ -996,6 +1275,19 @@ export default function SuperAdminAiAgentsPage() {
                         }`}
                       >
                         <MarkdownRenderer content={m.content} />
+                        {m.role === "assistant" && (
+                          <div className="flex items-center justify-end pt-2 border-t border-slate-800/80 mt-2.5">
+                            <button
+                              type="button"
+                              onClick={() => handleStartTrainingFromMessage(m.content)}
+                              className="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1.5 hover:underline cursor-pointer transition-colors"
+                              title="Usar esta resposta para orientar e treinar a IA deste cliente"
+                            >
+                              <GraduationCap size={12} className="text-cyan-400" />
+                              <span>Orientar IA sobre esta resposta</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))

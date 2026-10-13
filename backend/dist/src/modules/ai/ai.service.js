@@ -233,6 +233,13 @@ Responda de forma concisa e factual em português (máximo de 3 a 4 linhas).`;
     async processConversation(history, tenantConfig, dynamicContext) {
         try {
             const basePrompt = tenantConfig?.aiPrompt || this.fallbackPrompt;
+            const rawAgentName = tenantConfig?.aiName?.trim();
+            const companyName = tenantConfig?.name?.trim();
+            const agentName = rawAgentName || 'Sofia';
+            const identityDirective = `\n\n=== IDENTIDADE E APRESENTAÇÃO DO ATENDENTE ===
+- Seu nome oficial de atendimento é: "${agentName}".
+${companyName ? `- Você representa oficialmente a empresa: "${companyName}".\n` : ''}- Ao se apresentar, saudar o cliente ou quando perguntarem seu nome ("qual o seu nome?", "quem está falando?", "quem é você?", "como se chama?"), responda com simpatia e clareza dizendo que você é ${agentName}${companyName ? ` da ${companyName}` : ''}.
+- NUNCA invente outro nome de atendente e nunca diga apenas que é um "robô genérico".`;
             const multimodalDirective = `\n\n=== REGRAS DE CAPACIDADE MULTIMODAL E FORMATAÇÃO ===
 - Você possui capacidade multimodal total: ouve áudios perfeitamente (chegam como '🎤 [Áudio]: ...'), analisa imagens e comprovantes (chegam como '📷 [Análise da Imagem]: ...') e lê documentos/PDFs (chegam como '📄 [Documento PDF]: ...').
 - É ESTRITAMENTE PROIBIDO dizer que 'não pode ouvir áudios', 'não pode receber fotos/arquivos' ou pedir para o cliente mandar em texto. O conteúdo das mídias já está legível para você. Responda diretamente e com naturalidade ao que o cliente falou, mandou ou perguntou.
@@ -243,12 +250,12 @@ Responda de forma concisa e factual em português (máximo de 3 a 4 linhas).`;
                 if (lastUserMessage) {
                     const similarChunks = await this.ragService.searchSimilarChunks(tenantConfig.id, lastUserMessage.content, 3);
                     if (similarChunks.length > 0) {
-                        knowledgeBase += `\n\n=== BASE DE CONHECIMENTO DINÂMICA (RAG PDF) ===\nUse APENAS as informações abaixo para responder a pergunta se forem relevantes:\n${similarChunks.join('\n---\n')}\n`;
+                        knowledgeBase += `\n\n=== BASE DE CONHECIMENTO DINÂMICA (RAG PDF) ===\nUse as informações abaixo com prioridade para responder a pergunta se forem relevantes:\n${similarChunks.join('\n---\n')}\n`;
                         this.logger.debug(`Injetou ${similarChunks.length} blocos RAG no contexto.`);
                     }
                 }
             }
-            const systemMessage = basePrompt + multimodalDirective + (dynamicContext || '') + knowledgeBase;
+            const systemMessage = identityDirective + '\n\n' + basePrompt + multimodalDirective + (dynamicContext || '') + knowledgeBase;
             const messages = [
                 { role: 'system', content: systemMessage },
                 ...history

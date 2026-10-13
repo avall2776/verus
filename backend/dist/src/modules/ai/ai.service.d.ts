@@ -34,6 +34,8 @@ export declare class AiService {
         content: string;
     }[], tenantConfig?: {
         id?: string;
+        name?: string;
+        aiName?: string;
         aiPrompt?: string;
         aiKnowledgeBase?: string;
         aiTemperature?: number;

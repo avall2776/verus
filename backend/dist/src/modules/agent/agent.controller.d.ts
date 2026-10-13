@@ -5,6 +5,8 @@ export declare class AgentController {
     private aiService;
     constructor(agentService: AgentService, aiService: AiService);
     getConfig(tenantId: string): Promise<{
+        id: string;
+        name: string;
         aiName: string;
         aiModel: string;
         aiPrompt: string;
@@ -12,11 +14,56 @@ export declare class AgentController {
         aiTemperature: number;
     }>;
     updateConfig(tenantId: string, body: any): Promise<{
+        id: string;
+        name: string;
         aiName: string;
         aiModel: string;
         aiPrompt: string;
         aiKnowledgeBase: string;
         aiTemperature: number;
+    }>;
+    getTrainingLogs(tenantId: string): Promise<{
+        id: string;
+        tenantId: string;
+        createdAt: Date;
+        userId: string | null;
+        userName: string | null;
+        feedback: string;
+        quotedText: string | null;
+        targetCategory: string;
+        categoryLabel: string;
+        explanation: string;
+        learnedRule: string;
+    }[]>;
+    coachAgent(tenantId: string, body: {
+        feedback: string;
+        quotedText?: string;
+    }, req: any): Promise<{
+        success: boolean;
+        parsedResult: any;
+        updatedConfig: {
+            id: string;
+            name: string;
+            aiName: string;
+            aiModel: string;
+            aiPrompt: string;
+            aiKnowledgeBase: string;
+            aiTemperature: number;
+        };
+        log: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            userId: string | null;
+            userName: string | null;
+            feedback: string;
+            quotedText: string | null;
+            targetCategory: string;
+            categoryLabel: string;
+            explanation: string;
+            learnedRule: string;
+        };
+        confirmationMessage: string;
     }>;
     testPlayground(tenantId: string, body: {
         messages: {

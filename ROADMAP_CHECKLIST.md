@@ -203,6 +203,7 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 - **[18/09/2026 - 10:45]** 💎 **Fase 81 Concluída & Deployada com Sucesso (Motor VoIP Proprietário, Softphone WebAudio DTMF e Subseção Produtos / Roadmap)**. Status: ⏳ Aguardando Credenciais de Tronco SIP da Operadora Direct Call.
 - **[18/09/2026 - 18:30]** 🏁 **Fim de Turno / Saída Consolidada - Ponto Eletrônico Registrado (Equipe de Engenharia)**: Encerramento do expediente de sexta-feira após reunião estratégica e alinhamento do roadmap.
 - **[21/09/2026 - 08:00]** 🟢 **Início de Turno (Manhã) - Ponto Eletrônico Registrado & Imutável (Equipe de Engenharia)**: Início da jornada semanal. Foco: Refinamento operacional, estabilidade, testes e continuidade do roadmap VERSUS. Status: ⏳ Em Andamento.
+- **[13/10/2026 - 09:15]** 🟢 **Início de Turno & Planejamento Arquitetural (Fase 85: Simulador Multi-Dispositivo & Viewport Sandbox para Super Admin Master)**. Status: ⏳ Submetido para Aprovação do Usuário.
 
 ### 🟢 FASE 51: ANALYTICS AVANÇADO (PRO) - MAPEAMENTO DE CANAIS, FUNIL & GARGALOS (16/09/2026 - IDE 1)
 - [x] Mapeamento de canais de aquisição (`GET /analytics/channels`) com volume, conversão e receita faturada.
@@ -272,6 +273,31 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 
 #### 3. Próximo Passo Técnico (Assim que as credenciais forem obtidas):
 - [ ] **Inserção das credenciais finais (Host SIP, porta, usuário, senha e dados de WSS) no painel de configuração do tronco SIP do VERSUS para habilitar o disparo de chamadas reais e a homologação final do sandbox**.
+
+---
+
+### 📱 FASE 85: SIMULADOR MULTI-DISPOSITIVO & VIEWPORT SANDBOX (13/10/2026 - SUPER ADMIN MASTER)
+> **Status**: ⏳ Planejamento Submetido para Aprovação Executiva do Usuário (Plano em `device_sandbox_implementation_plan.md`).
+
+- [ ] **Controle de Acesso & Segurança Estrita**:
+  - [ ] Restrição absoluta ao Super Admin Master (`isSuperAdmin === true`).
+  - [ ] Blindagem contra visualização ou execução por usuários padrão, operadores ou tenants comuns.
+- [ ] **Componente Executivo de Simulação (`DeviceSandboxModal.tsx`)**:
+  - [ ] Viewport Mobile: 390px × 844px com moldura de smartphone (`rounded-[40px]`, bezel escuro `#1E293B`, status bar indicator).
+  - [ ] Viewport Tablet: 768px × 1024px com moldura de tablet (`rounded-[24px]`).
+  - [ ] Viewport Desktop: 100% de largura / Widescreen.
+  - [ ] Alternador de orientação: Modo Retrato (Portrait) ⟷ Modo Paisagem (Landscape).
+- [ ] **Arquitetura de Iframe Isolado de Alta Fidelidade**:
+  - [ ] Resolução de 100% das media queries nativas do Tailwind CSS (`md:hidden`, `sm:flex`, breakpoints responsivos).
+  - [ ] Preservação da sessão, cookies e JWT do Super Admin.
+  - [ ] Otimização de concorrência: renderização de apenas 1 dispositivo ativo por vez (zero duplicação de sockets ou lag).
+- [ ] **Barra de Navegação e Atalhos Rápidos**:
+  - [ ] Input de rota ativa e seletor rápido para `/vallor/inbox`, `/vallor/crm`, `/vallor/dashboard/analytics`, `/vallor/settings/whatsapp`, `/vallor/support`.
+  - [ ] Botão de recarregamento (F5) interno do viewport.
+- [ ] **Homologação e Deploy**:
+  - [ ] Validação de tipagem TypeScript (`npx tsc --noEmit`) com código 0.
+  - [ ] Build de produção Next.js (`npm run build`) com código 0.
+  - [ ] Deploy na Vercel e VPS, homologação direta com o usuário.
 
 ---
 

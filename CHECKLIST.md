@@ -2437,8 +2437,28 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 - [x] **4. Sincronização em Tempo Real e Persistência**:
   - [x] Transmissão de eventos WebSocket para atualização instantânea dos campos da aba `Agente IA de Suporte` (`prompt`, `knowledgeBase`, `guardrails`).
 - [x] **5. Compilação, Validação e Deploy**:
-  - [x] Validação de tipos (`tsc`) e compilação de produção no backend e frontend.
-  - [x] Deploy e reinicialização de serviços na VPS e na nuvem.
+### Fase 85: Simulador Multi-Dispositivo & Viewport Sandbox para Super Admin Master (13/10/2026 - Manhã)
+> **Status**: ⏳ Planejamento Arquitetural Concluído. Submetido para Aprovação do Usuário.
+
+- [ ] **1. Controle de Acesso & Segurança Estrita**:
+  - [ ] Restrição absoluta ao Super Admin Master (`isSuperAdmin === true`).
+  - [ ] Inacessível e invisível para operadores, atendentes e administradores de tenants comuns.
+- [ ] **2. Componente Executivo de Simulação (`DeviceSandboxModal.tsx`)**:
+  - [ ] Viewport Mobile: 390px × 844px com moldura de smartphone (`rounded-[40px]`, bezel escuro `#1E293B`, notch e home bar).
+  - [ ] Viewport Tablet: 768px × 1024px com moldura de tablet (`rounded-[24px]`).
+  - [ ] Viewport Desktop: 100% de largura / Widescreen.
+  - [ ] Alternador de orientação: Modo Retrato (Portrait) ⟷ Modo Paisagem (Landscape).
+- [ ] **3. Arquitetura de Iframe Isolado de Alta Fidelidade**:
+  - [ ] Resolução de 100% das media queries nativas do Tailwind CSS (`md:hidden`, `sm:flex`, breakpoints responsivos).
+  - [ ] Preservação da sessão, cookies e JWT do Super Admin Master.
+  - [ ] Otimização de concorrência: renderização de apenas 1 dispositivo ativo por vez (zero duplicação de sockets ou lag).
+- [ ] **4. Barra de Navegação e Atalhos Rápidos**:
+  - [ ] Input de rota ativa e seletor rápido para `/vallor/inbox`, `/vallor/crm`, `/vallor/dashboard/analytics`, `/vallor/settings/whatsapp`, `/vallor/support`.
+  - [ ] Botão de recarregamento (F5) interno do viewport.
+- [ ] **5. Homologação e Deploy**:
+  - [ ] Validação de tipagem TypeScript (`npx tsc --noEmit`) com código 0.
+  - [ ] Build de produção Next.js (`npm run build`) com código 0.
+  - [ ] Deploy na Vercel e VPS, homologação direta com o usuário.
 
 ---
 
