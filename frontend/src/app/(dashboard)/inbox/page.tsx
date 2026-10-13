@@ -1673,6 +1673,15 @@ function InboxContent() {
       if (!isInternalMode) {
         setContacts(prev => prev.map(c => c.id === activeChat ? { ...c, isAi: false, status: 'human_takeover', lastMsg: content } : c));
       }
+
+      // Se o atendimento estava finalizado, reabre automaticamente no backend
+      if (isResolved) {
+        api.patch(`/conversations/${activeChat}/reopen`).then(() => {
+          refetchConversations();
+        }).catch(err => {
+          console.error("Erro ao auto-reabrir conversa finalizada", err);
+        });
+      }
     } catch (error: any) {
       console.error("Erro ao enviar mensagem", error);
       alert(`ERRO AO ENVIAR: ${error.response?.data?.message || error.message || 'Erro Desconhecido'}`);
@@ -2366,8 +2375,8 @@ function InboxContent() {
         ) : (
           <>
             {/* Chat Header (Padrão Estrutural WhatsApp - Design Monocromático VERSUS) */}
-            <div className="h-16 px-3 sm:px-4 border-b border-slate-800/80 flex items-center justify-between bg-[#0B1224] z-20 shadow-sm">
-              <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
+            <div className="h-16 px-2.5 sm:px-4 border-b border-slate-800/80 flex items-center justify-between bg-[#0B1224] z-20 shadow-sm shrink-0 w-full overflow-hidden">
+              <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 overflow-hidden">
                 {/* Botão Voltar para Lista no Mobile (WhatsApp style) */}
                 <button
                   type="button"
@@ -2375,113 +2384,113 @@ function InboxContent() {
                     e.stopPropagation();
                     setActiveChat(null);
                   }}
-                  className="md:hidden p-1.5 -ml-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/80 transition-colors shrink-0 cursor-pointer"
+                  className="md:hidden p-1.5 -ml-0.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/80 transition-colors shrink-0 cursor-pointer"
                   title="Voltar para conversas"
                 >
                   <ArrowLeft size={20} />
                 </button>
 
                 <div 
-                  className="flex items-center gap-2.5 sm:gap-3 min-w-0 cursor-pointer group"
+                  className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 cursor-pointer group overflow-hidden"
                   onClick={() => setShowContactInfo(prev => !prev)}
                   title="Clique para ver dados do contato"
                 >
-                {/* Avatar WhatsApp com indicador de status */}
-                <div className="relative shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700/60 flex items-center justify-center text-white font-bold shrink-0 relative overflow-hidden shadow-inner">
-                    {(() => {
-                      const isSelfOrMainLine = activeContactData.name?.includes('(você)') || (activeContactData.phone && activeInstance?.phoneNumber && activeContactData.phone.replace(/\D/g, '') === activeInstance.phoneNumber.replace(/\D/g, ''));
-                      const rawContactPhoto = activeContactData.avatarUrl || (isSelfOrMainLine ? (activeInstance?.profilePicUrl || waStatus?.profilePicUrl) : null);
-                      const contactPhoto = sanitizeAvatarUrl(rawContactPhoto);
+                  {/* Avatar WhatsApp com indicador de status */}
+                  <div className="relative shrink-0">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-800 border border-slate-700/60 flex items-center justify-center text-white font-bold shrink-0 relative overflow-hidden shadow-inner text-xs sm:text-sm">
+                      {(() => {
+                        const isSelfOrMainLine = activeContactData.name?.includes('(você)') || (activeContactData.phone && activeInstance?.phoneNumber && activeContactData.phone.replace(/\D/g, '') === activeInstance.phoneNumber.replace(/\D/g, ''));
+                        const rawContactPhoto = activeContactData.avatarUrl || (isSelfOrMainLine ? (activeInstance?.profilePicUrl || waStatus?.profilePicUrl) : null);
+                        const contactPhoto = sanitizeAvatarUrl(rawContactPhoto);
 
-                      return contactPhoto ? (
-                        <img 
-                          src={contactPhoto} 
-                          alt={activeContactData.name} 
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover rounded-full"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLElement).style.display = 'none';
-                            const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
-                            if (fallback) fallback.classList.remove('hidden');
-                          }}
-                        />
-                      ) : null;
-
-                    })()}
-                    <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
-                      {getContactInitials(activeContactData.name, activeContactData.phone)}
-                    </span>
-                  </div>
-                  {/* Status Indicator */}
-                  <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#0B1224]" />
-                </div>
-                
-                {/* Título e Subtítulo WhatsApp */}
-                <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-white truncate max-w-[200px] sm:max-w-xs group-hover:text-blue-300 transition-colors">
-                    {formatContactDisplayName(activeContactData.name, activeContactData.phone)}
-                  </h2>
-                  {activeContactData.isAi ? (
-                    <div className="flex items-center gap-1.5 text-xs text-cyan-400 font-medium">
-                      <BrainCircuit size={12} className="animate-pulse" />
-                      <span>IA Vitor conversando...</span>
+                        return contactPhoto ? (
+                          <img 
+                            src={contactPhoto} 
+                            alt={activeContactData.name} 
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover rounded-full"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = 'none';
+                              const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                              if (fallback) fallback.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null;
+                      })()}
+                      <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
+                        {getContactInitials(activeContactData.name, activeContactData.phone)}
+                      </span>
                     </div>
-                  ) : (activeContactData.status === 'human_takeover' || activeContactData.status === 'open') ? (
-                    <span className="text-xs text-emerald-400 font-medium">online • Atendimento ativo</span>
-                  ) : activeContactData.status === 'waiting' ? (
-                    <span className="text-xs text-amber-400 font-medium">Aguardando atendimento</span>
-                  ) : (
-                    <span className="text-xs text-slate-400 font-medium">
-                      {activeContactData.phone?.includes('@lid') 
-                        ? 'online • WhatsApp' 
-                        : activeContactData.phone 
-                          ? `${formatDisplayPhoneNumber(activeContactData.phone)} • online` 
-                          : 'online'}
-                    </span>
-                  )}
+                    {/* Status Indicator */}
+                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 border-2 border-[#0B1224]" />
+                  </div>
+                  
+                  {/* Título e Subtítulo WhatsApp */}
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <h2 className="text-xs sm:text-sm font-bold text-white truncate whitespace-nowrap group-hover:text-blue-300 transition-colors leading-tight">
+                      {formatContactDisplayName(activeContactData.name, activeContactData.phone)}
+                    </h2>
+                    {activeContactData.isAi ? (
+                      <div className="flex items-center gap-1 text-[11px] sm:text-xs text-cyan-400 font-medium truncate whitespace-nowrap leading-tight mt-0.5">
+                        <BrainCircuit size={11} className="animate-pulse shrink-0" />
+                        <span className="truncate">IA Vitor conversando...</span>
+                      </div>
+                    ) : (activeContactData.status === 'human_takeover' || activeContactData.status === 'open') ? (
+                      <span className="text-[11px] sm:text-xs text-emerald-400 font-medium truncate whitespace-nowrap block leading-tight mt-0.5">online • Atendimento ativo</span>
+                    ) : activeContactData.status === 'waiting' ? (
+                      <span className="text-[11px] sm:text-xs text-amber-400 font-medium truncate whitespace-nowrap block leading-tight mt-0.5">Aguardando atendimento</span>
+                    ) : (
+                      <span className="text-[11px] sm:text-xs text-slate-400 font-medium truncate whitespace-nowrap block leading-tight mt-0.5">
+                        {activeContactData.phone?.includes('@lid') 
+                          ? 'online • WhatsApp' 
+                          : activeContactData.phone && activeContactData.name && activeContactData.name !== activeContactData.phone
+                            ? `${formatDisplayPhoneNumber(activeContactData.phone)} • online` 
+                            : 'online'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
               {/* Ações Alinhadas à Direita (Padrão WhatsApp Web) */}
-              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-1.5">
                 {isResolved ? (
-                  <div className="flex items-center gap-1.5 mr-1">
-                    <span className="text-slate-300 text-[11px] font-semibold px-2 py-0.5 bg-slate-800/80 border border-slate-700/80 rounded-lg flex items-center gap-1">
+                  <div className="flex items-center gap-1 sm:gap-1.5 mr-0.5 sm:mr-1">
+                    <span className="hidden sm:inline-flex text-slate-300 text-[11px] font-semibold px-2 py-0.5 bg-slate-800/80 border border-slate-700/80 rounded-lg items-center gap-1">
                       <Lock size={11} className="text-slate-400" />
                       Finalizado
                     </span>
                     <button 
                       onClick={handleReopen} 
                       disabled={isReopening}
-                      className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 shrink-0 shadow-sm"
+                      title="Reabrir atendimento"
                     >
                       <ArrowRightLeft size={11} />
-                      {isReopening ? '...' : 'Reabrir'}
+                      <span>{isReopening ? '...' : 'Reabrir'}</span>
                     </button>
                   </div>
                 ) : (activeContactData.status === 'bot_active' || activeContactData.status === 'waiting' || activeContactData.status === 'open') ? (
-                  <button onClick={() => handleTakeover()} className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold px-3 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer mr-1">
+                  <button onClick={() => handleTakeover()} className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold px-2 sm:px-3 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer mr-0.5 sm:mr-1 shrink-0 shadow-sm">
                     <UserCheck size={12} />
-                    Assumir
+                    <span>Assumir</span>
                   </button>
                 ) : activeContactData.status === 'human_takeover' ? (
-                  <button onClick={handleRelease} className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-[11px] font-bold px-3 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer mr-1">
-                    Finalizar
+                  <button onClick={handleRelease} className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-[11px] font-bold px-2 sm:px-3 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer mr-0.5 sm:mr-1 shrink-0">
+                    <span>Finalizar</span>
                   </button>
                 ) : null}
 
                 {/* Botão de Ação Manual no Funil do CRM */}
                 {activeContactData?.contactId && (
-                  <div className="relative">
+                  <div className="relative shrink-0">
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowCrmDropdown(prev => !prev);
                       }}
-                      className={`px-2.5 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer text-xs font-semibold ${
+                      className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border transition-all flex items-center gap-1 cursor-pointer text-xs font-semibold ${
                         showCrmDropdown
                           ? 'bg-blue-600/25 text-blue-300 border-blue-500/60 shadow-lg shadow-blue-500/10'
                           : currentStageObj
@@ -2491,10 +2500,10 @@ function InboxContent() {
                       title="Mover lead no Funil do CRM"
                     >
                       <Workflow size={13} className={currentStageObj ? currentStageObj.color : 'text-blue-400'} />
-                      <span className="hidden sm:inline font-medium text-[11px] max-w-[110px] truncate">
+                      <span className="hidden md:inline font-medium text-[11px] max-w-[100px] truncate">
                         {currentStageObj ? currentStageObj.title : 'Funil CRM'}
                       </span>
-                      <ChevronDown size={11} className={`transition-transform duration-200 ${showCrmDropdown ? 'rotate-180' : ''}`} />
+                      <ChevronDown size={11} className={`hidden sm:inline transition-transform duration-200 ${showCrmDropdown ? 'rotate-180' : ''}`} />
                     </button>
 
                     {/* Dropdown de Estágios do Funil com Backdrop Isolado */}
@@ -2553,38 +2562,38 @@ function InboxContent() {
                 <button
                   type="button"
                   onClick={() => setShowSearchInChat(prev => !prev)}
-                  className={`p-2 rounded-full transition-colors cursor-pointer ${
+                  className={`p-1.5 sm:p-2 rounded-full transition-colors cursor-pointer shrink-0 ${
                     showSearchInChat ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                   }`}
                   title="Pesquisar na conversa"
                 >
-                  <Search size={19} />
+                  <Search size={18} />
                 </button>
 
-                {/* Botão Rápido: Apagar Conversa Inteira */}
+                {/* Botão Rápido: Apagar Conversa Inteira (Em telas médias/grandes) */}
                 <button
                   type="button"
                   onClick={() => setShowDeleteConvModal(true)}
-                  className="p-2 rounded-full text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition-colors cursor-pointer"
+                  className="hidden sm:flex p-1.5 sm:p-2 rounded-full text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition-colors cursor-pointer shrink-0"
                   title="Apagar conversa inteira"
                 >
-                  <Trash2 size={19} />
+                  <Trash2 size={18} />
                 </button>
 
                 {/* Ícone 2: Menu Mais Opções (WhatsApp Web) */}
-                <div className="relative">
+                <div className="relative shrink-0">
                   <button 
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowChatOptionsMenu(prev => !prev);
                     }}
-                    className={`p-2 rounded-full transition-colors cursor-pointer ${
+                    className={`p-1.5 sm:p-2 rounded-full transition-colors cursor-pointer ${
                       showChatOptionsMenu ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                     }`}
                     title="Mais opções do chat"
                   >
-                    <MoreVertical size={19} />
+                    <MoreVertical size={18} />
                   </button>
 
                   {/* Dropdown de Opções Superiores do Chat com Backdrop Isolado */}
@@ -2599,6 +2608,23 @@ function InboxContent() {
                         className="absolute top-full right-0 mt-2 w-72 bg-[#0F172A] border border-slate-700/90 rounded-2xl shadow-[0_25px_50px_rgba(0,0,0,0.9)] py-2 z-50 animate-in fade-in zoom-in-95 text-xs divide-y divide-slate-800/80"
                       >
                       <div className="py-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowChatOptionsMenu(false);
+                            setShowContactInfo(true);
+                          }}
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 group-hover:bg-blue-500/25 transition-colors">
+                            <PanelRight size={16} />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-semibold text-white group-hover:text-blue-300 transition-colors">Dados do Contato</span>
+                            <span className="text-[11px] text-slate-300 leading-tight">Ver detalhes, tags e telefone</span>
+                          </div>
+                        </button>
+
                         <button
                           type="button"
                           onClick={() => {
@@ -2751,16 +2777,16 @@ function InboxContent() {
                 )}
               </div>
 
-                {/* Ícone 3: Dados do Contato (WhatsApp Web) */}
+                {/* Ícone 3: Dados do Contato (WhatsApp Web - desktop/tablet) */}
                 <button
                   type="button"
                   onClick={() => setShowContactInfo(prev => !prev)}
-                  className={`p-2 rounded-full transition-colors cursor-pointer ${
+                  className={`hidden md:flex p-2 rounded-full transition-colors cursor-pointer shrink-0 ${
                     showContactInfo ? 'bg-slate-800 text-blue-400' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                   }`}
                   title="Dados do contato"
                 >
-                  <PanelRight size={19} />
+                  <PanelRight size={18} />
                 </button>
               </div>
             </div>
@@ -3095,28 +3121,31 @@ function InboxContent() {
             </div>
 
             {/* Chat Input Area (Estrutura e Formato Idênticos ao WhatsApp) */}
-            {isResolved ? (
-              <div className="p-4 border-t border-slate-800/90 bg-[#0B1224] z-20 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700/80 flex items-center justify-center text-slate-300 shrink-0">
-                    <Lock size={18} />
+            <div className="border-t border-slate-800/90 bg-[#0B1224] z-20 flex flex-col shrink-0">
+              {/* Banner Informativo quando o Atendimento estiver Finalizado */}
+              {isResolved && (
+                <div className="bg-[#0F172A]/95 border-b border-slate-800 px-3.5 py-2 flex items-center justify-between gap-2 shrink-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-6 h-6 rounded-lg bg-slate-800 border border-slate-700/80 flex items-center justify-center text-slate-400 shrink-0">
+                      <Lock size={12} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-slate-300 font-medium truncate block">
+                        Atendimento finalizado. Enviar mensagem reabrirá automaticamente o ticket.
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white">Atendimento Finalizado</h4>
-                    <p className="text-xs text-slate-400">Este atendimento foi finalizado. Reabra o ticket para enviar novas mensagens.</p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleReopen}
+                    disabled={isReopening}
+                    className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer disabled:opacity-50 shadow-sm"
+                  >
+                    <ArrowRightLeft size={11} />
+                    <span>{isReopening ? 'Reabrindo...' : 'Reabrir Atendimento'}</span>
+                  </button>
                 </div>
-                <button
-                  onClick={handleReopen}
-                  disabled={isReopening}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-md flex items-center gap-2 shrink-0 cursor-pointer disabled:opacity-50 w-full sm:w-auto justify-center"
-                >
-                  <ArrowRightLeft size={14} />
-                  {isReopening ? 'Reabrindo...' : 'Reabrir Atendimento'}
-                </button>
-              </div>
-            ) : (
-              <div className="border-t border-slate-800/90 bg-[#0B1224] z-20 flex flex-col">
+              )}
                 
                 {/* File Preview */}
                 {selectedFile && (
@@ -3494,37 +3523,40 @@ function InboxContent() {
                             )}
                           </div>
 
-                          {/* 4. Botão de Ação WhatsApp (Microfone se vazio / Avião de Papel Enviar se com texto) */}
-                          <div className="shrink-0">
-                            {(!inputText.trim() && !selectedFile) ? (
-                              <button 
-                                type="button"
-                                onClick={startRecording}
-                                title="Gravar mensagem de voz"
-                                className="p-2.5 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors cursor-pointer"
-                              >
-                                <Mic size={22} />
-                              </button>
-                            ) : (
-                              <button 
-                                type="button"
-                                onClick={handleSendMessage} 
-                                disabled={isUploadingMedia}
-                                title={isUploadingMedia ? "Enviando..." : "Enviar mensagem"}
-                                className={`p-2.5 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 disabled:opacity-50
-                                  ${isInternalMode 
-                                    ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-[0_0_12px_rgba(217,119,6,0.4)]' 
-                                    : 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]'
-                                  }
-                                `}
-                              >
-                                {isUploadingMedia ? (
-                                  <RefreshCw size={18} className="animate-spin text-white" />
-                                ) : (
-                                  <Send size={18} className="ml-0.5" />
-                                )}
-                              </button>
-                            )}
+                          {/* 4. Botão de Gravar Áudio + Botão Enviar Mensagem (SEMPRE VISÍVEIS) */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            {/* Botão Gravar Áudio */}
+                            <button 
+                              type="button"
+                              onClick={startRecording}
+                              title="Gravar mensagem de voz"
+                              className="p-1.5 sm:p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors cursor-pointer"
+                            >
+                              <Mic size={20} />
+                            </button>
+
+                            {/* Botão Enviar Mensagem - Ícone Send SEMPRE VISÍVEL */}
+                            <button 
+                              type="button"
+                              onClick={handleSendMessage} 
+                              disabled={isUploadingMedia || (!inputText.trim() && !selectedFile)}
+                              title={isUploadingMedia ? "Enviando..." : "Enviar mensagem"}
+                              className={`p-2 sm:p-2.5 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed
+                                ${(inputText.trim() || selectedFile)
+                                  ? (isInternalMode 
+                                      ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-[0_0_12px_rgba(217,119,6,0.4)] active:scale-95' 
+                                      : 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)] active:scale-95'
+                                    )
+                                  : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700/80'
+                                }
+                              `}
+                            >
+                              {isUploadingMedia ? (
+                                <RefreshCw size={18} className="animate-spin text-white" />
+                              ) : (
+                                <Send size={18} className="ml-0.5" />
+                              )}
+                            </button>
                           </div>
                         </>
                       )}
@@ -3532,7 +3564,6 @@ function InboxContent() {
                   </>
                 )}
               </div>
-            )}
           </>
         )}
       </div>
