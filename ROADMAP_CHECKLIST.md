@@ -277,27 +277,52 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 ---
 
 ### 📱 FASE 85: SIMULADOR MULTI-DISPOSITIVO & VIEWPORT SANDBOX (13/10/2026 - SUPER ADMIN MASTER)
-> **Status**: ⏳ Planejamento Submetido para Aprovação Executiva do Usuário (Plano em `device_sandbox_implementation_plan.md`).
+> **Status**: Concluído com Sucesso e Homologado (Build Next.js código 0, 47 rotas, 100% SVG de alto padrão, zero emojis).
 
-- [ ] **Controle de Acesso & Segurança Estrita**:
-  - [ ] Restrição absoluta ao Super Admin Master (`isSuperAdmin === true`).
-  - [ ] Blindagem contra visualização ou execução por usuários padrão, operadores ou tenants comuns.
-- [ ] **Componente Executivo de Simulação (`DeviceSandboxModal.tsx`)**:
-  - [ ] Viewport Mobile: 390px × 844px com moldura de smartphone (`rounded-[40px]`, bezel escuro `#1E293B`, status bar indicator).
-  - [ ] Viewport Tablet: 768px × 1024px com moldura de tablet (`rounded-[24px]`).
-  - [ ] Viewport Desktop: 100% de largura / Widescreen.
-  - [ ] Alternador de orientação: Modo Retrato (Portrait) ⟷ Modo Paisagem (Landscape).
-- [ ] **Arquitetura de Iframe Isolado de Alta Fidelidade**:
-  - [ ] Resolução de 100% das media queries nativas do Tailwind CSS (`md:hidden`, `sm:flex`, breakpoints responsivos).
-  - [ ] Preservação da sessão, cookies e JWT do Super Admin.
-  - [ ] Otimização de concorrência: renderização de apenas 1 dispositivo ativo por vez (zero duplicação de sockets ou lag).
-- [ ] **Barra de Navegação e Atalhos Rápidos**:
-  - [ ] Input de rota ativa e seletor rápido para `/vallor/inbox`, `/vallor/crm`, `/vallor/dashboard/analytics`, `/vallor/settings/whatsapp`, `/vallor/support`.
-  - [ ] Botão de recarregamento (F5) interno do viewport.
-- [ ] **Homologação e Deploy**:
-  - [ ] Validação de tipagem TypeScript (`npx tsc --noEmit`) com código 0.
-  - [ ] Build de produção Next.js (`npm run build`) com código 0.
-  - [ ] Deploy na Vercel e VPS, homologação direta com o usuário.
+- [x] **Controle de Acesso & Segurança Estrita**:
+  - [x] Restrição absoluta ao Super Admin Master (`isSuperAdmin === true`).
+  - [x] Blindagem contra visualização ou execução por usuários padrão, operadores ou tenants comuns.
+- [x] **Componente Executivo de Simulação (`DeviceSandboxModal.tsx`)**:
+  - [x] Viewport Mobile: 390px × 844px com moldura de smartphone (`rounded-[52px]`, bezel escuro `#1E293B`, notch e home bar).
+  - [x] Viewport Tablet: 768px × 1024px com moldura de tablet (`rounded-[34px]`).
+  - [x] Viewport Desktop: 100% de largura / Widescreen.
+  - [x] Alternador de orientação: Modo Retrato (Portrait) ⟷ Modo Paisagem (Landscape).
+  - [x] 100% ícones vetoriais SVG de alto padrão (`lucide-react`) com zero emojis na interface.
+- [x] **Arquitetura de Iframe Isolado de Alta Fidelidade**:
+  - [x] Resolução de 100% das media queries nativas do Tailwind CSS (`md:hidden`, `sm:flex`, breakpoints responsivos).
+  - [x] Preservação da sessão, cookies e JWT do Super Admin.
+  - [x] Otimização de concorrência: renderização de apenas 1 dispositivo ativo por vez (zero duplicação de sockets ou lag).
+- [x] **Barra de Navegação e Atalhos Rápidos**:
+  - [x] Input de rota ativa e seletor rápido para `/vallor/inbox`, `/vallor/crm`, `/vallor/dashboard/analytics`, `/vallor/settings/whatsapp`, `/vallor/support`.
+  - [x] Botão de recarregamento (F5) interno do viewport.
+  - [x] Atalho de teclado global `Alt + S` e acionamento no Topbar e Sidebar.
+- [x] **Homologação e Deploy**:
+  - [x] Validação de tipagem TypeScript (`npx tsc --noEmit`) com código 0.
+  - [x] Build de produção Next.js (`npm run build`) com código 0 em todas as 47 rotas.
+  - [x] Deploy efetuado na nuvem.
+
+---
+
+### 🧠 FASE 86: INTELIGÊNCIA EMOCIONAL, DETECÇÃO DE SENTIMENTO & APRENDIZADO CONTÍNUO DA IA (13/10/2026 - MULTITENANT)
+> **Status**: ⏳ Planejamento Submetido para Aprovação do Usuário (Plano em `ai_continuous_learning_implementation_plan.md`).
+
+- [ ] **1. Motor de Inteligência Emocional & Structured Outputs**:
+  - [ ] Extensão do `AiResponseSchema` (Zod): `sentimento_cliente` (Enum de humor), `reclamou_de_bot` (booleano) e `analise_emocional`.
+  - [ ] Regras determinísticas de humanização, transparência carismática e desarmamento de atrito no System Prompt.
+  - [ ] Protocolo de transbordo automático imediato (`transferir_vendedor = true`) caso o lead expresse irritação crítica ou frustração severa com a IA.
+- [ ] **2. Pipeline de Registro de Incidentes & Oportunidades**:
+  - [ ] Modelagem da tabela `AiLearningIncident` no Supabase PostgreSQL vinculada ao `tenantId`.
+  - [ ] Captura assíncrona de falhas de comunicação, insatisfação de preço e notas baixas no CSAT (`CsatSurvey`).
+  - [ ] Diagnóstico automatizado da causa-raiz gerado por IA com formulação de nova diretriz sugerida.
+- [ ] **3. Endpoints de Curadoria e Gestão de Incidentes (NestJS)**:
+  - [ ] Endpoints `GET /agent/learning-incidents`, `POST /agent/learning-incidents/:id/apply` e `PATCH /agent/learning-incidents/:id/dismiss`.
+  - [ ] Aplicação em 1 clique acionando a engine `coachAgent` com persistência na base do tenant.
+- [ ] **4. Interface no Console de Governança de IA (Frontend)**:
+  - [ ] Sub-aba executiva "Radar de Sentimentos & Oportunidades de Aprendizado" na Governança de Agentes de IA.
+  - [ ] Cards de incidentes com trecho falado pelo cliente, diagnóstico da IA e botão "Aprovar & Ensinar com 1 Clique".
+- [ ] **5. Homologação e Deploy**:
+  - [ ] Validação de tipagem TypeScript e build com código 0 de erros.
+  - [ ] Deploy unificado na VPS (backend) e Vercel (frontend).
 
 ---
 
