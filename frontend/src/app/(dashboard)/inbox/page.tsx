@@ -190,6 +190,7 @@ function InboxContent() {
   const [showLeftHeaderMenu, setShowLeftHeaderMenu] = useState(false);
   const [showDeleteConvModal, setShowDeleteConvModal] = useState(false);
   const [isDeletingConv, setIsDeletingConv] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   // Estados para Envio de Modelo / Reabertura 24h Meta
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -1437,6 +1438,17 @@ function InboxContent() {
           return m;
         })
       );
+      if (data.conversationId && messagesCacheRef.current[data.conversationId]) {
+        messagesCacheRef.current[data.conversationId] = messagesCacheRef.current[data.conversationId].map((m) => {
+          if (
+            (data.messageId && m.id === data.messageId) ||
+            (data.providerMessageId && m.providerMessageId === data.providerMessageId)
+          ) {
+            return { ...m, status: data.status };
+          }
+          return m;
+        });
+      }
     };
 
     const handleMessageDeleted = (data: { conversationId: string; messageId: string }) => {
@@ -1609,6 +1621,39 @@ function InboxContent() {
       alert(`Erro ao reabrir atendimento: ${error.response?.data?.message || error.message}`);
     } finally {
       setIsReopening(false);
+    }
+  };
+
+  // Verificação de expiração da janela de 24 horas da Meta (WhatsApp Cloud API)
+  const is24hExpired = useMemo(() => {
+    if (!activeContactData || activeContactData.channel !== 'whatsapp') return false;
+    const inboundMessages = messages.filter(m => m.direction === 'INBOUND' && !m.isInternal);
+    if (inboundMessages.length === 0) return true;
+    const lastInbound = inboundMessages[inboundMessages.length - 1];
+    const lastInboundTime = new Date(lastInbound.createdAt).getTime();
+    if (isNaN(lastInboundTime)) return false;
+    const now = Date.now();
+    return (now - lastInboundTime) > 24 * 60 * 60 * 1000;
+  }, [activeContactData, messages]);
+
+  const handleSendReopenTemplate = async (templateName: string = 'hello_world') => {
+    if (!activeChat || isSendingTemplate) return;
+    setIsSendingTemplate(true);
+    try {
+      const res = await api.post(`/conversations/${activeChat}/template`, { templateName });
+      toast.success('Modelo HSM enviado com sucesso!');
+      setShowTemplateModal(false);
+      if (res.data?.message) {
+        setMessages(prev => [...prev, res.data.message]);
+        if (messagesCacheRef.current[activeChat]) {
+          messagesCacheRef.current[activeChat] = [...messagesCacheRef.current[activeChat], res.data.message];
+        }
+      }
+    } catch (err: any) {
+      console.error('Erro ao enviar modelo HSM:', err);
+      toast.error(err.response?.data?.message || 'Falha ao enviar modelo HSM.');
+    } finally {
+      setIsSendingTemplate(false);
     }
   };
 
@@ -3152,13 +3197,22 @@ function InboxContent() {
                             }`}>
                               <span>{new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                               {isMe && !msg.isInternal && (
-                                <span title={
-                                  msg.status === 'read' ? 'Lida' :
-                                  msg.status === 'delivered' ? 'Entregue' :
-                                  msg.status === 'sent' ? 'Enviada' :
-                                  msg.status === 'failed' || msg.status === 'error' ? 'Não entregue' :
-                                  'Enviando...'
-                                } className="inline-flex items-center">
+                                <span 
+                                  title={
+                                    msg.status === 'read' ? 'Lida' :
+                                    msg.status === 'delivered' ? 'Entregue' :
+                                    msg.status === 'sent' ? 'Enviada' :
+                                    msg.status === 'failed' || msg.status === 'error' ? 'Não entregue (Janela de 24h expirada ou erro Meta). Clique para reenviar como Modelo HSM.' :
+                                    'Enviando...'
+                                  } 
+                                  onClick={(e) => {
+                                    if (msg.status === 'failed' || msg.status === 'error') {
+                                      e.stopPropagation();
+                                      setShowTemplateModal(true);
+                                    }
+                                  }}
+                                  className={`inline-flex items-center ${msg.status === 'failed' || msg.status === 'error' ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
+                                >
                                   {msg.status === 'read' ? (
                                     <CheckCheck size={14} className="text-[#53bdeb] shrink-0" />
                                   ) : msg.status === 'delivered' ? (
@@ -3174,6 +3228,26 @@ function InboxContent() {
                               )}
                             </span>
                           </div>
+
+                          {/* Alerta de Falha de Envio (Janela de 24h Meta) */}
+                          {isMe && !msg.isInternal && (msg.status === 'failed' || msg.status === 'error') && (
+                            <div className="mt-1 pt-1 border-t border-rose-500/20 flex items-center justify-between gap-2 text-[10px] text-rose-300">
+                              <span className="flex items-center gap-1">
+                                <AlertCircle size={11} className="text-rose-400 shrink-0" />
+                                Não entregue (Janela 24h)
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowTemplateModal(true);
+                                }}
+                                className="text-cyan-400 hover:text-cyan-300 font-bold underline cursor-pointer"
+                              >
+                                Reabrir com HSM
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -3207,6 +3281,30 @@ function InboxContent() {
                   >
                     <ArrowRightLeft size={11} />
                     <span>{isReopening ? 'Reabrindo...' : 'Reabrir Atendimento'}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Banner de Janela de 24h Expirada (WhatsApp Cloud API) */}
+              {!isResolved && is24hExpired && (
+                <div className="bg-amber-950/80 border-b border-amber-500/40 px-3.5 py-2 flex items-center justify-between gap-3 shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+                      <AlertCircle size={13} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-amber-200 font-medium block truncate">
+                        Janela de 24h expirada. Mensagens normais falharão até o cliente responder.
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowTemplateModal(true)}
+                    className="px-2.5 py-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer shadow-sm"
+                  >
+                    <Sparkles size={11} />
+                    <span>Reabrir com Modelo HSM</span>
                   </button>
                 </div>
               )}
@@ -4556,6 +4654,96 @@ function InboxContent() {
                   <>
                     <Trash2 size={13} />
                     <span>Apagar Conversa</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Envio de Modelo HSM (Reabertura da Janela de 24h Meta) */}
+      {showTemplateModal && activeContactData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-[#0B1224] border border-cyan-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Reabrir Janela de 24h (Meta HSM)</h3>
+                  <p className="text-xs text-slate-400">Envie um modelo aprovado pela Meta para retomar o contato</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTemplateModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="bg-amber-950/40 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200/90 flex items-start gap-2.5">
+              <AlertCircle size={16} className="text-amber-400 shrink-0 mt-0.5" />
+              <span>
+                Mais de 24 horas se passaram desde a última mensagem do cliente. A Meta proíbe mensagens livres até que o cliente interaja com um modelo pré-aprovado.
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-xs font-semibold text-slate-300 block">
+                Selecione o Modelo de Mensagem (HSM):
+              </label>
+              
+              <div 
+                onClick={() => setSelectedTemplateName('hello_world')}
+                className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+                  selectedTemplateName === 'hello_world'
+                    ? 'bg-cyan-950/40 border-cyan-500/80 ring-1 ring-cyan-500/50'
+                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-xs text-white">hello_world</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold">
+                      Aprovado Universal Meta
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono">en_US</span>
+                </div>
+                <div className="p-2.5 bg-black/40 rounded-lg border border-white/5 text-xs text-slate-300 italic font-sans leading-relaxed">
+                  "Hello World! Welcome and congratulations on choosing our platform."
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                disabled={isSendingTemplate}
+                onClick={() => setShowTemplateModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={isSendingTemplate}
+                onClick={() => handleSendReopenTemplate(selectedTemplateName)}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold transition-all shadow-lg shadow-cyan-600/30 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isSendingTemplate ? (
+                  <>
+                    <RefreshCw size={13} className="animate-spin" />
+                    <span>Enviando Modelo...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send size={13} />
+                    <span>Enviar Modelo de Reabertura</span>
                   </>
                 )}
               </button>
