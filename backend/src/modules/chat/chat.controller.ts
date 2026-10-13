@@ -195,6 +195,20 @@ export class ChatController {
     }
   }
 
+  @Post(':id/template')
+  async sendTemplateMessage(
+    @CurrentTenant() tenantId: string,
+    @Param('id') conversationId: string,
+    @Body() body: { templateName?: string; languageCode?: string; components?: any[]; instanceId?: string },
+  ) {
+    try {
+      return await this.chatService.sendTemplateMessage(tenantId, conversationId, body);
+    } catch (error) {
+      console.error('ERRO AO ENVIAR TEMPLATE META:', error);
+      throw error;
+    }
+  }
+
   @Post(':id/messages/audio')
   @UseInterceptors(FileInterceptor('file'))
   async sendAudioMessage(

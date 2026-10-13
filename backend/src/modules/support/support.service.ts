@@ -450,18 +450,20 @@ export class SupportService {
         whatsappSettings: true,
         emailSettings: true,
         metaPhoneNumberId: true,
+        aiName: true,
         plan: { select: { name: true } },
       }
     });
 
     const isWhatsappActive = Boolean(tenant?.metaPhoneNumberId || tenant?.whatsappSettings);
     const isEmailActive = Boolean(tenant?.emailSettings);
+    const aiDisplayName = tenant?.aiName?.trim() || 'Sofia';
 
     return {
       systemStatus: [
         {
           id: 'ai-vitor',
-          name: 'IA Vitor Online',
+          name: `IA ${aiDisplayName} Online`,
           status: 'OPERATIONAL',
           label: 'Motor OpenAI / LangChain Ativo',
           indicator: 'healthy'

@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { io, Socket } from 'socket.io-client';
 import { usePathname, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { showLeadMessageToast, showTransferAlertToast } from '@/components/notifications/NotificationToast';
+import { showLeadMessageToast, showTransferAlertToast, showLeadQualifiedToast } from '@/components/notifications/NotificationToast';
 import { sanitizeAvatarUrl } from '@/lib/avatarUtils';
 
 import { getStoredToken } from '@/lib/api';
@@ -327,16 +327,21 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('📡 [WebSockets] Desconectado.');
     });
 
-    // Escuta global para Alerta de Handoff da IA (Lead Qualificado)
+    // Escuta global para Alerta de Handoff da IA (Lead Qualificado via Deal)
     socketInstance.on('dealUpdated', (deal) => {
       // Suprime absolutamente notificações em login, público, deslogado ou super-admin
       if (isUnauthenticatedOrPublic()) return;
 
-      toast.error(`🚨 Lead Qualificado pela IA!\nUm novo lead precisa de atendimento humano.\nAcesse o Pipeline CRM.`, {
-        duration: 8000,
-        position: 'top-right',
-        style: { background: '#0B1224', color: '#fff', border: '1px solid #ef4444' }
-      });
+      showLeadQualifiedToast(
+        {
+          dealId: deal?.id,
+          contactName: deal?.name || deal?.title || 'Lead Qualificado',
+          contactPhone: deal?.phone || null,
+          product: deal?.value ? `R$ ${deal.value}` : 'Oportunidade Comercial',
+          reason: deal?.notes || 'Lead qualificado pela IA e pronto para atendimento humano.',
+        },
+        router
+      );
       playNotificationSound(true);
       triggerVibration(true);
       triggerTabBlink("🚨 [1] LEAD QUALIFICADO!");
@@ -346,6 +351,34 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           body: "Um novo lead atingiu critérios de qualificação e aguarda contato humano.",
           tag: `deal_${deal?.id || 'alert'}`,
           url: "/crm"
+        });
+      }
+    });
+
+    // Escuta direta de Transbordo Humano da IA (aiHandoffAlert)
+    socketInstance.on('aiHandoffAlert', (data) => {
+      if (isUnauthenticatedOrPublic()) return;
+
+      showLeadQualifiedToast(
+        {
+          conversationId: data?.conversationId,
+          contactName: data?.contactName || 'Lead Qualificado',
+          contactPhone: data?.contactPhone,
+          product: data?.product,
+          reason: data?.reason || data?.summary,
+          dealId: data?.dealId,
+        },
+        router
+      );
+      playNotificationSound(true);
+      triggerVibration(true);
+      triggerTabBlink("🚨 [1] TRANSBORDO IA!");
+
+      if (document.hidden || !document.hasFocus()) {
+        dispatchDesktopNotification(`🚨 Transbordo: ${data?.contactName || 'Lead Qualificado'}`, {
+          body: data?.reason || "A IA transferiu este lead para você no chat.",
+          tag: `handoff_${data?.conversationId || 'alert'}`,
+          url: data?.conversationId ? `/inbox?conversationId=${data.conversationId}` : "/inbox"
         });
       }
     });

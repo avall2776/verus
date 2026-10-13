@@ -359,9 +359,24 @@ export class AiProcessor extends WorkerHost {
       }
 
       // Atualizar status da conversa (Trava Handoff) com o atendente sorteado
-      await this.prisma.conversation.update({
+      const updatedConv = await this.prisma.conversation.update({
         where: { id: conversationId },
-        data: { status: 'human_takeover', assignedTo }
+        data: { status: 'human_takeover', assignedTo },
+        include: { contact: true }
+      });
+
+      // Emissão em tempo real para o Inbox: atualiza status para 'human_takeover' e trava a IA
+      this.chatGateway.emitConversationUpdated(tenantId, updatedConv);
+
+      // Emissão do alerta rico de Handoff para o Front-end (Toast executivo de transbordo)
+      this.chatGateway.server.to(tenantId).emit('aiHandoffAlert', {
+        conversationId,
+        contactId,
+        contactName: conversation.contact.name || aiResponse.nome_cliente || 'Lead WhatsApp',
+        phone: conversation.contact.phone,
+        product: aiResponse.produto_interesse,
+        reason: aiResponse.motivo_transferencia,
+        summary: aiResponse.resumo_atendimento,
       });
 
       // 5.2 Atualizar/Criar o Deal no CRM com Metadados Completos

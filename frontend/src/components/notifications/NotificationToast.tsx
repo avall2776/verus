@@ -426,3 +426,160 @@ export function showTransferAlertToast(
     }
   );
 }
+
+// Componente Executivo de Lead Qualificado pela IA (Transbordo Humano)
+export interface LeadQualifiedToastProps {
+  toastId: string | number;
+  contactName: string;
+  contactPhone?: string | null;
+  product?: string | null;
+  reason?: string | null;
+  conversationId?: string | null;
+  dealId?: string | null;
+  onOpenChat: (convId?: string | null) => void;
+  onOpenCrm: () => void;
+  onClose: () => void;
+}
+
+export const LeadQualifiedToast: React.FC<LeadQualifiedToastProps> = ({
+  toastId,
+  contactName,
+  contactPhone,
+  product,
+  reason,
+  conversationId,
+  onOpenChat,
+  onOpenCrm,
+  onClose,
+}) => {
+  if (isBlockedNotificationContext()) return null;
+
+  return (
+    <div className="w-[380px] sm:w-[410px] rounded-2xl bg-[#0B1426]/95 backdrop-blur-2xl border border-amber-500/50 shadow-[0_12px_45px_rgba(0,0,0,0.8),0_0_25px_rgba(245,158,11,0.2)] p-4 text-white relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300">
+      {/* Luz ambiente dourada no topo */}
+      <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-56 h-14 bg-gradient-to-r from-amber-500/30 to-orange-500/20 blur-2xl rounded-full pointer-events-none" />
+
+      {/* Header do Toast */}
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-md shadow-amber-500/30 shrink-0">
+            <Sparkles size={16} />
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                Lead Qualificado pela IA
+              </span>
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping shrink-0" />
+            </div>
+            <p className="text-[10px] text-slate-400 font-medium">
+              Transbordo para Atendimento Humano
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800/60 transition-colors cursor-pointer shrink-0"
+          title="Fechar"
+        >
+          <X size={15} />
+        </button>
+      </div>
+
+      {/* Card do Lead */}
+      <div className="bg-slate-900/90 rounded-xl p-3 border border-amber-500/20 mb-3 space-y-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="font-bold text-sm text-white truncate">{contactName || 'Lead Interessado'}</h4>
+          {contactPhone && (
+            <span className="text-[11px] text-amber-400 font-mono font-bold shrink-0">
+              {contactPhone}
+            </span>
+          )}
+        </div>
+
+        {product && product !== 'Não informado' && product !== 'Atendimento Comercial' && (
+          <div className="text-[11px] text-cyan-300 flex items-center gap-1">
+            <span className="text-slate-400">Interesse:</span>
+            <span className="font-semibold text-white truncate max-w-[220px]">{product}</span>
+          </div>
+        )}
+
+        <p className="text-[11px] text-slate-300 leading-relaxed italic border-l-2 border-amber-400 pl-2">
+          &ldquo;{reason || 'Lead solicitou especialista ou expressou necessidade de atendimento humano.'}&rdquo;
+        </p>
+      </div>
+
+      {/* Botões de Ação */}
+      <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/80">
+        <button
+          type="button"
+          onClick={onOpenCrm}
+          className="px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all cursor-pointer flex items-center gap-1"
+        >
+          <span>Ver no CRM</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onOpenChat(conversationId)}
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-500 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-black shadow-[0_0_15px_rgba(245,158,11,0.35)] transition-all cursor-pointer"
+        >
+          <MessageSquare size={13} />
+          <span>Atender no Chat</span>
+          <ArrowRight size={13} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export function showLeadQualifiedToast(
+  data: {
+    conversationId?: string | null;
+    contactName?: string | null;
+    contactPhone?: string | null;
+    product?: string | null;
+    reason?: string | null;
+    dealId?: string | null;
+  },
+  router: any
+) {
+  if (isBlockedNotificationContext()) return;
+
+  const stableKey = data.conversationId || data.dealId || data.contactPhone || 'lead_qual';
+  const toastId = `lead_qual_${stableKey}`;
+
+  toast.custom(
+    (t) => (
+      <LeadQualifiedToast
+        toastId={t}
+        conversationId={data.conversationId}
+        contactName={data.contactName || 'Lead Qualificado'}
+        contactPhone={data.contactPhone}
+        product={data.product}
+        reason={data.reason}
+        dealId={data.dealId}
+        onOpenChat={(cId) => {
+          toast.dismiss(toastId);
+          if (cId) {
+            router.push(`/inbox?conversationId=${cId}`);
+          } else {
+            router.push('/inbox');
+          }
+        }}
+        onOpenCrm={() => {
+          toast.dismiss(toastId);
+          router.push('/crm');
+        }}
+        onClose={() => toast.dismiss(toastId)}
+      />
+    ),
+    {
+      id: toastId,
+      duration: 12000,
+      position: 'top-right',
+    }
+  );
+}
+

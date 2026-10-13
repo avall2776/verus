@@ -28,6 +28,15 @@ export interface SendMediaPayload {
   instanceId?: string;
 }
 
+export interface SendTemplatePayload {
+  tenantId: string;
+  phone: string;
+  templateName: string;
+  languageCode?: string;
+  components?: any[];
+  instanceId?: string;
+}
+
 export interface SendResult {
   success: boolean;
   messageId?: string;
@@ -187,6 +196,99 @@ export class MessagingService {
       const evoRes = await this.sendEvolutionText(conn.evolution, cleanPhone, payload.content);
       if (evoRes.success) return evoRes;
       return metaRes;
+    }
+  }
+
+  /**
+   * Dispara Template Oficial da Meta (HSM) para reabertura de janela de 24 horas
+   */
+  async sendTemplate(payload: SendTemplatePayload): Promise<SendResult> {
+    const cleanPhone = this.sanitizePhone(payload.phone);
+    if (!cleanPhone) {
+      return { success: false, error: 'Telefone inválido ou ausente' };
+    }
+
+    const conn = await this.resolveConnection(payload.tenantId, payload.instanceId, cleanPhone);
+
+    // Se a instância conectada for Evolution (WhatsApp Web), enviamos como texto amigável
+    if (conn.preferredProvider === 'evolution') {
+      const fallbackText = `Olá! Estamos retomando nosso atendimento para dar sequência ao seu contato. Como podemos te ajudar?`;
+      return this.sendEvolutionText(conn.evolution, cleanPhone, fallbackText);
+    }
+
+    if (conn.meta.token && conn.meta.phoneNumberId) {
+      return this.sendMetaTemplate(
+        conn.meta,
+        cleanPhone,
+        payload.templateName,
+        payload.languageCode,
+        payload.components,
+      );
+    }
+
+    return { success: false, error: 'Credenciais Meta ausentes para disparo de templates' };
+  }
+
+  /**
+   * Disparo direto de Template via Meta Graph API Oficial
+   */
+  private async sendMetaTemplate(
+    metaConfig: { token: string | null; phoneNumberId: string | null },
+    cleanPhone: string,
+    templateName: string,
+    languageCode?: string,
+    components?: any[],
+  ): Promise<SendResult> {
+    if (!metaConfig.token || !metaConfig.phoneNumberId) {
+      return { success: false, error: 'Credenciais Meta ausentes' };
+    }
+
+    try {
+      const url = `https://graph.facebook.com/v19.0/${metaConfig.phoneNumberId}/messages`;
+      this.logger.log(`Disparando Template Meta [${templateName}] para ${cleanPhone}...`);
+
+      const tplPayload: any = {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: cleanPhone,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: {
+            code: languageCode || 'pt_BR',
+          },
+        },
+      };
+
+      if (components && components.length > 0) {
+        tplPayload.template.components = components;
+      }
+
+      const response = await axios.post(
+        url,
+        tplPayload,
+        {
+          headers: {
+            Authorization: `Bearer ${metaConfig.token}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 15000,
+        },
+      );
+
+      const messageId = response.data?.messages?.[0]?.id || `meta_tpl_${Date.now()}`;
+      this.logger.log(`Template Meta [${templateName}] enviado com sucesso para ${cleanPhone}. ID: ${messageId}`);
+      return {
+        success: true,
+        messageId,
+        provider: 'meta',
+        raw: response.data,
+      };
+    } catch (err: any) {
+      const errorObj = err.response?.data?.error;
+      const errorMsg = errorObj?.message || err.message;
+      this.logger.error(`Erro no envio de Template Meta para ${cleanPhone}: ${errorMsg}`);
+      return { success: false, error: errorMsg, raw: errorObj };
     }
   }
 

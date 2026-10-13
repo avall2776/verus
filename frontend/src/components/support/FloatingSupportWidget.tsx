@@ -233,7 +233,7 @@ export default function FloatingSupportWidget() {
       console.error("[FLOATING_SUPPORT] Erro ao carregar avisos:", err);
       // Fallback gracioso caso a rota ainda esteja sendo carregada
       setSystemStatuses([
-        { id: "ai", name: "IA Vitor Online", status: "OPERATIONAL", label: "Motor Ativo", indicator: "healthy" },
+        { id: "ai", name: "Agente de IA", status: "OPERATIONAL", label: "Motor Ativo", indicator: "healthy" },
         { id: "wa", name: "WhatsApp API", status: "OPERATIONAL", label: "Operacional", indicator: "healthy" },
         { id: "infra", name: "Servidores Cloud", status: "OPERATIONAL", label: "99.9% Uptime", indicator: "healthy" }
       ]);

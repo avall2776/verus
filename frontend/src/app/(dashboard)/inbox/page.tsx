@@ -108,7 +108,17 @@ function InboxContent() {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [departments, setDepartments] = useState<any[]>([]);
   const [isReopening, setIsReopening] = useState(false);
+  const [aiAgentName, setAiAgentName] = useState<string>('Sofia');
   const { socket, isConnected, clearGlobalUnread } = useSocket();
+
+  // Carrega dinamicamente o nome da IA configurado para este Tenant
+  useEffect(() => {
+    api.get('/agent/config').then((res) => {
+      if (res.data?.aiName && typeof res.data.aiName === 'string' && res.data.aiName.trim().length > 0) {
+        setAiAgentName(res.data.aiName.trim());
+      }
+    }).catch(() => {});
+  }, []);
   const { instances, activeInstance, setActiveInstance, refreshInstances, status: waStatus, refreshStatus: refreshWaStatus } = useWhatsApp();
   const [showInstanceDropdown, setShowInstanceDropdown] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -178,9 +188,13 @@ function InboxContent() {
   const [expandedTranscriptions, setExpandedTranscriptions] = useState<{ [key: string]: boolean }>({});
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
   const [showLeftHeaderMenu, setShowLeftHeaderMenu] = useState(false);
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showDeleteConvModal, setShowDeleteConvModal] = useState(false);
   const [isDeletingConv, setIsDeletingConv] = useState(false);
+
+  // Estados para Envio de Modelo / Reabertura 24h Meta
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [isSendingTemplate, setIsSendingTemplate] = useState(false);
+  const [selectedTemplateName, setSelectedTemplateName] = useState('hello_world');
 
   // Estados para Ação Manual no Funil do CRM
   const [crmStages, setCrmStages] = useState(DEFAULT_CRM_STAGES);
@@ -376,7 +390,7 @@ function InboxContent() {
       const time = new Date(m.createdAt || Date.now()).toLocaleString('pt-BR');
       const sender = m.isInternal 
         ? '[NOTA INTERNA]' 
-        : (m.direction === 'OUTBOUND' ? '[ATENDENTE]' : (m.senderType === 'system' ? '[IA VITOR]' : `[${activeContactData.name}]`));
+        : (m.direction === 'OUTBOUND' ? '[ATENDENTE]' : (m.senderType === 'system' ? `[IA ${aiAgentName.toUpperCase()}]` : `[${activeContactData.name}]`));
       
       let text = m.content || '';
       if (m.type === 'audio') {
@@ -1332,24 +1346,32 @@ function InboxContent() {
 
     const handleConversationUpdated = (data: any) => {
       console.log('Conversation Updated via WebSocket:', data);
-      if (data?.contact) {
-        setContacts((prev) =>
-          prev.map((c) => {
-            if (c.contactId === data.contact.id || c.id === data.id || (data.contact.phone && c.phone === data.contact.phone)) {
-              const rawAvatar = data.contact.avatarUrl;
-              const cleanAvatar = sanitizeAvatarUrl(rawAvatar) || sanitizeAvatarUrl(c.avatarUrl);
-              const newName = (data.contact.name && data.contact.name !== 'Cliente WhatsApp' && !data.contact.name.includes('@lid')) ? data.contact.name : c.name;
-              return {
-                ...c,
-                name: newName,
-                avatarUrl: cleanAvatar,
-                phone: data.contact.phone || c.phone,
-              };
-            }
-            return c;
-          })
-        );
-      }
+      if (!data) return;
+
+      setContacts((prev) =>
+        prev.map((c) => {
+          const isTarget = c.id === data.id || 
+            (data.contactId && c.contactId === data.contactId) || 
+            (data.contact && (c.contactId === data.contact.id || c.id === data.contact.id || (data.contact.phone && c.phone === data.contact.phone)));
+
+          if (isTarget) {
+            const rawAvatar = data.contact?.avatarUrl || c.avatarUrl;
+            const cleanAvatar = sanitizeAvatarUrl(rawAvatar);
+            const newName = (data.contact?.name && data.contact.name !== 'Cliente WhatsApp' && !data.contact.name.includes('@lid')) ? data.contact.name : c.name;
+            const newStatus = data.status !== undefined ? data.status : c.status;
+            return {
+              ...c,
+              name: newName,
+              avatarUrl: cleanAvatar,
+              phone: data.contact?.phone || c.phone,
+              status: newStatus,
+              isAi: newStatus === 'bot_active',
+              assignedTo: data.assignedTo !== undefined ? data.assignedTo : c.assignedTo,
+            };
+          }
+          return c;
+        })
+      );
 
       // Recarrega a lista silenciosamente mantendo unread
       api.get(`/conversations?tab=${queryTab}`).then((res) => {
@@ -2430,12 +2452,17 @@ function InboxContent() {
                     <h2 className="text-xs sm:text-sm font-bold text-white truncate whitespace-nowrap group-hover:text-blue-300 transition-colors leading-tight">
                       {formatContactDisplayName(activeContactData.name, activeContactData.phone)}
                     </h2>
-                    {activeContactData.isAi ? (
+                    {activeContactData.status === 'human_takeover' ? (
+                      <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-amber-400 font-bold truncate whitespace-nowrap leading-tight mt-0.5">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping shrink-0" />
+                        <span className="truncate">🚨 Transbordo da IA • Aguardando Atendente</span>
+                      </div>
+                    ) : activeContactData.isAi ? (
                       <div className="flex items-center gap-1 text-[11px] sm:text-xs text-cyan-400 font-medium truncate whitespace-nowrap leading-tight mt-0.5">
                         <BrainCircuit size={11} className="animate-pulse shrink-0" />
-                        <span className="truncate">IA Vitor conversando...</span>
+                        <span className="truncate">IA {aiAgentName} conversando...</span>
                       </div>
-                    ) : (activeContactData.status === 'human_takeover' || activeContactData.status === 'open') ? (
+                    ) : activeContactData.status === 'open' ? (
                       <span className="text-[11px] sm:text-xs text-emerald-400 font-medium truncate whitespace-nowrap block leading-tight mt-0.5">online • Atendimento ativo</span>
                     ) : activeContactData.status === 'waiting' ? (
                       <span className="text-[11px] sm:text-xs text-amber-400 font-medium truncate whitespace-nowrap block leading-tight mt-0.5">Aguardando atendimento</span>
@@ -2476,9 +2503,15 @@ function InboxContent() {
                     <span>Assumir</span>
                   </button>
                 ) : activeContactData.status === 'human_takeover' ? (
-                  <button onClick={handleRelease} className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-[11px] font-bold px-2 sm:px-3 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer mr-0.5 sm:mr-1 shrink-0">
-                    <span>Finalizar</span>
-                  </button>
+                  <div className="flex items-center gap-1 mr-0.5 sm:mr-1 shrink-0">
+                    <button onClick={() => handleTakeover()} className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-sm">
+                      <UserCheck size={12} />
+                      <span>Assumir</span>
+                    </button>
+                    <button onClick={handleRelease} className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer">
+                      <span>Finalizar</span>
+                    </button>
+                  </div>
                 ) : null}
 
                 {/* Botão de Ação Manual no Funil do CRM */}
@@ -2838,6 +2871,37 @@ function InboxContent() {
               </div>
             )}
 
+            {/* Banner de Transbordo da IA (Aguardando Atendente Humano) */}
+            {activeContactData?.status === 'human_takeover' && (
+              <div className="bg-gradient-to-r from-amber-950/70 via-orange-950/50 to-slate-900/80 border-b border-amber-500/40 px-4 sm:px-6 py-2.5 flex items-center justify-between text-amber-200 text-xs shrink-0 backdrop-blur-md z-20 shadow-md">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 shadow-sm">
+                    <Sparkles size={14} className="animate-pulse" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-amber-300 uppercase tracking-wide text-[11px]">
+                        Transbordo da IA Ativo
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-400/30">
+                        IA Pausada
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 truncate mt-0.5">
+                      A IA encerrou o auto-atendimento e transferiu para você. Ela não responderá mais este lead automaticamente.
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => handleTakeover(activeChat!)}
+                  className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)] cursor-pointer shrink-0 ml-3"
+                >
+                  <UserCheck size={13} />
+                  <span>Assumir no Meu Nome</span>
+                </button>
+              </div>
+            )}
+
             {/* Chat Messages (Padrão Estrutural WhatsApp com Ticks Inline e Balões Corporativos) */}
             <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-2.5 z-10 scrollbar-thin">
               {messages.length === 0 ? (
@@ -2924,11 +2988,11 @@ function InboxContent() {
                             </div>
                           )}
 
-                          {/* Pill de IA Vitor */}
+                          {/* Pill de IA */}
                           {isAi && !msg.isInternal && (
                             <div className="inline-flex items-center gap-1 bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1 shadow-sm">
                               <Bot size={11} className="text-cyan-400 animate-pulse" />
-                              <span>IA VITOR</span>
+                              <span>IA {aiAgentName.toUpperCase()}</span>
                             </div>
                           )}
 
@@ -3906,6 +3970,8 @@ function InboxContent() {
               <div className={`w-full text-center py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 border ${
                 activeContactData.status === 'bot_active' 
                   ? 'bg-cyan-950/40 text-cyan-300 border-cyan-700/50 shadow-[0_0_15px_rgba(6,182,212,0.15)]' 
+                  : activeContactData.status === 'human_takeover'
+                  ? 'bg-amber-950/40 text-amber-300 border-amber-700/50 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
                   : activeContactData.status === 'resolved' || activeContactData.status === 'closed'
                   ? 'bg-slate-800/80 text-slate-400 border-slate-700/60'
                   : 'bg-emerald-950/40 text-emerald-300 border-emerald-700/50 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
@@ -3913,7 +3979,12 @@ function InboxContent() {
                 {activeContactData.status === 'bot_active' ? (
                   <>
                     <Bot size={14} className="text-cyan-400 animate-pulse" />
-                    <span>IA Vitor em Atendimento</span>
+                    <span>IA {aiAgentName} em Atendimento</span>
+                  </>
+                ) : activeContactData.status === 'human_takeover' ? (
+                  <>
+                    <Sparkles size={14} className="text-amber-400 animate-pulse" />
+                    <span>Transbordo da IA (Aguardando Atendente)</span>
                   </>
                 ) : activeContactData.status === 'resolved' || activeContactData.status === 'closed' ? (
                   <>
@@ -4001,7 +4072,7 @@ function InboxContent() {
                 <div>
                   <h2 className="text-base font-bold text-white tracking-tight">Atendimento em Fila</h2>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Este atendimento está na fila <strong className="text-white">{selectedQueueChat.isAi ? 'IA Vitor Online' : 'Aguardando'}</strong>.
+                    Este atendimento está na fila <strong className="text-white">{selectedQueueChat.isAi ? `IA ${aiAgentName} Online` : 'Aguardando'}</strong>.
                   </p>
                 </div>
               </div>
