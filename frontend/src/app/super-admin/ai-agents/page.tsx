@@ -29,6 +29,11 @@ import {
   GraduationCap,
   Lock,
   X,
+  HeartPulse,
+  ThumbsDown,
+  Filter,
+  CheckCircle,
+  Flame,
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -98,6 +103,29 @@ interface AiConfigState {
   aiTemperature: number;
 }
 
+interface LearningIncident {
+  id: string;
+  tenantId: string;
+  conversationId?: string;
+  contactId?: string;
+  sentimento: string;
+  tipoIncidente: string;
+  reclamouDeBot: boolean;
+  trechoCliente?: string;
+  respostaIa?: string;
+  diagnosticoCausa?: string;
+  sugestaoDiretriz?: string;
+  status: "PENDENTE" | "ASSIMILADO" | "DESCARTADO";
+  assimiladoPor?: string;
+  assimiladoEm?: string;
+  createdAt: string;
+  contact?: {
+    id: string;
+    name: string;
+    phone: string;
+  };
+}
+
 export default function SuperAdminAiAgentsPage() {
   // Lista de Tenants para Governança Centralizada (Inicialização Segura e Uniforme para SSR)
   const [tenants, setTenants] = useState<{ id: string; name: string; document?: string }[]>([]);
@@ -132,6 +160,18 @@ export default function SuperAdminAiAgentsPage() {
   const [quotedTrainingText, setQuotedTrainingText] = useState<string | null>(null);
   const [trainingAi, setTrainingAi] = useState(false);
   const trainingInputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Estados do Radar de Sentimentos & Incidentes de Aprendizado (Fase 86)
+  const [incidents, setIncidents] = useState<LearningIncident[]>([]);
+  const [incidentMetrics, setIncidentMetrics] = useState<{ total: number; pending: number; assimilated: number }>({
+    total: 0,
+    pending: 0,
+    assimilated: 0,
+  });
+  const [loadingIncidents, setLoadingIncidents] = useState(false);
+  const [incidentStatusFilter, setIncidentStatusFilter] = useState<'PENDENTE' | 'ASSIMILADO' | 'ALL'>('PENDENTE');
+  const [applyingIncidentId, setApplyingIncidentId] = useState<string | null>(null);
+  const [dismissingIncidentId, setDismissingIncidentId] = useState<string | null>(null);
 
   // Documentos RAG
   const [documents, setDocuments] = useState<{ id: string; filename: string; createdAt?: string }[]>([]);
@@ -296,6 +336,58 @@ export default function SuperAdminAiAgentsPage() {
     }
   }, []);
 
+  const fetchLearningIncidents = useCallback(async (tenantId: string, status?: string) => {
+    if (!tenantId) return;
+    setLoadingIncidents(true);
+    try {
+      const headers = { "x-target-tenant-id": tenantId };
+      const res = await api.get("/agent/learning-incidents", {
+        headers,
+        params: status && status !== "ALL" ? { status } : undefined,
+      });
+      setIncidents(res.data?.incidents || []);
+      setIncidentMetrics(res.data?.metrics || { total: 0, pending: 0, assimilated: 0 });
+    } catch (err) {
+      console.error("Erro ao carregar incidentes de aprendizado:", err);
+    } finally {
+      setLoadingIncidents(false);
+    }
+  }, []);
+
+  const handleApplyIncident = async (incident: LearningIncident) => {
+    if (!selectedTenantId || applyingIncidentId) return;
+    setApplyingIncidentId(incident.id);
+    try {
+      const headers = { "x-target-tenant-id": selectedTenantId };
+      const res = await api.post(`/agent/learning-incidents/${incident.id}/apply`, {}, { headers });
+      toast.success(res.data?.confirmationMessage || "Diretriz aprovada e ensinada ao agente!");
+      await Promise.all([
+        fetchLearningIncidents(selectedTenantId, incidentStatusFilter),
+        fetchTrainingLogs(selectedTenantId),
+        loadTenantConfig(selectedTenantId),
+      ]);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao assimilar diretriz do incidente.");
+    } finally {
+      setApplyingIncidentId(null);
+    }
+  };
+
+  const handleDismissIncident = async (incidentId: string) => {
+    if (!selectedTenantId || dismissingIncidentId) return;
+    setDismissingIncidentId(incidentId);
+    try {
+      const headers = { "x-target-tenant-id": selectedTenantId };
+      await api.patch(`/agent/learning-incidents/${incidentId}/dismiss`, {}, { headers });
+      toast.info("Incidente descartado.");
+      await fetchLearningIncidents(selectedTenantId, incidentStatusFilter);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao descartar incidente.");
+    } finally {
+      setDismissingIncidentId(null);
+    }
+  };
+
   const handleCoachAgent = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!trainingFeedback.trim() || !selectedTenantId || trainingAi) return;
@@ -380,6 +472,7 @@ export default function SuperAdminAiAgentsPage() {
       ]);
       fetchTenantAiStatus(tenantId);
       fetchTrainingLogs(tenantId);
+      fetchLearningIncidents(tenantId, incidentStatusFilter);
 
       if (configRes.data) {
         const rawTemp = typeof configRes.data.aiTemperature === "number" 
@@ -407,13 +500,20 @@ export default function SuperAdminAiAgentsPage() {
     } finally {
       setLoadingConfig(false);
     }
-  }, [fetchTenantAiStatus, fetchTrainingLogs]);
+  }, [fetchTenantAiStatus, fetchTrainingLogs, fetchLearningIncidents, incidentStatusFilter]);
 
   useEffect(() => {
     if (selectedTenantId) {
       loadTenantConfig(selectedTenantId);
     }
   }, [selectedTenantId, loadTenantConfig]);
+
+  useEffect(() => {
+    if (selectedTenantId) {
+      fetchLearningIncidents(selectedTenantId, incidentStatusFilter);
+    }
+  }, [incidentStatusFilter, selectedTenantId, fetchLearningIncidents]);
+
 
   // Atualização dos inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -1012,6 +1112,253 @@ export default function SuperAdminAiAgentsPage() {
                   <p className="text-slate-300 font-semibold mb-0.5">Nenhuma diretriz cadastrada ainda para este agente.</p>
                   <p className="text-slate-500 text-[11px]">
                     Use o campo acima ou o simulador ao lado para orientar a IA sobre novas regras de negócio, correções e conduta de atendimento.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* SEÇÃO 1.8: RADAR DE SENTIMENTOS & OPORTUNIDADES DE APRENDIZADO CONTÍNUO (FASE 86) */}
+            <div className="rounded-2xl bg-[#0B1224] border border-amber-500/30 p-6 space-y-5 shadow-xl shadow-amber-950/20 ring-1 ring-amber-500/10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-500/20 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0">
+                    <HeartPulse size={22} className="text-amber-400" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                        Radar de Sentimentos & Ciclo de Aprendizado
+                      </h2>
+                      <span className="text-[10px] bg-amber-950 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-mono uppercase flex items-center gap-1 font-bold">
+                        <Sparkles size={10} /> Fase 86 • Human-in-the-Loop
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Monitoramento emocional em tempo real no WhatsApp. Transforme atritos, queixas de robô e avaliações baixas em evolução permanente da IA com 1 clique.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Badges de Métricas */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIncidentStatusFilter("PENDENTE")}
+                    className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                      incidentStatusFilter === "PENDENTE"
+                        ? "bg-amber-500/20 border-amber-400 text-amber-300"
+                        : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <span>Pendentes:</span>
+                    <span className="px-1.5 py-0.2 rounded bg-amber-500/30 text-amber-200">
+                      {incidentMetrics.pending}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIncidentStatusFilter("ASSIMILADO")}
+                    className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                      incidentStatusFilter === "ASSIMILADO"
+                        ? "bg-emerald-500/20 border-emerald-400 text-emerald-300"
+                        : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <span>Assimilados:</span>
+                    <span className="px-1.5 py-0.2 rounded bg-emerald-500/30 text-emerald-200">
+                      {incidentMetrics.assimilated}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIncidentStatusFilter("ALL")}
+                    className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                      incidentStatusFilter === "ALL"
+                        ? "bg-cyan-500/20 border-cyan-400 text-cyan-300"
+                        : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <span>Todos:</span>
+                    <span className="px-1.5 py-0.2 rounded bg-cyan-500/30 text-cyan-200">
+                      {incidentMetrics.total}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Lista de Incidentes de Aprendizado */}
+              {loadingIncidents ? (
+                <div className="py-8 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
+                  <Loader2 size={16} className="animate-spin text-amber-400" />
+                  <span>Sincronizando radar emocional e incidentes...</span>
+                </div>
+              ) : incidents.length > 0 ? (
+                <div className="space-y-3.5 max-h-[460px] overflow-y-auto custom-scrollbar pr-1">
+                  {incidents.map((inc) => {
+                    const isPending = inc.status === "PENDENTE";
+                    const isAssimilated = inc.status === "ASSIMILADO";
+
+                    return (
+                      <div
+                        key={inc.id}
+                        className={`p-4 rounded-xl border transition-all space-y-3 ${
+                          isPending
+                            ? "bg-gradient-to-br from-[#1c1409]/70 to-[#0F1420] border-amber-500/40 shadow-sm"
+                            : isAssimilated
+                            ? "bg-[#0A151C]/60 border-emerald-500/30"
+                            : "bg-slate-900/40 border-slate-800 opacity-60"
+                        }`}
+                      >
+                        {/* Header do Incidente */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {/* Tag de Sentimento */}
+                            {inc.sentimento === "HOSTIL_RECLAMACAO" ? (
+                              <span className="text-[10px] bg-red-950 text-red-300 border border-red-500/40 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                <Flame size={11} className="text-red-400" /> Reclamação Hostil
+                              </span>
+                            ) : inc.sentimento === "FRUSTRADO_IRRITADO" ? (
+                              <span className="text-[10px] bg-amber-950 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                <AlertTriangle size={11} className="text-amber-400" /> Cliente Frustrado/Irritado
+                              </span>
+                            ) : inc.tipoIncidente === "NOTA_BAIXA_CSAT" ? (
+                              <span className="text-[10px] bg-rose-950 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                <ThumbsDown size={11} className="text-rose-400" /> CSAT Baixo (1-2 Estrelas)
+                              </span>
+                            ) : (
+                              <span className="text-[10px] bg-blue-950 text-blue-300 border border-blue-500/40 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                <Info size={11} className="text-blue-400" /> Dúvida Crítica
+                              </span>
+                            )}
+
+                            {/* Tag de Robô */}
+                            {inc.reclamouDeBot && (
+                              <span className="text-[10px] bg-purple-950 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                <Bot size={11} className="text-purple-400" /> Reclamou de Robô / IA
+                              </span>
+                            )}
+
+                            {/* Contato */}
+                            {inc.contact && (
+                              <span className="text-[11px] text-slate-300 font-medium">
+                                Lead: <strong>{inc.contact.name || inc.contact.phone}</strong>
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="text-[10px] text-slate-500 font-mono" suppressHydrationWarning>
+                            {new Date(inc.createdAt).toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+
+                        {/* O que o cliente falou */}
+                        {inc.trechoCliente && (
+                          <div className="p-2.5 rounded-lg bg-[#070D1B] border border-slate-800/80 text-xs text-slate-300 border-l-2 border-l-amber-400">
+                            <span className="text-[10px] uppercase font-bold text-amber-400 block mb-0.5">
+                              💬 O que o cliente disse no WhatsApp:
+                            </span>
+                            &ldquo;{inc.trechoCliente}&rdquo;
+                          </div>
+                        )}
+
+                        {/* Diagnóstico da IA */}
+                        {inc.diagnosticoCausa && (
+                          <div className="text-xs text-slate-300 space-y-0.5">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                              🔍 Diagnóstico da Causa-Raiz (Cognitivo):
+                            </span>
+                            <p className="text-[11px] text-slate-300 leading-relaxed">
+                              {inc.diagnosticoCausa}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Nova Diretriz Sugerida */}
+                        {inc.sugestaoDiretriz && (
+                          <div className="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 text-xs text-emerald-200 border-l-2 border-l-emerald-400 space-y-1">
+                            <span className="text-[10px] uppercase font-bold text-emerald-400 flex items-center gap-1">
+                              <Sparkles size={11} /> Nova Diretriz Proposta pela IA para Evitar Reincidência:
+                            </span>
+                            <p className="text-[11px] text-emerald-100 font-mono leading-relaxed">
+                              &ldquo;{inc.sugestaoDiretriz}&rdquo;
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Barra de Ações */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
+                          <div>
+                            {isAssimilated ? (
+                              <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1.5">
+                                <CheckCircle size={13} className="text-emerald-400" />
+                                Diretriz assimilada por {inc.assimiladoPor || "Super Admin"}
+                                {inc.assimiladoEm && (
+                                  <span className="text-[10px] text-slate-500 font-mono" suppressHydrationWarning>
+                                    ({new Date(inc.assimiladoEm).toLocaleDateString("pt-BR")})
+                                  </span>
+                                )}
+                              </span>
+                            ) : inc.status === "DESCARTADO" ? (
+                              <span className="text-[11px] text-slate-500 italic">
+                                Incidente descartado
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-amber-300 font-medium flex items-center gap-1">
+                                <Clock size={11} /> Aguardando aprovação do gestor para ser assimilada
+                              </span>
+                            )}
+                          </div>
+
+                          {isPending && (
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDismissIncident(inc.id)}
+                                disabled={dismissingIncidentId === inc.id || applyingIncidentId === inc.id}
+                                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-[11px] font-semibold transition-colors disabled:opacity-40 cursor-pointer"
+                              >
+                                {dismissingIncidentId === inc.id ? "Descartando..." : "Descartar"}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleApplyIncident(inc)}
+                                disabled={applyingIncidentId === inc.id || dismissingIncidentId === inc.id}
+                                className="px-4 py-1.5 bg-gradient-to-r from-amber-600 via-emerald-600 to-teal-600 hover:from-amber-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-40 flex items-center gap-1.5 cursor-pointer shadow-md"
+                              >
+                                {applyingIncidentId === inc.id ? (
+                                  <>
+                                    <Loader2 size={13} className="animate-spin" />
+                                    <span>Assimilando na IA...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Zap size={13} className="text-amber-200" />
+                                    <span>Aprovar & Ensinar com 1 Clique</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-6 text-center text-slate-500 text-xs flex flex-col items-center max-w-md mx-auto">
+                  <CheckCircle2 size={24} className="text-emerald-400 mb-1.5 opacity-80" />
+                  <p className="text-slate-300 font-semibold mb-0.5">
+                    {incidentStatusFilter === "PENDENTE"
+                      ? "Nenhum incidente de atrito pendente!"
+                      : "Nenhum registro encontrado neste filtro."}
+                  </p>
+                  <p className="text-slate-500 text-[11px]">
+                    {incidentStatusFilter === "PENDENTE"
+                      ? "O agente está acolhendo os leads com excelente tom emocional. Caso algum cliente expresse atrito ou reclame de robô no WhatsApp, o incidente aparecerá aqui com sugestão de diretriz para aprovação com 1 clique."
+                      : "Alterne os filtros acima para ver outros status de incidentes e feedbacks."}
                   </p>
                 </div>
               )}

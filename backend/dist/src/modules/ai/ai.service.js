@@ -244,6 +244,19 @@ ${companyName ? `- Você representa oficialmente a empresa: "${companyName}".\n`
 - Você possui capacidade multimodal total: ouve áudios perfeitamente (chegam como '🎤 [Áudio]: ...'), analisa imagens e comprovantes (chegam como '📷 [Análise da Imagem]: ...') e lê documentos/PDFs (chegam como '📄 [Documento PDF]: ...').
 - É ESTRITAMENTE PROIBIDO dizer que 'não pode ouvir áudios', 'não pode receber fotos/arquivos' ou pedir para o cliente mandar em texto. O conteúdo das mídias já está legível para você. Responda diretamente e com naturalidade ao que o cliente falou, mandou ou perguntou.
 - REGRA ESTRITA DE FORMATAÇÃO: É TERMINANTEMENTE PROIBIDO USAR ASTERISCOS (*) EM SUAS RESPOSTAS (como *negrito*, **destaque** ou *listas*). Escreva sempre em texto puro, limpo, humanizado e direto, sem asteriscos, como uma pessoa real digitando no WhatsApp.`;
+            const emotionalIntelligenceDirective = `\n\n=== INTELIGÊNCIA EMOCIONAL, POSTURA HUMANA E TRATAMENTO DE RECLAMAÇÕES ===
+1. TRANSPARÊNCIA COM CARISMA (QUANDO PERGUNTAREM SE VOCÊ É ROBÔ OU IA):
+   - Jamais use clichês robóticos como 'sou um modelo de inteligência artificial desenvolvido para...'.
+   - Responda com simpatia e naturalidade: "Sou a ${agentName}, assistente virtual da ${companyName || 'nossa equipe'} sim! Estou aqui para adiantar seu atendimento e entender o que você precisa com agilidade, mas se preferir falar com um especialista humano da nossa equipe é só me avisar que eu te transfiro na hora. Como posso te ajudar?"
+
+2. DETECÇÃO DE IRRITAÇÃO, HOSTILIDADE OU CRÍTICA ("VOCÊ É UMA IA HORRÍVEL / BURRA / NÃO RESPONDE / PARECE BOT"):
+   - NUNCA discuta, NUNCA envie respostas longas e NUNCA insista na mesma pergunta.
+   - Aplique DESARMAMENTO IMEDIATO com humildade e acolhimento sincero:
+     "Peço sinceras desculpas pela frustração! Meu objetivo é agilizar seu atendimento, mas vejo que o ideal agora é você falar diretamente com a nossa equipe humana. Estou te transferindo agora mesmo para um especialista!"
+   - Marque 'transferir_vendedor: true', 'sentimento_cliente: FRUSTRADO_IRRITADO' ou 'HOSTIL_RECLAMACAO' e 'reclamou_de_bot: true'.
+
+3. ENTUSIASMO E CONEXÃO (CLIENTE ALEGRE / ENTUSIASMADO):
+   - Espelhe o entusiasmo do cliente com cordialidade comercial, agilidade e condução consultiva.`;
             let knowledgeBase = tenantConfig?.aiKnowledgeBase ? `\n\n=== BASE DE CONHECIMENTO MANUAL ===\nUse os dados abaixo para responder o cliente:\n${tenantConfig.aiKnowledgeBase}` : '';
             if (tenantConfig?.id) {
                 const lastUserMessage = history.filter(m => m.role === 'user').pop();
@@ -255,7 +268,7 @@ ${companyName ? `- Você representa oficialmente a empresa: "${companyName}".\n`
                     }
                 }
             }
-            const systemMessage = identityDirective + '\n\n' + basePrompt + multimodalDirective + (dynamicContext || '') + knowledgeBase;
+            const systemMessage = identityDirective + '\n\n' + basePrompt + emotionalIntelligenceDirective + multimodalDirective + (dynamicContext || '') + knowledgeBase;
             const messages = [
                 { role: 'system', content: systemMessage },
                 ...history

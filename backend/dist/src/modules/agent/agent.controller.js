@@ -39,6 +39,17 @@ let AgentController = class AgentController {
         const userName = user?.name || (user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Administrador');
         return this.agentService.coachAgent(tenantId, body, user?.id, userName);
     }
+    async getLearningIncidents(tenantId, status) {
+        return this.agentService.getLearningIncidents(tenantId, status);
+    }
+    async applyLearningIncident(tenantId, incidentId, req) {
+        const user = req.user;
+        const userName = user?.name || (user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Administrador');
+        return this.agentService.applyLearningIncident(tenantId, incidentId, user?.id, userName);
+    }
+    async dismissLearningIncident(tenantId, incidentId) {
+        return this.agentService.dismissLearningIncident(tenantId, incidentId);
+    }
     async testPlayground(tenantId, body) {
         const rawTemp = body.config?.aiTemperature !== undefined ? Number(body.config.aiTemperature) : 0.7;
         const safeTemp = isNaN(rawTemp) ? 0.7 : Math.min(Math.max(rawTemp, 0), 1.5);
@@ -86,6 +97,31 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], AgentController.prototype, "coachAgent", null);
+__decorate([
+    (0, common_1.Get)('learning-incidents'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('status')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AgentController.prototype, "getLearningIncidents", null);
+__decorate([
+    (0, common_1.Post)('learning-incidents/:id/apply'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], AgentController.prototype, "applyLearningIncident", null);
+__decorate([
+    (0, common_1.Patch)('learning-incidents/:id/dismiss'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AgentController.prototype, "dismissLearningIncident", null);
 __decorate([
     (0, common_1.Post)('playground'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

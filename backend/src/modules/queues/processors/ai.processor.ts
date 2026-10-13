@@ -167,6 +167,58 @@ export class AiProcessor extends WorkerHost {
     this.logger.log(`Enviando ${historyForAi.length} mensagens de histórico para a OpenAI (Tenant: ${conversation.contact.tenant.name})...`);
     const aiResponse = await this.aiService.processConversation(historyForAi, conversation.contact.tenant, dynamicContext);
 
+    // 3.5 Análise de Inteligência Emocional e Registro de Incidentes de Aprendizado (Fase 86)
+    const isHostileOrFrustrated =
+      aiResponse.sentimento_cliente === 'FRUSTRADO_IRRITADO' ||
+      aiResponse.sentimento_cliente === 'HOSTIL_RECLAMACAO';
+    const complainedOfBot = Boolean(aiResponse.reclamou_de_bot);
+
+    if (isHostileOrFrustrated || complainedOfBot) {
+      this.logger.warn(`[Emotional Intelligence] Atrito detectado no WhatsApp: sentimento=${aiResponse.sentimento_cliente}, reclamou_de_bot=${complainedOfBot}. Ativando salvaguardas.`);
+
+      // Força transbordo para humano se o cliente estiver visivelmente irritado ou reclamou de bot
+      aiResponse.transferir_vendedor = true;
+      if (!aiResponse.motivo_transferencia || aiResponse.motivo_transferencia === 'Dúvida complexa') {
+        aiResponse.motivo_transferencia = complainedOfBot
+          ? 'Cliente insatisfeito com atendimento automatizado/robô'
+          : `Cliente demonstrou frustração/irritação (${aiResponse.sentimento_cliente})`;
+      }
+
+      // Registra incidente para ciclo de aprendizado contínuo (Human-in-the-loop)
+      try {
+        const lastUserMsg = historyForAi.filter(m => m.role === 'user').pop()?.content || '';
+        let tipoIncidente = 'FRUSTRACAO_RESPOSTA';
+        let sugestaoDiretriz = 'Adotar postura mais empática e concisa ao esclarecer dúvidas, evitando explicações prolixas e priorizando a resposta direta e objetiva.';
+
+        if (complainedOfBot) {
+          tipoIncidente = 'RECLAMACAO_ROBO';
+          sugestaoDiretriz = 'Quando o cliente perguntar se você é um robô ou demonstrar desconfiança, seja transparente com carisma, valide a percepção dele com simpatia e ofereça transferência humana imediata sem insistência.';
+        } else if (aiResponse.sentimento_cliente === 'HOSTIL_RECLAMACAO') {
+          tipoIncidente = 'HOSTILIDADE_CLIENTE';
+          sugestaoDiretriz = 'Diante de qualquer reclamação ou rispidez do cliente, pedir desculpas pela má experiência com humildade e acolhimento sincero, sem justificar falhas, repassando o caso de imediato a um gerente comercial.';
+        }
+
+        await this.prisma.aiLearningIncident.create({
+          data: {
+            tenantId,
+            conversationId,
+            contactId,
+            sentimento: aiResponse.sentimento_cliente || 'FRUSTRADO_IRRITADO',
+            tipoIncidente,
+            reclamouDeBot: complainedOfBot,
+            trechoCliente: lastUserMsg.slice(0, 1000),
+            respostaIa: (aiResponse.resposta_cliente || '').slice(0, 1000),
+            diagnosticoCausa: aiResponse.analise_emocional || 'O cliente demonstrou desconforto ou atrito durante o atendimento da IA.',
+            sugestaoDiretriz,
+            status: 'PENDENTE'
+          }
+        });
+        this.logger.log(`[AiLearningIncident] Incidente de aprendizado registrado com sucesso para análise do gestor.`);
+      } catch (incErr: any) {
+        this.logger.error(`[AiLearningIncident] Erro não-bloqueante ao registrar incidente: ${incErr.message}`);
+      }
+    }
+
     // 4. Despachar a resposta para o Lead
     if (aiResponse.resposta_cliente) {
       // Remove estritamente qualquer asterisco de markdown para formatação natural do WhatsApp

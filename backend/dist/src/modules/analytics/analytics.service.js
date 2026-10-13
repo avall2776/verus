@@ -585,13 +585,14 @@ let AnalyticsService = class AnalyticsService {
         }
     }
     async createCsatSurvey(tenantId, data) {
-        return this.prisma.csatSurvey.create({
+        const ratingVal = Math.min(Math.max(Number(data.rating) || 5, 1), 5);
+        const survey = await this.prisma.csatSurvey.create({
             data: {
                 tenantId,
                 contactName: data.contactName,
                 phone: data.phone,
                 agentName: data.agentName,
-                rating: Math.min(Math.max(Number(data.rating) || 5, 1), 5),
+                rating: ratingVal,
                 comment: data.comment,
                 conversationId: data.conversationId,
                 contactId: data.contactId,
@@ -600,6 +601,22 @@ let AnalyticsService = class AnalyticsService {
                 channel: 'WhatsApp',
             },
         });
+        if (ratingVal <= 2) {
+            await this.prisma.aiLearningIncident.create({
+                data: {
+                    tenantId,
+                    conversationId: data.conversationId,
+                    contactId: data.contactId,
+                    sentimento: 'FRUSTRADO_IRRITADO',
+                    tipoIncidente: 'NOTA_BAIXA_CSAT',
+                    trechoCliente: data.comment || `Avaliação negativa no CSAT: ${ratingVal} estrela(s).`,
+                    diagnosticoCausa: `Cliente avaliou o atendimento negativamente com nota ${ratingVal}/5 estrelas. Comentário: "${data.comment || 'Sem comentário'}"`,
+                    sugestaoDiretriz: 'Aprimorar a clareza e cortesia do atendimento inicial, garantindo que as dúvidas do cliente sejam esclarecidas antes de finalizar.',
+                    status: 'PENDENTE',
+                }
+            }).catch(() => null);
+        }
+        return survey;
     }
     async getChannels(tenantId, startDate, endDate) {
         const { start, end } = this.parseDateRange(startDate, endDate);

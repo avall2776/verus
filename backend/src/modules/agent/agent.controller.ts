@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { AgentService } from './agent.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { PlanGuard } from '../../shared/guards/plan.guard';
@@ -44,6 +44,35 @@ export class AgentController {
     return this.agentService.coachAgent(tenantId, body, user?.id, userName);
   }
 
+  // --- Ciclo de Aprendizado Contínuo & Radar de Sentimentos (Fase 86) ---
+
+  @Get('learning-incidents')
+  async getLearningIncidents(
+    @CurrentTenant() tenantId: string,
+    @Query('status') status?: string,
+  ) {
+    return this.agentService.getLearningIncidents(tenantId, status);
+  }
+
+  @Post('learning-incidents/:id/apply')
+  async applyLearningIncident(
+    @CurrentTenant() tenantId: string,
+    @Param('id') incidentId: string,
+    @Request() req: any,
+  ) {
+    const user = req.user;
+    const userName = user?.name || (user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Administrador');
+    return this.agentService.applyLearningIncident(tenantId, incidentId, user?.id, userName);
+  }
+
+  @Patch('learning-incidents/:id/dismiss')
+  async dismissLearningIncident(
+    @CurrentTenant() tenantId: string,
+    @Param('id') incidentId: string,
+  ) {
+    return this.agentService.dismissLearningIncident(tenantId, incidentId);
+  }
+
   @Post('playground')
   async testPlayground(
     @CurrentTenant() tenantId: string,
@@ -66,3 +95,4 @@ export class AgentController {
     return result;
   }
 }
+

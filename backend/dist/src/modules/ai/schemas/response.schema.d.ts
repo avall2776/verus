@@ -4,6 +4,9 @@ export declare const AiResponseSchema: z.ZodObject<{
     transferir_vendedor: z.ZodBoolean;
     motivo_transferencia: z.ZodString;
     resumo_atendimento: z.ZodString;
+    sentimento_cliente: z.ZodEnum<["ENTUSIASMADO", "POSITIVO_CORDIAL", "NEUTRO", "DUVIDA_CRITICA", "FRUSTRADO_IRRITADO", "HOSTIL_RECLAMACAO"]>;
+    reclamou_de_bot: z.ZodBoolean;
+    analise_emocional: z.ZodString;
     nome_cliente: z.ZodString;
     telefone_cliente: z.ZodNullable<z.ZodString>;
     produto_interesse: z.ZodString;
@@ -17,6 +20,9 @@ export declare const AiResponseSchema: z.ZodObject<{
     transferir_vendedor?: boolean;
     motivo_transferencia?: string;
     resumo_atendimento?: string;
+    sentimento_cliente?: "ENTUSIASMADO" | "POSITIVO_CORDIAL" | "NEUTRO" | "DUVIDA_CRITICA" | "FRUSTRADO_IRRITADO" | "HOSTIL_RECLAMACAO";
+    reclamou_de_bot?: boolean;
+    analise_emocional?: string;
     nome_cliente?: string;
     telefone_cliente?: string;
     produto_interesse?: string;
@@ -30,6 +36,9 @@ export declare const AiResponseSchema: z.ZodObject<{
     transferir_vendedor?: boolean;
     motivo_transferencia?: string;
     resumo_atendimento?: string;
+    sentimento_cliente?: "ENTUSIASMADO" | "POSITIVO_CORDIAL" | "NEUTRO" | "DUVIDA_CRITICA" | "FRUSTRADO_IRRITADO" | "HOSTIL_RECLAMACAO";
+    reclamou_de_bot?: boolean;
+    analise_emocional?: string;
     nome_cliente?: string;
     telefone_cliente?: string;
     produto_interesse?: string;

@@ -243,6 +243,85 @@ ATENÇÃO: Mantenha padrão corporativo, formal e de alto nível. Não use carac
             confirmationMessage: `Orientação assimilada com sucesso por ${agentName} (${companyName}) na camada ${parsedResult.categoryLabel || 'Base de Conhecimento'}.`,
         };
     }
+    async getLearningIncidents(tenantId, status) {
+        const where = { tenantId };
+        if (status && status !== 'ALL') {
+            where.status = status;
+        }
+        const [incidents, totalCount, pendingCount, assimilatedCount] = await Promise.all([
+            this.prisma.aiLearningIncident.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                take: 50,
+                include: {
+                    contact: {
+                        select: { id: true, name: true, phone: true },
+                    },
+                },
+            }),
+            this.prisma.aiLearningIncident.count({ where: { tenantId } }),
+            this.prisma.aiLearningIncident.count({ where: { tenantId, status: 'PENDENTE' } }),
+            this.prisma.aiLearningIncident.count({ where: { tenantId, status: 'ASSIMILADO' } }),
+        ]);
+        return {
+            incidents,
+            metrics: {
+                total: totalCount,
+                pending: pendingCount,
+                assimilated: assimilatedCount,
+            },
+        };
+    }
+    async applyLearningIncident(tenantId, incidentId, userId, userName) {
+        const incident = await this.prisma.aiLearningIncident.findFirst({
+            where: { id: incidentId, tenantId },
+        });
+        if (!incident) {
+            throw new common_1.NotFoundException('Incidente de aprendizado não encontrado.');
+        }
+        if (incident.status === 'ASSIMILADO') {
+            return {
+                success: true,
+                message: 'Este incidente já foi assimilado anteriormente.',
+                incident,
+            };
+        }
+        const feedbackText = incident.sugestaoDiretriz || incident.diagnosticoCausa || 'Aprimorar postura no atendimento';
+        const coachResult = await this.coachAgent(tenantId, {
+            feedback: feedbackText,
+            quotedText: incident.trechoCliente || undefined,
+        }, userId, userName);
+        const updatedIncident = await this.prisma.aiLearningIncident.update({
+            where: { id: incidentId },
+            data: {
+                status: 'ASSIMILADO',
+                assimiladoPor: userName || 'Super Admin',
+                assimiladoEm: new Date(),
+            },
+        });
+        return {
+            success: true,
+            coachResult,
+            incident: updatedIncident,
+            confirmationMessage: 'Diretriz aprovada e incorporada com sucesso ao agente!',
+        };
+    }
+    async dismissLearningIncident(tenantId, incidentId) {
+        const incident = await this.prisma.aiLearningIncident.findFirst({
+            where: { id: incidentId, tenantId },
+        });
+        if (!incident) {
+            throw new common_1.NotFoundException('Incidente não encontrado.');
+        }
+        const updated = await this.prisma.aiLearningIncident.update({
+            where: { id: incidentId },
+            data: { status: 'DESCARTADO' },
+        });
+        return {
+            success: true,
+            incident: updated,
+        };
+    }
 };
 exports.AgentService = AgentService;
 exports.AgentService = AgentService = AgentService_1 = __decorate([
