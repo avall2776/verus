@@ -146,25 +146,25 @@ export default function EmailComposerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="w-full max-w-3xl bg-white dark:bg-[#0B1224] border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-white"
+        className="w-full max-w-3xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-slate-900 dark:text-white"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header do Composer */}
-        <div className="px-6 py-4 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/30 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center">
               <Send className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Novo E-mail Comercial</h3>
-              <p className="text-[11px] text-slate-400">Envio de orçamentos, contratos e mensagens oficiais</p>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Novo E-mail Comercial</h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Envio de orçamentos, contratos e mensagens oficiais</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -175,11 +175,11 @@ export default function EmailComposerModal({
           {/* Linha Para & CC toggle */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300">Para (Destinatário) *</label>
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Para (Destinatário) *</label>
               <button
                 type="button"
                 onClick={() => setShowCcBcc(!showCcBcc)}
-                className="text-[11px] font-semibold text-blue-400 hover:underline"
+                className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
               >
                 {showCcBcc ? "Ocultar CC/CCO" : "+ Adicionar CC / CCO"}
               </button>
@@ -191,39 +191,39 @@ export default function EmailComposerModal({
                 value={recipientEmail}
                 onChange={(e) => setRecipientEmail(e.target.value)}
                 placeholder="cliente@empresa.com.br"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
               />
               <input
                 type="text"
                 value={recipientName}
                 onChange={(e) => setRecipientName(e.target.value)}
                 placeholder="Nome do contato (opcional)"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
 
           {/* Campos CC e CCO se habilitados */}
           {showCcBcc && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
               <div>
-                <label className="text-[11px] text-slate-400 mb-1 block">Com Cópia (CC)</label>
+                <label className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 block">Com Cópia (CC)</label>
                 <input
                   type="text"
                   value={cc}
                   onChange={(e) => setCc(e.target.value)}
                   placeholder="gerencia@empresa.com.br"
-                  className="w-full px-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 mb-1 block">Cópia Oculta (CCO)</label>
+                <label className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 block">Cópia Oculta (CCO)</label>
                 <input
                   type="text"
                   value={bcc}
                   onChange={(e) => setBcc(e.target.value)}
                   placeholder="auditoria@vallor.com.br"
-                  className="w-full px-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
@@ -231,21 +231,21 @@ export default function EmailComposerModal({
 
           {/* Assunto */}
           <div>
-            <label className="text-xs font-semibold text-slate-300 block mb-1">Assunto *</label>
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Assunto *</label>
             <input
               type="text"
               required
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Ex: Proposta Comercial PROP-2026 - Apresentação de Solução"
-              className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
             />
           </div>
 
           {/* Barra de Ações Rápidas Comerciais (Anexar Proposta / Contrato) */}
-          <div className="flex flex-wrap items-center gap-2 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs">
-            <span className="text-slate-400 text-[11px] font-semibold mr-1 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-blue-400" /> Inserir no E-mail:
+          <div className="flex flex-wrap items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs">
+            <span className="text-slate-500 dark:text-slate-400 text-[11px] font-semibold mr-1 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Inserir no E-mail:
             </span>
 
             {/* Inserir Proposta */}
@@ -256,26 +256,26 @@ export default function EmailComposerModal({
                   setShowProposalPicker(!showProposalPicker);
                   setShowContractPicker(false);
                 }}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 text-[11px] font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 text-[11px] font-medium transition-colors cursor-pointer shadow-xs"
               >
                 <FileText className="w-3.5 h-3.5" />
                 Anexar Proposta ({proposals.length})
               </button>
 
               {showProposalPicker && (
-                <div className="absolute left-0 top-full mt-1.5 w-72 max-h-48 overflow-y-auto rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 shadow-2xl z-50 p-2 space-y-1">
+                <div className="absolute left-0 top-full mt-1.5 w-72 max-h-48 overflow-y-auto rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 shadow-2xl z-50 p-2 space-y-1">
                   {proposals.length === 0 ? (
-                    <p className="text-[11px] text-slate-500 p-2 text-center">Nenhuma proposta encontrada.</p>
+                    <p className="text-[11px] text-slate-400 p-2 text-center">Nenhuma proposta encontrada.</p>
                   ) : (
                     proposals.slice(0, 10).map((p: any) => (
                       <button
                         key={p.id}
                         type="button"
                         onClick={() => handleAttachProposalLink(p)}
-                        className="w-full text-left p-2 rounded-lg hover:bg-slate-800 text-[11px] text-white flex flex-col border border-transparent hover:border-slate-700 transition-colors"
+                        className="w-full text-left p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-[11px] text-slate-900 dark:text-white flex flex-col border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-colors cursor-pointer"
                       >
-                        <span className="font-bold text-blue-300 truncate">{p.title || p.code}</span>
-                        <span className="text-[10px] text-slate-400">{p.clientName} • R$ {Number(p.totalValue || 0).toLocaleString("pt-BR")}</span>
+                        <span className="font-bold text-blue-600 dark:text-blue-300 truncate">{p.title || p.code}</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">{p.clientName} • R$ {Number(p.totalValue || 0).toLocaleString("pt-BR")}</span>
                       </button>
                     ))
                   )}
@@ -291,26 +291,26 @@ export default function EmailComposerModal({
                   setShowContractPicker(!showContractPicker);
                   setShowProposalPicker(false);
                 }}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 text-[11px] font-medium transition-colors cursor-pointer shadow-xs"
               >
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 Anexar Contrato ({contracts.length})
               </button>
 
               {showContractPicker && (
-                <div className="absolute left-0 top-full mt-1.5 w-72 max-h-48 overflow-y-auto rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 shadow-2xl z-50 p-2 space-y-1">
+                <div className="absolute left-0 top-full mt-1.5 w-72 max-h-48 overflow-y-auto rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 shadow-2xl z-50 p-2 space-y-1">
                   {contracts.length === 0 ? (
-                    <p className="text-[11px] text-slate-500 p-2 text-center">Nenhum contrato encontrado.</p>
+                    <p className="text-[11px] text-slate-400 p-2 text-center">Nenhum contrato encontrado.</p>
                   ) : (
                     contracts.slice(0, 10).map((c: any) => (
                       <button
                         key={c.id}
                         type="button"
                         onClick={() => handleAttachContractLink(c)}
-                        className="w-full text-left p-2 rounded-lg hover:bg-slate-800 text-[11px] text-white flex flex-col border border-transparent hover:border-slate-700 transition-colors"
+                        className="w-full text-left p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-[11px] text-slate-900 dark:text-white flex flex-col border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-colors cursor-pointer"
                       >
-                        <span className="font-bold text-white truncate">{c.title || c.code}</span>
-                        <span className="text-[10px] text-slate-400">{c.clientName} • R$ {Number(c.value || 0).toLocaleString("pt-BR")}</span>
+                        <span className="font-bold text-slate-900 dark:text-white truncate">{c.title || c.code}</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">{c.clientName} • R$ {Number(c.value || 0).toLocaleString("pt-BR")}</span>
                       </button>
                     ))
                   )}
@@ -322,27 +322,27 @@ export default function EmailComposerModal({
             <button
               type="button"
               onClick={handleAddSampleAttachment}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-medium transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 text-[11px] font-medium transition-colors cursor-pointer shadow-xs"
             >
-              <Paperclip className="w-3.5 h-3.5 text-blue-400" />
+              <Paperclip className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
               + Anexar Documento
             </button>
           </div>
 
           {/* Lista de Anexos adicionados */}
           {attachments.length > 0 && (
-            <div className="flex flex-wrap gap-2 p-2 rounded-xl bg-slate-900/40 border border-slate-800">
+            <div className="flex flex-wrap gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800">
               {attachments.map((att, index) => (
                 <div 
                   key={index}
-                  className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-[11px] text-slate-200"
+                  className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-800 dark:text-slate-200 shadow-xs"
                 >
-                  <Paperclip className="w-3 h-3 text-blue-400" />
+                  <Paperclip className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                   <span className="truncate max-w-[200px]">{att.name}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveAttachment(index)}
-                    className="text-slate-400 hover:text-red-400 ml-1"
+                    className="text-slate-400 hover:text-red-500 ml-1 cursor-pointer"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -353,30 +353,30 @@ export default function EmailComposerModal({
 
           {/* Mensagem / Corpo */}
           <div>
-            <label className="text-xs font-semibold text-slate-300 block mb-1">Mensagem *</label>
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Mensagem *</label>
             <textarea
               required
               rows={8}
               value={bodyText}
               onChange={(e) => setBodyText(e.target.value)}
               placeholder="Prezado cliente, segue em anexo a proposta para avaliação..."
-              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 leading-relaxed font-sans resize-y"
+              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 leading-relaxed font-sans resize-y"
             />
           </div>
 
           {/* Modal Footer */}
-          <div className="pt-2 flex items-center justify-between border-t border-slate-800">
+          <div className="pt-2 flex items-center justify-between border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors"
+              className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
             >
               Descartar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
             >
               {loading ? (
                 <>

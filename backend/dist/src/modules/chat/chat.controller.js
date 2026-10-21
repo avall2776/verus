@@ -24,15 +24,15 @@ let ChatController = class ChatController {
     constructor(chatService) {
         this.chatService = chatService;
     }
-    async listConversations(tenantId, req, tab, status) {
+    async listConversations(tenantId, req, tab, status, departmentId) {
         const selectedTab = tab || status || 'waiting';
-        return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, selectedTab);
+        return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, selectedTab, departmentId);
     }
     async syncOfflineMessages(tenantId, force) {
         return this.chatService.syncOfflineMessages(tenantId, force === 'true' || force === '1');
     }
-    async getConversationCounts(tenantId, req) {
-        return this.chatService.getConversationCounts(tenantId, req.user.id, req.user.role);
+    async getConversationCounts(tenantId, req, departmentId) {
+        return this.chatService.getConversationCounts(tenantId, req.user.id, req.user.role, departmentId);
     }
     async getOperatorProductivity(tenantId, req) {
         return this.chatService.getOperatorProductivity(tenantId, req.user.id);
@@ -147,8 +147,9 @@ __decorate([
     __param(1, (0, common_1.Request)()),
     __param(2, (0, common_1.Query)('tab')),
     __param(3, (0, common_1.Query)('status')),
+    __param(4, (0, common_1.Query)('departmentId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, String, String]),
+    __metadata("design:paramtypes", [String, Object, String, String, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "listConversations", null);
 __decorate([
@@ -163,8 +164,9 @@ __decorate([
     (0, common_1.Get)('counts'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Query)('departmentId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, Object, String]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "getConversationCounts", null);
 __decorate([

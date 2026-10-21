@@ -11,7 +11,7 @@ export declare class ChatService {
     private readonly scheduledQueue;
     private readonly logger;
     constructor(prisma: PrismaService, messagingService: MessagingService, whatsappService: WhatsappService, chatGateway: ChatGateway, scheduledQueue: Queue);
-    getConversationCounts(tenantId: string, userId: string, userRole: string): Promise<{
+    getConversationCounts(tenantId: string, userId: string, userRole: string, departmentId?: string): Promise<{
         waiting: number;
         mine: number;
         resolved: number;
@@ -21,7 +21,7 @@ export declare class ChatService {
     private static readonly lastSyncTimes;
     private readonly productivityCache;
     getOperatorProductivity(tenantId: string, userId: string): Promise<any>;
-    findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string): Promise<({
+    findAllConversations(tenantId: string, userId: string, userRole: string, tab?: string, departmentId?: string): Promise<({
         contact: {
             id: string;
             name: string;
@@ -182,6 +182,65 @@ export declare class ChatService {
         status: string;
     }>;
     takeoverConversation(tenantId: string, conversationId: string, userId: string): Promise<{
+        assignedUser: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string;
+            departments: ({
+                department: {
+                    id: string;
+                    name: string;
+                    tenantId: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    color: string | null;
+                };
+            } & {
+                departmentId: string;
+                userId: string;
+            })[];
+            role: string;
+        };
+        contact: {
+            id: string;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            avatarUrl: string | null;
+            source: string;
+            tags: string[];
+            tenantId: string;
+            whatsappLid: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+        messages: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            contactId: string;
+            status: string;
+            providerMessageId: string | null;
+            content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            isInternal: boolean;
+            fromMe: boolean;
+            direction: string;
+            senderType: string;
+            scheduledAt: Date | null;
+            conversationId: string;
+        }[];
+        department: {
+            id: string;
+            name: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            color: string | null;
+        };
         id: string;
         tenantId: string;
         createdAt: Date;
@@ -302,6 +361,26 @@ export declare class ChatService {
         unreadCount: number;
     }>;
     assignToUser(tenantId: string, conversationId: string, userId: string, operatorName?: string): Promise<{
+        assignedUser: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string;
+            departments: ({
+                department: {
+                    id: string;
+                    name: string;
+                    tenantId: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    color: string | null;
+                };
+            } & {
+                departmentId: string;
+                userId: string;
+            })[];
+            role: string;
+        };
         contact: {
             id: string;
             name: string;
@@ -341,7 +420,6 @@ export declare class ChatService {
             updatedAt: Date;
             color: string | null;
         };
-    } & {
         id: string;
         tenantId: string;
         createdAt: Date;
@@ -352,6 +430,7 @@ export declare class ChatService {
         status: string;
     }>;
     transferToDepartment(tenantId: string, conversationId: string, departmentId: string, userId?: string, operatorName?: string): Promise<{
+        assignedUser: any;
         contact: {
             id: string;
             name: string;
@@ -391,7 +470,6 @@ export declare class ChatService {
             updatedAt: Date;
             color: string | null;
         };
-    } & {
         id: string;
         tenantId: string;
         createdAt: Date;

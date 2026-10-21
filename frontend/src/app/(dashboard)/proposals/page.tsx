@@ -353,17 +353,17 @@ export default function ProposalsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-500 dark:text-blue-400 shadow-sm">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                 Propostas Comerciais
-                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 font-mono font-medium">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 font-mono font-medium">
                   {proposals.length} registradas
                 </span>
               </h1>
-              <p className="text-xs sm:text-sm text-slate-400">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                 Gerencie orçamentos dinâmicos, acompanhe visualizações e capture assinaturas digitais
               </p>
             </div>
@@ -376,7 +376,7 @@ export default function ProposalsPage() {
             setEditingProposal(null);
             setIsCreateModalOpen(true);
           }}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-md shadow-blue-950/40 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-md shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Nova Proposta Comercial
@@ -386,23 +386,23 @@ export default function ProposalsPage() {
       {/* Cards de Métricas e KPIs Comerciais com Tooltips Robustos & Zero Corte */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Pipeline em Propostas */}
-        <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/90 backdrop-blur-md relative group hover:border-cyan-500/50 hover:shadow-xl hover:shadow-cyan-950/20 hover:-translate-y-0.5 transition-all duration-300">
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800/90 shadow-sm relative group hover:border-cyan-500/50 hover:shadow-xl hover:shadow-cyan-950/20 hover:-translate-y-0.5 transition-all duration-300">
           <div className="flex justify-between items-start">
             <div className="relative group/tip flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Total em Propostas
               </span>
               <button
                 type="button"
-                className="text-slate-500 hover:text-cyan-400 transition-colors focus:outline-none cursor-help p-0.5 rounded"
+                className="text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors focus:outline-none cursor-help p-0.5 rounded"
                 aria-label="Informações sobre o indicador"
               >
                 <Info className="w-3.5 h-3.5" />
               </button>
 
               {/* Tooltip Hover Explicativo de Alta Densidade (Nunca Cortado) */}
-              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
-                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-slate-50 dark:bg-[#070D1B] border-t border-l border-slate-700/90 rotate-45" />
+              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-slate-900 text-xs text-slate-200 border border-slate-700 shadow-2xl backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
+                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-slate-900 border-t border-l border-slate-700 rotate-45" />
                 <div className="flex items-center gap-1.5 font-bold text-white text-xs border-b border-slate-800 pb-1.5">
                   <DollarSign className="w-3.5 h-3.5 text-cyan-400" />
                   Total em Propostas (Pipeline)
@@ -416,17 +416,17 @@ export default function ProposalsPage() {
               </div>
             </div>
 
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 group-hover:scale-105 transition-transform">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 group-hover:scale-105 transition-transform">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
 
           <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
               R$ {kpis.totalPipeline.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
             <div className="mt-2">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                 <TrendingUp className="w-3 h-3" />
                 {proposals.length > 0 ? "+18.4% vs. mês anterior" : "Sem movimentação"}
               </span>
@@ -440,23 +440,23 @@ export default function ProposalsPage() {
         </div>
 
         {/* Card 2: Propostas Aceitas */}
-        <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/90 backdrop-blur-md relative group hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-950/20 hover:-translate-y-0.5 transition-all duration-300">
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800/90 shadow-sm relative group hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-950/20 hover:-translate-y-0.5 transition-all duration-300">
           <div className="flex justify-between items-start">
             <div className="relative group/tip flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Propostas Aceitas
               </span>
               <button
                 type="button"
-                className="text-slate-500 hover:text-emerald-400 transition-colors focus:outline-none cursor-help p-0.5 rounded"
+                className="text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors focus:outline-none cursor-help p-0.5 rounded"
                 aria-label="Informações sobre o indicador"
               >
                 <Info className="w-3.5 h-3.5" />
               </button>
 
               {/* Tooltip Hover Explicativo */}
-              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
-                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-slate-50 dark:bg-[#070D1B] border-t border-l border-slate-700/90 rotate-45" />
+              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-slate-900 text-xs text-slate-200 border border-slate-700 shadow-2xl backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
+                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-slate-900 border-t border-l border-slate-700 rotate-45" />
                 <div className="flex items-center gap-1.5 font-bold text-white text-xs border-b border-slate-800 pb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   Receita Convertida & Fechamento
@@ -470,17 +470,17 @@ export default function ProposalsPage() {
               </div>
             </div>
 
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:scale-105 transition-transform">
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 group-hover:scale-105 transition-transform">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
 
           <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
               R$ {kpis.acceptedVal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
             <div className="mt-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                 <CheckCircle2 className="w-3 h-3" />
                 {kpis.acceptedCount} contratos fechados
               </span>
@@ -494,23 +494,23 @@ export default function ProposalsPage() {
         </div>
 
         {/* Card 3: Ticket Médio Comercial */}
-        <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/90 backdrop-blur-md relative group hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-950/20 hover:-translate-y-0.5 transition-all duration-300">
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800/90 shadow-sm relative group hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-950/20 hover:-translate-y-0.5 transition-all duration-300">
           <div className="flex justify-between items-start">
             <div className="relative group/tip flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Ticket Médio
               </span>
               <button
                 type="button"
-                className="text-slate-500 hover:text-blue-400 transition-colors focus:outline-none cursor-help p-0.5 rounded"
+                className="text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors focus:outline-none cursor-help p-0.5 rounded"
                 aria-label="Informações sobre o indicador"
               >
                 <Info className="w-3.5 h-3.5" />
               </button>
 
               {/* Tooltip Hover Explicativo */}
-              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
-                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-slate-50 dark:bg-[#070D1B] border-t border-l border-slate-700/90 rotate-45" />
+              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-slate-900 text-xs text-slate-200 border border-slate-700 shadow-2xl backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
+                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-slate-900 border-t border-l border-slate-700 rotate-45" />
                 <div className="flex items-center gap-1.5 font-bold text-white text-xs border-b border-slate-800 pb-1.5">
                   <Award className="w-3.5 h-3.5 text-blue-400" />
                   Média por Cliente Negociado
@@ -524,17 +524,17 @@ export default function ProposalsPage() {
               </div>
             </div>
 
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 group-hover:scale-105 transition-transform">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 group-hover:scale-105 transition-transform">
               <Award className="w-4 h-4" />
             </div>
           </div>
 
           <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
               R$ {kpis.avgTicket.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
             <div className="mt-2">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                 Valor médio por orçamento
               </span>
             </div>
@@ -547,23 +547,23 @@ export default function ProposalsPage() {
         </div>
 
         {/* Card 4: Taxa de Conversão */}
-        <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/90 backdrop-blur-md relative group hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-950/20 hover:-translate-y-0.5 transition-all duration-300">
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800/90 shadow-sm relative group hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-950/20 hover:-translate-y-0.5 transition-all duration-300">
           <div className="flex justify-between items-start">
             <div className="relative group/tip flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Taxa de Conversão
               </span>
               <button
                 type="button"
-                className="text-slate-500 hover:text-purple-400 transition-colors focus:outline-none cursor-help p-0.5 rounded"
+                className="text-slate-400 hover:text-purple-500 dark:hover:text-purple-400 transition-colors focus:outline-none cursor-help p-0.5 rounded"
                 aria-label="Informações sobre o indicador"
               >
                 <Info className="w-3.5 h-3.5" />
               </button>
 
               {/* Tooltip Hover Explicativo posicionado à direita para evitar transbordar a tela */}
-              <div className="absolute top-full right-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
-                <div className="absolute -top-1.5 right-4 w-3 h-3 bg-slate-50 dark:bg-[#070D1B] border-t border-r border-slate-700/90 rotate-45" />
+              <div className="absolute top-full right-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-slate-900 text-xs text-slate-200 border border-slate-700 shadow-2xl backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
+                <div className="absolute -top-1.5 right-4 w-3 h-3 bg-slate-900 border-t border-r border-slate-700 rotate-45" />
                 <div className="flex items-center gap-1.5 font-bold text-white text-xs border-b border-slate-800 pb-1.5">
                   <Percent className="w-3.5 h-3.5 text-purple-400" />
                   Taxa de Conversão de Propostas
@@ -577,18 +577,18 @@ export default function ProposalsPage() {
               </div>
             </div>
 
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 group-hover:scale-105 transition-transform">
+            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 group-hover:scale-105 transition-transform">
               <Percent className="w-4 h-4" />
             </div>
           </div>
 
           <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
               {kpis.convRate.toFixed(1)}%
             </div>
             <div className="mt-2">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                <Sparkles className="w-3 h-3 text-purple-400" />
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/30">
+                <Sparkles className="w-3 h-3 text-purple-500 dark:text-purple-400" />
                 {proposals.length > 0 ? "Conversão em tempo real" : "Aguardando dados"}
               </span>
             </div>
@@ -602,7 +602,7 @@ export default function ProposalsPage() {
       </div>
 
       {/* Barra de Filtros & Abas de Status */}
-      <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-4">
+      <div className="p-4 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 shadow-sm space-y-4">
         <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
           {/* Abas de Status */}
           <div className="flex flex-wrap items-center gap-2">
@@ -626,13 +626,13 @@ export default function ProposalsPage() {
                   onClick={() => setStatusFilter(tab.id)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                     isActive
-                      ? "bg-blue-600/25 text-blue-300 border border-blue-500/40 shadow-sm shadow-blue-950/30"
-                      : "bg-slate-800/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                      ? "bg-blue-600 text-white font-bold shadow-sm"
+                      : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800"
                   }`}
                 >
                   {tab.label}
                   <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                    isActive ? "bg-blue-500/30 text-white font-bold" : "bg-slate-700/60 text-slate-400"
+                    isActive ? "bg-white/20 text-white font-bold" : "bg-slate-200 dark:bg-slate-700/60 text-slate-700 dark:text-slate-400"
                   }`}>
                     {count}
                   </span>
@@ -643,30 +643,30 @@ export default function ProposalsPage() {
 
           {/* Busca por cliente ou código */}
           <div className="relative w-full md:w-72">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-3" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar por cliente, código ou vendedor..."
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
             />
           </div>
         </div>
 
         {/* Tabela de Propostas ou Empty State Limpo */}
         {loading ? (
-          <div className="p-12 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-            <RefreshCw className="w-4 h-4 animate-spin text-blue-400" />
+          <div className="p-12 text-center text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center gap-2">
+            <RefreshCw className="w-4 h-4 animate-spin text-blue-500 dark:text-blue-400" />
             Carregando propostas comerciais...
           </div>
         ) : filteredProposals.length === 0 ? (
-          <div className="p-12 text-center flex flex-col items-center justify-center space-y-3 bg-slate-50/40 dark:bg-slate-50 dark:bg-[#070D1B]/40 rounded-xl border border-dashed border-slate-800">
-            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+          <div className="p-12 text-center flex flex-col items-center justify-center space-y-3 bg-slate-50 dark:bg-[#070D1B]/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 dark:text-blue-400">
               <FolderOpen className="w-7 h-7" />
             </div>
-            <h3 className="text-sm font-bold text-white">Nenhuma proposta encontrada</h3>
-            <p className="text-xs text-slate-400 max-w-sm">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Nenhuma proposta encontrada</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
               {searchQuery || statusFilter !== "all"
                 ? "Nenhum resultado corresponde aos filtros selecionados."
                 : "Seu pipeline comercial está limpo. Crie sua primeira proposta oficial com cálculo dinâmico e link de aceite."}
@@ -677,7 +677,7 @@ export default function ProposalsPage() {
                   setEditingProposal(null);
                   setIsCreateModalOpen(true);
                 }}
-                className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-md shadow-blue-950/40 cursor-pointer"
+                className="mt-2 flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-md shadow-blue-600/20 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Criar Primeira Proposta
@@ -685,9 +685,9 @@ export default function ProposalsPage() {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-slate-800/80">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-transparent">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-900/90 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+              <thead className="bg-slate-50 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="p-3.5">Código / Proposta</th>
                   <th className="p-3.5">Cliente / Empresa</th>
@@ -698,40 +698,40 @@ export default function ProposalsPage() {
                   <th className="p-3.5 text-right">Ações Rápidas</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {filteredProposals.map((proposal) => (
                   <tr
                     key={proposal.id}
                     onClick={() => openPreview(proposal)}
-                    className="hover:bg-slate-800/40 cursor-pointer transition-all duration-150 group"
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-all duration-150 group"
                   >
                     <td className="p-3.5">
-                      <div className="font-mono font-bold text-white group-hover:text-blue-400 transition-colors">
+                      <div className="font-mono font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {proposal.code}
                       </div>
-                      <div className="text-[11px] text-slate-400 line-clamp-1 max-w-xs">
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 max-w-xs">
                         {proposal.title}
                       </div>
                     </td>
 
                     <td className="p-3.5">
-                      <div className="font-semibold text-slate-200">
+                      <div className="font-semibold text-slate-800 dark:text-slate-200">
                         {proposal.clientName}
                       </div>
-                      <div className="text-[11px] text-slate-400">
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
                         {proposal.clientCompany || proposal.clientPhone}
                       </div>
                     </td>
 
-                    <td className="p-3.5 text-slate-300">
+                    <td className="p-3.5 text-slate-700 dark:text-slate-300">
                       {proposal.sellerName}
                     </td>
 
-                    <td className="p-3.5 text-slate-400 font-mono">
+                    <td className="p-3.5 text-slate-500 dark:text-slate-400 font-mono">
                       {new Date(proposal.validUntil).toLocaleDateString("pt-BR")}
                     </td>
 
-                    <td className="p-3.5 text-right font-bold text-white font-mono text-sm">
+                    <td className="p-3.5 text-right font-bold text-slate-900 dark:text-white font-mono text-sm">
                       R$ {proposal.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </td>
 
@@ -743,7 +743,7 @@ export default function ProposalsPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => handleEditProposal(proposal)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/15 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/15 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                           title="Editar proposta"
                         >
                           <Edit3 className="w-4 h-4" />
@@ -751,7 +751,7 @@ export default function ProposalsPage() {
 
                         <button
                           onClick={() => copyQuickLink(proposal)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/15 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/15 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                           title="Copiar link de aceite"
                         >
                           <Copy className="w-4 h-4" />
@@ -759,7 +759,7 @@ export default function ProposalsPage() {
 
                         <button
                           onClick={() => openPreview(proposal)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                           title="Visualizar proposta completa"
                         >
                           <Eye className="w-4 h-4" />
@@ -767,7 +767,7 @@ export default function ProposalsPage() {
 
                         <button
                           onClick={() => handleDeleteProposal(proposal.id)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/15 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/15 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                           title="Excluir proposta"
                         >
                           <Trash2 className="w-4 h-4" />

@@ -22,7 +22,7 @@
   color-scheme: light;
 }
 
-html.dark {
+html.dark:not(.theme-whatsapp) {
   --background: #050814;
   --panel: #0B1224;
   --panel-secondary: #161b22;
@@ -39,6 +39,26 @@ html.dark {
   --sidebar-subtle: #070D1B;
   --scrollbar-thumb: rgba(255, 255, 255, 0.1);
   --scrollbar-hover: rgba(0, 210, 255, 0.4);
+  color-scheme: dark;
+}
+
+html.theme-whatsapp {
+  --background: #0C1317;
+  --panel: #111B21;
+  --panel-secondary: #202C33;
+  --card: #111B21;
+  --card-hover: #202C33;
+  --border-main: #222D34;
+  --border-subtle: #182229;
+  --text-primary: #E9EDEF;
+  --text-secondary: #8696A0;
+  --text-muted: #667781;
+  --input-bg: #202C33;
+  --header-bg: rgba(32, 44, 51, 0.96);
+  --sidebar-bg: #111B21;
+  --sidebar-subtle: #202C33;
+  --scrollbar-thumb: rgba(134, 150, 160, 0.25);
+  --scrollbar-hover: #00A884;
   color-scheme: dark;
 }
 
@@ -219,6 +239,275 @@ html:not(.dark) {
   .shadow-2xl {
     box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
   }
+}
+
+/* ==========================================================================
+   TEMA WHATSAPP WEB CORPORATIVO (OFFICIAL WHATSAPP WEB HIGH-FIDELITY PALETTE)
+   Tons 100% fiéis ao WhatsApp Web:
+   - Fundo Chat & Viewports: #0C1317 (ou #0B141A)
+   - Painéis, Listas e Sidebar: #111B21 (Zero azul!)
+   - Headers, Topbar e Modais: #202C33
+   - Divisores e Bordas: #222D34
+   - Texto Principal: #E9EDEF | Texto Secundário: #8696A0
+   - Balão Enviado (Você): #005C4B | Balão Recebido (Cliente): #202C33
+   - Acentos e Botões Ativos: #00A884 (Verde WhatsApp) | Tiques: #53BDEB
+   ========================================================================== */
+/* 1. FUNDOS PRINCIPAIS / VIEWPORTS (Zero azul, grafite profundo #0C1317) */
+.theme-whatsapp,
+.theme-whatsapp body,
+.theme-whatsapp main,
+.theme-whatsapp .bg-\[\#050814\],
+.theme-whatsapp .dark\:bg-\[\#050814\],
+.theme-whatsapp .bg-\[\#070D1B\],
+.theme-whatsapp .dark\:bg-\[\#070D1B\],
+.theme-whatsapp .bg-\[\#070D18\],
+.theme-whatsapp .dark\:bg-\[\#070D18\],
+.theme-whatsapp .bg-\[\#0d1117\],
+.theme-whatsapp .dark\:bg-\[\#0d1117\],
+.theme-whatsapp .bg-slate-950,
+.theme-whatsapp .dark\:bg-slate-950 {
+  background-color: #0C1317 !important;
+  color: #E9EDEF !important;
+}
+
+/* 2. PAINÉIS, SIDEBAR, LISTAS DE CONVERSAS E CARDS (Grafite #111B21) */
+.theme-whatsapp aside,
+.theme-whatsapp .bg-\[\#0B1224\],
+.theme-whatsapp .bg-\[\#0b1224\],
+.theme-whatsapp .dark\:bg-\[\#0B1224\],
+.theme-whatsapp .dark\:bg-\[\#0b1224\],
+.theme-whatsapp .bg-\[\#161b22\],
+.theme-whatsapp .dark\:bg-\[\#161b22\],
+.theme-whatsapp .bg-\[\#1c2128\],
+.theme-whatsapp .dark\:bg-\[\#1c2128\],
+.theme-whatsapp .bg-\[\#0F172A\],
+.theme-whatsapp .dark\:bg-\[\#0F172A\],
+.theme-whatsapp .bg-slate-900,
+.theme-whatsapp .dark\:bg-slate-900,
+.theme-whatsapp .bg-gray-900,
+.theme-whatsapp .dark\:bg-gray-900 {
+  background-color: #111B21 !important;
+}
+
+/* 3. HEADERS, TOPBARS, CABEÇALHOS E BARRAS SUPERIORES (#202C33) */
+.theme-whatsapp header,
+.theme-whatsapp .h-14.border-b,
+.theme-whatsapp .h-16.border-b,
+.theme-whatsapp .bg-\[\#0B1224\]\/80,
+.theme-whatsapp .dark\:bg-\[\#0B1224\]\/80,
+.theme-whatsapp .bg-\[\#0B1224\]\/90,
+.theme-whatsapp .dark\:bg-\[\#0B1224\]\/90,
+.theme-whatsapp .bg-\[\#0B1224\]\/95,
+.theme-whatsapp .dark\:bg-\[\#0B1224\]\/95 {
+  background-color: #202C33 !important;
+}
+
+/* 4. ELEMENTOS SECUNDÁRIOS, CAIXAS, MODAIS E DROPDOWNS (#202C33) */
+.theme-whatsapp .bg-\[\#1E293B\],
+.theme-whatsapp .dark\:bg-\[\#1E293B\],
+.theme-whatsapp .bg-\[\#161F30\],
+.theme-whatsapp .dark\:bg-\[\#161F30\],
+.theme-whatsapp .bg-\[\#11192A\],
+.theme-whatsapp .dark\:bg-\[\#11192A\],
+.theme-whatsapp .bg-slate-800,
+.theme-whatsapp .dark\:bg-slate-800,
+.theme-whatsapp .bg-gray-800,
+.theme-whatsapp .dark\:bg-gray-800,
+.theme-whatsapp .bg-slate-800\/90,
+.theme-whatsapp .dark\:bg-slate-800\/90,
+.theme-whatsapp .bg-slate-800\/80,
+.theme-whatsapp .dark\:bg-slate-800\/80 {
+  background-color: #202C33 !important;
+}
+
+/* 5. HOVER EM LINHAS DE CONVERSAS, BOTÕES E ITENS DE MENU (#2A3942 / #202C33) */
+.theme-whatsapp .hover\:bg-slate-800:hover,
+.theme-whatsapp .dark\:hover\:bg-slate-800:hover,
+.theme-whatsapp .hover\:bg-slate-700:hover,
+.theme-whatsapp .dark\:hover\:bg-slate-700:hover,
+.theme-whatsapp .hover\:bg-gray-800:hover,
+.theme-whatsapp .dark\:hover\:bg-gray-800:hover,
+.theme-whatsapp .hover\:bg-slate-100:hover,
+.theme-whatsapp .hover\:bg-slate-800\/50:hover,
+.theme-whatsapp .dark\:hover\:bg-slate-800\/50:hover,
+.theme-whatsapp .hover\:bg-slate-800\/80:hover,
+.theme-whatsapp .dark\:hover\:bg-slate-800\/80:hover {
+  background-color: #2A3942 !important;
+}
+
+/* 6. BORDAS E DIVISORES OFICIAIS DO WHATSAPP (#222D34) */
+.theme-whatsapp .border-slate-800,
+.theme-whatsapp .dark\:border-slate-800,
+.theme-whatsapp .border-slate-700,
+.theme-whatsapp .dark\:border-slate-700,
+.theme-whatsapp .border-gray-800,
+.theme-whatsapp .dark\:border-gray-800,
+.theme-whatsapp .border-gray-700,
+.theme-whatsapp .dark\:border-gray-700,
+.theme-whatsapp .border-slate-200,
+.theme-whatsapp .border-slate-800\/80,
+.theme-whatsapp .dark\:border-slate-800\/80,
+.theme-whatsapp .border-slate-800\/60,
+.theme-whatsapp .dark\:border-slate-800\/60,
+.theme-whatsapp .border-slate-800\/40,
+.theme-whatsapp .dark\:border-slate-800\/40,
+.theme-whatsapp .border-slate-700\/80,
+.theme-whatsapp .dark\:border-slate-700\/80,
+.theme-whatsapp .border-slate-700\/60,
+.theme-whatsapp .dark\:border-slate-700\/60,
+.theme-whatsapp .border-slate-700\/50,
+.theme-whatsapp .dark\:border-slate-700\/50,
+.theme-whatsapp .divide-slate-800 > *,
+.theme-whatsapp .dark\:divide-slate-800 > *,
+.theme-whatsapp .divide-slate-700 > *,
+.theme-whatsapp .dark\:divide-slate-700 > *,
+.theme-whatsapp .divide-gray-800 > * {
+  border-color: #222D34 !important;
+}
+
+/* 7. TIPOGRAFIA OFICIAL: Off-white #E9EDEF e Secundários #8696A0 */
+.theme-whatsapp h1,
+.theme-whatsapp h2,
+.theme-whatsapp h3,
+.theme-whatsapp h4,
+.theme-whatsapp h5,
+.theme-whatsapp h6 {
+  color: #E9EDEF !important;
+}
+
+.theme-whatsapp .text-slate-900,
+.theme-whatsapp .dark\:text-white,
+.theme-whatsapp .text-white,
+.theme-whatsapp .dark\:text-slate-100,
+.theme-whatsapp .text-slate-100 {
+  color: #E9EDEF !important;
+}
+
+.theme-whatsapp .text-slate-400,
+.theme-whatsapp .dark\:text-slate-400,
+.theme-whatsapp .text-slate-500,
+.theme-whatsapp .dark\:text-slate-500,
+.theme-whatsapp .text-gray-400,
+.theme-whatsapp .dark\:text-gray-400,
+.theme-whatsapp .text-gray-500,
+.theme-whatsapp .dark\:text-gray-500 {
+  color: #8696A0 !important;
+}
+
+/* 8. INPUTS, PESQUISAS E TEXTAREAS (#202C33 / #2A3942) */
+.theme-whatsapp input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.theme-whatsapp textarea,
+.theme-whatsapp select {
+  background-color: #202C33 !important;
+  border-color: #222D34 !important;
+  color: #E9EDEF !important;
+}
+
+.theme-whatsapp input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+.theme-whatsapp textarea:focus,
+.theme-whatsapp select:focus {
+  border-color: #00A884 !important;
+  box-shadow: 0 0 0 1px #00A884 !important;
+  outline: none !important;
+}
+
+.theme-whatsapp input::placeholder,
+.theme-whatsapp textarea::placeholder {
+  color: #8696A0 !important;
+}
+
+/* 9. ACENTOS E BOTÕES: CONVERSÃO DE AZUL PARA VERDE WHATSAPP (#00A884) */
+.theme-whatsapp .bg-blue-600,
+.theme-whatsapp .bg-blue-500,
+.theme-whatsapp .dark\:bg-blue-600,
+.theme-whatsapp .dark\:bg-blue-500 {
+  background-color: #00A884 !important;
+  color: #FFFFFF !important;
+}
+
+.theme-whatsapp .hover\:bg-blue-600:hover,
+.theme-whatsapp .hover\:bg-blue-500:hover,
+.theme-whatsapp .dark\:hover\:bg-blue-600:hover,
+.theme-whatsapp .dark\:hover\:bg-blue-500:hover {
+  background-color: #02906F !important;
+}
+
+.theme-whatsapp .text-blue-600,
+.theme-whatsapp .text-blue-500,
+.theme-whatsapp .text-blue-400,
+.theme-whatsapp .text-blue-300,
+.theme-whatsapp .text-blue-200,
+.theme-whatsapp .text-blue-100,
+.theme-whatsapp .text-cyan-400,
+.theme-whatsapp .text-cyan-500,
+.theme-whatsapp .dark\:text-blue-400,
+.theme-whatsapp .dark\:text-blue-300,
+.theme-whatsapp .dark\:text-cyan-400,
+.theme-whatsapp .group-focus-within\:text-blue-400,
+.theme-whatsapp .group:focus-within .group-focus-within\:text-blue-400,
+.theme-whatsapp .group-hover\:text-blue-400,
+.theme-whatsapp .group:hover .group-hover\:text-blue-400 {
+  color: #00A884 !important;
+}
+
+.theme-whatsapp .focus\:border-blue-500:focus,
+.theme-whatsapp .focus\:border-blue-600:focus,
+.theme-whatsapp .dark\:focus\:border-blue-500:focus {
+  border-color: #00A884 !important;
+}
+
+.theme-whatsapp .focus\:shadow-\[0_0_15px_rgba\(59\,130\,246\,0\.2\)\]:focus {
+  box-shadow: 0 0 15px rgba(0, 168, 132, 0.25) !important;
+}
+
+.theme-whatsapp .bg-blue-50,
+.theme-whatsapp .dark\:bg-blue-950,
+.theme-whatsapp .dark\:bg-blue-950\/40,
+.theme-whatsapp .dark\:bg-blue-950\/70,
+.theme-whatsapp .bg-blue-600\/10,
+.theme-whatsapp .bg-blue-600\/15,
+.theme-whatsapp .bg-blue-600\/20,
+.theme-whatsapp .dark\:bg-blue-600\/20,
+.theme-whatsapp .dark\:bg-blue-600\/25,
+.theme-whatsapp .bg-blue-500\/10,
+.theme-whatsapp .bg-blue-500\/15,
+.theme-whatsapp .dark\:bg-blue-500\/15,
+.theme-whatsapp .dark\:bg-blue-500\/20 {
+  background-color: rgba(0, 168, 132, 0.15) !important;
+}
+
+.theme-whatsapp .border-blue-500,
+.theme-whatsapp .border-blue-600,
+.theme-whatsapp .border-blue-700,
+.theme-whatsapp .border-blue-800,
+.theme-whatsapp .dark\:border-blue-500,
+.theme-whatsapp .dark\:border-blue-600,
+.theme-whatsapp .dark\:border-cyan-400,
+.theme-whatsapp .border-blue-500\/30,
+.theme-whatsapp .border-blue-500\/40,
+.theme-whatsapp .dark\:border-blue-500\/30,
+.theme-whatsapp .dark\:border-blue-500\/40,
+.theme-whatsapp .dark\:border-blue-500\/60 {
+  border-color: rgba(0, 168, 132, 0.35) !important;
+}
+
+/* 10. ITENS ATIVOS DA SIDEBAR NAVEGAÇÃO */
+.theme-whatsapp .border-l-2.border-blue-600,
+.theme-whatsapp .dark\:border-cyan-400 {
+  border-left-color: #00A884 !important;
+  color: #00A884 !important;
+}
+
+/* 11. TIQUES AZUIS WHATSAPP (#53BDEB) */
+.theme-whatsapp .text-\[\#53bdeb\],
+.theme-whatsapp .dark\:text-\[\#53bdeb\] {
+  color: #53BDEB !important;
+}
+
+/* 12. DOODLES DE FUNDO WHATSAPP */
+.theme-whatsapp [style*="WHATSAPP_WALLPAPER_BG"] {
+  opacity: 0.06 !important;
+  filter: brightness(0.7) !important;
 }
 
 /* ==========================================================================

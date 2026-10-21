@@ -54,6 +54,7 @@ import { getCachedUser, clearUserCache } from "@/lib/userCache";
 import { isAvatarUrlValid } from "@/lib/avatarUtils";
 import { useMobileMenu } from "@/contexts/MobileMenuContext";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import { useTheme } from "@/contexts/ThemeContext";
 
 function WhatsAppIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
   return (
@@ -129,6 +130,7 @@ export default function Sidebar() {
   const { hasGlobalUnread } = useSocket();
   const { status: waStatus, refreshStatus: refreshWaStatus } = useWhatsApp();
   const { isOpen: isMobileOpen, closeMenu: closeMobileMenu } = useMobileMenu();
+  const { isWhatsApp } = useTheme();
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
@@ -488,7 +490,7 @@ export default function Sidebar() {
       return true;
     }
 
-    // 3. CHECAGEM DE PERMISSÕES INDIVIDUAIS DO OPERADOR (AGENT)
+    // 3. CHECAGEM DE PERMISSÕES INDIVIDUAIS DO OPERADOR (AGENT / SUPERVISOR / COLABORADOR)
     const perms = user.permissions || {
       inbox: true,
       crm: true,
@@ -497,35 +499,50 @@ export default function Sidebar() {
       settings: false,
       support: true,
     };
+    const menus = perms.menus;
+    const subPerms = perms.subPermissions;
 
-    // Visão Geral sempre liberada
-    if (base === '/dashboard') return true;
+    // Visão Geral / Dashboard
+    if (base === '/dashboard') {
+      if (menus?.dashboard !== undefined) return menus.dashboard;
+      return true;
+    }
 
     // Atendimento & WhatsApp
     if (base === '/inbox' || base === '/monitor' || base === '/dashboard/atendimento' || base === '/email-inbox') {
+      if (menus?.whatsapp !== undefined) return menus.whatsapp;
       return perms.inbox !== false;
     }
 
     // CRM / Comercial
     if (
       base === '/crm' ||
-      base === '/contacts' ||
       base === '/dashboard/crm' ||
       base === '/proposals' ||
       base === '/contracts' ||
-      base === '/dashboard/goals' ||
-      base === '/dashboard/analytics'
+      base === '/dashboard/goals'
     ) {
+      if (subPerms?.crm_enabled !== undefined) return subPerms.crm_enabled;
+      return perms.crm !== false;
+    }
+
+    // Contatos
+    if (base === '/contacts') {
+      if (menus?.contacts !== undefined) return menus.contacts;
+      if (subPerms?.crm_enabled !== undefined) return subPerms.crm_enabled;
       return perms.crm !== false;
     }
 
     // Chat da Equipe
     if (base === '/chat-interno') {
+      if (menus?.chat !== undefined) return menus.chat;
       return perms.chat !== false;
     }
 
     // Automações & Agentes IA
-    if (href.includes('tab=automations') || base === '/agent') {
+    if (href.includes('tab=automations') || href.includes('tab=ai') || base === '/agent') {
+      if (menus?.ai_agents !== undefined) return menus.ai_agents;
+      if (menus?.chatbots !== undefined) return menus.chatbots;
       return perms.automations === true;
     }
 
@@ -540,8 +557,19 @@ export default function Sidebar() {
       return Boolean(user.canAccessMarketing === true || perms.marketing === true);
     }
 
-    // Configurações Gerais
-    if (base === '/settings' || href.includes('tab=users') || base === '/settings/whatsapp') {
+    // Configurações Gerais e Abas Específicas
+    if (href.includes('tab=users')) {
+      if (menus?.users !== undefined) return menus.users;
+      return perms.settings === true;
+    }
+
+    if (base === '/settings/whatsapp' || href.includes('tab=connections')) {
+      if (menus?.connections !== undefined) return menus.connections;
+      return perms.settings === true;
+    }
+
+    if (base === '/settings') {
+      if (menus?.settings !== undefined) return menus.settings;
       return perms.settings === true;
     }
 
@@ -570,8 +598,10 @@ export default function Sidebar() {
                 title="Clique para alternar ou gerenciar workspaces"
               >
                 <div 
-                  className="w-8 h-8 rounded-xl border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 shadow-sm overflow-hidden"
-                  style={{ backgroundColor: activeWorkspace?.themeColor || "#2563EB" }}
+                  className={`w-8 h-8 rounded-xl border flex items-center justify-center font-black text-white shrink-0 shadow-sm overflow-hidden ${
+                    isWhatsApp ? 'border-[#00A884]/40' : 'border-blue-500/30'
+                  }`}
+                  style={{ backgroundColor: isWhatsApp ? "#00A884" : (activeWorkspace?.themeColor || "#2563EB") }}
                 >
                   {activeWorkspace?.logoUrl ? (
                     <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
@@ -610,8 +640,10 @@ export default function Sidebar() {
                   setIsExpanded(true);
                   setIsWorkspaceDropdownOpen(true);
                 }}
-                className="w-8 h-8 rounded-xl border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 mx-auto shadow-sm cursor-pointer overflow-hidden"
-                style={{ backgroundColor: activeWorkspace?.themeColor || "#2563EB" }}
+                className={`w-8 h-8 rounded-xl border flex items-center justify-center font-black text-white shrink-0 mx-auto shadow-sm cursor-pointer overflow-hidden ${
+                  isWhatsApp ? 'border-[#00A884]/40' : 'border-blue-500/30'
+                }`}
+                style={{ backgroundColor: isWhatsApp ? "#00A884" : (activeWorkspace?.themeColor || "#2563EB") }}
                 title={targetTenantName ? `${activeWorkspace?.name || targetTenantName} (Modo Suporte)` : (activeWorkspace?.name || "Workspace")}
               >
                 {activeWorkspace?.logoUrl ? (
@@ -657,7 +689,7 @@ export default function Sidebar() {
                       >
                         <div
                           className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden"
-                          style={{ backgroundColor: ws.themeColor || "#2563EB" }}
+                          style={{ backgroundColor: isWhatsApp ? "#00A884" : (ws.themeColor || "#2563EB") }}
                         >
                           {ws.logoUrl ? (
                             <img src={ws.logoUrl} alt={ws.name} className="w-full h-full object-cover" />
@@ -786,13 +818,15 @@ export default function Sidebar() {
                         flex items-center gap-3 rounded-lg transition-all duration-200 relative group
                         ${isExpanded ? (isMarketingGroup ? 'pl-6 pr-3 py-2' : 'px-3 py-2') : 'w-10 h-10 justify-center'}
                         ${isActive 
-                          ? 'text-blue-600 dark:text-cyan-400 bg-blue-50 dark:bg-slate-800/60 border-l-2 border-blue-600 dark:border-cyan-400 font-semibold shadow-sm' 
+                          ? isWhatsApp
+                            ? 'text-[#00A884] bg-[#00A884]/15 border-l-2 border-[#00A884] font-semibold shadow-sm'
+                            : 'text-blue-600 dark:text-cyan-400 bg-blue-50 dark:bg-slate-800/60 border-l-2 border-blue-600 dark:border-cyan-400 font-semibold shadow-sm' 
                           : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200'
                         }
                         ${shouldBlink ? 'bg-primary/20 shadow-[0_0_15px_rgba(0,210,255,0.2)] animate-pulse text-blue-600 dark:text-white' : ''}
                       `}
                     >
-                      <item.icon size={isExpanded ? 17 : 20} strokeWidth={isActive ? 2 : 1.5} className={isActive ? 'text-blue-600 dark:text-cyan-400' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'} />
+                      <item.icon size={isExpanded ? 17 : 20} strokeWidth={isActive ? 2 : 1.5} className={isActive ? (isWhatsApp ? 'text-[#00A884]' : 'text-blue-600 dark:text-cyan-400') : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'} />
                       
                       {isExpanded && (
                         <span className="text-sm truncate flex-1">{item.name}</span>
@@ -1050,8 +1084,10 @@ export default function Sidebar() {
             <div className="h-16 flex items-center justify-between border-b border-slate-200 dark:border-gray-800 px-4 shrink-0 bg-white dark:bg-[#0B1224]">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div 
-                  className="w-8 h-8 rounded-xl border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 shadow-sm overflow-hidden"
-                  style={{ backgroundColor: activeWorkspace?.themeColor || "#2563EB" }}
+                  className={`w-8 h-8 rounded-xl border flex items-center justify-center font-black text-white shrink-0 shadow-sm overflow-hidden ${
+                    isWhatsApp ? 'border-[#00A884]/40' : 'border-blue-500/30'
+                  }`}
+                  style={{ backgroundColor: isWhatsApp ? "#00A884" : (activeWorkspace?.themeColor || "#2563EB") }}
                 >
                   {activeWorkspace?.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -1138,12 +1174,14 @@ export default function Sidebar() {
                           onClick={closeMobileMenu}
                           className={`flex items-center gap-3 ${isMarketingGroup ? 'pl-6 pr-3' : 'px-3'} py-2.5 rounded-xl font-medium text-sm transition-all duration-150 ${
                             isActive
-                              ? 'bg-blue-50 dark:bg-slate-800/80 text-blue-600 dark:text-white font-semibold border-l-2 border-blue-600 dark:border-cyan-400'
+                              ? isWhatsApp
+                                ? 'bg-[#00A884]/15 text-[#00A884] font-semibold border-l-2 border-[#00A884]'
+                                : 'bg-blue-50 dark:bg-slate-800/80 text-blue-600 dark:text-white font-semibold border-l-2 border-blue-600 dark:border-cyan-400'
                               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-gray-800/60 hover:text-slate-900 dark:hover:text-gray-200'
                           }`}
                         >
                           <div className="relative shrink-0">
-                            <item.icon size={18} strokeWidth={isActive ? 2 : 1.5} className={isActive ? 'text-blue-600 dark:text-cyan-400' : 'text-slate-400'} />
+                            <item.icon size={18} strokeWidth={isActive ? 2 : 1.5} className={isActive ? (isWhatsApp ? 'text-[#00A884]' : 'text-blue-600 dark:text-cyan-400') : 'text-slate-400'} />
                             {shouldBlink && (
                               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" />
                             )}

@@ -267,9 +267,10 @@ export class UsersController {
     }
 
     if (body.role !== undefined) {
-      const role = body.role.toUpperCase();
-      if (role !== 'ADMIN' && role !== 'AGENT') {
-        throw new BadRequestException('Cargo inválido. Utilize ADMIN ou AGENT.');
+      let role = body.role.toUpperCase();
+      if (role === 'COLLABORATOR') role = 'AGENT';
+      if (role !== 'ADMIN' && role !== 'SUPERVISOR' && role !== 'AGENT') {
+        throw new BadRequestException('Cargo inválido. Utilize ADMIN, SUPERVISOR ou AGENT.');
       }
       // Trava de segurança: não permitir que o único ADMIN remova seu próprio acesso de admin
       if (id === currentUserId && role !== 'ADMIN') {
@@ -277,7 +278,7 @@ export class UsersController {
           where: { tenantId, role: 'ADMIN', isActive: true },
         });
         if (adminCount <= 1) {
-          throw new BadRequestException('Você é o único Administrador ativo da empresa e não pode alterar seu cargo para Atendente.');
+          throw new BadRequestException('Você é o único Administrador ativo da empresa e não pode alterar seu cargo.');
         }
       }
       updateData.role = role;
@@ -408,7 +409,8 @@ export class UsersController {
     const bcrypt = await import('bcrypt');
     const hashedPassword = await bcrypt.hash(rawPass, 10);
 
-    const role = (body.role || 'AGENT').toUpperCase() === 'ADMIN' ? 'ADMIN' : 'AGENT';
+    const rawRole = (body.role || 'AGENT').toUpperCase();
+    const role = (rawRole === 'ADMIN' || rawRole === 'SUPERVISOR') ? rawRole : 'AGENT';
 
     const defaultPermissions = {
       inbox: true,

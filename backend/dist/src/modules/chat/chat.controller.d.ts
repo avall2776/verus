@@ -4,7 +4,7 @@ import { ScheduleMessageDto } from './dto/schedule-message.dto';
 export declare class ChatController {
     private readonly chatService;
     constructor(chatService: ChatService);
-    listConversations(tenantId: string, req: any, tab?: string, status?: string): Promise<({
+    listConversations(tenantId: string, req: any, tab?: string, status?: string, departmentId?: string): Promise<({
         contact: {
             id: string;
             name: string;
@@ -58,7 +58,7 @@ export declare class ChatController {
         syncedCount: number;
         updatedCount: number;
     }>;
-    getConversationCounts(tenantId: string, req: any): Promise<{
+    getConversationCounts(tenantId: string, req: any, departmentId?: string): Promise<{
         waiting: number;
         mine: number;
         resolved: number;
@@ -220,6 +220,65 @@ export declare class ChatController {
         conversationId: string;
     }>;
     takeover(tenantId: string, conversationId: string, req: any): Promise<{
+        assignedUser: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string;
+            departments: ({
+                department: {
+                    id: string;
+                    name: string;
+                    tenantId: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    color: string | null;
+                };
+            } & {
+                departmentId: string;
+                userId: string;
+            })[];
+            role: string;
+        };
+        contact: {
+            id: string;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            avatarUrl: string | null;
+            source: string;
+            tags: string[];
+            tenantId: string;
+            whatsappLid: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+        messages: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            contactId: string;
+            status: string;
+            providerMessageId: string | null;
+            content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            isInternal: boolean;
+            fromMe: boolean;
+            direction: string;
+            senderType: string;
+            scheduledAt: Date | null;
+            conversationId: string;
+        }[];
+        department: {
+            id: string;
+            name: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            color: string | null;
+        };
         id: string;
         tenantId: string;
         createdAt: Date;
@@ -443,6 +502,7 @@ export declare class ChatController {
         departmentId: string;
         userId?: string;
     }): Promise<{
+        assignedUser: any;
         contact: {
             id: string;
             name: string;
@@ -482,7 +542,6 @@ export declare class ChatController {
             updatedAt: Date;
             color: string | null;
         };
-    } & {
         id: string;
         tenantId: string;
         createdAt: Date;
@@ -495,6 +554,26 @@ export declare class ChatController {
     assign(tenantId: string, req: any, conversationId: string, body: {
         userId: string;
     }): Promise<{
+        assignedUser: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string;
+            departments: ({
+                department: {
+                    id: string;
+                    name: string;
+                    tenantId: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    color: string | null;
+                };
+            } & {
+                departmentId: string;
+                userId: string;
+            })[];
+            role: string;
+        };
         contact: {
             id: string;
             name: string;
@@ -534,7 +613,6 @@ export declare class ChatController {
             updatedAt: Date;
             color: string | null;
         };
-    } & {
         id: string;
         tenantId: string;
         createdAt: Date;

@@ -14,6 +14,14 @@ const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const passport_jwt_1 = require("passport-jwt");
 const prisma_service_1 = require("../../shared/database/prisma.service");
+const userCache = new Map();
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, val] of userCache.entries()) {
+        if (now > val.expiresAt)
+            userCache.delete(key);
+    }
+}, 5 * 60 * 1000);
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
     constructor(prisma) {
         super({
@@ -33,6 +41,10 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
                 code: 'INVALID_TOKEN',
                 message: 'Token inválido: identificador de usuário ausente.',
             });
+        }
+        const cached = userCache.get(userId);
+        if (cached && Date.now() < cached.expiresAt) {
+            return cached.result;
         }
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
@@ -111,7 +123,7 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
                 });
             }
         }
-        return {
+        const result = {
             id: user.id,
             userId: user.id,
             name: user.name,
@@ -122,6 +134,8 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
             tenant: user.tenant,
             plan: user.tenant?.plan || null,
         };
+        userCache.set(userId, { result, expiresAt: Date.now() + 30000 });
+        return result;
     }
 };
 exports.JwtStrategy = JwtStrategy;

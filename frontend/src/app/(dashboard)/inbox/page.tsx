@@ -24,6 +24,7 @@ import ScheduledMessagesDrawer, { ScheduledMessage } from "@/components/inbox/Sc
 import GlobalScheduledCenterModal from "@/components/inbox/GlobalScheduledCenterModal";
 import VersusAudioPlayer from "@/components/chat/VersusAudioPlayer";
 import { sanitizeAvatarUrl, isAvatarUrlValid } from "@/lib/avatarUtils";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const COMMON_EMOJIS = [
   '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', 
@@ -34,13 +35,13 @@ const COMMON_EMOJIS = [
 ];
 
 const TAG_COLOR_PALETTES = [
-  { bg: 'bg-emerald-950/70', text: 'text-emerald-300', border: 'border-emerald-700/60', dot: 'bg-emerald-400' },
-  { bg: 'bg-blue-950/70', text: 'text-blue-300', border: 'border-blue-700/60', dot: 'bg-blue-400' },
-  { bg: 'bg-purple-950/70', text: 'text-purple-300', border: 'border-purple-700/60', dot: 'bg-purple-400' },
-  { bg: 'bg-amber-950/70', text: 'text-amber-300', border: 'border-amber-700/60', dot: 'bg-amber-400' },
-  { bg: 'bg-cyan-950/70', text: 'text-cyan-300', border: 'border-cyan-700/60', dot: 'bg-cyan-400' },
-  { bg: 'bg-rose-950/70', text: 'text-rose-300', border: 'border-rose-700/60', dot: 'bg-rose-400' },
-  { bg: 'bg-indigo-950/70', text: 'text-indigo-300', border: 'border-indigo-700/60', dot: 'bg-indigo-400' },
+  { bg: 'bg-emerald-50 dark:bg-emerald-950/70', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-700/60', dot: 'bg-emerald-500 dark:bg-emerald-400' },
+  { bg: 'bg-blue-50 dark:bg-blue-950/70', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-700/60', dot: 'bg-blue-500 dark:bg-blue-400' },
+  { bg: 'bg-purple-50 dark:bg-purple-950/70', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-200 dark:border-purple-700/60', dot: 'bg-purple-500 dark:bg-purple-400' },
+  { bg: 'bg-amber-50 dark:bg-amber-950/70', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-200 dark:border-amber-700/60', dot: 'bg-amber-500 dark:bg-amber-400' },
+  { bg: 'bg-cyan-50 dark:bg-cyan-950/70', text: 'text-cyan-700 dark:text-cyan-300', border: 'border-cyan-200 dark:border-cyan-700/60', dot: 'bg-cyan-500 dark:bg-cyan-400' },
+  { bg: 'bg-rose-50 dark:bg-rose-950/70', text: 'text-rose-700 dark:text-rose-300', border: 'border-rose-200 dark:border-rose-700/60', dot: 'bg-rose-500 dark:bg-rose-400' },
+  { bg: 'bg-indigo-50 dark:bg-indigo-950/70', text: 'text-indigo-700 dark:text-indigo-300', border: 'border-indigo-200 dark:border-indigo-700/60', dot: 'bg-indigo-500 dark:bg-indigo-400' },
 ];
 
 function getTagColor(tag: string) {
@@ -79,6 +80,7 @@ function getWhatsAppDateLabel(dateInput?: string | number | Date): string {
 }
 
 function InboxContent() {
+  const { isWhatsApp } = useTheme();
   const searchParams = useSearchParams();
   const contactIdParam = searchParams.get('contactId');
   const conversationIdParam = searchParams.get('conversationId') || searchParams.get('chat');
@@ -107,12 +109,19 @@ function InboxContent() {
   const [newTagInput, setNewTagInput] = useState('');
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [departments, setDepartments] = useState<any[]>([]);
+  const [selectedDepartmentFilter, setSelectedDepartmentFilter] = useState<string>('all');
   const [isReopening, setIsReopening] = useState(false);
   const [aiAgentName, setAiAgentName] = useState<string>('Sofia');
   const { socket, isConnected, clearGlobalUnread } = useSocket();
 
-  // Carrega dinamicamente o nome da IA configurado para este Tenant
+  // Carrega dinamicamente departamentos e nome da IA configurado para este Tenant
   useEffect(() => {
+    api.get('/departments').then((res) => {
+      if (Array.isArray(res.data)) {
+        setDepartments(res.data);
+      }
+    }).catch(() => {});
+
     api.get('/agent/config').then((res) => {
       if (res.data?.aiName && typeof res.data.aiName === 'string' && res.data.aiName.trim().length > 0) {
         setAiAgentName(res.data.aiName.trim());
@@ -1006,7 +1015,8 @@ function InboxContent() {
 
         setActiveTab(targetTab);
 
-        const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
+        const lastMessageObj = conv.messages && conv.messages.length > 0 ? conv.messages[0] : null;
+        const lastMsg = lastMessageObj ? lastMessageObj.content : 'Nova conversa';
         const rawAvatar = conv.contact?.avatarUrl;
         const cleanAvatar = sanitizeAvatarUrl(rawAvatar);
         const formattedContact = {
@@ -1018,11 +1028,18 @@ function InboxContent() {
           avatarUrl: cleanAvatar,
           tags: conv.contact?.tags || [],
           lastMsg: lastMsg,
+          lastMessage: lastMsg,
+          lastMessageType: lastMessageObj?.type || 'text',
+          lastMessageDirection: lastMessageObj?.direction || null,
           time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           updatedAt: conv.updatedAt,
           isAi: conv.status === 'bot_active',
           unread: 0,
-          status: conv.status
+          status: conv.status,
+          assignedTo: conv.assignedTo,
+          assignedUser: conv.assignedUser,
+          departmentId: conv.departmentId,
+          department: conv.department
         };
 
         setContacts(prev => {
@@ -1045,10 +1062,11 @@ function InboxContent() {
   const tenantKey = effectiveTenantId || 'default_tenant';
 
   const { data: tabCounts, refetch: refetchCounts } = useQuery({
-    queryKey: ['conversationCounts', tenantKey],
+    queryKey: ['conversationCounts', tenantKey, selectedDepartmentFilter],
     queryFn: async () => {
       try {
-        const { data } = await api.get('/conversations/counts');
+        const deptParam = selectedDepartmentFilter && selectedDepartmentFilter !== 'all' ? `?departmentId=${selectedDepartmentFilter}` : '';
+        const { data } = await api.get(`/conversations/counts${deptParam}`);
         return data;
       } catch (e) {
         return null;
@@ -1100,11 +1118,13 @@ function InboxContent() {
   const queryTab = (activeFilterTab === 'unread' || activeFilterTab === 'all') ? 'all' : activeFilterTab;
 
   const { data: initialContacts, isLoading, error: fetchErrorQuery, refetch: refetchConversations } = useQuery({
-    queryKey: ['conversations', tenantKey, activeFilterTab],
+    queryKey: ['conversations', tenantKey, activeFilterTab, selectedDepartmentFilter],
     queryFn: async () => {
-      const { data } = await api.get(`/conversations?tab=${queryTab}`);
+      const deptQuery = selectedDepartmentFilter && selectedDepartmentFilter !== 'all' ? `&departmentId=${selectedDepartmentFilter}` : '';
+      const { data } = await api.get(`/conversations?tab=${queryTab}${deptQuery}`);
       return data.map((conv: any) => {
-        const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
+        const lastMessageObj = conv.messages && conv.messages.length > 0 ? conv.messages[0] : null;
+        const lastMsg = lastMessageObj ? lastMessageObj.content : 'Nova conversa';
         const rawAvatar = conv.contact?.avatarUrl;
         const cleanAvatar = sanitizeAvatarUrl(rawAvatar);
         return {
@@ -1116,12 +1136,18 @@ function InboxContent() {
           avatarUrl: cleanAvatar,
           tags: conv.contact?.tags || [],
           lastMsg: lastMsg,
+          lastMessage: lastMsg,
+          lastMessageType: lastMessageObj?.type || 'text',
+          lastMessageDirection: lastMessageObj?.direction || null,
           time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           updatedAt: conv.updatedAt,
           isAi: conv.status === 'bot_active',
           unread: 0,
           status: conv.status,
-          assignedTo: conv.assignedTo
+          assignedTo: conv.assignedTo,
+          assignedUser: conv.assignedUser,
+          departmentId: conv.departmentId,
+          department: conv.department
         };
       });
     },
@@ -1368,6 +1394,9 @@ function InboxContent() {
               status: newStatus,
               isAi: newStatus === 'bot_active',
               assignedTo: data.assignedTo !== undefined ? data.assignedTo : c.assignedTo,
+              assignedUser: data.assignedUser !== undefined ? data.assignedUser : c.assignedUser,
+              departmentId: data.departmentId !== undefined ? data.departmentId : c.departmentId,
+              department: data.department !== undefined ? data.department : c.department,
             };
           }
           return c;
@@ -1375,9 +1404,11 @@ function InboxContent() {
       );
 
       // Recarrega a lista silenciosamente mantendo unread
-      api.get(`/conversations?tab=${queryTab}`).then((res) => {
+      const deptQuery = selectedDepartmentFilter && selectedDepartmentFilter !== 'all' ? `&departmentId=${selectedDepartmentFilter}` : '';
+      api.get(`/conversations?tab=${queryTab}${deptQuery}`).then((res) => {
         const mapped = res.data.map((conv: any) => {
-          const lastMsg = conv.messages && conv.messages.length > 0 ? conv.messages[0].content : 'Nova conversa';
+          const lastMessageObj = conv.messages && conv.messages.length > 0 ? conv.messages[0] : null;
+          const lastMsg = lastMessageObj ? lastMessageObj.content : 'Nova conversa';
           const rawAvatar = conv.contact?.avatarUrl;
           const cleanAvatar = sanitizeAvatarUrl(rawAvatar);
           return {
@@ -1389,10 +1420,16 @@ function InboxContent() {
             avatarUrl: cleanAvatar,
             tags: conv.contact?.tags || [],
             lastMsg: lastMsg,
+            lastMessage: lastMsg,
+            lastMessageType: lastMessageObj?.type || 'text',
+            lastMessageDirection: lastMessageObj?.direction || null,
             time: new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             isAi: conv.status === 'bot_active',
             status: conv.status,
-            assignedTo: conv.assignedTo
+            assignedTo: conv.assignedTo,
+            assignedUser: conv.assignedUser,
+            departmentId: conv.departmentId,
+            department: conv.department
           };
         });
         
@@ -1403,6 +1440,30 @@ function InboxContent() {
            });
         });
       }).catch(() => {});
+    };
+
+    const handleConversationTransferred = (transferData: any) => {
+      console.log('Conversation Transferred via WebSocket:', transferData);
+      if (transferData?.conversationId) {
+        setContacts((prev) =>
+          prev.map((c) => {
+            if (c.id === transferData.conversationId) {
+              return {
+                ...c,
+                departmentId: transferData.department?.id || transferData.departmentId || c.departmentId,
+                department: transferData.department !== undefined ? transferData.department : c.department,
+                assignedTo: transferData.assignedTo !== undefined ? transferData.assignedTo : c.assignedTo,
+                assignedUser: transferData.assignedUser !== undefined ? transferData.assignedUser : c.assignedUser,
+                status: transferData.assignedTo ? 'open' : 'waiting',
+                isAi: false,
+              };
+            }
+            return c;
+          })
+        );
+      }
+      refetchConversations();
+      refetchCounts();
     };
 
     const handleContactUpdated = (contactData: any) => {
@@ -1470,6 +1531,7 @@ function InboxContent() {
 
     socket.on('newMessage', handleNewMessage);
     socket.on('conversationUpdated', handleConversationUpdated);
+    socket.on('conversationTransferred', handleConversationTransferred);
     socket.on('contactUpdated', handleContactUpdated);
     socket.on('messageStatusUpdated', handleMessageStatusUpdated);
     socket.on('messageDeleted', handleMessageDeleted);
@@ -1478,12 +1540,13 @@ function InboxContent() {
     return () => {
       socket.off('newMessage', handleNewMessage);
       socket.off('conversationUpdated', handleConversationUpdated);
+      socket.off('conversationTransferred', handleConversationTransferred);
       socket.off('contactUpdated', handleContactUpdated);
       socket.off('messageStatusUpdated', handleMessageStatusUpdated);
       socket.off('messageDeleted', handleMessageDeleted);
       socket.off('conversationDeleted', handleConversationDeleted);
     };
-  }, [socket, activeChat, activeTab, activeFilterTab]);
+  }, [socket, activeChat, activeTab, activeFilterTab, selectedDepartmentFilter, refetchConversations, refetchCounts]);
 
   // Derivar contato ativo
   const activeContactData = contacts.find(c => c.id === activeChat);
@@ -1656,21 +1719,20 @@ function InboxContent() {
     }
   };
 
-  const handleTransfer = async (departmentId: string) => {
+  const handleTransfer = async (departmentId: string, userId?: string) => {
     const targetId = selectedQueueChat?.id || activeChat;
     if (!targetId) return;
     try {
-      await api.patch(`/conversations/${targetId}/transfer`, { departmentId });
+      await api.patch(`/conversations/${targetId}/transfer`, { departmentId, userId });
       setShowTransferModal(false);
       setShowTakeoverModal(false);
       setSelectedQueueChat(null);
-      setContacts(prev => prev.filter(c => c.id !== targetId)); // Remove from current view
-      if (activeChat === targetId) {
-        setActiveChat(null);
-      }
+      toast.success(userId ? 'Conversa atribuída ao atendente!' : 'Conversa transferida para o setor com sucesso!');
       refetchConversations();
-    } catch (e) {
+      refetchCounts();
+    } catch (e: any) {
       console.error("Erro ao transferir", e);
+      toast.error(e.response?.data?.message || "Erro ao transferir conversa.");
     }
   };
 
@@ -1812,6 +1874,9 @@ function InboxContent() {
     if (activeFilterTab === 'mine' && !(c.status === 'open' || c.status === 'human_takeover' || c.status === 'in_progress' || !!c.assignedTo)) return false;
     if (activeFilterTab === 'resolved' && !(c.status === 'resolved' || c.status === 'closed')) return false;
     if (onlyUnread && !((c.unread || 0) > 0 || c.hasNewMessage)) return false;
+    if (selectedDepartmentFilter && selectedDepartmentFilter !== 'all') {
+      if (c.departmentId !== selectedDepartmentFilter) return false;
+    }
 
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -1857,14 +1922,14 @@ function InboxContent() {
   const todayFirstResp = productivityData?.todayFirstResp ?? "0s";
 
   return (
-    <div className="flex h-full w-full bg-slate-100 dark:bg-[#050814] text-slate-900 dark:text-slate-100 overflow-hidden">
+    <div className={`flex h-full w-full ${isWhatsApp ? 'bg-[#0C1317]' : 'bg-slate-100 dark:bg-[#050814]'} text-slate-900 dark:text-slate-100 overflow-hidden`}>
       
       {/* 1. PAINEL ESQUERDO: Lista de Conversas (Padrão Estrutural WhatsApp Web com Master-Detail Mobile) */}
-      <div className={`${activeChat ? 'hidden md:flex' : 'flex'} w-full md:w-[360px] lg:w-[380px] flex-shrink-0 bg-white dark:bg-[#0B1224] border-r border-slate-200 dark:border-slate-800 flex-col overflow-hidden z-10`}>
+      <div className={`${activeChat ? 'hidden md:flex' : 'flex'} w-full md:w-[360px] lg:w-[380px] flex-shrink-0 ${isWhatsApp ? 'bg-[#111B21] border-[#222D34]' : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800'} border-r flex-col overflow-hidden z-10`}>
         
         {/* Header Superior WhatsApp */}
         {/* Header Superior WhatsApp (Foto de Perfil da Linha Principal & Status) */}
-        <div className="px-3.5 py-3 bg-white dark:bg-[#0B1224] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className={`px-3.5 py-3 ${isWhatsApp ? 'bg-[#202C33] border-[#222D34]' : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800'} border-b flex items-center justify-between`}>
           {(() => {
             const effectiveStatus = activeInstance ? activeInstance.status : (waStatus?.status || 'disconnected');
             const isWaConnected = effectiveStatus === 'connected';
@@ -1937,7 +2002,7 @@ function InboxContent() {
             <button
               type="button"
               onClick={() => setShowContactsModal(true)}
-              className="w-8 h-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+              className={`w-8 h-8 rounded-xl ${isWhatsApp ? 'bg-[#00A884] hover:bg-[#02906F]' : 'bg-blue-600 hover:bg-blue-500'} text-white flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95`}
               title="Nova conversa / Contatos"
             >
               <Plus size={17} className="stroke-[2.5]" />
@@ -2067,18 +2132,18 @@ function InboxContent() {
         )}
 
         {/* Barra de Busca WhatsApp */}
-        <div className="px-3 pt-2.5 pb-1.5 bg-white dark:bg-[#0B1224]">
-          <div className="bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 flex items-center gap-2 focus-within:border-blue-500 dark:focus-within:border-slate-500 focus-within:bg-white dark:focus-within:bg-[#0B1224] transition-all">
-            <Search size={15} className="text-slate-400 shrink-0" />
+        <div className={`px-3 pt-2.5 pb-1.5 ${isWhatsApp ? 'bg-[#111B21]' : 'bg-white dark:bg-[#0B1224]'}`}>
+          <div className={`${isWhatsApp ? 'bg-[#202C33] border-[#222D34] focus-within:border-[#00A884] focus-within:bg-[#202C33]' : 'bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 focus-within:border-blue-500 dark:focus-within:border-slate-500 focus-within:bg-white dark:focus-within:bg-[#0B1224]'} border rounded-xl px-3 py-2 flex items-center gap-2 transition-all`}>
+            <Search size={15} className={`${isWhatsApp ? 'text-[#8696A0]' : 'text-slate-400'} shrink-0`} />
             <input 
               type="text" 
               placeholder="Pesquisar ou começar uma nova conversa" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none"
+              className={`w-full bg-transparent text-xs ${isWhatsApp ? 'text-[#E9EDEF] placeholder:text-[#8696A0]' : 'text-slate-800 dark:text-slate-100 placeholder:text-slate-400'} outline-none`}
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-700 dark:hover:text-white">
+              <button onClick={() => setSearchQuery('')} className={`${isWhatsApp ? 'text-[#8696A0] hover:text-[#E9EDEF]' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}>
                 <X size={13} />
               </button>
             )}
@@ -2086,7 +2151,7 @@ function InboxContent() {
         </div>
 
         {/* Pílulas de Filtro (Padrão Exato WhatsApp Web - Imagem 2) */}
-        <div className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-200 dark:border-slate-800/60 bg-white dark:bg-[#0B1224] shrink-0">
+        <div className={`px-3 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b ${isWhatsApp ? 'bg-[#111B21] border-[#222D34]' : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/60'} shrink-0`}>
           <button
             type="button"
             onClick={() => {
@@ -2095,8 +2160,8 @@ function InboxContent() {
             }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
               activeFilterTab === 'all'
-                ? 'bg-blue-600 text-white font-medium shadow-sm'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border border-[#00A884] font-semibold' : 'bg-blue-600 text-white font-medium shadow-sm')
+                : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] hover:bg-[#2A3942] border border-[#222D34]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')
             }`}
           >
             Tudo
@@ -2110,14 +2175,14 @@ function InboxContent() {
             }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeFilterTab === 'unread'
-                ? 'bg-blue-600 text-white font-medium shadow-sm'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border border-[#00A884] font-semibold' : 'bg-blue-600 text-white font-medium shadow-sm')
+                : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] hover:bg-[#2A3942] border border-[#222D34]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')
             }`}
           >
             <span>Não lidas</span>
             {unreadCount > 0 && (
               <span className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${
-                activeFilterTab === 'unread' ? 'bg-white text-blue-600' : 'bg-emerald-500 text-white'
+                activeFilterTab === 'unread' ? (isWhatsApp ? 'bg-[#00A884] text-[#111B21]' : 'bg-white text-blue-600') : 'bg-emerald-500 text-white'
               }`}>
                 {unreadCount}
               </span>
@@ -2133,15 +2198,15 @@ function InboxContent() {
             }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeFilterTab === 'waiting'
-                ? 'bg-blue-600 text-white font-medium shadow-sm'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border border-[#00A884] font-semibold' : 'bg-blue-600 text-white font-medium shadow-sm')
+                : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] hover:bg-[#2A3942] border border-[#222D34]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')
             }`}
           >
             <span>Aguardando</span>
             {waitingCount > 0 && (
               <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
                 activeFilterTab === 'waiting'
-                  ? 'bg-white/20 text-white'
+                  ? (isWhatsApp ? 'bg-[#00A884]/20 text-[#00A884]' : 'bg-white/20 text-white')
                   : 'bg-amber-500/10 text-amber-600 border border-amber-500/20 dark:bg-amber-400/20 dark:text-amber-400 dark:border-amber-400/30'
               }`}>
                 {waitingCount}
@@ -2158,16 +2223,18 @@ function InboxContent() {
             }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeFilterTab === 'mine'
-                ? 'bg-blue-600 text-white font-medium shadow-sm'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border border-[#00A884] font-semibold' : 'bg-blue-600 text-white font-medium shadow-sm')
+                : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] hover:bg-[#2A3942] border border-[#222D34]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')
             }`}
           >
             <span>Meus</span>
             {mineCount > 0 && (
               <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
                 activeFilterTab === 'mine'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-blue-500/10 text-blue-600 border border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30'
+                  ? (isWhatsApp ? 'bg-[#00A884]/20 text-[#00A884]' : 'bg-white/20 text-white')
+                  : isWhatsApp
+                    ? 'bg-[#00A884]/15 text-[#00A884] border border-[#00A884]/30'
+                    : 'bg-blue-500/10 text-blue-600 border border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30'
               }`}>
                 {mineCount}
               </span>
@@ -2183,13 +2250,61 @@ function InboxContent() {
             }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
               activeFilterTab === 'resolved'
-                ? 'bg-blue-600 text-white font-medium shadow-sm'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border border-[#00A884] font-semibold' : 'bg-blue-600 text-white font-medium shadow-sm')
+                : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] hover:bg-[#2A3942] border border-[#222D34]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300')
             }`}
           >
             Resolvidos
           </button>
         </div>
+
+        {/* Barra de Filtro de Departamentos / Setores */}
+        {departments.length > 0 && (
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 border-b ${
+            isWhatsApp ? 'bg-[#111B21] border-[#222D34]' : 'bg-slate-50/70 dark:bg-[#070D18]/70 border-slate-200/80 dark:border-slate-800/60'
+          } overflow-x-auto scrollbar-none text-xs shrink-0`}>
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${isWhatsApp ? 'text-[#8696A0]' : 'text-slate-400 dark:text-slate-500'} shrink-0 mr-0.5`}>
+              Setor:
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedDepartmentFilter('all')}
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1 ${
+                selectedDepartmentFilter === 'all'
+                  ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border border-[#00A884]' : 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-xs')
+                  : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] border border-[#222D34]' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-slate-800/80 dark:text-slate-300 dark:border-slate-700/60')
+              }`}
+            >
+              Todos
+            </button>
+            {departments.map((dept) => {
+              const isSelected = selectedDepartmentFilter === dept.id;
+              const color = isWhatsApp ? '#00A884' : (dept.color || '#3b82f6');
+              return (
+                <button
+                  key={dept.id}
+                  type="button"
+                  onClick={() => setSelectedDepartmentFilter(dept.id)}
+                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 border ${
+                    isSelected
+                      ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border-[#00A884]' : 'bg-blue-600 text-white border-blue-500 shadow-xs')
+                      : (isWhatsApp ? 'bg-[#202C33] text-[#8696A0] border-[#222D34]' : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200 dark:bg-slate-800/80 dark:text-slate-300 dark:border-slate-700/60')
+                  }`}
+                  style={!isWhatsApp ? {
+                    backgroundColor: isSelected ? color : undefined,
+                    borderColor: isSelected ? color : undefined,
+                  } : undefined}
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ backgroundColor: isSelected ? (isWhatsApp ? '#00A884' : '#ffffff') : color }}
+                  />
+                  <span>{dept.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Lista de Contatos WhatsApp */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden relative scrollbar-thin">
@@ -2231,15 +2346,17 @@ function InboxContent() {
                   setActiveChat(contact.id);
                   setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, hasNewMessage: false, unread: 0 } : c));
                 }}
-                className={`flex items-center gap-3.5 px-3.5 py-3 cursor-pointer transition-colors relative group border-b border-slate-100 dark:border-slate-800/40 ${
+                className={`flex items-center gap-3.5 px-3.5 py-3 cursor-pointer transition-colors relative group border-b ${
+                  isWhatsApp ? 'border-[#222D34]' : 'border-slate-100 dark:border-slate-800/40'
+                } ${
                   activeChat === contact.id
-                    ? 'bg-blue-50/80 dark:bg-blue-950/40 border-l-4 border-blue-600'
-                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                    ? (isWhatsApp ? 'bg-[#2A3942] border-l-4 border-[#00A884]' : 'bg-blue-50/80 dark:bg-blue-950/40 border-l-4 border-blue-600')
+                    : (isWhatsApp ? 'hover:bg-[#202C33]' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50')
                 }`}
               >
                 {/* Avatar Circular 48x48 */}
                 <div className="relative shrink-0">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center text-slate-700 dark:text-white font-bold text-sm shadow-inner">
+                  <div className={`w-12 h-12 rounded-full overflow-hidden ${isWhatsApp ? 'bg-[#202C33] border-[#222D34]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/60'} border flex items-center justify-center text-slate-700 dark:text-white font-bold text-sm shadow-inner`}>
                     {isAvatarUrlValid(contact.avatarUrl) ? (
                       <img 
                         src={contact.avatarUrl!} 
@@ -2259,55 +2376,131 @@ function InboxContent() {
                     </span>
                   </div>
                   {/* Status Indicator */}
-                  <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0B1224] shadow-sm" />
+                  <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 ${isWhatsApp ? 'border-[#111B21]' : 'border-white dark:border-[#0B1224]'} shadow-sm`} />
                 </div>
 
-                {/* Conteúdo do Card de Conversa (2 Linhas - Padrão WhatsApp Web) */}
-                <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
-                  {/* Linha 1: Nome + Horário */}
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className={`text-[0.93rem] truncate ${
-                      contact.unread > 0 
-                        ? 'font-bold text-slate-900 dark:text-white' 
-                        : (activeChat === contact.id 
-                            ? 'font-semibold text-blue-700 dark:text-white' 
-                            : 'font-semibold text-slate-900 dark:text-slate-200'
-                          )
-                    }`}>
-                      {formatContactDisplayName(contact.name, contact.phone)}
-                    </h3>
-                    <span className={`text-[11px] whitespace-nowrap shrink-0 ${
-                      contact.unread > 0 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-400 dark:text-slate-500 text-xs'
-                    }`}>
-                      {contact.time || ''}
-                    </span>
-                  </div>
-
-                  {/* Linha 2: Preview da Mensagem com Ticks + Badge de Não Lidas */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1 min-w-0 flex-1">
-                      {contact.lastMessageDirection === 'OUTBOUND' && (
-                        <CheckCheck size={14} className="text-cyan-600 dark:text-cyan-400 shrink-0 inline-block" />
-                      )}
-                      <p className={`text-xs truncate ${
-                        contact.unread > 0 ? 'text-slate-800 dark:text-slate-200 font-medium' : 'text-slate-500 dark:text-slate-400'
+                {/* Conteúdo do Card de Conversa (3 Linhas - Padrão Lero / WhatsApp Corporativo VERSUS) */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+                  {/* Linha 1: Nome + Tag + Horário + Badge de Não Lidas */}
+                  <div className="flex items-center justify-between gap-1.5 min-w-0">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <h3 className={`text-[0.91rem] truncate ${
+                        contact.unread > 0 
+                          ? 'font-bold text-slate-900 dark:text-white' 
+                          : (activeChat === contact.id 
+                              ? (isWhatsApp ? 'font-bold text-[#E9EDEF]' : 'font-bold text-blue-700 dark:text-white') 
+                              : 'font-semibold text-slate-900 dark:text-slate-200'
+                            )
                       }`}>
-                        {contact.lastMessage || contact.lastMsg || 'Nenhuma mensagem recente'}
-                      </p>
+                        {formatContactDisplayName(contact.name, contact.phone)}
+                      </h3>
+
+                      {/* Tag do Contato no Estilo Lero */}
+                      {contact.tags && contact.tags.length > 0 && (() => {
+                        const firstTag = contact.tags[0];
+                        const tagTheme = getTagColor(firstTag);
+                        return (
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 ${tagTheme.bg} ${tagTheme.text} ${tagTheme.border}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${tagTheme.dot} shrink-0`} />
+                            <span className="truncate max-w-[85px]">{firstTag}</span>
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={`text-[11px] whitespace-nowrap shrink-0 ${
+                        contact.unread > 0 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-400 dark:text-slate-500'
+                      }`}>
+                        {contact.time || ''}
+                      </span>
                       {contact.unread > 0 && (
-                        <span className="min-w-[1.25rem] h-5 px-1.5 bg-emerald-500 text-white font-black text-[11px] rounded-full flex items-center justify-center shadow-[0_0_8px_rgba(16,185,129,0.5)]">
+                        <span className="min-w-[1.15rem] h-4.5 px-1 bg-emerald-500 text-white font-black text-[10px] rounded-full flex items-center justify-center shadow-[0_0_8px_rgba(16,185,129,0.5)]">
                           {contact.unread}
                         </span>
                       )}
-                      {contact.status === 'bot_active' && (
-                        <span className="text-[10px] text-cyan-600 dark:text-cyan-400 px-1.5 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-500/30 font-semibold">
-                          IA
-                        </span>
+                    </div>
+                  </div>
+
+                  {/* Linha 2: Preview da Mensagem com Ticks / Ícone de Áudio */}
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <div className="flex items-center gap-1 min-w-0 flex-1">
+                      {contact.lastMessageDirection === 'OUTBOUND' && (
+                        <CheckCheck size={13} className="text-cyan-600 dark:text-cyan-400 shrink-0 inline-block" />
+                      )}
+                      {(contact.lastMessageType === 'audio' || contact.lastMsg?.includes('[Áudio]') || contact.lastMsg?.includes('[AUDIO]') || contact.lastMessage?.includes('[Áudio]') || contact.lastMessage?.includes('[AUDIO]')) ? (
+                        <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400 text-xs truncate">
+                          <Mic size={13} className="text-slate-400 dark:text-slate-500 shrink-0 inline-block" />
+                          <span className="truncate">Mensagem de voz</span>
+                        </div>
+                      ) : (
+                        <p className={`text-xs truncate ${
+                          contact.unread > 0 ? 'text-slate-800 dark:text-slate-200 font-medium' : 'text-slate-500 dark:text-slate-400'
+                        }`}>
+                          {contact.lastMessage || contact.lastMsg || 'Nenhuma mensagem recente'}
+                        </p>
                       )}
                     </div>
+                  </div>
+
+                  {/* Linha 3: Identificação do Atendente + Setor/Região e Badge de Status (Padrão Lero) */}
+                  <div className="flex items-center justify-between gap-1.5 pt-0.5 mt-0.5 border-t border-slate-100/80 dark:border-slate-800/40">
+                    {/* Lado Esquerdo: Bolinha de Status + Ícone de Usuário + Nome do Atendente • Setor */}
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
+                      {/* Bolinha indicadora de status */}
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${
+                        (contact.status === 'open' || contact.status === 'human_takeover')
+                          ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]'
+                          : contact.status === 'bot_active'
+                          ? 'bg-cyan-500 shadow-[0_0_6px_rgba(6,182,212,0.6)]'
+                          : contact.status === 'waiting'
+                          ? 'bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]'
+                          : 'bg-slate-400'
+                      }`} />
+
+                      {/* Ícone de Usuário */}
+                      <User size={11} className="text-slate-400 dark:text-slate-500 shrink-0" />
+
+                      {/* Atendente • Setor / Região */}
+                      {(() => {
+                        const operatorName = contact.assignedUser?.name
+                          || (contact.status === 'bot_active' ? `IA ${aiAgentName || 'Sofia'}` : (contact.assignedTo ? 'Atendente' : 'Comercial'));
+                        
+                        const departmentName = contact.department?.name 
+                          || (contact.status === 'bot_active' ? 'IA' : 'Comercial');
+
+                        return (
+                          <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                            <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[105px]">
+                              {operatorName}
+                            </span>
+                            <span className="text-slate-400 dark:text-slate-600">•</span>
+                            <span className="text-slate-500 dark:text-slate-400 truncate max-w-[95px]">
+                              {departmentName}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Lado Direito: Badge Pill de Status (ex: Em atendimento) */}
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md border shrink-0 whitespace-nowrap leading-none ${
+                      (contact.status === 'open' || contact.status === 'human_takeover')
+                        ? 'border-emerald-300/80 bg-emerald-50/80 text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/40 dark:text-emerald-300'
+                        : contact.status === 'bot_active'
+                        ? 'border-cyan-300/80 bg-cyan-50/80 text-cyan-700 dark:border-cyan-700/60 dark:bg-cyan-950/40 dark:text-cyan-300'
+                        : contact.status === 'waiting'
+                        ? 'border-amber-300/80 bg-amber-50/80 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300'
+                        : 'border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400'
+                    }`}>
+                      {contact.status === 'bot_active' 
+                        ? 'IA Ativa' 
+                        : contact.status === 'waiting' 
+                        ? 'Aguardando' 
+                        : (contact.status === 'resolved' || contact.status === 'closed') 
+                        ? 'Finalizado' 
+                        : 'Em atendimento'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -2316,11 +2509,11 @@ function InboxContent() {
       </div>
 
       {/* 2. PAINEL CENTRAL: Janela de Chat (Estrutura WhatsApp Corporativo VERSUS) */}
-      <div className={`${!activeChat ? 'hidden md:flex' : 'flex'} flex-1 w-full bg-slate-50 dark:bg-[#070D18] flex-col overflow-hidden relative border-r border-slate-200 dark:border-slate-800/80`}>
+      <div className={`${!activeChat ? 'hidden md:flex' : 'flex'} flex-1 w-full ${isWhatsApp ? 'bg-[#0B141A] border-[#222D34]' : 'bg-slate-50 dark:bg-[#070D18] border-slate-200 dark:border-slate-800/80'} flex-col overflow-hidden relative border-r`}>
         
-        {/* Textura/Papel de Parede Sutil Autêntico WhatsApp adaptado ao Dark Mode Corporativo (2.5% de opacidade) */}
+        {/* Textura/Papel de Parede Sutil Autêntico WhatsApp adaptado ao Dark Mode Corporativo */}
         <div 
-          className="absolute inset-0 opacity-[0.035] dark:opacity-[0.025] invert dark:invert-0 pointer-events-none" 
+          className={`absolute inset-0 ${isWhatsApp ? 'opacity-[0.06] brightness-75' : 'opacity-[0.035] dark:opacity-[0.025] invert dark:invert-0'} pointer-events-none`} 
           style={{ 
             backgroundImage: WHATSAPP_WALLPAPER_BG, 
             backgroundRepeat: 'repeat', 
@@ -2449,7 +2642,7 @@ function InboxContent() {
         ) : (
           <>
             {/* Chat Header (Padrão Estrutural WhatsApp - Design Monocromático VERSUS) */}
-            <div className="h-16 px-2.5 sm:px-4 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between bg-white dark:bg-[#0B1224] z-30 shadow-sm shrink-0 w-full text-slate-900 dark:text-white">
+            <div className={`h-16 px-2.5 sm:px-4 border-b ${isWhatsApp ? 'bg-[#202C33] border-[#222D34]' : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80'} flex items-center justify-between z-30 shadow-sm shrink-0 w-full text-slate-900 dark:text-white`}>
               <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 overflow-hidden">
                 {/* Botão Voltar para Lista no Mobile (WhatsApp style) */}
                 <button
@@ -2458,7 +2651,7 @@ function InboxContent() {
                     e.stopPropagation();
                     setActiveChat(null);
                   }}
-                  className="md:hidden p-1.5 -ml-0.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors shrink-0 cursor-pointer"
+                  className={`md:hidden p-1.5 -ml-0.5 ${isWhatsApp ? 'text-[#8696A0] hover:text-white hover:bg-[#2A3942]' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80'} rounded-lg transition-colors shrink-0 cursor-pointer`}
                   title="Voltar para conversas"
                 >
                   <ArrowLeft size={20} />
@@ -2471,7 +2664,7 @@ function InboxContent() {
                 >
                   {/* Avatar WhatsApp com indicador de status */}
                   <div className="relative shrink-0">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center text-slate-700 dark:text-white font-bold shrink-0 relative overflow-hidden shadow-inner text-xs sm:text-sm">
+                    <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full ${isWhatsApp ? 'bg-[#2A3942] border-[#222D34]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/60'} border flex items-center justify-center text-slate-700 dark:text-white font-bold shrink-0 relative overflow-hidden shadow-inner text-xs sm:text-sm`}>
                       {(() => {
                         const isSelfOrMainLine = activeContactData.name?.includes('(você)') || (activeContactData.phone && activeInstance?.phoneNumber && activeContactData.phone.replace(/\D/g, '') === activeInstance.phoneNumber.replace(/\D/g, ''));
                         const rawContactPhoto = activeContactData.avatarUrl || (isSelfOrMainLine ? (activeInstance?.profilePicUrl || waStatus?.profilePicUrl) : null);
@@ -2496,15 +2689,49 @@ function InboxContent() {
                       </span>
                     </div>
                     {/* Status Indicator */}
-                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0B1224]" />
+                    <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 border-2 ${isWhatsApp ? 'border-[#202C33]' : 'border-white dark:border-[#0B1224]'}`} />
                   </div>
                   
                   {/* Título e Subtítulo WhatsApp */}
                   <div className="min-w-0 flex-1 overflow-hidden">
-                    <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate whitespace-nowrap group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors leading-tight">
-                      {formatContactDisplayName(activeContactData.name, activeContactData.phone)}
-                    </h2>
-                    {activeContactData.isAi || activeContactData.status === 'bot_active' ? (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate whitespace-nowrap group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors leading-tight">
+                        {formatContactDisplayName(activeContactData.name, activeContactData.phone)}
+                      </h2>
+                      {activeContactData.department && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            loadDepartmentsAndShowTransfer();
+                          }}
+                          className="text-[10px] font-semibold px-2 py-0.5 rounded-md border flex items-center gap-1 cursor-pointer hover:opacity-85 transition-opacity shrink-0"
+                          style={{
+                            backgroundColor: isWhatsApp ? 'rgba(0,168,132,0.15)' : ((activeContactData.department.color || "#3b82f6") + "20"),
+                            borderColor: isWhatsApp ? 'rgba(0,168,132,0.3)' : ((activeContactData.department.color || "#3b82f6") + "40"),
+                            color: isWhatsApp ? '#00A884' : (activeContactData.department.color || "#60a5fa"),
+                          }}
+                          title="Clique para transferir departamento"
+                        >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full shrink-0"
+                            style={{ backgroundColor: isWhatsApp ? '#00A884' : (activeContactData.department.color || "#3b82f6") }}
+                          />
+                          <span>{activeContactData.department.name}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {activeContactData.assignedUser ? (
+                      <span className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium truncate whitespace-nowrap block leading-tight mt-0.5">
+                        Atendente: <strong className="text-slate-900 dark:text-white font-semibold">{activeContactData.assignedUser.name}</strong>
+                        {activeContactData.assignedUser.departments && activeContactData.assignedUser.departments.length > 0 && (
+                          <span className="text-slate-400 dark:text-slate-500 font-normal">
+                            {" "}• {activeContactData.assignedUser.departments.map((d: any) => d.department?.name).filter(Boolean).join(", ")}
+                          </span>
+                        )}
+                      </span>
+                    ) : activeContactData.isAi || activeContactData.status === 'bot_active' ? (
                       <div className="flex items-center gap-1 text-[11px] sm:text-xs text-cyan-600 dark:text-cyan-400 font-medium truncate whitespace-nowrap leading-tight mt-0.5">
                         <BrainCircuit size={11} className="animate-pulse shrink-0" />
                         <span className="truncate">IA {aiAgentName} conversando...</span>
@@ -2526,40 +2753,72 @@ function InboxContent() {
                 </div>
               </div>
 
-              {/* Ações Alinhadas à Direita (Padrão WhatsApp Web) */}
+              {/* Ações Alinhadas à Direita (Padrão WhatsApp Web + VERSUS) */}
               <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-1.5">
                 {isResolved ? (
                   <div className="flex items-center gap-1 sm:gap-1.5 mr-0.5 sm:mr-1">
-                    <span className="hidden sm:inline-flex text-slate-700 dark:text-slate-300 text-[11px] font-semibold px-2 py-0.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg items-center gap-1">
+                    <span className={`hidden sm:inline-flex ${isWhatsApp ? 'text-[#8696A0] bg-[#202C33] border-[#222D34]' : 'text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/80'} text-[11px] font-semibold px-2 py-0.5 border rounded-lg items-center gap-1`}>
                       <Lock size={11} className="text-slate-400" />
                       Finalizado
                     </span>
                     <button 
                       onClick={handleReopen} 
                       disabled={isReopening}
-                      className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 shrink-0 shadow-sm"
+                      className={`${isWhatsApp ? 'bg-[#00A884] hover:bg-[#02906F]' : 'bg-blue-600 hover:bg-blue-500'} text-white text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 shrink-0 shadow-sm`}
                       title="Reabrir atendimento"
                     >
                       <ArrowRightLeft size={11} />
                       <span>{isReopening ? '...' : 'Reabrir'}</span>
                     </button>
                   </div>
-                ) : (activeContactData.status === 'bot_active' || activeContactData.status === 'waiting' || activeContactData.status === 'open') ? (
-                  <button onClick={() => handleTakeover()} className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold px-2 sm:px-3 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer mr-0.5 sm:mr-1 shrink-0 shadow-sm">
-                    <UserCheck size={12} />
-                    <span>Assumir</span>
-                  </button>
-                ) : activeContactData.status === 'human_takeover' ? (
-                  <div className="flex items-center gap-1 mr-0.5 sm:mr-1 shrink-0">
-                    <button onClick={() => handleTakeover()} className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-sm">
+                ) : (
+                  <div className="flex items-center gap-1 sm:gap-1.5 mr-0.5 sm:mr-1 shrink-0">
+                    {/* Botão Assumir */}
+                    <button 
+                      onClick={() => handleTakeover()} 
+                      className={`text-white text-[11px] font-bold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm ${
+                        activeContactData.status === 'human_takeover'
+                          ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500'
+                          : isWhatsApp
+                            ? 'bg-[#00A884] hover:bg-[#02906F]'
+                            : 'bg-blue-600 hover:bg-blue-500'
+                      }`}
+                      title="Assumir o atendimento"
+                    >
                       <UserCheck size={12} />
                       <span>Assumir</span>
                     </button>
-                    <button onClick={handleRelease} className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700/80 text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer">
+
+                    {/* Botão Transferir (solicitado pelo usuário lado a lado com Assumir e Finalizar) */}
+                    <button 
+                      type="button"
+                      onClick={() => loadDepartmentsAndShowTransfer()} 
+                      className={`text-[11px] font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm ${
+                        isWhatsApp
+                          ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] border border-[#222D34]'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700 hover:text-blue-600 dark:hover:text-blue-400'
+                      }`}
+                      title="Transferir para outro atendente ou setor"
+                    >
+                      <ArrowRightLeft size={12} className={isWhatsApp ? "text-[#8696A0]" : "text-blue-500"} />
+                      <span>Transferir</span>
+                    </button>
+
+                    {/* Botão Finalizar */}
+                    <button 
+                      onClick={handleRelease} 
+                      className={`text-[11px] font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm ${
+                        isWhatsApp
+                          ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] border border-[#222D34]'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700 hover:text-red-600 dark:hover:text-red-400'
+                      }`}
+                      title="Finalizar atendimento"
+                    >
+                      <CheckCircle2 size={12} className="text-emerald-500" />
                       <span>Finalizar</span>
                     </button>
                   </div>
-                ) : null}
+                )}
 
                 {/* Botão de Ação Manual no Funil do CRM */}
                 {activeContactData?.contactId && (
@@ -2572,14 +2831,16 @@ function InboxContent() {
                       }}
                       className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border transition-all flex items-center gap-1 cursor-pointer text-xs font-semibold ${
                         showCrmDropdown
-                          ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-600/25 dark:text-blue-300 dark:border-blue-500/60 shadow-lg shadow-blue-500/10'
-                          : currentStageObj
-                            ? `${currentStageObj.bgLight} ${currentStageObj.color} ${currentStageObj.borderLight} hover:brightness-125`
-                            : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 hover:text-slate-900 dark:bg-[#1E293B]/80 dark:text-slate-300 dark:border-slate-700/80 dark:hover:bg-slate-700/80 dark:hover:text-white'
+                          ? (isWhatsApp ? 'bg-[#103629] text-[#00A884] border-[#00A884]' : 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-600/25 dark:text-blue-300 dark:border-blue-500/60 shadow-lg shadow-blue-500/10')
+                          : isWhatsApp
+                            ? 'bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] border-[#222D34]'
+                            : currentStageObj
+                              ? `${currentStageObj.bgLight} ${currentStageObj.color} ${currentStageObj.borderLight} hover:brightness-125`
+                              : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 hover:text-slate-900 dark:bg-[#1E293B]/80 dark:text-slate-300 dark:border-slate-700/80 dark:hover:bg-slate-700/80 dark:hover:text-white'
                       }`}
                       title="Mover lead no Funil do CRM"
                     >
-                      <Workflow size={13} className={currentStageObj ? currentStageObj.color : 'text-blue-600 dark:text-blue-400'} />
+                      <Workflow size={13} className={isWhatsApp ? 'text-[#00A884]' : (currentStageObj ? currentStageObj.color : 'text-blue-600 dark:text-blue-400')} />
                       <span className="hidden md:inline font-medium text-[11px] max-w-[100px] truncate">
                         {currentStageObj ? currentStageObj.title : 'Funil CRM'}
                       </span>
@@ -2959,7 +3220,7 @@ function InboxContent() {
                       {/* Pílula de Data Centralizada (WhatsApp Date Divider) */}
                       {showDateDivider && (
                         <div className="flex justify-center my-2">
-                          <div className="bg-slate-200/90 text-slate-700 dark:bg-[#111A2E]/95 dark:text-slate-300 text-[11px] font-medium px-3.5 py-1 rounded-lg shadow-sm border border-slate-300/80 dark:border-slate-800/80 backdrop-blur-sm uppercase tracking-wide">
+                          <div className={`${isWhatsApp ? 'bg-[#182229] text-[#8696A0] border-[#222D34]' : 'bg-slate-200/90 text-slate-700 dark:bg-[#111A2E]/95 dark:text-slate-300 border-slate-300/80 dark:border-slate-800/80'} text-[11px] font-medium px-3.5 py-1 rounded-lg shadow-sm border backdrop-blur-sm uppercase tracking-wide`}>
                             {currentDateLabel}
                           </div>
                         </div>
@@ -2971,8 +3232,12 @@ function InboxContent() {
                           msg.isInternal
                             ? 'bg-amber-50 text-amber-900 border border-amber-300 dark:bg-[#281b0a] dark:text-amber-100 dark:border-amber-500/30 rounded-lg rounded-tr-none'
                             : isMe
-                              ? 'bg-blue-600 text-white shadow-sm border border-blue-500/30 dark:bg-blue-600 dark:text-white dark:border-blue-700/30 rounded-lg rounded-tr-none'
-                              : 'bg-white text-slate-800 shadow-sm border border-slate-200/80 dark:bg-[#1E293B] dark:text-slate-100 dark:border-slate-700/50 rounded-lg rounded-tl-none'
+                              ? (isWhatsApp 
+                                  ? 'bg-[#005C4B] text-[#E9EDEF] shadow-sm border border-[rgba(0,92,75,0.4)] rounded-lg rounded-tr-none' 
+                                  : 'bg-blue-600 text-white shadow-sm border border-blue-500/30 dark:bg-blue-600 dark:text-white dark:border-blue-700/30 rounded-lg rounded-tr-none')
+                              : (isWhatsApp 
+                                  ? 'bg-[#202C33] text-[#E9EDEF] shadow-sm border border-[#222D34] rounded-lg rounded-tl-none' 
+                                  : 'bg-white text-slate-800 shadow-sm border border-slate-200/80 dark:bg-[#1E293B] dark:text-slate-100 dark:border-slate-700/50 rounded-lg rounded-tl-none')
                         }`}>
                           {/* Botão de Excluir Mensagem no Hover (Padrão WhatsApp Web) */}
                           {!msg.isInternal && (
@@ -2983,7 +3248,7 @@ function InboxContent() {
                                 handleDeleteMessage(msg.id);
                               }}
                               title={isMe ? "Apagar mensagem para todos no WhatsApp" : "Apagar mensagem do histórico"}
-                              className="absolute -top-2 -right-2 p-1.5 rounded-full bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-500/60 opacity-0 group-hover:opacity-100 transition-all shadow-lg z-20 cursor-pointer"
+                              className={`absolute -top-2 -right-2 p-1.5 rounded-full ${isWhatsApp ? 'bg-[#202C33] border-[#222D34] text-[#8696A0] hover:text-rose-400' : 'bg-white dark:bg-[#0F172A] border-slate-200 dark:border-slate-700/80 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400'} border opacity-0 group-hover:opacity-100 transition-all shadow-lg z-20 cursor-pointer`}
                             >
                               <Trash2 size={13} />
                             </button>
@@ -2994,11 +3259,11 @@ function InboxContent() {
                               <path fill="currentColor" d="M0 0h6.5c1.1 0 1.8.9 1.3 1.9l-5.2 9.8c-.7 1.4-2.6.8-2.6-.8V0z" />
                             </svg>
                           ) : isMe ? (
-                            <svg className="absolute -top-[0.5px] -right-2 text-blue-600 dark:text-blue-600 pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
+                            <svg className={`absolute -top-[0.5px] -right-2 ${isWhatsApp ? 'text-[#005C4B]' : 'text-blue-600 dark:text-blue-600'} pointer-events-none drop-shadow-sm`} width="9" height="13" viewBox="0 0 9 13">
                               <path fill="currentColor" d="M0 0h6.5c1.1 0 1.8.9 1.3 1.9l-5.2 9.8c-.7 1.4-2.6.8-2.6-.8V0z" />
                             </svg>
                           ) : (
-                            <svg className="absolute -top-[0.5px] -left-2 text-white dark:text-[#1E293B] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
+                            <svg className={`absolute -top-[0.5px] -left-2 ${isWhatsApp ? 'text-[#202C33]' : 'text-white dark:text-[#1E293B]'} pointer-events-none drop-shadow-sm`} width="9" height="13" viewBox="0 0 9 13">
                               <path fill="currentColor" d="M9 0H2.5C1.4 0 .7.9 1.2 1.9l5.2 9.8c.7 1.4 2.6.8 2.6-.8V0z" />
                             </svg>
                           )}
@@ -3329,7 +3594,7 @@ function InboxContent() {
                     )}
 
                     {/* Barra de Input Flutuante Nativa Padrão WhatsApp Web */}
-                    <div className="p-2 sm:p-2.5 px-2.5 sm:px-3 flex items-center gap-1.5 sm:gap-2 relative bg-white dark:bg-[#0B1224] w-full max-w-full shrink-0">
+                    <div className={`p-2 sm:p-2.5 px-2.5 sm:px-3 flex items-center gap-1.5 sm:gap-2 relative ${isWhatsApp ? 'bg-[#202C33] border-t border-[#222D34]' : 'bg-white dark:bg-[#0B1224]'} w-full max-w-full shrink-0`}>
                       {isRecording ? (
                         /* Painel de Gravação de Áudio WhatsApp */
                         <div className="flex-1 bg-rose-50 dark:bg-[#11192A] border border-rose-300 dark:border-rose-500/40 rounded-xl px-4 py-2 flex items-center justify-between animate-in fade-in duration-200 min-h-[44px]">
@@ -3503,16 +3768,18 @@ function InboxContent() {
                           </div>
 
                           {/* 3. Cápsula de Texto WhatsApp com Cantos Arredondados */}
-                          <div className={`flex-1 min-w-0 bg-slate-100 dark:bg-[#161F30] border rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 min-h-[42px] sm:min-h-[44px] max-h-36 flex items-center transition-all shadow-inner relative ${
+                          <div className={`flex-1 min-w-0 border rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 min-h-[42px] sm:min-h-[44px] max-h-36 flex items-center transition-all shadow-inner relative ${
                             isInternalMode 
                               ? 'border-amber-400 dark:border-amber-500/50 bg-amber-50/60 dark:bg-amber-950/15 focus-within:border-amber-500' 
-                              : 'border-slate-200 dark:border-slate-700 focus-within:border-blue-500/80 focus-within:ring-1 focus-within:ring-blue-500/20'
+                              : isWhatsApp
+                                ? 'bg-[#2A3942] border-transparent focus-within:border-transparent text-[#E9EDEF]'
+                                : 'bg-slate-100 dark:bg-[#161F30] border-slate-200 dark:border-slate-700 focus-within:border-blue-500/80 focus-within:ring-1 focus-within:ring-blue-500/20'
                           }`}>
                             <textarea 
                               ref={textareaRef}
                               placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem (ou '/' para atalhos e catálogo)"} 
                               className={`w-full flex-1 min-w-0 bg-transparent text-[0.93rem] resize-none outline-none py-0.5 max-h-32 
-                                ${isInternalMode ? 'text-amber-950 dark:text-amber-100 placeholder:text-amber-600/60 dark:placeholder:text-amber-500/50' : 'text-slate-900 dark:text-slate-100 placeholder:text-slate-400'}
+                                ${isInternalMode ? 'text-amber-950 dark:text-amber-100 placeholder:text-amber-600/60 dark:placeholder:text-amber-500/50' : isWhatsApp ? 'text-[#E9EDEF] placeholder:text-[#8696A0]' : 'text-slate-900 dark:text-slate-100 placeholder:text-slate-400'}
                               `}
                               rows={1}
                               value={inputText}
@@ -3686,9 +3953,13 @@ function InboxContent() {
                                 ${(inputText.trim() || selectedFile)
                                   ? (isInternalMode 
                                       ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-[0_0_12px_rgba(217,119,6,0.4)] active:scale-95' 
-                                      : 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)] active:scale-95'
+                                      : isWhatsApp
+                                        ? 'bg-[#00A884] hover:bg-[#02906F] text-white shadow-[0_0_12px_rgba(0,168,132,0.4)] active:scale-95'
+                                        : 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)] active:scale-95'
                                     )
-                                  : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700/80'
+                                  : isWhatsApp
+                                    ? 'bg-[#2A3942] text-[#8696A0] hover:text-[#E9EDEF]'
+                                    : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700/80'
                                 }
                               `}
                             >
@@ -4073,7 +4344,42 @@ function InboxContent() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] text-slate-500">Atribuído a</span>
-                  <span className="text-slate-700 dark:text-slate-300 font-semibold">{currentUserName}</span>
+                  <span className="text-slate-700 dark:text-slate-300 font-semibold truncate">
+                    {activeContactData.assignedUser ? activeContactData.assignedUser.name : (activeContactData.assignedTo ? 'Atendente' : 'Fila Geral')}
+                  </span>
+                </div>
+
+                {/* Departamento / Setor da Conversa */}
+                <div className="flex flex-col col-span-2 pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
+                  <span className="text-[10px] text-slate-500">Departamento / Setor</span>
+                  <div className="flex items-center justify-between mt-1">
+                    {activeContactData.department ? (
+                      <span
+                        className="text-[11px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1.5"
+                        style={{
+                          backgroundColor: (activeContactData.department.color || "#3b82f6") + "20",
+                          borderColor: (activeContactData.department.color || "#3b82f6") + "40",
+                          color: activeContactData.department.color || "#60a5fa",
+                        }}
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: activeContactData.department.color || "#3b82f6" }}
+                        />
+                        <span>{activeContactData.department.name}</span>
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-400 dark:text-slate-500">Nenhum setor definido</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => loadDepartmentsAndShowTransfer()}
+                      className="text-[11px] font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400 cursor-pointer underline flex items-center gap-1"
+                    >
+                      <ArrowRightLeft size={11} />
+                      Transferir
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -4096,27 +4402,59 @@ function InboxContent() {
             </div>
             <div className="p-6">
               <p className="text-sm text-slate-600 dark:text-gray-400 mb-4">
-                Selecione o departamento para o qual deseja enviar este lead. A roleta distribuirá para um agente online automaticamente.
+                Selecione o departamento para a fila geral ou escolha um atendente específico vinculado ao setor:
               </p>
               
-              <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+              <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
                 {departments.length === 0 ? (
-                  <p className="text-xs text-slate-500 dark:text-gray-500 text-center">Nenhum departamento encontrado.</p>
+                  <p className="text-xs text-slate-500 dark:text-gray-500 text-center py-4">Nenhum departamento encontrado.</p>
                 ) : (
                   departments.map(dept => (
-                    <button
+                    <div
                       key={dept.id}
-                      onClick={() => handleTransfer(dept.id)}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-gray-800/50 dark:hover:bg-gray-700/80 border border-slate-200 dark:border-gray-700 hover:border-primary transition-all text-left cursor-pointer"
+                      className="rounded-xl bg-slate-50 dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700/80 p-3 space-y-2"
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${dept.color || '#3b82f6'}30` }}>
-                        <Network size={16} style={{ color: dept.color || '#3b82f6' }} />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${dept.color || '#3b82f6'}25` }}>
+                            <Network size={16} style={{ color: dept.color || '#3b82f6' }} />
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate">{dept.name}</h4>
+                            <p className="text-[11px] text-slate-500 dark:text-gray-400">{dept.users?.length || 0} membro(s) vinculados</p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleTransfer(dept.id)}
+                          className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors shrink-0 cursor-pointer shadow-xs"
+                          title="Distribuir para a fila geral deste setor"
+                        >
+                          Fila do Setor
+                        </button>
                       </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">{dept.name}</h4>
-                        <p className="text-xs text-slate-500 dark:text-gray-400">{dept.users?.length || 0} membros</p>
-                      </div>
-                    </button>
+
+                      {dept.users && dept.users.length > 0 && (
+                        <div className="pt-2 border-t border-slate-200/70 dark:border-gray-700/60 flex flex-wrap gap-1.5 items-center">
+                          <span className="text-[10px] text-slate-400 font-medium">Ou atribuir a:</span>
+                          {dept.users.map((u: any) => {
+                            const usr = u.user || u;
+                            return (
+                              <button
+                                key={usr.id}
+                                type="button"
+                                onClick={() => handleTransfer(dept.id, usr.id)}
+                                className="px-2 py-0.5 rounded-md bg-white hover:bg-slate-100 dark:bg-gray-700/60 dark:hover:bg-gray-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-gray-600 text-[10px] font-medium transition-colors cursor-pointer flex items-center gap-1"
+                              >
+                                <User size={10} className="text-slate-400" />
+                                <span>{usr.name || 'Atendente'}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   ))
                 )}
               </div>

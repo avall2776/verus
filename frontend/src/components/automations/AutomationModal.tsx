@@ -256,22 +256,22 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#0B1224] border border-slate-800/80 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         {/* MODAL HEADER */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/40">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/40">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500/10 dark:from-cyan-500/20 to-blue-600/10 dark:to-blue-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
               <Zap size={22} className="animate-pulse" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 Construtor de Automação Comercial
-                <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-mono font-medium">
                   Enterprise
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Configure gatilhos inteligentes e ações instantâneas sem intervenção humana
               </p>
             </div>
@@ -279,14 +279,14 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
 
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/60 transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* STEPPER PROGRESS */}
-        <div className="px-8 py-3 bg-slate-900/60 border-b border-slate-800/60 flex items-center justify-between">
+        <div className="px-8 py-3 bg-slate-100/70 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800/60 flex items-center justify-between">
           <div className="flex items-center gap-8 w-full max-w-2xl mx-auto">
             {/* Step 1 */}
             <div
@@ -299,21 +299,21 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                     ? "bg-cyan-500 text-slate-950 ring-4 ring-cyan-500/20 shadow-lg shadow-cyan-500/30"
                     : step > 1
                     ? "bg-emerald-500 text-slate-950"
-                    : "bg-slate-800 text-slate-400"
+                    : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
                 {step > 1 ? <CheckCircle2 size={14} /> : "1"}
               </div>
               <span
                 className={`text-xs font-semibold ${
-                  step === 1 ? "text-cyan-400" : step > 1 ? "text-emerald-400" : "text-slate-400"
+                  step === 1 ? "text-cyan-600 dark:text-cyan-400" : step > 1 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"
                 }`}
               >
                 Identificação
               </span>
             </div>
 
-            <div className="flex-1 h-[2px] bg-slate-800">
+            <div className="flex-1 h-[2px] bg-slate-200 dark:bg-slate-800">
               <div
                 className="h-full bg-cyan-500 transition-all duration-300"
                 style={{ width: step === 1 ? "0%" : step === 2 ? "50%" : "100%" }}
@@ -331,21 +331,21 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                     ? "bg-cyan-500 text-slate-950 ring-4 ring-cyan-500/20 shadow-lg shadow-cyan-500/30"
                     : step > 2
                     ? "bg-emerald-500 text-slate-950"
-                    : "bg-slate-800 text-slate-400"
+                    : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
                 {step > 2 ? <CheckCircle2 size={14} /> : "2"}
               </div>
               <span
                 className={`text-xs font-semibold ${
-                  step === 2 ? "text-cyan-400" : step > 2 ? "text-emerald-400" : "text-slate-400"
+                  step === 2 ? "text-cyan-600 dark:text-cyan-400" : step > 2 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"
                 }`}
               >
                 Gatilho (QUANDO)
               </span>
             </div>
 
-            <div className="flex-1 h-[2px] bg-slate-800">
+            <div className="flex-1 h-[2px] bg-slate-200 dark:bg-slate-800">
               <div
                 className="h-full bg-cyan-500 transition-all duration-300"
                 style={{ width: step === 3 ? "100%" : "0%" }}
@@ -361,14 +361,14 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                   step === 3
                     ? "bg-cyan-500 text-slate-950 ring-4 ring-cyan-500/20 shadow-lg shadow-cyan-500/30"
-                    : "bg-slate-800 text-slate-400"
+                    : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
                 3
               </div>
               <span
                 className={`text-xs font-semibold ${
-                  step === 3 ? "text-cyan-400" : "text-slate-400"
+                  step === 3 ? "text-cyan-600 dark:text-cyan-400" : "text-slate-500 dark:text-slate-400"
                 }`}
               >
                 Ação (ENTÃO)
@@ -383,8 +383,8 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
           {step === 1 && (
             <div className="space-y-6 animate-in fade-in duration-150 max-w-2xl mx-auto py-4">
               <div>
-                <label className="block text-sm font-semibold text-white mb-2">
-                  Nome da Automação <span className="text-cyan-400">*</span>
+                <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                  Nome da Automação <span className="text-cyan-600 dark:text-cyan-400">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -392,20 +392,20 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="Ex: Boas-vindas pós aceite de proposta comercial"
-                    className="w-full bg-slate-100 dark:bg-[#050A15] border border-slate-700/70 rounded-xl px-4 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-medium text-sm"
+                    className="w-full bg-slate-50 dark:bg-[#050A15] border border-slate-300 dark:border-slate-700/70 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-medium text-sm"
                   />
                   <Zap
                     size={18}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
                   />
                 </div>
-                <p className="text-xs text-slate-400 mt-1.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
                   Dê um nome claro para que sua equipe identifique facilmente a finalidade do fluxo.
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-white mb-2">
+                <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
                   Descrição / Objetivo (Opcional)
                 </label>
                 <textarea
@@ -413,14 +413,14 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                   onChange={e => setDescription(e.target.value)}
                   placeholder="Ex: Envia WhatsApp com link de onboarding e move o card do CRM para 'Ganho'."
                   rows={4}
-                  className="w-full bg-slate-100 dark:bg-[#050A15] border border-slate-700/70 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-sm resize-none"
+                  className="w-full bg-slate-50 dark:bg-[#050A15] border border-slate-300 dark:border-slate-700/70 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-sm resize-none"
                 />
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
-                <Sparkles className="text-cyan-400 shrink-0 mt-0.5" size={18} />
-                <div className="text-xs text-slate-300 leading-relaxed">
-                  <strong className="text-white">Dica Enterprise:</strong> Automações bem descritas
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex items-start gap-3">
+                <Sparkles className="text-cyan-600 dark:text-cyan-400 shrink-0 mt-0.5" size={18} />
+                <div className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  <strong className="text-slate-900 dark:text-white">Dica Enterprise:</strong> Automações bem descritas
                   facilitam a governança entre consultores comerciais, supervisores de vendas e
                   equipes de implantação.
                 </div>
@@ -432,10 +432,10 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
           {step === 2 && (
             <div className="space-y-6 animate-in fade-in duration-150">
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-cyan-400 mb-1 flex items-center gap-2">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 mb-1 flex items-center gap-2">
                   <Zap size={16} /> 1. Escolha o Evento Disparador (QUANDO)
                 </h3>
-                <p className="text-xs text-slate-400 mb-4">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
                   Selecione o acontecimento comercial que irá iniciar o fluxo de automação:
                 </p>
 
@@ -448,21 +448,21 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                         onClick={() => setTriggerType(t.type)}
                         className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3.5 relative ${
                           isSelected
-                            ? `${t.color} ring-1 ring-cyan-400 shadow-lg shadow-cyan-500/10`
-                            : "bg-slate-50/60 dark:bg-slate-100 dark:bg-[#050A15]/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/40"
+                            ? `${t.color} ring-1 ring-cyan-500 shadow-md shadow-cyan-500/10`
+                            : "bg-slate-50/70 dark:bg-[#050A15]/60 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-100/70 dark:hover:bg-slate-900/40"
                         }`}
                       >
-                        <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 shrink-0 mt-0.5">
+                        <div className="p-2 rounded-lg bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shrink-0 mt-0.5">
                           {t.icon}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-bold text-white">{t.title}</h4>
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">{t.title}</h4>
                             {isSelected && (
-                              <CheckCircle2 size={16} className="text-cyan-400 shrink-0" />
+                              <CheckCircle2 size={16} className="text-cyan-500 dark:text-cyan-400 shrink-0" />
                             )}
                           </div>
-                          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                             {t.description}
                           </p>
                         </div>
@@ -473,15 +473,15 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               </div>
 
               {/* CONDIÇÕES ESPECÍFICAS DE REFINAMENTO */}
-              <div className="p-5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                  <Layers size={14} className="text-cyan-400" />
+              <div className="p-5 rounded-xl bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                  <Layers size={14} className="text-cyan-600 dark:text-cyan-400" />
                   Condições de Refinamento (Opcionais)
                 </h4>
 
                 {(triggerType === "PROPOSAL_ACCEPTED" || triggerType === "DEAL_CREATED") && (
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                       Disparar apenas se o valor for maior ou igual a (R$):
                     </label>
                     <input
@@ -491,14 +491,14 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                         setTriggerConditions(prev => ({ ...prev, minValue: e.target.value }))
                       }
                       placeholder="Ex: 5000 (Deixe em branco para qualquer valor)"
-                      className="w-full bg-slate-100 dark:bg-[#050A15] border border-slate-700/70 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-500"
+                      className="w-full bg-white dark:bg-[#050A15] border border-slate-300 dark:border-slate-700/70 rounded-lg px-3 py-2 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs focus:outline-none focus:border-cyan-500"
                     />
                   </div>
                 )}
 
                 {triggerType === "DEAL_STAGE_CHANGED" && (
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                       Quando for movido especificamente para a etapa:
                     </label>
                     <select
@@ -506,7 +506,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                       onChange={e =>
                         setTriggerConditions(prev => ({ ...prev, stage: e.target.value }))
                       }
-                      className="w-full bg-slate-100 dark:bg-[#050A15] border border-slate-700/70 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-500"
+                      className="w-full bg-white dark:bg-[#050A15] border border-slate-300 dark:border-slate-700/70 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-cyan-500"
                     >
                       <option value="">Qualquer Etapa</option>
                       <option value="leads">Novos Leads</option>
@@ -521,7 +521,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
 
                 {triggerType === "TAG_ADDED" && (
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                       Disparar apenas quando a tag adicionada for:
                     </label>
                     <input
@@ -531,14 +531,14 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                         setTriggerConditions(prev => ({ ...prev, tag: e.target.value }))
                       }
                       placeholder="Ex: vip, prioridade-alta, retorno-agendado"
-                      className="w-full bg-slate-100 dark:bg-[#050A15] border border-slate-700/70 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-500"
+                      className="w-full bg-white dark:bg-[#050A15] border border-slate-300 dark:border-slate-700/70 rounded-lg px-3 py-2 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs focus:outline-none focus:border-cyan-500"
                     />
                   </div>
                 )}
 
                 {triggerType === "INACTIVITY_TIMEOUT" && (
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                       Tempo de tolerância aguardando resposta (em minutos):
                     </label>
                     <input
@@ -550,9 +550,9 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                           timeoutMinutes: Number(e.target.value)
                         }))
                       }
-                      className="w-full bg-slate-100 dark:bg-[#050A15] border border-slate-700/70 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-500"
+                      className="w-full bg-white dark:bg-[#050A15] border border-slate-300 dark:border-slate-700/70 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-cyan-500"
                     />
-                    <p className="text-[11px] text-slate-500 mt-1">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                       Exemplo: 60 = 1 hora de silêncio do contato antes de disparar o lembrete.
                     </p>
                   </div>
@@ -565,10 +565,10 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
           {step === 3 && (
             <div className="space-y-6 animate-in fade-in duration-150">
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-1 flex items-center gap-2">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-2">
                   <Zap size={16} /> 2. O que o sistema deve fazer? (ENTÃO)
                 </h3>
-                <p className="text-xs text-slate-400 mb-4">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
                   Selecione a ação automatizada que será executada imediatamente:
                 </p>
 
@@ -582,19 +582,19 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                         onClick={() => setActionType(a.type)}
                         className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
                           isSelected
-                            ? "border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-400"
-                            : "bg-slate-50/60 dark:bg-slate-100 dark:bg-[#050A15]/60 border-slate-800 hover:border-slate-700 text-slate-300"
+                            ? "border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-400 shadow-sm"
+                            : "bg-slate-50/70 dark:bg-[#050A15]/60 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-300"
                         }`}
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-800">
+                          <div className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
                             {a.icon}
                           </div>
-                          {isSelected && <CheckCircle2 size={16} className="text-emerald-400" />}
+                          {isSelected && <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />}
                         </div>
                         <div>
-                          <div className="text-xs font-bold text-white">{a.title}</div>
-                          <div className="text-[10px] text-slate-400 line-clamp-2 mt-0.5">
+                          <div className="text-xs font-bold text-slate-900 dark:text-white">{a.title}</div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
                             {a.description}
                           </div>
                         </div>
@@ -606,30 +606,30 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
 
               {/* CONFIGURAÇÃO DA AÇÃO ESPECÍFICA */}
               {actionType === "SEND_WHATSAPP" && (
-                <div className="space-y-4 p-5 rounded-2xl bg-slate-100 dark:bg-[#050A15] border border-slate-800">
+                <div className="space-y-4 p-5 rounded-2xl bg-slate-50/80 dark:bg-[#050A15] border border-slate-200 dark:border-slate-800">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                      <Send size={14} className="text-emerald-400" />
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                      <Send size={14} className="text-emerald-600 dark:text-emerald-400" />
                       Mensagem do WhatsApp (Template Dinâmico)
                     </label>
-                    <span className="text-[11px] text-slate-500">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
                       Clique nas tags abaixo para inserir
                     </span>
                   </div>
 
                   {/* PÍLULAS DE VARIÁVEIS DINÂMICAS */}
-                  <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                  <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800">
                     {DYNAMIC_VARIABLES.map(v => (
                       <button
                         key={v.tag}
                         type="button"
                         onClick={() => insertVariable(v.tag)}
                         title={`Exemplo: ${v.example}`}
-                        className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/40 border border-slate-700/60 text-slate-300 text-xs font-mono transition-all flex items-center gap-1.5 active:scale-95"
+                        className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-cyan-50 dark:hover:bg-cyan-500/20 hover:text-cyan-700 dark:hover:text-cyan-300 hover:border-cyan-300 dark:hover:border-cyan-500/40 border border-slate-200 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 text-xs font-mono transition-all flex items-center gap-1.5 active:scale-95"
                       >
-                        <Sparkles size={11} className="text-cyan-400" />
+                        <Sparkles size={11} className="text-cyan-600 dark:text-cyan-400" />
                         <span>{v.label}</span>
-                        <span className="text-slate-500 text-[10px]">({v.tag})</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-[10px]">({v.tag})</span>
                       </button>
                     ))}
                   </div>
@@ -641,17 +641,17 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                       value={messageTemplate}
                       onChange={e => setMessageTemplate(e.target.value)}
                       rows={4}
-                      className="w-full bg-slate-900/60 border border-slate-700 rounded-xl p-4 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all resize-none leading-relaxed"
+                      className="w-full bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all resize-none leading-relaxed"
                       placeholder="Digite a mensagem..."
                     />
                   </div>
 
                   {/* PREVIEW DO WHATSAPP AO VIVO */}
-                  <div className="p-4 rounded-xl bg-slate-900/90 border border-emerald-500/20 relative overflow-hidden">
-                    <div className="text-[10px] font-bold tracking-wider uppercase text-emerald-400 mb-1 flex items-center gap-1.5">
+                  <div className="p-4 rounded-xl bg-slate-100/70 dark:bg-slate-900/90 border border-emerald-500/30 dark:border-emerald-500/20 relative overflow-hidden">
+                    <div className="text-[10px] font-bold tracking-wider uppercase text-emerald-700 dark:text-emerald-400 mb-1 flex items-center gap-1.5">
                       <CheckCircle2 size={12} /> Pré-visualização com dados reais interpolados
                     </div>
-                    <div className="p-3 bg-emerald-950/20 border border-emerald-500/30 rounded-lg text-emerald-200 text-xs font-sans leading-relaxed whitespace-pre-wrap">
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-500/30 rounded-lg text-emerald-900 dark:text-emerald-200 text-xs font-sans leading-relaxed whitespace-pre-wrap">
                       {getInterpolatedPreview()}
                     </div>
                   </div>
@@ -659,14 +659,14 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               )}
 
               {actionType === "UPDATE_DEAL_STAGE" && (
-                <div className="p-5 rounded-2xl bg-slate-100 dark:bg-[#050A15] border border-slate-800 space-y-3">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                <div className="p-5 rounded-2xl bg-slate-50/80 dark:bg-[#050A15] border border-slate-200 dark:border-slate-800 space-y-3">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     Selecione a Etapa de Destino no CRM:
                   </label>
                   <select
                     value={targetStage}
                     onChange={e => setTargetStage(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-500"
                   >
                     <option value="ganho">🏆 Negócio Ganho (Fechado)</option>
                     <option value="proposta">📄 Proposta Apresentada</option>
@@ -678,25 +678,25 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               )}
 
               {actionType === "CREATE_TASK" && (
-                <div className="p-5 rounded-2xl bg-slate-100 dark:bg-[#050A15] border border-slate-800 space-y-3">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                <div className="p-5 rounded-2xl bg-slate-50/80 dark:bg-[#050A15] border border-slate-200 dark:border-slate-800 space-y-3">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     Título da Tarefa:
                   </label>
                   <input
                     type="text"
                     value={taskTitle}
                     onChange={e => setTaskTitle(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:outline-none focus:border-cyan-500"
                   />
-                  <p className="text-xs text-slate-500">
-                    Você pode usar variáveis como <code className="text-cyan-400">{"{{clientName}}"}</code> no título da tarefa.
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Você pode usar variáveis como <code className="text-cyan-600 dark:text-cyan-400 font-semibold">{"{{clientName}}"}</code> no título da tarefa.
                   </p>
                 </div>
               )}
 
               {actionType === "ADD_TAG" && (
-                <div className="p-5 rounded-2xl bg-slate-100 dark:bg-[#050A15] border border-slate-800 space-y-3">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                <div className="p-5 rounded-2xl bg-slate-50/80 dark:bg-[#050A15] border border-slate-200 dark:border-slate-800 space-y-3">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     Tag a ser adicionada no Contato:
                   </label>
                   <input
@@ -704,21 +704,21 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                     value={actionTag}
                     onChange={e => setActionTag(e.target.value)}
                     placeholder="Ex: cliente-vip"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-pink-500"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:outline-none focus:border-pink-500"
                   />
                 </div>
               )}
 
               {actionType === "NOTIFY_USER" && (
-                <div className="p-5 rounded-2xl bg-slate-100 dark:bg-[#050A15] border border-slate-800 space-y-3">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                <div className="p-5 rounded-2xl bg-slate-50/80 dark:bg-[#050A15] border border-slate-200 dark:border-slate-800 space-y-3">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     Mensagem de Alerta para o Time:
                   </label>
                   <input
                     type="text"
                     value={notifyMsg}
                     onChange={e => setNotifyMsg(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-yellow-500"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:outline-none focus:border-yellow-500"
                   />
                 </div>
               )}
@@ -727,13 +727,13 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
         </div>
 
         {/* MODAL FOOTER */}
-        <div className="p-6 border-t border-slate-800/80 bg-slate-900/40 flex items-center justify-between">
+        <div className="p-6 border-t border-slate-200 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-900/40 flex items-center justify-between">
           <div>
             {step > 1 && (
               <button
                 type="button"
                 onClick={handlePrev}
-                className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-bold transition-all flex items-center gap-2"
+                className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition-all flex items-center gap-2"
               >
                 <ArrowLeft size={16} /> Voltar
               </button>
@@ -744,7 +744,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white text-xs font-semibold transition-colors"
+              className="px-5 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white text-xs font-semibold transition-colors"
             >
               Cancelar
             </button>

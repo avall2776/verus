@@ -69,7 +69,7 @@ __decorate([
 ], QuickRepliesController.prototype, "deleteQuickReply", null);
 exports.QuickRepliesController = QuickRepliesController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Controller)('quick-replies'),
+    (0, common_1.Controller)(['quick-replies', 'quick_replies']),
     __metadata("design:paramtypes", [quick_replies_service_1.QuickRepliesService])
 ], QuickRepliesController);
 //# sourceMappingURL=quick-replies.controller.js.map

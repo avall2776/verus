@@ -99,9 +99,9 @@ export declare class SupportService {
         contactId: string | null;
         status: string;
         subject: string;
+        userId: string | null;
         description: string;
         priority: string;
-        userId: string | null;
         category: string;
         ticketNumber: number;
         assignedToId: string | null;
@@ -141,9 +141,9 @@ export declare class SupportService {
         contactId: string | null;
         status: string;
         subject: string;
+        userId: string | null;
         description: string;
         priority: string;
-        userId: string | null;
         category: string;
         ticketNumber: number;
         assignedToId: string | null;
@@ -194,9 +194,9 @@ export declare class SupportService {
         contactId: string | null;
         status: string;
         subject: string;
+        userId: string | null;
         description: string;
         priority: string;
-        userId: string | null;
         category: string;
         ticketNumber: number;
         assignedToId: string | null;
@@ -221,9 +221,9 @@ export declare class SupportService {
         contactId: string | null;
         status: string;
         subject: string;
+        userId: string | null;
         description: string;
         priority: string;
-        userId: string | null;
         category: string;
         ticketNumber: number;
         assignedToId: string | null;
@@ -426,9 +426,9 @@ export declare class SupportService {
         contactId: string | null;
         status: string;
         subject: string;
+        userId: string | null;
         description: string;
         priority: string;
-        userId: string | null;
         category: string;
         ticketNumber: number;
         assignedToId: string | null;
@@ -543,9 +543,9 @@ export declare class SupportService {
             contactId: string | null;
             status: string;
             subject: string;
+            userId: string | null;
             description: string;
             priority: string;
-            userId: string | null;
             category: string;
             ticketNumber: number;
             assignedToId: string | null;

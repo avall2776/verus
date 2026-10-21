@@ -319,22 +319,22 @@ export default function SuperAdminOperatorsPage() {
   }, [operators, searchTerm, roleFilter, statusFilter]);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 text-slate-100 font-sans">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 text-slate-900 dark:text-slate-100 font-sans">
       
       {/* Topo / Header da Página */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-blue-400 bg-blue-600/10 px-2 py-0.5 rounded border border-blue-500/20">
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-600/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20">
               Módulo Administrativo
             </span>
-            <span className="text-xs font-mono text-slate-500">Super Admin Master</span>
+            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">Super Admin Master</span>
           </div>
-          <h1 className="text-xl font-bold text-white tracking-wide flex items-center gap-2">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-wide flex items-center gap-2">
             <Users className="text-blue-500" size={22} />
             Gestão de Equipe & Operadores de Suporte
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
             Controle de colaboradores, produtividade diária, segurança de acesso e auditoria em tempo real.
           </p>
         </div>
@@ -343,10 +343,10 @@ export default function SuperAdminOperatorsPage() {
           <button
             onClick={fetchOperators}
             disabled={loading}
-            className="p-2.5 rounded-xl border border-slate-800 bg-white dark:bg-[#0B1224] hover:bg-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold shadow-sm"
+            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1224] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold shadow-sm"
             title="Atualizar Dados"
           >
-            <RefreshCw size={14} className={loading ? "animate-spin text-blue-400" : ""} />
+            <RefreshCw size={14} className={loading ? "animate-spin text-blue-500 dark:text-blue-400" : ""} />
             <span className="hidden sm:inline">Atualizar</span>
           </button>
 
@@ -363,65 +363,65 @@ export default function SuperAdminOperatorsPage() {
       {/* Painel Analítico de Produtividade Diária (KPIs) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Card 1: Operadores */}
-        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-1">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Total Operadores</span>
-            <Users size={16} className="text-blue-400" />
+            <Users size={16} className="text-blue-500 dark:text-blue-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-white">{overview.totalOperators}</span>
-            <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+            <span className="text-2xl font-black text-slate-900 dark:text-white">{overview.totalOperators}</span>
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               {overview.onlineOperators} Online
             </span>
           </div>
-          <span className="text-[10px] text-slate-500 block">Equipe do Suporte Master</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Equipe do Suporte Master</span>
         </div>
 
         {/* Card 2: Atendimentos Hoje */}
-        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-1">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Atendimentos Hoje</span>
-            <Activity size={16} className="text-cyan-400" />
+            <Activity size={16} className="text-cyan-500 dark:text-cyan-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-white">{overview.totalAttendancesToday}</span>
-            <span className="text-[11px] font-bold text-cyan-300">Volume Total</span>
+            <span className="text-2xl font-black text-slate-900 dark:text-white">{overview.totalAttendancesToday}</span>
+            <span className="text-[11px] font-bold text-cyan-600 dark:text-cyan-300">Volume Total</span>
           </div>
-          <span className="text-[10px] text-slate-500 block">Tratados desde 00:00h</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Tratados desde 00:00h</span>
         </div>
 
         {/* Card 3: Chamados Resolvidos */}
-        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-1">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Chamados Fechados</span>
-            <CheckCircle2 size={16} className="text-emerald-400" />
+            <CheckCircle2 size={16} className="text-emerald-500 dark:text-emerald-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-emerald-400">{overview.totalResolvedToday}</span>
-            <span className="text-[11px] font-bold text-emerald-300 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-mono">
+            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{overview.totalResolvedToday}</span>
+            <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-500/20 font-mono">
               {overview.globalResolutionRate}% Taxa
             </span>
           </div>
-          <span className="text-[10px] text-slate-500 block">Finalizados com sucesso</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Finalizados com sucesso</span>
         </div>
 
         {/* Card 4: TMR Médio Global */}
-        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-1">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Tempo Médio Resposta</span>
-            <Clock size={16} className="text-amber-400" />
+            <Clock size={16} className="text-amber-500 dark:text-amber-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-amber-300">{overview.globalAvgResponseTime}m</span>
-            <span className="text-[11px] font-bold text-slate-400">TMR Geral</span>
+            <span className="text-2xl font-black text-amber-600 dark:text-amber-300">{overview.globalAvgResponseTime}m</span>
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">TMR Geral</span>
           </div>
-          <span className="text-[10px] text-slate-500 block">Tempo até primeira resposta</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Tempo até primeira resposta</span>
         </div>
       </div>
 
       {/* Barra de Filtros e Busca */}
-      <div className="p-3.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="p-3.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
           <div className="relative w-full sm:w-72">
             <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
@@ -430,14 +430,14 @@ export default function SuperAdminOperatorsPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nome ou e-mail..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 transition-colors"
             />
           </div>
 
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500 cursor-pointer"
+            className="px-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="ALL">Todos os Cargos</option>
             <option value="Atendente">Atendente de Suporte</option>
@@ -448,7 +448,7 @@ export default function SuperAdminOperatorsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500 cursor-pointer"
+            className="px-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="ALL">Todos os Status</option>
             <option value="ONLINE">Apenas Online</option>
@@ -457,16 +457,16 @@ export default function SuperAdminOperatorsPage() {
           </select>
         </div>
 
-        <span className="text-xs text-slate-400 font-mono self-start md:self-auto">
+        <span className="text-xs text-slate-500 dark:text-slate-400 font-mono self-start md:self-auto">
           Exibindo <strong>{filteredOperators.length}</strong> de {operators.length} colaboradores
         </span>
       </div>
 
       {/* Tabela de Operadores & Auditoria */}
-      <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 overflow-hidden shadow-sm">
+      <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 dark:bg-[#070D1B] text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+            <thead className="bg-slate-50 dark:bg-[#070D1B] text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="px-4 py-3 font-bold">Colaborador / Operador</th>
                 <th className="px-4 py-3 font-bold">Função / Cargo</th>
@@ -477,59 +477,59 @@ export default function SuperAdminOperatorsPage() {
                 <th className="px-4 py-3 font-bold text-right">Ações de Governança</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-400 text-xs">
-                    <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-400" />
+                  <td colSpan={7} className="text-center py-12 text-slate-500 dark:text-slate-400 text-xs">
+                    <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-500 dark:text-blue-400" />
                     Carregando equipe e métricas em tempo real...
                   </td>
                 </tr>
               ) : filteredOperators.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-400 text-xs">
+                  <td colSpan={7} className="text-center py-12 text-slate-500 dark:text-slate-400 text-xs">
                     Nenhum operador encontrado com os filtros selecionados.
                   </td>
                 </tr>
               ) : (
                 filteredOperators.map((op) => {
                   return (
-                    <tr key={op.id} className="hover:bg-slate-800/30 transition-colors">
+                    <tr key={op.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                       {/* Coluna 1: Colaborador */}
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="relative">
-                            <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-300 font-bold text-sm">
+                            <div className="w-9 h-9 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-sm">
                               {op.name.charAt(0).toUpperCase()}
                             </div>
                             <span 
-                              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0B1224] ${
-                                op.isOnline ? "bg-emerald-500" : "bg-slate-500"
+                              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-[#0B1224] ${
+                                op.isOnline ? "bg-emerald-500" : "bg-slate-400 dark:bg-slate-500"
                               }`}
                               title={op.isOnline ? "Conectado agora" : "Offline"}
                             />
                           </div>
 
                           <div>
-                            <span className="font-bold text-white text-xs block truncate">{op.name}</span>
-                            <span className="text-[11px] text-slate-400 font-mono block truncate">{op.email}</span>
+                            <span className="font-bold text-slate-900 dark:text-white text-xs block truncate">{op.name}</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono block truncate">{op.email}</span>
                           </div>
                         </div>
                       </td>
 
                       {/* Coluna 2: Cargo */}
                       <td className="px-4 py-3.5">
-                        <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-200 border border-slate-700 inline-flex items-center gap-1.5">
-                          <ShieldCheck size={12} className="text-blue-400" />
+                        <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 inline-flex items-center gap-1.5">
+                          <ShieldCheck size={12} className="text-blue-500 dark:text-blue-400" />
                           <span>{op.roleTitle || "Atendente de Suporte"}</span>
                         </span>
                       </td>
 
                       {/* Coluna 3: Atendimentos Hoje */}
                       <td className="px-4 py-3.5 text-center">
-                        <span className="text-sm font-bold text-white font-mono">{op.metrics.todayAttendances}</span>
+                        <span className="text-sm font-bold text-slate-900 dark:text-white font-mono">{op.metrics.todayAttendances}</span>
                         {op.metrics.activeTicketsCount > 0 && (
-                          <span className="text-[10px] text-blue-400 block font-semibold">
+                          <span className="text-[10px] text-blue-600 dark:text-blue-400 block font-semibold">
                             ({op.metrics.activeTicketsCount} em aberto)
                           </span>
                         )}
@@ -537,23 +537,23 @@ export default function SuperAdminOperatorsPage() {
 
                       {/* Coluna 4: Resolvidos Hoje */}
                       <td className="px-4 py-3.5 text-center">
-                        <span className="text-sm font-bold text-emerald-400 font-mono">{op.metrics.todayResolved}</span>
-                        <span className="text-[10px] text-slate-500 block">
+                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">{op.metrics.todayResolved}</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 block">
                           {op.metrics.resolutionRate}% taxa
                         </span>
                       </td>
 
                       {/* Coluna 5: TMR */}
                       <td className="px-4 py-3.5 text-center font-mono">
-                        <span className="text-xs font-bold text-amber-300">{op.metrics.avgResponseMinutes}m</span>
+                        <span className="text-xs font-bold text-amber-600 dark:text-amber-300">{op.metrics.avgResponseMinutes}m</span>
                       </td>
 
                       {/* Coluna 6: Status */}
                       <td className="px-4 py-3.5 text-center">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
                           op.isActive
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                            : "bg-slate-800 text-slate-400 border-slate-700"
+                            ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
                         }`}>
                           {op.isActive ? "Ativo" : "Pausado"}
                         </span>
@@ -567,10 +567,10 @@ export default function SuperAdminOperatorsPage() {
                           <button
                             type="button"
                             onClick={() => handleSpyConversation(op)}
-                            className="px-2.5 py-1.5 rounded-lg bg-purple-600/15 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                            className="px-2.5 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-600/15 hover:bg-purple-100 dark:hover:bg-purple-600/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                             title="Auditar atendimentos e espiar conversas em tempo real"
                           >
-                            <Eye size={13} className="text-purple-400" />
+                            <Eye size={13} className="text-purple-600 dark:text-purple-400" />
                             <span>Espiar Conversa</span>
                           </button>
 
@@ -578,7 +578,7 @@ export default function SuperAdminOperatorsPage() {
                           <button
                             type="button"
                             onClick={() => handleOpenEditModal(op)}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
                             title="Editar Dados e Permissões"
                           >
                             <Edit2 size={13} />
@@ -590,8 +590,8 @@ export default function SuperAdminOperatorsPage() {
                             onClick={() => handleToggleStatus(op)}
                             className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
                               op.isActive
-                                ? "bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border-slate-700 hover:border-rose-500/30"
-                                : "bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 border-emerald-700/50"
+                                ? "bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-500/30"
+                                : "bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700/50"
                             }`}
                             title={op.isActive ? "Pausar Acesso do Operador" : "Reativar Acesso do Operador"}
                           >

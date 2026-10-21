@@ -11,6 +11,19 @@ export declare class UsersController {
         avatarUrl: string;
         createdAt: Date;
         isActive: boolean;
+        departments: ({
+            department: {
+                id: string;
+                name: string;
+                tenantId: string;
+                createdAt: Date;
+                updatedAt: Date;
+                color: string | null;
+            };
+        } & {
+            departmentId: string;
+            userId: string;
+        })[];
         role: string;
         isSuperAdmin: boolean;
         canAccessMarketing: boolean;
@@ -57,6 +70,7 @@ export declare class UsersController {
         avatarUrl?: string;
         permissions?: any;
         canAccessMarketing?: boolean;
+        departmentIds?: string[];
     }): Promise<{
         message: string;
         user: {
@@ -66,6 +80,19 @@ export declare class UsersController {
             avatarUrl: string;
             tenantId: string;
             isActive: boolean;
+            departments: ({
+                department: {
+                    id: string;
+                    name: string;
+                    tenantId: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    color: string | null;
+                };
+            } & {
+                departmentId: string;
+                userId: string;
+            })[];
             role: string;
             canAccessMarketing: boolean;
             permissions: import("@prisma/client/runtime/library").JsonValue;
@@ -79,14 +106,44 @@ export declare class UsersController {
         role?: string;
         permissions?: any;
         canAccessMarketing?: boolean;
+        departmentIds?: string[];
     }): Promise<{
         message: string;
         user: {
             id: string;
             name: string;
             email: string;
+            avatarUrl: string | null;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
+            password: string;
+            rawPasswordEncrypted: string | null;
+            role: string;
+            isSuperAdmin: boolean;
+            canAccessMarketing: boolean;
+            permissions: import("@prisma/client/runtime/library").JsonValue | null;
+            isOnline: boolean;
+        } | {
+            id: string;
+            name: string;
+            email: string;
             avatarUrl: string;
             isActive: boolean;
+            departments: ({
+                department: {
+                    id: string;
+                    name: string;
+                    tenantId: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    color: string | null;
+                };
+            } & {
+                departmentId: string;
+                userId: string;
+            })[];
             role: string;
             canAccessMarketing: boolean;
             permissions: import("@prisma/client/runtime/library").JsonValue;

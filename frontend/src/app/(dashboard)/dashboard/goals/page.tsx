@@ -237,21 +237,21 @@ export default function GoalsPage() {
   };
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 animate-in fade-in duration-300">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+          <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-sm">
             <Target className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
               Metas & Desempenho Comercial
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 font-medium">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-medium">
                 Run Rate & Gamificação
               </span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
               Acompanhamento preditivo de ritmo, projeção de fechamento e leaderboard gamificado da equipe
             </p>
           </div>
@@ -261,16 +261,16 @@ export default function GoalsPage() {
           <button
             onClick={() => loadData(true)}
             disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-700/80 hover:border-slate-600 text-slate-300 hover:text-white text-xs font-semibold transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold transition-all shadow-sm disabled:opacity-50"
             title="Atualizar dados agora"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-blue-400" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-blue-600 dark:text-blue-400" : ""}`} />
             <span className="hidden sm:inline">Sincronizar</span>
           </button>
 
           <button
             onClick={() => setIsNewGoalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-md shadow-blue-500/20 active:scale-[0.98]"
           >
             <Plus className="w-4 h-4" />
             Nova Meta
@@ -280,33 +280,33 @@ export default function GoalsPage() {
 
       {/* Hero: Motor Preditivo de Run Rate */}
       {summaryMetrics && (
-        <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 shadow-2xl relative overflow-hidden space-y-6">
+        <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             <div className="space-y-3 max-w-2xl">
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 text-blue-400 text-xs font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">
                   <Zap className="w-4 h-4" />
                   Motor Preditivo de Run Rate Comercial
                 </div>
                 {getHealthBadge(summaryMetrics.healthStatus)}
               </div>
 
-              <h2 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
+              <h2 className="text-xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
                 Ritmo aponta para{" "}
-                <span className="text-blue-400 font-black font-mono">
+                <span className="text-blue-600 dark:text-blue-400 font-black font-mono">
                   {summaryMetrics.totalTarget > 0
                     ? `${Math.round((summaryMetrics.projectedRevenue / summaryMetrics.totalTarget) * 100)}% da Meta`
                     : "0% da Meta"}
                 </span>
               </h2>
 
-              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                 Com base nos {summaryMetrics.daysPassed} dias decorridos do mês atual e na velocidade média diária de{" "}
-                <strong className="text-slate-200 font-mono">
+                <strong className="text-slate-800 dark:text-slate-200 font-mono">
                   R$ {formatMoney(summaryMetrics.currentDailyPace)}/dia
                 </strong>
                 , a projeção matemática estima o faturamento final em{" "}
-                <strong className="text-white font-mono">
+                <strong className="text-slate-900 dark:text-white font-mono">
                   R$ {formatMoney(summaryMetrics.projectedRevenue)}
                 </strong>
                 .
@@ -314,8 +314,8 @@ export default function GoalsPage() {
 
               {/* Filtro Dinâmico por Canal de Origem */}
               <div className="flex flex-wrap items-center gap-2 pt-1">
-                <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5 mr-1">
-                  <Filter className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mr-1">
+                  <Filter className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   Canal de Aquisição:
                 </span>
                 {[
@@ -335,7 +335,7 @@ export default function GoalsPage() {
                     className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
                       selectedChannel === ch.id
                         ? "bg-blue-600 text-white shadow-sm shadow-blue-500/30 font-semibold"
-                        : "bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
+                        : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70"
                     }`}
                   >
                     {ch.label}
@@ -344,31 +344,31 @@ export default function GoalsPage() {
               </div>
             </div>
 
-            {/* Quick Metrics Badges (Monocromáticos e Sóbrios) */}
-            <div className="grid grid-cols-3 gap-3 shrink-0 bg-slate-50 dark:bg-[#070D1B] p-4 rounded-xl border border-slate-800">
-              <div className="text-center px-2 border-r border-slate-800">
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
+            {/* Quick Metrics Badges */}
+            <div className="grid grid-cols-3 gap-3 shrink-0 bg-slate-50 dark:bg-[#070D1B] p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+              <div className="text-center px-2 border-r border-slate-200 dark:border-slate-800">
+                <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
                   Dias Restantes
                 </span>
-                <span className="text-lg sm:text-xl font-bold font-mono text-white">
+                <span className="text-lg sm:text-xl font-bold font-mono text-slate-900 dark:text-white">
                   {summaryMetrics.daysRemaining} dias
                 </span>
               </div>
 
-              <div className="text-center px-2 border-r border-slate-800">
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
+              <div className="text-center px-2 border-r border-slate-200 dark:border-slate-800">
+                <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
                   Ritmo Necessário
                 </span>
-                <span className={`text-lg sm:text-xl font-bold font-mono ${summaryMetrics.dailyPaceNeeded > summaryMetrics.currentDailyPace ? "text-amber-400" : "text-slate-200"}`}>
+                <span className={`text-lg sm:text-xl font-bold font-mono ${summaryMetrics.dailyPaceNeeded > summaryMetrics.currentDailyPace ? "text-amber-600 dark:text-amber-400" : "text-slate-700 dark:text-slate-200"}`}>
                   R$ {formatShortMoney(summaryMetrics.dailyPaceNeeded)}
                 </span>
               </div>
 
               <div className="text-center px-2">
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
+                <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
                   Ritmo Atual
                 </span>
-                <span className="text-lg sm:text-xl font-bold font-mono text-blue-400">
+                <span className="text-lg sm:text-xl font-bold font-mono text-blue-600 dark:text-blue-400">
                   R$ {formatShortMoney(summaryMetrics.currentDailyPace)}
                 </span>
               </div>
@@ -376,26 +376,26 @@ export default function GoalsPage() {
           </div>
 
           {/* Barra de Progresso Comparativa: Ritmo Esperado vs Ritmo Real */}
-          <div className="space-y-2 pt-2 border-t border-slate-800/80">
+          <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800/80">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400 flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5 text-blue-400" />
+              <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 Faturamento Real Realizado (
-                <strong className="text-white font-mono">
+                <strong className="text-slate-900 dark:text-white font-mono">
                   R$ {formatMoney(summaryMetrics.totalCurrent)}
                 </strong>
                 ) de{" "}
-                <span className="text-slate-500 font-mono">
+                <span className="text-slate-500 dark:text-slate-500 font-mono">
                   R$ {formatMoney(summaryMetrics.totalTarget)}
                 </span>
               </span>
-              <span className="font-bold text-white font-mono">{summaryMetrics.overallProgress}%</span>
+              <span className="font-bold text-slate-900 dark:text-white font-mono">{summaryMetrics.overallProgress}%</span>
             </div>
 
-            <div className="w-full h-3 bg-slate-50 dark:bg-[#070D1B] rounded-full overflow-hidden p-0.5 border border-slate-800 relative">
+            <div className="w-full h-3 bg-slate-100 dark:bg-[#070D1B] rounded-full overflow-hidden p-0.5 border border-slate-200 dark:border-slate-800 relative">
               {/* Linha vertical que marca o ritmo de tempo decorrido no mês */}
               <div 
-                className="absolute top-0 bottom-0 w-0.5 bg-amber-400 z-10"
+                className="absolute top-0 bottom-0 w-0.5 bg-amber-500 dark:bg-amber-400 z-10"
                 style={{ left: `${Math.min(100, Math.max(0, summaryMetrics.expectedPacePercentage))}%` }}
                 title={`Ritmo de Tempo no Mês: ${summaryMetrics.expectedPacePercentage}%`}
               />
@@ -407,16 +407,16 @@ export default function GoalsPage() {
 
             <div className="flex items-center justify-between text-[11px] text-slate-500">
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                <span className="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 inline-block" />
                 Marcador amarelo: Tempo decorrido no mês ({summaryMetrics.expectedPacePercentage}%)
               </span>
               <span>
                 {summaryMetrics.paceGap >= 0 ? (
-                  <span className="text-blue-400 font-semibold font-mono">
+                  <span className="text-blue-600 dark:text-blue-400 font-semibold font-mono">
                     +{summaryMetrics.paceGap}% vs cronograma
                   </span>
                 ) : (
-                  <span className="text-amber-400 font-semibold font-mono">
+                  <span className="text-amber-600 dark:text-amber-400 font-semibold font-mono">
                     {summaryMetrics.paceGap}% vs cronograma
                   </span>
                 )}
@@ -425,17 +425,17 @@ export default function GoalsPage() {
           </div>
 
           {/* Simulador Interativo de Aceleração */}
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 space-y-3">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-blue-400" />
-                <span className="text-xs font-bold text-slate-200">
+                <Sliders className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                   Simulador de Cenários: E se a equipe acelerar as vendas?
                 </span>
               </div>
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-slate-500 dark:text-slate-400">
                 Incremento adicional simulado:{" "}
-                <span className="font-mono font-bold text-blue-400">
+                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
                   +R$ {formatNumber(dailyPaceBonus)}/dia
                 </span>
               </div>
@@ -449,28 +449,28 @@ export default function GoalsPage() {
                 step={500}
                 value={dailyPaceBonus}
                 onChange={(e) => setDailyPaceBonus(Number(e.target.value))}
-                className="w-full accent-blue-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
+                className="w-full accent-blue-600 cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg"
               />
               <button
                 onClick={() => setDailyPaceBonus(0)}
-                className="text-[11px] px-2 py-1 rounded bg-slate-800 text-slate-400 hover:text-white shrink-0"
+                className="text-[11px] px-2 py-1 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white shrink-0 font-medium transition-colors"
               >
                 Resetar
               </button>
             </div>
 
             {simulatedRunRate && dailyPaceBonus > 0 && (
-              <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs border-t border-slate-800/60 animate-in fade-in">
-                <span className="text-slate-300">
+              <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs border-t border-slate-200 dark:border-slate-800/60 animate-in fade-in">
+                <span className="text-slate-600 dark:text-slate-300">
                   Impacto projetado:{" "}
-                  <strong className="text-white font-mono">
+                  <strong className="text-slate-900 dark:text-white font-mono">
                     +R$ {formatMoney(simulatedRunRate.additionalRevenue)}
                   </strong>{" "}
                   adicionais até o fechamento.
                 </span>
-                <span className="text-slate-200 font-medium">
+                <span className="text-slate-700 dark:text-slate-200 font-medium">
                   Novo Fechamento Estimado:{" "}
-                  <strong className="text-blue-400 font-mono">
+                  <strong className="text-blue-600 dark:text-blue-400 font-mono">
                     R$ {formatMoney(simulatedRunRate.totalProjected)}
                   </strong>{" "}
                   ({simulatedRunRate.simulatedProgress}%)
@@ -482,24 +482,25 @@ export default function GoalsPage() {
       )}
 
       {/* Alerta Executivo de Aceleração Comercial (Quando Pace Gap é negativo ou status é At_risk/Behind) */}
+      {/* Alerta Executivo de Aceleração Comercial */}
       {summaryMetrics && (summaryMetrics.paceGap < 0 || summaryMetrics.healthStatus === "BEHIND" || summaryMetrics.healthStatus === "CRITICAL" || summaryMetrics.healthStatus === "AT_RISK") && (
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in shadow-xl">
+        <div className="p-5 rounded-2xl bg-amber-50/50 dark:bg-[#0B1224] border border-amber-300 dark:border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in shadow-sm">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h4 className="text-sm font-bold text-white">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white">
                   Alerta Executivo de Ritmo Comercial: Ritmo {Math.abs(summaryMetrics.paceGap)}% abaixo do cronograma
                 </h4>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 uppercase">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-500/30 uppercase">
                   Ação Recomendada
                 </span>
               </div>
-              <p className="text-xs text-slate-300">
+              <p className="text-xs text-slate-600 dark:text-slate-300">
                 A velocidade média atual aponta para um déficit de{" "}
-                <strong className="text-rose-400 font-mono">
+                <strong className="text-rose-600 dark:text-rose-400 font-mono">
                   R$ {formatMoney(Math.max(0, summaryMetrics.totalTarget - summaryMetrics.projectedRevenue))}
                 </strong>{" "}
                 em relação à meta do ciclo. Acione o playbook de recuperação comercial.
@@ -510,16 +511,16 @@ export default function GoalsPage() {
           <div className="flex items-center gap-2 shrink-0">
             <a
               href="/settings?tab=automations"
-              className="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-amber-100 dark:bg-amber-500/10 hover:bg-amber-200 dark:hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <Zap className="w-3.5 h-3.5" />
               Ativar Resgate de Leads
             </a>
             <a
               href="/dashboard/analytics"
-              className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-white dark:bg-[#070D1B] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
             >
-              <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
+              <TrendingUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
               Ver Funil & Gargalos
             </a>
           </div>
@@ -529,27 +530,27 @@ export default function GoalsPage() {
       {/* Grid de Metas Comerciais Ativas */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Target className="w-5 h-5 text-blue-400" />
+          <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             Metas Comerciais Estabelecidas ({goals.length})
           </h3>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
             Acompanhamento individual e coletivo
           </span>
         </div>
 
         {goals.length === 0 ? (
-          <div className="p-8 text-center rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-3">
-            <div className="w-12 h-12 mx-auto rounded-full bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+          <div className="p-8 text-center rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <div className="w-12 h-12 mx-auto rounded-full bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
               <Target className="w-6 h-6" />
             </div>
-            <h4 className="text-sm font-bold text-white">Nenhuma meta configurada ainda</h4>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white">Nenhuma meta configurada ainda</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
               Defina as metas do mês para calcular o Run Rate diário e classificar os vendedores no Leaderboard.
             </p>
             <button
               onClick={() => setIsNewGoalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-500/20 transition-all"
             >
               <Plus className="w-4 h-4" />
               Criar Primeira Meta
@@ -568,24 +569,24 @@ export default function GoalsPage() {
               return (
                 <div
                   key={goal.id}
-                  className="p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800/80 hover:border-blue-500/40 transition-all group flex flex-col justify-between space-y-4"
+                  className="p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 hover:border-blue-500/40 shadow-sm transition-all group flex flex-col justify-between space-y-4"
                 >
                   <div className="space-y-2">
                     <div className="flex items-start justify-between">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 truncate max-w-[180px]">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate max-w-[180px]">
                         {goal.user?.name ? `Vendedor: ${goal.user.name}` : "Meta Coletiva (Equipe)"}
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={() => setEditingGoal(goal)}
-                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                          className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                           title="Editar meta"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteGoal(goal.id)}
-                          className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                          className="p-1 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-slate-800 transition-colors"
                           title="Excluir meta"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -593,7 +594,7 @@ export default function GoalsPage() {
                       </div>
                     </div>
 
-                    <h4 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                       {goal.title || "Meta"}
                     </h4>
 
@@ -605,16 +606,16 @@ export default function GoalsPage() {
                   {/* Números */}
                   <div>
                     <div className="flex items-baseline justify-between">
-                      <span className="text-xl font-extrabold text-white font-mono">
+                      <span className="text-xl font-extrabold text-slate-900 dark:text-white font-mono">
                         {isCurrency ? `R$ ${formatShortMoney(currentVal)}` : formatNumber(currentVal)}
                       </span>
-                      <span className="text-xs text-slate-400 font-mono">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                         Alvo: {isCurrency ? `R$ ${formatShortMoney(targetVal)}` : formatNumber(targetVal)}
                       </span>
                     </div>
 
                     {/* Barra de Progresso */}
-                    <div className="w-full h-2 bg-slate-50 dark:bg-[#070D1B] rounded-full overflow-hidden mt-2 p-0.5 border border-slate-800">
+                    <div className="w-full h-2 bg-slate-100 dark:bg-[#070D1B] rounded-full overflow-hidden mt-2 p-0.5 border border-slate-200 dark:border-slate-800">
                       <div
                         className="h-full rounded-full bg-blue-600 transition-all duration-500"
                         style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
@@ -623,9 +624,9 @@ export default function GoalsPage() {
                   </div>
 
                   {/* Rodapé do Card */}
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                    <span className="text-slate-400">Atingimento:</span>
-                    <span className="font-bold text-blue-400 font-mono">{percent}%</span>
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
+                    <span className="text-slate-500 dark:text-slate-400">Atingimento:</span>
+                    <span className="font-bold text-blue-600 dark:text-blue-400 font-mono">{percent}%</span>
                   </div>
                 </div>
               );
@@ -635,20 +636,20 @@ export default function GoalsPage() {
       </div>
 
       {/* Leaderboard Gamificado & Pódio dos Top 3 */}
-      <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800/80 shadow-2xl space-y-6">
+      <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
               <Trophy className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 Leaderboard Gamificado da Equipe
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 font-semibold">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-semibold">
                   Top Closers
                 </span>
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Classificação em tempo real por contratos fechados, receita acumulada e taxa de conversão
               </p>
             </div>
@@ -656,7 +657,7 @@ export default function GoalsPage() {
         </div>
 
         {ranking.length === 0 ? (
-          <div className="py-10 text-center text-slate-400 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
+          <div className="py-10 text-center text-slate-500 dark:text-slate-400 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
             Nenhum contrato fechado no período atual para exibir o Leaderboard.
           </div>
         ) : (
@@ -667,28 +668,28 @@ export default function GoalsPage() {
               {ranking[1] && (
                 <div 
                   onClick={() => openSellerDrilldown(ranking[1].userId || ranking[1].id, ranking[1].name)}
-                  className="order-2 md:order-1 p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 relative flex flex-col justify-between hover:border-slate-700 cursor-pointer transition-all group"
+                  className="order-2 md:order-1 p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm relative flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer transition-all group"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800/80 text-slate-300 border border-slate-700 flex items-center gap-1.5">
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
                       🥈 2º Lugar
                     </span>
-                    <span className="text-xs text-slate-400 font-mono">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                       {formatNumber(ranking[1].dealsWon ?? ranking[1].dealsCount)} vendas
                     </span>
                   </div>
 
                   <div className="my-4 text-center">
-                    <div className="w-14 h-14 mx-auto rounded-full bg-slate-700 p-0.5 shadow-md">
-                      <div className="w-full h-full rounded-full bg-slate-50 dark:bg-[#070D1B] flex items-center justify-center text-base font-bold text-slate-200">
+                    <div className="w-14 h-14 mx-auto rounded-full bg-slate-200 dark:bg-slate-700 p-0.5 shadow-md">
+                      <div className="w-full h-full rounded-full bg-slate-50 dark:bg-[#070D1B] flex items-center justify-center text-base font-bold text-slate-700 dark:text-slate-200">
                         {getInitials(ranking[1].name)}
                       </div>
                     </div>
-                    <h4 className="text-sm font-bold text-white mt-2 group-hover:text-blue-400 transition-colors">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white mt-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                       {ranking[1].name || "Consultor"}
                     </h4>
-                    <p className="text-xs text-slate-400 truncate">{ranking[1].email || "Consultor"}</p>
-                    <div className="text-lg font-extrabold text-white font-mono mt-2">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{ranking[1].email || "Consultor"}</p>
+                    <div className="text-lg font-extrabold text-slate-900 dark:text-white font-mono mt-2">
                       R$ {formatMoney(ranking[1].totalRevenueWon ?? ranking[1].achievedValue)}
                     </div>
 
@@ -699,7 +700,7 @@ export default function GoalsPage() {
                           <span
                             key={b.id}
                             title={`${b.title}: ${b.description}`}
-                            className="text-xs px-1.5 py-0.5 rounded bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-slate-300 flex items-center gap-1 cursor-help"
+                            className="text-xs px-1.5 py-0.5 rounded bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-1 cursor-help"
                           >
                             <span>{b.icon}</span>
                             <span className="text-[10px] font-semibold">{b.title}</span>
@@ -709,14 +710,14 @@ export default function GoalsPage() {
                     )}
                   </div>
 
-                  <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
-                    <div className="flex justify-between text-xs text-slate-400">
+                  <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                    <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
                       <span>Conversão: {Number(ranking[1].conversionRate || 0)}%</span>
-                      <span className="text-slate-300 font-bold font-mono">
+                      <span className="text-slate-700 dark:text-slate-300 font-bold font-mono">
                         Ticket: R$ {formatShortMoney(ranking[1].avgTicket)}
                       </span>
                     </div>
-                    <div className="text-[11px] text-center text-blue-400 flex items-center justify-center gap-1 pt-1 opacity-80 group-hover:opacity-100">
+                    <div className="text-[11px] text-center text-blue-600 dark:text-blue-400 flex items-center justify-center gap-1 pt-1 opacity-80 group-hover:opacity-100">
                       <span>Ver histórico completo</span>
                       <ChevronRight className="w-3 h-3" />
                     </div>
@@ -728,28 +729,28 @@ export default function GoalsPage() {
               {ranking[0] && (
                 <div 
                   onClick={() => openSellerDrilldown(ranking[0].userId || ranking[0].id, ranking[0].name)}
-                  className="order-1 md:order-2 p-6 rounded-2xl bg-white dark:bg-[#0B1224] border-2 border-blue-500/40 relative flex flex-col justify-between shadow-xl shadow-blue-500/5 md:-translate-y-2 hover:border-blue-500/70 cursor-pointer transition-all group"
+                  className="order-1 md:order-2 p-6 rounded-2xl bg-white dark:bg-[#0B1224] border-2 border-blue-500/40 relative flex flex-col justify-between shadow-lg shadow-blue-500/10 md:-translate-y-2 hover:border-blue-500/70 cursor-pointer transition-all group"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="px-3 py-1 rounded-lg text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30 flex items-center gap-1.5 shadow-sm">
+                    <span className="px-3 py-1 rounded-lg text-xs font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 flex items-center gap-1.5 shadow-sm">
                       🥇 1º Lugar • Líder Comercial
                     </span>
-                    <span className="text-xs font-semibold text-blue-400 font-mono">
+                    <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 font-mono">
                       {formatNumber(ranking[0].dealsWon ?? ranking[0].dealsCount)} vendas
                     </span>
                   </div>
 
                   <div className="my-5 text-center">
-                    <div className="w-18 h-18 mx-auto rounded-full bg-blue-600/20 border border-blue-500/30 p-1 shadow-md">
-                      <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-[#070D1B] flex items-center justify-center text-lg font-black text-blue-400">
+                    <div className="w-18 h-18 mx-auto rounded-full bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 p-1 shadow-md">
+                      <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-[#070D1B] flex items-center justify-center text-lg font-black text-blue-600 dark:text-blue-400">
                         {getInitials(ranking[0].name)}
                       </div>
                     </div>
-                    <h4 className="text-base font-extrabold text-white mt-2 group-hover:text-blue-400 transition-colors">
+                    <h4 className="text-base font-extrabold text-slate-900 dark:text-white mt-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                       {ranking[0].name || "Líder Comercial"}
                     </h4>
-                    <p className="text-xs text-slate-400 truncate">{ranking[0].email || "Líder de Vendas"}</p>
-                    <div className="text-2xl font-black text-white font-mono mt-2">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{ranking[0].email || "Líder de Vendas"}</p>
+                    <div className="text-2xl font-black text-slate-900 dark:text-white font-mono mt-2">
                       R$ {formatMoney(ranking[0].totalRevenueWon ?? ranking[0].achievedValue)}
                     </div>
 
@@ -760,7 +761,7 @@ export default function GoalsPage() {
                           <span
                             key={b.id}
                             title={`${b.title}: ${b.description}`}
-                            className="text-xs px-2 py-0.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-slate-300 flex items-center gap-1 cursor-help"
+                            className="text-xs px-2 py-0.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-1 cursor-help"
                           >
                             <span>{b.icon}</span>
                             <span className="text-[10px] font-bold">{b.title}</span>
@@ -770,14 +771,14 @@ export default function GoalsPage() {
                     )}
                   </div>
 
-                  <div className="space-y-1.5 pt-2 border-t border-slate-800">
-                    <div className="flex justify-between text-xs text-slate-400 font-medium">
+                  <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
                       <span>Conversão: {Number(ranking[0].conversionRate || 0)}%</span>
-                      <span className="text-slate-300 font-bold font-mono">
+                      <span className="text-slate-700 dark:text-slate-300 font-bold font-mono">
                         Ticket: R$ {formatShortMoney(ranking[0].avgTicket)}
                       </span>
                     </div>
-                    <div className="text-[11px] text-center text-blue-400 flex items-center justify-center gap-1 pt-1 opacity-80 group-hover:opacity-100">
+                    <div className="text-[11px] text-center text-blue-600 dark:text-blue-400 flex items-center justify-center gap-1 pt-1 opacity-80 group-hover:opacity-100">
                       <span>Ver histórico completo</span>
                       <ChevronRight className="w-3 h-3" />
                     </div>
@@ -789,28 +790,28 @@ export default function GoalsPage() {
               {ranking[2] && (
                 <div 
                   onClick={() => openSellerDrilldown(ranking[2].userId || ranking[2].id, ranking[2].name)}
-                  className="order-3 p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 relative flex flex-col justify-between hover:border-slate-700 cursor-pointer transition-all group"
+                  className="order-3 p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm relative flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer transition-all group"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800/80 text-slate-300 border border-slate-700 flex items-center gap-1.5">
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
                       🥉 3º Lugar
                     </span>
-                    <span className="text-xs text-slate-400 font-mono">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                       {formatNumber(ranking[2].dealsWon ?? ranking[2].dealsCount)} vendas
                     </span>
                   </div>
 
                   <div className="my-4 text-center">
-                    <div className="w-14 h-14 mx-auto rounded-full bg-slate-700 p-0.5 shadow-md">
-                      <div className="w-full h-full rounded-full bg-white dark:bg-[#0B1224] flex items-center justify-center text-base font-bold text-slate-200">
+                    <div className="w-14 h-14 mx-auto rounded-full bg-slate-200 dark:bg-slate-700 p-0.5 shadow-md">
+                      <div className="w-full h-full rounded-full bg-slate-50 dark:bg-[#0B1224] flex items-center justify-center text-base font-bold text-slate-700 dark:text-slate-200">
                         {getInitials(ranking[2].name)}
                       </div>
                     </div>
-                    <h4 className="text-sm font-bold text-white mt-2 group-hover:text-blue-400 transition-colors">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white mt-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                       {ranking[2].name || "Consultor"}
                     </h4>
-                    <p className="text-xs text-slate-400 truncate">{ranking[2].email || "Consultor"}</p>
-                    <div className="text-lg font-extrabold text-white font-mono mt-2">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{ranking[2].email || "Consultor"}</p>
+                    <div className="text-lg font-extrabold text-slate-900 dark:text-white font-mono mt-2">
                       R$ {formatMoney(ranking[2].totalRevenueWon ?? ranking[2].achievedValue)}
                     </div>
 
@@ -821,7 +822,7 @@ export default function GoalsPage() {
                           <span
                             key={b.id}
                             title={`${b.title}: ${b.description}`}
-                            className="text-xs px-1.5 py-0.5 rounded bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-slate-300 flex items-center gap-1 cursor-help"
+                            className="text-xs px-1.5 py-0.5 rounded bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-1 cursor-help"
                           >
                             <span>{b.icon}</span>
                             <span className="text-[10px] font-semibold">{b.title}</span>
@@ -831,14 +832,14 @@ export default function GoalsPage() {
                     )}
                   </div>
 
-                  <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
-                    <div className="flex justify-between text-xs text-slate-400">
+                  <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                    <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
                       <span>Conversão: {Number(ranking[2].conversionRate || 0)}%</span>
-                      <span className="text-slate-300 font-bold font-mono">
+                      <span className="text-slate-700 dark:text-slate-300 font-bold font-mono">
                         Ticket: R$ {formatShortMoney(ranking[2].avgTicket)}
                       </span>
                     </div>
-                    <div className="text-[11px] text-center text-blue-400 flex items-center justify-center gap-1 pt-1 opacity-80 group-hover:opacity-100">
+                    <div className="text-[11px] text-center text-blue-600 dark:text-blue-400 flex items-center justify-center gap-1 pt-1 opacity-80 group-hover:opacity-100">
                       <span>Ver histórico completo</span>
                       <ChevronRight className="w-3 h-3" />
                     </div>
@@ -848,9 +849,9 @@ export default function GoalsPage() {
             </div>
 
             {/* Tabela de Classificação Geral da Equipe */}
-            <div className="overflow-x-auto rounded-xl border border-slate-800">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-[#070D1B] text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                <thead className="bg-slate-50 dark:bg-[#070D1B] text-slate-600 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="p-3.5">Posição</th>
                     <th className="p-3.5">Consultor Comercial</th>
@@ -862,15 +863,15 @@ export default function GoalsPage() {
                     <th className="p-3.5 text-right">Ação</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 bg-white/50 dark:bg-[#0B1224]/50">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-[#0B1224]/50">
                   {ranking.map((rep) => (
-                    <tr key={rep.userId || rep.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="p-3.5 font-bold font-mono text-slate-300">
+                    <tr key={rep.userId || rep.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                      <td className="p-3.5 font-bold font-mono text-slate-700 dark:text-slate-300">
                         {rep.rank === 1 ? "🥇 1º" : rep.rank === 2 ? "🥈 2º" : rep.rank === 3 ? "🥉 3º" : `#${rep.rank}`}
                       </td>
                       <td className="p-3.5">
-                        <div className="font-semibold text-white">{rep.name || "Consultor"}</div>
-                        <div className="text-[11px] text-slate-400">{rep.email || "Consultor"}</div>
+                        <div className="font-semibold text-slate-900 dark:text-white">{rep.name || "Consultor"}</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">{rep.email || "Consultor"}</div>
                       </td>
                       <td className="p-3.5">
                         <div className="flex items-center gap-1">
@@ -879,32 +880,32 @@ export default function GoalsPage() {
                               <span
                                 key={b.id}
                                 title={`${b.title}: ${b.description}`}
-                                className="text-xs px-1.5 py-0.5 rounded bg-slate-50 dark:bg-[#070D1B] border border-slate-800 cursor-help"
+                                className="text-xs px-1.5 py-0.5 rounded bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 cursor-help"
                               >
                                 {b.icon}
                               </span>
                             ))
                           ) : (
-                            <span className="text-[11px] text-slate-500">—</span>
+                            <span className="text-[11px] text-slate-400">—</span>
                           )}
                         </div>
                       </td>
-                      <td className="p-3.5 text-center font-semibold text-slate-300">
+                      <td className="p-3.5 text-center font-semibold text-slate-700 dark:text-slate-300">
                         {formatNumber(rep.dealsWon ?? rep.dealsCount)}
                       </td>
-                      <td className="p-3.5 text-center font-mono text-blue-400 font-semibold">
+                      <td className="p-3.5 text-center font-mono text-blue-600 dark:text-blue-400 font-semibold">
                         {Number(rep.conversionRate || 0)}%
                       </td>
-                      <td className="p-3.5 text-right text-slate-300 font-mono">
+                      <td className="p-3.5 text-right text-slate-700 dark:text-slate-300 font-mono">
                         R$ {formatShortMoney(rep.avgTicket)}
                       </td>
-                      <td className="p-3.5 text-right font-bold text-white font-mono">
+                      <td className="p-3.5 text-right font-bold text-slate-900 dark:text-white font-mono">
                         R$ {formatMoney(rep.totalRevenueWon ?? rep.achievedValue)}
                       </td>
                       <td className="p-3.5 text-right">
                         <button
                           onClick={() => openSellerDrilldown(rep.userId || rep.id, rep.name)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/20 font-medium transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-600/10 hover:bg-blue-100 dark:hover:bg-blue-600/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 font-medium transition-colors"
                         >
                           <Eye className="w-3 h-3" />
                           Detalhes

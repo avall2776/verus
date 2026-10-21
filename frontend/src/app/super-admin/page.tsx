@@ -91,8 +91,8 @@ export default function SuperAdminDashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-wide">Métricas Globais do SaaS</h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-wide">Métricas Globais do SaaS</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Visão executiva em tempo real de faturamento, crescimento de tenants e demanda de suporte.
           </p>
         </div>
@@ -100,9 +100,9 @@ export default function SuperAdminDashboard() {
         <button
           onClick={() => fetchStats(false)}
           disabled={loading}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-sm"
         >
-          <RefreshCw size={13} className={loading ? "animate-spin text-blue-400" : ""} />
+          <RefreshCw size={13} className={loading ? "animate-spin text-blue-500" : ""} />
           <span>Atualizar Dados</span>
         </button>
       </div>
@@ -113,22 +113,22 @@ export default function SuperAdminDashboard() {
           <Link
             key={index}
             href={kpi.href}
-            className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between group"
+            className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between group shadow-sm"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 {kpi.title}
               </span>
-              <div className={`p-2 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-800 ${kpi.color}`}>
+              <div className={`p-2 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 ${kpi.color}`}>
                 <kpi.icon size={16} />
               </div>
             </div>
 
             <div>
-              <p className="text-2xl font-black text-white font-mono tracking-tight group-hover:text-blue-400 transition-colors">
+              <p className="text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 {kpi.value}
               </p>
-              <span className="text-[11px] text-slate-400 mt-1 block">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">
                 {kpi.subtitle}
               </span>
             </div>
@@ -138,34 +138,34 @@ export default function SuperAdminDashboard() {
 
       {/* Ações Rápidas do Master */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-3">
-          <div className="flex items-center gap-2 text-white font-bold text-sm">
-            <Building2 size={16} className="text-blue-400" />
+        <div className="p-5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
+          <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
+            <Building2 size={16} className="text-blue-600 dark:text-blue-400" />
             <span>Gestão de Empresas (Tenants)</span>
           </div>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             Consulte a lista de empresas, analise métricas individuais no Raio-X, ative/bloqueie acessos e redefina senhas com um clique.
           </p>
           <Link
             href="/super-admin/companies"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors shadow-sm"
           >
             <span>Gerenciar Empresas</span>
             <ArrowUpRight size={14} />
           </Link>
         </div>
 
-        <div className="p-5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-3">
-          <div className="flex items-center gap-2 text-white font-bold text-sm">
-            <Headphones size={16} className="text-blue-400" />
+        <div className="p-5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
+          <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
+            <Headphones size={16} className="text-blue-600 dark:text-blue-400" />
             <span>Central de Atendimento ao Vivo</span>
           </div>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             Atenda clientes de qualquer empresa em tempo real, registre notas internas para a equipe e confira diagnósticos no card lateral.
           </p>
           <Link
             href="/super-admin/support"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors border border-slate-700"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold transition-colors border border-slate-300 dark:border-slate-700 shadow-sm"
           >
             <span>Abrir Fila de Atendimento</span>
             <ArrowUpRight size={14} />

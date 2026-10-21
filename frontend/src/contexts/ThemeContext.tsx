@@ -2,13 +2,15 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type Theme = "dark" | "light";
+export type Theme = "dark" | "light" | "whatsapp";
 
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
   isDark: boolean;
+  isClean: boolean;
+  isWhatsApp: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -21,7 +23,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const storedTheme = (localStorage.getItem("versus_theme") || localStorage.getItem("theme")) as Theme | null;
-      if (storedTheme === "dark" || storedTheme === "light") {
+      if (storedTheme === "dark" || storedTheme === "light" || storedTheme === "whatsapp") {
         setThemeState(storedTheme);
         applyThemeClass(storedTheme);
       } else {
@@ -39,9 +41,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Ouvir alterações em outras abas
     const handleStorageChange = (e: StorageEvent) => {
       if ((e.key === "versus_theme" || e.key === "theme") && e.newValue) {
-        if (e.newValue === "dark" || e.newValue === "light") {
-          setThemeState(e.newValue);
-          applyThemeClass(e.newValue);
+        if (e.newValue === "dark" || e.newValue === "light" || e.newValue === "whatsapp") {
+          setThemeState(e.newValue as Theme);
+          applyThemeClass(e.newValue as Theme);
         }
       }
     };
@@ -53,12 +55,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const applyThemeClass = (t: Theme) => {
     if (typeof document !== "undefined") {
       const root = document.documentElement;
-      if (t === "dark") {
-        root.classList.add("dark");
+      if (t === "whatsapp") {
+        root.classList.add("dark", "theme-whatsapp");
         root.classList.remove("light");
+        root.setAttribute("data-theme", "whatsapp");
+      } else if (t === "dark") {
+        root.classList.add("dark");
+        root.classList.remove("light", "theme-whatsapp");
+        root.setAttribute("data-theme", "dark");
       } else {
-        root.classList.remove("dark");
+        root.classList.remove("dark", "theme-whatsapp");
         root.classList.add("light");
+        root.setAttribute("data-theme", "light");
       }
       // Notificar outros ouvintes no mesmo documento
       window.dispatchEvent(new CustomEvent("theme_changed", { detail: { theme: t } }));
@@ -77,7 +85,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   const toggleTheme = () => {
-    const nextTheme: Theme = theme === "dark" ? "light" : "dark";
+    // Ciclo entre os 3 temas: dark -> light -> whatsapp -> dark
+    const nextTheme: Theme = 
+      theme === "dark" ? "light" :
+      theme === "light" ? "whatsapp" : "dark";
     setTheme(nextTheme);
   };
 
@@ -87,7 +98,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         theme,
         setTheme,
         toggleTheme,
-        isDark: theme === "dark",
+        isDark: theme === "dark" || theme === "whatsapp",
+        isClean: theme === "light",
+        isWhatsApp: theme === "whatsapp",
       }}
     >
       {children}

@@ -43,6 +43,11 @@ let UsersController = class UsersController {
                 avatarUrl: true,
                 isOnline: true,
                 createdAt: true,
+                departments: {
+                    include: {
+                        department: true,
+                    },
+                },
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -235,16 +240,18 @@ let UsersController = class UsersController {
             updateData.name = name;
         }
         if (body.role !== undefined) {
-            const role = body.role.toUpperCase();
-            if (role !== 'ADMIN' && role !== 'AGENT') {
-                throw new common_1.BadRequestException('Cargo inválido. Utilize ADMIN ou AGENT.');
+            let role = body.role.toUpperCase();
+            if (role === 'COLLABORATOR')
+                role = 'AGENT';
+            if (role !== 'ADMIN' && role !== 'SUPERVISOR' && role !== 'AGENT') {
+                throw new common_1.BadRequestException('Cargo inválido. Utilize ADMIN, SUPERVISOR ou AGENT.');
             }
             if (id === currentUserId && role !== 'ADMIN') {
                 const adminCount = await this.prisma.user.count({
                     where: { tenantId, role: 'ADMIN', isActive: true },
                 });
                 if (adminCount <= 1) {
-                    throw new common_1.BadRequestException('Você é o único Administrador ativo da empresa e não pode alterar seu cargo para Atendente.');
+                    throw new common_1.BadRequestException('Você é o único Administrador ativo da empresa e não pode alterar seu cargo.');
                 }
             }
             updateData.role = role;
@@ -279,6 +286,24 @@ let UsersController = class UsersController {
         if (body.avatarUrl !== undefined) {
             updateData.avatarUrl = body.avatarUrl;
         }
+        if (body.departmentIds !== undefined && Array.isArray(body.departmentIds)) {
+            const validDepts = await this.prisma.department.findMany({
+                where: {
+                    id: { in: body.departmentIds },
+                    tenantId,
+                },
+                select: { id: true },
+            });
+            const validDeptIds = validDepts.map(d => d.id);
+            await this.prisma.userDepartment.deleteMany({
+                where: { userId: id },
+            });
+            if (validDeptIds.length > 0) {
+                await this.prisma.userDepartment.createMany({
+                    data: validDeptIds.map(dId => ({ userId: id, departmentId: dId })),
+                });
+            }
+        }
         const updatedUser = await this.prisma.user.update({
             where: { id },
             data: updateData,
@@ -293,6 +318,11 @@ let UsersController = class UsersController {
                 avatarUrl: true,
                 isOnline: true,
                 tenantId: true,
+                departments: {
+                    include: {
+                        department: true,
+                    },
+                },
             },
         });
         return {
@@ -329,7 +359,8 @@ let UsersController = class UsersController {
         const rawPass = body.password?.trim() || 'Versus@123';
         const bcrypt = await Promise.resolve().then(() => require('bcrypt'));
         const hashedPassword = await bcrypt.hash(rawPass, 10);
-        const role = (body.role || 'AGENT').toUpperCase() === 'ADMIN' ? 'ADMIN' : 'AGENT';
+        const rawRole = (body.role || 'AGENT').toUpperCase();
+        const role = (rawRole === 'ADMIN' || rawRole === 'SUPERVISOR') ? rawRole : 'AGENT';
         const defaultPermissions = {
             inbox: true,
             crm: true,
@@ -353,6 +384,23 @@ let UsersController = class UsersController {
                 isActive: true,
                 tenantId,
             },
+        });
+        if (body.departmentIds && Array.isArray(body.departmentIds) && body.departmentIds.length > 0) {
+            const validDepts = await this.prisma.department.findMany({
+                where: {
+                    id: { in: body.departmentIds },
+                    tenantId,
+                },
+                select: { id: true },
+            });
+            if (validDepts.length > 0) {
+                await this.prisma.userDepartment.createMany({
+                    data: validDepts.map(d => ({ userId: newUser.id, departmentId: d.id })),
+                });
+            }
+        }
+        const completeUser = await this.prisma.user.findUnique({
+            where: { id: newUser.id },
             select: {
                 id: true,
                 name: true,
@@ -363,6 +411,11 @@ let UsersController = class UsersController {
                 permissions: true,
                 avatarUrl: true,
                 isOnline: true,
+                departments: {
+                    include: {
+                        department: true,
+                    },
+                },
             },
         });
         let emailSent = false;
@@ -386,7 +439,7 @@ let UsersController = class UsersController {
             message: emailSent
                 ? 'Membro cadastrado com sucesso! E-mail de convite enviado via SMTP.'
                 : 'Membro cadastrado com sucesso! (Configure o Inbox de E-mails para envio automático de convites).',
-            user: newUser,
+            user: completeUser || newUser,
             emailSent,
             emailError,
         };

@@ -6,11 +6,13 @@ import { usePathname } from "next/navigation";
 import { MessageSquare, Kanban, LayoutDashboard, Activity, Menu } from "lucide-react";
 import { useMobileMenu } from "@/contexts/MobileMenuContext";
 import { useSocket } from "@/components/ui/SocketProvider";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { openMenu } = useMobileMenu();
   const { hasGlobalUnread } = useSocket();
+  const { isWhatsApp } = useTheme();
 
   // Se estiver na tela de login, pública ou relatório compartilhado, não exibe
   if (
@@ -58,16 +60,29 @@ export default function BottomNav() {
             href={item.href}
             prefetch={true}
             className={`flex flex-col items-center justify-center flex-1 py-1 transition-all duration-150 relative rounded-xl ${
-              isActive ? "text-blue-600 dark:text-blue-400 font-bold" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              isActive 
+                ? (isWhatsApp ? "text-[#00A884] font-bold" : "text-blue-600 dark:text-blue-400 font-bold")
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
             <div className="relative">
-              <Icon size={20} className={isActive ? "text-blue-600 dark:text-blue-400 scale-110 transition-transform" : "transition-transform"} />
+              <Icon 
+                size={20} 
+                className={
+                  isActive 
+                    ? (isWhatsApp ? "text-[#00A884] scale-110 transition-transform" : "text-blue-600 dark:text-blue-400 scale-110 transition-transform") 
+                    : "transition-transform"
+                } 
+              />
               {item.badge && (
                 <span className="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
               )}
             </div>
-            <span className={`text-[10px] mt-1 tracking-tight ${isActive ? "text-slate-900 dark:text-white font-semibold" : "text-slate-500 dark:text-slate-400"}`}>
+            <span className={`text-[10px] mt-1 tracking-tight ${
+              isActive 
+                ? (isWhatsApp ? "text-[#E9EDEF] font-semibold" : "text-slate-900 dark:text-white font-semibold") 
+                : "text-slate-500 dark:text-slate-400"
+            }`}>
               {item.label}
             </span>
           </Link>

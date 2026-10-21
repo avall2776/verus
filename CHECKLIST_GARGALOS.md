@@ -35,9 +35,38 @@ Plano de modernização estrutural e resolução gradual dos 6 gargalos prioriza
 
 ---
 
-### [PENDENTE] 03. Departamentos e Associação Direta de Usuários
-- **Status:** Pendente
-- **Descrição:** Associação direta de operadores e usuários a múltiplos departamentos com filtragem no chat e distribuição de atendimentos.
+### [CONCLUÍDO] 03. Departamentos e Associação Direta de Usuários
+- **Status:** Concluído (Associação N:N de operadores a múltiplos departamentos, filtros por setor em tempo real no Chat/Inbox, badges com cores do departamento, exibição do operador e setor na conversa ativa e gaveta lateral, distribuição para fila do setor ou atendente direto, compilação TypeScript `tsc` código 0, NestJS `nest build` código 0)
+- **Descrição:** Associação direta de operadores/usuários a múltiplos setores corporativos com controle granular de filas no Inbox e distribuição inteligente de atendimentos.
+- **Recursos Entregues:**
+  1. **Associação N:N de Usuários e Departamentos no Backend:**
+     - Endpoints `findAll`, `create` e `update` em `users.controller.ts` integrados com a tabela relacional `UserDepartment`.
+     - Suporte a `departmentIds?: string[]` no envio de convites e edição de colaboradores, sincronizando os setores com validação estrita de segurança e isolamento multi-tenant.
+  2. **Consulta e Filtro no Chat/Inbox:**
+     - Query parameter `@Query('departmentId')` adicionado nos endpoints `GET /conversations` e `GET /conversations/counts`.
+     - `findAllConversations` e `getConversationCounts` em `chat.service.ts` filtrando dinamicamente por departamento.
+     - Carregamento de `assignedUser` com dados do operador e seus respectivos setores (`departments.department`) e injeção nas conversas.
+  3. **Eventos em Tempo Real (WebSocket):**
+     - Transmissão de `conversationUpdated` e `conversationTransferred` com dados completos da conversa, departamento e operador responsável.
+     - Listener do WebSocket no frontend (`conversationTransferred`) atualizando conversas e contadores de fila instantaneamente.
+  4. **Gestão de Usuários (`UsersSettingsTab.tsx`):**
+     - Carregamento assíncrono dos departamentos disponíveis no tenant.
+     - Componente seletor de departamentos (`DepartmentSelector`) com chips clicáveis, bolinhas coloridas e seleção múltipla nos modais de Convidar e Editar Usuário.
+     - Exibição de badges com as cores e nomes dos setores associados a cada colaborador na listagem de usuários.
+  5. **Gestão de Departamentos (`DepartmentsSettingsTab.tsx`):**
+     - Refinamento visual com suporte completo a Dark/Light mode, tokens de cor semânticos e gerenciamento de membros vinculados.
+  6. **Filtros por Setor no Chat/Inbox (`inbox/page.tsx`):**
+     - Barra horizontal de filtros por departamento posicionada logo abaixo das abas de atendimento ("Todos", "Comercial", "Suporte", etc.).
+     - Filtragem reativa na lista lateral e atualização dos contadores de abas (`tabCounts`) respeitando o departamento selecionado.
+  7. **Badges de Setor e Atendente nos Cards de Conversa:**
+     - Cada card da lista lateral exibe o badge estilizado do departamento da conversa e o nome do atendente atribuído.
+  8. **Header da Conversa Ativa e Gaveta de Detalhes:**
+     - Exibição do badge do departamento ao lado do nome do contato com ação rápida de transferência ao clicar.
+     - Subtítulo detalhado indicando o operador responsável e os setores aos quais ele pertence.
+     - Painel lateral de detalhes com seção de status operacional indicando departamento e operador atribuído com botão de transferência.
+  9. **Distribuição e Transferência Completa de Tickets:**
+     - Modal de transferência aprimorado permitindo tanto a transferência para a fila geral do setor quanto a atribuição direta para qualquer atendente daquele departamento.
+     - Toast feedback e preservação de SLA de espera.
 
 ---
 

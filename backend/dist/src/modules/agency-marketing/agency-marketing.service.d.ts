@@ -414,8 +414,8 @@ export declare class AgencyMarketingService {
         createdAt: Date;
         type: string;
         notes: string | null;
-        timestamp: Date;
         userId: string;
+        timestamp: Date;
         durationMinutes: number | null;
         sessionHash: string;
         ipAddress: string | null;

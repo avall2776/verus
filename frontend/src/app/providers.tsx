@@ -12,7 +12,8 @@ import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
 
 function ThemeAwareToaster() {
   const { theme } = useTheme();
-  return <Toaster position="top-right" theme={theme} richColors />;
+  const toasterTheme = theme === "whatsapp" ? "dark" : theme;
+  return <Toaster position="top-right" theme={toasterTheme} richColors />;
 }
 
 export default function Providers({ children }: { children: React.ReactNode }) {

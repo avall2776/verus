@@ -125,8 +125,9 @@ export default function Topbar() {
           </Link>
         ) : null}
 
-        {/* Alternador de Tema Dia e Noite */}
-        <ThemeToggle />
+        {/* Alternador de Tema Triplo (Clean, Dark, WhatsApp) */}
+        <ThemeToggle variant="pill" className="hidden sm:inline-flex" />
+        <ThemeToggle variant="icon" className="sm:hidden" />
 
         {/* Central de Notificações Global (Popover Interativo em Tempo Real) */}
         <NotificationsPopover />

@@ -313,13 +313,13 @@ export default function SuperAdminPlansPage() {
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-10">
       
       {/* Header Corporativo */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-wide flex items-center gap-2">
-            <ShieldCheck size={20} className="text-blue-400" />
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-wide flex items-center gap-2">
+            <ShieldCheck size={20} className="text-blue-600 dark:text-blue-400" />
             <span>Matriz de Planos & Permissões</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Configure os 10 módulos do sistema, limites operacionais e cotas de IA para cada nível de assinatura.
           </p>
         </div>
@@ -336,35 +336,35 @@ export default function SuperAdminPlansPage() {
           <button
             onClick={fetchPlans}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-sm"
           >
-            <RefreshCw size={13} className={loading ? "animate-spin text-blue-400" : ""} />
+            <RefreshCw size={13} className={loading ? "animate-spin text-blue-500" : ""} />
             <span>Atualizar</span>
           </button>
         </div>
       </div>
 
       {/* Alerta de Impacto */}
-      <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-3">
-        <ShieldAlert size={18} className="text-blue-400 shrink-0 mt-0.5" />
-        <div className="text-xs text-blue-300 leading-relaxed">
-          <strong className="block text-white mb-0.5">Governança Master & Persistência em Tempo Real:</strong>
+      <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 flex items-start gap-3 shadow-sm">
+        <ShieldAlert size={18} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+        <div className="text-xs text-blue-900 dark:text-blue-300 leading-relaxed">
+          <strong className="block text-blue-950 dark:text-white mb-0.5">Governança Master & Persistência em Tempo Real:</strong>
           As permissões e módulos definidos aqui governam diretamente o que os operadores das empresas (tenants) conseguem acessar no Vallor. A desativação de um módulo bloqueia o recurso no respectivo tenant.
         </div>
       </div>
 
       {/* Modal/Formulário de Criação de Novo Plano */}
       {isCreating && (
-        <form onSubmit={handleCreatePlan} className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-blue-500/40 space-y-5 animate-in fade-in duration-200 shadow-2xl">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <form onSubmit={handleCreatePlan} className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-blue-500/30 dark:border-blue-500/40 space-y-5 animate-in fade-in duration-200 shadow-xl">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-blue-400" />
-              <h3 className="text-sm font-bold text-white">Criar Novo Nível de Assinatura</h3>
+              <Sparkles size={16} className="text-blue-600 dark:text-blue-400" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Criar Novo Nível de Assinatura</h3>
             </div>
             <button
               type="button"
               onClick={() => setIsCreating(false)}
-              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1 rounded text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <X size={16} />
             </button>
@@ -372,19 +372,19 @@ export default function SuperAdminPlansPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400">Nome do Plano *</label>
+              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Nome do Plano *</label>
               <input
                 type="text"
                 required
                 value={newPlanName}
                 onChange={(e) => setNewPlanName(e.target.value)}
                 placeholder="Ex: Start, Enterprise Plus"
-                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400">Valor Mensal (R$) *</label>
+              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Valor Mensal (R$) *</label>
               <input
                 type="number"
                 step="0.01"
@@ -392,34 +392,34 @@ export default function SuperAdminPlansPage() {
                 value={newPlanPrice}
                 onChange={(e) => setNewPlanPrice(e.target.value)}
                 placeholder="Ex: 199.90"
-                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400">Máx. Usuários (Operadores)</label>
+              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Máx. Usuários (Operadores)</label>
               <input
                 type="number"
                 value={newMaxUsers}
                 onChange={(e) => setNewMaxUsers(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white outline-none"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400">Cota Mensal de Mensagens IA</label>
+              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Cota Mensal de Mensagens IA</label>
               <input
                 type="number"
                 value={newMaxAIMsgs}
                 onChange={(e) => setNewMaxAIMsgs(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white outline-none"
               />
             </div>
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-[11px] font-bold text-slate-300">
+              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
                 Módulos do Sistema ({Object.values(newModules).filter(Boolean).length}/10 selecionados):
               </label>
               <div className="flex gap-2">
@@ -430,11 +430,11 @@ export default function SuperAdminPlansPage() {
                     ALL_SYSTEM_MODULES.forEach(m => (all[m.key] = true));
                     setNewModules(all);
                   }}
-                  className="text-[10px] text-blue-400 hover:text-blue-300 font-semibold"
+                  className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold"
                 >
                   Marcar Todos
                 </button>
-                <span className="text-slate-600 text-[10px]">|</span>
+                <span className="text-slate-300 dark:text-slate-600 text-[10px]">|</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -442,7 +442,7 @@ export default function SuperAdminPlansPage() {
                     ALL_SYSTEM_MODULES.forEach(m => (all[m.key] = false));
                     setNewModules(all);
                   }}
-                  className="text-[10px] text-slate-400 hover:text-white font-semibold"
+                  className="text-[10px] text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white font-semibold"
                 >
                   Desmarcar Todos
                 </button>
@@ -457,21 +457,21 @@ export default function SuperAdminPlansPage() {
                   <div
                     key={mod.key}
                     onClick={() => setNewModules(prev => ({ ...prev, [mod.key]: !prev[mod.key] }))}
-                    className={`p-3 rounded-xl border transition-all cursor-pointer select-none flex flex-col justify-between gap-2 ${
+                    className={`p-3 rounded-xl border transition-all cursor-pointer select-none flex flex-col justify-between gap-2 shadow-sm ${
                       active 
-                        ? "bg-blue-950/20 border-blue-500/40 text-white" 
-                        : "bg-slate-50 dark:bg-[#070D1B] border-slate-800 text-slate-400 hover:border-slate-700"
+                        ? "bg-blue-50 dark:bg-blue-950/20 border-blue-300 dark:border-blue-500/40 text-blue-950 dark:text-white" 
+                        : "bg-slate-50 dark:bg-[#070D1B] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700"
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <IconComponent size={16} className={active ? "text-blue-400" : "text-slate-500"} />
-                      <div className={`w-7 h-4 rounded-full relative transition-colors ${active ? "bg-blue-600" : "bg-slate-800"}`}>
+                      <IconComponent size={16} className={active ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-500"} />
+                      <div className={`w-7 h-4 rounded-full relative transition-colors ${active ? "bg-blue-600" : "bg-slate-200 dark:bg-slate-800"}`}>
                         <div className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-all ${active ? "left-3.5" : "left-0.5"}`} />
                       </div>
                     </div>
                     <div>
                       <span className="text-xs font-bold block leading-snug">{mod.name}</span>
-                      <span className="text-[10px] text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">{mod.desc}</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">{mod.desc}</span>
                     </div>
                   </div>
                 );
@@ -479,18 +479,18 @@ export default function SuperAdminPlansPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={() => setIsCreating(false)}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs text-slate-700 dark:text-slate-300 transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={creatingLoading}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white transition-colors disabled:opacity-50 shadow-sm"
             >
               {creatingLoading ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
               <span>Salvar Novo Plano</span>
@@ -506,7 +506,7 @@ export default function SuperAdminPlansPage() {
           <span className="text-xs font-medium">Carregando matriz de planos e permissões...</span>
         </div>
       ) : plans.length === 0 ? (
-        <div className="text-center py-16 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl text-slate-400 text-xs">
+        <div className="text-center py-16 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-500 dark:text-slate-400 text-xs shadow-sm">
           Nenhum plano cadastrado. Clique em "Criar Novo Plano" acima para iniciar.
         </div>
       ) : (
@@ -518,34 +518,34 @@ export default function SuperAdminPlansPage() {
             return (
               <div 
                 key={plan.id}
-                className="flex flex-col rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-slate-700/80 transition-all shadow-xl overflow-hidden"
+                className="flex flex-col rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700/80 transition-all shadow-sm dark:shadow-xl overflow-hidden"
               >
                 {/* Header do Card do Plano */}
-                <div className="p-5 border-b border-slate-800/80 bg-slate-50/70 dark:bg-slate-50 dark:bg-[#070D1B]/70 space-y-4">
+                <div className="p-5 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-[#070D1B]/70 space-y-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex-1">
-                      <span className="text-[10px] uppercase tracking-wider font-bold text-blue-400 block mb-1">
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-blue-600 dark:text-blue-400 block mb-1">
                         Nível de Assinatura
                       </span>
                       <input
                         type="text"
                         value={plan.name}
                         onChange={(e) => handleUpdateLimit(plan.id, "name", e.target.value)}
-                        className="text-base font-bold text-white bg-transparent border-b border-transparent hover:border-slate-700 focus:border-blue-500 focus:bg-white dark:bg-[#0B1224] rounded px-1.5 py-0.5 outline-none transition-colors w-full"
+                        className="text-base font-bold text-slate-900 dark:text-white bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:bg-white dark:focus:bg-[#0B1224] rounded px-1.5 py-0.5 outline-none transition-colors w-full"
                         title="Clique para editar o nome do plano"
                       />
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="text-[10px] text-slate-400 font-semibold block mb-0.5">Mensalidade</span>
-                      <div className="flex items-center justify-end gap-1 bg-white dark:bg-[#0B1224] px-2.5 py-1 rounded-lg border border-slate-800">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block mb-0.5">Mensalidade</span>
+                      <div className="flex items-center justify-end gap-1 bg-white dark:bg-[#0B1224] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
                         <span className="text-xs font-bold text-slate-400">R$</span>
                         <input
                           type="number"
                           step="0.01"
                           value={plan.price}
                           onChange={(e) => handleUpdateLimit(plan.id, "price", e.target.value)}
-                          className="w-20 text-sm font-extrabold text-white bg-transparent outline-none text-right"
+                          className="w-20 text-sm font-extrabold text-slate-900 dark:text-white bg-transparent outline-none text-right"
                           title="Valor da mensalidade"
                         />
                       </div>
@@ -554,33 +554,33 @@ export default function SuperAdminPlansPage() {
 
                   {/* Limites Operacionais & Cotas */}
                   <div className="grid grid-cols-2 gap-2.5 pt-1">
-                    <div className="p-2.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800/90 flex flex-col gap-1">
-                      <div className="flex items-center justify-between text-slate-400">
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/90 flex flex-col gap-1 shadow-sm">
+                      <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
                         <span className="text-[10px] font-bold uppercase tracking-wider">Operadores</span>
-                        <Users size={12} className="text-blue-400" />
+                        <Users size={12} className="text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="flex items-baseline gap-1">
                         <input
                           type="number"
                           value={plan.maxUsers}
                           onChange={(e) => handleUpdateLimit(plan.id, "maxUsers", e.target.value)}
-                          className="w-full text-sm font-bold text-white bg-transparent outline-none border-b border-transparent focus:border-blue-500"
+                          className="w-full text-sm font-bold text-slate-900 dark:text-white bg-transparent outline-none border-b border-transparent focus:border-blue-500"
                         />
                         <span className="text-[10px] text-slate-500">usuários</span>
                       </div>
                     </div>
 
-                    <div className="p-2.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800/90 flex flex-col gap-1">
-                      <div className="flex items-center justify-between text-slate-400">
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/90 flex flex-col gap-1 shadow-sm">
+                      <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
                         <span className="text-[10px] font-bold uppercase tracking-wider">Cota IA</span>
-                        <Bot size={12} className="text-blue-400" />
+                        <Bot size={12} className="text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="flex items-baseline gap-1">
                         <input
                           type="number"
                           value={plan.maxAIMsgs}
                           onChange={(e) => handleUpdateLimit(plan.id, "maxAIMsgs", e.target.value)}
-                          className="w-full text-sm font-bold text-white bg-transparent outline-none border-b border-transparent focus:border-blue-500"
+                          className="w-full text-sm font-bold text-slate-900 dark:text-white bg-transparent outline-none border-b border-transparent focus:border-blue-500"
                         />
                         <span className="text-[10px] text-slate-500">msgs/mês</span>
                       </div>
@@ -590,25 +590,25 @@ export default function SuperAdminPlansPage() {
 
                 {/* Seção de Módulos (Sem Scroll Interno, Contraste Máximo) */}
                 <div className="p-5 space-y-3.5 flex-1">
-                  <div className="flex items-center justify-between pb-1 border-b border-slate-800/60">
-                    <span className="text-[11px] font-bold text-slate-300">
+                  <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-800/60">
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
                       Módulos Habilitados:
-                      <span className="ml-1.5 text-blue-400 font-extrabold">{activeCount} / 10</span>
+                      <span className="ml-1.5 text-blue-600 dark:text-blue-400 font-extrabold">{activeCount} / 10</span>
                     </span>
 
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => handleToggleAllModules(plan.id, true)}
-                        className="text-[10px] text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                        className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold transition-colors"
                       >
                         Ativar Todos
                       </button>
-                      <span className="text-slate-700 text-[10px]">•</span>
+                      <span className="text-slate-300 dark:text-slate-700 text-[10px]">•</span>
                       <button
                         type="button"
                         onClick={() => handleToggleAllModules(plan.id, false)}
-                        className="text-[10px] text-slate-500 hover:text-slate-300 font-semibold transition-colors"
+                        className="text-[10px] text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 font-semibold transition-colors"
                       >
                         Desativar
                       </button>
@@ -624,17 +624,17 @@ export default function SuperAdminPlansPage() {
                         <div
                           key={mod.key}
                           onClick={() => handleToggleModule(plan.id, mod.key)}
-                          className={`group cursor-pointer select-none rounded-xl p-3 border transition-all duration-150 flex items-center justify-between gap-3 ${
+                          className={`group cursor-pointer select-none rounded-xl p-3 border transition-all duration-150 flex items-center justify-between gap-3 shadow-sm ${
                             isActive
-                              ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80 border-l-4 border-l-blue-500 shadow-sm"
-                              : "bg-slate-50/40 dark:bg-slate-50 dark:bg-[#070D1B]/40 border-slate-800/40 border-l-4 border-l-slate-800 opacity-45 hover:opacity-75"
+                              ? "bg-slate-50 dark:bg-[#070D1B] border-slate-200 dark:border-slate-700/80 border-l-4 border-l-blue-500 text-slate-900 dark:text-white"
+                              : "bg-slate-50/50 dark:bg-[#070D1B]/40 border-slate-200/60 dark:border-slate-800/40 border-l-4 border-l-slate-300 dark:border-l-slate-800 opacity-60 hover:opacity-90"
                           }`}
                         >
                           <div className="flex items-start gap-2.5 flex-1 min-w-0">
                             <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 transition-colors ${
                               isActive 
-                                ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" 
-                                : "bg-slate-800/50 text-slate-500 border border-slate-800/40"
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20" 
+                                : "bg-slate-200/60 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-800/40"
                             }`}>
                               <IconComp size={15} />
                             </div>
@@ -642,13 +642,13 @@ export default function SuperAdminPlansPage() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className={`text-xs font-semibold leading-tight block truncate ${
-                                  isActive ? "text-white" : "text-slate-400"
+                                  isActive ? "text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400"
                                 }`}>
                                   {mod.name}
                                 </span>
                               </div>
                               <p className={`text-[10px] leading-relaxed mt-0.5 line-clamp-1 ${
-                                isActive ? "text-slate-400" : "text-slate-600"
+                                isActive ? "text-slate-500 dark:text-slate-400" : "text-slate-400 dark:text-slate-600"
                               }`}>
                                 {mod.desc}
                               </p>
@@ -659,14 +659,14 @@ export default function SuperAdminPlansPage() {
                           <div className="flex items-center gap-2 shrink-0">
                             <span className={`text-[9px] font-bold uppercase tracking-wider hidden sm:inline-block px-1.5 py-0.5 rounded ${
                               isActive
-                                ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
-                                : "bg-slate-800 text-slate-500 border border-slate-800"
+                                ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30"
+                                : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-500 border border-slate-300 dark:border-slate-800"
                             }`}>
                               {isActive ? "Ligado" : "Desligado"}
                             </span>
 
                             <div className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out flex items-center ${
-                              isActive ? "bg-blue-600 justify-end" : "bg-slate-800 justify-start"
+                              isActive ? "bg-blue-600 justify-end" : "bg-slate-200 dark:bg-slate-800 justify-start"
                             }`}>
                               <div className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200 flex items-center justify-center ${
                                 isActive ? "text-blue-600" : "text-slate-400"
@@ -682,7 +682,7 @@ export default function SuperAdminPlansPage() {
                 </div>
 
                 {/* Botão de Ação Salvar */}
-                <div className="p-4 bg-slate-50/80 dark:bg-slate-50 dark:bg-[#070D1B]/80 border-t border-slate-800 flex items-center justify-between gap-3">
+                <div className="p-4 bg-slate-50 dark:bg-[#070D1B]/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
                   <span className="text-[10px] text-slate-500 font-medium">
                     {isSaving ? "Persistindo matriz..." : "Modificações salvas localmente"}
                   </span>

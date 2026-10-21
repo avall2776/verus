@@ -91,31 +91,31 @@ export function ContractPreviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-3xl bg-slate-50 dark:bg-[#080D1A] border border-slate-800 shadow-2xl text-white overflow-hidden"
+        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-3xl bg-white dark:bg-[#080D1A] border border-slate-200 dark:border-slate-800 shadow-2xl text-slate-900 dark:text-white overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/60 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <div className="w-10 h-10 rounded-2xl bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-white tracking-tight">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
                   {contract.code}
                 </h2>
                 <span className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded-full font-bold ${
                   isSigned 
-                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" 
-                    : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                    ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30" 
+                    : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30"
                 }`}>
                   {isSigned ? "✓ Assinado Digitalmente" : "Aguardando Assinatura"}
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {contract.title}
               </p>
             </div>
@@ -124,25 +124,25 @@ export function ContractPreviewModal({
           <div className="flex items-center gap-2">
             <button
               onClick={handleOpenPdf}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-700 transition-colors shadow-sm"
               title="Abrir PDF Oficial para Impressão"
             >
-              <Printer className="w-4 h-4 text-cyan-400" />
+              <Printer className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
               Imprimir / PDF
             </button>
 
             <button
               onClick={handleCopyWhatsApp}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-xs font-semibold text-emerald-300 border border-emerald-500/30 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-600/20 hover:bg-emerald-100 dark:hover:bg-emerald-600/30 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 transition-colors"
               title="Compartilhar via WhatsApp"
             >
-              <Share2 className="w-4 h-4 text-emerald-400" />
+              <Share2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               WhatsApp
             </button>
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -150,31 +150,31 @@ export function ContractPreviewModal({
         </div>
 
         {/* Scrollable Content (Minuta & Dados) */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 custom-scrollbar bg-slate-50/70 dark:bg-slate-50 dark:bg-[#060913]/70">
+        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 custom-scrollbar bg-slate-50/50 dark:bg-[#060913]/70">
           {/* Box Emitente / Contratante */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-800 space-y-2">
-              <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-400 flex items-center gap-1.5">
-                <Building2 className="w-3.5 h-3.5 text-cyan-400" /> Contratada (Emitente)
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+              <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" /> Contratada (Emitente)
               </span>
-              <div className="font-bold text-sm text-white">
+              <div className="font-bold text-sm text-slate-900 dark:text-white">
                 {contract.issuer?.name || "Vallor Tecnologia & Inteligência Comercial"}
               </div>
-              <div className="text-xs text-slate-400 space-y-0.5">
+              <div className="text-xs text-slate-500 dark:text-slate-400 space-y-0.5">
                 {contract.issuer?.document && <div>CNPJ: {contract.issuer.document}</div>}
                 {contract.issuer?.email && <div>E-mail: {contract.issuer.email}</div>}
                 {contract.issuer?.phone && <div>Tel: {contract.issuer.phone}</div>}
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-800 space-y-2">
-              <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-400 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-emerald-400" /> Contratante (Cliente)
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+              <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Contratante (Cliente)
               </span>
-              <div className="font-bold text-sm text-white">
+              <div className="font-bold text-sm text-slate-900 dark:text-white">
                 {contract.clientName}
               </div>
-              <div className="text-xs text-slate-400 space-y-0.5">
+              <div className="text-xs text-slate-500 dark:text-slate-400 space-y-0.5">
                 {contract.clientDocument && <div>CPF/CNPJ: {contract.clientDocument}</div>}
                 {contract.clientEmail && <div>E-mail: {contract.clientEmail}</div>}
                 {contract.clientPhone && <div>WhatsApp: {contract.clientPhone}</div>}
@@ -184,33 +184,33 @@ export function ContractPreviewModal({
           </div>
 
           {/* Dados Financeiros e Prazos */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-900/70 border border-slate-800">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div>
-              <span className="text-[11px] text-slate-400 uppercase font-semibold">Valor Contratado</span>
-              <div className="text-xl font-extrabold text-emerald-400 font-mono mt-1">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Valor Contratado</span>
+              <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono mt-1">
                 {formattedValue}
               </div>
             </div>
             <div>
-              <span className="text-[11px] text-slate-400 uppercase font-semibold">Início da Vigência</span>
-              <div className="text-sm font-semibold text-white mt-1">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Início da Vigência</span>
+              <div className="text-sm font-semibold text-slate-900 dark:text-white mt-1">
                 {contract.startDate ? new Date(contract.startDate).toLocaleDateString("pt-BR") : "Data de Assinatura"}
               </div>
             </div>
             <div>
-              <span className="text-[11px] text-slate-400 uppercase font-semibold">Término da Vigência</span>
-              <div className="text-sm font-semibold text-white mt-1">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Término da Vigência</span>
+              <div className="text-sm font-semibold text-slate-900 dark:text-white mt-1">
                 {contract.endDate ? new Date(contract.endDate).toLocaleDateString("pt-BR") : "Prazo Indeterminado"}
               </div>
             </div>
           </div>
 
           {/* Cláusulas Contratuais Padronizadas */}
-          <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800/80 space-y-4">
-            <h3 className="text-sm font-bold text-white border-b border-slate-800 pb-2">
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 shadow-sm space-y-4">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">
               CLÁUSULAS CONTRATUAIS & DISPOSIÇÕES GERAIS
             </h3>
-            <div className="text-xs text-slate-300 leading-relaxed space-y-3">
+            <div className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed space-y-3">
               <p>
                 <strong>1. DO OBJETO:</strong> O presente instrumento tem como escopo a prestação de serviços profissionais e/ou fornecimento de soluções digitais discriminadas conforme proposta comercial e especificações acordadas entre as partes.
               </p>
@@ -227,31 +227,31 @@ export function ContractPreviewModal({
           </div>
 
           {/* Bloco de Assinatura & Auditoria */}
-          <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <div className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               Trilha de Auditoria e Assinatura Digital
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-950/60 border border-slate-800/80">
-                <div className="font-semibold text-slate-200">Pela Contratada:</div>
-                <div className="text-slate-400 mt-1">{contract.issuer?.name || "Vallor Tecnologia"}</div>
-                <div className="text-emerald-400 font-mono text-[11px] mt-1 flex items-center gap-1">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80">
+                <div className="font-semibold text-slate-800 dark:text-slate-200">Pela Contratada:</div>
+                <div className="text-slate-500 dark:text-slate-400 mt-1">{contract.issuer?.name || "Vallor Tecnologia"}</div>
+                <div className="text-emerald-600 dark:text-emerald-400 font-mono text-[11px] mt-1 flex items-center gap-1 font-medium">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Assinado pelo Emitente
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-950/60 border border-slate-800/80">
-                <div className="font-semibold text-slate-200">Pelo Contratante:</div>
-                <div className="text-slate-400 mt-1">{contract.clientName}</div>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80">
+                <div className="font-semibold text-slate-800 dark:text-slate-200">Pelo Contratante:</div>
+                <div className="text-slate-500 dark:text-slate-400 mt-1">{contract.clientName}</div>
                 {isSigned ? (
-                  <div className="text-emerald-400 font-mono text-[11px] mt-1 space-y-0.5">
+                  <div className="text-emerald-600 dark:text-emerald-400 font-mono text-[11px] mt-1 space-y-0.5 font-medium">
                     <div className="flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5" /> Assinado Digitalmente em {contract.signedAt || "Hoje"}
                     </div>
-                    <div className="text-[10px] text-slate-500">IP: {contract.signIp || "Auditado e Registrado"}</div>
+                    <div className="text-[10px] text-slate-400 dark:text-slate-500">IP: {contract.signIp || "Auditado e Registrado"}</div>
                   </div>
                 ) : (
-                  <div className="text-amber-400 font-mono text-[11px] mt-1 flex items-center gap-1">
+                  <div className="text-amber-600 dark:text-amber-400 font-mono text-[11px] mt-1 flex items-center gap-1 font-medium">
                     <Clock className="w-3.5 h-3.5" /> Aguardando assinatura eletrônica
                   </div>
                 )}
@@ -261,10 +261,10 @@ export function ContractPreviewModal({
         </div>
 
         {/* Footer com Ações */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-800/80 bg-slate-900/60">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/60">
           <button
             onClick={handleOpenPdf}
-            className="flex items-center gap-2 text-xs text-slate-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <Download className="w-4 h-4" /> Baixar Minuta Oficial
           </button>
@@ -274,7 +274,7 @@ export function ContractPreviewModal({
               <button
                 onClick={handleSignContract}
                 disabled={updating}
-                className="flex items-center gap-2 px-4 py-2 text-xs rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-xs rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-md shadow-emerald-500/20 transition-all disabled:opacity-50"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 {updating ? "Assinando..." : "Marcar como Assinado"}
@@ -283,7 +283,7 @@ export function ContractPreviewModal({
 
             <button
               onClick={onClose}
-              className="px-4 py-2 text-xs rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium transition-colors"
+              className="px-4 py-2 text-xs rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-medium transition-colors"
             >
               Fechar
             </button>
