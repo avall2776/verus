@@ -46,7 +46,7 @@ const nextConfig = {
   },
 
   async rewrites() {
-    const backendTarget = process.env.BACKEND_URL || 'http://localhost:3001';
+    const backendTarget = process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? 'http://187.127.10.166:3001' : 'http://localhost:3001');
     return [
       {
         source: '/api-backend/:path*',
