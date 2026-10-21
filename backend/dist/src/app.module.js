@@ -44,6 +44,7 @@ const operators_module_1 = require("./modules/operators/operators.module");
 const engineering_module_1 = require("./modules/engineering/engineering.module");
 const voip_module_1 = require("./modules/voip/voip.module");
 const agency_marketing_module_1 = require("./modules/agency-marketing/agency-marketing.module");
+const public_api_module_1 = require("./modules/public-api/public-api.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer
@@ -89,6 +90,7 @@ exports.AppModule = AppModule = __decorate([
             engineering_module_1.EngineeringModule,
             voip_module_1.VoipModule,
             agency_marketing_module_1.AgencyMarketingModule,
+            public_api_module_1.PublicApiModule,
         ],
         controllers: [],
         providers: [],

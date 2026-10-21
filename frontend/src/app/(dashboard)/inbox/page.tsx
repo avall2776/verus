@@ -3310,16 +3310,33 @@ function InboxContent() {
                           {/* Renderização de Vídeos (WhatsApp Nativo) */}
                           {(msg.type === 'video' || (!!msg.mediaUrl && /\.(mp4|mov|webm|mkv|avi)($|\?)/i.test(msg.mediaUrl))) && (
                             <div className="mb-2 max-w-[320px] sm:max-w-[380px]">
-                              <div className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 shadow-md bg-black">
-                                <video
-                                  src={getMediaUrl(msg.mediaUrl, 'video')}
-                                  controls
-                                  preload="metadata"
-                                  className="rounded-xl w-full max-h-72 object-contain bg-black"
-                                >
-                                  Seu navegador não suporta reprodução de vídeo.
-                                </video>
-                              </div>
+                              {msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? (
+                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 text-xs">
+                                  <Video size={18} className="shrink-0 opacity-70" />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="font-semibold text-slate-800 dark:text-slate-200">Vídeo histórico indisponível</span>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400">Armazenamento do CRM anterior desativado</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 shadow-md bg-black">
+                                  <video
+                                    src={getMediaUrl(msg.mediaUrl, 'video')}
+                                    controls
+                                    preload="metadata"
+                                    className="rounded-xl w-full max-h-72 object-contain bg-black"
+                                    onError={(e) => {
+                                      const target = e.currentTarget;
+                                      target.style.display = 'none';
+                                      if (target.parentElement) {
+                                        target.parentElement.innerHTML = '<div class="p-3 text-xs text-amber-600 dark:text-amber-400">Vídeo indisponível</div>';
+                                      }
+                                    }}
+                                  >
+                                    Seu navegador não suporta reprodução de vídeo.
+                                  </video>
+                                </div>
+                              )}
                               {msg.content && !msg.content.startsWith('📹') && (
                                 <p className="text-xs text-slate-700 dark:text-slate-300 mt-1 px-1">{msg.content}</p>
                               )}
@@ -3412,10 +3429,10 @@ function InboxContent() {
                                   {msg.content?.replace(/^📄\s*\[Documento:\s*([^\]]+)\][\s\S]*$/, '$1') || 'Documento anexo'}
                                 </span>
                                 <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                  {msg.mediaUrl ? (msg.mediaUrl.split('.').pop()?.split('?')[0] || 'ARQUIVO') : 'ARQUIVO'}
+                                  {msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? 'ARQUIVO HISTÓRICO (CRM ANTERIOR)' : (msg.mediaUrl ? (msg.mediaUrl.split('.').pop()?.split('?')[0] || 'ARQUIVO') : 'ARQUIVO')}
                                 </span>
                               </div>
-                              {msg.mediaUrl && (
+                              {msg.mediaUrl && !msg.mediaUrl.includes('lvdphjhftfjdifnzuazd.supabase.co') && (
                                 <a 
                                   href={getMediaUrl(msg.mediaUrl, 'document')} 
                                   target="_blank" 

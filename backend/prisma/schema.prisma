@@ -70,6 +70,7 @@ model Tenant {
   marketingCards        MarketingCard[]
   marketingCampaigns    MarketingCampaign[]
   marketingTimeLogs     MarketingTimeLog[]
+  apiTokens             ApiToken[]
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
 
@@ -912,4 +913,26 @@ model MarketingTimeLog {
 
   @@index([tenantId, userId])
   @@index([timestamp])
+}
+
+// ------------------------------------------------------
+// API PÚBLICA & WEBHOOKS DE TRÁFEGO PAGO (META ADS -> CRM)
+// ------------------------------------------------------
+
+model ApiToken {
+  id          String    @id @default(uuid())
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  token       String    @unique
+  tokenPrefix String
+  permissions Json?     // { leads: true, contacts: true, deals: true }
+  isActive    Boolean   @default(true)
+  lastUsedAt  DateTime?
+  createdBy   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([token])
 }

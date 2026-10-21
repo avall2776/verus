@@ -82,6 +82,49 @@ Plano de modernização estrutural e resolução gradual dos 6 gargalos prioriza
 
 ---
 
-### [PENDENTE] 06. API Pública e Webhook de Tráfego Pago (Meta Ads -> CRM)
-- **Status:** Pendente
-- **Descrição:** Endpoint seguro para ingestão de leads diretamente de campanhas de tráfego pago (Meta Ads / Webhooks externos) para o CRM.
+### [CONCLUÍDO] 06. API Pública e Webhook de Tráfego Pago (Meta Ads -> CRM)
+- **Status:** Concluído (API Pública RESTful + Webhook seguro com Bearer token, ingestão ponta a ponta com criação de Deal no CRM e conversa no Inbox, normalização E.164, broadcast WebSocket em tempo real, disparo de automações, gestão de chaves em Configurações Gerais com exibição única de segurança, documentação interativa com exemplos cURL/JS/Python e simulador de leads ao vivo; TypeScript `tsc` código 0, NestJS `nest build` código 0).
+- **Descrição:** Criação da infraestrutura corporativa de API Pública e Webhook para ingestão de leads diretamente de campanhas de tráfego pago (Meta Ads / Instagram Lead Ads / Facebook Ads, Google Ads, TikTok Ads, Typebot, Landing Pages, n8n, Make e Zapier) para o CRM e Inbox do VERSUS.
+- **Recursos Entregues:**
+  1. **Modelo de Banco de Dados (`ApiToken` via Prisma PostgreSQL):**
+     - Armazenamento com `id`, `tenantId`, `name`, `token` único com hash e prefixo seguro (`vrs_live_...`), `tokenPrefix`, array de `permissions`, `isActive`, `lastUsedAt`, `createdBy`, `createdAt`, `updatedAt` e índices de alta performance.
+     - Isolamento estrito por tenant.
+  2. **Middlewares de Segurança e Whitelist:**
+     - Rotas `/api/v1/public` e `/public-api` liberadas no `BotDetectorMiddleware` (evitando bloqueios indevidos de webhooks com User-Agents automatizados do Meta/Zapier/n8n).
+     - Rota liberada de throttling restritivo de login no `RateLimiterMiddleware`.
+  3. **Guarda de Autenticação Segura (`PublicApiKeyGuard`):**
+     - Suporte a cabeçalhos padrão `Authorization: Bearer <TOKEN>` e `x-api-key: <TOKEN>`.
+     - Validação instantânea de vigência do token, status do tenant e atualização assíncrona do carimbo `lastUsedAt`.
+     - Injeção contextual de `req.tenantId` e `req.apiToken`.
+  4. **Motor de Ingestão de Leads (`POST /api/v1/public/leads`):**
+     - Normalização robusta de telefones para padrão E.164 (limpeza de caracteres, prefixo de país `+55` automático para números brasileiros).
+     - Busca e atualização (upsert) transparente do contato (`Contact`).
+     - Criação da oportunidade (`Deal`) no funil comercial desejado (respeitando `stage` e `funnel_id` informados ou selecionando o primeiro funil ativo da empresa).
+     - Mapeamento completo de rastreamento de marketing: `source`, `campaign`, `ad_name`, `adset_name`, `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term` e notas operacionais.
+     - Criação ou reativação da conversa no Inbox oficial na fila de `waiting` (Aguardando Atendimento) com metadados do lead.
+     - Broadcast em tempo real via WebSocket (`chatGateway.server.emit('dealCreated')`, `emit('conversationUpdated')`) para atualização de contadores e Kanban sem refresh.
+     - Integração com o motor de automações (`automationsService.evaluateEvent`) para disparo de regras de boas-vindas e distribuição de leads.
+  5. **Endpoints Auxiliares da API Pública:**
+     - `GET /api/v1/public/funnels`: Listagem dos funis e etapas da empresa para mapeamento no formulário ou ferramenta de automação.
+     - `GET /api/v1/public/users`: Listagem dos colaboradores para atribuição automática (`assigned_to`).
+     - `POST /api/v1/public/deals` e `POST /api/v1/public/contacts`: Endpoints REST granulares para integrações personalizadas.
+     - `GET /api/v1/public/health`: Endpoint de verificação rápida de status e conectividade.
+  6. **Gestão de Chaves de Acesso (`ApiTokensController` & `ApiTokensService`):**
+     - Endpoints protegidos por JWT corporativo para administradores gerenciarem credenciais (`GET /api-tokens`, `POST /api-tokens`, `PATCH /api-tokens/:id/toggle`, `DELETE /api-tokens/:id`).
+     - Geração criptográfica segura via `crypto.randomBytes(24)` com prefixo identificador `vrs_live_`.
+  7. **Interface Gráfica em Configurações Gerais (`/settings?tab=api`):**
+     - Nova aba "APIs e Webhooks" integrada ao menu corporativo de parametrizações com ícone `KeyRound`.
+     - **Sub-aba 1: Tokens de Acesso:**
+       - Tabela com listagem de chaves ativas/inativas, data de criação e último uso.
+       - Modal de criação de token com exibição única e destacada do Bearer token completo (padrão GitHub/Stripe/Lero) com botão de cópia em 1 clique e alerta de segurança.
+       - Ativação/desativação instantânea (toggle) e revogação/exclusão com modal de confirmação.
+     - **Sub-aba 2: Documentação Interativa & Webhook de Tráfego:**
+       - URL Base copiável para o ambiente de produção.
+       - Passo a passo visual em 3 etapas para o gestor de tráfego conectar formulários do Facebook/Instagram Lead Ads.
+       - Tabela descritiva de todos os parâmetros aceitos no payload.
+       - Seletor de exemplos de código com cópia em 1 clique: cURL, JavaScript (Fetch), Python (Requests) e Payload JSON completo.
+       - Documentação dos endpoints auxiliares com respostas simuladas.
+     - **Sub-aba 3: Simulador de Leads:**
+       - Formulário visual em tempo real para disparar um lead de teste direto para a API e inspecionar a resposta HTTP e o JSON retornado sem sair do sistema.
+     - Suporte nativo aos 3 temas da plataforma (WhatsApp `#00A884`, Dark Corporativo e Clean/Light).
+

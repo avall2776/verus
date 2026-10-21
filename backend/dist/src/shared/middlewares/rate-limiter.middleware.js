@@ -29,6 +29,8 @@ let RateLimiterMiddleware = RateLimiterMiddleware_1 = class RateLimiterMiddlewar
     use(req, res, next) {
         const reqPath = req.path || req.originalUrl || req.url || '';
         if (reqPath.startsWith('/webhooks') ||
+            reqPath.startsWith('/api/v1/public') ||
+            reqPath.startsWith('/public-api') ||
             reqPath.startsWith('/media') ||
             reqPath.includes('/media/') ||
             req.method === 'OPTIONS') {

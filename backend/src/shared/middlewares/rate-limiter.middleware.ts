@@ -27,9 +27,11 @@ export class RateLimiterMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     const reqPath = req.path || req.originalUrl || req.url || '';
 
-    // Webhooks de mensageria e mídias do chat não sofrem throttling
+    // Webhooks de mensageria, ingestão pública de leads e mídias do chat não sofrem throttling restritivo
     if (
       reqPath.startsWith('/webhooks') || 
+      reqPath.startsWith('/api/v1/public') ||
+      reqPath.startsWith('/public-api') ||
       reqPath.startsWith('/media') || 
       reqPath.includes('/media/') ||
       req.method === 'OPTIONS'

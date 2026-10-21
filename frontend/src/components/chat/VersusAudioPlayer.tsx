@@ -24,6 +24,9 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSeeking, setIsSeeking] = useState(false);
 
+  const isLeroBrokenUrl = !src || src.includes('lvdphjhftfjdifnzuazd.supabase.co');
+  const [hasError, setHasError] = useState(isLeroBrokenUrl);
+
   // Formata segundos para MM:SS
   const formatTime = (seconds: number) => {
     if (!seconds || isNaN(seconds) || seconds < 0) return '0:00';
@@ -34,7 +37,7 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
 
   // Alterna Play / Pause
   const togglePlay = useCallback(() => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || hasError) return;
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -43,13 +46,14 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
         setIsPlaying(true);
       }).catch((err) => {
         console.warn('[Audio Player] Erro ao reproduzir:', err);
+        setHasError(true);
       });
     }
-  }, [isPlaying]);
+  }, [isPlaying, hasError]);
 
   // Alterna velocidade (1x -> 1.5x -> 2x -> 1x)
   const cyclePlaybackRate = useCallback(() => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || hasError) return;
     let nextRate: 1 | 1.5 | 2 = 1;
     if (playbackRate === 1) nextRate = 1.5;
     else if (playbackRate === 1.5) nextRate = 2;
@@ -57,11 +61,11 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
 
     setPlaybackRate(nextRate);
     audioRef.current.playbackRate = nextRate;
-  }, [playbackRate]);
+  }, [playbackRate, hasError]);
 
   // Interação na barra de progresso (Click / Seek)
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!progressBarRef.current || !audioRef.current || !duration) return;
+    if (!progressBarRef.current || !audioRef.current || !duration || hasError) return;
     const rect = progressBarRef.current.getBoundingClientRect();
     const clickPos = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
     const percentage = clickPos / rect.width;
@@ -82,6 +86,7 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
     if (audioRef.current) {
       setDuration(audioRef.current.duration || 0);
       setIsLoading(false);
+      setHasError(false);
     }
   };
 
@@ -105,11 +110,23 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
   // Porcentagem atual
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  if (hasError) {
+    return (
+      <div className={`flex items-center gap-2.5 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 select-none ${className}`}>
+        <Volume2 size={16} className="shrink-0 opacity-70" />
+        <div className="flex flex-col min-w-0">
+          <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">Áudio histórico indisponível</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400">Armazenamento do CRM anterior desativado</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`flex flex-col gap-2 p-3 rounded-2xl bg-slate-100 dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/90 shadow-sm dark:shadow-lg text-slate-800 dark:text-white select-none ${className}`}
     >
-      {/* Elemento de áudio nativo oculto */}
+      {/* Elemento de áudio nativo */}
       <audio
         ref={audioRef}
         src={src}
@@ -117,16 +134,19 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
+        onError={() => {
+          setIsLoading(false);
+          setHasError(true);
+        }}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onWaiting={() => setIsLoading(true)}
-        onCanPlay={() => setIsLoading(false)}
+        onCanPlay={() => {
+          setIsLoading(false);
+          setHasError(false);
+        }}
         className="hidden"
-      >
-        <source src={src} type="audio/ogg" />
-        <source src={src} type="audio/mp4" />
-        <source src={src} type="audio/mpeg" />
-      </audio>
+      />
 
       {/* Linha Principal de Controles */}
       <div className="flex items-center gap-3">

@@ -35,6 +35,7 @@ import { OperatorsModule } from './modules/operators/operators.module';
 import { EngineeringModule } from './modules/engineering/engineering.module';
 import { VoipModule } from './modules/voip/voip.module';
 import { AgencyMarketingModule } from './modules/agency-marketing/agency-marketing.module';
+import { PublicApiModule } from './modules/public-api/public-api.module';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { AgencyMarketingModule } from './modules/agency-marketing/agency-marketi
     EngineeringModule,
     VoipModule,
     AgencyMarketingModule,
+    PublicApiModule,
   ],
   controllers: [],
   providers: [],

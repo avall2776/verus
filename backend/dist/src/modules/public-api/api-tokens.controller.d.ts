@@ -1,0 +1,51 @@
+import { ApiTokensService } from './api-tokens.service';
+export declare class ApiTokensController {
+    private readonly apiTokensService;
+    constructor(apiTokensService: ApiTokensService);
+    listTokens(tenantId: string): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        tokenPrefix: string;
+        lastUsedAt: Date;
+        createdBy: string;
+    }[]>;
+    createToken(tenantId: string, body: {
+        name: string;
+        permissions?: any;
+    }, req: any): Promise<{
+        success: boolean;
+        message: string;
+        token: string;
+        data: {
+            id: string;
+            name: string;
+            tokenPrefix: string;
+            isActive: boolean;
+            createdAt: Date;
+        };
+    }>;
+    toggleToken(tenantId: string, id: string): Promise<{
+        success: boolean;
+        message: string;
+        data: {
+            id: string;
+            name: string;
+            tenantId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
+            token: string;
+            permissions: import("@prisma/client/runtime/library").JsonValue | null;
+            tokenPrefix: string;
+            lastUsedAt: Date | null;
+            createdBy: string | null;
+        };
+    }>;
+    deleteToken(tenantId: string, id: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+}

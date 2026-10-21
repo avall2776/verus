@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export interface UserMenuPermissions {
   whatsapp: boolean;
@@ -219,6 +220,143 @@ const MENU_CONFIGS: {
 ];
 
 export default function UsersSettingsTab() {
+  const { theme, isClean, isDark, isWhatsApp } = useTheme();
+
+  // Tokens de Cores Adaptativos (Clean, Dark, WhatsApp)
+  const th = {
+    containerText: isClean ? "text-slate-900" : isWhatsApp ? "text-[#E9EDEF]" : "text-slate-100",
+    pageTitle: isClean ? "text-slate-900" : isWhatsApp ? "text-[#E9EDEF]" : "text-white",
+    pageSubtitle: isClean ? "text-slate-500" : isWhatsApp ? "text-[#8696A0]" : "text-slate-400",
+    userCountBadge: isClean
+      ? "bg-slate-100 border-slate-200 text-slate-700"
+      : isWhatsApp
+      ? "bg-[#202C33] border-[#2A3942] text-[#8696A0]"
+      : "bg-slate-900/40 border-slate-800 text-slate-400",
+    primaryBtn: isClean
+      ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm"
+      : isWhatsApp
+      ? "bg-[#00A884] hover:bg-[#02906F] text-white shadow-[0_0_15px_rgba(0,168,132,0.3)]"
+      : "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.25)]",
+    card: isClean
+      ? "bg-white border-slate-200/90 shadow-sm"
+      : isWhatsApp
+      ? "bg-[#111B21] border-[#222D34] shadow-xl"
+      : "bg-[#111722] border-slate-800/80 shadow-2xl",
+    input: isClean
+      ? "bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-emerald-600"
+      : isWhatsApp
+      ? "bg-[#202C33] border-[#2A3942] text-[#E9EDEF] placeholder:text-[#8696A0] focus:border-[#00A884]"
+      : "bg-[#18202f] border-slate-700/60 text-white placeholder:text-slate-500 focus:border-emerald-500/60",
+    tableWrap: isClean
+      ? "bg-white border-slate-200"
+      : isWhatsApp
+      ? "bg-[#111B21] border-[#222D34]"
+      : "bg-[#141b27] border-slate-800/80",
+    tableHead: isClean
+      ? "bg-slate-50 text-slate-600 border-slate-200 font-bold"
+      : isWhatsApp
+      ? "bg-[#202C33] text-[#8696A0] border-[#222D34]"
+      : "bg-[#0e1422] text-slate-400 border-slate-800",
+    tableDivider: isClean
+      ? "divide-slate-100"
+      : isWhatsApp
+      ? "divide-[#222D34]"
+      : "divide-slate-800/60",
+    tableRowHover: isClean
+      ? "hover:bg-slate-50/80"
+      : isWhatsApp
+      ? "hover:bg-[#182229]"
+      : "hover:bg-[#182232]/50",
+    tableRowSelected: isClean
+      ? "bg-emerald-50/60"
+      : isWhatsApp
+      ? "bg-[#103629]/40"
+      : "bg-emerald-500/5",
+    userName: isClean ? "text-slate-900" : isWhatsApp ? "text-[#E9EDEF]" : "text-white",
+    userEmail: isClean ? "text-slate-500" : isWhatsApp ? "text-[#8696A0]" : "text-slate-400",
+    badgeAdmin: isClean
+      ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-bold"
+      : isWhatsApp
+      ? "bg-[#103629] text-[#00A884] border-[#00A884]/40 font-semibold"
+      : "bg-emerald-500/15 text-emerald-400 border-emerald-500/40 font-semibold",
+    badgeSupervisor: isClean
+      ? "bg-cyan-50 text-cyan-800 border-cyan-300 font-bold"
+      : isWhatsApp
+      ? "bg-[#0e2a3b] text-[#34b7f1] border-[#34b7f1]/40 font-semibold"
+      : "bg-cyan-500/15 text-cyan-300 border-cyan-500/40 font-semibold",
+    badgeCollaborator: isClean
+      ? "bg-slate-100 text-slate-700 border-slate-300 font-medium"
+      : isWhatsApp
+      ? "bg-[#202C33] text-[#8696A0] border-[#2A3942] font-medium"
+      : "bg-slate-800/90 text-slate-300 border-slate-700 font-medium",
+    badgeActive: isClean
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200 font-bold"
+      : isWhatsApp
+      ? "bg-[#103629] text-[#00A884] border-[#00A884]/30 font-semibold"
+      : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-semibold",
+    badgeInactive: isClean
+      ? "bg-rose-50 text-rose-700 border-rose-200 font-bold"
+      : isWhatsApp
+      ? "bg-[#33181c] text-[#f15c6d] border-[#f15c6d]/30 font-semibold"
+      : "bg-rose-500/10 text-rose-400 border-rose-500/20 font-semibold",
+    sectorChip: isClean
+      ? "bg-slate-100 border-slate-200 text-slate-700 font-medium"
+      : isWhatsApp
+      ? "bg-[#202C33] border-[#2A3942] text-[#E9EDEF] font-medium"
+      : "bg-[#1a2334] border-slate-700/80 text-slate-300 font-medium",
+    workspacePill: isClean
+      ? "bg-slate-100 border-slate-200 text-slate-700 font-medium"
+      : isWhatsApp
+      ? "bg-[#202C33] border-[#2A3942] text-[#E9EDEF] font-medium"
+      : "bg-[#1a2334] border-slate-700/80 text-slate-300 font-medium",
+    actionMenu: isClean
+      ? "bg-white border-slate-200 text-slate-800 shadow-xl"
+      : isWhatsApp
+      ? "bg-[#202C33] border-[#2A3942] text-[#E9EDEF] shadow-2xl"
+      : "bg-[#141b27] border-slate-700/80 text-slate-200 shadow-2xl",
+    actionMenuItem: isClean
+      ? "hover:bg-slate-100 hover:text-slate-900 text-slate-700"
+      : isWhatsApp
+      ? "hover:bg-[#111B21] hover:text-white text-[#E9EDEF]"
+      : "hover:bg-slate-800/80 hover:text-white text-slate-200",
+    modalCard: isClean
+      ? "bg-white border-slate-200 text-slate-900 shadow-2xl"
+      : isWhatsApp
+      ? "bg-[#111B21] border-[#222D34] text-[#E9EDEF] shadow-2xl"
+      : "bg-[#161c28] border-slate-700 text-white shadow-2xl",
+    modalBorder: isClean ? "border-slate-200" : isWhatsApp ? "border-[#222D34]" : "border-slate-800",
+    modalInput: isClean
+      ? "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-600"
+      : isWhatsApp
+      ? "bg-[#202C33] border-[#2A3942] text-[#E9EDEF] placeholder:text-[#8696A0] focus:border-[#00A884]"
+      : "bg-[#1c2434] border-slate-700 text-white placeholder:text-slate-500 focus:border-emerald-500",
+    modalSubBox: isClean
+      ? "bg-slate-50 border-slate-200 text-slate-800"
+      : isWhatsApp
+      ? "bg-[#202C33] border-[#2A3942] text-[#E9EDEF]"
+      : "bg-[#1a2232] border-slate-700/80 text-slate-200",
+    modalSecondaryBtn: isClean
+      ? "bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
+      : isWhatsApp
+      ? "bg-[#202C33] hover:bg-[#2A3942] text-[#E9EDEF] font-semibold"
+      : "bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold",
+    permTileChecked: isClean
+      ? "bg-emerald-50 border-emerald-300 text-emerald-950 font-semibold shadow-xs"
+      : isWhatsApp
+      ? "bg-[#103629] border-[#00A884] text-[#00A884] font-medium"
+      : "bg-[#1c2434] border-emerald-500/50 text-white font-medium",
+    permTileUnchecked: isClean
+      ? "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300"
+      : isWhatsApp
+      ? "bg-[#202C33] border-[#2A3942] text-[#8696A0] hover:bg-[#182229]"
+      : "bg-[#141a26] border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700",
+    subPermBox: isClean
+      ? "bg-slate-50 border-slate-200 text-slate-800"
+      : isWhatsApp
+      ? "bg-[#202C33] border-[#2A3942] text-[#E9EDEF]"
+      : "bg-[#141a26] border-slate-800 text-white",
+  };
+
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableDepartments, setAvailableDepartments] = useState<DepartmentItem[]>([]);
@@ -610,30 +748,30 @@ export default function UsersSettingsTab() {
   }
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-200 text-slate-100">
+    <div className={`space-y-5 animate-in fade-in duration-200 ${th.containerText}`}>
       {/* 1. CABEÇALHO SUPERIOR (PADRÃO LERO) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+          <h1 className={`text-xl sm:text-2xl tracking-tight flex items-center gap-2 ${th.pageTitle}`}>
             Gestão de Usuários
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className={`text-xs mt-0.5 ${th.pageSubtitle}`}>
             Gerencie os colaboradores da sua conta
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <div
-            className="flex items-center gap-1.5 text-xs text-slate-400 font-medium px-2 py-1 rounded-lg bg-slate-900/40 border border-slate-800"
+            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-xl border ${th.userCountBadge}`}
             title={`Limite da sua conta: ${maxUsers} usuários simultâneos`}
           >
             <span>{users.length} / {maxUsers} usuários</span>
-            <HelpCircle className="w-3.5 h-3.5 text-slate-500 cursor-pointer" />
+            <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
           </div>
 
           <button
             onClick={handleOpenInvite}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all shadow-[0_0_15px_rgba(16,185,129,0.25)] cursor-pointer"
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all cursor-pointer ${th.primaryBtn}`}
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Convidar Colaborador</span>
@@ -641,19 +779,19 @@ export default function UsersSettingsTab() {
         </div>
       </div>
 
-      {/* 2. CARD PRINCIPAL DA TABELA (PADRÃO LERO) */}
-      <div className="rounded-2xl bg-[#111722] dark:bg-[#0c1017] border border-slate-800/80 shadow-2xl overflow-hidden p-4 space-y-4">
+      {/* 2. CARD PRINCIPAL DA TABELA (PADRÃO LERO EXPANDIDO) */}
+      <div className={`rounded-2xl border p-4 space-y-4 ${th.card}`}>
         {/* Barra de Busca e Filtros */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
           {/* Campo de Busca */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar..."
-              className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#18202f] dark:bg-[#121824] border border-slate-700/60 text-xs text-white placeholder-slate-500 outline-none focus:border-emerald-500/60 transition-colors"
+              className={`w-full pl-9 pr-4 py-2 rounded-xl border text-xs outline-none transition-colors ${th.input}`}
             />
           </div>
 
@@ -662,7 +800,7 @@ export default function UsersSettingsTab() {
             <select
               value={filterEnvironment}
               onChange={(e) => setFilterEnvironment(e.target.value)}
-              className="appearance-none px-3.5 py-2 pr-8 rounded-xl bg-[#18202f] dark:bg-[#121824] border border-slate-700/60 text-xs text-slate-300 font-medium outline-none focus:border-emerald-500/60 cursor-pointer"
+              className={`appearance-none px-3.5 py-2 pr-8 rounded-xl border text-xs font-medium outline-none cursor-pointer ${th.input}`}
             >
               <option value="all">Todos os ambientes</option>
               <option value="workspace-1">Workspace 1</option>
@@ -675,7 +813,7 @@ export default function UsersSettingsTab() {
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="appearance-none px-3.5 py-2 pr-8 rounded-xl bg-[#18202f] dark:bg-[#121824] border border-slate-700/60 text-xs text-slate-300 font-medium outline-none focus:border-emerald-500/60 cursor-pointer"
+              className={`appearance-none px-3.5 py-2 pr-8 rounded-xl border text-xs font-medium outline-none cursor-pointer ${th.input}`}
             >
               <option value="all">Todos os tipos</option>
               <option value="administrador">Administrador</option>
@@ -690,7 +828,7 @@ export default function UsersSettingsTab() {
             <select
               value={filterDepartment}
               onChange={(e) => setFilterDepartment(e.target.value)}
-              className="appearance-none px-3.5 py-2 pr-8 rounded-xl bg-[#18202f] dark:bg-[#121824] border border-slate-700/60 text-xs text-slate-300 font-medium outline-none focus:border-emerald-500/60 cursor-pointer"
+              className={`appearance-none px-3.5 py-2 pr-8 rounded-xl border text-xs font-medium outline-none cursor-pointer ${th.input}`}
             >
               <option value="all">Todos os setores</option>
               {availableDepartments.map((dept) => (
@@ -704,20 +842,20 @@ export default function UsersSettingsTab() {
         </div>
 
         {/* Tabela Responsiva de Usuários */}
-        <div className="overflow-x-auto rounded-xl border border-slate-800/80 bg-[#141b27] dark:bg-[#0e131d]">
+        <div className={`overflow-x-auto rounded-xl border ${th.tableWrap}`}>
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+              <tr className={`border-b text-[10px] uppercase font-bold tracking-wider ${th.tableHead}`}>
                 <th className="py-3 px-3.5 w-10 text-center">
                   <button
                     type="button"
                     onClick={handleSelectAll}
-                    className="cursor-pointer text-slate-400 hover:text-white"
+                    className="cursor-pointer text-slate-400 hover:text-emerald-500"
                   >
                     {selectedUserIds.length === filteredUsers.length && filteredUsers.length > 0 ? (
-                      <CheckSquare className="w-4 h-4 text-emerald-400" />
+                      <CheckSquare className="w-4 h-4 text-emerald-500" />
                     ) : (
-                      <Square className="w-4 h-4 text-slate-600" />
+                      <Square className="w-4 h-4 text-slate-400" />
                     )}
                   </button>
                 </th>
@@ -730,7 +868,7 @@ export default function UsersSettingsTab() {
                 <th className="py-3 px-3 w-16 text-center">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 text-xs">
+            <tbody className={`divide-y text-xs ${th.tableDivider}`}>
               {filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-8 text-center text-slate-500 italic">
@@ -746,21 +884,19 @@ export default function UsersSettingsTab() {
                   return (
                     <tr
                       key={u.id}
-                      className={`hover:bg-slate-800/30 transition-colors ${
-                        isSelected ? "bg-emerald-500/5" : ""
-                      }`}
+                      className={`transition-colors ${isSelected ? th.tableRowSelected : th.tableRowHover}`}
                     >
                       {/* Checkbox de Seleção */}
                       <td className="py-3 px-3.5 text-center">
                         <button
                           type="button"
                           onClick={() => toggleSelectUser(u.id)}
-                          className="cursor-pointer text-slate-500 hover:text-white"
+                          className="cursor-pointer text-slate-400 hover:text-emerald-500"
                         >
                           {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-emerald-400" />
+                            <CheckSquare className="w-4 h-4 text-emerald-500" />
                           ) : (
-                            <Square className="w-4 h-4 text-slate-600" />
+                            <Square className="w-4 h-4 text-slate-400" />
                           )}
                         </button>
                       </td>
@@ -773,13 +909,13 @@ export default function UsersSettingsTab() {
                             className={`w-2 h-2 rounded-full shrink-0 ${
                               u.isOnline
                                 ? "bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]"
-                                : "bg-slate-600"
+                                : "bg-slate-400"
                             }`}
                             title={u.isOnline ? "Online" : "Offline"}
                           />
 
                           {/* Avatar com badge de proprietário se aplicável */}
-                          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center font-bold text-slate-200 text-xs shrink-0 overflow-hidden relative shadow-inner">
+                          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-slate-700 dark:text-slate-200 text-xs shrink-0 overflow-hidden relative shadow-inner">
                             {u.avatarUrl ? (
                               <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" />
                             ) : (
@@ -788,15 +924,15 @@ export default function UsersSettingsTab() {
                           </div>
 
                           <div className="min-w-0">
-                            <div className="font-bold text-white truncate max-w-[180px] flex items-center gap-1.5">
+                            <div className={`font-bold truncate max-w-[180px] flex items-center gap-1.5 ${th.userName}`}>
                               <span>{u.name}</span>
                               {isOwner && (
                                 <span title="Proprietário da Conta">
-                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-slate-400 font-mono truncate max-w-[180px]">
+                            <div className={`text-[11px] font-mono truncate max-w-[180px] ${th.userEmail}`}>
                               {u.email}
                             </div>
                           </div>
@@ -806,15 +942,15 @@ export default function UsersSettingsTab() {
                       {/* Tipo / Cargo (Administrador, Supervisor, Colaborador) */}
                       <td className="py-3 px-3">
                         {roleLabel === "Administrador" ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/40">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] border ${th.badgeAdmin}`}>
                             Administrador
                           </span>
                         ) : roleLabel === "Supervisor" ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/40">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] border ${th.badgeSupervisor}`}>
                             Supervisor
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-800/90 text-slate-300 border border-slate-700">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] border ${th.badgeCollaborator}`}>
                             Colaborador
                           </span>
                         )}
@@ -831,14 +967,14 @@ export default function UsersSettingsTab() {
                             {u.departments.map((rel) => (
                               <span
                                 key={rel.departmentId}
-                                className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#1a2334] border border-slate-700/80 text-slate-300"
+                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] border ${th.sectorChip}`}
                               >
                                 {rel.department?.name || "Setor"}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-[11px] text-slate-500 italic">
+                          <span className="text-[11px] text-slate-400 italic">
                             Nenhum setor
                           </span>
                         )}
@@ -847,9 +983,9 @@ export default function UsersSettingsTab() {
                       {/* Ambiente de Trabalho */}
                       <td className="py-3 px-3">
                         {roleLabel === "Administrador" ? (
-                          <span className="text-xs text-slate-400 font-medium">Todos</span>
+                          <span className={`text-xs font-medium ${th.userEmail}`}>Todos</span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#1a2334] border border-slate-700/80 text-slate-300">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] border ${th.workspacePill}`}>
                             Workspace 1
                           </span>
                         )}
@@ -858,18 +994,18 @@ export default function UsersSettingsTab() {
                       {/* Status (Ativo / Inativo) */}
                       <td className="py-3 px-3">
                         {u.isActive !== false ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] border ${th.badgeActive}`}>
                             Ativo
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] border ${th.badgeInactive}`}>
                             Inativo
                           </span>
                         )}
                       </td>
 
                       {/* Convite */}
-                      <td className="py-3 px-3 text-slate-400 text-[11px] font-mono">
+                      <td className={`py-3 px-3 text-[11px] font-mono ${th.userEmail}`}>
                         {isOwner ? (
                           <span>—</span>
                         ) : u.createdAt ? (
@@ -893,7 +1029,7 @@ export default function UsersSettingsTab() {
                                 e.stopPropagation();
                                 setOpenActionMenuId(openActionMenuId === u.id ? null : u.id);
                               }}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                               title="Mais opções"
                             >
                               <MoreVertical className="w-4 h-4" />
@@ -902,7 +1038,7 @@ export default function UsersSettingsTab() {
                             {openActionMenuId === u.id && (
                               <div
                                 onClick={(e) => e.stopPropagation()}
-                                className="absolute right-0 top-8 z-30 w-48 rounded-xl bg-[#141b27] border border-slate-700/80 shadow-2xl p-1 text-left animate-in fade-in zoom-in-95 duration-150"
+                                className={`absolute right-0 top-8 z-30 w-52 rounded-xl border p-1 text-left animate-in fade-in zoom-in-95 duration-150 ${th.actionMenu}`}
                               >
                                 <button
                                   type="button"
@@ -910,9 +1046,9 @@ export default function UsersSettingsTab() {
                                     setOpenActionMenuId(null);
                                     handleOpenEdit(u);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer"
+                                  className={`w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer ${th.actionMenuItem}`}
                                 >
-                                  <Edit2 className="w-3.5 h-3.5 text-blue-400" />
+                                  <Edit2 className="w-3.5 h-3.5 text-blue-500" />
                                   <span>Editar Colaborador</span>
                                 </button>
 
@@ -922,9 +1058,9 @@ export default function UsersSettingsTab() {
                                     setOpenActionMenuId(null);
                                     handleOpenPerms(u);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer"
+                                  className={`w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer ${th.actionMenuItem}`}
                                 >
-                                  <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                                  <Shield className="w-3.5 h-3.5 text-emerald-500" />
                                   <span>Permissões de Acesso</span>
                                 </button>
 
@@ -934,9 +1070,9 @@ export default function UsersSettingsTab() {
                                     setOpenActionMenuId(null);
                                     handleOpenPasswordModal(u);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer"
+                                  className={`w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer ${th.actionMenuItem}`}
                                 >
-                                  <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                                  <KeyRound className="w-3.5 h-3.5 text-amber-500" />
                                   <span>Redefinir Senha</span>
                                 </button>
 
@@ -946,13 +1082,13 @@ export default function UsersSettingsTab() {
                                     setOpenActionMenuId(null);
                                     handleToggleActive(u);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer"
+                                  className={`w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer ${th.actionMenuItem}`}
                                 >
-                                  <Power className="w-3.5 h-3.5 text-purple-400" />
+                                  <Power className="w-3.5 h-3.5 text-purple-500" />
                                   <span>{u.isActive !== false ? "Inativar" : "Ativar"}</span>
                                 </button>
 
-                                <div className="my-1 border-t border-slate-800" />
+                                <div className={`my-1 border-t ${th.modalBorder}`} />
 
                                 <button
                                   type="button"
@@ -960,7 +1096,7 @@ export default function UsersSettingsTab() {
                                     setOpenActionMenuId(null);
                                     handleDeleteUser(u);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer font-medium"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                   <span>Remover Colaborador</span>
@@ -981,18 +1117,18 @@ export default function UsersSettingsTab() {
 
       {/* 3. MODAL: EDITAR / CONVIDAR COLABORADOR (EXATA PARIDADE COM SCREENSHOT 2 DO LERO) */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full max-w-md bg-[#161c28] dark:bg-[#121722] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4 max-h-[90vh] overflow-y-auto"
+            className={`w-full max-w-lg border rounded-2xl p-6 sm:p-7 space-y-4 max-h-[90vh] overflow-y-auto ${th.modalCard}`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Cabeçalho do Modal */}
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div className={`flex items-center justify-between pb-2 border-b ${th.modalBorder}`}>
               <div>
-                <h3 className="text-base font-bold text-white">
+                <h3 className={`text-base font-bold ${th.userName}`}>
                   {isInviteMode ? "Convidar Colaborador" : "Editar Colaborador"}
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className={`text-xs mt-0.5 ${th.userEmail}`}>
                   {isInviteMode
                     ? "Envie um convite para um novo membro da equipe"
                     : "Atualize as informações do colaborador"}
@@ -1001,7 +1137,7 @@ export default function UsersSettingsTab() {
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1010,30 +1146,34 @@ export default function UsersSettingsTab() {
             <form onSubmit={handleSaveUserForm} className="space-y-4">
               {/* Campo: Nome */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-200">Nome</label>
+                <label className={`text-xs font-semibold ${isClean ? 'text-slate-700' : isWhatsApp ? 'text-[#E9EDEF]' : 'text-slate-200'}`}>Nome</label>
                 <input
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="Ex: Felipe Costa"
-                  className="w-full p-2.5 text-xs rounded-xl bg-[#1c2434] dark:bg-[#161d2b] border border-emerald-500/70 text-white placeholder:text-slate-500 outline-none focus:ring-1 focus:ring-emerald-500"
+                  className={`w-full p-2.5 text-xs rounded-xl border outline-none ${th.modalInput}`}
                   required
                 />
               </div>
 
               {/* Campo: Email */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-200">Email</label>
+                <label className={`text-xs font-semibold ${isClean ? 'text-slate-700' : isWhatsApp ? 'text-[#E9EDEF]' : 'text-slate-200'}`}>Email</label>
                 <input
                   type="email"
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
                   placeholder="comercial@suaempresa.com"
                   disabled={!isInviteMode}
-                  className={`w-full p-2.5 text-xs rounded-xl border text-white placeholder:text-slate-500 outline-none ${
+                  className={`w-full p-2.5 text-xs rounded-xl border outline-none ${
                     isInviteMode
-                      ? "bg-[#1c2434] dark:bg-[#161d2b] border-slate-700 focus:border-emerald-500"
-                      : "bg-[#141a26] border-slate-800 text-slate-400 cursor-not-allowed"
+                      ? th.modalInput
+                      : isClean
+                      ? "bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed"
+                      : isWhatsApp
+                      ? "bg-[#182229] border-[#222D34] text-[#8696A0] cursor-not-allowed"
+                      : "bg-[#141a26] border-slate-800 text-slate-500 cursor-not-allowed"
                   }`}
                   required
                 />
@@ -1042,15 +1182,15 @@ export default function UsersSettingsTab() {
               {/* Campo: Senha Provisória (apenas no convite) */}
               {isInviteMode && (
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-200">Senha Provisória (Opcional)</label>
+                  <label className={`text-xs font-semibold ${isClean ? 'text-slate-700' : isWhatsApp ? 'text-[#E9EDEF]' : 'text-slate-200'}`}>Senha Provisória (Opcional)</label>
                   <input
                     type="password"
                     value={formPassword}
                     onChange={(e) => setFormPassword(e.target.value)}
                     placeholder="Padrão: Versus@123"
-                    className="w-full p-2.5 text-xs rounded-xl bg-[#1c2434] dark:bg-[#161d2b] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-emerald-500"
+                    className={`w-full p-2.5 text-xs rounded-xl border outline-none ${th.modalInput}`}
                   />
-                  <span className="text-[10px] text-slate-400">
+                  <span className={`text-[10px] ${th.userEmail}`}>
                     Deixe em branco para usar a senha padrão segura (Versus@123).
                   </span>
                 </div>
@@ -1058,14 +1198,14 @@ export default function UsersSettingsTab() {
 
               {/* Campo: Tipo (Dropdown) */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-200">Tipo</label>
+                <label className={`text-xs font-semibold ${isClean ? 'text-slate-700' : isWhatsApp ? 'text-[#E9EDEF]' : 'text-slate-200'}`}>Tipo</label>
                 <div className="relative">
                   <select
                     value={formRole}
                     onChange={(e) =>
                       setFormRole(e.target.value as "Administrador" | "Supervisor" | "Colaborador")
                     }
-                    className="w-full appearance-none p-2.5 pr-8 text-xs rounded-xl bg-[#1c2434] dark:bg-[#161d2b] border border-slate-700 text-white outline-none focus:border-emerald-500 cursor-pointer"
+                    className={`w-full appearance-none p-2.5 pr-8 text-xs rounded-xl border outline-none cursor-pointer ${th.modalInput}`}
                   >
                     <option value="Administrador">Administrador</option>
                     <option value="Supervisor">Supervisor</option>
@@ -1077,23 +1217,23 @@ export default function UsersSettingsTab() {
 
               {/* Campo: Ambiente(s) de trabalho * (Padrão Lero) */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-200">Ambiente(s) de trabalho *</label>
-                <div className="p-3 rounded-xl bg-[#1a2232] border border-slate-700/80 flex items-center gap-2.5 text-xs font-medium text-slate-200">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Workspace 1 <span className="text-slate-400">(Padrão)</span></span>
+                <label className={`text-xs font-semibold ${isClean ? 'text-slate-700' : isWhatsApp ? 'text-[#E9EDEF]' : 'text-slate-200'}`}>Ambiente(s) de trabalho *</label>
+                <div className={`p-3 rounded-xl border flex items-center gap-2.5 text-xs font-medium ${th.modalSubBox}`}>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>Workspace 1 <span className={th.userEmail}>(Padrão)</span></span>
                 </div>
               </div>
 
               {/* Campo: Setores (Scrollable Checklist com Checkmarks Verde Padrão Lero) */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-200">Setores</label>
-                <div className="p-3 rounded-xl bg-[#1a2232] border border-slate-700/80 space-y-2">
-                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <label className={`text-xs font-semibold ${isClean ? 'text-slate-700' : isWhatsApp ? 'text-[#E9EDEF]' : 'text-slate-200'}`}>Setores</label>
+                <div className={`p-3 rounded-xl border space-y-2 ${th.modalSubBox}`}>
+                  <div className={`text-[11px] font-bold uppercase tracking-wider ${th.userEmail}`}>
                     Workspace 1
                   </div>
-                  <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+                  <div className="max-h-52 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
                     {availableDepartments.length === 0 ? (
-                      <p className="text-xs text-slate-500 italic py-2">
+                      <p className={`text-xs italic py-2 ${th.userEmail}`}>
                         Nenhum departamento cadastrado. Crie setores na aba "Departamentos".
                       </p>
                     ) : (
@@ -1105,15 +1245,31 @@ export default function UsersSettingsTab() {
                             onClick={() => toggleFormDepartment(dept.id)}
                             className={`p-2 rounded-lg flex items-center justify-between cursor-pointer transition-colors ${
                               isChecked
-                                ? "bg-emerald-500/10 text-white"
+                                ? isClean
+                                  ? "bg-emerald-50 text-emerald-900 font-semibold"
+                                  : isWhatsApp
+                                  ? "bg-[#103629] text-[#00A884]"
+                                  : "bg-emerald-500/10 text-white"
+                                : isClean
+                                ? "text-slate-700 hover:bg-slate-100"
+                                : isWhatsApp
+                                ? "text-[#8696A0] hover:bg-[#182229]"
                                 : "text-slate-300 hover:bg-slate-800/50"
                             }`}
                           >
-                            <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex items-center gap-2.5 min-w-0">
                               <span
                                 className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
                                   isChecked
-                                    ? "bg-emerald-500 text-slate-950"
+                                    ? isClean
+                                      ? "bg-emerald-600 text-white"
+                                      : isWhatsApp
+                                      ? "bg-[#00A884] text-white"
+                                      : "bg-emerald-500 text-slate-950"
+                                    : isClean
+                                    ? "border border-slate-400 bg-transparent"
+                                    : isWhatsApp
+                                    ? "border border-[#8696A0] bg-transparent"
                                     : "border border-slate-600 bg-transparent"
                                 }`}
                               >
@@ -1130,18 +1286,18 @@ export default function UsersSettingsTab() {
               </div>
 
               {/* Rodapé do Modal */}
-              <div className="pt-3 flex justify-end gap-2 border-t border-slate-800">
+              <div className={`pt-3 flex justify-end gap-2 border-t ${th.modalBorder}`}>
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                  className={`px-4 py-2 rounded-xl text-xs transition-colors cursor-pointer ${th.modalSecondaryBtn}`}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={submittingUserForm}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all disabled:opacity-50 cursor-pointer shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-xs transition-all disabled:opacity-50 cursor-pointer ${th.primaryBtn}`}
                 >
                   {submittingUserForm ? (
                     <>
@@ -1160,25 +1316,25 @@ export default function UsersSettingsTab() {
 
       {/* 4. MODAL: PERMISSÕES DE ACESSO (EXATA PARIDADE COM SCREENSHOT 3 DO LERO) */}
       {isPermsModalOpen && permsUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full max-w-3xl bg-[#161c28] dark:bg-[#121722] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-5 max-h-[90vh] overflow-y-auto"
+            className={`w-full max-w-4xl border rounded-2xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto ${th.modalCard}`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Topo do Modal */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className={`flex items-center justify-between pb-3 border-b ${th.modalBorder}`}>
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <h3 className={`text-lg font-bold flex items-center gap-2 ${th.userName}`}>
                   Permissões de Acesso
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  <strong className="text-slate-200">{permsUser.name}</strong> · {permsUser.email}
+                <p className={`text-xs mt-0.5 ${th.userEmail}`}>
+                  <strong className={th.userName}>{permsUser.name}</strong> · {permsUser.email}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsPermsModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1187,10 +1343,10 @@ export default function UsersSettingsTab() {
             <div className="space-y-6">
               {/* SEÇÃO 1: MENUS (GRID 3 COLUNAS - PADRÃO LERO) */}
               <div className="space-y-2.5">
-                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                <h4 className={`text-xs font-bold uppercase tracking-wider ${isClean ? 'text-slate-700' : isWhatsApp ? 'text-[#8696A0]' : 'text-slate-300'}`}>
                   Menus
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                   {MENU_CONFIGS.map((menu) => {
                     const isChecked = Boolean(activeMenus[menu.key]);
                     const Icon = menu.icon;
@@ -1205,28 +1361,34 @@ export default function UsersSettingsTab() {
                           }))
                         }
                         className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all select-none ${
-                          isChecked
-                            ? "bg-[#1c2434] border-emerald-500/50 text-white"
-                            : "bg-[#141a26] border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
+                          isChecked ? th.permTileChecked : th.permTileUnchecked
                         }`}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           {/* Circular Checkbox Verde Padrão Lero */}
                           <span
                             className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
                               isChecked
-                                ? "bg-emerald-500 text-slate-950"
+                                ? isClean
+                                  ? "bg-emerald-600 text-white"
+                                  : isWhatsApp
+                                  ? "bg-[#00A884] text-white"
+                                  : "bg-emerald-500 text-slate-950"
+                                : isClean
+                                ? "border border-slate-400 bg-transparent"
+                                : isWhatsApp
+                                ? "border border-[#8696A0] bg-transparent"
                                 : "border border-slate-600 bg-transparent"
                             }`}
                           >
                             {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                           </span>
 
-                          <Icon className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                          <span className="text-xs font-medium truncate">{menu.label}</span>
+                          <Icon className={`w-3.5 h-3.5 shrink-0 ${isChecked ? (isClean ? 'text-emerald-700' : isWhatsApp ? 'text-[#00A884]' : 'text-emerald-400') : 'text-slate-400'}`} />
+                          <span className="text-xs truncate">{menu.label}</span>
                         </div>
 
-                        <span title={menu.tooltip} className="text-slate-500 hover:text-slate-300">
+                        <span title={menu.tooltip} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                           <HelpCircle className="w-3.5 h-3.5" />
                         </span>
                       </div>
@@ -1236,13 +1398,13 @@ export default function UsersSettingsTab() {
               </div>
 
               {/* SEÇÃO 2: MÓDULOS COM SUB-PERMISSÕES (PADRÃO LERO) */}
-              <div className="space-y-3 pt-3 border-t border-slate-800">
-                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              <div className={`space-y-3 pt-4 border-t ${th.modalBorder}`}>
+                <h4 className={`text-xs font-bold uppercase tracking-wider ${isClean ? 'text-slate-700' : isWhatsApp ? 'text-[#8696A0]' : 'text-slate-300'}`}>
                   Módulos com sub-permissões
                 </h4>
 
                 {/* Sub-permissão: CRM */}
-                <div className="p-3.5 rounded-xl bg-[#141a26] border border-slate-800 space-y-3">
+                <div className={`p-4 rounded-xl border space-y-3.5 ${th.subPermBox}`}>
                   <div
                     onClick={() =>
                       setActiveSubPerms((prev) => ({
@@ -1255,18 +1417,26 @@ export default function UsersSettingsTab() {
                     <span
                       className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
                         activeSubPerms.crm_enabled
-                          ? "bg-emerald-500 text-slate-950"
+                          ? isClean
+                            ? "bg-emerald-600 text-white"
+                            : isWhatsApp
+                            ? "bg-[#00A884] text-white"
+                            : "bg-emerald-500 text-slate-950"
+                          : isClean
+                          ? "border border-slate-400 bg-transparent"
+                          : isWhatsApp
+                          ? "border border-[#8696A0] bg-transparent"
                           : "border border-slate-600 bg-transparent"
                       }`}
                     >
                       {activeSubPerms.crm_enabled && <Check className="w-3 h-3 stroke-[3]" />}
                     </span>
-                    <Kanban className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-white">CRM</span>
+                    <Kanban className="w-4 h-4 text-emerald-500" />
+                    <span className={`text-xs font-bold ${th.userName}`}>CRM</span>
                   </div>
 
                   {activeSubPerms.crm_enabled && (
-                    <div className="pl-6 space-y-2 border-l border-slate-800/80 ml-2 animate-in fade-in duration-150">
+                    <div className={`pl-6 space-y-2 border-l ml-2 animate-in fade-in duration-150 ${isClean ? 'border-slate-200' : isWhatsApp ? 'border-[#222D34]' : 'border-slate-800'}`}>
                       <div
                         onClick={() =>
                           setActiveSubPerms((prev) => ({
@@ -1274,13 +1444,23 @@ export default function UsersSettingsTab() {
                             crm_create_funnels: !prev.crm_create_funnels,
                           }))
                         }
-                        className="flex items-center justify-between cursor-pointer select-none text-xs text-slate-300 hover:text-white"
+                        className={`flex items-center justify-between cursor-pointer select-none text-xs transition-colors ${
+                          isClean ? 'text-slate-700 hover:text-slate-950' : isWhatsApp ? 'text-[#E9EDEF] hover:text-white' : 'text-slate-300 hover:text-white'
+                        }`}
                       >
                         <div className="flex items-center gap-2">
                           <span
                             className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${
                               activeSubPerms.crm_create_funnels
-                                ? "bg-emerald-500 text-slate-950"
+                                ? isClean
+                                  ? "bg-emerald-600 text-white"
+                                  : isWhatsApp
+                                  ? "bg-[#00A884] text-white"
+                                  : "bg-emerald-500 text-slate-950"
+                                : isClean
+                                ? "border border-slate-400 bg-transparent"
+                                : isWhatsApp
+                                ? "border border-[#8696A0] bg-transparent"
                                 : "border border-slate-600 bg-transparent"
                             }`}
                           >
@@ -1291,7 +1471,7 @@ export default function UsersSettingsTab() {
                           <span>+ Criar Funis</span>
                         </div>
                         <span title="Permite criar novos funis e pipelines no CRM">
-                          <HelpCircle className="w-3 h-3 text-slate-500" />
+                          <HelpCircle className="w-3 h-3 text-slate-400" />
                         </span>
                       </div>
 
@@ -1302,13 +1482,23 @@ export default function UsersSettingsTab() {
                             crm_delete_deals: !prev.crm_delete_deals,
                           }))
                         }
-                        className="flex items-center justify-between cursor-pointer select-none text-xs text-slate-300 hover:text-white"
+                        className={`flex items-center justify-between cursor-pointer select-none text-xs transition-colors ${
+                          isClean ? 'text-slate-700 hover:text-slate-950' : isWhatsApp ? 'text-[#E9EDEF] hover:text-white' : 'text-slate-300 hover:text-white'
+                        }`}
                       >
                         <div className="flex items-center gap-2">
                           <span
                             className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${
                               activeSubPerms.crm_delete_deals
-                                ? "bg-emerald-500 text-slate-950"
+                                ? isClean
+                                  ? "bg-emerald-600 text-white"
+                                  : isWhatsApp
+                                  ? "bg-[#00A884] text-white"
+                                  : "bg-emerald-500 text-slate-950"
+                                : isClean
+                                ? "border border-slate-400 bg-transparent"
+                                : isWhatsApp
+                                ? "border border-[#8696A0] bg-transparent"
                                 : "border border-slate-600 bg-transparent"
                             }`}
                           >
@@ -1319,7 +1509,7 @@ export default function UsersSettingsTab() {
                           <span>Excluir Oportunidades</span>
                         </div>
                         <span title="Permite excluir permanentemente cards de negociação">
-                          <HelpCircle className="w-3 h-3 text-slate-500" />
+                          <HelpCircle className="w-3 h-3 text-slate-400" />
                         </span>
                       </div>
 
@@ -1330,13 +1520,23 @@ export default function UsersSettingsTab() {
                             crm_only_own_deals: !prev.crm_only_own_deals,
                           }))
                         }
-                        className="flex items-center justify-between cursor-pointer select-none text-xs text-slate-300 hover:text-white"
+                        className={`flex items-center justify-between cursor-pointer select-none text-xs transition-colors ${
+                          isClean ? 'text-slate-700 hover:text-slate-950' : isWhatsApp ? 'text-[#E9EDEF] hover:text-white' : 'text-slate-300 hover:text-white'
+                        }`}
                       >
                         <div className="flex items-center gap-2">
                           <span
                             className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${
                               activeSubPerms.crm_only_own_deals
-                                ? "bg-emerald-500 text-slate-950"
+                                ? isClean
+                                  ? "bg-emerald-600 text-white"
+                                  : isWhatsApp
+                                  ? "bg-[#00A884] text-white"
+                                  : "bg-emerald-500 text-slate-950"
+                                : isClean
+                                ? "border border-slate-400 bg-transparent"
+                                : isWhatsApp
+                                ? "border border-[#8696A0] bg-transparent"
                                 : "border border-slate-600 bg-transparent"
                             }`}
                           >
@@ -1347,7 +1547,7 @@ export default function UsersSettingsTab() {
                           <span>Ver Apenas Próprias Oportunidades</span>
                         </div>
                         <span title="Restringe a visão do operador aos leads em que ele é responsável">
-                          <HelpCircle className="w-3 h-3 text-slate-500" />
+                          <HelpCircle className="w-3 h-3 text-slate-400" />
                         </span>
                       </div>
                     </div>
@@ -1362,23 +1562,31 @@ export default function UsersSettingsTab() {
                       agenda_enabled: !prev.agenda_enabled,
                     }))
                   }
-                  className="p-3.5 rounded-xl bg-[#141a26] border border-slate-800 flex items-center justify-between cursor-pointer select-none"
+                  className={`p-3.5 rounded-xl border flex items-center justify-between cursor-pointer select-none ${th.subPermBox}`}
                 >
                   <div className="flex items-center gap-2.5">
                     <span
                       className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
                         activeSubPerms.agenda_enabled
-                          ? "bg-emerald-500 text-slate-950"
+                          ? isClean
+                            ? "bg-emerald-600 text-white"
+                            : isWhatsApp
+                            ? "bg-[#00A884] text-white"
+                            : "bg-emerald-500 text-slate-950"
+                          : isClean
+                          ? "border border-slate-400 bg-transparent"
+                          : isWhatsApp
+                          ? "border border-[#8696A0] bg-transparent"
                           : "border border-slate-600 bg-transparent"
                       }`}
                     >
                       {activeSubPerms.agenda_enabled && <Check className="w-3 h-3 stroke-[3]" />}
                     </span>
-                    <Calendar className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-white">Agenda</span>
+                    <Calendar className="w-4 h-4 text-emerald-500" />
+                    <span className={`text-xs font-bold ${th.userName}`}>Agenda</span>
                   </div>
                   <span title="Permite criar reuniões e gerenciar disponibilidade">
-                    <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
+                    <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
                   </span>
                 </div>
 
@@ -1390,34 +1598,42 @@ export default function UsersSettingsTab() {
                       analytics_enabled: !prev.analytics_enabled,
                     }))
                   }
-                  className="p-3.5 rounded-xl bg-[#141a26] border border-slate-800 flex items-center justify-between cursor-pointer select-none"
+                  className={`p-3.5 rounded-xl border flex items-center justify-between cursor-pointer select-none ${th.subPermBox}`}
                 >
                   <div className="flex items-center gap-2.5">
                     <span
                       className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
                         activeSubPerms.analytics_enabled
-                          ? "bg-emerald-500 text-slate-950"
+                          ? isClean
+                            ? "bg-emerald-600 text-white"
+                            : isWhatsApp
+                            ? "bg-[#00A884] text-white"
+                            : "bg-emerald-500 text-slate-950"
+                          : isClean
+                          ? "border border-slate-400 bg-transparent"
+                          : isWhatsApp
+                          ? "border border-[#8696A0] bg-transparent"
                           : "border border-slate-600 bg-transparent"
                       }`}
                     >
                       {activeSubPerms.analytics_enabled && <Check className="w-3 h-3 stroke-[3]" />}
                     </span>
-                    <LayoutDashboard className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-white">Análises</span>
+                    <LayoutDashboard className="w-4 h-4 text-emerald-500" />
+                    <span className={`text-xs font-bold ${th.userName}`}>Análises</span>
                   </div>
                   <span title="Acesso a relatórios de conversão e tempos de atendimento">
-                    <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
+                    <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Rodapé do Modal de Permissões */}
-            <div className="pt-3 flex justify-end gap-2 border-t border-slate-800">
+            <div className={`pt-3 flex justify-end gap-2 border-t ${th.modalBorder}`}>
               <button
                 type="button"
                 onClick={() => setIsPermsModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                className={`px-4 py-2 rounded-xl text-xs transition-colors cursor-pointer ${th.modalSecondaryBtn}`}
               >
                 Cancelar
               </button>
@@ -1425,7 +1641,7 @@ export default function UsersSettingsTab() {
                 type="button"
                 onClick={handleSavePerms}
                 disabled={submittingPerms}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all disabled:opacity-50 cursor-pointer shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+                className={`flex items-center gap-1.5 px-5 py-2 rounded-xl font-bold text-xs transition-all disabled:opacity-50 cursor-pointer ${th.primaryBtn}`}
               >
                 {submittingPerms ? (
                   <>
@@ -1443,27 +1659,27 @@ export default function UsersSettingsTab() {
 
       {/* 5. MODAL: REDEFINIR SENHA */}
       {isPasswordModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full max-w-sm bg-[#161c28] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4"
+            className={`w-full max-w-sm border rounded-2xl p-6 space-y-4 ${th.modalCard}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div className={`flex items-center justify-between pb-2 border-b ${th.modalBorder}`}>
               <div className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-amber-400" />
-                <h3 className="text-sm font-bold text-white">Redefinir Senha</h3>
+                <KeyRound className="w-4 h-4 text-amber-500" />
+                <h3 className={`text-sm font-bold ${th.userName}`}>Redefinir Senha</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsPasswordModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-900 dark:hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-400">
-              Defina a nova senha para <strong className="text-white">{passwordUserName}</strong>:
+            <p className={`text-xs ${th.userEmail}`}>
+              Defina a nova senha para <strong className={th.userName}>{passwordUserName}</strong>:
             </p>
 
             <form onSubmit={handleSavePassword} className="space-y-3">
@@ -1472,7 +1688,7 @@ export default function UsersSettingsTab() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Nova senha (mínimo 6 caracteres)"
-                className="w-full p-2.5 text-xs rounded-xl bg-[#1c2434] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-amber-400"
+                className={`w-full p-2.5 text-xs rounded-xl border outline-none ${th.modalInput}`}
                 required
                 autoFocus
               />
@@ -1481,14 +1697,14 @@ export default function UsersSettingsTab() {
                 <button
                   type="button"
                   onClick={() => setIsPasswordModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${th.modalSecondaryBtn}`}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={submittingPassword}
-                  className="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs disabled:opacity-50"
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold disabled:opacity-50 ${th.primaryBtn}`}
                 >
                   {submittingPassword ? "Salvando..." : "Redefinir"}
                 </button>

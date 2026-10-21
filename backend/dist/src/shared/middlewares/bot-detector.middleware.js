@@ -43,7 +43,10 @@ let BotDetectorMiddleware = BotDetectorMiddleware_1 = class BotDetectorMiddlewar
     use(req, res, next) {
         const rawUserAgent = String(req.headers['user-agent'] || '').toLowerCase();
         const reqPath = req.path || req.originalUrl || req.url || '';
-        const isWebhook = reqPath.startsWith('/webhooks') || reqPath.startsWith('/api/webhooks');
+        const isWebhook = reqPath.startsWith('/webhooks') ||
+            reqPath.startsWith('/api/webhooks') ||
+            reqPath.startsWith('/api/v1/public') ||
+            reqPath.startsWith('/public-api');
         const isMedia = reqPath.startsWith('/media') || reqPath.startsWith('/api/media') || reqPath.includes('/media/');
         if (isWebhook || isMedia) {
             return next();

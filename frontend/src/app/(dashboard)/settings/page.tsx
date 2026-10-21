@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   CreditCard,
   Sparkles,
+  KeyRound,
 } from "lucide-react";
 
 import CompanySettingsTab from "@/components/settings/CompanySettingsTab";
@@ -22,8 +23,9 @@ import UsersSettingsTab from "@/components/settings/UsersSettingsTab";
 import DepartmentsSettingsTab from "@/components/settings/DepartmentsSettingsTab";
 import QuickRepliesSettingsTab from "@/components/settings/QuickRepliesSettingsTab";
 import AutomationsSettingsTab from "@/components/settings/AutomationsSettingsTab";
+import ApiSettingsTab from "@/components/settings/ApiSettingsTab";
 
-type TabId = "company" | "plan" | "ai" | "users" | "departments" | "quick-replies" | "automations";
+type TabId = "company" | "plan" | "ai" | "users" | "departments" | "quick-replies" | "automations" | "api";
 
 interface TabConfig {
   id: TabId;
@@ -74,6 +76,12 @@ const SETTINGS_TABS: TabConfig[] = [
     label: "Automações e Gatilhos",
     description: "Gatilhos de fluxo, regras automáticas do CRM e webhooks",
     icon: Zap,
+  },
+  {
+    id: "api",
+    label: "APIs e Webhooks",
+    description: "Tokens de acesso, documentação da API e webhook de tráfego pago (Meta Ads)",
+    icon: KeyRound,
   },
 ];
 
@@ -203,6 +211,7 @@ function SettingsContent() {
             {activeTab === "departments" && <DepartmentsSettingsTab />}
             {activeTab === "quick-replies" && <QuickRepliesSettingsTab />}
             {activeTab === "automations" && <AutomationsSettingsTab />}
+            {activeTab === "api" && <ApiSettingsTab />}
           </main>
         </div>
       )}
