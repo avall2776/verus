@@ -26,13 +26,18 @@ export class ChatService {
     @InjectQueue('scheduled-messages') private readonly scheduledQueue: Queue,
   ) {}
 
-  async getConversationCounts(tenantId: string, userId: string, userRole: string) {
+  async getConversationCounts(tenantId: string, userId: string, userRole: string, departmentId?: string) {
     const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+
+    const where: any = { tenantId };
+    if (departmentId && departmentId !== 'all') {
+      where.departmentId = departmentId;
+    }
 
     // Agregação via groupBy em uma ÚNICA consulta ao banco de dados
     const groups = await this.prisma.conversation.groupBy({
       by: ['status', 'assignedTo'],
-      where: { tenantId },
+      where,
       _count: { id: true },
     });
 
@@ -184,9 +189,13 @@ export class ChatService {
     return result;
   }
 
-  async findAllConversations(tenantId: string, userId: string, userRole: string, tab: string = 'waiting') {
+  async findAllConversations(tenantId: string, userId: string, userRole: string, tab: string = 'waiting', departmentId?: string) {
     const whereClause: any = { tenantId };
     const isMaster = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+
+    if (departmentId && departmentId !== 'all') {
+      whereClause.departmentId = departmentId;
+    }
 
     if (tab === 'all' || tab === 'unread') {
       // Traz todas as conversas do tenant para todos os operadores cadastrados
@@ -213,8 +222,29 @@ export class ChatService {
       orderBy: { updatedAt: 'desc' }
     });
 
+    // Anexa dados do operador responsável (incluindo seus setores) em lote com alta performance
+    const userIds = [...new Set(conversations.map(c => c.assignedTo).filter(Boolean))] as string[];
+    let userMap = new Map<string, any>();
+    if (userIds.length > 0) {
+      const users = await this.prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+          role: true,
+          departments: {
+            include: { department: true }
+          }
+        }
+      });
+      userMap = new Map(users.map(u => [u.id, u]));
+    }
+
     // Sanitiza e formata avatarUrl de forma ultra rápida em memória sem travar requisições
     for (const conv of conversations) {
+      (conv as any).assignedUser = conv.assignedTo ? userMap.get(conv.assignedTo) || null : null;
       if (conv.contact) {
         const av = conv.contact.avatarUrl;
         if (!av || av === 'null' || av === 'undefined' || av.includes('unsplash.com')) {
@@ -287,6 +317,23 @@ export class ChatService {
       }
     }
 
+    if (conversation.assignedTo) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: conversation.assignedTo },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+          role: true,
+          departments: {
+            include: { department: true }
+          }
+        }
+      });
+      (conversation as any).assignedUser = user || null;
+    }
+
     return conversation;
   }
 
@@ -301,11 +348,34 @@ export class ChatService {
 
     const updated = await this.prisma.conversation.update({
       where: { id: conversationId },
-      data: { status: 'human_takeover', assignedTo: userId }
+      data: { status: 'human_takeover', assignedTo: userId },
+      include: {
+        contact: true,
+        department: true,
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1
+        }
+      }
+    });
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+        role: true,
+        departments: {
+          include: { department: true }
+        }
+      }
     });
     
-    this.chatGateway.emitConversationUpdated(tenantId, updated);
-    return updated;
+    const convWithUser = { ...updated, assignedUser: user || null };
+    this.chatGateway.emitConversationUpdated(tenantId, convWithUser);
+    return convWithUser;
   }
 
   async releaseConversation(tenantId: string, conversationId: string) {
@@ -426,18 +496,35 @@ export class ChatService {
       }
     });
 
-    this.chatGateway.emitConversationUpdated(tenantId, updated);
+    const assignedUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+        role: true,
+        departments: {
+          include: { department: true }
+        }
+      }
+    });
+
+    const convWithUser = { ...updated, assignedUser: assignedUser || null };
+
+    this.chatGateway.emitConversationUpdated(tenantId, convWithUser);
     this.chatGateway.emitConversationTransferred(tenantId, {
       conversationId: updated.id,
       contact: updated.contact,
       department: updated.department,
       assignedTo: updated.assignedTo,
+      assignedUser: assignedUser || null,
       transferredBy: operatorName || 'Um operador',
       action: 'ASSIGNED',
       transferredAt: new Date().toISOString()
     });
 
-    return updated;
+    return convWithUser;
   }
 
   async transferToDepartment(tenantId: string, conversationId: string, departmentId: string, userId?: string, operatorName?: string) {
@@ -477,17 +564,37 @@ export class ChatService {
       }
     });
 
-    this.chatGateway.emitConversationUpdated(tenantId, updated);
+    let assignedUser: any = null;
+    if (updated.assignedTo) {
+      assignedUser = await this.prisma.user.findUnique({
+        where: { id: updated.assignedTo },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+          role: true,
+          departments: {
+            include: { department: true }
+          }
+        }
+      });
+    }
+
+    const convWithUser = { ...updated, assignedUser: assignedUser || null };
+
+    this.chatGateway.emitConversationUpdated(tenantId, convWithUser);
     this.chatGateway.emitConversationTransferred(tenantId, {
       conversationId: updated.id,
       contact: updated.contact,
       department: updated.department,
       assignedTo: updated.assignedTo,
+      assignedUser: assignedUser || null,
       transferredBy: operatorName || 'Um colega',
       action: 'TRANSFERRED',
       transferredAt: new Date().toISOString()
     });
-    return updated;
+    return convWithUser;
   }
 
 

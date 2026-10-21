@@ -17,9 +17,10 @@ export class ChatController {
     @Request() req: any,
     @Query('tab') tab?: string,
     @Query('status') status?: string,
+    @Query('departmentId') departmentId?: string,
   ) {
     const selectedTab = tab || status || 'waiting';
-    return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, selectedTab);
+    return this.chatService.findAllConversations(tenantId, req.user.id, req.user.role, selectedTab, departmentId);
   }
 
   @Post('sync')
@@ -34,8 +35,9 @@ export class ChatController {
   async getConversationCounts(
     @CurrentTenant() tenantId: string,
     @Request() req: any,
+    @Query('departmentId') departmentId?: string,
   ) {
-    return this.chatService.getConversationCounts(tenantId, req.user.id, req.user.role);
+    return this.chatService.getConversationCounts(tenantId, req.user.id, req.user.role, departmentId);
   }
 
   @Get('operator-productivity')

@@ -1172,21 +1172,21 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
           {/* ========================================================================= */}
           {/* COLUNA DIREITA: PAINEL DE AÇÕES RÁPIDAS (PADRÃO LERO)                     */}
           {/* ========================================================================= */}
-          <div className="w-full lg:w-[350px] bg-slate-50/80 dark:bg-slate-50 dark:bg-[#13171f]/80 p-6 lg:p-7 flex flex-col gap-5 overflow-y-auto custom-scrollbar shrink-0 border-t lg:border-t-0 border-gray-800/60">
+          <div className="w-full lg:w-[350px] bg-slate-50 dark:bg-[#13171f] p-6 lg:p-7 flex flex-col gap-5 overflow-y-auto custom-scrollbar shrink-0 border-t lg:border-t-0 border-slate-200 dark:border-gray-800/60">
             
             {/* ETAPA ATUAL & RESPONSÁVEL */}
             <div className="space-y-4">
               <div>
-                <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">
+                <label className="text-[11px] font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5 block">
                   Etapa do Funil
                 </label>
                 <select 
-                  className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                  className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-600 transition-colors cursor-pointer"
                   value={deal.status || "new"}
                   onChange={(e) => handleStageChange(e.target.value)}
                 >
                   {PIPELINE_STAGES.map(s => (
-                    <option key={s.id} value={s.id} className="bg-white dark:bg-[#161b22] text-white">
+                    <option key={s.id} value={s.id} className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">
                       {s.title}
                     </option>
                   ))}
@@ -1194,17 +1194,17 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">
+                <label className="text-[11px] font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-wider mb-1.5 block">
                   Responsável pelo Negócio
                 </label>
                 <select 
-                  className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                  className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-600 transition-colors cursor-pointer"
                   value={deal.assignedTo?.id || (typeof deal.assignedTo === 'string' ? deal.assignedTo : "")}
                   onChange={(e) => onUpdate(deal.id, { assignedTo: e.target.value || null })}
                 >
-                  <option value="" className="bg-white dark:bg-[#161b22]">Nenhum (Fila Geral)</option>
+                  <option value="" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Nenhum (Fila Geral)</option>
                   {users.map(u => (
-                    <option key={u.id} value={u.id} className="bg-white dark:bg-[#161b22]">
+                    <option key={u.id} value={u.id} className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">
                       {u.name} {u.role ? `(${u.role})` : ''}
                     </option>
                   ))}
@@ -1212,7 +1212,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               </div>
             </div>
 
-            <div className="h-px bg-gray-800/60 w-full"></div>
+            <div className="h-px bg-slate-200 dark:bg-gray-800/60 w-full"></div>
 
             {/* AÇÕES DE STATUS CRÍTICO (GANHO / PERDIDO NO PADRÃO LERO) */}
             <div className="grid grid-cols-2 gap-2">
@@ -1221,12 +1221,12 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                 onClick={handleMarkWon}
                 className={`flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold transition-all border ${
                   deal.status === 'won'
-                    ? 'bg-emerald-950/40 text-emerald-300 border-emerald-700/60 shadow-sm'
-                    : 'bg-emerald-950/20 hover:bg-emerald-950/35 text-emerald-400 border-emerald-900/40'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/60 shadow-sm'
+                    : 'bg-emerald-50/70 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/35 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/40'
                 }`}
                 title="Marcar como Fechado / Ganho"
               >
-                <CheckCircle2 size={14} className="text-emerald-400" />
+                <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400" />
                 <span>{deal.status === 'won' ? 'Ganho' : 'Marcar Ganho'}</span>
               </button>
 
@@ -1235,12 +1235,12 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                 onClick={() => setShowLossModal(true)}
                 className={`flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold transition-all border ${
                   deal.status === 'lost'
-                    ? 'bg-rose-950/40 text-rose-300 border-rose-700/60 shadow-sm'
-                    : 'bg-rose-950/20 hover:bg-rose-950/35 text-rose-400/90 border-rose-900/30'
+                    ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-700/60 shadow-sm'
+                    : 'bg-rose-50/70 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/35 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900/30'
                 }`}
                 title="Marcar como Fechado / Perdido"
               >
-                <XCircle size={14} className="text-rose-400/90" />
+                <XCircle size={14} className="text-rose-600 dark:text-rose-400" />
                 <span>{deal.status === 'lost' ? 'Perdido' : 'Marcar Perdido'}</span>
               </button>
             </div>
@@ -1250,13 +1250,13 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               <button 
                 type="button"
                 onClick={handleReactivateDeal} 
-                className="flex items-center justify-center gap-2 w-full p-2.5 rounded-xl text-xs font-medium text-blue-300 bg-blue-950/25 border border-blue-900/40 hover:bg-blue-900/35 transition-all"
+                className="flex items-center justify-center gap-2 w-full p-2.5 rounded-xl text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/25 border border-blue-200 dark:border-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/35 transition-all"
               >
                 <RotateCcw size={14} /> Reativar Negociação
               </button>
             )}
 
-            {/* BOTÕES DE AÇÃO UNIFICADOS (MONOCROMÁTICOS COM HOVER EM AZUL ESCURO) */}
+            {/* BOTÕES DE AÇÃO UNIFICADOS (MONOCROMÁTICOS COM HOVER ELEGANTE) */}
             <div className="flex flex-col gap-2">
               
               {/* 1. Ver Conversa no WhatsApp */}
@@ -1270,9 +1270,9 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                     router.push(`/inbox`);
                   }
                 }} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-white dark:bg-[#161b22] border border-gray-800 hover:bg-slate-100 dark:bg-[#21262d] hover:border-gray-700 transition-colors"
+                className="group flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-gray-200 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 hover:bg-slate-100 dark:hover:bg-[#21262d] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-gray-700 transition-colors shadow-xs"
               >
-                <MessageSquare size={14} className="text-gray-400" />
+                <MessageSquare size={14} className="text-slate-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
                 <span>Ver Conversa no WhatsApp</span>
               </button>
 
@@ -1280,9 +1280,9 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               <button 
                 type="button"
                 onClick={() => loadChat('send')} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-white dark:bg-[#161b22] border border-gray-800 hover:bg-slate-100 dark:bg-[#21262d] hover:border-gray-700 transition-colors"
+                className="group flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-gray-200 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 hover:bg-slate-100 dark:hover:bg-[#21262d] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-gray-700 transition-colors shadow-xs"
               >
-                <Send size={14} className="text-gray-400" />
+                <Send size={14} className="text-slate-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
                 <span>Enviar Mensagem Rápida</span>
               </button>
 
@@ -1293,9 +1293,9 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                   setActivityTab('task');
                   setShowActivityModal(true);
                 }} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-white dark:bg-[#161b22] border border-gray-800 hover:bg-slate-100 dark:bg-[#21262d] hover:border-gray-700 transition-colors"
+                className="group flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-gray-200 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 hover:bg-slate-100 dark:hover:bg-[#21262d] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-gray-700 transition-colors shadow-xs"
               >
-                <CheckSquare size={14} className="text-gray-400" />
+                <CheckSquare size={14} className="text-slate-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
                 <span>Criar Tarefa</span>
               </button>
 
@@ -1306,9 +1306,9 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                   setActivityTab('event');
                   setShowActivityModal(true);
                 }} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-white dark:bg-[#161b22] border border-gray-800 hover:bg-slate-100 dark:bg-[#21262d] hover:border-gray-700 transition-colors"
+                className="group flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-gray-200 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 hover:bg-slate-100 dark:hover:bg-[#21262d] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-gray-700 transition-colors shadow-xs"
               >
-                <Calendar size={14} className="text-gray-400" />
+                <Calendar size={14} className="text-slate-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
                 <span>Criar Evento</span>
               </button>
 
@@ -1316,40 +1316,40 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               <button 
                 type="button"
                 onClick={() => setShowEditContactModal(true)} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-white dark:bg-[#161b22] border border-gray-800 hover:bg-slate-100 dark:bg-[#21262d] hover:border-gray-700 transition-colors"
+                className="group flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-gray-200 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 hover:bg-slate-100 dark:hover:bg-[#21262d] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-gray-700 transition-colors shadow-xs"
                 title="Editar informações completas do contato"
               >
-                <UserCog size={14} className="text-gray-400" />
+                <UserCog size={14} className="text-slate-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
                 <span>Editar Contato</span>
               </button>
             </div>
 
             {/* Rodapé da Coluna Direita: Auditoria de Datas da Negociação */}
-            <div className="mt-auto pt-4 border-t border-gray-800/60 flex flex-col gap-2">
-              <div className="bg-slate-100/60 dark:bg-[#0d1117]/60 p-3 rounded-xl border border-gray-800/60 flex flex-col gap-2">
+            <div className="mt-auto pt-4 border-t border-slate-200 dark:border-gray-800/60 flex flex-col gap-2">
+              <div className="bg-slate-100 dark:bg-[#0d1117] p-3 rounded-xl border border-slate-200 dark:border-gray-800/60 flex flex-col gap-2 shadow-xs">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-gray-400 flex items-center gap-1.5">
-                    <Calendar size={12} className="text-primary" /> Data de Início:
+                  <span className="text-slate-600 dark:text-gray-400 flex items-center gap-1.5 font-medium">
+                    <Calendar size={12} className="text-blue-600 dark:text-blue-400" /> Data de Início:
                   </span>
-                  <span className="text-white font-mono font-semibold">
+                  <span className="text-slate-900 dark:text-white font-mono font-bold">
                     {safeFormatDate(deal.metadata?.startDate || deal.createdAt)}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-gray-800/40">
-                  <span className="text-gray-400 flex items-center gap-1.5">
+                <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-200 dark:border-gray-800/40">
+                  <span className="text-slate-600 dark:text-gray-400 flex items-center gap-1.5 font-medium">
                     <CheckCircle2 size={12} className="text-emerald-500 shrink-0" /> Fechamento:
                   </span>
                   {deal.metadata?.closedAt ? (
-                    <span className="text-emerald-400 font-mono font-bold">
+                    <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">
                       {safeFormatDate(deal.metadata.closedAt)}
                     </span>
                   ) : ['won', 'lost', 'disqualified'].includes(deal.status) ? (
-                    <span className="text-emerald-400 font-mono font-bold">
+                    <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">
                       {safeFormatDate(deal.updatedAt)}
                     </span>
                   ) : (
-                    <span className="text-blue-400 italic">Em andamento</span>
+                    <span className="text-blue-600 dark:text-blue-400 font-medium">Em andamento</span>
                   )}
                 </div>
               </div>
@@ -1361,7 +1361,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                     handleStageChange('disqualified');
                   }
                 }}
-                className="flex items-center justify-center gap-1.5 w-full p-2 rounded-lg text-xs font-medium text-gray-400 hover:text-rose-400 hover:bg-rose-950/20 border border-transparent hover:border-rose-900/30 transition-colors"
+                className="flex items-center justify-center gap-1.5 w-full p-2 rounded-lg text-xs font-medium text-slate-500 dark:text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 border border-transparent hover:border-rose-200 dark:hover:border-rose-900/30 transition-colors"
               >
                 <Trash2 size={13} /> Desqualificar / Excluir
               </button>
@@ -1376,22 +1376,22 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
         {/* ========================================================================= */}
         {showEditContactModal && (
           <div className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white dark:bg-[#161b22] border border-gray-800 w-full max-w-2xl rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
+            <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 w-full max-w-2xl rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
               
               {/* Topo do Modal */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800/80 bg-white dark:bg-[#161b22] shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-gray-800/80 bg-white dark:bg-[#161b22] shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#0d1117] border border-gray-800 flex items-center justify-center text-gray-300">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 flex items-center justify-center text-slate-700 dark:text-gray-300">
                     <UserCog size={16} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">Editar Contato</h3>
-                    <p className="text-[11px] text-gray-400">Atualize as informações cadastrais e comerciais do contato</p>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Editar Contato</h3>
+                    <p className="text-[11px] text-slate-500 dark:text-gray-400">Atualize as informações cadastrais e comerciais do contato</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setShowEditContactModal(false)}
-                  className="p-1.5 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors"
+                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
                   title="Fechar"
                 >
                   <X size={18} />
@@ -1404,48 +1404,48 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                   
                   {/* 1. Nome do Contato */}
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
-                      Nome do Contato <span className="text-rose-400">*</span>
+                    <label className="text-[10px] font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Nome do Contato <span className="text-rose-500">*</span>
                     </label>
                     <input 
                       type="text" 
                       value={editContactData.name}
                       onChange={e => setEditContactData(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="Nome completo do lead..."
-                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none focus:border-blue-600 transition-colors"
                     />
                   </div>
 
                   {/* 2. Número WhatsApp */}
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
-                      Número WhatsApp <span className="text-rose-400">*</span>
+                    <label className="text-[10px] font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Número WhatsApp <span className="text-rose-500">*</span>
                     </label>
                     <input 
                       type="text" 
                       value={editContactData.phone}
                       onChange={e => setEditContactData(prev => ({ ...prev, phone: e.target.value }))}
                       placeholder="+55 (11) 99999-9999"
-                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none focus:border-blue-600 transition-colors"
                     />
                   </div>
 
                   {/* 3. Data de Nascimento */}
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-[10px] font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
                       Data de Nascimento
                     </label>
                     <input 
                       type="date" 
                       value={editContactData.birthDate}
                       onChange={e => setEditContactData(prev => ({ ...prev, birthDate: e.target.value }))}
-                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors"
                     />
                   </div>
 
                   {/* 4. Email */}
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-[10px] font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
                       Email
                     </label>
                     <input 
@@ -1453,13 +1453,13 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       value={editContactData.email}
                       onChange={e => setEditContactData(prev => ({ ...prev, email: e.target.value }))}
                       placeholder="email@cliente.com.br"
-                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none focus:border-blue-600 transition-colors"
                     />
                   </div>
 
                   {/* 5. Cargo / Função */}
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-[10px] font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
                       Cargo / Função
                     </label>
                     <input 
@@ -1467,13 +1467,13 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       value={editContactData.role}
                       onChange={e => setEditContactData(prev => ({ ...prev, role: e.target.value }))}
                       placeholder="Ex: Produtor Rural, Diretor de Compras"
-                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none focus:border-blue-600 transition-colors"
                     />
                   </div>
 
                   {/* 6. CPF / CNPJ */}
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-[10px] font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
                       CPF / CNPJ
                     </label>
                     <input 
@@ -1481,32 +1481,32 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       value={editContactData.document}
                       onChange={e => setEditContactData(prev => ({ ...prev, document: e.target.value }))}
                       placeholder="000.000.000-00 ou CNPJ"
-                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none focus:border-blue-600 transition-colors"
                     />
                   </div>
 
                   {/* 7. Tipo de Contato */}
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-[10px] font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
                       Tipo de Contato
                     </label>
                     <select 
                       value={editContactData.type}
                       onChange={e => setEditContactData(prev => ({ ...prev, type: e.target.value }))}
-                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-600 transition-colors cursor-pointer"
                     >
-                      <option value="Lead" className="bg-white dark:bg-[#161b22]">Lead (Potencial Cliente)</option>
-                      <option value="Cliente" className="bg-white dark:bg-[#161b22]">Cliente Ativo</option>
-                      <option value="Ex-Cliente" className="bg-white dark:bg-[#161b22]">Ex-Cliente</option>
-                      <option value="Fornecedor" className="bg-white dark:bg-[#161b22]">Fornecedor</option>
-                      <option value="Parceiro" className="bg-white dark:bg-[#161b22]">Parceiro Comercial</option>
-                      <option value="Outro" className="bg-white dark:bg-[#161b22]">Outro</option>
+                      <option value="Lead" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Lead (Potencial Cliente)</option>
+                      <option value="Cliente" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Cliente Ativo</option>
+                      <option value="Ex-Cliente" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Ex-Cliente</option>
+                      <option value="Fornecedor" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Fornecedor</option>
+                      <option value="Parceiro" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Parceiro Comercial</option>
+                      <option value="Outro" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Outro</option>
                     </select>
                   </div>
 
                   {/* 8. Endereço Completo & CEP */}
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-[10px] font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
                       Endereço Completo & CEP
                     </label>
                     <input 
@@ -1514,30 +1514,30 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       value={editContactData.address}
                       onChange={e => setEditContactData(prev => ({ ...prev, address: e.target.value }))}
                       placeholder="Endereço, Cidade - UF, CEP..."
-                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none focus:border-blue-600 transition-colors"
                     />
                   </div>
 
                   {/* 9. Empresas (Atribuir Empresa) */}
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-[10px] font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
                       Empresas (Atribuir Empresa)
                     </label>
                     <div className="relative">
-                      <Building2 size={14} className="absolute left-3.5 top-3 text-gray-500" />
+                      <Building2 size={14} className="absolute left-3.5 top-3 text-slate-400 dark:text-gray-500" />
                       <input 
                         type="text" 
                         value={editContactData.company}
                         onChange={e => setEditContactData(prev => ({ ...prev, company: e.target.value }))}
                         placeholder="Nome da empresa vinculada..."
-                        className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                        className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none focus:border-blue-600 transition-colors"
                       />
                     </div>
                   </div>
 
                   {/* 10. Rótulo de Campanha & Origem */}
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-[10px] font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
                       Rótulo de Campanha & Origem
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -1546,28 +1546,28 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                         value={editContactData.campaign}
                         onChange={e => setEditContactData(prev => ({ ...prev, campaign: e.target.value }))}
                         placeholder="Campanha"
-                        className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                        className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none focus:border-blue-600 transition-colors"
                       />
                       <input 
                         type="text" 
                         value={editContactData.source}
                         onChange={e => setEditContactData(prev => ({ ...prev, source: e.target.value }))}
                         placeholder="Origem"
-                        className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                        className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none focus:border-blue-600 transition-colors"
                       />
                     </div>
                   </div>
 
                   {/* 11. Observação do Contato */}
                   <div className="col-span-1 md:col-span-2">
-                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-[10px] font-semibold text-slate-600 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
                       Observações do Contato
                     </label>
                     <textarea 
                       value={editContactData.notes}
                       onChange={e => setEditContactData(prev => ({ ...prev, notes: e.target.value }))}
                       placeholder="Observações importantes, detalhes comerciais ou histórico do contato..."
-                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl p-3.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 resize-y min-h-[90px] leading-relaxed transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl p-3.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none focus:border-blue-600 resize-y min-h-[90px] leading-relaxed transition-colors"
                     />
                   </div>
 
@@ -1575,11 +1575,11 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               </div>
 
               {/* Botões Inferiores */}
-              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-800/80 bg-white dark:bg-[#161b22] shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-gray-800/80 bg-white dark:bg-[#161b22] shrink-0">
                 <button
                   type="button"
                   onClick={handleDeleteContact}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 border border-transparent hover:border-rose-900/40 rounded-xl transition-all"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-transparent hover:border-rose-200 dark:hover:border-rose-900/40 rounded-xl transition-all"
                   title="Desvincular contato desta oportunidade"
                 >
                   <Trash2 size={13} />
@@ -1590,7 +1590,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                   <button
                     type="button"
                     onClick={() => setShowEditContactModal(false)}
-                    className="px-4 py-2 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+                    className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     Cancelar
                   </button>

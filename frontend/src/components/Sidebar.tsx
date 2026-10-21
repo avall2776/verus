@@ -737,7 +737,7 @@ export default function Sidebar() {
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-1">
           <button 
             onClick={toggleSidebar}
-            className={`flex items-center p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/50 transition-colors mb-2 ${isExpanded ? 'justify-end' : 'justify-center'}`}
+            className={`flex items-center p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800/50 transition-colors mb-2 ${isExpanded ? 'justify-end' : 'justify-center'}`}
             title={isExpanded ? "Recolher Menu" : "Expandir Menu"}
           >
             <Menu size={18} />
@@ -751,14 +751,14 @@ export default function Sidebar() {
                 onClick={() => toggleGroup(group.title)}
               >
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-[10px] font-bold text-gray-500 tracking-wider uppercase group-hover:text-gray-300 transition-colors truncate">
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-gray-400 tracking-wider uppercase group-hover:text-slate-800 dark:group-hover:text-gray-200 transition-colors truncate">
                     {group.title}
                   </span>
                 </div>
                 {expandedGroups[group.title] ? (
-                  <ChevronDown size={12} className="text-gray-600 group-hover:text-gray-400 shrink-0 ml-1" />
+                  <ChevronDown size={12} className="text-slate-400 dark:text-gray-600 group-hover:text-slate-600 dark:group-hover:text-gray-400 shrink-0 ml-1" />
                 ) : (
-                  <ChevronRight size={12} className="text-gray-600 group-hover:text-gray-400 shrink-0 ml-1" />
+                  <ChevronRight size={12} className="text-slate-400 dark:text-gray-600 group-hover:text-slate-600 dark:group-hover:text-gray-400 shrink-0 ml-1" />
                 )}
               </div>
 
@@ -783,23 +783,23 @@ export default function Sidebar() {
                       prefetch={true}
                       title={!isExpanded ? item.name : undefined}
                       className={`
-                        flex items-center gap-3 rounded-lg transition-all duration-200 relative
+                        flex items-center gap-3 rounded-lg transition-all duration-200 relative group
                         ${isExpanded ? (isMarketingGroup ? 'pl-6 pr-3 py-2' : 'px-3 py-2') : 'w-10 h-10 justify-center'}
                         ${isActive 
-                          ? 'text-white bg-slate-800/60 border-l-2 border-cyan-400 font-medium shadow-sm' 
-                          : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
+                          ? 'text-blue-600 dark:text-cyan-400 bg-blue-50 dark:bg-slate-800/60 border-l-2 border-blue-600 dark:border-cyan-400 font-semibold shadow-sm' 
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200'
                         }
-                        ${shouldBlink ? 'bg-primary/20 shadow-[0_0_15px_rgba(0,210,255,0.2)] animate-pulse text-white' : ''}
+                        ${shouldBlink ? 'bg-primary/20 shadow-[0_0_15px_rgba(0,210,255,0.2)] animate-pulse text-blue-600 dark:text-white' : ''}
                       `}
                     >
-                      <item.icon size={isExpanded ? 17 : 20} strokeWidth={isActive ? 1.75 : 1.5} className={isActive ? 'text-cyan-400' : 'text-slate-400'} />
+                      <item.icon size={isExpanded ? 17 : 20} strokeWidth={isActive ? 2 : 1.5} className={isActive ? 'text-blue-600 dark:text-cyan-400' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'} />
                       
                       {isExpanded && (
                         <span className="text-sm truncate flex-1">{item.name}</span>
                       )}
 
                       {!isExpanded && (
-                        <div className="absolute left-14 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-lg border border-gray-700">
+                        <div className="absolute left-14 bg-slate-900 dark:bg-gray-900 text-white text-xs px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-lg border border-slate-700 dark:border-gray-700">
                           {item.name}
                         </div>
                       )}
@@ -812,9 +812,9 @@ export default function Sidebar() {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-800 p-3 shrink-0 flex flex-col gap-2">
+        <div className="border-t border-slate-200 dark:border-gray-800 p-3 shrink-0 flex flex-col gap-2">
           {/* WA Status */}
-          <div className={`flex items-center gap-3 px-2 py-1.5 rounded-lg bg-gray-900/50 border border-gray-800 ${!isExpanded && 'justify-center'}`}>
+          <div className={`flex items-center gap-3 px-2 py-1.5 rounded-lg bg-slate-50 dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 ${!isExpanded && 'justify-center'}`}>
             <div className="relative flex items-center justify-center w-2 h-2 shrink-0">
               {waStatus.status === 'connected' ? (
                 <>
@@ -827,10 +827,10 @@ export default function Sidebar() {
             </div>
             {isExpanded && (
               <div className="flex flex-col overflow-hidden">
-                <span className="text-xs text-white truncate">
+                <span className="text-xs font-semibold text-slate-800 dark:text-white truncate">
                   {waStatus.status === 'connected' ? 'WhatsApp Conectado' : 'Desconectado'}
                 </span>
-                <span className="text-[10px] text-gray-500 truncate">
+                <span className="text-[10px] text-slate-500 dark:text-gray-500 truncate">
                   {waStatus.metaPhoneNumberId ? `ID: ${String(waStatus.metaPhoneNumberId).replace(/^ID:\s*/i, '').trim()}` : 'Sem Instância'}
                 </span>
               </div>
@@ -848,13 +848,13 @@ export default function Sidebar() {
               <div 
                 onMouseEnter={handleMouseEnterUser}
                 onMouseLeave={handleMouseLeaveUser}
-                className={`absolute bottom-full mb-2.5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 shadow-2xl p-2 z-[90] flex flex-col gap-1 text-white animate-in fade-in-50 slide-in-from-bottom-2 ${
+                className={`absolute bottom-full mb-2.5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-2xl p-2 z-[90] flex flex-col gap-1 text-slate-800 dark:text-white animate-in fade-in-50 slide-in-from-bottom-2 ${
                   isExpanded ? "left-0 w-64" : "left-full ml-2 w-64"
                 }`}
               >
                 {/* Header do Usuário no Popover */}
-                <div className="p-2.5 border-b border-slate-800/80 mb-1 flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm">
+                <div className="p-2.5 border-b border-slate-200 dark:border-slate-800/80 mb-1 flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm">
                     {isAvatarUrlValid(currentUser?.avatarUrl) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img 
@@ -872,10 +872,10 @@ export default function Sidebar() {
 
                   </div>
                   <div className="flex flex-col min-w-0 flex-1">
-                    <span className="text-xs font-bold text-white truncate">{currentUser?.name || "Operador"}</span>
-                    <span className="text-[10px] text-slate-400 truncate">{currentUser?.email || "operador@vallor.com.br"}</span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{currentUser?.name || "Operador"}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{currentUser?.email || "operador@vallor.com.br"}</span>
                   </div>
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono uppercase bg-blue-600/15 text-blue-400 border border-blue-500/30 shrink-0">
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono uppercase bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 shrink-0">
                     {currentUser?.role === 'ADMIN' ? 'Admin' : 'Operador'}
                   </span>
                 </div>
@@ -887,9 +887,9 @@ export default function Sidebar() {
                     setIsUserMenuOpen(false);
                     setIsProfileModalOpen(true);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-300 hover:text-white hover:bg-slate-800/70 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors text-left"
                 >
-                  <User size={15} className="text-blue-400" />
+                  <User size={15} className="text-blue-500 dark:text-blue-400" />
                   <span>Meu Perfil & Foto</span>
                 </button>
 
@@ -900,9 +900,9 @@ export default function Sidebar() {
                     setIsUserMenuOpen(false);
                     setIsSoundModalOpen(true);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-300 hover:text-white hover:bg-slate-800/70 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors text-left"
                 >
-                  <Volume2 size={15} className="text-blue-400" />
+                  <Volume2 size={15} className="text-blue-500 dark:text-blue-400" />
                   <span>Alertas Sonoros</span>
                 </button>
 
@@ -913,9 +913,9 @@ export default function Sidebar() {
                     setIsUserMenuOpen(false);
                     setIsKeyboardModalOpen(true);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-300 hover:text-white hover:bg-slate-800/70 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors text-left"
                 >
-                  <Keyboard size={15} className="text-blue-400" />
+                  <Keyboard size={15} className="text-blue-500 dark:text-blue-400" />
                   <span>Atalhos de Teclado</span>
                 </button>
 
@@ -944,7 +944,7 @@ export default function Sidebar() {
                         setIsUserMenuOpen(false);
                         window.dispatchEvent(new CustomEvent("open_device_sandbox"));
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors text-left font-semibold"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors text-left font-semibold"
                     >
                       <MonitorSmartphone size={15} />
                       <span>Simulador de Telas</span>
@@ -955,7 +955,7 @@ export default function Sidebar() {
                         setIsUserMenuOpen(false);
                         router.push("/super-admin/companies");
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-colors text-left font-semibold"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-500/10 transition-colors text-left font-semibold"
                     >
                       <ShieldCheck size={15} />
                       <span>Console Super Admin</span>
@@ -963,7 +963,7 @@ export default function Sidebar() {
                   </>
                 )}
 
-                <div className="h-px bg-slate-800/80 my-1" />
+                <div className="h-px bg-slate-200 dark:bg-slate-800/80 my-1" />
 
                 {/* Opção 5: Sair */}
                 <button
@@ -972,7 +972,7 @@ export default function Sidebar() {
                     setIsUserMenuOpen(false);
                     handleLogout();
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors text-left"
                 >
                   <LogOut size={15} />
                   <span>Sair da Conta</span>
@@ -984,9 +984,9 @@ export default function Sidebar() {
             <div 
               onClick={() => setIsProfileModalOpen(true)}
               title="Passe o mouse para abrir o menu do operador"
-              className={`flex items-center gap-2.5 px-2 py-2 mt-1 rounded-lg hover:bg-slate-800/60 cursor-pointer transition-colors group relative ${!isExpanded && 'justify-center'}`}
+              className={`flex items-center gap-2.5 px-2 py-2 mt-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/60 cursor-pointer transition-colors group relative ${!isExpanded && 'justify-center'}`}
             >
-              <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm overflow-hidden">
+              <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm overflow-hidden">
                 {isAvatarUrlValid(currentUser?.avatarUrl) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img 
@@ -1006,13 +1006,13 @@ export default function Sidebar() {
               {isExpanded && (
                 <div className="flex flex-col overflow-hidden flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-white truncate group-hover:text-blue-400 transition-colors">
+                    <span className="text-xs font-bold text-slate-800 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                       {currentUser?.name || "Usuário Atual"}
                     </span>
-                    <Edit2 size={11} className="text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    <Edit2 size={11} className="text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                   </div>
-                  <span className="text-[10px] text-slate-400 truncate">
-                    {currentUser?.role === 'ADMIN' ? 'Administrador' : 'Operador'} • <span className="text-blue-400 font-medium">Menu</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                    {currentUser?.role === 'ADMIN' ? 'Administrador' : 'Operador'} • <span className="text-blue-600 dark:text-blue-400 font-medium">Menu</span>
                   </span>
                 </div>
               )}
@@ -1023,7 +1023,7 @@ export default function Sidebar() {
                     e.stopPropagation();
                     handleLogout();
                   }}
-                  className="text-slate-500 hover:text-red-400 p-1.5 rounded-md hover:bg-slate-800 transition-colors shrink-0"
+                  className="text-slate-400 hover:text-red-500 p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors shrink-0"
                   title="Sair da conta"
                 >
                   <LogOut size={14} />
@@ -1115,7 +1115,7 @@ export default function Sidebar() {
             <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-1">
               {visibleGroups.map((group) => (
                 <div key={group.title} className="mb-4">
-                  <div className="px-2 py-1 mb-1 text-[10px] font-bold text-gray-500 tracking-wider uppercase">
+                  <div className="px-2 py-1 mb-1 text-[10px] font-bold text-slate-500 dark:text-gray-400 tracking-wider uppercase">
                     {group.title}
                   </div>
                   <div className="flex flex-col gap-1">
@@ -1138,12 +1138,12 @@ export default function Sidebar() {
                           onClick={closeMobileMenu}
                           className={`flex items-center gap-3 ${isMarketingGroup ? 'pl-6 pr-3' : 'px-3'} py-2.5 rounded-xl font-medium text-sm transition-all duration-150 ${
                             isActive
-                              ? 'bg-slate-800/80 text-white font-semibold border-l-2 border-cyan-400'
-                              : 'text-slate-400 hover:bg-gray-800/60 hover:text-gray-200'
+                              ? 'bg-blue-50 dark:bg-slate-800/80 text-blue-600 dark:text-white font-semibold border-l-2 border-blue-600 dark:border-cyan-400'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-gray-800/60 hover:text-slate-900 dark:hover:text-gray-200'
                           }`}
                         >
                           <div className="relative shrink-0">
-                            <item.icon size={18} strokeWidth={isActive ? 1.75 : 1.5} className={isActive ? 'text-cyan-400' : 'text-slate-400'} />
+                            <item.icon size={18} strokeWidth={isActive ? 2 : 1.5} className={isActive ? 'text-blue-600 dark:text-cyan-400' : 'text-slate-400'} />
                             {shouldBlink && (
                               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" />
                             )}
@@ -1161,7 +1161,7 @@ export default function Sidebar() {
             </div>
 
             {/* Rodapé Mobile / Operador */}
-            <div className="p-3 border-t border-gray-800 bg-slate-50 dark:bg-[#070D1B] flex flex-col gap-2">
+            <div className="p-3 border-t border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#070D1B] flex flex-col gap-2">
               {/* Atalho Console Super Admin no Mobile Footer */}
               {(currentUser?.isSuperAdmin || currentUser?.role === 'SUPER_ADMIN' || targetTenantId) && (
                 <button

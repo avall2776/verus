@@ -568,7 +568,7 @@ export default function CrmDashboardPage() {
   }, [metrics]);
 
   return (
-    <div className="flex flex-col min-h-full w-full bg-slate-100 dark:bg-[#0a0c10] text-white p-4 md:p-6 lg:p-8 space-y-6">
+    <div className="flex flex-col min-h-full w-full bg-slate-50 dark:bg-[#0a0c10] text-slate-900 dark:text-white p-4 md:p-6 lg:p-8 space-y-6">
       
       {/* DealModal Integrado para Inspeção Rápida */}
       <DealModal 
@@ -585,17 +585,17 @@ export default function CrmDashboardPage() {
       />
 
       {/* CABEÇALHO COM TÍTULO, SUBTÍTULO E ABAS DE VISUALIZAÇÃO */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800/80 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-gray-800/80 pb-5">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-white dark:bg-[#161b22] border border-gray-800 rounded-xl text-primary">
-              <PieChartIcon size={22} className="text-blue-400" />
+            <div className="p-2 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl text-primary shadow-xs">
+              <PieChartIcon size={22} className="text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
                 Métricas e Vendas
               </h1>
-              <p className="text-xs md:text-sm text-gray-400 mt-0.5">
+              <p className="text-xs md:text-sm text-slate-500 dark:text-gray-400 mt-0.5">
                 Acompanhe o desempenho comercial, taxas de conversão, velocidade do time e relatórios em tempo real.
               </p>
             </div>
@@ -603,17 +603,17 @@ export default function CrmDashboardPage() {
         </div>
 
         {/* ABAS: GRÁFICOS VS RELATÓRIOS */}
-        <div className="flex items-center p-1 bg-white dark:bg-[#161b22] border border-gray-800 rounded-xl self-start md:self-auto shadow-sm">
+        <div className="flex items-center p-1 bg-slate-100 dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl self-start md:self-auto shadow-xs">
           <button
             type="button"
             onClick={() => setActiveTab('charts')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'charts'
-                ? 'bg-slate-100 dark:bg-[#21262d] text-white shadow-sm border border-gray-700'
-                : 'text-gray-400 hover:text-gray-200'
+                ? 'bg-blue-600 text-white shadow-sm border border-blue-600'
+                : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-gray-800/50'
             }`}
           >
-            <BarChart3 size={14} className={activeTab === 'charts' ? 'text-blue-400' : 'text-gray-400'} />
+            <BarChart3 size={14} className={activeTab === 'charts' ? 'text-white' : 'text-slate-400 dark:text-gray-400'} />
             <span>Gráficos & KPIs</span>
           </button>
 
@@ -622,13 +622,17 @@ export default function CrmDashboardPage() {
             onClick={() => setActiveTab('reports')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'reports'
-                ? 'bg-slate-100 dark:bg-[#21262d] text-white shadow-sm border border-gray-700'
-                : 'text-gray-400 hover:text-gray-200'
+                ? 'bg-blue-600 text-white shadow-sm border border-blue-600'
+                : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-gray-800/50'
             }`}
           >
-            <TableIcon size={14} className={activeTab === 'reports' ? 'text-blue-400' : 'text-gray-400'} />
+            <TableIcon size={14} className={activeTab === 'reports' ? 'text-white' : 'text-slate-400 dark:text-gray-400'} />
             <span>Relatórios em Tabela</span>
-            <span className="ml-1 px-1.5 py-0.2 bg-gray-800 text-[10px] text-gray-300 rounded-full">
+            <span className={`ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold ${
+              activeTab === 'reports'
+                ? 'bg-blue-700 text-white'
+                : 'bg-slate-200 dark:bg-gray-800 text-slate-700 dark:text-gray-300'
+            }`}>
               {filteredDeals.length}
             </span>
           </button>
@@ -636,12 +640,12 @@ export default function CrmDashboardPage() {
       </div>
 
       {/* BARRA DE FILTROS AVANÇADOS (PERÍODO, CRITÉRIO TEMPORAL, STATUS, CRMs, EQUIPE & RECARREGAR) */}
-      <div className="bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-2xl p-3 md:p-3.5 flex flex-col xl:flex-row xl:items-center justify-between gap-3 shadow-sm">
+      <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-2xl p-3 md:p-3.5 flex flex-col xl:flex-row xl:items-center justify-between gap-3 shadow-xs">
         
         {/* LADO ESQUERDO: Filtros Temporais + Critério Temporal + Status + CRMs + Equipe perfeitamente alinhados */}
         <div className="flex flex-wrap items-center gap-2 md:gap-2.5">
           {/* Pílulas de Período Temporal */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#0d1117] p-1 border border-gray-800 rounded-xl overflow-visible relative">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#0d1117] p-1 border border-slate-200 dark:border-gray-800 rounded-xl overflow-visible relative">
             {PERIOD_OPTIONS.filter(opt => opt.id !== 'custom').map(opt => (
               <button
                 key={opt.id}
@@ -652,8 +656,8 @@ export default function CrmDashboardPage() {
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                   period === opt.id
-                    ? 'bg-slate-100 dark:bg-[#21262d] text-white font-semibold shadow-xs border border-gray-700'
-                    : 'text-gray-400 hover:text-gray-200'
+                    ? 'bg-blue-600 text-white font-semibold shadow-xs border border-blue-600'
+                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-gray-800/50'
                 }`}
               >
                 {opt.label}
@@ -670,11 +674,11 @@ export default function CrmDashboardPage() {
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
                   period === 'custom'
-                    ? 'bg-slate-100 dark:bg-[#21262d] text-white font-semibold shadow-xs border border-gray-700'
-                    : 'text-gray-400 hover:text-gray-200'
+                    ? 'bg-blue-600 text-white font-semibold shadow-xs border border-blue-600'
+                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-gray-800/50'
                 }`}
               >
-                <Calendar size={12} className={period === 'custom' ? 'text-blue-400' : 'text-gray-400'} />
+                <Calendar size={12} className={period === 'custom' ? 'text-white' : 'text-slate-500 dark:text-gray-400'} />
                 <span>
                   {period === 'custom' && customStartDate && customEndDate
                     ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
@@ -684,17 +688,17 @@ export default function CrmDashboardPage() {
               </button>
 
               {isCustomDateOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-72 md:w-80 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-gray-200 text-xs shadow-2xl rounded-2xl p-4 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-xl">
+                <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-72 md:w-80 bg-white dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 text-slate-800 dark:text-gray-200 text-xs shadow-2xl rounded-2xl p-4 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-xl">
                   {/* Cabeçalho do Popover */}
-                  <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-gray-800">
+                  <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-200 dark:border-gray-800">
                     <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-blue-400" />
-                      <span className="font-bold text-white text-xs">Período Personalizado</span>
+                      <Calendar size={14} className="text-blue-600 dark:text-blue-400" />
+                      <span className="font-bold text-slate-900 dark:text-white text-xs">Período Personalizado</span>
                     </div>
                     <button 
                       type="button"
                       onClick={() => setIsCustomDateOpen(false)}
-                      className="text-gray-400 hover:text-white p-1 rounded-md hover:bg-gray-800 transition-colors"
+                      className="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1 rounded-md hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors"
                     >
                       <X size={13} />
                     </button>
@@ -711,7 +715,7 @@ export default function CrmDashboardPage() {
                         setCustomStartDate(start.toISOString().split('T')[0]);
                         setCustomEndDate(end.toISOString().split('T')[0]);
                       }}
-                      className="px-2 py-1.5 bg-white dark:bg-[#161b22] hover:bg-slate-100 dark:bg-[#21262d] border border-gray-800 rounded-lg text-[11px] text-gray-300 text-center transition-colors hover:text-white"
+                      className="px-2 py-1.5 bg-slate-50 dark:bg-[#161b22] hover:bg-slate-100 dark:hover:bg-[#21262d] border border-slate-200 dark:border-gray-800 rounded-lg text-[11px] text-slate-700 dark:text-gray-300 text-center transition-colors hover:text-slate-900 dark:hover:text-white"
                     >
                       Últimos 7 dias
                     </button>
@@ -724,7 +728,7 @@ export default function CrmDashboardPage() {
                         setCustomStartDate(start.toISOString().split('T')[0]);
                         setCustomEndDate(end.toISOString().split('T')[0]);
                       }}
-                      className="px-2 py-1.5 bg-white dark:bg-[#161b22] hover:bg-slate-100 dark:bg-[#21262d] border border-gray-800 rounded-lg text-[11px] text-gray-300 text-center transition-colors hover:text-white"
+                      className="px-2 py-1.5 bg-slate-50 dark:bg-[#161b22] hover:bg-slate-100 dark:hover:bg-[#21262d] border border-slate-200 dark:border-gray-800 rounded-lg text-[11px] text-slate-700 dark:text-gray-300 text-center transition-colors hover:text-slate-900 dark:hover:text-white"
                     >
                       Últimos 15 dias
                     </button>
@@ -736,7 +740,7 @@ export default function CrmDashboardPage() {
                         setCustomStartDate(start.toISOString().split('T')[0]);
                         setCustomEndDate(end.toISOString().split('T')[0]);
                       }}
-                      className="px-2 py-1.5 bg-white dark:bg-[#161b22] hover:bg-slate-100 dark:bg-[#21262d] border border-gray-800 rounded-lg text-[11px] text-gray-300 text-center transition-colors hover:text-white"
+                      className="px-2 py-1.5 bg-slate-50 dark:bg-[#161b22] hover:bg-slate-100 dark:hover:bg-[#21262d] border border-slate-200 dark:border-gray-800 rounded-lg text-[11px] text-slate-700 dark:text-gray-300 text-center transition-colors hover:text-slate-900 dark:hover:text-white"
                     >
                       Este mês
                     </button>
@@ -749,7 +753,7 @@ export default function CrmDashboardPage() {
                         setCustomStartDate(start.toISOString().split('T')[0]);
                         setCustomEndDate(end.toISOString().split('T')[0]);
                       }}
-                      className="px-2 py-1.5 bg-white dark:bg-[#161b22] hover:bg-slate-100 dark:bg-[#21262d] border border-gray-800 rounded-lg text-[11px] text-gray-300 text-center transition-colors hover:text-white"
+                      className="px-2 py-1.5 bg-slate-50 dark:bg-[#161b22] hover:bg-slate-100 dark:hover:bg-[#21262d] border border-slate-200 dark:border-gray-800 rounded-lg text-[11px] text-slate-700 dark:text-gray-300 text-center transition-colors hover:text-slate-900 dark:hover:text-white"
                     >
                       Mês anterior
                     </button>
@@ -758,21 +762,21 @@ export default function CrmDashboardPage() {
                   {/* Dois Inputs de Data Formatados */}
                   <div className="space-y-2 mb-3.5">
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Data Inicial (De)</label>
+                      <label className="text-[10px] uppercase font-bold text-slate-600 dark:text-gray-400 block mb-1">Data Inicial (De)</label>
                       <input 
                         type="date" 
                         value={customStartDate} 
                         onChange={e => setCustomStartDate(e.target.value)}
-                        className="w-full bg-white dark:bg-[#161b22] border border-gray-800 rounded-xl px-3 py-1.5 text-white text-xs outline-none focus:border-blue-600/60 transition-colors"
+                        className="w-full bg-slate-50 dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl px-3 py-1.5 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-600 transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Data Final (Até)</label>
+                      <label className="text-[10px] uppercase font-bold text-slate-600 dark:text-gray-400 block mb-1">Data Final (Até)</label>
                       <input 
                         type="date" 
                         value={customEndDate} 
                         onChange={e => setCustomEndDate(e.target.value)}
-                        className="w-full bg-white dark:bg-[#161b22] border border-gray-800 rounded-xl px-3 py-1.5 text-white text-xs outline-none focus:border-blue-600/60 transition-colors"
+                        className="w-full bg-slate-50 dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl px-3 py-1.5 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-600 transition-colors"
                       />
                     </div>
                   </div>
@@ -794,65 +798,65 @@ export default function CrmDashboardPage() {
           </div>
 
           {/* Critério Temporal (Última Movimentação vs Criação) */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-gray-300">
-            <Clock size={13} className="text-gray-400" />
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 dark:text-gray-300">
+            <Clock size={13} className="text-slate-500 dark:text-gray-400" />
             <select
               value={dateCriterion}
               onChange={e => setDateCriterion(e.target.value as "updatedAt" | "createdAt")}
-              className="bg-transparent text-white outline-none cursor-pointer pr-1"
+              className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer pr-1 font-medium"
             >
-              <option value="updatedAt" className="bg-white dark:bg-[#161b22]">Última Movimentação</option>
-              <option value="createdAt" className="bg-white dark:bg-[#161b22]">Data de Criação</option>
+              <option value="updatedAt" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Última Movimentação</option>
+              <option value="createdAt" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Data de Criação</option>
             </select>
           </div>
 
           {/* Filtro de Status */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-gray-300">
-            <Filter size={13} className="text-gray-400" />
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 dark:text-gray-300">
+            <Filter size={13} className="text-slate-500 dark:text-gray-400" />
             <select
               value={selectedStatusFilter}
               onChange={e => {
                 setSelectedStatusFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="bg-transparent text-white outline-none cursor-pointer pr-1"
+              className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer pr-1 font-medium"
             >
-              <option value="all" className="bg-white dark:bg-[#161b22]">Todos os Status</option>
-              <option value="open" className="bg-white dark:bg-[#161b22]">Em Aberto</option>
-              <option value="won" className="bg-white dark:bg-[#161b22]">Fechado / Ganho</option>
-              <option value="lost" className="bg-white dark:bg-[#161b22]">Fechado / Perdido</option>
+              <option value="all" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Todos os Status</option>
+              <option value="open" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Em Aberto</option>
+              <option value="won" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Fechado / Ganho</option>
+              <option value="lost" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Fechado / Perdido</option>
             </select>
           </div>
 
           {/* Filtro de Todos os CRMs */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-gray-300">
-            <Briefcase size={13} className="text-gray-400" />
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 dark:text-gray-300">
+            <Briefcase size={13} className="text-slate-500 dark:text-gray-400" />
             <select
               value={selectedCrmFilter}
               onChange={e => {
                 setSelectedCrmFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="bg-transparent text-white outline-none cursor-pointer pr-1"
+              className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer pr-1 font-medium"
             >
-              <option value="all" className="bg-white dark:bg-[#161b22]">Todos os CRMs</option>
-              <option value="principal" className="bg-white dark:bg-[#161b22]">Funil Principal</option>
-              <option value="inbound" className="bg-white dark:bg-[#161b22]">Vendas Inbound</option>
-              <option value="outbound" className="bg-white dark:bg-[#161b22]">Outbound B2B</option>
-              <option value="partners" className="bg-white dark:bg-[#161b22]">Parcerias</option>
+              <option value="all" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Todos os CRMs</option>
+              <option value="principal" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Funil Principal</option>
+              <option value="inbound" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Vendas Inbound</option>
+              <option value="outbound" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Outbound B2B</option>
+              <option value="partners" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Parcerias</option>
             </select>
           </div>
 
           {/* Filtro de Equipe / Atendente */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-gray-300">
-            <Users size={13} className="text-gray-400" />
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 dark:text-gray-300">
+            <Users size={13} className="text-slate-500 dark:text-gray-400" />
             <select
               value={selectedUserFilter}
               onChange={e => {
                 setSelectedUserFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="bg-transparent text-white outline-none cursor-pointer pr-1 max-w-[130px] truncate"
+              className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer pr-1 max-w-[130px] truncate font-medium"
             >
               <option value="all" className="bg-white dark:bg-[#161b22]">Todos os Responsáveis</option>
               {users.map(u => (
@@ -886,29 +890,29 @@ export default function CrmDashboardPage() {
         <div 
           onMouseEnter={() => setHoveredCard('opportunities')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-gray-400 mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-400 transition-colors">Oportunidades</span>
-            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#0d1117] border border-gray-800 flex items-center justify-center text-blue-400">
+          <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Oportunidades</span>
+            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
               <Briefcase size={11} />
             </div>
           </div>
           <div className="flex items-baseline justify-between mb-1">
-            <p className="text-2xl font-extrabold text-white font-mono">
+            <p className="text-2xl font-extrabold text-slate-900 dark:text-white font-mono">
               {analyticsData.opportunities.current}
             </p>
             <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
               analyticsData.opportunities.diff >= 0 
-                ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' 
-                : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
+                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40' 
+                : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
             }`}>
               {analyticsData.opportunities.diff >= 0 ? `+${analyticsData.opportunities.diff}%` : `${analyticsData.opportunities.diff}%`}
             </span>
           </div>
-          <div className="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px]">
-            <span className="text-gray-400">Total:</span>
-            <span className="font-mono font-semibold text-gray-200">{formatCurrency(analyticsData.opportunities.revenue)}</span>
+          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[11px]">
+            <span className="text-slate-500 dark:text-gray-400">Total:</span>
+            <span className="font-mono font-semibold text-slate-800 dark:text-gray-200">{formatCurrency(analyticsData.opportunities.revenue)}</span>
           </div>
 
           {hoveredCard === 'opportunities' && (
@@ -928,29 +932,29 @@ export default function CrmDashboardPage() {
         <div 
           onMouseEnter={() => setHoveredCard('open')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-gray-400 mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-400 transition-colors">Em Aberto</span>
-            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#0d1117] border border-gray-800 flex items-center justify-center text-blue-400">
+          <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Em Aberto</span>
+            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
               <Layers size={11} />
             </div>
           </div>
           <div className="flex items-baseline justify-between mb-1">
-            <p className="text-2xl font-extrabold text-blue-400 font-mono">
+            <p className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 font-mono">
               {analyticsData.open.current}
             </p>
             <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
               analyticsData.open.diff >= 0 
-                ? 'bg-blue-950/60 text-blue-400 border border-blue-800/40' 
-                : 'bg-gray-800/60 text-gray-400 border border-gray-700/40'
+                ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40' 
+                : 'bg-slate-100 dark:bg-gray-800/60 text-slate-600 dark:text-gray-400 border border-slate-200 dark:border-gray-700/40'
             }`}>
               {analyticsData.open.diff >= 0 ? `+${analyticsData.open.diff}%` : `${analyticsData.open.diff}%`}
             </span>
           </div>
-          <div className="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px]">
-            <span className="text-gray-400">Pipeline:</span>
-            <span className="font-mono font-semibold text-blue-300">{formatCurrency(analyticsData.open.revenue)}</span>
+          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[11px]">
+            <span className="text-slate-500 dark:text-gray-400">Pipeline:</span>
+            <span className="font-mono font-semibold text-blue-600 dark:text-blue-300">{formatCurrency(analyticsData.open.revenue)}</span>
           </div>
 
           {hoveredCard === 'open' && (
@@ -970,29 +974,29 @@ export default function CrmDashboardPage() {
         <div 
           onMouseEnter={() => setHoveredCard('won')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-gray-400 mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-400 transition-colors">Ganhas</span>
-            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
+          <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Ganhas</span>
+            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 size={11} />
             </div>
           </div>
           <div className="flex items-baseline justify-between mb-1">
-            <p className="text-2xl font-extrabold text-emerald-400 font-mono">
+            <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
               {analyticsData.won.current}
             </p>
             <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
               analyticsData.won.diff >= 0 
-                ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' 
-                : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
+                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40' 
+                : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
             }`}>
               {analyticsData.won.diff >= 0 ? `+${analyticsData.won.diff}%` : `${analyticsData.won.diff}%`}
             </span>
           </div>
-          <div className="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px]">
-            <span className="text-gray-400">Receita:</span>
-            <span className="font-mono font-bold text-emerald-400">{formatCurrency(analyticsData.won.revenue)}</span>
+          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[11px]">
+            <span className="text-slate-500 dark:text-gray-400">Receita:</span>
+            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(analyticsData.won.revenue)}</span>
           </div>
 
           {hoveredCard === 'won' && (
@@ -1012,29 +1016,29 @@ export default function CrmDashboardPage() {
         <div 
           onMouseEnter={() => setHoveredCard('lost')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-gray-400 mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-rose-400 transition-colors">Perdidas</span>
-            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#0d1117] border border-gray-800 flex items-center justify-center text-rose-400">
+          <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">Perdidas</span>
+            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 flex items-center justify-center text-rose-600 dark:text-rose-400">
               <XCircle size={11} />
             </div>
           </div>
           <div className="flex items-baseline justify-between mb-1">
-            <p className="text-2xl font-extrabold text-rose-400 font-mono">
+            <p className="text-2xl font-extrabold text-rose-600 dark:text-rose-400 font-mono">
               {analyticsData.lost.current}
             </p>
             <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
               analyticsData.lost.diff <= 0 
-                ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' 
-                : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
+                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40' 
+                : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
             }`}>
               {analyticsData.lost.diff >= 0 ? `+${analyticsData.lost.diff}%` : `${analyticsData.lost.diff}%`}
             </span>
           </div>
-          <div className="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px]">
-            <span className="text-gray-400">Perda:</span>
-            <span className="font-mono font-bold text-rose-400">-{formatCurrency(analyticsData.lost.revenue)}</span>
+          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[11px]">
+            <span className="text-slate-500 dark:text-gray-400">Perda:</span>
+            <span className="font-mono font-bold text-rose-600 dark:text-rose-400">-{formatCurrency(analyticsData.lost.revenue)}</span>
           </div>
 
           {hoveredCard === 'lost' && (
@@ -1055,29 +1059,29 @@ export default function CrmDashboardPage() {
         <div 
           onMouseEnter={() => setHoveredCard('ticket')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-gray-400 mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-400 transition-colors">Ticket Médio</span>
-            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
+          <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Ticket Médio</span>
+            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <DollarSign size={11} />
             </div>
           </div>
           <div className="flex items-baseline justify-between mb-1">
-            <p className="text-xl md:text-2xl font-extrabold text-white font-mono truncate">
+            <p className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-white font-mono truncate">
               {formatCurrency(analyticsData.ticket.current)}
             </p>
             <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
               analyticsData.ticket.diff >= 0 
-                ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' 
-                : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
+                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40' 
+                : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
             }`}>
               {analyticsData.ticket.diff >= 0 ? `+${analyticsData.ticket.diff}%` : `${analyticsData.ticket.diff}%`}
             </span>
           </div>
-          <div className="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px] text-gray-400">
+          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[11px] text-slate-500 dark:text-gray-400">
             <span className="truncate">Por venda fechada</span>
-            <span className="text-[10px] text-emerald-400/80 font-mono font-semibold">Ganhas</span>
+            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-semibold">Ganhas</span>
           </div>
 
           {hoveredCard === 'ticket' && (
@@ -1097,33 +1101,33 @@ export default function CrmDashboardPage() {
         <div 
           onMouseEnter={() => setHoveredCard('winrate_cycle')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-gray-400 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-400 transition-colors">Taxa & Ciclo</span>
-            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#0d1117] border border-gray-800 flex items-center justify-center text-emerald-400">
+          <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Taxa & Ciclo</span>
+            <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <Target size={11} />
             </div>
           </div>
           
           {/* Subdivisão interna de 3 colunas: Win Rate, Ciclo Médio e Movimentação */}
-          <div className="grid grid-cols-3 gap-1 py-1.5 my-0.5 bg-slate-100 dark:bg-[#0d1117]/80 rounded-lg border border-gray-800/80 text-center">
+          <div className="grid grid-cols-3 gap-1 py-1.5 my-0.5 bg-slate-100 dark:bg-[#0d1117]/80 rounded-lg border border-slate-200 dark:border-gray-800/80 text-center">
             <div className="flex flex-col items-center">
-              <span className="text-[9px] uppercase tracking-wider text-gray-400 font-semibold">Ganho</span>
-              <span className="text-sm font-extrabold text-emerald-400 font-mono">{analyticsData.winRate.current}%</span>
+              <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-gray-400 font-semibold">Ganho</span>
+              <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">{analyticsData.winRate.current}%</span>
             </div>
-            <div className="flex flex-col items-center border-x border-gray-800/80 px-1">
-              <span className="text-[9px] uppercase tracking-wider text-gray-400 font-semibold">Ciclo</span>
-              <span className="text-sm font-extrabold text-white font-mono">{analyticsData.cycle.current}d</span>
+            <div className="flex flex-col items-center border-x border-slate-200 dark:border-gray-800/80 px-1">
+              <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-gray-400 font-semibold">Ciclo</span>
+              <span className="text-sm font-extrabold text-slate-900 dark:text-white font-mono">{analyticsData.cycle.current}d</span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-[9px] uppercase tracking-wider text-gray-400 font-semibold">Movim.</span>
-              <span className="text-sm font-extrabold text-blue-400 font-mono">~{analyticsData.movement.current}h</span>
+              <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-gray-400 font-semibold">Movim.</span>
+              <span className="text-sm font-extrabold text-blue-600 dark:text-blue-400 font-mono">~{analyticsData.movement.current}h</span>
             </div>
           </div>
 
-          <div className="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px]">
-            <span className="text-gray-400">Conversão:</span>
+          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[11px]">
+            <span className="text-slate-500 dark:text-gray-400">Conversão:</span>
             <span className={`font-mono font-semibold text-[10px] ${analyticsData.winRate.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {analyticsData.winRate.diff >= 0 ? `+${analyticsData.winRate.diff}%` : `${analyticsData.winRate.diff}%`} vs ant.
             </span>
@@ -1170,16 +1174,16 @@ export default function CrmDashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Gráfico 1: Comparativo Semanal de Receita Ganha vs Perdida */}
-            <div className="lg:col-span-2 bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-2xl p-5 shadow-sm flex flex-col">
+            <div className="lg:col-span-2 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-2xl p-5 shadow-xs flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <BarChart3 size={16} className="text-blue-400" />
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <BarChart3 size={16} className="text-blue-600 dark:text-blue-400" />
                     Comparativo Semanal de Receita Ganha vs Perdida
                   </h3>
-                  <p className="text-[11px] text-gray-400">Valores faturados em contraste com oportunidades perdidas</p>
+                  <p className="text-[11px] text-slate-500 dark:text-gray-400">Valores faturados em contraste com oportunidades perdidas</p>
                 </div>
-                <span className="text-[10px] text-gray-400 bg-slate-100 dark:bg-[#0d1117] px-2.5 py-1 rounded-lg border border-gray-800 font-mono">
+                <span className="text-[10px] text-slate-600 dark:text-gray-400 bg-slate-100 dark:bg-[#0d1117] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-gray-800 font-mono">
                   Valores em BRL
                 </span>
               </div>
@@ -1197,27 +1201,27 @@ export default function CrmDashboardPage() {
                           const perdido = payload.find(p => p.dataKey === 'perdido')?.value || 0;
                           const liquido = Number(ganho) - Number(perdido);
                           return (
-                            <div className="bg-slate-100 dark:bg-[#0d1117]/95 border border-gray-800 rounded-xl p-3 shadow-2xl backdrop-blur-md text-xs min-w-[190px]">
-                              <p className="text-white font-bold mb-2 pb-1.5 border-b border-gray-800/80 flex items-center justify-between">
+                            <div className="bg-white dark:bg-[#0d1117]/95 border border-slate-200 dark:border-gray-800 rounded-xl p-3 shadow-2xl backdrop-blur-md text-xs min-w-[190px]">
+                              <p className="text-slate-900 dark:text-white font-bold mb-2 pb-1.5 border-b border-slate-200 dark:border-gray-800/80 flex items-center justify-between">
                                 <span>{label}</span>
-                                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${liquido >= 0 ? 'bg-emerald-950/50 text-emerald-400' : 'bg-rose-950/50 text-rose-400'}`}>
+                                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${liquido >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400'}`}>
                                   {liquido >= 0 ? '+ Lucro' : '- Déficit'}
                                 </span>
                               </p>
                               <div className="space-y-1.5">
-                                <div className="flex items-center justify-between text-gray-400">
+                                <div className="flex items-center justify-between text-slate-500 dark:text-gray-400">
                                   <span className="flex items-center gap-1.5">
                                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
                                     <span>Receita Ganha:</span>
                                   </span>
-                                  <span className="font-mono font-bold text-emerald-400">{formatCurrency(Number(ganho))}</span>
+                                  <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(Number(ganho))}</span>
                                 </div>
-                                <div className="flex items-center justify-between text-gray-400">
+                                <div className="flex items-center justify-between text-slate-500 dark:text-gray-400">
                                   <span className="flex items-center gap-1.5">
                                     <span className="w-2 h-2 rounded-full bg-rose-500" />
                                     <span>Receita Perdida:</span>
                                   </span>
-                                  <span className="font-mono font-bold text-rose-400">{formatCurrency(Number(perdido))}</span>
+                                  <span className="font-mono font-bold text-rose-600 dark:text-rose-400">{formatCurrency(Number(perdido))}</span>
                                 </div>
                               </div>
                             </div>
@@ -1229,7 +1233,7 @@ export default function CrmDashboardPage() {
                     <Legend 
                       iconType="circle" 
                       wrapperStyle={{ paddingTop: 12, fontSize: 12 }} 
-                      formatter={(value) => <span className="text-gray-400 text-xs">{value}</span>}
+                      formatter={(value) => <span className="text-slate-600 dark:text-gray-400 text-xs">{value}</span>}
                     />
                     <Bar dataKey="ganho" name="Receita Ganha" fill="#10b981" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="perdido" name="Receita Perdida" fill="#f43f5e" radius={[4, 4, 0, 0]} />
@@ -1239,13 +1243,13 @@ export default function CrmDashboardPage() {
             </div>
 
             {/* Gráfico 2: Distribuição por Status (Donut Chart) */}
-            <div className="bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <PieChartIcon size={16} className="text-emerald-400" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <PieChartIcon size={16} className="text-emerald-600 dark:text-emerald-400" />
                   Distribuição por Status
                 </h3>
-                <p className="text-[11px] text-gray-400 mb-2">Equilíbrio do funil de oportunidades</p>
+                <p className="text-[11px] text-slate-500 dark:text-gray-400 mb-2">Equilíbrio do funil de oportunidades</p>
               </div>
 
               <div className="h-[200px] w-full relative flex items-center justify-center">
@@ -1269,18 +1273,18 @@ export default function CrmDashboardPage() {
                           const total = statusPieData.reduce((acc, curr) => acc + curr.value, 0) || 1;
                           const percent = Math.round((Number(item.value) / total) * 100);
                           return (
-                            <div className="bg-slate-100 dark:bg-[#0d1117]/95 border border-gray-800 rounded-xl p-3 shadow-2xl backdrop-blur-md text-xs min-w-[150px]">
-                              <div className="flex items-center gap-1.5 mb-1.5 font-bold text-white">
+                            <div className="bg-white dark:bg-[#0d1117]/95 border border-slate-200 dark:border-gray-800 rounded-xl p-3 shadow-2xl backdrop-blur-md text-xs min-w-[150px]">
+                              <div className="flex items-center gap-1.5 mb-1.5 font-bold text-slate-900 dark:text-white">
                                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.payload?.color }} />
                                 <span>{item.name}</span>
                               </div>
-                              <div className="flex items-center justify-between text-gray-400">
+                              <div className="flex items-center justify-between text-slate-500 dark:text-gray-400">
                                 <span>Volume:</span>
-                                <span className="font-mono font-bold text-white">{item.value} cards</span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-white">{item.value} cards</span>
                               </div>
-                              <div className="flex items-center justify-between text-gray-400 mt-1">
+                              <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mt-1">
                                 <span>Participação:</span>
-                                <span className="font-mono font-semibold text-emerald-400">{percent}%</span>
+                                <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{percent}%</span>
                               </div>
                             </div>
                           );
@@ -1291,33 +1295,33 @@ export default function CrmDashboardPage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-xl font-extrabold text-white">{metrics?.totalDeals || deals.length}</span>
-                  <span className="text-[10px] text-gray-400 uppercase tracking-wider">Total Cards</span>
+                  <span className="text-xl font-extrabold text-slate-900 dark:text-white">{metrics?.totalDeals || deals.length}</span>
+                  <span className="text-[10px] text-slate-500 dark:text-gray-400 uppercase tracking-wider">Total Cards</span>
                 </div>
               </div>
 
               {/* Legenda limpa do Donut */}
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-800/80 text-center">
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200 dark:border-gray-800/80 text-center">
                 <div>
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400">
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-gray-400">
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
                     <span>Ganhos</span>
                   </div>
-                  <p className="text-sm font-bold text-white mt-0.5">{metrics?.wonCount || 0}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{metrics?.wonCount || 0}</p>
                 </div>
                 <div>
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400">
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-gray-400">
                     <span className="w-2 h-2 rounded-full bg-rose-500" />
                     <span>Perdidos</span>
                   </div>
-                  <p className="text-sm font-bold text-white mt-0.5">{metrics?.lostCount || 0}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{metrics?.lostCount || 0}</p>
                 </div>
                 <div>
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400">
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-gray-400">
                     <span className="w-2 h-2 rounded-full bg-blue-500" />
                     <span>Abertos</span>
                   </div>
-                  <p className="text-sm font-bold text-white mt-0.5">{metrics?.openCount || 0}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{metrics?.openCount || 0}</p>
                 </div>
               </div>
             </div>
@@ -1328,14 +1332,14 @@ export default function CrmDashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Gráfico 3: Distribuição de Leads por Etapas do Funil */}
-            <div className="bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-2xl p-5 shadow-sm flex flex-col">
+            <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-2xl p-5 shadow-xs flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <Layers size={16} className="text-purple-400" />
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Layers size={16} className="text-purple-600 dark:text-purple-400" />
                     Distribuição de Leads no Funil
                   </h3>
-                  <p className="text-[11px] text-gray-400">Volume de negociações em cada etapa do processo</p>
+                  <p className="text-[11px] text-slate-500 dark:text-gray-400">Volume de negociações em cada etapa do processo</p>
                 </div>
               </div>
 
@@ -1344,16 +1348,16 @@ export default function CrmDashboardPage() {
                   <BarChart data={translatedFunnelData} layout="vertical" margin={{ top: 5, right: 25, left: 10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#21262d" horizontal={true} vertical={false} />
                     <XAxis type="number" stroke="#8b949e" tick={{ fill: '#8b949e', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis dataKey="name" type="category" stroke="#8b949e" tick={{ fill: '#c9d1d9', fontSize: 11 }} axisLine={false} tickLine={false} width={130} />
+                    <YAxis dataKey="name" type="category" stroke="#8b949e" tick={{ fill: '#8b949e', fontSize: 11 }} axisLine={false} tickLine={false} width={130} />
                     <Tooltip 
                       content={({ active, payload, label }) => {
                         if (active && payload && payload.length) {
                           return (
-                            <div className="bg-slate-100 dark:bg-[#0d1117]/95 border border-gray-800 rounded-xl p-3 shadow-2xl backdrop-blur-md text-xs min-w-[160px]">
-                              <p className="text-white font-bold mb-1 border-b border-gray-800 pb-1">{label}</p>
-                              <div className="flex items-center justify-between text-gray-400 mt-1">
+                            <div className="bg-white dark:bg-[#0d1117]/95 border border-slate-200 dark:border-gray-800 rounded-xl p-3 shadow-2xl backdrop-blur-md text-xs min-w-[160px]">
+                              <p className="text-slate-900 dark:text-white font-bold mb-1 border-b border-slate-200 dark:border-gray-800 pb-1">{label}</p>
+                              <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mt-1">
                                 <span>Volume de leads:</span>
-                                <span className="font-mono font-bold text-blue-400">{payload[0].value} cards</span>
+                                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{payload[0].value} cards</span>
                               </div>
                             </div>
                           );
@@ -1389,15 +1393,15 @@ export default function CrmDashboardPage() {
             </div>
 
             {/* Gráfico 4 / Tabela: Desempenho e Velocidade da Equipe */}
-            <div className="bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+            <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                      <Users size={16} className="text-yellow-400" />
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Users size={16} className="text-amber-500 dark:text-yellow-400" />
                       Velocidade & Desempenho da Equipe
                     </h3>
-                    <p className="text-[11px] text-gray-400">Conversão e volume gerado por cada membro</p>
+                    <p className="text-[11px] text-slate-500 dark:text-gray-400">Conversão e volume gerado por cada membro</p>
                   </div>
                 </div>
 
@@ -1409,9 +1413,9 @@ export default function CrmDashboardPage() {
                     const userWinRate = userDeals.length > 0 ? Math.round((userWon / userDeals.length) * 100) : 60;
 
                     return (
-                      <div key={u.id} className="p-3 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl flex items-center justify-between hover:border-gray-700 transition-colors">
+                      <div key={u.id} className="p-3 bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl flex items-center justify-between hover:border-slate-300 dark:hover:border-gray-700 transition-colors shadow-xs">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center font-bold text-xs text-white">
+                          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gray-800 border border-slate-300 dark:border-gray-700 flex items-center justify-center font-bold text-xs text-slate-800 dark:text-white">
                             {u.name?.[0]?.toUpperCase() || "A"}
                           </div>
                           <div>
@@ -1455,12 +1459,12 @@ export default function CrmDashboardPage() {
       {/* ABA 2: RELATÓRIOS EM TABELA (301+ OPORTUNIDADES, BUSCA & EXPORTAÇÃO)       */}
       {/* ========================================================================= */}
       {activeTab === 'reports' && (
-        <div className="bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+        <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-2xl overflow-hidden shadow-sm flex flex-col">
           
           {/* BARRA SUPERIOR DA TABELA: BUSCA, CONTADOR E EXPORTAÇÃO */}
-          <div className="p-4 bg-white dark:bg-[#161b22] border-b border-gray-800 flex flex-wrap items-center justify-between gap-3">
+          <div className="p-4 bg-white dark:bg-[#161b22] border-b border-slate-200 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3">
             <div className="relative flex-1 min-w-[240px] max-w-md">
-              <Search size={14} className="absolute left-3 top-3 text-gray-500" />
+              <Search size={14} className="absolute left-3 top-3 text-slate-400 dark:text-gray-500" />
               <input
                 type="text"
                 value={reportSearch}
@@ -1469,13 +1473,13 @@ export default function CrmDashboardPage() {
                   setCurrentPage(1);
                 }}
                 placeholder="Buscar por contato, telefone, título ou vendedor..."
-                className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-600/60 transition-colors"
+                className="w-full bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none focus:border-blue-600/60 transition-colors"
               />
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-400 hidden sm:inline-block">
-                Mostrando <strong className="text-white">{filteredDeals.length}</strong> oportunidades
+              <span className="text-xs text-slate-500 dark:text-gray-400 hidden sm:inline-block">
+                Mostrando <strong className="text-slate-900 dark:text-white">{filteredDeals.length}</strong> oportunidades
               </span>
 
               <button
@@ -1492,7 +1496,7 @@ export default function CrmDashboardPage() {
           {/* TABELA ANALÍTICA DENSA */}
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-[#12161f] border-b border-gray-800 text-[11px] font-bold text-gray-400 uppercase tracking-wider select-none">
+              <thead className="bg-slate-100 dark:bg-[#12161f] border-b border-slate-200 dark:border-gray-800 text-[11px] font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider select-none">
                 <tr>
                   <th className="py-3 px-4">Contato / Lead</th>
                   <th className="py-3 px-4">Título da Oportunidade</th>
@@ -1505,10 +1509,10 @@ export default function CrmDashboardPage() {
                   <th className="py-3 px-4 text-right">Ação</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800/60">
+              <tbody className="divide-y divide-slate-100 dark:divide-gray-800/60">
                 {paginatedDeals.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="py-10 text-center text-gray-500 italic">
+                    <td colSpan={9} className="py-10 text-center text-slate-500 dark:text-gray-500 italic">
                       Nenhuma oportunidade encontrada com os filtros selecionados.
                     </td>
                   </tr>
@@ -1525,19 +1529,19 @@ export default function CrmDashboardPage() {
                       <tr
                         key={deal.id}
                         onClick={() => setSelectedDeal(deal)}
-                        className="hover:bg-[#1f2530] transition-colors cursor-pointer group"
+                        className="hover:bg-slate-50 dark:hover:bg-[#1f2530] transition-colors cursor-pointer group"
                       >
                         {/* 1. Contato */}
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center font-bold text-[10px] text-gray-200 shrink-0">
+                            <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-gray-800 border border-slate-300 dark:border-gray-700 flex items-center justify-center font-bold text-[10px] text-slate-700 dark:text-gray-200 shrink-0">
                               {deal.contact?.name?.[0]?.toUpperCase() || "?"}
                             </div>
                             <div className="flex flex-col min-w-0">
-                              <span className="font-bold text-white group-hover:text-primary transition-colors truncate max-w-[160px]">
+                              <span className="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-primary transition-colors truncate max-w-[160px]">
                                 {deal.contact?.name || "Contato não informado"}
                               </span>
-                              <span className="text-[10px] text-gray-400 flex items-center gap-1.5">
+                              <span className="text-[10px] text-slate-500 dark:text-gray-400 flex items-center gap-1.5">
                                 <MessageCircle size={11} className="text-[#25D366] shrink-0" /> {deal.contact?.phone || "-"}
                               </span>
                             </div>
@@ -1547,17 +1551,17 @@ export default function CrmDashboardPage() {
                         {/* 2. Título */}
                         <td className="py-3 px-4">
                           <div className="flex flex-col min-w-0 max-w-[200px]">
-                            <span className="font-semibold text-gray-200 truncate group-hover:underline underline-offset-2">
+                            <span className="font-semibold text-slate-800 dark:text-gray-200 truncate group-hover:underline underline-offset-2">
                               {deal.title || "Oportunidade Comercial"}
                             </span>
-                            <span className="text-[10px] font-mono text-gray-500">
+                            <span className="text-[10px] font-mono text-slate-400 dark:text-gray-500">
                               #{deal.id?.slice(0, 7)}
                             </span>
                           </div>
                         </td>
 
                         {/* 3. Funil */}
-                        <td className="py-3 px-4 text-gray-400 font-medium">
+                        <td className="py-3 px-4 text-slate-600 dark:text-gray-400 font-medium">
                           Funil Principal
                         </td>
 
@@ -1570,8 +1574,8 @@ export default function CrmDashboardPage() {
 
                         {/* 5. Responsável */}
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-1.5 text-gray-300">
-                            <UserIcon size={12} className="text-gray-500" />
+                          <div className="flex items-center gap-1.5 text-slate-700 dark:text-gray-300">
+                            <UserIcon size={12} className="text-slate-400 dark:text-gray-500" />
                             <span className="truncate max-w-[120px]">
                               {deal.assignedTo?.name || deal.assignee?.name || "Fila Geral"}
                             </span>
@@ -1580,7 +1584,7 @@ export default function CrmDashboardPage() {
 
                         {/* 6. Valor */}
                         <td className="py-3 px-4">
-                          <span className="font-mono font-bold text-emerald-400">
+                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
                             {formatCurrency(Number(deal.value || 0))}
                           </span>
                         </td>
@@ -1588,22 +1592,22 @@ export default function CrmDashboardPage() {
                         {/* 7. Status */}
                         <td className="py-3 px-4">
                           {isWon ? (
-                            <span className="flex items-center gap-1 text-emerald-400 font-bold text-[11px]">
+                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
                               <CheckCircle2 size={13} /> Ganho
                             </span>
                           ) : isLost ? (
-                            <span className="flex items-center gap-1 text-rose-400 font-bold text-[11px]">
+                            <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold text-[11px]">
                               <XCircle size={13} /> Perdido
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1 text-blue-400 font-medium text-[11px]">
+                            <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium text-[11px]">
                               <Clock size={13} /> Em Aberto
                             </span>
                           )}
                         </td>
 
                         {/* 8. Data Criação */}
-                        <td className="py-3 px-4 text-gray-400 font-mono text-[11px]">
+                        <td className="py-3 px-4 text-slate-500 dark:text-gray-400 font-mono text-[11px]">
                           {formatDate(deal.createdAt)}
                         </td>
 
@@ -1615,7 +1619,7 @@ export default function CrmDashboardPage() {
                               e.stopPropagation();
                               setSelectedDeal(deal);
                             }}
-                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#0d1117] border border-gray-800 hover:border-gray-600 text-gray-400 hover:text-white transition-colors"
+                            className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 hover:border-slate-400 dark:hover:border-gray-600 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                             title="Abrir DealModal"
                           >
                             <ArrowUpRight size={14} />
@@ -1630,9 +1634,9 @@ export default function CrmDashboardPage() {
           </div>
 
           {/* RODAPÉ DA TABELA: PAGINAÇÃO */}
-          <div className="p-4 bg-white dark:bg-[#161b22] border-t border-gray-800 flex items-center justify-between text-xs">
-            <span className="text-gray-400">
-              Página <strong className="text-white">{currentPage}</strong> de <strong className="text-white">{totalPages}</strong>
+          <div className="p-4 bg-white dark:bg-[#161b22] border-t border-slate-200 dark:border-gray-800 flex items-center justify-between text-xs">
+            <span className="text-slate-500 dark:text-gray-400">
+              Página <strong className="text-slate-900 dark:text-white">{currentPage}</strong> de <strong className="text-slate-900 dark:text-white">{totalPages}</strong>
             </span>
 
             <div className="flex items-center gap-2">
@@ -1640,7 +1644,7 @@ export default function CrmDashboardPage() {
                 type="button"
                 disabled={currentPage <= 1}
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                className="px-3 py-1.5 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 hover:border-gray-600 rounded-lg text-gray-300 disabled:opacity-40 transition-colors"
+                className="px-3 py-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 hover:border-slate-400 dark:hover:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 disabled:opacity-40 transition-colors"
               >
                 Anterior
               </button>
@@ -1648,7 +1652,7 @@ export default function CrmDashboardPage() {
                 type="button"
                 disabled={currentPage >= totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                className="px-3 py-1.5 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 hover:border-gray-600 rounded-lg text-gray-300 disabled:opacity-40 transition-colors"
+                className="px-3 py-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 hover:border-slate-400 dark:hover:border-gray-600 rounded-lg text-slate-700 dark:text-gray-300 disabled:opacity-40 transition-colors"
               >
                 Próxima
               </button>

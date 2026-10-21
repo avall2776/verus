@@ -32,6 +32,11 @@ export class UsersController {
         avatarUrl: true,
         isOnline: true,
         createdAt: true,
+        departments: {
+          include: {
+            department: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -238,7 +243,7 @@ export class UsersController {
   async update(
     @Request() req,
     @Param('id') id: string,
-    @Body() body: { name?: string; role?: string; isActive?: boolean; password?: string; avatarUrl?: string; permissions?: any; canAccessMarketing?: boolean }
+    @Body() body: { name?: string; role?: string; isActive?: boolean; password?: string; avatarUrl?: string; permissions?: any; canAccessMarketing?: boolean; departmentIds?: string[] }
   ) {
     const tenantId = req.user?.tenantId;
     const currentUserId = req.user?.id || req.user?.userId;
@@ -313,6 +318,28 @@ export class UsersController {
       updateData.avatarUrl = body.avatarUrl;
     }
 
+    // Atualização de Departamentos / Setores
+    if (body.departmentIds !== undefined && Array.isArray(body.departmentIds)) {
+      const validDepts = await this.prisma.department.findMany({
+        where: {
+          id: { in: body.departmentIds },
+          tenantId,
+        },
+        select: { id: true },
+      });
+      const validDeptIds = validDepts.map(d => d.id);
+
+      await this.prisma.userDepartment.deleteMany({
+        where: { userId: id },
+      });
+
+      if (validDeptIds.length > 0) {
+        await this.prisma.userDepartment.createMany({
+          data: validDeptIds.map(dId => ({ userId: id, departmentId: dId })),
+        });
+      }
+    }
+
     const updatedUser = await this.prisma.user.update({
       where: { id },
       data: updateData,
@@ -327,6 +354,11 @@ export class UsersController {
         avatarUrl: true,
         isOnline: true,
         tenantId: true,
+        departments: {
+          include: {
+            department: true,
+          },
+        },
       },
     });
 
@@ -339,7 +371,7 @@ export class UsersController {
   @Post()
   async create(
     @Request() req,
-    @Body() body: { name: string; email: string; password?: string; role?: string; permissions?: any; canAccessMarketing?: boolean }
+    @Body() body: { name: string; email: string; password?: string; role?: string; permissions?: any; canAccessMarketing?: boolean; departmentIds?: string[] }
   ) {
     const tenantId = req.user?.tenantId;
     if (!tenantId) throw new BadRequestException('Tenant não identificado.');
@@ -402,6 +434,26 @@ export class UsersController {
         isActive: true,
         tenantId,
       },
+    });
+
+    // Vinculação de Departamentos na criação
+    if (body.departmentIds && Array.isArray(body.departmentIds) && body.departmentIds.length > 0) {
+      const validDepts = await this.prisma.department.findMany({
+        where: {
+          id: { in: body.departmentIds },
+          tenantId,
+        },
+        select: { id: true },
+      });
+      if (validDepts.length > 0) {
+        await this.prisma.userDepartment.createMany({
+          data: validDepts.map(d => ({ userId: newUser.id, departmentId: d.id })),
+        });
+      }
+    }
+
+    const completeUser = await this.prisma.user.findUnique({
+      where: { id: newUser.id },
       select: {
         id: true,
         name: true,
@@ -412,6 +464,11 @@ export class UsersController {
         permissions: true,
         avatarUrl: true,
         isOnline: true,
+        departments: {
+          include: {
+            department: true,
+          },
+        },
       },
     });
 
@@ -437,7 +494,7 @@ export class UsersController {
       message: emailSent
         ? 'Membro cadastrado com sucesso! E-mail de convite enviado via SMTP.'
         : 'Membro cadastrado com sucesso! (Configure o Inbox de E-mails para envio automático de convites).',
-      user: newUser,
+      user: completeUser || newUser,
       emailSent,
       emailError,
     };
