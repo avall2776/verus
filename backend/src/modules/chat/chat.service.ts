@@ -262,10 +262,15 @@ export class ChatService {
   }
 
   async getConversationMessages(tenantId: string, conversationId: string) {
-    return this.prisma.message.findMany({
-      where: { tenantId, conversationId },
-      orderBy: { createdAt: 'asc' }
-    });
+    try {
+      return await this.prisma.message.findMany({
+        where: { tenantId, conversationId },
+        orderBy: { createdAt: 'asc' }
+      });
+    } catch (err: any) {
+      this.logger.error(`Erro ao buscar mensagens da conversa ${conversationId}: ${err?.message}`);
+      return [];
+    }
   }
 
   async getConversationByContact(tenantId: string, contactId: string) {
@@ -713,43 +718,51 @@ export class ChatService {
    * Retorna todas as mensagens atualmente agendadas e pendentes de envio de uma conversa
    */
   async getScheduledMessages(tenantId: string, conversationId: string) {
-    return this.prisma.message.findMany({
-      where: {
-        tenantId,
-        conversationId,
-        status: 'scheduled',
-      },
-      orderBy: { scheduledAt: 'asc' }
-    });
+    try {
+      return await this.prisma.message.findMany({
+        where: {
+          tenantId,
+          conversationId,
+          status: 'scheduled',
+        },
+        orderBy: { scheduledAt: 'asc' }
+      });
+    } catch (err: any) {
+      return [];
+    }
   }
 
   /**
    * Retorna todas as mensagens agendadas e pendentes de todo o Tenant (Central Global)
    */
   async getAllScheduledMessages(tenantId: string) {
-    return this.prisma.message.findMany({
-      where: {
-        tenantId,
-        status: 'scheduled',
-      },
-      include: {
-        contact: {
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            avatarUrl: true,
+    try {
+      return await this.prisma.message.findMany({
+        where: {
+          tenantId,
+          status: 'scheduled',
+        },
+        include: {
+          contact: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              avatarUrl: true,
+            }
+          },
+          conversation: {
+            select: {
+              id: true,
+              status: true,
+            }
           }
         },
-        conversation: {
-          select: {
-            id: true,
-            status: true,
-          }
-        }
-      },
-      orderBy: { scheduledAt: 'asc' }
-    });
+        orderBy: { scheduledAt: 'asc' }
+      });
+    } catch (err: any) {
+      return [];
+    }
   }
 
   /**

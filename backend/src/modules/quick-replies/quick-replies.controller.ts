@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 
 @UseGuards(JwtAuthGuard)
-@Controller('quick-replies')
+@Controller(['quick-replies', 'quick_replies'])
 export class QuickRepliesController {
   constructor(private readonly quickRepliesService: QuickRepliesService) {}
 

@@ -3,6 +3,20 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../shared/database/prisma.service';
 
+interface CachedUserSession {
+  result: any;
+  expiresAt: number;
+}
+const userCache = new Map<string, CachedUserSession>();
+
+// Limpeza periódica da memória a cada 5 minutos
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of userCache.entries()) {
+    if (now > val.expiresAt) userCache.delete(key);
+  }
+}, 5 * 60 * 1000);
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly prisma: PrismaService) {
@@ -24,6 +38,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         code: 'INVALID_TOKEN',
         message: 'Token inválido: identificador de usuário ausente.',
       });
+    }
+
+    // Cache em memória de alta performance (TTL 30s) para evitar sobrecarga no banco em requisições simultâneas
+    const cached = userCache.get(userId);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.result;
     }
 
     // Consulta em tempo real no banco de dados para garantir governança instantânea
@@ -115,7 +135,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       }
     }
 
-    return {
+    const result = {
       id: user.id,
       userId: user.id,
       name: user.name,
@@ -126,5 +146,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       tenant: user.tenant,
       plan: user.tenant?.plan || null,
     };
+
+    userCache.set(userId, { result, expiresAt: Date.now() + 30000 });
+    return result;
   }
 }
