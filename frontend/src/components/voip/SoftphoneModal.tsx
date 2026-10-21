@@ -367,10 +367,10 @@ export default function SoftphoneModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-[#0B1224] border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+      <div className="w-full max-w-md bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
         
         {/* HEADER DO SOFTPHONE */}
-        <div className="p-3.5 bg-[#070D1B] border-b border-slate-800 flex items-center justify-between">
+        <div className="p-3.5 bg-slate-50 dark:bg-[#070D1B] border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
               <PhoneCall size={16} />
@@ -400,7 +400,7 @@ export default function SoftphoneModal({
         </div>
 
         {/* NAVEGAÇÃO DE ABAS DO SOFTPHONE */}
-        <div className="flex items-center border-b border-slate-800 bg-[#091020] p-1 gap-1">
+        <div className="flex items-center border-b border-slate-800 bg-slate-100 dark:bg-[#091020] p-1 gap-1">
           <button
             onClick={() => setActiveTab("dialer")}
             className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
@@ -442,11 +442,11 @@ export default function SoftphoneModal({
             ABA 1: DISCADOR (DIALPAD & TELA DE CHAMADA ATIVA)
             ========================================================================= */}
         {activeTab === "dialer" && (
-          <div className="p-4 flex flex-col gap-4 bg-[#070D1B]">
+          <div className="p-4 flex flex-col gap-4 bg-slate-50 dark:bg-[#070D1B]">
             
             {/* TELA DE CHAMADA EM ANDAMENTO */}
             {activeCall ? (
-              <div className="p-4 rounded-2xl bg-[#0B1224] border border-slate-800 flex flex-col items-center justify-center text-center space-y-3 shadow-inner">
+              <div className="p-4 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 flex flex-col items-center justify-center text-center space-y-3 shadow-inner">
                 {/* Status Indicator */}
                 <div className="flex items-center gap-2">
                   <span className={`w-2.5 h-2.5 rounded-full ${
@@ -538,7 +538,7 @@ export default function SoftphoneModal({
                       value={transferNumber}
                       onChange={(e) => setTransferNumber(e.target.value)}
                       placeholder="Ramal ou número destino..."
-                      className="flex-1 bg-[#070D1B] border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 outline-none"
+                      className="flex-1 bg-slate-50 dark:bg-[#070D1B] border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 outline-none"
                     />
                     <button
                       onClick={handleTransfer}
@@ -562,7 +562,7 @@ export default function SoftphoneModal({
               </div>
             ) : (
               /* CAMPO DE DIGITAÇÃO DO NÚMERO */
-              <div className="p-3 bg-[#0B1224] border border-slate-800 rounded-xl flex items-center justify-between gap-2">
+              <div className="p-3 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-xl flex items-center justify-between gap-2">
                 <input
                   type="text"
                   value={destinationNumber}
@@ -591,7 +591,7 @@ export default function SoftphoneModal({
                   <button
                     key={btn.digit}
                     onClick={() => handleKeyPress(btn.digit)}
-                    className="h-13 rounded-xl bg-[#0B1224] hover:bg-[#0E172E] active:bg-blue-600/20 border border-slate-800 hover:border-slate-700 flex flex-col items-center justify-center transition-all cursor-pointer group shadow-sm"
+                    className="h-13 rounded-xl bg-white dark:bg-[#0B1224] hover:bg-[#0E172E] active:bg-blue-600/20 border border-slate-800 hover:border-slate-700 flex flex-col items-center justify-center transition-all cursor-pointer group shadow-sm"
                   >
                     <span className="text-lg font-black text-white group-hover:text-blue-400 transition-colors">
                       {btn.digit}
@@ -626,7 +626,7 @@ export default function SoftphoneModal({
             ABA 2: HISTÓRICO CDR (BILHETAGEM & LIGAÇÕES)
             ========================================================================= */}
         {activeTab === "history" && (
-          <div className="p-4 flex flex-col gap-3 max-h-[380px] overflow-y-auto bg-[#070D1B]">
+          <div className="p-4 flex flex-col gap-3 max-h-[380px] overflow-y-auto bg-slate-50 dark:bg-[#070D1B]">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span>Últimos Registros (CDR)</span>
               <button
@@ -645,7 +645,7 @@ export default function SoftphoneModal({
               callHistory.map((cdr) => (
                 <div
                   key={cdr.id}
-                  className="p-3 rounded-xl bg-[#0B1224] border border-slate-800 flex items-center justify-between gap-3 text-xs"
+                  className="p-3 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 flex items-center justify-between gap-3 text-xs"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
@@ -692,7 +692,7 @@ export default function SoftphoneModal({
             ABA 3: TRONCO SIP & CONFIGURAÇÃO
             ========================================================================= */}
         {activeTab === "config" && (
-          <form onSubmit={handleSaveConfig} className="p-4 flex flex-col gap-3 bg-[#070D1B] max-h-[420px] overflow-y-auto">
+          <form onSubmit={handleSaveConfig} className="p-4 flex flex-col gap-3 bg-slate-50 dark:bg-[#070D1B] max-h-[420px] overflow-y-auto">
             <div className="flex items-center justify-between pb-1">
               <span className="text-xs font-bold text-white">Parâmetros de Tronco SIP</span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
@@ -708,7 +708,7 @@ export default function SoftphoneModal({
                   value={sipConfig.providerName}
                   onChange={(e) => setSipConfig({ ...sipConfig, providerName: e.target.value })}
                   placeholder="Ex: Direct Call Telecom, FreeSWITCH, Asterisk"
-                  className="w-full bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500"
+                  className="w-full bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -719,7 +719,7 @@ export default function SoftphoneModal({
                     type="text"
                     value={sipConfig.sipHost}
                     onChange={(e) => setSipConfig({ ...sipConfig, sipHost: e.target.value })}
-                    className="w-full bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="w-full bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
@@ -728,7 +728,7 @@ export default function SoftphoneModal({
                     type="number"
                     value={sipConfig.sipPort}
                     onChange={(e) => setSipConfig({ ...sipConfig, sipPort: Number(e.target.value) })}
-                    className="w-full bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="w-full bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -740,7 +740,7 @@ export default function SoftphoneModal({
                     type="text"
                     value={sipConfig.sipUsername}
                     onChange={(e) => setSipConfig({ ...sipConfig, sipUsername: e.target.value })}
-                    className="w-full bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="w-full bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
@@ -749,7 +749,7 @@ export default function SoftphoneModal({
                     type="password"
                     value={sipConfig.sipPassword || ""}
                     onChange={(e) => setSipConfig({ ...sipConfig, sipPassword: e.target.value })}
-                    className="w-full bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="w-full bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -761,7 +761,7 @@ export default function SoftphoneModal({
                   value={sipConfig.webrtcWssUrl}
                   onChange={(e) => setSipConfig({ ...sipConfig, webrtcWssUrl: e.target.value })}
                   placeholder="wss://187.127.10.166:7443"
-                  className="w-full bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500 font-mono text-[11px]"
+                  className="w-full bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500 font-mono text-[11px]"
                 />
               </div>
 
@@ -771,7 +771,7 @@ export default function SoftphoneModal({
                   type="button"
                   onClick={handleTestConnection}
                   disabled={testingConnection}
-                  className="w-full py-2 bg-[#0B1224] hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  className="w-full py-2 bg-white dark:bg-[#0B1224] hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors"
                 >
                   <Server size={14} className={testingConnection ? "animate-spin text-blue-400" : ""} />
                   <span>{testingConnection ? "Testando Socket PABX..." : "Testar Conectividade com PABX"}</span>
@@ -780,7 +780,7 @@ export default function SoftphoneModal({
 
               {/* Resultado do Teste */}
               {connectionStatus && (
-                <div className="p-2.5 rounded-lg bg-[#0B1224] border border-slate-800 text-[11px] font-mono space-y-1">
+                <div className="p-2.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-800 text-[11px] font-mono space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400">Status:</span>
                     <span className={connectionStatus.success ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"}>

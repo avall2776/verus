@@ -2,15 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --background: #F8FAFC;
+  --panel: #FFFFFF;
+  --panel-secondary: #F1F5F9;
+  --card: #FFFFFF;
+  --card-hover: #F8FAFC;
+  --border-main: #E2E8F0;
+  --border-subtle: #F1F5F9;
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  --input-bg: #FFFFFF;
+  --header-bg: rgba(255, 255, 255, 0.88);
+  --sidebar-bg: #FFFFFF;
+  --sidebar-subtle: #F8FAFC;
+  --scrollbar-thumb: rgba(15, 23, 42, 0.15);
+  --scrollbar-hover: rgba(0, 85, 255, 0.35);
+  color-scheme: light;
+}
+
+html.dark {
+  --background: #050814;
+  --panel: #0B1224;
+  --panel-secondary: #161b22;
+  --card: #0B1224;
+  --card-hover: #161f36;
+  --border-main: #1e293b;
+  --border-subtle: #0f172a;
+  --text-primary: #FFFFFF;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --input-bg: #070D1B;
+  --header-bg: rgba(11, 18, 36, 0.85);
+  --sidebar-bg: #0B1224;
+  --sidebar-subtle: #070D1B;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --scrollbar-hover: rgba(0, 210, 255, 0.4);
+  color-scheme: dark;
+}
+
 body {
-  background-color: theme('colors.background');
-  color: theme('colors.text-primary');
+  background-color: var(--background);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Scrollbar Global Estilizada para todo o Sistema */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -23,21 +64,161 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--scrollbar-thumb);
   border-radius: 10px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 210, 255, 0.4); /* Cor do Accent no hover */
+  background-color: var(--scrollbar-hover);
 }
 
-/* Mantendo a classe antiga por compatibilidade, caso algo ainda a use explicitamente */
+/* Mantendo a classe antiga por compatibilidade */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--scrollbar-thumb);
   border-radius: 10px;
+}
+
+/* ==========================================================================
+   TEMA CLARO CORPORATIVO (LIGHT MODE ADAPTIVE STYLES)
+   Substituição sóbria de elementos escuros fixos quando html não possui .dark
+   ========================================================================== */
+html:not(.dark) {
+  /* Fundo principal e painéis corporativos */
+  .bg-\[\#0B1224\],
+  .bg-\[\#0b1224\] {
+    background-color: #FFFFFF !important;
+  }
+
+  .bg-\[\#0B1224\]\/80,
+  .bg-\[\#0B1224\]\/90,
+  .bg-\[\#0B1224\]\/95 {
+    background-color: rgba(255, 255, 255, 0.88) !important;
+  }
+
+  .bg-\[\#050814\],
+  .bg-\[\#070D1B\],
+  .bg-\[\#0d1117\] {
+    background-color: #F8FAFC !important;
+  }
+
+  .bg-\[\#161b22\],
+  .bg-\[\#1c2128\],
+  .bg-\[\#1c1d22\],
+  .bg-\[\#25262c\] {
+    background-color: #FFFFFF !important;
+  }
+
+  /* Bordas suaves e harmônicas */
+  .border-slate-800,
+  .border-gray-800,
+  .border-slate-800\/80,
+  .border-slate-800\/60,
+  .border-slate-800\/40,
+  .border-slate-800\/50,
+  .border-gray-800\/50,
+  .border-gray-800\/80,
+  .border-gray-700,
+  .border-slate-700 {
+    border-color: #E2E8F0 !important;
+  }
+
+  .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
+  .divide-gray-800 > :not([hidden]) ~ :not([hidden]),
+  .divide-gray-800\/50 > :not([hidden]) ~ :not([hidden]) {
+    border-color: #E2E8F0 !important;
+  }
+
+  /* Textos gerais para alto contraste e legibilidade corporativa */
+  h1:not([class*="text-blue-"]):not([class*="text-emerald-"]):not([class*="text-rose-"]):not([class*="text-amber-"]):not([class*="text-cyan-"]),
+  h2:not([class*="text-blue-"]):not([class*="text-emerald-"]):not([class*="text-rose-"]):not([class*="text-amber-"]):not([class*="text-cyan-"]),
+  h3:not([class*="text-blue-"]):not([class*="text-emerald-"]):not([class*="text-rose-"]):not([class*="text-amber-"]):not([class*="text-cyan-"]),
+  h4:not([class*="text-blue-"]):not([class*="text-emerald-"]):not([class*="text-rose-"]):not([class*="text-amber-"]):not([class*="text-cyan-"]) {
+    color: #0F172A;
+  }
+
+  /* Inputs, selects e textareas no tema claro */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    color: #0F172A !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #94A3B8 !important;
+  }
+
+  /* Cards do Kanban e Tabelas do CRM no Tema Claro */
+  .group.relative.flex.flex-col.rounded-xl.border.bg-\[\#161b22\] {
+    background-color: #FFFFFF !important;
+    border-color: #E2E8F0 !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .group.relative.flex.flex-col.rounded-xl.border.bg-\[\#161b22\]:hover {
+    border-color: #CBD5E1 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  /* Cabeçalhos de tabelas no tema claro */
+  thead {
+    background-color: #F1F5F9 !important;
+    color: #334155 !important;
+  }
+
+  thead th {
+    background-color: #F1F5F9 !important;
+    color: #334155 !important;
+    border-color: #E2E8F0 !important;
+  }
+
+  tbody tr:hover {
+    background-color: #F8FAFC !important;
+  }
+
+  /* Modais no tema claro */
+  .bg-\[\#0B1224\].border.border-slate-800,
+  .bg-\[\#0B1224\].border.border-slate-700 {
+    background-color: #FFFFFF !important;
+    border-color: #E2E8F0 !important;
+    color: #0F172A !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Proteção mandatória para botões cheios / badges coloridos */
+  .bg-blue-600,
+  .bg-blue-500,
+  .bg-primary,
+  .bg-emerald-600,
+  .bg-emerald-500,
+  .bg-green-600,
+  .bg-green-500,
+  .bg-rose-600,
+  .bg-rose-500,
+  .bg-red-600,
+  .bg-amber-600,
+  .bg-amber-500 {
+    color: #FFFFFF !important;
+  }
+
+  .bg-blue-600 *,
+  .bg-blue-500 *,
+  .bg-primary *,
+  .bg-emerald-600 *,
+  .bg-green-600 *,
+  .bg-rose-600 *,
+  .bg-red-600 * {
+    color: #FFFFFF !important;
+  }
+
+  /* Popovers e Dropdowns */
+  .shadow-2xl {
+    box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
+  }
 }
 
 /* ==========================================================================

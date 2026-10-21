@@ -546,13 +546,13 @@ export default function ChatInternoPage() {
   const isAdmin = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
 
   return (
-    <div className="flex h-full w-full bg-[#0B1224] overflow-hidden text-slate-100">
+    <div className="flex h-full w-full bg-slate-100 dark:bg-[#0B1224] overflow-hidden text-slate-900 dark:text-slate-100">
       
       {/* 1. BARRA LATERAL (LISTAGEM DE DIÁLOGOS PADRÃO VERSUS - 340px) */}
-      <div className={`w-full md:w-[340px] flex-shrink-0 bg-[#0F172A] border-r border-slate-800 flex-col overflow-hidden z-10 ${activeChatId ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`w-full md:w-[340px] flex-shrink-0 bg-white dark:bg-[#0F172A] border-r border-slate-200 dark:border-slate-800 flex-col overflow-hidden z-10 ${activeChatId ? 'hidden md:flex' : 'flex'}`}>
         
         {/* Topo: Título + Badge Online + Botão Novo Chat (+) */}
-        <div className="p-4 border-b border-slate-800/80 flex items-center justify-between gap-2">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <h1 className="text-base font-bold text-white tracking-tight">Chat Interno</h1>
             <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-full shadow-sm">
@@ -573,13 +573,13 @@ export default function ChatInternoPage() {
 
         {/* 1.1 ESTRUTURA DE ABAS SUPERIORES ([Colaboradores] | [Equipes]) */}
         <div className="px-4 pt-3 pb-1">
-          <div className="flex bg-[#1E293B] p-1 rounded-xl border border-slate-800">
+          <div className="flex bg-slate-100 dark:bg-[#1E293B] p-1 rounded-xl border border-slate-200 dark:border-slate-800">
             <button
               onClick={() => setActiveTab('users')}
               className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'users'
-                  ? 'bg-[#0B1224] text-white shadow-sm border border-slate-700/60'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700/60'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               <UserIcon size={14} />
@@ -599,8 +599,8 @@ export default function ChatInternoPage() {
               onClick={() => setActiveTab('channels')}
               className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'channels'
-                  ? 'bg-[#0B1224] text-white shadow-sm border border-slate-700/60'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700/60'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               <Hash size={14} />
@@ -619,7 +619,7 @@ export default function ChatInternoPage() {
         </div>
 
         {/* 1.2 BARRA DE FILTROS E BUSCA */}
-        <div className="p-4 pt-2 space-y-2.5 border-b border-slate-800/80">
+        <div className="p-4 pt-2 space-y-2.5 border-b border-slate-200 dark:border-slate-800/80">
           {/* Input de Busca Reativo */}
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -633,13 +633,13 @@ export default function ChatInternoPage() {
                   setSearchQuery('');
                 }
               }}
-              className="w-full bg-[#1E293B] border border-slate-700/60 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder:text-slate-500 outline-none focus:border-blue-500 focus:bg-[#0B1224] transition-all"
+              className="w-full bg-slate-100 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700/60 rounded-xl pl-9 pr-8 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-[#0B1224] transition-all"
             />
             {searchQuery && (
               <button 
                 onClick={() => setSearchQuery('')}
                 title="Limpar busca (Esc)"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white p-1 transition-colors cursor-pointer"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 transition-colors cursor-pointer"
               >
                 <X size={13} />
               </button>
@@ -654,14 +654,14 @@ export default function ChatInternoPage() {
                 <select
                   value={selectedDepartment}
                   onChange={(e) => setSelectedDepartment(e.target.value)}
-                  className="w-full appearance-none bg-[#1E293B] border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-300 font-medium outline-none focus:border-blue-500 cursor-pointer"
+                  className="w-full appearance-none bg-slate-100 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700/60 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 font-medium outline-none focus:border-blue-500 cursor-pointer"
                 >
                   <option value="all">Todos os setores</option>
                   {departments.map(d => (
                     <option key={d.id} value={d.name}>{d.name}</option>
                   ))}
                 </select>
-                <Filter size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                <Filter size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
 
               {/* Botão de Toggle [Online] */}
@@ -670,7 +670,7 @@ export default function ChatInternoPage() {
                 className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer border ${
                   onlyOnline
                     ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm'
-                    : 'bg-[#1E293B] border-slate-700/60 text-slate-400 hover:text-slate-200'
+                    : 'bg-slate-100 dark:bg-[#1E293B] border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
                 title="Filtrar colaboradores conectados"
               >
@@ -743,8 +743,8 @@ export default function ChatInternoPage() {
                     onClick={() => loadMessages(u.id, 'user')}
                     className={`p-3 rounded-xl cursor-pointer transition-all flex items-start gap-3 relative group border ${
                       isSelected
-                        ? 'bg-[#1E293B] border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]'
-                        : 'border-transparent hover:bg-slate-800/50 hover:border-slate-800'
+                        ? 'bg-blue-50/80 dark:bg-[#1E293B] border-blue-500/50 shadow-sm'
+                        : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:border-slate-200 dark:hover:border-slate-800'
                     }`}
                   >
                     {/* Avatar com Dot de Status Online/Offline */}
@@ -753,7 +753,7 @@ export default function ChatInternoPage() {
                         {u.name?.substring(0, 2).toUpperCase() || 'CO'}
                       </div>
                       <span 
-                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0F172A] ${
+                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-[#0F172A] ${
                           u.isOnline ? 'bg-emerald-500 ring-2 ring-emerald-500/20' : 'bg-slate-500'
                         }`} 
                         title={u.isOnline ? "Online" : "Offline"}
@@ -874,8 +874,8 @@ export default function ChatInternoPage() {
                     onClick={() => loadMessages(c.id, 'channel')}
                     className={`p-3 rounded-xl cursor-pointer transition-all flex items-start gap-3 relative group border ${
                       isSelected
-                        ? 'bg-[#1E293B] border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]'
-                        : 'border-transparent hover:bg-slate-800/50 hover:border-slate-800'
+                        ? 'bg-blue-50/80 dark:bg-[#1E293B] border-blue-500/50 shadow-sm'
+                        : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:border-slate-200 dark:hover:border-slate-800'
                     }`}
                   >
                     {/* Ícone de Canal */}
@@ -926,10 +926,10 @@ export default function ChatInternoPage() {
 
       {/* 2. PAINEL CENTRAL: CHAT & DIÁLOGO */}
       {activeChatId ? (
-        <div className="flex-1 flex flex-col bg-[#0B1224] overflow-hidden relative">
+        <div className="flex-1 flex flex-col bg-slate-50 dark:bg-[#0B1224] overflow-hidden relative">
           
           {/* Header do Chat Ativo */}
-          <div className="h-16 px-4 md:px-6 border-b border-slate-800 bg-[#0F172A] flex items-center justify-between shrink-0 shadow-sm z-20">
+          <div className="h-16 px-4 md:px-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] flex items-center justify-between shrink-0 shadow-sm z-20">
             <div className="flex items-center gap-3.5 min-w-0">
               {/* Botão Voltar no Mobile */}
               <button
@@ -947,7 +947,7 @@ export default function ChatInternoPage() {
                       {activeUser.name?.substring(0, 2).toUpperCase() || 'CO'}
                     </div>
                     <span 
-                      className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0F172A] ${
+                      className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-[#0F172A] ${
                         activeUser.isOnline ? 'bg-emerald-500 ring-2 ring-emerald-500/20' : 'bg-slate-500'
                       }`} 
                     />
@@ -1017,7 +1017,7 @@ export default function ChatInternoPage() {
                 {showChatMenu && (
                   <div 
                     onClick={(e) => e.stopPropagation()}
-                    className="absolute right-0 mt-2 w-56 bg-[#0F172A] border border-slate-700/80 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150"
+                    className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150"
                   >
                     <div className="px-3 py-1.5 border-b border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       Gerenciar Conversa
@@ -1125,7 +1125,7 @@ export default function ChatInternoPage() {
                           className={`px-4 py-2.5 text-sm relative break-words leading-relaxed shadow-sm ${
                             fromMe 
                               ? 'bg-blue-600 text-white rounded-2xl rounded-tr-xs shadow-[0_2px_10px_rgba(37,99,235,0.2)]' 
-                              : 'bg-[#1E293B] border border-slate-700/60 text-slate-100 rounded-2xl rounded-tl-xs'
+                              : 'bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-100 rounded-2xl rounded-tl-xs shadow-sm'
                           }`}
                         >
                           <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -1145,11 +1145,11 @@ export default function ChatInternoPage() {
           </div>
 
           {/* Composer / Campo de Digitação */}
-          <div className="p-3 md:p-4 border-t border-slate-800 bg-[#0F172A] shrink-0">
-            <div className="bg-[#1E293B] border border-slate-700/80 rounded-2xl p-2 flex items-end gap-2 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all shadow-sm">
+          <div className="p-3 md:p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] shrink-0">
+            <div className="bg-slate-100 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700/80 rounded-2xl p-2 flex items-end gap-2 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all shadow-sm">
               <button 
                 type="button"
-                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-xl transition-colors shrink-0"
+                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl transition-colors shrink-0"
                 title="Anexar arquivo"
               >
                 <Paperclip size={18} />
@@ -1171,12 +1171,12 @@ export default function ChatInternoPage() {
                     ? `Enviar mensagem para ${activeUser?.name || 'colega'}...` 
                     : `Conversar no canal #${activeChannel?.name || 'equipe'}...`
                 }
-                className="flex-1 bg-transparent text-sm text-white placeholder:text-slate-500 outline-none resize-none py-2 max-h-32 custom-scrollbar leading-relaxed"
+                className="flex-1 bg-transparent text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none resize-none py-2 max-h-32 custom-scrollbar leading-relaxed"
               />
 
               <button 
                 type="button"
-                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-xl transition-colors shrink-0"
+                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl transition-colors shrink-0"
                 title="Emojis"
               >
                 <Smile size={18} />
@@ -1198,8 +1198,8 @@ export default function ChatInternoPage() {
         </div>
       ) : (
         /* Estado Vazio Quando Nenhuma Conversa Está Selecionada */
-        <div className="flex-1 hidden md:flex flex-col items-center justify-center text-slate-500 bg-[#0B1224] p-8">
-          <div className="w-16 h-16 rounded-2xl bg-[#0F172A] border border-slate-800 flex items-center justify-center text-blue-500 shadow-xl mb-4">
+        <div className="flex-1 hidden md:flex flex-col items-center justify-center text-slate-500 bg-slate-100 dark:bg-[#0B1224] p-8">
+          <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-blue-600 dark:text-blue-500 shadow-xl mb-4">
             <MessageSquare size={32} />
           </div>
           <h2 className="text-lg font-bold text-white mb-1.5">Comunicação Interna da Equipe</h2>
@@ -1214,7 +1214,7 @@ export default function ChatInternoPage() {
                   loadMessages(filteredUsers[0].id, 'user');
                 }
               }}
-              className="px-4 py-2 bg-[#1E293B] hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-2"
+              className="px-4 py-2 bg-white hover:bg-slate-50 dark:bg-[#1E293B] dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-2"
             >
               <Users size={14} className="text-blue-400" />
               <span>Ver Colaboradores</span>
@@ -1236,7 +1236,7 @@ export default function ChatInternoPage() {
       {/* MODAL 1: EXCLUSÃO DE MENSAGEM INDIVIDUAL */}
       {messageToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="bg-[#0F172A] border border-slate-700/80 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
             <div className="p-5">
               <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mb-3">
                 <Trash2 size={20} />
@@ -1246,7 +1246,7 @@ export default function ChatInternoPage() {
                 Esta ação removerá a mensagem definitivamente para todos os colaboradores da conversa.
               </p>
               
-              <div className="p-3 bg-[#1E293B] rounded-xl border border-slate-800 mb-4 text-xs text-slate-300 italic line-clamp-3">
+              <div className="p-3 bg-slate-50 dark:bg-[#1E293B] rounded-xl border border-slate-200 dark:border-slate-800 mb-4 text-xs text-slate-300 italic line-clamp-3">
                 "{messageToDelete.content}"
               </div>
 
@@ -1276,7 +1276,7 @@ export default function ChatInternoPage() {
       {/* MODAL 2: LIMPAR HISTÓRICO DE CONVERSA */}
       {showClearHistoryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="bg-[#0F172A] border border-slate-700/80 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
             <div className="p-5">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-3">
                 <AlertTriangle size={20} />
@@ -1314,7 +1314,7 @@ export default function ChatInternoPage() {
       {/* MODAL 3: EXCLUSÃO DE CANAL DE EQUIPE */}
       {channelToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="bg-[#0F172A] border border-slate-700/80 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
             <div className="p-5">
               <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mb-3">
                 <Trash2 size={20} />
@@ -1352,9 +1352,9 @@ export default function ChatInternoPage() {
       {/* MODAL 4: NOVA CONVERSA / NOVO CANAL */}
       {showNewChatModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-[#0F172A] border border-slate-700/80 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Header Modal */}
-            <div className="px-6 py-4 border-b border-slate-800 bg-[#162038]/50 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#162038]/50 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
                   {activeTab === 'users' ? <UserIcon size={16} /> : <Hash size={16} />}
@@ -1387,7 +1387,7 @@ export default function ChatInternoPage() {
                           setShowNewChatModal(false);
                           loadMessages(u.id, 'user');
                         }}
-                        className="p-2.5 rounded-xl bg-[#1E293B]/70 hover:bg-[#1E293B] border border-slate-800 hover:border-blue-500/50 flex items-center justify-between transition-all cursor-pointer group"
+                        className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#1E293B]/70 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 flex items-center justify-between transition-all cursor-pointer group"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-white">
@@ -1417,7 +1417,7 @@ export default function ChatInternoPage() {
                         placeholder="ex: comercial-vendas, avisos-gerais"
                         value={newChannelName}
                         onChange={(e) => setNewChannelName(e.target.value)}
-                        className="w-full bg-[#1E293B] border border-slate-700 rounded-xl pl-8 pr-3 py-2 text-xs text-white outline-none focus:border-blue-500 transition-colors"
+                        className="w-full bg-slate-100 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white pl-8 pr-3 py-2 text-xs text-white outline-none focus:border-blue-500 transition-colors"
                       />
                     </div>
                   </div>
@@ -1429,11 +1429,11 @@ export default function ChatInternoPage() {
                       placeholder="Qual é o propósito deste canal?"
                       value={newChannelDesc}
                       onChange={(e) => setNewChannelDesc(e.target.value)}
-                      className="w-full bg-[#1E293B] border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-blue-500 transition-colors resize-none"
+                      className="w-full bg-slate-100 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white p-2.5 text-xs text-white outline-none focus:border-blue-500 transition-colors resize-none"
                     />
                   </div>
 
-                  <div className="p-3 bg-[#1E293B] border border-slate-800 rounded-xl flex items-center justify-between">
+                  <div className="p-3 bg-slate-50 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
                         <ShieldCheck size={14} className="text-amber-400" />

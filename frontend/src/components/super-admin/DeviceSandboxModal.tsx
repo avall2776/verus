@@ -129,9 +129,9 @@ export default function DeviceSandboxModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#050814]/95 backdrop-blur-xl flex flex-col select-none text-slate-200 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-slate-100/95 dark:bg-slate-100 dark:bg-[#050814]/95 backdrop-blur-xl flex flex-col select-none text-slate-200 animate-in fade-in duration-200">
       {/* Barra de Ferramentas Superior Executiva (Monocromática e Escura) */}
-      <header className="h-14 border-b border-slate-800 bg-[#0B1224] px-4 flex items-center justify-between gap-3 shrink-0">
+      <header className="h-14 border-b border-slate-800 bg-white dark:bg-[#0B1224] px-4 flex items-center justify-between gap-3 shrink-0">
         {/* Identificação de Acesso Master */}
         <div className="flex items-center gap-2.5 shrink-0">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400">
@@ -274,7 +274,7 @@ export default function DeviceSandboxModal({
       </header>
 
       {/* Sub-Barra de Navegação de Rota (URL Bar & Atalhos) */}
-      <div className="h-11 border-b border-slate-800/80 bg-[#0B1224]/90 px-4 flex items-center justify-between gap-3 shrink-0">
+      <div className="h-11 border-b border-slate-800/80 bg-white/90 dark:bg-[#0B1224]/90 px-4 flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-2 flex-1 max-w-xl relative">
           {/* Seletor de Rotas Rápidas */}
           <div className="relative">
@@ -288,7 +288,7 @@ export default function DeviceSandboxModal({
             </button>
 
             {showRoutesDropdown && (
-              <div className="absolute left-0 top-8 z-30 w-56 rounded-xl bg-[#0B1224] border border-slate-800 shadow-2xl p-1.5 animate-in fade-in zoom-in-95">
+              <div className="absolute left-0 top-8 z-30 w-56 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 shadow-2xl p-1.5 animate-in fade-in zoom-in-95">
                 <div className="text-[10px] uppercase font-bold text-slate-500 px-2 py-1 tracking-wider">
                   Telas do Sistema
                 </div>
@@ -356,12 +356,12 @@ export default function DeviceSandboxModal({
       </div>
 
       {/* Área Central de Visualização & Moldura do Dispositivo */}
-      <main className="flex-1 overflow-auto flex items-center justify-center p-4 relative bg-[#050814]/70">
+      <main className="flex-1 overflow-auto flex items-center justify-center p-4 relative bg-slate-100/70 dark:bg-slate-100 dark:bg-[#050814]/70">
         {device === "desktop" ? (
           /* MODO DESKTOP: Ocupa toda a área interna de forma limpa */
-          <div className="w-full h-full rounded-xl overflow-hidden border border-slate-800/90 bg-[#0B1224] shadow-2xl relative">
+          <div className="w-full h-full rounded-xl overflow-hidden border border-slate-800/90 bg-white dark:bg-[#0B1224] shadow-2xl relative">
             {isLoading && (
-              <div className="absolute inset-0 bg-[#0B1224]/80 backdrop-blur-sm flex items-center justify-center z-10">
+              <div className="absolute inset-0 bg-white/80 dark:bg-[#0B1224]/80 backdrop-blur-sm flex items-center justify-center z-10">
                 <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs shadow-xl">
                   <Loader2 size={16} className="animate-spin text-blue-400" />
                   <span>Carregando interface...</span>
@@ -388,7 +388,7 @@ export default function DeviceSandboxModal({
           >
             {/* Moldura do Aparelho */}
             <div
-              className={`bg-slate-950 border-[6px] border-slate-800 shadow-[0_0_60px_rgba(0,0,0,0.9),inset_0_0_0_1px_rgba(255,255,255,0.1)] relative flex flex-col ${
+              className={`bg-slate-100 dark:bg-slate-950 border-[6px] border-slate-800 shadow-[0_0_60px_rgba(0,0,0,0.9),inset_0_0_0_1px_rgba(255,255,255,0.1)] relative flex flex-col ${
                 device === "mobile"
                   ? orientation === "portrait"
                     ? "rounded-[52px] p-3 pb-4"
@@ -404,7 +404,7 @@ export default function DeviceSandboxModal({
               {device === "mobile" && orientation === "portrait" && (
                 <div className="w-full flex justify-center py-1 shrink-0 z-20 pointer-events-none">
                   <div className="w-28 h-4 rounded-full bg-slate-900 border border-slate-800/80 flex items-center justify-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-slate-950 border border-slate-800" />
+                    <div className="w-2 h-2 rounded-full bg-slate-100 dark:bg-slate-950 border border-slate-800" />
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-500/40" />
                   </div>
                 </div>
@@ -432,7 +432,7 @@ export default function DeviceSandboxModal({
                 }}
               >
                 {isLoading && (
-                  <div className="absolute inset-0 bg-[#0B1224]/80 backdrop-blur-sm flex items-center justify-center z-10">
+                  <div className="absolute inset-0 bg-white/80 dark:bg-[#0B1224]/80 backdrop-blur-sm flex items-center justify-center z-10">
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 text-xs shadow-xl">
                       <Loader2 size={14} className="animate-spin text-blue-400" />
                       <span>Renderizando viewport...</span>

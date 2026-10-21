@@ -187,7 +187,7 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
                     id: waNoticeId,
                     type: 'SYSTEM',
                     title: 'Conexão WhatsApp Pendente',
-                    description: 'Configure a Meta Cloud API para iniciar atendimentos automatizados com IA Vitor.',
+                    description: 'Configure a Meta Cloud API para iniciar atendimentos automatizados com seu Agente de IA.',
                     createdAt: new Date('2026-09-17T07:30:00Z').toISOString(),
                     isRead: readNotificationIds.includes(waNoticeId),
                     link: '/settings/whatsapp',

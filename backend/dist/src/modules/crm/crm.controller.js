@@ -23,8 +23,8 @@ let CrmController = class CrmController {
     constructor(crmService) {
         this.crmService = crmService;
     }
-    async listDeals(tenantId) {
-        return this.crmService.findAllDeals(tenantId);
+    async listDeals(tenantId, startDate, endDate, dateType, status) {
+        return this.crmService.findAllDeals(tenantId, { startDate, endDate, dateType, status });
     }
     async listUsers(tenantId) {
         return this.crmService.findTenantUsers(tenantId);
@@ -49,8 +49,12 @@ exports.CrmController = CrmController;
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('startDate')),
+    __param(2, (0, common_1.Query)('endDate')),
+    __param(3, (0, common_1.Query)('dateType')),
+    __param(4, (0, common_1.Query)('status')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], CrmController.prototype, "listDeals", null);
 __decorate([

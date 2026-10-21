@@ -316,10 +316,10 @@ export default function ProductSandboxModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-5xl h-[90vh] bg-[#0B1224] border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+      <div className="w-full max-w-5xl h-[90vh] bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
         
         {/* HEADER DO MODAL */}
-        <div className="p-4 md:px-6 bg-[#070D1B] border-b border-slate-800 flex items-center justify-between gap-4 shrink-0">
+        <div className="p-4 md:px-6 bg-slate-50 dark:bg-[#070D1B] border-b border-slate-800 flex items-center justify-between gap-4 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
               <Cpu size={20} />
@@ -347,7 +347,7 @@ export default function ProductSandboxModal({
             <select
               value={product.status}
               onChange={(e) => handleStatusChange(e.target.value)}
-              className="bg-[#0B1224] border border-slate-700 text-xs font-bold text-slate-200 rounded-lg px-2.5 py-1.5 outline-none cursor-pointer hover:border-slate-600 transition-colors"
+              className="bg-white dark:bg-[#0B1224] border border-slate-700 text-xs font-bold text-slate-200 rounded-lg px-2.5 py-1.5 outline-none cursor-pointer hover:border-slate-600 transition-colors"
             >
               <option value="EM_PLANEJAMENTO">Em Planejamento</option>
               <option value="EM_DESENVOLVIMENTO">Em Desenvolvimento</option>
@@ -366,7 +366,7 @@ export default function ProductSandboxModal({
         </div>
 
         {/* NAVEGAÇÃO DE SUB-ABAS */}
-        <div className="px-4 md:px-6 bg-[#091020] border-b border-slate-800 flex items-center justify-between gap-2 overflow-x-auto shrink-0">
+        <div className="px-4 md:px-6 bg-slate-100 dark:bg-[#091020] border-b border-slate-800 flex items-center justify-between gap-2 overflow-x-auto shrink-0">
           <div className="flex items-center gap-1.5 py-2">
             <button
               onClick={() => setActiveTab("ai_copilot")}
@@ -416,7 +416,7 @@ export default function ProductSandboxModal({
         </div>
 
         {/* CORPO PRINCIPAL DO MODAL */}
-        <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-[#070D1B]">
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-slate-50 dark:bg-[#070D1B]">
 
           {/* =========================================================================
               ABA 1: COPILOT DE ENGENHARIA COM IA (CHAT CONTEXTUALIZADO)
@@ -425,7 +425,7 @@ export default function ProductSandboxModal({
             <div className="flex-1 flex flex-col min-h-0">
               
               {/* Barra de Instruções & Sugestões Rápidas */}
-              <div className="p-3 bg-[#0B1224] border-b border-slate-800 flex items-center justify-between gap-3 shrink-0">
+              <div className="p-3 bg-white dark:bg-[#0B1224] border-b border-slate-800 flex items-center justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-2 text-xs text-slate-400">
                   <Sparkles size={14} className="text-purple-400 shrink-0" />
                   <span className="truncate">
@@ -478,7 +478,7 @@ export default function ProductSandboxModal({
                       className={`max-w-[85%] md:max-w-[75%] rounded-xl p-3.5 text-xs leading-relaxed ${
                         msg.role === "user"
                           ? "bg-blue-600 text-white shadow-sm"
-                          : "bg-[#0B1224] border border-slate-800 text-slate-200"
+                          : "bg-white dark:bg-[#0B1224] border border-slate-800 text-slate-200"
                       }`}
                     >
                       {msg.role === "user" ? (
@@ -506,7 +506,7 @@ export default function ProductSandboxModal({
                     <div className="w-8 h-8 rounded-lg bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shrink-0">
                       <Bot size={16} className="animate-spin" />
                     </div>
-                    <div className="bg-[#0B1224] border border-slate-800 rounded-xl p-3.5 text-xs text-slate-400 flex items-center gap-2">
+                    <div className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-xl p-3.5 text-xs text-slate-400 flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
                       <span>Copilot Técnico analisando arquitetura e diretrizes...</span>
                     </div>
@@ -516,7 +516,7 @@ export default function ProductSandboxModal({
               </div>
 
               {/* Caixa de Entrada de Texto e Gravação de Áudio */}
-              <div className="p-3 md:p-4 bg-[#0B1224] border-t border-slate-800 shrink-0">
+              <div className="p-3 md:p-4 bg-white dark:bg-[#0B1224] border-t border-slate-800 shrink-0">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -553,7 +553,7 @@ export default function ProductSandboxModal({
                     onChange={(e) => setChatInput(e.target.value)}
                     placeholder="Converse com a IA sobre o que programar ou cole trechos de código..."
                     disabled={chatLoading || isRecording}
-                    className="flex-1 bg-[#070D1B] border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-purple-500/50"
+                    className="flex-1 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-purple-500/50"
                   />
 
                   <button
@@ -576,10 +576,10 @@ export default function ProductSandboxModal({
             <div className="flex-1 flex flex-col md:flex-row min-h-0">
               
               {/* LADO ESQUERDO: CONTROLES & CHECKLIST DE TAREFAS */}
-              <div className="w-full md:w-96 border-b md:border-b-0 md:border-r border-slate-800 p-4 bg-[#091020] flex flex-col justify-between overflow-y-auto shrink-0">
+              <div className="w-full md:w-96 border-b md:border-b-0 md:border-r border-slate-800 p-4 bg-slate-100 dark:bg-[#091020] flex flex-col justify-between overflow-y-auto shrink-0">
                 <div className="space-y-4">
                   {/* Card de Disparo da Bateria de Testes */}
-                  <div className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800 space-y-3">
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] uppercase tracking-wider font-bold text-slate-400">
                         Bateria de Testes
@@ -604,7 +604,7 @@ export default function ProductSandboxModal({
                   </div>
 
                   {/* Checklist de Etapas de Programação */}
-                  <div className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800 space-y-3">
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-3">
                     <span className="text-[11px] uppercase tracking-wider font-bold text-slate-400">
                       Checklist do Módulo
                     </span>
@@ -613,7 +613,7 @@ export default function ProductSandboxModal({
                       {product.tasks?.map((task: any) => (
                         <div
                           key={task.id}
-                          className="flex items-start gap-2.5 p-2 rounded-lg bg-[#070D1B] border border-slate-800/80 text-xs"
+                          className="flex items-start gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 text-xs"
                         >
                           <div className={`mt-0.5 ${task.done ? "text-emerald-400" : "text-slate-600"}`}>
                             <CheckCircle2 size={14} />
@@ -627,7 +627,7 @@ export default function ProductSandboxModal({
                   </div>
 
                   {/* Especificações de Arquitetura */}
-                  <div className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800 space-y-2.5 text-xs">
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-2.5 text-xs">
                     <span className="text-[11px] uppercase tracking-wider font-bold text-slate-400">
                       Especificações do Módulo
                     </span>
@@ -649,7 +649,7 @@ export default function ProductSandboxModal({
               </div>
 
               {/* LADO DIREITO: TERMINAL DE LOGS EM TEMPO REAL */}
-              <div className="flex-1 flex flex-col min-h-0 bg-[#050811] p-4">
+              <div className="flex-1 flex flex-col min-h-0 bg-slate-50 dark:bg-[#050811] p-4">
                 
                 {/* Header do Terminal */}
                 <div className="flex items-center justify-between pb-3 border-b border-slate-800/80 shrink-0">
@@ -666,7 +666,7 @@ export default function ProductSandboxModal({
                     <select
                       value={logFilter}
                       onChange={(e) => setLogFilter(e.target.value)}
-                      className="bg-[#0B1224] border border-slate-800 text-[11px] font-mono text-slate-300 rounded px-2 py-1 outline-none cursor-pointer"
+                      className="bg-white dark:bg-[#0B1224] border border-slate-800 text-[11px] font-mono text-slate-300 rounded px-2 py-1 outline-none cursor-pointer"
                     >
                       <option value="ALL">Todos os Níveis</option>
                       <option value="INFO">INFO</option>
@@ -745,7 +745,7 @@ export default function ProductSandboxModal({
                 <div className={`p-5 rounded-2xl border flex items-start gap-4 ${
                   product.isIntegrated 
                     ? "bg-emerald-500/10 border-emerald-500/30" 
-                    : "bg-[#0B1224] border-slate-800"
+                    : "bg-white dark:bg-[#0B1224] border-slate-800"
                 }`}>
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                     product.isIntegrated
@@ -770,13 +770,13 @@ export default function ProductSandboxModal({
                 </div>
 
                 {/* Critérios de Aceite e Homologação */}
-                <div className="bg-[#0B1224] border border-slate-800 rounded-2xl p-5 space-y-4">
+                <div className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl p-5 space-y-4">
                   <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                     Checklist de Segurança e Homologação
                   </h4>
 
                   <div className="space-y-3 text-xs">
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-[#070D1B] border border-slate-800">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
                       <div className="flex items-center gap-2.5">
                         <CheckCircle2 size={16} className="text-emerald-400" />
                         <span className="text-slate-200">Ambiente Sandbox Isolado (Zero Mocks)</span>
@@ -786,7 +786,7 @@ export default function ProductSandboxModal({
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-[#070D1B] border border-slate-800">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
                       <div className="flex items-center gap-2.5">
                         <CheckCircle2 size={16} className="text-emerald-400" />
                         <span className="text-slate-200">Bateria de Testes de Latência & Protocolo</span>
@@ -796,7 +796,7 @@ export default function ProductSandboxModal({
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-[#070D1B] border border-slate-800">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
                       <div className="flex items-center gap-2.5">
                         <CheckCircle2 size={16} className="text-emerald-400" />
                         <span className="text-slate-200">Conformidade com Arquitetura e Contratos</span>
@@ -809,7 +809,7 @@ export default function ProductSandboxModal({
                 </div>
 
                 {/* AÇÃO PRINCIPAL DE INTEGRAÇÃO */}
-                <div className="bg-[#0B1224] border border-slate-800 rounded-2xl p-5 space-y-4">
+                <div className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl p-5 space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="text-sm font-bold text-white">

@@ -34,6 +34,7 @@ import { SearchModule } from './modules/search/search.module';
 import { OperatorsModule } from './modules/operators/operators.module';
 import { EngineeringModule } from './modules/engineering/engineering.module';
 import { VoipModule } from './modules/voip/voip.module';
+import { AgencyMarketingModule } from './modules/agency-marketing/agency-marketing.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { VoipModule } from './modules/voip/voip.module';
     OperatorsModule,
     EngineeringModule,
     VoipModule,
+    AgencyMarketingModule,
   ],
   controllers: [],
   providers: [],

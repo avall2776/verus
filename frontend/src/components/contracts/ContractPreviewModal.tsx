@@ -93,7 +93,7 @@ export function ContractPreviewModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-3xl bg-[#080D1A] border border-slate-800 shadow-2xl text-white overflow-hidden"
+        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-3xl bg-slate-50 dark:bg-[#080D1A] border border-slate-800 shadow-2xl text-white overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top bar */}
@@ -150,7 +150,7 @@ export function ContractPreviewModal({
         </div>
 
         {/* Scrollable Content (Minuta & Dados) */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 custom-scrollbar bg-[#060913]/70">
+        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 custom-scrollbar bg-slate-50/70 dark:bg-slate-50 dark:bg-[#060913]/70">
           {/* Box Emitente / Contratante */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-800 space-y-2">
@@ -232,7 +232,7 @@ export function ContractPreviewModal({
               Trilha de Auditoria e Assinatura Digital
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-950/60 border border-slate-800/80">
                 <div className="font-semibold text-slate-200">Pela Contratada:</div>
                 <div className="text-slate-400 mt-1">{contract.issuer?.name || "Vallor Tecnologia"}</div>
                 <div className="text-emerald-400 font-mono text-[11px] mt-1 flex items-center gap-1">
@@ -240,7 +240,7 @@ export function ContractPreviewModal({
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-950/60 border border-slate-800/80">
                 <div className="font-semibold text-slate-200">Pelo Contratante:</div>
                 <div className="text-slate-400 mt-1">{contract.clientName}</div>
                 {isSigned ? (

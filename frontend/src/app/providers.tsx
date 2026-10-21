@@ -8,6 +8,13 @@ import { WhatsAppProvider } from "@/components/ui/WhatsAppProvider";
 import SecurityShieldProvider from "@/components/security/SecurityShieldProvider";
 import { MobileMenuProvider } from "@/contexts/MobileMenuContext";
 
+import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
+
+function ThemeAwareToaster() {
+  const { theme } = useTheme();
+  return <Toaster position="top-right" theme={theme} richColors />;
+}
+
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
@@ -30,18 +37,20 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SocketProvider>
-        <WhatsAppProvider>
-          <SecurityShieldProvider>
-            <MobileMenuProvider>
-              {children}
-              {mounted && <Toaster position="top-right" theme="dark" richColors />}
-            </MobileMenuProvider>
-          </SecurityShieldProvider>
-        </WhatsAppProvider>
-      </SocketProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <SocketProvider>
+          <WhatsAppProvider>
+            <SecurityShieldProvider>
+              <MobileMenuProvider>
+                {children}
+                {mounted && <ThemeAwareToaster />}
+              </MobileMenuProvider>
+            </SecurityShieldProvider>
+          </WhatsAppProvider>
+        </SocketProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

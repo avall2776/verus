@@ -194,11 +194,11 @@ export default function CreateCompanyModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden text-slate-100 flex flex-col"
+        className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden text-slate-100 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-[#070D1B]">
+        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#070D1B]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold shrink-0">
               <Building2 size={22} />
@@ -235,7 +235,7 @@ export default function CreateCompanyModal({
                   if (!adminName) setAdminName(`Admin ${e.target.value}`);
                 }}
                 placeholder="Ex: Avall Empreendimentos LTDA"
-                className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
               />
             </div>
 
@@ -247,7 +247,7 @@ export default function CreateCompanyModal({
                   value={cnpj}
                   onChange={(e) => setCnpj(e.target.value)}
                   placeholder="00.000.000/0001-00"
-                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono"
                 />
               </div>
 
@@ -258,7 +258,7 @@ export default function CreateCompanyModal({
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="(11) 99999-9999"
-                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
                 />
               </div>
             </div>
@@ -271,7 +271,7 @@ export default function CreateCompanyModal({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="contato@empresa.com.br"
-                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono"
                 />
               </div>
 
@@ -282,7 +282,7 @@ export default function CreateCompanyModal({
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="Av. Paulista, 1000 - São Paulo, SP"
-                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
                 />
               </div>
             </div>
@@ -303,7 +303,7 @@ export default function CreateCompanyModal({
                   value={adminName}
                   onChange={(e) => setAdminName(e.target.value)}
                   placeholder="Ex: Carlos Ferreira"
-                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
                 />
               </div>
 
@@ -315,7 +315,7 @@ export default function CreateCompanyModal({
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
                   placeholder="admin@empresa.com.br"
-                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono"
                 />
               </div>
             </div>
@@ -339,7 +339,7 @@ export default function CreateCompanyModal({
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
                   placeholder="Defina uma senha"
-                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-emerald-400 font-mono outline-none pr-8"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-emerald-400 font-mono outline-none pr-8"
                 />
                 <KeyRound size={14} className="absolute right-2.5 top-2.5 text-slate-500" />
               </div>
@@ -367,7 +367,7 @@ export default function CreateCompanyModal({
                     setSelectedPlanId(e.target.value);
                   }
                 }}
-                className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
               >
                 {plans.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -380,7 +380,7 @@ export default function CreateCompanyModal({
 
             {/* Sub-Card: Criação de Plano Personalizado */}
             {isCustomPlan && (
-              <div className="p-4 rounded-xl bg-[#070D1B] border border-blue-500/30 space-y-3 animate-in fade-in duration-200">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-blue-500/30 space-y-3 animate-in fade-in duration-200">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                   <span className="text-xs font-bold text-blue-400 flex items-center gap-1.5">
                     <Sparkles size={14} /> Criar Plano Sob Medida para Este Cliente
@@ -396,7 +396,7 @@ export default function CreateCompanyModal({
                       placeholder="Ex: VIP Avall"
                       value={customPlanName}
                       onChange={(e) => setCustomPlanName(e.target.value)}
-                      className="w-full bg-[#0B1224] border border-slate-800 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                      className="w-full bg-white dark:bg-[#0B1224] border border-slate-800 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
                       required={isCustomPlan}
                     />
                   </div>
@@ -409,7 +409,7 @@ export default function CreateCompanyModal({
                       placeholder="Ex: 350.00"
                       value={customPlanPrice}
                       onChange={(e) => setCustomPlanPrice(e.target.value)}
-                      className="w-full bg-[#0B1224] border border-slate-800 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                      className="w-full bg-white dark:bg-[#0B1224] border border-slate-800 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
                       required={isCustomPlan}
                     />
                   </div>
@@ -421,7 +421,7 @@ export default function CreateCompanyModal({
                       placeholder="Ex: 5"
                       value={customMaxUsers}
                       onChange={(e) => setCustomMaxUsers(e.target.value)}
-                      className="w-full bg-[#0B1224] border border-slate-800 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                      className="w-full bg-white dark:bg-[#0B1224] border border-slate-800 focus:border-blue-500 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
                     />
                   </div>
                 </div>
@@ -447,8 +447,8 @@ export default function CreateCompanyModal({
                         key={mod.key} 
                         className={`flex items-center gap-2 cursor-pointer p-2 rounded-lg border transition-all ${
                           customModules[mod.key]
-                            ? "bg-[#0B1224] border-blue-500/40 text-white"
-                            : "bg-[#0B1224] border-slate-800 text-slate-400 hover:text-slate-200"
+                            ? "bg-white dark:bg-[#0B1224] border-blue-500/40 text-white"
+                            : "bg-white dark:bg-[#0B1224] border-slate-800 text-slate-400 hover:text-slate-200"
                         }`}
                       >
                         <input

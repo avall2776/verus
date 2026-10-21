@@ -5,7 +5,12 @@ export declare class CrmService {
     private readonly automationsService;
     private readonly logger;
     constructor(prisma: PrismaService, automationsService: AutomationsService);
-    findAllDeals(tenantId: string): Promise<({
+    findAllDeals(tenantId: string, filters?: {
+        startDate?: string;
+        endDate?: string;
+        dateType?: 'created' | 'closed';
+        status?: string;
+    }): Promise<({
         contact: {
             id: string;
             name: string;

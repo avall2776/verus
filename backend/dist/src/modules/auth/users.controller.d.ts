@@ -13,6 +13,7 @@ export declare class UsersController {
         isActive: boolean;
         role: string;
         isSuperAdmin: boolean;
+        canAccessMarketing: boolean;
         permissions: import("@prisma/client/runtime/library").JsonValue;
         isOnline: boolean;
     }[]>;
@@ -30,13 +31,9 @@ export declare class UsersController {
         isActive: boolean;
         role: string;
     }>;
-    update(req: any, id: string, body: {
-        name?: string;
-        role?: string;
-        isActive?: boolean;
-        password?: string;
-        avatarUrl?: string;
-        permissions?: any;
+    updatePermissions(req: any, id: string, body: {
+        permissions: any;
+        canAccessMarketing?: boolean;
     }): Promise<{
         message: string;
         user: {
@@ -47,6 +44,30 @@ export declare class UsersController {
             tenantId: string;
             isActive: boolean;
             role: string;
+            canAccessMarketing: boolean;
+            permissions: import("@prisma/client/runtime/library").JsonValue;
+            isOnline: boolean;
+        };
+    }>;
+    update(req: any, id: string, body: {
+        name?: string;
+        role?: string;
+        isActive?: boolean;
+        password?: string;
+        avatarUrl?: string;
+        permissions?: any;
+        canAccessMarketing?: boolean;
+    }): Promise<{
+        message: string;
+        user: {
+            id: string;
+            name: string;
+            email: string;
+            avatarUrl: string;
+            tenantId: string;
+            isActive: boolean;
+            role: string;
+            canAccessMarketing: boolean;
             permissions: import("@prisma/client/runtime/library").JsonValue;
             isOnline: boolean;
         };
@@ -57,6 +78,7 @@ export declare class UsersController {
         password?: string;
         role?: string;
         permissions?: any;
+        canAccessMarketing?: boolean;
     }): Promise<{
         message: string;
         user: {
@@ -66,6 +88,7 @@ export declare class UsersController {
             avatarUrl: string;
             isActive: boolean;
             role: string;
+            canAccessMarketing: boolean;
             permissions: import("@prisma/client/runtime/library").JsonValue;
             isOnline: boolean;
         };

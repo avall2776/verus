@@ -167,7 +167,7 @@ export default function PlanSettingsTab() {
       </div>
 
       {/* Card de Destaque do Plano Contratado */}
-      <div className="p-6 rounded-2xl bg-[#0B1224] border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold text-blue-400 bg-blue-600/10 px-2.5 py-0.5 rounded border border-blue-500/30 uppercase tracking-wider">
@@ -217,8 +217,8 @@ export default function PlanSettingsTab() {
                 key={mod.key} 
                 className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
                   active 
-                    ? "bg-[#070D1B] border-slate-800" 
-                    : "bg-[#070D1B]/40 border-slate-900/60 opacity-60"
+                    ? "bg-slate-50 dark:bg-[#070D1B] border-slate-800" 
+                    : "bg-slate-50/40 dark:bg-slate-50 dark:bg-[#070D1B]/40 border-slate-900/60 opacity-60"
                 }`}
               >
                 <div className="space-y-2">
@@ -255,7 +255,7 @@ export default function PlanSettingsTab() {
       {/* Limites Operacionais e Consumo da Equipe */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Card Usuários */}
-        <div className="p-5 rounded-xl bg-[#070D1B] border border-slate-800 space-y-3">
+        <div className="p-5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users size={16} className="text-blue-400" />
@@ -281,7 +281,7 @@ export default function PlanSettingsTab() {
         </div>
 
         {/* Card IA e Atendimento */}
-        <div className="p-5 rounded-xl bg-[#070D1B] border border-slate-800 space-y-3">
+        <div className="p-5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bot size={16} className="text-blue-400" />
@@ -303,7 +303,7 @@ export default function PlanSettingsTab() {
       </div>
 
       {/* Banner de Upgrade / Suporte */}
-      <div className="p-5 rounded-2xl bg-[#0B1224] border border-blue-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-blue-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-blue-400" />

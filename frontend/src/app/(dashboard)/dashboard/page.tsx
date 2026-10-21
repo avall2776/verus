@@ -84,7 +84,7 @@ function DashboardInner() {
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="bg-[#0B1224] border border-slate-800 rounded-2xl p-5 flex flex-col gap-4 h-[120px] animate-pulse"
+              className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl p-5 flex flex-col gap-4 h-[120px] animate-pulse"
             >
               <div className="flex justify-between items-start">
                 <div className="w-10 h-10 rounded-xl bg-slate-800" />
@@ -98,8 +98,8 @@ function DashboardInner() {
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-[#0B1224] border border-slate-800 rounded-2xl p-6 h-[350px] animate-pulse" />
-          <div className="bg-[#0B1224] border border-slate-800 rounded-2xl p-6 h-[350px] animate-pulse" />
+          <div className="lg:col-span-2 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl p-6 h-[350px] animate-pulse" />
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl p-6 h-[350px] animate-pulse" />
         </div>
       </div>
     );
@@ -158,7 +158,7 @@ function DashboardInner() {
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0B1224] border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors"
             title="Atualizar métricas"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin text-blue-400" : ""}`} />
@@ -180,12 +180,12 @@ function DashboardInner() {
         {kpis.map((kpi, index) => (
           <div
             key={index}
-            className={`bg-[#0B1224] border ${
+            className={`bg-white dark:bg-[#0B1224] border ${
               kpi.alert ? "border-rose-500/40 shadow-lg shadow-rose-500/5" : "border-slate-800/80"
             } rounded-2xl p-5 flex flex-col gap-4 relative overflow-hidden group hover:border-slate-700 transition-colors`}
           >
             <div className="flex justify-between items-start">
-              <div className={`p-2.5 rounded-xl bg-[#070D1B] border border-slate-800 ${kpi.color}`}>
+              <div className={`p-2.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 ${kpi.color}`}>
                 <kpi.icon size={20} />
               </div>
               <div
@@ -209,12 +209,12 @@ function DashboardInner() {
       {/* Grid Principal: Gráfico + Leads Recentes */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Gráfico de Fluxo */}
-        <div className="lg:col-span-2 bg-[#0B1224] border border-slate-800/80 rounded-2xl p-6 flex flex-col gap-6">
+        <div className="lg:col-span-2 bg-white dark:bg-[#0B1224] border border-slate-800/80 rounded-2xl p-6 flex flex-col gap-6">
           <div className="flex justify-between items-center">
             <h2 className="text-sm font-bold text-white flex items-center gap-2">
               <Activity size={16} className="text-blue-400" /> Fluxo de Mensagens (Últimos 7 dias)
             </h2>
-            <select className="bg-[#070D1B] border border-slate-800 text-xs text-slate-300 rounded-lg px-3 py-1.5 outline-none">
+            <select className="bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-xs text-slate-300 rounded-lg px-3 py-1.5 outline-none">
               <option>Esta semana</option>
               <option>Este mês</option>
             </select>
@@ -247,7 +247,7 @@ function DashboardInner() {
         </div>
 
         {/* Leads Recentes */}
-        <div className="bg-[#0B1224] border border-slate-800/80 rounded-2xl p-6 flex flex-col gap-4">
+        <div className="bg-white dark:bg-[#0B1224] border border-slate-800/80 rounded-2xl p-6 flex flex-col gap-4">
           <div className="flex justify-between items-center mb-1">
             <h2 className="text-sm font-bold text-white">Últimos Qualificados</h2>
             <span className="text-xs text-blue-400 font-semibold">CRM Ativo</span>
@@ -262,7 +262,7 @@ function DashboardInner() {
               recentLeads.map((lead: any) => (
                 <div
                   key={lead.id}
-                  className="flex items-center justify-between p-3 bg-[#070D1B] border border-slate-800/80 rounded-xl hover:border-slate-700 transition-colors"
+                  className="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 rounded-xl hover:border-slate-700 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-white font-bold text-xs">

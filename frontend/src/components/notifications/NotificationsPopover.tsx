@@ -278,10 +278,10 @@ export default function NotificationsPopover() {
       {isOpen && (
         <div
           ref={popoverRef}
-          className="absolute right-0 mt-3 w-80 sm:w-96 bg-[#0F172A] border border-slate-800 rounded-2xl shadow-2xl shadow-black/90 z-50 overflow-hidden flex flex-col text-slate-100 animate-fadeIn"
+          className="absolute right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-[#0F172A] border border-slate-800 rounded-2xl shadow-2xl shadow-black/90 z-50 overflow-hidden flex flex-col text-slate-100 animate-fadeIn"
         >
           {/* Header do Popover */}
-          <div className="p-4 pb-3 border-b border-slate-800/80 flex items-center justify-between gap-2 bg-[#0B1224]/60">
+          <div className="p-4 pb-3 border-b border-slate-800/80 flex items-center justify-between gap-2 bg-white/60 dark:bg-[#0B1224]/60">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-white tracking-tight">Notificações</h3>
               {unreadCount > 0 ? (
@@ -310,7 +310,7 @@ export default function NotificationsPopover() {
           </div>
 
           {/* Abas / Filtros de Categorias */}
-          <div className="px-3 pt-2.5 pb-2 border-b border-slate-800/60 bg-[#0F172A] flex items-center gap-1 overflow-x-auto custom-scrollbar">
+          <div className="px-3 pt-2.5 pb-2 border-b border-slate-800/60 bg-white dark:bg-[#0F172A] flex items-center gap-1 overflow-x-auto custom-scrollbar">
             {[
               { key: 'ALL', label: 'Todas', count: counts.ALL },
               { key: 'CHAT', label: 'Chat', count: counts.CHAT },
@@ -323,7 +323,7 @@ export default function NotificationsPopover() {
                 onClick={() => setActiveFilter(tab.key as any)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeFilter === tab.key
-                    ? 'bg-[#1E293B] text-white border border-slate-700 shadow-sm'
+                    ? 'bg-slate-100 dark:bg-[#1E293B] text-white border border-slate-700 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                 }`}
               >
@@ -340,7 +340,7 @@ export default function NotificationsPopover() {
           </div>
 
           {/* Barra de Toque de Notificação Corporativo */}
-          <div className="px-3.5 py-1.5 bg-[#080d1a] border-b border-slate-800/80 flex items-center justify-between text-[11px]">
+          <div className="px-3.5 py-1.5 bg-slate-50 dark:bg-[#080d1a] border-b border-slate-800/80 flex items-center justify-between text-[11px]">
             <div className="flex items-center gap-1.5 text-slate-300">
               <Volume2 size={13} className="text-cyan-400 shrink-0" />
               <span className="font-semibold text-slate-400">Som:</span>
@@ -445,7 +445,7 @@ export default function NotificationsPopover() {
           </div>
 
           {/* Rodapé do Popover */}
-          <div className="p-2.5 border-t border-slate-800/80 bg-[#0B1224]/80 text-center flex items-center justify-between px-3 text-[11px] text-slate-400">
+          <div className="p-2.5 border-t border-slate-800/80 bg-white/80 dark:bg-[#0B1224]/80 text-center flex items-center justify-between px-3 text-[11px] text-slate-400">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
               Sincronização em tempo real

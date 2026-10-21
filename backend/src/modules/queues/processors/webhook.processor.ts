@@ -445,15 +445,11 @@ export class WebhookProcessor extends WorkerHost {
     });
 
     if (fromMe) {
-      // Se a mensagem foi enviada diretamente pelo celular WhatsApp da empresa:
-      // Transiciona a conversa para atendimento humano se estava com bot ou fila
-      if (conversation.status === 'bot_active' || conversation.status === 'waiting' || conversation.status === 'resolved' || conversation.status === 'closed') {
-        conversation = await this.prisma.conversation.update({
-          where: { id: conversation.id },
-          data: { status: 'human_takeover', updatedAt: new Date() }
-        });
-        this.chatGateway.emitConversationUpdated(tenantId, conversation);
-      }
+      // Mensagem enviada diretamente pelo celular WhatsApp da empresa: atualiza data da conversa
+      conversation = await this.prisma.conversation.update({
+        where: { id: conversation.id },
+        data: { updatedAt: new Date() }
+      });
 
       // Cancela imediatamente qualquer resposta pendente da IA para não falar por cima do humano
       try {
@@ -541,9 +537,9 @@ export class WebhookProcessor extends WorkerHost {
           data: { status: 'waiting' }
         });
       }
-    } else if (conversation.status === 'bot_active' || (conversation.status === 'waiting' && !conversation.assignedTo)) {
-      // Se a conversa estava em waiting sem operador e a IA está ligada, ativa a IA para atender imediatamente
-      if (conversation.status === 'waiting') {
+    } else {
+      // Auto-atendimento por IA ativo: garante bot_active para manter o fluxo contínuo
+      if (conversation.status !== 'bot_active') {
         conversation = await this.prisma.conversation.update({
           where: { id: conversation.id },
           data: { status: 'bot_active' }
@@ -620,8 +616,6 @@ export class WebhookProcessor extends WorkerHost {
         }
       );
       this.logger.log(`Conversa [${conversation.id}] agendada para IA em 800ms (Buffer).`);
-    } else {
-      this.logger.log(`Conversa [${conversation.id}] ignorada pela IA. O status atual é Humano (${conversation.status}).`);
     }
 
     return { status: 'success', messageId: savedMessage.id };

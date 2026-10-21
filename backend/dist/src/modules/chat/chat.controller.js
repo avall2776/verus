@@ -96,6 +96,15 @@ let ChatController = class ChatController {
             throw error;
         }
     }
+    async sendTemplateMessage(tenantId, conversationId, body) {
+        try {
+            return await this.chatService.sendTemplateMessage(tenantId, conversationId, body);
+        }
+        catch (error) {
+            console.error('ERRO AO ENVIAR TEMPLATE META:', error);
+            throw error;
+        }
+    }
     async sendAudioMessage(tenantId, conversationId, file, isInternal, content, instanceId) {
         if (!file) {
             throw new common_1.BadRequestException('Arquivo de áudio obrigatório.');
@@ -308,6 +317,15 @@ __decorate([
     __metadata("design:paramtypes", [String, String, send_message_dto_1.SendMessageDto]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "sendMessage", null);
+__decorate([
+    (0, common_1.Post)(':id/template'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], ChatController.prototype, "sendTemplateMessage", null);
 __decorate([
     (0, common_1.Post)(':id/messages/audio'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),

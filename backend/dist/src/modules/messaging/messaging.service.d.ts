@@ -22,6 +22,14 @@ export interface SendMediaPayload {
     filename?: string;
     instanceId?: string;
 }
+export interface SendTemplatePayload {
+    tenantId: string;
+    phone: string;
+    templateName: string;
+    languageCode?: string;
+    components?: any[];
+    instanceId?: string;
+}
 export interface SendResult {
     success: boolean;
     messageId?: string;
@@ -36,6 +44,8 @@ export declare class MessagingService {
     sanitizePhone(phone: string): string;
     private resolveConnection;
     sendText(payload: SendMessagePayload): Promise<SendResult>;
+    sendTemplate(payload: SendTemplatePayload): Promise<SendResult>;
+    private sendMetaTemplate;
     private sendEvolutionText;
     private sendMetaText;
     sendMedia(payload: SendMediaPayload): Promise<SendResult>;

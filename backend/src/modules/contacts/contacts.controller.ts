@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
 import { ContactsService } from './contacts.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
@@ -11,6 +11,14 @@ export class ContactsController {
   @Get()
   async listContacts(@CurrentTenant() tenantId: string) {
     return this.contactsService.findAll(tenantId);
+  }
+
+  @Post()
+  async createContact(
+    @CurrentTenant() tenantId: string,
+    @Body() data: { name: string; phone?: string; email?: string; source?: string; tags?: string[] },
+  ) {
+    return this.contactsService.createContact(tenantId, data);
   }
 
   @Patch(':id')

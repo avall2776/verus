@@ -23,6 +23,7 @@ import {
   Zap,
   Settings,
   LifeBuoy,
+  Megaphone,
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
@@ -34,6 +35,7 @@ export interface UserPermissions {
   automations: boolean;  // Automações & Agentes IA
   settings: boolean;     // Configurações Gerais
   support: boolean;      // Central de Suporte
+  marketing: boolean;    // Acesso a Operações de Marketing (Equipe da Agência)
 }
 
 export const DEFAULT_AGENT_PERMISSIONS: UserPermissions = {
@@ -43,6 +45,7 @@ export const DEFAULT_AGENT_PERMISSIONS: UserPermissions = {
   automations: false,
   settings: false,
   support: true,
+  marketing: false,
 };
 
 export const DEFAULT_ADMIN_PERMISSIONS: UserPermissions = {
@@ -52,6 +55,7 @@ export const DEFAULT_ADMIN_PERMISSIONS: UserPermissions = {
   automations: true,
   settings: true,
   support: true,
+  marketing: true,
 };
 
 const PERMISSION_CONFIGS = [
@@ -97,6 +101,13 @@ const PERMISSION_CONFIGS = [
     description: "Abertura e gestão de chamados",
     icon: LifeBuoy,
   },
+  {
+    key: "marketing" as keyof UserPermissions,
+    label: "Acesso a Operações de Marketing (Equipe da Agência)",
+    badgeLabel: "Marketing",
+    description: "Kanban de produção, clientes, cronograma, tráfego pago e ponto",
+    icon: Megaphone,
+  },
 ];
 
 interface UserItem {
@@ -106,6 +117,7 @@ interface UserItem {
   role: string;
   isActive?: boolean;
   isSuperAdmin?: boolean;
+  canAccessMarketing?: boolean;
   permissions?: UserPermissions;
   avatarUrl?: string;
   isOnline?: boolean;
@@ -160,8 +172,8 @@ function PermissionSelector({
               onClick={() => toggle(p.key)}
               className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 transition-all select-none ${
                 isGranted
-                  ? "bg-[#070D1B] border-blue-500/40 hover:border-blue-500/60"
-                  : "bg-[#070D1B]/40 border-slate-800 opacity-60 hover:opacity-80"
+                  ? "bg-slate-50 dark:bg-[#070D1B] border-blue-500/40 hover:border-blue-500/60"
+                  : "bg-slate-50/40 dark:bg-slate-50 dark:bg-[#070D1B]/40 border-slate-800 opacity-60 hover:opacity-80"
               } ${isAdmin ? "cursor-default" : "cursor-pointer"}`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
@@ -269,6 +281,7 @@ export default function UsersSettingsTab() {
         password: invitePassword.trim() || undefined,
         role: inviteRole,
         permissions: permsToSave,
+        canAccessMarketing: inviteRole === "ADMIN" ? true : Boolean(permsToSave.marketing),
       });
 
       toast.success(res.data?.message || "Membro convidado com sucesso!");
@@ -290,7 +303,7 @@ export default function UsersSettingsTab() {
     setEditIsActive(u.isActive !== false);
     setEditPassword("");
 
-    const perms = u.permissions || (role === "ADMIN" ? DEFAULT_ADMIN_PERMISSIONS : DEFAULT_AGENT_PERMISSIONS);
+    const perms = (u.permissions as any) || (role === "ADMIN" ? DEFAULT_ADMIN_PERMISSIONS : DEFAULT_AGENT_PERMISSIONS);
     setEditPermissions({
       inbox: perms.inbox !== false,
       crm: perms.crm !== false,
@@ -298,6 +311,7 @@ export default function UsersSettingsTab() {
       automations: role === "ADMIN" ? true : perms.automations === true,
       settings: role === "ADMIN" ? true : perms.settings === true,
       support: perms.support !== false,
+      marketing: role === "ADMIN" ? true : Boolean(u.canAccessMarketing || perms.marketing),
     });
 
     setIsEditModalOpen(true);
@@ -319,6 +333,7 @@ export default function UsersSettingsTab() {
         role: editRole,
         isActive: editIsActive,
         permissions: permsToSave,
+        canAccessMarketing: editRole === "ADMIN" ? true : Boolean(permsToSave.marketing),
       };
       if (editPassword.trim()) {
         payload.password = editPassword.trim();
@@ -384,7 +399,7 @@ export default function UsersSettingsTab() {
       </div>
 
       {/* Lista de Usuários */}
-      <div className="rounded-xl bg-[#070D1B] border border-slate-800/80 overflow-hidden divide-y divide-slate-800/60 shadow-lg">
+      <div className="rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 overflow-hidden divide-y divide-slate-800/60 shadow-lg">
         {users.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-500">
             Nenhum colaborador cadastrado além do administrador principal.
@@ -462,6 +477,13 @@ export default function UsersSettingsTab() {
                     {isAdmin ? "Administrador" : "Atendente"}
                   </span>
 
+                  {Boolean(u.canAccessMarketing || (u.permissions as any)?.marketing) && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
+                      <Megaphone className="w-2.5 h-2.5" />
+                      Marketing
+                    </span>
+                  )}
+
                   {/* Botão de Edição */}
                   <button
                     onClick={() => handleOpenEditModal(u)}
@@ -490,7 +512,7 @@ export default function UsersSettingsTab() {
       {isInviteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full max-w-lg bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4 max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-lg bg-white dark:bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -514,7 +536,7 @@ export default function UsersSettingsTab() {
                   value={inviteName}
                   onChange={(e) => setInviteName(e.target.value)}
                   placeholder="Ex: Carlos Eduardo Silva"
-                  className="w-full p-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
                   required
                 />
               </div>
@@ -526,7 +548,7 @@ export default function UsersSettingsTab() {
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="carlos@suaempresa.com.br"
-                  className="w-full p-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
                   required
                 />
               </div>
@@ -538,7 +560,7 @@ export default function UsersSettingsTab() {
                   value={invitePassword}
                   onChange={(e) => setInvitePassword(e.target.value)}
                   placeholder="Padrão: Vallor@123"
-                  className="w-full p-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
                 />
                 <span className="text-[10px] text-slate-500">
                   Deixe em branco para usar a senha padrão segura (Vallor@123).
@@ -557,7 +579,7 @@ export default function UsersSettingsTab() {
                     className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                       inviteRole === "AGENT"
                         ? "bg-blue-600/20 border-blue-500 text-blue-300"
-                        : "bg-[#070D1B] border-slate-700 text-slate-400 hover:text-white"
+                        : "bg-slate-50 dark:bg-[#070D1B] border-slate-700 text-slate-400 hover:text-white"
                     }`}
                   >
                     <User className="w-3.5 h-3.5" />
@@ -573,7 +595,7 @@ export default function UsersSettingsTab() {
                     className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                       inviteRole === "ADMIN"
                         ? "bg-blue-600/20 border-blue-500 text-blue-300"
-                        : "bg-[#070D1B] border-slate-700 text-slate-400 hover:text-white"
+                        : "bg-slate-50 dark:bg-[#070D1B] border-slate-700 text-slate-400 hover:text-white"
                     }`}
                   >
                     <Shield className="w-3.5 h-3.5" />
@@ -635,7 +657,7 @@ export default function UsersSettingsTab() {
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full max-w-lg bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4 max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-lg bg-white dark:bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -659,7 +681,7 @@ export default function UsersSettingsTab() {
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   placeholder="Nome do colaborador"
-                  className="w-full p-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
                   required
                 />
               </div>
@@ -675,7 +697,7 @@ export default function UsersSettingsTab() {
                     className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                       editRole === "AGENT"
                         ? "bg-blue-600/20 border-blue-500 text-blue-300"
-                        : "bg-[#070D1B] border-slate-700 text-slate-400 hover:text-white"
+                        : "bg-slate-50 dark:bg-[#070D1B] border-slate-700 text-slate-400 hover:text-white"
                     }`}
                   >
                     <User className="w-3.5 h-3.5" />
@@ -691,7 +713,7 @@ export default function UsersSettingsTab() {
                     className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                       editRole === "ADMIN"
                         ? "bg-blue-600/20 border-blue-500 text-blue-300"
-                        : "bg-[#070D1B] border-slate-700 text-slate-400 hover:text-white"
+                        : "bg-slate-50 dark:bg-[#070D1B] border-slate-700 text-slate-400 hover:text-white"
                     }`}
                   >
                     <Shield className="w-3.5 h-3.5" />
@@ -709,7 +731,7 @@ export default function UsersSettingsTab() {
                     className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                       editIsActive
                         ? "bg-emerald-600/20 border-emerald-500 text-emerald-300"
-                        : "bg-[#070D1B] border-slate-700 text-slate-400 hover:text-white"
+                        : "bg-slate-50 dark:bg-[#070D1B] border-slate-700 text-slate-400 hover:text-white"
                     }`}
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
@@ -722,7 +744,7 @@ export default function UsersSettingsTab() {
                     className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                       !editIsActive
                         ? "bg-rose-600/20 border-rose-500 text-rose-300"
-                        : "bg-[#070D1B] border-slate-700 text-slate-400 hover:text-white"
+                        : "bg-slate-50 dark:bg-[#070D1B] border-slate-700 text-slate-400 hover:text-white"
                     }`}
                   >
                     <XCircle className="w-3.5 h-3.5" />
@@ -745,7 +767,7 @@ export default function UsersSettingsTab() {
                   value={editPassword}
                   onChange={(e) => setEditPassword(e.target.value)}
                   placeholder="Deixe em branco para manter a senha atual"
-                  className="w-full p-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
                 />
                 <span className="text-[10px] text-slate-500">
                   Preencha apenas se desejar redefinir a credencial deste colaborador.

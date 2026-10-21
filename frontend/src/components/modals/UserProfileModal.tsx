@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Camera, Mail, Shield, Check, X, RefreshCw, Upload, Image as ImageIcon } from "lucide-react";
+import { User, Camera, Mail, Shield, Check, X, RefreshCw, Upload, Image as ImageIcon, Sun, Moon } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export default function UserProfileModal({
   currentUser,
   onUserUpdated,
 }: UserProfileModalProps) {
+  const { theme, setTheme } = useTheme();
   const [name, setName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [customUrlInput, setCustomUrlInput] = useState(false);
@@ -146,23 +148,23 @@ export default function UserProfileModal({
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="bg-[#0B1224] border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl p-6 flex flex-col gap-5 animate-in zoom-in-95 text-white"
+        className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-2xl shadow-2xl p-6 flex flex-col gap-5 animate-in zoom-in-95 text-slate-900 dark:text-white"
       >
         {/* Cabeçalho */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-600/10 text-blue-400 border border-blue-500/30 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-blue-600/10 text-blue-500 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center">
               <User className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Meu Perfil do Sistema</h3>
-              <p className="text-[11px] text-slate-400">Edite seu nome de operador e foto de exibição</p>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Meu Perfil do Sistema</h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Edite seu nome de operador e foto de exibição</p>
             </div>
           </div>
           <button 
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -170,9 +172,9 @@ export default function UserProfileModal({
 
         <form onSubmit={handleSave} className="space-y-4">
           {/* Seletor e Preview de Foto de Perfil */}
-          <div className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl bg-[#070D1B] border border-slate-800">
+          <div className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
             <div className="relative group">
-              <div className="w-20 h-20 rounded-full bg-blue-600/20 text-blue-400 border-2 border-blue-500/40 flex items-center justify-center font-bold text-2xl overflow-hidden shadow-md">
+              <div className="w-20 h-20 rounded-full bg-blue-600/20 text-blue-500 dark:text-blue-400 border-2 border-blue-500/40 flex items-center justify-center font-bold text-2xl overflow-hidden shadow-md">
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img 
@@ -187,7 +189,7 @@ export default function UserProfileModal({
 
               <label 
                 htmlFor="avatar-upload-input"
-                className="absolute bottom-0 right-0 p-1.5 rounded-full bg-blue-600 text-white cursor-pointer hover:bg-blue-500 transition-colors shadow-md border-2 border-[#0B1224]"
+                className="absolute bottom-0 right-0 p-1.5 rounded-full bg-blue-600 text-white cursor-pointer hover:bg-blue-500 transition-colors shadow-md border-2 border-white dark:border-[#0B1224]"
                 title="Carregar foto do computador"
               >
                 <Camera className="w-3.5 h-3.5" />
@@ -204,25 +206,25 @@ export default function UserProfileModal({
             <div className="flex items-center gap-2">
               <label 
                 htmlFor="avatar-upload-input"
-                className="text-[11px] font-semibold text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
+                className="text-[11px] font-semibold text-blue-500 dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
               >
                 <Upload className="w-3 h-3" /> Fazer Upload
               </label>
-              <span className="text-slate-600">•</span>
+              <span className="text-slate-400 dark:text-slate-600">•</span>
               <button
                 type="button"
                 onClick={() => setCustomUrlInput(!customUrlInput)}
-                className="text-[11px] font-semibold text-slate-400 hover:text-slate-200 flex items-center gap-1"
+                className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center gap-1"
               >
                 <ImageIcon className="w-3 h-3" /> Inserir Link URL
               </button>
               {avatarUrl && (
                 <>
-                  <span className="text-slate-600">•</span>
+                  <span className="text-slate-400 dark:text-slate-600">•</span>
                   <button
                     type="button"
                     onClick={() => setAvatarUrl("")}
-                    className="text-[11px] font-semibold text-rose-400 hover:underline"
+                    className="text-[11px] font-semibold text-rose-500 dark:text-rose-400 hover:underline"
                   >
                     Remover
                   </button>
@@ -236,20 +238,20 @@ export default function UserProfileModal({
                 value={avatarUrl}
                 onChange={(e) => setAvatarUrl(e.target.value)}
                 placeholder="https://exemplo.com/minha-foto.jpg"
-                className="w-full px-3 py-1.5 text-xs rounded-lg bg-[#0B1224] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+                className="w-full px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-[#0B1224] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
               />
             )}
 
             {/* Presets Rápidos */}
             <div className="flex items-center gap-2 pt-1">
-              <span className="text-[10px] text-slate-400">Sugestões:</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">Sugestões:</span>
               <div className="flex items-center gap-1.5">
                 {PRESET_AVATARS.map((url, idx) => (
                   <button
                     type="button"
                     key={idx}
                     onClick={() => setAvatarUrl(url)}
-                    className="w-6 h-6 rounded-full border border-slate-700 hover:border-blue-500 overflow-hidden transition-all shrink-0"
+                    className="w-6 h-6 rounded-full border border-slate-300 dark:border-slate-700 hover:border-blue-500 overflow-hidden transition-all shrink-0"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={url} alt={`Preset ${idx}`} className="w-full h-full object-cover" />
@@ -261,7 +263,7 @@ export default function UserProfileModal({
 
           {/* Nome do Operador */}
           <div>
-            <label className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider block mb-1.5">
+            <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
               Nome Completo do Operador *
             </label>
             <input 
@@ -270,39 +272,73 @@ export default function UserProfileModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Carlos Albuquerque"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
             />
           </div>
 
           {/* E-mail e Cargo (Informativo) */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+              <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
                 E-mail de Acesso
               </label>
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#070D1B] border border-slate-800 text-xs text-slate-300">
-                <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300">
+                <Mail className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
                 <span className="truncate">{currentUser?.email || "usuario@vallor.com.br"}</span>
               </div>
             </div>
 
             <div>
-              <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+              <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
                 Nível de Acesso
               </label>
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#070D1B] border border-slate-800 text-xs text-slate-300">
-                <Shield className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300">
+                <Shield className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
                 <span>{currentUser?.role === "ADMIN" ? "Administrador" : "Operador"}</span>
               </div>
             </div>
           </div>
 
+          {/* Seletor de Tema do Sistema (Dark / Light Mode) */}
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-2">
+            <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
+              Aparência do Sistema (Tema Dia / Noite)
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setTheme("dark")}
+                className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                  theme === "dark"
+                    ? "bg-blue-600/15 border-blue-500 text-blue-500 dark:text-blue-400 font-bold ring-1 ring-blue-500/30"
+                    : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700"
+                }`}
+              >
+                <Moon size={15} className={theme === "dark" ? "text-blue-500 dark:text-blue-400" : "text-slate-400"} />
+                <span>Tema Escuro (Noite)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTheme("light")}
+                className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                  theme === "light"
+                    ? "bg-amber-500/15 border-amber-500 text-amber-600 font-bold ring-1 ring-amber-500/30"
+                    : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700"
+                }`}
+              >
+                <Sun size={15} className={theme === "light" ? "text-amber-500" : "text-slate-400"} />
+                <span>Tema Claro (Dia)</span>
+              </button>
+            </div>
+          </div>
+
           {/* Rodapé com Ações */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800 transition-colors"
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-colors"
             >
               Cancelar
             </button>

@@ -107,7 +107,7 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
 
   return (
     <div
-      className={`flex flex-col gap-2 p-3 rounded-2xl bg-[#0B1224] border border-slate-800/90 shadow-lg text-white select-none ${className}`}
+      className={`flex flex-col gap-2 p-3 rounded-2xl bg-slate-100 dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/90 shadow-sm dark:shadow-lg text-slate-800 dark:text-white select-none ${className}`}
     >
       {/* Elemento de áudio nativo oculto */}
       <audio
@@ -149,7 +149,7 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
           <div
             ref={progressBarRef}
             onClick={handleSeek}
-            className="relative h-2 w-full bg-slate-800/90 hover:h-2.5 rounded-full cursor-pointer transition-all overflow-hidden group/bar"
+            className="relative h-2 w-full bg-slate-200 dark:bg-slate-800/90 hover:h-2.5 rounded-full cursor-pointer transition-all overflow-hidden group/bar"
             title="Clique para avançar ou retroceder"
           >
             {/* Barra preenchida com gradiente monocromático ciano/azul do Vallor */}
@@ -165,7 +165,7 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
           </div>
 
           {/* Timers de Reprodução */}
-          <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-mono">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
@@ -175,7 +175,7 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
         <button
           type="button"
           onClick={cyclePlaybackRate}
-          className="px-2 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 hover:border-cyan-500/50 text-[11px] font-bold text-cyan-300 hover:text-white transition-all cursor-pointer shrink-0"
+          className="px-2 py-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 dark:border-slate-700/60 dark:hover:border-cyan-500/50 text-[11px] font-bold text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-white transition-all cursor-pointer shrink-0 shadow-sm"
           title="Alterar velocidade de reprodução"
         >
           {playbackRate}x
@@ -187,7 +187,7 @@ export const VersusAudioPlayer: React.FC<VersusAudioPlayerProps> = ({
           download={downloadName}
           target="_blank"
           rel="noopener noreferrer"
-          className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 hover:border-slate-600 text-slate-400 hover:text-white transition-all cursor-pointer shrink-0"
+          className="p-2 rounded-lg bg-white hover:bg-slate-200 border border-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 dark:border-slate-700/60 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white transition-all cursor-pointer shrink-0 shadow-sm"
           title="Baixar áudio"
         >
           <Download size={14} />

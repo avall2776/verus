@@ -51,7 +51,7 @@ export function SellerDetailModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="w-full max-w-2xl rounded-2xl bg-[#0B1224] border border-slate-700/80 shadow-2xl text-slate-200 overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-2xl rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-700/80 shadow-2xl text-slate-200 overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -104,7 +104,7 @@ export function SellerDetailModal({
             <>
               {/* KPIs Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800/80">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
                   <span className="text-[11px] font-medium text-slate-400 block mb-1">
                     Receita Faturada
                   </span>
@@ -116,7 +116,7 @@ export function SellerDetailModal({
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800/80">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
                   <span className="text-[11px] font-medium text-slate-400 block mb-1">
                     Contratos Ganhos
                   </span>
@@ -128,7 +128,7 @@ export function SellerDetailModal({
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800/80">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
                   <span className="text-[11px] font-medium text-slate-400 block mb-1">
                     Taxa de Conversão
                   </span>
@@ -137,7 +137,7 @@ export function SellerDetailModal({
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800/80">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
                   <span className="text-[11px] font-medium text-slate-400 block mb-1">
                     Ticket Médio
                   </span>
@@ -152,7 +152,7 @@ export function SellerDetailModal({
 
               {/* Badges de Conquistas do Consultor */}
               {data.badges && data.badges.length > 0 && (
-                <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800/80 space-y-3">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                       <Award className="w-4 h-4 text-blue-400" />
@@ -167,7 +167,7 @@ export function SellerDetailModal({
                     {data.badges.map((badge) => (
                       <div
                         key={badge.id}
-                        className="p-2.5 rounded-lg bg-[#0B1224] border border-slate-800 flex items-start gap-2.5"
+                        className="p-2.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-800 flex items-start gap-2.5"
                       >
                         <span className="text-xl p-1.5 rounded-md bg-slate-800/80 shrink-0">
                           {badge.icon}
@@ -199,11 +199,11 @@ export function SellerDetailModal({
                 </div>
 
                 {data.recentDeals.length === 0 ? (
-                  <div className="py-8 text-center rounded-xl bg-[#070D1B] border border-slate-800/80 text-xs text-slate-500">
+                  <div className="py-8 text-center rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 text-xs text-slate-500">
                     Nenhum negócio associado a este consultor no período.
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-slate-800/80 overflow-hidden bg-[#070D1B]">
+                  <div className="rounded-xl border border-slate-800/80 overflow-hidden bg-slate-50 dark:bg-[#070D1B]">
                     <div className="max-h-64 overflow-y-auto divide-y divide-slate-800/60">
                       {data.recentDeals.map((deal) => (
                         <div

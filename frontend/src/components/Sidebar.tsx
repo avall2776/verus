@@ -36,6 +36,11 @@ import {
   ShieldCheck,
   Building2,
   MonitorSmartphone,
+  Megaphone,
+  KanbanSquare as LayoutKanban,
+  Briefcase,
+  Calendar,
+  FolderArchive,
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -48,6 +53,7 @@ import WorkspaceManagerModal, { WorkspaceItem } from "@/components/modals/Worksp
 import { getCachedUser, clearUserCache } from "@/lib/userCache";
 import { isAvatarUrlValid } from "@/lib/avatarUtils";
 import { useMobileMenu } from "@/contexts/MobileMenuContext";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 function WhatsAppIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
   return (
@@ -67,6 +73,15 @@ const NAV_GROUPS = [
       { name: "Monitor em Tempo Real", icon: Activity, href: "/monitor" },
       { name: "WhatsApp", icon: WhatsAppIcon, href: "/inbox" },
       { name: "Métricas de Atendimento", icon: BarChart, href: "/dashboard/atendimento" },
+    ]
+  },
+  {
+    title: "MARKETING & AGÊNCIA",
+    items: [
+      { name: "Kanban de Produção", icon: LayoutKanban, href: "/agency/marketing" },
+      { name: "Clientes & Escopos", icon: Briefcase, href: "/agency/marketing/clients" },
+      { name: "Cronograma", icon: Calendar, href: "/agency/marketing/schedule" },
+      { name: "Biblioteca de Mídia", icon: FolderArchive, href: "/agency/marketing/media" },
     ]
   },
   {
@@ -361,8 +376,17 @@ export default function Sidebar() {
     NAV_GROUPS.forEach(g => {
       initialGroups[g.title] = false;
     });
+    if (pathname.startsWith('/agency/marketing')) {
+      initialGroups["MARKETING & AGÊNCIA"] = true;
+    }
     setExpandedGroups(initialGroups);
   }, []);
+
+  useEffect(() => {
+    if (pathname.startsWith('/agency/marketing')) {
+      setExpandedGroups(prev => ({ ...prev, "MARKETING & AGÊNCIA": true }));
+    }
+  }, [pathname]);
 
   const toggleSidebar = () => {
     const newState = !isExpanded;
@@ -510,6 +534,12 @@ export default function Sidebar() {
       return perms.support !== false;
     }
 
+    // Operações de Marketing da Agência
+    if (base === '/agency/marketing' || base.startsWith('/agency/marketing')) {
+      if (isSuperAdmin || user.role === 'ADMIN') return true;
+      return Boolean(user.canAccessMarketing === true || perms.marketing === true);
+    }
+
     // Configurações Gerais
     if (base === '/settings' || href.includes('tab=users') || base === '/settings/whatsapp') {
       return perms.settings === true;
@@ -526,21 +556,63 @@ export default function Sidebar() {
   return (
     <>
       <aside 
-        className={`hidden md:flex bg-[#0B1224] border-r border-gray-800 flex-col justify-between h-full transition-[width] duration-200 ease-in-out relative z-20 shrink-0 ${isExpanded ? 'w-[260px]' : 'w-[64px]'}`}
+        className={`hidden md:flex bg-white dark:bg-[#0B1224] border-r border-slate-200 dark:border-gray-800 flex-col justify-between h-full transition-[width] duration-200 ease-in-out relative z-20 shrink-0 ${isExpanded ? 'w-[260px]' : 'w-[64px]'}`}
       >
       <div className="flex flex-col h-full overflow-hidden">
         
         {/* Header / Workspace & Tenant Selector */}
-        <div className="h-16 flex items-center justify-between border-b border-gray-800 px-3 shrink-0 relative">
+        <div className="h-16 flex items-center justify-between border-b border-slate-200 dark:border-gray-800 px-3 shrink-0 relative">
           {isExpanded ? (
-            <div 
-              onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
-              className="flex items-center gap-2.5 cursor-pointer hover:bg-gray-800/50 p-1.5 rounded-xl transition-colors w-full select-none"
-              title="Clique para alternar ou gerenciar workspaces"
-            >
+            <div className="flex items-center justify-between w-full gap-1">
               <div 
-                className="w-8 h-8 rounded-xl border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 shadow-sm overflow-hidden"
+                onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
+                className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-800/50 p-1.5 rounded-xl transition-colors min-w-0 flex-1 select-none"
+                title="Clique para alternar ou gerenciar workspaces"
+              >
+                <div 
+                  className="w-8 h-8 rounded-xl border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 shadow-sm overflow-hidden"
+                  style={{ backgroundColor: activeWorkspace?.themeColor || "#2563EB" }}
+                >
+                  {activeWorkspace?.logoUrl ? (
+                    <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{(activeWorkspace?.name || targetTenantName || "W").charAt(0).toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="flex flex-col overflow-hidden min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-xs font-bold text-slate-800 dark:text-white truncate leading-tight">
+                      {targetTenantName ? (activeWorkspace?.name || targetTenantName) : (activeWorkspace?.name || "Workspace Principal")}
+                    </span>
+                    {targetTenantId && (
+                      <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold border border-amber-500/30 shrink-0">
+                        Suporte
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-slate-500 dark:text-gray-400 truncate">
+                    {targetTenantName ? `${targetTenantName} (Suporte)` : (currentUser?.tenantName ? `${currentUser.tenantName}` : "VALLOR INC.")}
+                  </span>
+                </div>
+                <ChevronDown 
+                  size={14} 
+                  className={`text-gray-400 dark:text-gray-500 ml-auto transition-transform duration-200 ${isWorkspaceDropdownOpen ? "rotate-180 text-blue-500" : ""}`} 
+                />
+              </div>
+
+              {/* Botão de Alternância de Tema no topo da Sidebar */}
+              <ThemeToggle className="shrink-0" />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2 mx-auto">
+              <div 
+                onClick={() => {
+                  setIsExpanded(true);
+                  setIsWorkspaceDropdownOpen(true);
+                }}
+                className="w-8 h-8 rounded-xl border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 mx-auto shadow-sm cursor-pointer overflow-hidden"
                 style={{ backgroundColor: activeWorkspace?.themeColor || "#2563EB" }}
+                title={targetTenantName ? `${activeWorkspace?.name || targetTenantName} (Modo Suporte)` : (activeWorkspace?.name || "Workspace")}
               >
                 {activeWorkspace?.logoUrl ? (
                   <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
@@ -548,47 +620,12 @@ export default function Sidebar() {
                   <span>{(activeWorkspace?.name || targetTenantName || "W").charAt(0).toUpperCase()}</span>
                 )}
               </div>
-              <div className="flex flex-col overflow-hidden min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-xs font-bold text-white truncate leading-tight">
-                    {targetTenantName ? (activeWorkspace?.name || targetTenantName) : (activeWorkspace?.name || "Workspace Principal")}
-                  </span>
-                  {targetTenantId && (
-                    <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 shrink-0">
-                      Suporte
-                    </span>
-                  )}
-                </div>
-                <span className="text-[10px] text-gray-400 truncate">
-                  {targetTenantName ? `${targetTenantName} (Suporte)` : (currentUser?.tenantName ? `${currentUser.tenantName}` : "VALLOR INC.")}
-                </span>
-              </div>
-              <ChevronDown 
-                size={14} 
-                className={`text-gray-500 ml-auto transition-transform duration-200 ${isWorkspaceDropdownOpen ? "rotate-180 text-blue-400" : ""}`} 
-              />
-            </div>
-          ) : (
-            <div 
-              onClick={() => {
-                setIsExpanded(true);
-                setIsWorkspaceDropdownOpen(true);
-              }}
-              className="w-8 h-8 rounded-xl border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 mx-auto shadow-sm cursor-pointer overflow-hidden"
-              style={{ backgroundColor: activeWorkspace?.themeColor || "#2563EB" }}
-              title={targetTenantName ? `${activeWorkspace?.name || targetTenantName} (Modo Suporte)` : (activeWorkspace?.name || "Workspace")}
-            >
-              {activeWorkspace?.logoUrl ? (
-                <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
-              ) : (
-                <span>{(activeWorkspace?.name || targetTenantName || "W").charAt(0).toUpperCase()}</span>
-              )}
             </div>
           )}
 
           {/* Dropdown de Seleção de Workspaces */}
           {isExpanded && isWorkspaceDropdownOpen && (
-            <div className="absolute top-16 left-3 right-3 bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="absolute top-16 left-3 right-3 bg-white dark:bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 Workspaces / Unidades
               </div>
@@ -652,7 +689,7 @@ export default function Sidebar() {
                     setIsWorkspaceDropdownOpen(false);
                     setIsWorkspaceModalOpen(true);
                   }}
-                  className="w-full flex items-center justify-center gap-2 p-2 rounded-xl bg-[#070D1B] hover:bg-slate-800 text-blue-400 hover:text-blue-300 text-xs font-bold transition-colors border border-slate-800 hover:border-blue-500/30 shadow-sm"
+                  className="w-full flex items-center justify-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] hover:bg-slate-800 text-blue-400 hover:text-blue-300 text-xs font-bold transition-colors border border-slate-800 hover:border-blue-500/30 shadow-sm"
                 >
                   <Building2 size={14} />
                   <span>Gerenciar Workspaces</span>
@@ -664,22 +701,22 @@ export default function Sidebar() {
 
         {/* Banner Modo Suporte Super Admin */}
         {targetTenantId && isExpanded && (
-          <div className="mx-3 mt-2 mb-1 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex flex-col gap-1.5 shrink-0 shadow-lg shadow-amber-950/20">
+          <div className="mx-3 mt-2 mb-1 p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 text-slate-800 dark:text-blue-200 text-xs flex flex-col gap-1.5 shrink-0 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="font-bold flex items-center gap-1.5 truncate text-[11px]">
-                <Building2 size={13} className="text-amber-400 shrink-0" />
+              <span className="font-bold flex items-center gap-1.5 truncate text-[11px] text-blue-900 dark:text-blue-200">
+                <Building2 size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
                 <span className="truncate">{targetTenantName || 'Agência Alvo'}</span>
               </span>
-              <span className="text-[9px] bg-amber-500/25 text-amber-300 font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
+              <span className="text-[9px] bg-blue-600 text-white font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
                 SUPORTE
               </span>
             </div>
-            <p className="text-[10px] text-amber-400/80 leading-tight">
+            <p className="text-[10px] text-blue-700/90 dark:text-blue-300/80 leading-tight">
               Acesso de auditoria no contexto desta agência cliente.
             </p>
             <button
               onClick={handleExitSupportMode}
-              className="w-full text-center text-[11px] font-bold py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 hover:text-white transition-all border border-amber-500/40 cursor-pointer"
+              className="w-full text-center text-[11px] font-bold py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 active:scale-95 text-white transition-all shadow-sm cursor-pointer"
             >
               Sair do Modo Suporte
             </button>
@@ -690,7 +727,7 @@ export default function Sidebar() {
           <div 
             onClick={() => setIsExpanded(true)}
             title={`Modo Suporte Ativo: ${targetTenantName || 'Agência'}. Clique para expandir.`}
-            className="mx-2 mt-2 p-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center cursor-pointer hover:bg-amber-500/30 transition-colors"
+            className="mx-2 mt-2 p-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 text-blue-600 dark:text-blue-400 flex items-center justify-center cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
           >
             <Building2 size={16} className="animate-pulse" />
           </div>
@@ -729,9 +766,13 @@ export default function Sidebar() {
               <div className={`flex flex-col gap-1 ${!isExpanded ? 'items-center' : ''} ${(!expandedGroups[group.title] && isExpanded) ? 'hidden' : ''}`}>
                 {group.items.map((item) => {
                   const itemBase = item.href.split('?')[0];
+                  const isMarketingMain = item.href === '/agency/marketing';
+                  const isMarketingGroup = group.title === "MARKETING & AGÊNCIA";
                   const isActive = item.href.includes('?')
                     ? pathname === itemBase
-                    : pathname === item.href || (item.href !== '/dashboard' && item.href !== '/settings' && pathname.startsWith(item.href));
+                    : isMarketingMain
+                      ? pathname === '/agency/marketing' || pathname === '/agency/marketing/kanban'
+                      : pathname === item.href || (item.href !== '/dashboard' && item.href !== '/settings' && !isMarketingMain && pathname.startsWith(item.href));
                   const isInbox = item.href === '/inbox';
                   const shouldBlink = isInbox && hasGlobalUnread && !isActive;
 
@@ -743,15 +784,15 @@ export default function Sidebar() {
                       title={!isExpanded ? item.name : undefined}
                       className={`
                         flex items-center gap-3 rounded-lg transition-all duration-200 relative
-                        ${isExpanded ? 'px-3 py-2' : 'w-10 h-10 justify-center'}
+                        ${isExpanded ? (isMarketingGroup ? 'pl-6 pr-3 py-2' : 'px-3 py-2') : 'w-10 h-10 justify-center'}
                         ${isActive 
-                          ? 'text-blue-400 bg-blue-600/15 border-l-2 border-blue-500 font-medium' 
-                          : 'text-gray-400 hover:bg-slate-800/60 hover:text-slate-200'
+                          ? 'text-white bg-slate-800/60 border-l-2 border-cyan-400 font-medium shadow-sm' 
+                          : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
                         }
                         ${shouldBlink ? 'bg-primary/20 shadow-[0_0_15px_rgba(0,210,255,0.2)] animate-pulse text-white' : ''}
                       `}
                     >
-                      <item.icon size={isExpanded ? 18 : 20} className={isActive ? 'text-blue-400' : 'text-gray-400'} />
+                      <item.icon size={isExpanded ? 17 : 20} strokeWidth={isActive ? 1.75 : 1.5} className={isActive ? 'text-cyan-400' : 'text-slate-400'} />
                       
                       {isExpanded && (
                         <span className="text-sm truncate flex-1">{item.name}</span>
@@ -807,7 +848,7 @@ export default function Sidebar() {
               <div 
                 onMouseEnter={handleMouseEnterUser}
                 onMouseLeave={handleMouseLeaveUser}
-                className={`absolute bottom-full mb-2.5 rounded-2xl bg-[#0B1224] border border-slate-800 shadow-2xl p-2 z-[90] flex flex-col gap-1 text-white animate-in fade-in-50 slide-in-from-bottom-2 ${
+                className={`absolute bottom-full mb-2.5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 shadow-2xl p-2 z-[90] flex flex-col gap-1 text-white animate-in fade-in-50 slide-in-from-bottom-2 ${
                   isExpanded ? "left-0 w-64" : "left-full ml-2 w-64"
                 }`}
               >
@@ -885,11 +926,14 @@ export default function Sidebar() {
                     setIsUserMenuOpen(false);
                     router.push("/support");
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-300 hover:text-white hover:bg-slate-800/70 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors text-left"
                 >
-                  <LifeBuoy size={15} className="text-blue-400" />
+                  <LifeBuoy size={15} className="text-blue-500 dark:text-blue-400" />
                   <span>Central de Suporte</span>
                 </button>
+
+                {/* Opção: Alternância de Tema Dia/Noite */}
+                <ThemeToggle variant="menu-item" />
 
                 {/* Opção Super Admin (se aplicável) */}
                 {(currentUser?.isSuperAdmin || currentUser?.role === 'SUPER_ADMIN') && (
@@ -1001,9 +1045,9 @@ export default function Sidebar() {
           />
 
           {/* Drawer Lateral */}
-          <aside className="relative w-[300px] max-w-[85vw] bg-[#0B1224] border-r border-gray-800 flex flex-col justify-between h-full z-10 shadow-2xl animate-in slide-in-from-left duration-200">
+          <aside className="relative w-[300px] max-w-[85vw] bg-white dark:bg-[#0B1224] border-r border-slate-200 dark:border-gray-800 flex flex-col justify-between h-full z-10 shadow-2xl animate-in slide-in-from-left duration-200">
             {/* Header Mobile Drawer */}
-            <div className="h-16 flex items-center justify-between border-b border-gray-800 px-4 shrink-0">
+            <div className="h-16 flex items-center justify-between border-b border-slate-200 dark:border-gray-800 px-4 shrink-0 bg-white dark:bg-[#0B1224]">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div 
                   className="w-8 h-8 rounded-xl border border-blue-500/30 flex items-center justify-center font-black text-white shrink-0 shadow-sm overflow-hidden"
@@ -1017,38 +1061,41 @@ export default function Sidebar() {
                   )}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-white truncate">
+                  <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
                     {targetTenantName ? (activeWorkspace?.name || targetTenantName) : (activeWorkspace?.name || "Workspace Principal")}
                   </span>
-                  <span className="text-[10px] text-gray-400 truncate">
+                  <span className="text-[10px] text-slate-500 dark:text-gray-400 truncate">
                     {targetTenantName ? `${targetTenantName} (Suporte)` : (currentUser?.tenantName ? currentUser.tenantName : "VALLOR")}
                   </span>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={closeMobileMenu}
-                className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800/80 transition-colors"
-                title="Fechar Menu"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-1.5">
+                <ThemeToggle />
+                <button
+                  type="button"
+                  onClick={closeMobileMenu}
+                  className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-gray-800/80 transition-colors"
+                  title="Fechar Menu"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             {/* Banner Modo Suporte Super Admin no Mobile Drawer */}
             {targetTenantId && (
-              <div className="mx-3 mt-2 mb-1 p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs flex flex-col gap-1.5 shrink-0 shadow-lg shadow-amber-950/20">
+              <div className="mx-3 mt-2 mb-1 p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 text-slate-800 dark:text-blue-200 text-xs flex flex-col gap-1.5 shrink-0 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold flex items-center gap-1.5 truncate text-[11px]">
-                    <Building2 size={13} className="text-amber-400 shrink-0" />
+                  <span className="font-bold flex items-center gap-1.5 truncate text-[11px] text-blue-900 dark:text-blue-200">
+                    <Building2 size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />
                     <span className="truncate">{targetTenantName || 'Agência Alvo'}</span>
                   </span>
-                  <span className="text-[9px] bg-amber-500/25 text-amber-300 font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
+                  <span className="text-[9px] bg-blue-600 text-white font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
                     SUPORTE
                   </span>
                 </div>
-                <p className="text-[10px] text-amber-400/80 leading-tight">
+                <p className="text-[10px] text-blue-700/90 dark:text-blue-300/80 leading-tight">
                   Visualizando em modo suporte como Super Admin.
                 </p>
                 <button
@@ -1057,7 +1104,7 @@ export default function Sidebar() {
                     closeMobileMenu();
                     handleExitSupportMode();
                   }}
-                  className="w-full text-center text-[11px] font-bold py-1.5 rounded-lg bg-amber-500/25 hover:bg-amber-500/35 text-amber-200 hover:text-white transition-all border border-amber-500/40 cursor-pointer"
+                  className="w-full text-center text-[11px] font-bold py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 active:scale-95 text-white transition-all shadow-sm cursor-pointer"
                 >
                   Voltar ao Super Admin
                 </button>
@@ -1074,9 +1121,13 @@ export default function Sidebar() {
                   <div className="flex flex-col gap-1">
                     {group.items.map((item) => {
                       const itemBase = item.href.split('?')[0];
+                      const isMarketingMain = item.href === '/agency/marketing';
+                      const isMarketingGroup = group.title === "MARKETING & AGÊNCIA";
                       const isActive = item.href.includes('?')
                         ? pathname === itemBase
-                        : pathname === item.href || (item.href !== '/dashboard' && item.href !== '/settings' && pathname.startsWith(item.href));
+                        : isMarketingMain
+                          ? pathname === '/agency/marketing' || pathname === '/agency/marketing/kanban'
+                          : pathname === item.href || (item.href !== '/dashboard' && item.href !== '/settings' && !isMarketingMain && pathname.startsWith(item.href));
                       const isInbox = item.href === '/inbox';
                       const shouldBlink = isInbox && hasGlobalUnread && !isActive;
 
@@ -1085,14 +1136,14 @@ export default function Sidebar() {
                           key={item.href}
                           href={item.href}
                           onClick={closeMobileMenu}
-                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 ${
+                          className={`flex items-center gap-3 ${isMarketingGroup ? 'pl-6 pr-3' : 'px-3'} py-2.5 rounded-xl font-medium text-sm transition-all duration-150 ${
                             isActive
-                              ? 'bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30'
-                              : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-200'
+                              ? 'bg-slate-800/80 text-white font-semibold border-l-2 border-cyan-400'
+                              : 'text-slate-400 hover:bg-gray-800/60 hover:text-gray-200'
                           }`}
                         >
                           <div className="relative shrink-0">
-                            <item.icon size={18} className={isActive ? 'text-blue-400' : 'text-gray-400'} />
+                            <item.icon size={18} strokeWidth={isActive ? 1.75 : 1.5} className={isActive ? 'text-cyan-400' : 'text-slate-400'} />
                             {shouldBlink && (
                               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" />
                             )}
@@ -1110,7 +1161,7 @@ export default function Sidebar() {
             </div>
 
             {/* Rodapé Mobile / Operador */}
-            <div className="p-3 border-t border-gray-800 bg-[#070D1B] flex flex-col gap-2">
+            <div className="p-3 border-t border-gray-800 bg-slate-50 dark:bg-[#070D1B] flex flex-col gap-2">
               {/* Atalho Console Super Admin no Mobile Footer */}
               {(currentUser?.isSuperAdmin || currentUser?.role === 'SUPER_ADMIN' || targetTenantId) && (
                 <button

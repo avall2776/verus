@@ -33,7 +33,7 @@ function CodeBlock({ inline, className, children, ...props }: CodeBlockProps) {
   if (inline) {
     return (
       <code
-        className="bg-[#070D1B] text-cyan-300 px-1.5 py-0.5 rounded font-mono text-[11px] border border-slate-800"
+        className="bg-slate-50 dark:bg-[#070D1B] text-cyan-300 px-1.5 py-0.5 rounded font-mono text-[11px] border border-slate-800"
         {...props}
       >
         {children}
@@ -42,9 +42,9 @@ function CodeBlock({ inline, className, children, ...props }: CodeBlockProps) {
   }
 
   return (
-    <div className="my-3 rounded-xl border border-slate-800 bg-[#070D1B] overflow-hidden shadow-lg">
+    <div className="my-3 rounded-xl border border-slate-800 bg-slate-50 dark:bg-[#070D1B] overflow-hidden shadow-lg">
       {/* Header do Bloco de Código */}
-      <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#0B1224] border-b border-slate-800 text-[11px] font-mono text-slate-400">
+      <div className="flex items-center justify-between px-3.5 py-1.5 bg-white dark:bg-[#0B1224] border-b border-slate-800 text-[11px] font-mono text-slate-400">
         <div className="flex items-center gap-1.5">
           <Terminal size={12} className="text-cyan-400" />
           <span className="uppercase font-semibold text-slate-300">
@@ -146,7 +146,7 @@ export default function MarkdownRenderer({ content, className = "" }: MarkdownRe
             </div>
           ),
           thead: ({ children }) => (
-            <thead className="bg-[#0B1224] border-b border-slate-800 text-white font-bold">
+            <thead className="bg-white dark:bg-[#0B1224] border-b border-slate-800 text-white font-bold">
               {children}
             </thead>
           ),

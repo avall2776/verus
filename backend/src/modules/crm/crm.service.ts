@@ -11,9 +11,26 @@ export class CrmService {
     private readonly automationsService: AutomationsService
   ) {}
 
-  async findAllDeals(tenantId: string) {
+  async findAllDeals(tenantId: string, filters?: { startDate?: string; endDate?: string; dateType?: 'created' | 'closed'; status?: string }) {
+    const where: any = { tenantId };
+
+    if (filters?.status && filters.status !== 'all') {
+      where.status = filters.status;
+    }
+
+    if (filters?.startDate || filters?.endDate) {
+      const field = filters.dateType === 'closed' ? 'updatedAt' : 'createdAt';
+      where[field] = {};
+      if (filters.startDate) {
+        where[field].gte = new Date(filters.startDate);
+      }
+      if (filters.endDate) {
+        where[field].lte = new Date(filters.endDate);
+      }
+    }
+
     return this.prisma.deal.findMany({
-      where: { tenantId },
+      where,
       include: {
         contact: {
           select: {

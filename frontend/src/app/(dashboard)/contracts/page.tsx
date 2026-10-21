@@ -254,7 +254,7 @@ export default function ContractsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por cliente, documento ou código..."
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
             />
           </div>
 
@@ -263,7 +263,7 @@ export default function ContractsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-slate-300 focus:outline-none focus:border-cyan-500"
+              className="px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-slate-300 focus:outline-none focus:border-cyan-500"
             >
               <option value="all">Todos os Status</option>
               <option value="signed">Assinados</option>
@@ -280,7 +280,7 @@ export default function ContractsPage() {
             <p className="text-xs text-slate-400">Carregando contratos digitais sincronizados...</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-16 px-4 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-950/30 space-y-4">
+          <div className="py-16 px-4 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-100 dark:bg-slate-950/30 space-y-4">
             <div className="w-14 h-14 rounded-3xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mx-auto">
               <ScrollText className="w-7 h-7" />
             </div>

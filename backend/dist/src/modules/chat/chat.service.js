@@ -688,14 +688,103 @@ let ChatService = ChatService_1 = class ChatService {
                 });
             }
         }
-        if (conversation.status === 'bot_active' && !isInternal) {
-            await this.prisma.conversation.update({
-                where: { id: conversationId },
-                data: { status: 'human_takeover' }
-            });
-        }
+        await this.prisma.conversation.update({
+            where: { id: conversationId },
+            data: { updatedAt: new Date() }
+        });
         this.chatGateway.emitNewMessage(tenantId, msg);
         return msg;
+    }
+    async sendTemplateMessage(tenantId, conversationId, body) {
+        const conversation = await this.prisma.conversation.findUnique({
+            where: { id: conversationId },
+            include: { contact: true }
+        });
+        if (!conversation || conversation.tenantId !== tenantId) {
+            throw new common_1.NotFoundException('Conversa não encontrada.');
+        }
+        if (!conversation.contact?.phone) {
+            throw new common_1.BadRequestException('Contato sem telefone cadastrado.');
+        }
+        const templateName = body.templateName || 'hello_world';
+        const languageCode = body.languageCode || (templateName === 'hello_world' ? 'en_US' : 'pt_BR');
+        const contactName = conversation.contact.name || 'Cliente';
+        const cleanFirstName = contactName.split(' ')[0] || 'Cliente';
+        let components = body.components;
+        if (!components && templateName !== 'hello_world') {
+            components = [
+                {
+                    type: 'body',
+                    parameters: [
+                        { type: 'text', text: cleanFirstName }
+                    ]
+                }
+            ];
+        }
+        const tempMessageId = `template_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        const templateDisplayText = templateName === 'hello_world'
+            ? `📄 [Modelo de Retomada WhatsApp]: Olá! Estamos retomando nosso atendimento.`
+            : `📄 [Modelo: ${templateName}]: Olá ${cleanFirstName}! Retomamos o contato para dar sequência ao seu atendimento.`;
+        let msg = await this.prisma.message.create({
+            data: {
+                tenantId,
+                conversationId,
+                providerMessageId: tempMessageId,
+                contactId: conversation.contactId,
+                content: templateDisplayText,
+                type: 'template',
+                isInternal: false,
+                direction: 'OUTBOUND',
+                senderType: 'user',
+                status: 'pending',
+            }
+        });
+        this.chatGateway.emitNewMessage(tenantId, {
+            ...msg,
+            contact: { phone: conversation.contact.phone, name: conversation.contact.name, avatarUrl: conversation.contact.avatarUrl }
+        });
+        await this.prisma.conversation.update({
+            where: { id: conversationId },
+            data: { updatedAt: new Date() }
+        });
+        const sendRes = await this.messagingService.sendTemplate({
+            tenantId,
+            phone: conversation.contact.phone,
+            templateName,
+            languageCode,
+            components,
+            instanceId: body.instanceId,
+        });
+        if (sendRes.success) {
+            msg = await this.prisma.message.update({
+                where: { id: msg.id },
+                data: {
+                    providerMessageId: sendRes.messageId || msg.providerMessageId,
+                    status: 'sent',
+                }
+            });
+            this.chatGateway.emitMessageStatusUpdated(tenantId, {
+                messageId: msg.id,
+                providerMessageId: msg.providerMessageId,
+                status: 'sent',
+                conversationId,
+            });
+            return { success: true, message: msg };
+        }
+        else {
+            this.logger.error(`Falha no envio de Template Meta: ${sendRes.error}`);
+            msg = await this.prisma.message.update({
+                where: { id: msg.id },
+                data: { status: 'failed' }
+            });
+            this.chatGateway.emitMessageStatusUpdated(tenantId, {
+                messageId: msg.id,
+                providerMessageId: msg.providerMessageId,
+                status: 'failed',
+                conversationId,
+            });
+            return { success: false, error: sendRes.error, message: msg };
+        }
     }
     async sendManualMessageToContact(tenantId, contactId, payload, userId) {
         let conversation = await this.prisma.conversation.findFirst({
@@ -707,7 +796,7 @@ let ChatService = ChatService_1 = class ChatService {
                 data: {
                     tenantId,
                     contactId,
-                    status: 'human_takeover',
+                    status: 'bot_active',
                     assignedTo: userId
                 }
             });

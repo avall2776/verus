@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useEffect, useState, useMemo, useRef, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { 
   Search, Filter, MoreHorizontal, MessageCircle, Copy, FileText, 
   Maximize2, Minimize2, Activity, Users, Building, LayoutDashboard, 
   Plus, Settings, DollarSign, Target, ChevronDown, ChevronUp, Calendar, 
   CheckSquare, ArrowRight, Clock, MessageSquare, ArrowUpRight, 
   Kanban as KanbanIcon, Table as TableIcon, CalendarDays, ChevronLeft, 
-  ChevronRight, X, User as UserIcon, Phone, Mail, Check,
+  ChevronRight, X, User as UserIcon, Phone, Mail, Check, CheckCircle2, Flag,
   ArrowUpDown, ArrowUp, ArrowDown, Columns, SlidersHorizontal, Edit2
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -39,6 +40,32 @@ function getSundayOfWeek(d: Date): Date {
   const sunday = new Date(date.setDate(diff));
   sunday.setHours(0, 0, 0, 0);
   return sunday;
+}
+
+// Formatador de datas seguro para o CRM
+function formatDate(dateStr?: string | Date): string {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatRelativeTime(dateStr?: string | Date): string {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "-";
+  const diffMs = Date.now() - d.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins <= 1) return "há poucos instantes";
+  if (diffMins < 60) return `há ${diffMins} minutos`;
+  if (diffHours === 1) return `há cerca de 1 hora`;
+  if (diffHours < 24) return `há cerca de ${diffHours} horas`;
+  if (diffDays === 1) return `há cerca de 1 dia`;
+  if (diffDays < 30) return `há cerca de ${diffDays} dias`;
+  return d.toLocaleDateString('pt-BR');
 }
 
 function CrmContent() {
@@ -86,8 +113,153 @@ function CrmContent() {
     );
   };
 
+  // Seletor de Período do CRM (Data de Início e Data de Fechamento)
+  type DateFilterType = 'created' | 'closed';
+  type DatePreset = 'all' | 'today' | 'yesterday' | 'last7' | 'last15' | 'last30' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'custom';
+
+  const [dateFilterType, setDateFilterType] = useState<DateFilterType>('created');
+  const [datePreset, setDatePreset] = useState<DatePreset>('all');
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
+  const [mounted, setMounted] = useState<boolean>(false);
+  const [showDateFilterDropdown, setShowDateFilterDropdown] = useState<boolean>(false);
+  const dateFilterBtnRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const toggleDateFilterDropdown = () => {
+    if (!showDateFilterDropdown) {
+      if (dateFilterBtnRef.current) {
+        const rect = dateFilterBtnRef.current.getBoundingClientRect();
+        const popoverWidth = 384;
+        let left = rect.left;
+        if (left + popoverWidth > window.innerWidth - 16) {
+          left = Math.max(16, window.innerWidth - popoverWidth - 16);
+        }
+        setDropdownPosition({
+          top: rect.bottom + 6,
+          left
+        });
+      }
+      setShowDateFilterDropdown(true);
+    } else {
+      setShowDateFilterDropdown(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!showDateFilterDropdown) return;
+    const updatePos = () => {
+      if (dateFilterBtnRef.current) {
+        const rect = dateFilterBtnRef.current.getBoundingClientRect();
+        const popoverWidth = 384;
+        let left = rect.left;
+        if (left + popoverWidth > window.innerWidth - 16) {
+          left = Math.max(16, window.innerWidth - popoverWidth - 16);
+        }
+        setDropdownPosition({ top: rect.bottom + 6, left });
+      }
+    };
+    window.addEventListener('resize', updatePos);
+    window.addEventListener('scroll', updatePos, true);
+    return () => {
+      window.removeEventListener('resize', updatePos);
+      window.removeEventListener('scroll', updatePos, true);
+    };
+  }, [showDateFilterDropdown]);
+
+  // Cálculo da faixa de datas ativa
+  const activeDateRange = useMemo(() => {
+    if (datePreset === 'all') return null;
+
+    const now = new Date();
+    let start: Date;
+    let end: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    switch (datePreset) {
+      case 'today':
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        break;
+      case 'yesterday': {
+        const y = new Date(now);
+        y.setDate(y.getDate() - 1);
+        start = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 0, 0, 0, 0);
+        end = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 23, 59, 59, 999);
+        break;
+      }
+      case 'last7': {
+        const d = new Date(now);
+        d.setDate(d.getDate() - 6);
+        start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+        break;
+      }
+      case 'last15': {
+        const d = new Date(now);
+        d.setDate(d.getDate() - 14);
+        start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+        break;
+      }
+      case 'last30': {
+        const d = new Date(now);
+        d.setDate(d.getDate() - 29);
+        start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+        break;
+      }
+      case 'thisMonth':
+        start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        break;
+      case 'lastMonth':
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+        end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        break;
+      case 'thisYear':
+        start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+        end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+        break;
+      case 'custom':
+        if (!customStartDate && !customEndDate) return null;
+        start = customStartDate ? new Date(customStartDate + 'T00:00:00') : new Date(2000, 0, 1);
+        end = customEndDate ? new Date(customEndDate + 'T23:59:59.999') : new Date(2099, 11, 31);
+        break;
+      default:
+        return null;
+    }
+
+    return { start, end };
+  }, [datePreset, customStartDate, customEndDate]);
+
+  // Label amigável do botão do seletor de período
+  const dateFilterButtonLabel = useMemo(() => {
+    if (datePreset === 'all') return "Período: Todo o histórico";
+    const typeLabel = dateFilterType === 'created' ? 'Início' : 'Fechamento';
+    const presetNames: Record<DatePreset, string> = {
+      all: 'Todo o histórico',
+      today: 'Hoje',
+      yesterday: 'Ontem',
+      last7: 'Últimos 7 dias',
+      last15: 'Últimos 15 dias',
+      last30: 'Últimos 30 dias',
+      thisMonth: 'Este Mês',
+      lastMonth: 'Mês Passado',
+      thisYear: 'Este Ano',
+      custom: 'Personalizado'
+    };
+
+    if (datePreset === 'custom') {
+      const s = customStartDate ? customStartDate.split('-').reverse().slice(0, 2).join('/') : '...';
+      const e = customEndDate ? customEndDate.split('-').reverse().slice(0, 2).join('/') : '...';
+      return `${typeLabel}: ${s} a ${e}`;
+    }
+
+    return `${typeLabel}: ${presetNames[datePreset]}`;
+  }, [datePreset, dateFilterType, customStartDate, customEndDate]);
+
   // Tabela: Ordenação interativa (Sorting)
-  type TableSortField = 'title' | 'contact' | 'description' | 'assignee' | 'value' | 'updatedAt' | 'createdAt';
+  type TableSortField = 'title' | 'contact' | 'description' | 'assignee' | 'value' | 'updatedAt' | 'createdAt' | 'closedAt';
   const [sortField, setSortField] = useState<TableSortField>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
@@ -102,8 +274,9 @@ function CrmContent() {
     description: true,
     assignee: true,
     value: true,
-    updatedAt: true,
-    createdAt: true
+    createdAt: true,
+    closedAt: true,
+    updatedAt: true
   });
 
   const toggleColumnVisibility = (colKey: string) => {
@@ -315,11 +488,24 @@ function CrmContent() {
     const previousDeals = [...deals];
 
     // 2. Reordenação otimista imediata na UI (0ms de latência percebida)
+    const isClosing = newStatus === 'won';
+    const isReopening = ['seed', 'new', 'qualified', 'follow-up', 'proposal', 'negotiation'].includes(newStatus);
+    let updatedMetadata: any = null;
+
     setDeals(prev => {
       const dragged = prev.find(d => d.id === draggableId);
       if (!dragged) return prev;
 
-      const updated = { ...dragged, status: newStatus, updatedAt: new Date().toISOString() };
+      updatedMetadata = isClosing
+        ? { ...(dragged.metadata || {}), closedAt: new Date().toISOString() }
+        : (isReopening ? { ...(dragged.metadata || {}), closedAt: null } : dragged.metadata);
+
+      const updated = { 
+        ...dragged, 
+        status: newStatus, 
+        metadata: updatedMetadata,
+        updatedAt: new Date().toISOString() 
+      };
       const withoutDragged = prev.filter(d => d.id !== draggableId);
 
       // Agrupa os deals da coluna de destino mantendo a ordenação
@@ -333,12 +519,19 @@ function CrmContent() {
     });
 
     if (selectedDeal && selectedDeal.id === draggableId) {
-      setSelectedDeal({ ...selectedDeal, status: newStatus });
+      setSelectedDeal({ 
+        ...selectedDeal, 
+        status: newStatus, 
+        metadata: updatedMetadata !== null ? updatedMetadata : selectedDeal.metadata 
+      });
     }
 
     // 3. Sincroniza com o backend em background sem travar a interface
     try {
-      await api.patch(`/deals/${draggableId}`, { status: newStatus });
+      await api.patch(`/deals/${draggableId}`, { 
+        status: newStatus,
+        ...(updatedMetadata !== null ? { metadata: updatedMetadata } : {})
+      });
     } catch (error) {
       console.error("Erro ao sincronizar movimento de fase:", error);
       toast.error("Não foi possível mover a oportunidade");
@@ -360,31 +553,6 @@ function CrmContent() {
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
-  };
-
-  const formatDate = (dateStr?: string | Date) => {
-    if (!dateStr) return "-";
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return "-";
-    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  };
-
-  const formatRelativeTime = (dateStr?: string | Date) => {
-    if (!dateStr) return "-";
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return "-";
-    const diffMs = Date.now() - d.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMins <= 1) return "há poucos instantes";
-    if (diffMins < 60) return `há ${diffMins} minutos`;
-    if (diffHours === 1) return `há cerca de 1 hora`;
-    if (diffHours < 24) return `há cerca de ${diffHours} horas`;
-    if (diffDays === 1) return `há cerca de 1 dia`;
-    if (diffDays < 30) return `há cerca de ${diffDays} dias`;
-    return d.toLocaleDateString('pt-BR');
   };
 
   // Usuário atual para filtro "Minhas"
@@ -445,17 +613,52 @@ function CrmContent() {
         if (deal.status !== selectedStageFilter) return false;
       }
 
+      // 4. Filtro Avançado por Período (Data de Início e Data de Fechamento)
+      if (activeDateRange) {
+        let dealDate: Date | null = null;
+        if (dateFilterType === 'created') {
+          const raw = deal.metadata?.startDate || deal.createdAt;
+          if (raw) {
+            const parsed = new Date(raw);
+            if (!isNaN(parsed.getTime())) dealDate = parsed;
+          }
+        } else {
+          // dateFilterType === 'closed'
+          const isClosed = (
+            deal.metadata?.closedAt ||
+            deal.status === 'won' ||
+            deal.status === 'lost' ||
+            deal.status === 'disqualified'
+          );
+          if (!isClosed) {
+            return false;
+          }
+          const raw = deal.metadata?.closedAt || deal.updatedAt;
+          if (raw) {
+            const parsed = new Date(raw);
+            if (!isNaN(parsed.getTime())) dealDate = parsed;
+          }
+        }
+
+        if (!dealDate) return false;
+        const time = dealDate.getTime();
+        if (time < activeDateRange.start.getTime() || time > activeDateRange.end.getTime()) {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [deals, searchQuery, activeTab, currentUser, selectedStageFilter]);
+  }, [deals, searchQuery, activeTab, currentUser, selectedStageFilter, activeDateRange, dateFilterType]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (searchQuery.trim()) count++;
     if (activeTab !== 'all') count++;
     if (selectedStageFilter !== 'all') count++;
+    if (datePreset !== 'all') count++;
     return count;
-  }, [searchQuery, activeTab, selectedStageFilter]);
+  }, [searchQuery, activeTab, selectedStageFilter, datePreset]);
 
   const handleResizeStart = (e: React.MouseEvent, colId: string) => {
     e.preventDefault();
@@ -638,7 +841,7 @@ function CrmContent() {
       ref={crmContainerRef}
       className={`flex flex-col gap-3.5 relative transition-all duration-200 ${
         isFullscreen 
-          ? 'fixed inset-0 z-50 bg-[#0a0c10] p-4 h-screen w-screen overflow-y-auto text-white' 
+          ? 'fixed inset-0 z-50 bg-slate-100 dark:bg-[#0a0c10] p-4 h-screen w-screen overflow-y-auto text-white' 
           : 'h-full w-full'
       }`}
     >
@@ -653,7 +856,7 @@ function CrmContent() {
       {/* Modal de Perda */}
       {lossModalState.isOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#161b22] border border-gray-800 w-full max-w-sm rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95">
+          <div className="bg-white dark:bg-[#161b22] border border-gray-800 w-full max-w-sm rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95">
             <h2 className="text-lg font-bold text-white mb-4">Marcar como Perdido</h2>
             <div className="space-y-3 mb-4">
               {["Cliente achou caro", "Cliente enrolou", "Comprou do concorrente", "Contato inválido / sem interesse"].map(reason => (
@@ -671,7 +874,7 @@ function CrmContent() {
               placeholder="Comentário (opcional)..."
               value={lossComment}
               onChange={(e) => setLossComment(e.target.value)}
-              className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2.5 text-sm text-slate-200 outline-none focus:border-rose-500 mb-6 min-h-[80px]"
+              className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-lg p-2.5 text-sm text-slate-200 outline-none focus:border-rose-500 mb-6 min-h-[80px]"
             />
             <div className="flex justify-end gap-3">
               <button 
@@ -683,10 +886,16 @@ function CrmContent() {
               <button 
                 onClick={() => {
                   if (lossModalState.dealId && lossModalState.destColId) {
+                    const currentDeal = deals.find(d => d.id === lossModalState.dealId);
+                    const updatedMetadata = {
+                      ...(currentDeal?.metadata || {}),
+                      closedAt: new Date().toISOString()
+                    };
                     handleUpdateDeal(lossModalState.dealId, { 
                       status: lossModalState.destColId, 
                       lossReason: lossReason === 'outro' ? lossComment : lossReason, 
-                      lossComment 
+                      lossComment,
+                      metadata: updatedMetadata
                     });
                   }
                   setLossModalState({ isOpen: false, dealId: null, destColId: null });
@@ -703,14 +912,14 @@ function CrmContent() {
       )}
 
       {/* Barra Superior em Linha Única (Single-Row Flexbox - Padrão Executivo Lero) */}
-      <div className="flex items-center justify-between gap-3 w-full bg-[#161b22] p-2.5 sm:p-3 rounded-xl border border-gray-800/60 overflow-x-auto custom-scrollbar shadow-sm shrink-0">
+      <div className="flex items-center justify-between gap-3 w-full bg-white dark:bg-[#161b22] p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-gray-800/60 overflow-x-auto custom-scrollbar shadow-sm shrink-0 relative z-30">
         
         {/* LADO ESQUERDO: FUNIL PRINCIPAL COM EDIÇÃO (Edit2) + ABAS DE VISUALIZAÇÃO */}
         <div className="flex items-center gap-2.5 shrink-0">
           {/* Funil Principal Interativo com Edição */}
-          <div className="flex items-center pr-2.5 border-r border-gray-800 shrink-0">
+          <div className="flex items-center pr-2.5 border-r border-slate-200 dark:border-gray-800 shrink-0">
             {isEditingFunnel ? (
-              <div className="flex items-center gap-1 bg-[#0d1117] border border-primary/60 rounded-lg px-2 py-0.5 shadow-inner">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#0d1117] border border-primary/60 rounded-lg px-2 py-0.5 shadow-inner">
                 <input
                   type="text"
                   value={tempFunnelName}
@@ -723,13 +932,13 @@ function CrmContent() {
                     }
                   }}
                   autoFocus
-                  className="bg-transparent text-white font-bold text-xs sm:text-sm outline-none w-40"
+                  className="bg-transparent text-slate-900 dark:text-white font-bold text-xs sm:text-sm outline-none w-40"
                   placeholder="Nome do Funil"
                 />
                 <button
                   type="button"
                   onClick={handleSaveFunnelName}
-                  className="text-emerald-400 hover:text-emerald-300 p-0.5 rounded transition-colors"
+                  className="text-emerald-500 hover:text-emerald-400 p-0.5 rounded transition-colors"
                   title="Salvar nome"
                 >
                   <Check size={13} />
@@ -740,7 +949,7 @@ function CrmContent() {
                     setTempFunnelName(funnelName);
                     setIsEditingFunnel(false);
                   }}
-                  className="text-gray-400 hover:text-white p-0.5 rounded transition-colors"
+                  className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-0.5 rounded transition-colors"
                   title="Cancelar"
                 >
                   <X size={13} />
@@ -753,7 +962,7 @@ function CrmContent() {
                     setTempFunnelName(funnelName);
                     setIsEditingFunnel(true);
                   }}
-                  className="text-white font-extrabold text-xs sm:text-sm tracking-tight select-none cursor-pointer hover:text-primary transition-colors whitespace-nowrap"
+                  className="text-slate-900 dark:text-white font-extrabold text-xs sm:text-sm tracking-tight select-none cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors whitespace-nowrap"
                   title="Clique para editar o nome do funil"
                 >
                   {funnelName}
@@ -764,7 +973,7 @@ function CrmContent() {
                     setTempFunnelName(funnelName);
                     setIsEditingFunnel(true);
                   }}
-                  className="text-gray-400 hover:text-primary transition-colors p-1 rounded hover:bg-gray-800/80"
+                  className="text-slate-400 hover:text-blue-600 dark:hover:text-primary transition-colors p-1 rounded hover:bg-slate-100 dark:hover:bg-gray-800/80"
                   title="Editar nome do funil"
                 >
                   <Edit2 size={12} className="opacity-70 group-hover:opacity-100 transition-opacity" />
@@ -774,15 +983,15 @@ function CrmContent() {
           </div>
           
           {/* ABAS DE VISUALIZAÇÃO: QUADRO | TABELA | LINHA DO TEMPO */}
-          <div className="flex bg-[#0d1117] rounded-lg p-0.5 border border-gray-800 shadow-inner shrink-0">
+          <div className="flex bg-slate-100 dark:bg-[#0d1117] rounded-lg p-0.5 border border-slate-200 dark:border-gray-800 shadow-inner shrink-0">
             <button
               id="view-mode-kanban-btn"
               type="button"
               onClick={() => setViewMode('kanban')}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
                 viewMode === 'kanban' 
-                  ? 'bg-primary text-white shadow-sm' 
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800/60'
+                  ? 'bg-blue-600 text-white shadow-sm' 
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-gray-800/60'
               }`}
               title="Visualização em Quadro Kanban"
             >
@@ -796,8 +1005,8 @@ function CrmContent() {
               onClick={() => setViewMode('table')}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
                 viewMode === 'table' 
-                  ? 'bg-primary text-white shadow-sm' 
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800/60'
+                  ? 'bg-blue-600 text-white shadow-sm' 
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-gray-800/60'
               }`}
               title="Visualização em Tabela Densa"
             >
@@ -811,8 +1020,8 @@ function CrmContent() {
               onClick={() => setViewMode('timeline')}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
                 viewMode === 'timeline' 
-                  ? 'bg-primary text-white shadow-sm' 
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800/60'
+                  ? 'bg-blue-600 text-white shadow-sm' 
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-gray-800/60'
               }`}
               title="Visualização em Linha do Tempo Semanal"
             >
@@ -826,28 +1035,214 @@ function CrmContent() {
         <div className="flex items-center gap-2.5 shrink-0">
           {/* Input de Busca Compactado */}
           <div className="relative w-36 sm:w-44 lg:w-52 shrink-0">
-            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500" />
             <input 
               id="crm-search-input"
               type="text" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar oportunidade..." 
-              className="bg-[#0d1117] border border-gray-800 rounded-lg pl-7 pr-6 py-1 text-xs text-white outline-none focus:border-primary w-full transition-colors"
+              className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-lg pl-7 pr-6 py-1 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-500 outline-none focus:border-blue-600 w-full transition-colors"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X size={11} />
               </button>
             )}
           </div>
 
+          {/* SELETOR DE PERÍODO (DATA DE INÍCIO / DATA DE FECHAMENTO) */}
+          <div className="relative shrink-0">
+            <button
+              id="crm-date-filter-btn"
+              ref={dateFilterBtnRef}
+              type="button"
+              onClick={toggleDateFilterDropdown}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all whitespace-nowrap shadow-xs ${
+                datePreset !== 'all'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                  : 'bg-white hover:bg-slate-50 dark:bg-[#0d1117] dark:hover:bg-gray-800 text-slate-700 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white border-slate-200 dark:border-gray-800'
+              }`}
+              title="Filtrar por período (Data de Início ou Data de Fechamento)"
+            >
+              <Calendar size={12} className={datePreset !== 'all' ? 'text-white' : 'text-blue-600 dark:text-blue-400'} />
+              <span className="truncate max-w-[145px] sm:max-w-[185px]">{dateFilterButtonLabel}</span>
+              <ChevronDown size={11} className={`transition-transform ${datePreset !== 'all' ? 'text-white' : 'text-slate-400 dark:text-gray-400'} ${showDateFilterDropdown ? 'rotate-180' : ''}`} />
+              {datePreset !== 'all' && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDatePreset('all');
+                    setCustomStartDate('');
+                    setCustomEndDate('');
+                  }}
+                  className="ml-0.5 p-0.5 hover:bg-white/20 rounded-full text-white"
+                  title="Limpar filtro de período"
+                >
+                  <X size={10} />
+                </span>
+              )}
+            </button>
+
+            {/* Popover Executivo de Seleção de Período via Portal Flutuante */}
+            {mounted && showDateFilterDropdown && dropdownPosition && createPortal(
+              <>
+                <div 
+                  className="fixed inset-0 z-[9998] bg-black/20 backdrop-blur-[1px]" 
+                  onClick={() => setShowDateFilterDropdown(false)} 
+                />
+                
+                <div 
+                  style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
+                  className="fixed z-[9999] w-80 sm:w-96 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-700/80 rounded-xl shadow-2xl p-4 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 text-slate-800 dark:text-slate-100"
+                >
+                  {/* Topo do Popover: Título e Botão Limpar */}
+                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-gray-800/80 pb-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <CalendarDays size={14} className="text-blue-600 dark:text-blue-400" />
+                      <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Filtrar por Período</span>
+                    </div>
+                    {datePreset !== 'all' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDatePreset('all');
+                          setCustomStartDate('');
+                          setCustomEndDate('');
+                        }}
+                        className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+                      >
+                        Limpar Período
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Segmented Control: Data de Início vs Data de Fechamento */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Filtrar Oportunidades Por:
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-[#0d1117] p-1 rounded-lg border border-slate-200 dark:border-gray-800">
+                      <button
+                        type="button"
+                        onClick={() => setDateFilterType('created')}
+                        className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-bold transition-all ${
+                          dateFilterType === 'created'
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <Calendar size={13} className={dateFilterType === 'created' ? 'text-white' : 'text-blue-500'} />
+                        <span>Data de Início</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDateFilterType('closed')}
+                        className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-bold transition-all ${
+                          dateFilterType === 'closed'
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <CheckCircle2 size={13} className={dateFilterType === 'closed' ? 'text-white' : 'text-emerald-500'} />
+                        <span>Data de Fim</span>
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-slate-500 dark:text-gray-400 mt-1 italic">
+                      {dateFilterType === 'created' 
+                        ? 'Exibindo quando a oportunidade foi iniciada/criada no CRM.'
+                        : 'Exibindo quando a oportunidade foi ganha, perdida ou finalizada.'}
+                    </p>
+                  </div>
+
+                  {/* Grade de Presets Rápidos */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Atalhos Rápidos de Período
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {[
+                        { id: 'all', label: 'Todo o histórico' },
+                        { id: 'today', label: 'Hoje' },
+                        { id: 'yesterday', label: 'Ontem' },
+                        { id: 'last7', label: 'Últimos 7 dias' },
+                        { id: 'last15', label: 'Últimos 15 dias' },
+                        { id: 'last30', label: 'Últimos 30 dias' },
+                        { id: 'thisMonth', label: 'Este Mês' },
+                        { id: 'lastMonth', label: 'Mês Passado' },
+                        { id: 'thisYear', label: 'Este Ano' },
+                        { id: 'custom', label: 'Personalizado' },
+                      ].map(preset => (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => setDatePreset(preset.id as DatePreset)}
+                          className={`py-1.5 px-2.5 rounded-lg text-xs font-semibold text-left transition-all border ${
+                            datePreset === preset.id
+                              ? 'bg-blue-600 text-white border-blue-600 font-bold shadow-xs'
+                              : 'bg-slate-50 hover:bg-slate-100 dark:bg-[#0d1117] dark:hover:bg-gray-800 text-slate-700 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white border-slate-200 dark:border-gray-800'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Campos de Data Personalizada */}
+                  {datePreset === 'custom' && (
+                    <div className="bg-slate-50 dark:bg-[#0d1117] p-2.5 rounded-xl border border-slate-200 dark:border-gray-800 space-y-2 animate-in fade-in-50">
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase block">Faixa Personalizada</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] text-slate-500 dark:text-gray-400 block mb-0.5">De:</label>
+                          <input
+                            type="date"
+                            value={customStartDate}
+                            onChange={(e) => setCustomStartDate(e.target.value)}
+                            className="w-full bg-white dark:bg-[#161b22] border border-slate-300 dark:border-gray-700 rounded-lg p-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-600"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-500 dark:text-gray-400 block mb-0.5">Até:</label>
+                          <input
+                            type="date"
+                            value={customEndDate}
+                            onChange={(e) => setCustomEndDate(e.target.value)}
+                            className="w-full bg-white dark:bg-[#161b22] border border-slate-300 dark:border-gray-700 rounded-lg p-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-600"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rodapé com Indicador de Oportunidades e Botão Aplicar */}
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-gray-800/80">
+                    <span className="text-[11px] text-slate-500 dark:text-gray-400">
+                      <strong className="text-slate-900 dark:text-white font-mono">{filteredDeals.length}</strong> {filteredDeals.length === 1 ? 'oportunidade' : 'oportunidades'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowDateFilterDropdown(false)}
+                      className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm"
+                    >
+                      Aplicar Filtro
+                    </button>
+                  </div>
+                </div>
+              </>,
+              document.body
+            )}
+          </div>
+
           {/* Filtros Rápidos (Tudo, Minhas, Contatos, Empresas) */}
-          <div className="flex bg-[#0d1117] rounded-lg p-0.5 border border-gray-800 shrink-0">
+          <div className="flex bg-slate-100 dark:bg-[#0d1117] rounded-lg p-0.5 border border-slate-200 dark:border-gray-800 shrink-0">
             {[
               { id: 'all', label: 'Tudo', icon: Activity },
               { id: 'mine', label: 'Minhas', icon: FileText },
@@ -859,8 +1254,10 @@ function CrmContent() {
                 id={`crm-tab-${tab.id}-btn`}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
-                  activeTab === tab.id ? 'bg-gray-800 text-white shadow font-bold' : 'text-gray-400 hover:text-white'
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
+                  activeTab === tab.id 
+                    ? 'bg-blue-600 text-white shadow font-bold' 
+                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-gray-800/60'
                 }`}
               >
                 <tab.icon size={12} />
@@ -869,14 +1266,16 @@ function CrmContent() {
             ))}
           </div>
 
-          <div className="h-4 w-px bg-gray-800 shrink-0 hidden sm:block"></div>
+          <div className="h-4 w-px bg-slate-200 dark:bg-gray-800 shrink-0 hidden sm:block"></div>
 
           {/* Botões de Ação */}
           <button 
             type="button"
             onClick={() => setNeutralMode(!neutralMode)}
-            className={`px-2 py-1 rounded-lg border text-xs font-bold transition-all whitespace-nowrap ${
-              neutralMode ? 'bg-gray-100 text-black border-gray-100' : 'bg-[#0d1117] text-gray-300 border-gray-800 hover:bg-gray-800 hover:text-white'
+            className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition-all whitespace-nowrap shadow-xs ${
+              neutralMode 
+                ? 'bg-blue-600 text-white border-blue-600 shadow-sm' 
+                : 'bg-white hover:bg-slate-100 dark:bg-[#0d1117] dark:hover:bg-gray-800 text-slate-700 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white border-slate-300 dark:border-gray-800'
             }`}
           >
             Neutro
@@ -885,7 +1284,7 @@ function CrmContent() {
           <button 
             type="button"
             onClick={() => setShowStageModal(true)} 
-            className="bg-primary hover:bg-primary/90 text-white px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm whitespace-nowrap"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm whitespace-nowrap"
           >
             <Plus size={13}/>
             <span>Nova Etapa</span>
@@ -894,7 +1293,7 @@ function CrmContent() {
           <button 
             type="button"
             onClick={() => setShowManageStagesModal(true)} 
-            className="bg-[#0d1117] hover:bg-gray-800 text-gray-300 border border-gray-800 px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 whitespace-nowrap hover:text-white"
+            className="bg-white hover:bg-slate-100 dark:bg-[#0d1117] dark:hover:bg-gray-800 text-slate-700 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white border border-slate-300 dark:border-gray-800 px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 whitespace-nowrap shadow-xs"
           >
             <Settings size={13}/>
             <span className="hidden sm:inline">Gerenciar Etapas</span>
@@ -907,8 +1306,8 @@ function CrmContent() {
             onClick={toggleFullscreen} 
             className={`p-1.5 rounded-lg border transition-all flex items-center justify-center shrink-0 ${
               isFullscreen 
-                ? 'bg-primary/20 text-primary border-primary/40 hover:bg-primary/30' 
-                : 'bg-[#0d1117] hover:bg-gray-800 text-gray-300 border-gray-800 hover:text-white'
+                ? 'bg-blue-600/15 text-blue-600 dark:text-blue-400 border-blue-500/40 hover:bg-blue-600/25' 
+                : 'bg-white hover:bg-slate-100 dark:bg-[#0d1117] dark:hover:bg-gray-800 text-slate-700 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white border-slate-300 dark:border-gray-800 shadow-xs'
             }`}
           >
             {isFullscreen ? <Minimize2 size={13}/> : <Maximize2 size={13}/>}
@@ -937,7 +1336,7 @@ function CrmContent() {
                     style={{ width: isCollapsed ? '60px' : `${columnWidths[col.id] || 300}px` }}
                   >
                     {isCollapsed ? (
-                      <div className={`w-full h-full flex-shrink-0 flex flex-col bg-[#1c1d22] border border-gray-800 border-t-2 ${borderTopClass} rounded-xl items-center py-4 cursor-pointer hover:bg-gray-800/50 transition-colors group`} onClick={() => toggleColumn(col.id)}>
+                      <div className={`w-full h-full flex-shrink-0 flex flex-col bg-slate-50 dark:bg-[#1c1d22] border border-gray-800 border-t-2 ${borderTopClass} rounded-xl items-center py-4 cursor-pointer hover:bg-gray-800/50 transition-colors group`} onClick={() => toggleColumn(col.id)}>
                          <button className="text-gray-500 group-hover:text-white mb-6">
                            <Maximize2 size={16} />
                          </button>
@@ -950,20 +1349,20 @@ function CrmContent() {
                     ) : (
                       <div className="w-full shrink-0 flex flex-col h-full gap-3">
                         {/* Column Header */}
-                        <div className={`p-4 rounded-xl border border-gray-800 bg-[#1c1d22] border-t-2 ${borderTopClass} flex flex-col shadow-sm shrink-0`}>
+                        <div className={`p-4 rounded-xl border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#1c1d22] border-t-2 ${borderTopClass} flex flex-col shadow-sm shrink-0`}>
                           <div className="flex justify-between items-center mb-2">
                             <h3 className={`text-sm font-black uppercase tracking-wider ${colColorClass}`}>
                               {col.title}
                             </h3>
                             <div className="flex gap-1">
-                              <button onClick={() => toggleColumn(col.id)} className="text-gray-500 hover:text-white p-1 rounded hover:bg-gray-700 transition-colors">
+                              <button onClick={() => toggleColumn(col.id)} className="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1 rounded hover:bg-slate-200/60 dark:hover:bg-gray-700 transition-colors">
                                 <Minimize2 size={14} />
                               </button>
                             </div>
                           </div>
-                          <div className="flex items-center justify-between text-xs text-gray-400 font-semibold bg-[#0B1224] px-3 py-1.5 rounded-lg border border-gray-800/50">
-                            <span className="bg-gray-800 px-2 py-0.5 rounded-full text-white">{columnDeals.length} cards</span>
-                            <span className="text-gray-300 font-mono font-bold">{formatCurrency(totalValue)}</span>
+                          <div className="flex items-center justify-between text-xs font-semibold bg-white dark:bg-[#0B1224] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-gray-800/50 shadow-xs">
+                            <span className="bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded-full text-slate-700 dark:text-white font-bold border border-slate-200 dark:border-transparent">{columnDeals.length} cards</span>
+                            <span className="text-slate-700 dark:text-gray-300 font-mono font-bold">{formatCurrency(totalValue)}</span>
                           </div>
                         </div>
 
@@ -1000,7 +1399,7 @@ function CrmContent() {
                                     isNew: true
                                   });
                                 }}
-                                className="mt-auto shrink-0 w-full bg-[#161b22] border border-gray-800 hover:border-gray-600 text-gray-400 hover:text-white rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm"
+                                className="mt-auto shrink-0 w-full bg-white hover:bg-slate-50 dark:bg-[#161b22] dark:hover:bg-[#1c2128] border border-slate-200 dark:border-gray-800 hover:border-slate-300 dark:hover:border-gray-600 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-xs"
                               >
                                 <Plus size={16} /> Adicionar novo cartão
                               </button>
@@ -1032,9 +1431,9 @@ function CrmContent() {
         const visibleColCount = Object.values(visibleColumns).filter(Boolean).length || 1;
 
         return (
-          <div className="flex-1 flex flex-col bg-[#161b22] border border-gray-800 rounded-xl overflow-hidden shadow-lg animate-in fade-in-50 duration-200">
+          <div className="flex-1 flex flex-col bg-white dark:bg-[#161b22] border border-gray-800 rounded-xl overflow-hidden shadow-lg animate-in fade-in-50 duration-200">
             {/* Barra de Ferramentas da Tabela: Filtros, Visibilidade de Colunas e Adição Rápida */}
-            <div className="bg-[#1c2128] border-b border-gray-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="bg-slate-100 dark:bg-[#1c2128] border-b border-gray-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2">
                 {/* Botão [Filtros] com badge numérico */}
                 <div className="relative">
@@ -1043,8 +1442,8 @@ function CrmContent() {
                     onClick={() => setShowFilterDropdown(!showFilterDropdown)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
                       activeFilterCount > 0 
-                        ? 'bg-primary/20 border-primary text-white shadow-sm' 
-                        : 'bg-[#0B1224] border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800'
+                        ? 'bg-blue-600/15 border-blue-600 text-blue-700 dark:text-blue-400 shadow-sm' 
+                        : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-gray-700 text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-gray-800'
                     }`}
                   >
                     <Filter size={13} className={activeFilterCount > 0 ? "text-primary" : "text-gray-400"} />
@@ -1056,32 +1455,89 @@ function CrmContent() {
                     )}
                   </button>
 
-                  {/* Popover de Filtros */}
+                  {/* Popover de Filtros Avançados da Tabela */}
                   {showFilterDropdown && (
-                    <div className="absolute left-0 top-full mt-2 w-64 bg-[#161b22] border border-gray-700 rounded-xl shadow-2xl p-3 z-30 flex flex-col gap-3 animate-in fade-in zoom-in-95">
+                    <div className="absolute left-0 top-full mt-2 w-72 bg-white dark:bg-[#161b22] border border-gray-700 rounded-xl shadow-2xl p-3.5 z-30 flex flex-col gap-3 animate-in fade-in zoom-in-95">
                       <div className="flex items-center justify-between border-b border-gray-800 pb-2">
-                        <span className="text-xs font-bold text-white">Filtros Avançados</span>
+                        <span className="text-xs font-bold text-white">Filtros da Tabela</span>
                         {activeFilterCount > 0 && (
                           <button 
                             type="button" 
-                            onClick={() => { setSearchQuery(""); setActiveTab("all"); setSelectedStageFilter("all"); }}
+                            onClick={() => { 
+                              setSearchQuery(""); 
+                              setActiveTab("all"); 
+                              setSelectedStageFilter("all"); 
+                              setDatePreset("all");
+                              setCustomStartDate("");
+                              setCustomEndDate("");
+                            }}
                             className="text-[10px] text-primary hover:underline font-bold"
                           >
                             Limpar todos
                           </button>
                         )}
                       </div>
+
+                      {/* 1. Estágio */}
                       <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Filtrar por Estágio</label>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Estágio</label>
                         <select
                           value={selectedStageFilter}
                           onChange={(e) => setSelectedStageFilter(e.target.value)}
-                          className="w-full bg-[#0B1224] border border-gray-700 text-white rounded-lg p-1.5 text-xs outline-none focus:border-primary"
+                          className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-700 text-white rounded-lg p-1.5 text-xs outline-none focus:border-primary"
                         >
                           <option value="all">Todos os Estágios</option>
                           {columns.map(c => (
                             <option key={c.id} value={c.id}>{c.title}</option>
                           ))}
+                        </select>
+                      </div>
+
+                      {/* 2. Tipo de Data */}
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Filtrar Data Por</label>
+                        <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-[#0d1117] p-0.5 rounded-lg border border-gray-800">
+                          <button
+                            type="button"
+                            onClick={() => setDateFilterType('created')}
+                            className={`flex items-center justify-center gap-1 py-1 px-1.5 rounded text-[11px] font-bold transition-all ${
+                              dateFilterType === 'created' ? 'bg-primary text-white shadow-xs' : 'text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            <Calendar size={11} />
+                            <span>Data Início</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDateFilterType('closed')}
+                            className={`flex items-center justify-center gap-1 py-1 px-1.5 rounded text-[11px] font-bold transition-all ${
+                              dateFilterType === 'closed' ? 'bg-primary text-white shadow-xs' : 'text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            <CheckCircle2 size={11} />
+                            <span>Fechamento</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 3. Atalho de Período */}
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Período</label>
+                        <select
+                          value={datePreset}
+                          onChange={(e) => setDatePreset(e.target.value as any)}
+                          className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-700 text-white rounded-lg p-1.5 text-xs outline-none focus:border-primary"
+                        >
+                          <option value="all">Todo o histórico</option>
+                          <option value="today">Hoje</option>
+                          <option value="yesterday">Ontem</option>
+                          <option value="last7">Últimos 7 dias</option>
+                          <option value="last15">Últimos 15 dias</option>
+                          <option value="last30">Últimos 30 dias</option>
+                          <option value="thisMonth">Este Mês</option>
+                          <option value="lastMonth">Mês Passado</option>
+                          <option value="thisYear">Este Ano</option>
+                          <option value="custom">Personalizado</option>
                         </select>
                       </div>
                     </div>
@@ -1093,7 +1549,7 @@ function CrmContent() {
                   <button
                     type="button"
                     onClick={() => setShowColumnVisibility(!showColumnVisibility)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#0B1224] border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-gray-700 text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
                     title="Configurar colunas visíveis"
                   >
                     <Columns size={13} className="text-gray-400" />
@@ -1102,7 +1558,7 @@ function CrmContent() {
 
                   {/* Popover de Visibilidade de Colunas */}
                   {showColumnVisibility && (
-                    <div className="absolute left-0 top-full mt-2 w-56 bg-[#161b22] border border-gray-700 rounded-xl shadow-2xl p-3 z-30 flex flex-col gap-2 animate-in fade-in zoom-in-95">
+                    <div className="absolute left-0 top-full mt-2 w-56 bg-white dark:bg-[#161b22] border border-gray-700 rounded-xl shadow-2xl p-3 z-30 flex flex-col gap-2 animate-in fade-in zoom-in-95">
                       <span className="text-xs font-bold text-white border-b border-gray-800 pb-2">Exibir Colunas</span>
                       {[
                         { id: 'title', label: 'Título' },
@@ -1110,8 +1566,9 @@ function CrmContent() {
                         { id: 'description', label: 'Descrição' },
                         { id: 'assignee', label: 'Responsável' },
                         { id: 'value', label: 'Valor (R$)' },
-                        { id: 'updatedAt', label: 'Última Interação' },
-                        { id: 'createdAt', label: 'Criado Em' }
+                        { id: 'createdAt', label: 'Data de Início' },
+                        { id: 'closedAt', label: 'Data de Fechamento' },
+                        { id: 'updatedAt', label: 'Última Interação' }
                       ].map(colItem => (
                         <label key={colItem.id} className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer hover:text-white">
                           <input
@@ -1266,16 +1723,34 @@ function CrmContent() {
                       </th>
                     )}
 
-                    {/* 7. Criado Em */}
+                    {/* 7. Data Início */}
                     {visibleColumns.createdAt && (
                       <th 
                         onClick={() => handleSort('createdAt')}
-                        className="py-2.5 px-3.5 w-[120px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
-                        title="Clique para ordenar por Data de Cadastro"
+                        className="py-2.5 px-3.5 w-[130px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        title="Clique para ordenar por Data de Início"
                       >
                         <div className="flex items-center gap-1.5">
-                          <span className={sortField === 'createdAt' ? 'text-white' : ''}>Criado Em</span>
+                          <span className={sortField === 'createdAt' ? 'text-white' : ''}>Data Início</span>
                           {sortField === 'createdAt' ? (
+                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
+                          ) : (
+                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                          )}
+                        </div>
+                      </th>
+                    )}
+
+                    {/* 8. Data Fechamento */}
+                    {visibleColumns.closedAt && (
+                      <th 
+                        onClick={() => handleSort('closedAt')}
+                        className="py-2.5 px-3.5 w-[140px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        title="Clique para ordenar por Data de Fechamento"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className={sortField === 'closedAt' ? 'text-white' : ''}>Fechamento</span>
+                          {sortField === 'closedAt' ? (
                             sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
                           ) : (
                             <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
@@ -1322,9 +1797,19 @@ function CrmContent() {
                           bVal = new Date(b.updatedAt || b.createdAt || 0).getTime();
                           return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
                         case 'createdAt':
-                          aVal = new Date(a.createdAt || 0).getTime();
-                          bVal = new Date(b.createdAt || 0).getTime();
+                          aVal = new Date(a.metadata?.startDate || a.createdAt || 0).getTime();
+                          bVal = new Date(b.metadata?.startDate || b.createdAt || 0).getTime();
                           return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                        case 'closedAt': {
+                          const getCloseTime = (d: any) => {
+                            if (d.metadata?.closedAt) return new Date(d.metadata.closedAt).getTime();
+                            if (['won', 'lost', 'disqualified'].includes(d.status)) return new Date(d.updatedAt || 0).getTime();
+                            return 0;
+                          };
+                          aVal = getCloseTime(a);
+                          bVal = getCloseTime(b);
+                          return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                        }
                       }
 
                       if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
@@ -1337,7 +1822,7 @@ function CrmContent() {
                         {/* Linha Cabeçalho do Estágio com Montante Total Acumulado */}
                         <tr 
                           onClick={() => toggleTableStage(col.id)}
-                          className="bg-[#1c2128] hover:bg-[#222832] cursor-pointer transition-colors border-t border-b border-gray-800"
+                          className="bg-slate-100 dark:bg-[#1c2128] hover:bg-[#222832] cursor-pointer transition-colors border-t border-b border-gray-800"
                         >
                           <td colSpan={visibleColCount} className="py-2.5 px-3.5">
                             <div className="flex items-center justify-between">
@@ -1464,7 +1949,7 @@ function CrmContent() {
                                 <td className="py-2.5 px-3.5 max-w-[320px]">
                                   <div className="flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className="text-[9px] font-bold text-gray-400 bg-[#0B1224] border border-gray-800 px-1.5 py-0.2 rounded uppercase">
+                                      <span className="text-[9px] font-bold text-slate-600 dark:text-gray-400 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-gray-800 px-1.5 py-0.2 rounded uppercase">
                                         {originSource}
                                       </span>
                                     </div>
@@ -1524,10 +2009,27 @@ function CrmContent() {
                                 </td>
                               )}
 
-                              {/* 7. Criado Em (Data de cadastro) */}
+                              {/* 7. Data Início */}
                               {visibleColumns.createdAt && (
-                                <td className="py-2.5 px-3.5 text-gray-400 text-[11px]">
-                                  {formatDate(deal.createdAt)}
+                                <td className="py-2.5 px-3.5 text-gray-400 text-[11px] whitespace-nowrap">
+                                  {formatDate(deal.metadata?.startDate || deal.createdAt)}
+                                </td>
+                              )}
+
+                              {/* 8. Data de Fechamento */}
+                              {visibleColumns.closedAt && (
+                                <td className="py-2.5 px-3.5 text-[11px] whitespace-nowrap">
+                                  {deal.metadata?.closedAt ? (
+                                    <span className="text-emerald-400 font-semibold font-mono">
+                                      {formatDate(deal.metadata.closedAt)}
+                                    </span>
+                                  ) : ['won', 'lost', 'disqualified'].includes(deal.status) ? (
+                                    <span className="text-emerald-400 font-semibold font-mono">
+                                      {formatDate(deal.updatedAt)}
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-500 italic">Em andamento</span>
+                                  )}
                                 </td>
                               )}
                             </tr>
@@ -1549,7 +2051,7 @@ function CrmContent() {
       {viewMode === 'timeline' && (
         <div className="flex-1 flex flex-col gap-4 animate-in fade-in-50 duration-200 overflow-hidden">
           {/* Barra de Navegação do Período Semanal Sincronizada */}
-          <div className="bg-[#161b22] border border-gray-800 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm shrink-0">
+          <div className="bg-white dark:bg-[#161b22] border border-gray-800 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm shrink-0">
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -1582,7 +2084,7 @@ function CrmContent() {
 
               <div className="h-5 w-px bg-gray-800 mx-1"></div>
 
-              <div className="flex items-center gap-2 text-white font-bold text-sm bg-[#0d1117] px-3 py-1.5 rounded-lg border border-gray-800/80 shadow-inner">
+              <div className="flex items-center gap-2 text-white font-bold text-sm bg-slate-100 dark:bg-[#0d1117] px-3 py-1.5 rounded-lg border border-gray-800/80 shadow-inner">
                 <CalendarDays size={15} className="text-primary shrink-0" />
                 <span className="capitalize">{timelineWeekLabel}</span>
               </div>
@@ -1590,8 +2092,8 @@ function CrmContent() {
 
             <div className="flex flex-wrap items-center gap-2.5 text-xs">
               {/* Badge Contador Semanal */}
-              <span className="bg-[#0B1224] border border-gray-800 px-3 py-1.5 rounded-lg font-semibold text-gray-300 flex items-center gap-1.5 shadow-sm">
-                <span className="text-white font-bold">{weekTotalCards}</span> {weekTotalCards === 1 ? 'card nesta semana' : 'cards nesta semana'}
+              <span className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-gray-800 px-3 py-1.5 rounded-lg font-semibold text-slate-700 dark:text-gray-300 flex items-center gap-1.5 shadow-sm">
+                <span className="text-slate-900 dark:text-white font-bold">{weekTotalCards}</span> {weekTotalCards === 1 ? 'card nesta semana' : 'cards nesta semana'}
               </span>
 
               {/* Montante Financeiro Semanal */}
@@ -1604,14 +2106,14 @@ function CrmContent() {
           </div>
 
           {/* Grade da Timeline: Estágios na Lateral Esquerda + 7 Colunas dos Dias da Semana */}
-          <div className="flex-1 bg-[#161b22] border border-gray-800 rounded-xl overflow-hidden shadow-lg flex flex-col min-h-0">
+          <div className="flex-1 bg-white dark:bg-[#161b22] border border-gray-800 rounded-xl overflow-hidden shadow-lg flex flex-col min-h-0">
             <div className="flex-1 overflow-auto custom-scrollbar">
               <table className="w-full text-left border-collapse min-w-[1100px]">
                 {/* Cabeçalho da Grade */}
-                <thead className="sticky top-0 z-30 bg-[#1c2128] border-b border-gray-800 text-xs font-bold text-gray-300 shadow-sm">
+                <thead className="sticky top-0 z-30 bg-slate-100 dark:bg-[#1c2128] border-b border-gray-800 text-xs font-bold text-gray-300 shadow-sm">
                   <tr>
                     {/* Coluna Fixa à Esquerda: Estágios do Funil */}
-                    <th className="p-3 w-64 min-w-[240px] max-w-[260px] sticky left-0 z-40 bg-[#1c2128] border-r border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
+                    <th className="p-3 w-64 min-w-[240px] max-w-[260px] sticky left-0 z-40 bg-slate-100 dark:bg-[#1c2128] border-r border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
                       <div className="flex items-center justify-between text-xs font-extrabold uppercase tracking-wider text-gray-300">
                         <div className="flex items-center gap-2">
                           <LayoutDashboard size={14} className="text-primary" />
@@ -1705,10 +2207,10 @@ function CrmContent() {
                     return (
                       <tr 
                         key={`timeline-stage-row-${col.id}`}
-                        className={`transition-colors ${isCollapsed ? 'bg-[#12161f]/80' : 'hover:bg-gray-900/30'}`}
+                        className={`transition-colors ${isCollapsed ? 'bg-slate-50/80 dark:bg-[#12161f]/80' : 'hover:bg-gray-900/30'}`}
                       >
                         {/* Célula Lateral Esquerda: Cabeçalho Colapsável do Estágio */}
-                        <td className="p-3 align-top sticky left-0 z-20 bg-[#161b22] border-r border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
+                        <td className="p-3 align-top sticky left-0 z-20 bg-white dark:bg-[#161b22] border-r border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
                           <div className="flex flex-col gap-1.5">
                             <button
                               type="button"
@@ -1786,7 +2288,7 @@ function CrmContent() {
                                         key={`timeline-bar-${deal.id}`}
                                         onClick={() => handleOpenDeal(deal)}
                                         title={`${deal.title || 'Sem título'} | ${leadName} | ${col.title} | ${formatCurrency(Number(deal.value || 0))}`}
-                                        className="relative flex items-center justify-between gap-1.5 pl-2.5 pr-2 py-1.5 rounded-lg bg-[#0d1117] hover:bg-[#1f2633] border border-gray-800 hover:border-gray-700 cursor-pointer transition-all duration-150 shadow-sm text-left group overflow-hidden"
+                                        className="relative flex items-center justify-between gap-1.5 pl-2.5 pr-2 py-1.5 rounded-lg bg-slate-100 dark:bg-[#0d1117] hover:bg-[#1f2633] border border-gray-800 hover:border-gray-700 cursor-pointer transition-all duration-150 shadow-sm text-left group overflow-hidden"
                                       >
                                         {/* Barra lateral colorida do estágio */}
                                         <div className={`absolute left-0 top-0 bottom-0 w-1 ${stageAccent.barBg}`} />
@@ -1836,12 +2338,12 @@ function CrmContent() {
       {/* MODAL NOVA ETAPA (Mock) */}
       {showStageModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#1c1d22] border border-gray-800 w-full max-w-sm rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95">
-            <h2 className="text-lg font-bold text-white mb-4">Nova Etapa</h2>
+          <div className="bg-white dark:bg-[#1c1d22] border border-slate-200 dark:border-gray-800 w-full max-w-sm rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Nova Etapa</h2>
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-gray-400 uppercase font-bold mb-1 block">Nome da Etapa</label>
-                <input type="text" className="w-full bg-[#0B1224] border border-gray-700 rounded-lg p-2 text-white outline-none focus:border-primary" placeholder="Ex: Demonstração" />
+                <label className="text-xs text-slate-500 dark:text-gray-400 uppercase font-bold mb-1 block">Nome da Etapa</label>
+                <input type="text" className="w-full bg-slate-50 dark:bg-[#0B1224] border border-slate-300 dark:border-gray-700 rounded-lg p-2 text-slate-900 dark:text-white outline-none focus:border-blue-600" placeholder="Ex: Demonstração" />
               </div>
               <div>
                 <label className="text-xs text-gray-400 uppercase font-bold mb-2 block">Cor</label>
@@ -1863,7 +2365,7 @@ function CrmContent() {
       {/* MODAL GERENCIAR ETAPAS (Mock) */}
       {showManageStagesModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#1c1d22] border border-gray-800 w-full max-w-lg rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95 max-h-[80vh] overflow-y-auto">
+          <div className="bg-slate-50 dark:bg-[#1c1d22] border border-gray-800 w-full max-w-lg rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95 max-h-[80vh] overflow-y-auto">
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Settings size={18} className="text-primary" /> Gerenciar Etapas do Funil
             </h2>
@@ -1922,8 +2424,8 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
               setSelectedDeal(deal);
             }
           }}
-          className={`group relative flex flex-col gap-2.5 rounded-xl border border-slate-800/80 bg-[#161b22] p-4 text-slate-200 shadow-md transition-all hover:border-slate-700 cursor-pointer ${
-            snapshot.isDragging ? `rotate-2 scale-[1.02] shadow-2xl transition-transform duration-150 z-50 ring-1 ${col.borderLight} bg-gray-800` : ''
+          className={`group relative flex flex-col gap-2.5 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#161b22] p-4 text-slate-800 dark:text-slate-200 shadow-sm dark:shadow-md transition-all hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer ${
+            snapshot.isDragging ? `rotate-2 scale-[1.02] shadow-2xl transition-transform duration-150 z-50 ring-1 ${col.borderLight} bg-slate-50 dark:bg-gray-800` : ''
           }`}
         >
           {/* CABEÇALHO: ID E BADGE */}
@@ -1945,15 +2447,15 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
           {/* AVATAR DO LEAD + NOME + TELEFONE */}
           <div className="flex flex-col mt-1">
             <div className="flex items-center gap-3">
-              <div className={`flex shrink-0 h-9 w-9 items-center justify-center rounded-full bg-[#0d1117] text-sm font-bold shadow-sm ring-2 ${col.color.replace('text-', 'ring-')}/40 ${col.color.replace('500', '400').replace('600', '400')}`}>
+              <div className={`flex shrink-0 h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-[#0d1117] text-sm font-bold shadow-sm ring-2 ${col.color.replace('text-', 'ring-')}/40 ${col.color.replace('500', '400').replace('600', '400')}`}>
                 {deal.contact?.name?.[0]?.toUpperCase() || "?"}
               </div>
               <div className="flex flex-col min-w-0">
-                <h4 className={`text-[15px] font-bold leading-snug truncate group-hover:text-primary transition-colors ${col.color.replace('500', '400').replace('600', '400')}`}>
+                <h4 className={`text-[15px] font-bold leading-snug truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors ${col.color.replace('500', '400').replace('600', '400')}`}>
                   {deal.contact?.name || deal.title || "Nome do Contato"}
                 </h4>
-                <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
-                  <span className="text-[#25D366]">🟢</span>
+                <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <MessageCircle size={12} className="text-[#25D366] shrink-0" />
                   <span className="truncate">{deal.contact?.phone?.includes('@lid') ? 'WhatsApp (Privado)' : (deal.contact?.phone || "+55 00 00000-0000")}</span>
                 </div>
               </div>
@@ -1961,54 +2463,54 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
           </div>
 
           {/* BADGE DE TIPO */}
-          <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400 mt-1">
-            <span className="text-emerald-400">•</span>
+          <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">
+            <span className="text-emerald-500 dark:text-emerald-400">•</span>
             <span>Lead</span>
           </div>
 
           {/* CAIXA CINZA DE METADADOS & ACCORDION */}
-          <div className="rounded-lg bg-[#0d1117] p-3 text-xs text-slate-300 border border-slate-800/60" onClick={(e) => e.stopPropagation()}>
-            <p className="font-bold text-slate-200">ORIGEM: [{deal.contact?.source || deal.metadata?.source || 'WHATSAPP'}]</p>
+          <div className="rounded-lg bg-slate-50 dark:bg-[#0d1117] p-3 text-xs text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800/60" onClick={(e) => e.stopPropagation()}>
+            <p className="font-bold text-slate-800 dark:text-slate-200">ORIGEM: [{deal.contact?.source || deal.metadata?.source || 'WHATSAPP'}]</p>
             {Boolean(deal.metadata?.formName || deal.metadata?.campaign) && (
-              <p className="font-semibold text-slate-400">FORMULÁRIO: {deal.metadata?.formName || deal.metadata?.campaign}</p>
+              <p className="font-semibold text-slate-500 dark:text-slate-400">FORMULÁRIO: {deal.metadata?.formName || deal.metadata?.campaign}</p>
             )}
             {deal.notes ? (
-              <p className="mt-1 text-slate-400 line-clamp-2">
+              <p className="mt-1 text-slate-600 dark:text-slate-400 line-clamp-2">
                 {deal.notes}
               </p>
             ) : null}
 
             {/* CONTEÚDO EXPANSÍVEL */}
             {isExpanded && (
-              <div className="mt-2.5 space-y-1.5 border-t border-slate-800/80 pt-2 text-slate-300 text-[11px] animate-in slide-in-from-top-2">
-                <p className="font-bold text-slate-200">RESPOSTAS DO FORMULÁRIO & METADADOS:</p>
+              <div className="mt-2.5 space-y-1.5 border-t border-slate-200 dark:border-slate-800/80 pt-2 text-slate-700 dark:text-slate-300 text-[11px] animate-in slide-in-from-top-2">
+                <p className="font-bold text-slate-800 dark:text-slate-200">RESPOSTAS DO FORMULÁRIO & METADADOS:</p>
                 {(deal.metadata?.model || deal.metadata?.product || (deal.title && !['Atendimento Comercial', 'Novo Lead', 'Nova Oportunidade', deal.contact?.name].includes(deal.title))) && (
-                  <p>• <span className="text-slate-400">Interesse:</span> {deal.metadata?.model || deal.metadata?.product || deal.title}</p>
+                  <p>• <span className="text-slate-500 dark:text-slate-400">Interesse:</span> {deal.metadata?.model || deal.metadata?.product || deal.title}</p>
                 )}
                 {(deal.metadata?.city || deal.contact?.city || deal.contact?.address) && (
-                  <p>• <span className="text-slate-400">Cidade:</span> {deal.metadata?.city || deal.contact?.city || deal.contact?.address}</p>
+                  <p>• <span className="text-slate-500 dark:text-slate-400">Cidade:</span> {deal.metadata?.city || deal.contact?.city || deal.contact?.address}</p>
                 )}
                 {(deal.contact?.email || deal.metadata?.email) && (
-                  <p>• <span className="text-slate-400">E-mail:</span> {deal.contact?.email || deal.metadata?.email}</p>
+                  <p>• <span className="text-slate-500 dark:text-slate-400">E-mail:</span> {deal.contact?.email || deal.metadata?.email}</p>
                 )}
                 {deal.metadata?.company && (
-                  <p>• <span className="text-slate-400">Empresa:</span> {deal.metadata.company}</p>
+                  <p>• <span className="text-slate-500 dark:text-slate-400">Empresa:</span> {deal.metadata.company}</p>
                 )}
                 {deal.metadata?.role && (
-                  <p>• <span className="text-slate-400">Cargo:</span> {deal.metadata.role}</p>
+                  <p>• <span className="text-slate-500 dark:text-slate-400">Cargo:</span> {deal.metadata.role}</p>
                 )}
                 {!deal.metadata?.model && !deal.metadata?.product && !deal.metadata?.city && !deal.contact?.email && !deal.metadata?.email && !deal.metadata?.formName && (
-                  <p className="text-slate-500 italic">Sem metadados adicionais.</p>
+                  <p className="text-slate-400 dark:text-slate-500 italic">Sem metadados adicionais.</p>
                 )}
               </div>
             )}
 
             {/* BOTÕES DO ACCORDION: MAIS / MENOS & COPIAR */}
-            <div className="mt-2.5 flex items-center justify-between pt-1 border-t border-slate-800/40">
+            <div className="mt-2.5 flex items-center justify-between pt-1 border-t border-slate-200 dark:border-slate-800/40">
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
-                className="flex items-center gap-1 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+                className="flex items-center gap-1 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <span>{isExpanded ? "⌃ Menos" : "⌵ Mais"}</span>
               </button>
@@ -2017,16 +2519,16 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); toast.success("Copiado!"); }}
-                  className="group/btn flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-200 transition-colors"
+                  className="group/btn flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
                 >
-                  <Copy size={13} className="text-slate-500 group-hover/btn:text-slate-300 transition-colors" /> Copiar descrição
+                  <Copy size={13} className="text-slate-400 dark:text-slate-500 group-hover/btn:text-slate-600 dark:group-hover/btn:text-slate-300 transition-colors" /> Copiar descrição
                 </button>
               )}
             </div>
           </div>
 
           {/* BARRA DE FERRAMENTAS E AUDITORIA (HOVER DRAWER) */}
-          <div className="max-h-0 opacity-0 group-hover:max-h-[100px] group-hover:opacity-100 transition-all duration-300 ease-in-out overflow-hidden flex flex-col gap-2 pt-0 group-hover:pt-2 border-t border-transparent group-hover:border-slate-800/40">
+          <div className="max-h-0 opacity-0 group-hover:max-h-[100px] group-hover:opacity-100 transition-all duration-300 ease-in-out overflow-hidden flex flex-col gap-2 pt-0 group-hover:pt-2 border-t border-transparent group-hover:border-slate-200 dark:group-hover:border-slate-800/40">
             <p className="text-[10px] text-slate-500 font-medium">
               Criado por {deal.assignedTo?.name || deal.assignee?.name || "Sistema"}.
             </p>
@@ -2045,7 +2547,7 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
                     setSelectedDeal(deal);
                   }
                 }} 
-                className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"
+                className="rounded p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <MessageSquare size={15} />
               </button>
@@ -2061,7 +2563,7 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
                     setSelectedDeal(deal);
                   }
                 }} 
-                className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"
+                className="rounded p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <Calendar size={15} />
               </button>
@@ -2077,7 +2579,7 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
                     setSelectedDeal(deal);
                   }
                 }} 
-                className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"
+                className="rounded p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <CheckSquare size={15} />
               </button>
@@ -2094,7 +2596,7 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
                     router.push(`/inbox`);
                   }
                 }}
-                className="ml-auto rounded p-1.5 hover:bg-slate-700 hover:text-emerald-400 transition-colors"
+                className="ml-auto rounded p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors"
               >
                 <ArrowUpRight size={15} />
               </button>
@@ -2103,29 +2605,46 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
 
           {/* VALOR EM VERDE DESTAQUE */}
           <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-400 bg-emerald-950/20 px-2.5 py-1 rounded-md border border-emerald-800/30 w-fit">
-              <span>💲</span>
+            <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-950/20 px-2.5 py-1 rounded-md border border-emerald-500/30 dark:border-emerald-800/30 w-fit">
+              <DollarSign size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>{deal.value ? `R$ ${Number(deal.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : "R$ 0,00"}</span>
             </div>
           </div>
 
+          {/* DATAS DA NEGOCIAÇÃO: INÍCIO E FECHAMENTO */}
+          <div className="flex items-center justify-between text-[10px] px-2 py-1 bg-slate-100 dark:bg-[#0d1117] rounded-md border border-slate-200 dark:border-gray-800 mt-0.5">
+            <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300" title="Data de início / criação da oportunidade">
+              <Calendar size={11} className="text-blue-600 dark:text-blue-400 shrink-0" />
+              <span>Início: <strong className="text-slate-900 dark:text-white font-mono font-bold">{formatDate(deal.metadata?.startDate || deal.createdAt)}</strong></span>
+            </span>
+
+            {(deal.metadata?.closedAt || ['won', 'lost', 'disqualified'].includes(deal.status)) ? (
+              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold" title="Data de fechamento da oportunidade">
+                <CheckCircle2 size={11} className="shrink-0" />
+                <span className="font-mono">{formatDate(deal.metadata?.closedAt || deal.updatedAt)}</span>
+              </span>
+            ) : (
+              <span className="text-blue-600 dark:text-blue-400 font-medium">Em andamento</span>
+            )}
+          </div>
+
           {/* RESPONSÁVEL / ASSIGNEE */}
-          <div className="mt-1 flex items-center gap-2 border-t border-slate-800/40 pt-3">
+          <div className="mt-1 flex items-center gap-2 border-t border-slate-200 dark:border-slate-800/40 pt-3">
             {(deal.assignedTo?.name || deal.assignee?.name) ? (
                <>
                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[9px] font-bold text-white shadow-md">
                    {(deal.assignedTo?.name || deal.assignee?.name)[0]}
                  </div>
-                 <span className="text-[11px] text-slate-400 font-semibold truncate">
+                 <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold truncate">
                    {deal.assignedTo?.name || deal.assignee?.name}
                  </span>
                </>
             ) : (
                <>
-                 <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-[9px] font-bold text-slate-300 shadow-md">
+                 <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-[9px] font-bold text-slate-700 dark:text-slate-300 shadow-md">
                    F
                  </div>
-                 <span className="text-[11px] text-slate-400 font-semibold italic">
+                 <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold italic">
                    Fila Geral
                  </span>
                </>

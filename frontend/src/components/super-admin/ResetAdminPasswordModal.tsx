@@ -75,11 +75,11 @@ export default function ResetAdminPasswordModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden text-slate-100"
+        className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden text-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-[#070D1B]">
+        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#070D1B]">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold shrink-0">
               <KeyRound size={20} />
@@ -105,7 +105,7 @@ export default function ResetAdminPasswordModal({
                 <p className="text-xs text-slate-300">
                   A nova senha de acesso para o administrador <strong className="text-white font-mono">{adminEmail}</strong> é:
                 </p>
-                <div className="flex items-center justify-between bg-[#070D1B] border border-slate-800 p-2.5 rounded-lg">
+                <div className="flex items-center justify-between bg-slate-50 dark:bg-[#070D1B] border border-slate-800 p-2.5 rounded-lg">
                   <span className="font-mono text-sm font-bold text-emerald-400 select-all tracking-wider">
                     {resultPassword}
                   </span>
@@ -126,7 +126,7 @@ export default function ResetAdminPasswordModal({
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Senha Atual Salva para Testes Imediatos */}
               {currentSavedPassword && (
-                <div className="p-3 rounded-lg bg-[#070D1B] border border-slate-800 space-y-1.5">
+                <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       Senha Atual Salva
@@ -135,7 +135,7 @@ export default function ResetAdminPasswordModal({
                       Disponível para Teste
                     </span>
                   </div>
-                  <div className="flex items-center justify-between gap-2 bg-[#0B1224] p-2 rounded-lg border border-slate-800">
+                  <div className="flex items-center justify-between gap-2 bg-white dark:bg-[#0B1224] p-2 rounded-lg border border-slate-800">
                     <span className="font-mono text-xs font-bold text-slate-100 tracking-wider">
                       {showCurrentPassword ? currentSavedPassword : "••••••••••••"}
                     </span>
@@ -190,7 +190,7 @@ export default function ResetAdminPasswordModal({
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Digite a senha que você desejar (ex: minhaSenha123)"
-                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono"
                 />
               </div>
 

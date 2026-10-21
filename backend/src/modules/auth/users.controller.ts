@@ -27,6 +27,7 @@ export class UsersController {
         role: true,
         isActive: true,
         isSuperAdmin: true,
+        canAccessMarketing: true,
         permissions: true,
         avatarUrl: true,
         isOnline: true,
@@ -63,6 +64,7 @@ export class UsersController {
         role: true,
         isActive: true,
         isSuperAdmin: true,
+        canAccessMarketing: true,
         permissions: true,
         avatarUrl: true,
         tenantId: true,
@@ -185,12 +187,58 @@ export class UsersController {
     });
   }
 
+  @Patch(':id/permissions')
+  async updatePermissions(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { permissions: any; canAccessMarketing?: boolean }
+  ) {
+    const tenantId = req.user?.tenantId;
+    const targetUser = await this.prisma.user.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!targetUser) {
+      throw new BadRequestException('Usuário não encontrado na sua empresa.');
+    }
+
+    const perms = body.permissions || {};
+    const canAccessMarketing = body.canAccessMarketing !== undefined
+      ? Boolean(body.canAccessMarketing)
+      : Boolean(perms.marketing);
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        permissions: perms,
+        canAccessMarketing,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        canAccessMarketing: true,
+        permissions: true,
+        avatarUrl: true,
+        isOnline: true,
+        tenantId: true,
+      },
+    });
+
+    return {
+      message: 'Permissões atualizadas com sucesso!',
+      user: updatedUser,
+    };
+  }
+
   @Patch(':id')
   @Put(':id')
   async update(
     @Request() req,
     @Param('id') id: string,
-    @Body() body: { name?: string; role?: string; isActive?: boolean; password?: string; avatarUrl?: string; permissions?: any }
+    @Body() body: { name?: string; role?: string; isActive?: boolean; password?: string; avatarUrl?: string; permissions?: any; canAccessMarketing?: boolean }
   ) {
     const tenantId = req.user?.tenantId;
     const currentUserId = req.user?.id || req.user?.userId;
@@ -232,6 +280,16 @@ export class UsersController {
 
     if (body.permissions !== undefined) {
       updateData.permissions = body.permissions;
+      if (body.permissions?.marketing !== undefined) {
+        updateData.canAccessMarketing = Boolean(body.permissions.marketing);
+      }
+    }
+
+    if (body.canAccessMarketing !== undefined) {
+      updateData.canAccessMarketing = Boolean(body.canAccessMarketing);
+      if (updateData.permissions) {
+        updateData.permissions.marketing = updateData.canAccessMarketing;
+      }
     }
 
     if (body.isActive !== undefined) {
@@ -264,6 +322,7 @@ export class UsersController {
         email: true,
         role: true,
         isActive: true,
+        canAccessMarketing: true,
         permissions: true,
         avatarUrl: true,
         isOnline: true,
@@ -280,7 +339,7 @@ export class UsersController {
   @Post()
   async create(
     @Request() req,
-    @Body() body: { name: string; email: string; password?: string; role?: string; permissions?: any }
+    @Body() body: { name: string; email: string; password?: string; role?: string; permissions?: any; canAccessMarketing?: boolean }
   ) {
     const tenantId = req.user?.tenantId;
     if (!tenantId) throw new BadRequestException('Tenant não identificado.');
@@ -326,8 +385,10 @@ export class UsersController {
       automations: role === 'ADMIN',
       settings: role === 'ADMIN',
       support: true,
+      marketing: Boolean(body.canAccessMarketing ?? false),
     };
     const permissions = body.permissions !== undefined ? body.permissions : defaultPermissions;
+    const canAccessMarketing = Boolean(body.canAccessMarketing ?? permissions?.marketing ?? false);
 
     const newUser = await this.prisma.user.create({
       data: {
@@ -337,6 +398,7 @@ export class UsersController {
         rawPasswordEncrypted: encryptApiKey(rawPass),
         role,
         permissions,
+        canAccessMarketing,
         isActive: true,
         tenantId,
       },
@@ -346,6 +408,7 @@ export class UsersController {
         email: true,
         role: true,
         isActive: true,
+        canAccessMarketing: true,
         permissions: true,
         avatarUrl: true,
         isOnline: true,

@@ -405,13 +405,10 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             update: {}
         });
         if (fromMe) {
-            if (conversation.status === 'bot_active' || conversation.status === 'waiting' || conversation.status === 'resolved' || conversation.status === 'closed') {
-                conversation = await this.prisma.conversation.update({
-                    where: { id: conversation.id },
-                    data: { status: 'human_takeover', updatedAt: new Date() }
-                });
-                this.chatGateway.emitConversationUpdated(tenantId, conversation);
-            }
+            conversation = await this.prisma.conversation.update({
+                where: { id: conversation.id },
+                data: { updatedAt: new Date() }
+            });
             try {
                 const jobId = `ai_reply_${conversation.id}`;
                 const existingJob = await this.aiQueue.getJob(jobId);
@@ -482,8 +479,8 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 });
             }
         }
-        else if (conversation.status === 'bot_active' || (conversation.status === 'waiting' && !conversation.assignedTo)) {
-            if (conversation.status === 'waiting') {
+        else {
+            if (conversation.status !== 'bot_active') {
                 conversation = await this.prisma.conversation.update({
                     where: { id: conversation.id },
                     data: { status: 'bot_active' }
@@ -544,9 +541,6 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 backoff: { type: 'fixed', delay: 2000 }
             });
             this.logger.log(`Conversa [${conversation.id}] agendada para IA em 800ms (Buffer).`);
-        }
-        else {
-            this.logger.log(`Conversa [${conversation.id}] ignorada pela IA. O status atual é Humano (${conversation.status}).`);
         }
         return { status: 'success', messageId: savedMessage.id };
     }

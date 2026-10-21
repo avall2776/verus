@@ -127,6 +127,66 @@ let MessagingService = MessagingService_1 = class MessagingService {
             return metaRes;
         }
     }
+    async sendTemplate(payload) {
+        const cleanPhone = this.sanitizePhone(payload.phone);
+        if (!cleanPhone) {
+            return { success: false, error: 'Telefone inválido ou ausente' };
+        }
+        const conn = await this.resolveConnection(payload.tenantId, payload.instanceId, cleanPhone);
+        if (conn.preferredProvider === 'evolution') {
+            const fallbackText = `Olá! Estamos retomando nosso atendimento para dar sequência ao seu contato. Como podemos te ajudar?`;
+            return this.sendEvolutionText(conn.evolution, cleanPhone, fallbackText);
+        }
+        if (conn.meta.token && conn.meta.phoneNumberId) {
+            return this.sendMetaTemplate(conn.meta, cleanPhone, payload.templateName, payload.languageCode, payload.components);
+        }
+        return { success: false, error: 'Credenciais Meta ausentes para disparo de templates' };
+    }
+    async sendMetaTemplate(metaConfig, cleanPhone, templateName, languageCode, components) {
+        if (!metaConfig.token || !metaConfig.phoneNumberId) {
+            return { success: false, error: 'Credenciais Meta ausentes' };
+        }
+        try {
+            const url = `https://graph.facebook.com/v19.0/${metaConfig.phoneNumberId}/messages`;
+            this.logger.log(`Disparando Template Meta [${templateName}] para ${cleanPhone}...`);
+            const tplPayload = {
+                messaging_product: 'whatsapp',
+                recipient_type: 'individual',
+                to: cleanPhone,
+                type: 'template',
+                template: {
+                    name: templateName,
+                    language: {
+                        code: languageCode || 'pt_BR',
+                    },
+                },
+            };
+            if (components && components.length > 0) {
+                tplPayload.template.components = components;
+            }
+            const response = await axios_1.default.post(url, tplPayload, {
+                headers: {
+                    Authorization: `Bearer ${metaConfig.token}`,
+                    'Content-Type': 'application/json',
+                },
+                timeout: 15000,
+            });
+            const messageId = response.data?.messages?.[0]?.id || `meta_tpl_${Date.now()}`;
+            this.logger.log(`Template Meta [${templateName}] enviado com sucesso para ${cleanPhone}. ID: ${messageId}`);
+            return {
+                success: true,
+                messageId,
+                provider: 'meta',
+                raw: response.data,
+            };
+        }
+        catch (err) {
+            const errorObj = err.response?.data?.error;
+            const errorMsg = errorObj?.message || err.message;
+            this.logger.error(`Erro no envio de Template Meta para ${cleanPhone}: ${errorMsg}`);
+            return { success: false, error: errorMsg, raw: errorObj };
+        }
+    }
     async sendEvolutionText(evoConfig, cleanPhone, content) {
         try {
             const url = `${evoConfig.url}/message/sendText/${evoConfig.instanceName}`;

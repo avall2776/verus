@@ -328,6 +328,113 @@ Abaixo estão listadas as sprints para dar vida às novas telas operacionais:
 
 ---
 
+### 🚀 FASE 87: MÓDULO DE GESTÃO E OPERAÇÕES DE MARKETING COM CONTROLE GRANULAR DE ACESSO (19/10/2026 - FULL-STACK ENTERPRISE)
+> **Status**: ✅ Concluído com Sucesso e Homologado (Build Next.js código 0, 48 rotas, Build NestJS código 0, 100% SVG corporativo, zero emojis).
+
+- [x] **1. Controle de Permissões e Governança no Banco de Dados (Prisma & Supabase)**:
+  - [x] Adicionar flag direta `canAccessMarketing Boolean @default(false)` no model `User`.
+  - [x] Expandir o campo `permissions Json?` no model `User` com granularidade por módulos (`ATENDIMENTO_COMERCIAL`, `OPERACOES_MARKETING`, `CONFIGURACOES_GERAIS`, `marketing: boolean`).
+  - [x] Modelar `MarketingClient` (dados estruturados, planos, entregas acordadas, verba de anúncios).
+  - [x] Modelar `MarketingCard` (esteira Kanban, formatos, checklists, prazos).
+  - [x] Modelar `MarketingCampaign` (gestão de tráfego pago, plataformas, CPL, ROAS, leads).
+  - [x] Modelar `MarketingTimeLog` (ponto eletrônico com hash criptográfico SHA-256 de auditoria de sessão).
+  - [x] Executar `npx prisma generate` e sincronizar schema.
+- [x] **2. Backend NestJS - Guard de Proteção e Endpoints de Operações**:
+  - [x] Criar `MarketingModuleGuard` validando permissão de marketing.
+  - [x] Proteger endpoints do módulo `/api/agency/marketing/*` e `/agency/marketing/*`.
+  - [x] Criar `AgencyMarketingModule`, `AgencyMarketingController` e `AgencyMarketingService`.
+  - [x] Atualizar endpoints de usuários (`PATCH /users/:id/permissions`, `PATCH /users/:id`, etc.).
+- [x] **3. Gestão de Usuários no Frontend (`/settings?tab=users`)**:
+  - [x] Seletor/toggle explícito no modal de criação e edição: "Acesso a Operações de Marketing (Equipe da Agência)".
+  - [x] Atualização de tipagens `UserPermissions` e cache reativo local.
+- [x] **4. Sidebar & Navegação Segura por Permissão**:
+  - [x] Item "Operações de Marketing" visível apenas com permissão ativa.
+  - [x] Redirecionamento automático e blindagem contra acesso direto via URL (`/agency/marketing`).
+- [x] **5. Interface do Módulo Operações de Marketing (`/agency/marketing`)**:
+  - [x] Design System Dark Glassmorphism monocromático (#0B1224, #050814, slate, acentos ciano e azul).
+  - [x] Widget de Ponto Eletrônico & Monitoramento por Sessão no topo com hash SHA-256 de auditoria.
+  - [x] Kanban de Produção Operacional (6 colunas, drag-and-drop, cards compactos, checklist).
+  - [x] Gestão de Clientes & Escopos de Marketing com entregas mensais acordadas e histórico de peças.
+  - [x] Aba Tráfego Pago com métricas consolidadas (investimento, CPL, ROAS, leads) e gestão de campanhas (Meta Ads, Google Ads, TikTok Ads).
+  - [x] Cronograma & Calendário mensal/semanal sincronizado com os cards.
+- [x] **6. Validação, Homologação e Compilação Estrita**:
+  - [x] `npx prisma generate` e `npm run build` no backend (código 0).
+  - [x] `npx tsc --noEmit` e `npm run build` no frontend (código 0, 48 rotas).
+
+### 🟢 FASE 88: PARIDADE ABSOLUTA DO KANBAN E MODAL DE MARKETING COM O CRM COMERCIAL (PADRÃO LERO)
+- [x] Barra Superior Idêntica ao CRM Comercial: nome do funil editável, modos `[Quadro]`, `[Tabela]` e `[Linha do Tempo]`, busca ágil, pílulas de filtros rápidos, `+ Nova Etapa`, `Gerenciar Etapas` e `Fullscreen`.
+- [x] Colunas com topo colorido (`border-t-2`), colapso para 60px com título -90 graus, contador e valor em pill, redimensionamento por arraste e botão `+ Adicionar novo cartão` no rodapé.
+- [x] Card do Kanban idêntico ao `DealCard`: `#ID`, prioridade, avatar com ring, subtítulo com indicador `🟢`, caixa escura de metadados com acordeão `⌵ Mais / ⌃ Menos`, gaveta no hover com ações e autor, valor em destaque verde esmeralda e avatar do responsável.
+- [x] Modal de Demanda (`MarketingCardModal`) idêntico ao `DealModal`: split view em 2 colunas com dados do cliente, editor de copy/briefing, checklist interativo, anexos de arquivos, timeline em tempo real e barra lateral de parâmetros e ações.
+- [x] Compilação e tipagem rigorosa: `npx tsc --noEmit` e `npm run build` aprovados com código 0 (48 rotas).
+
+### 🟢 FASE 89: REFATORAÇÃO DE UI/UX E SUB-ROTAS DO MÓDULO MARKETING & AGÊNCIA (19/10/2026)
+> **Status**: ✅ Concluído com Sucesso e Homologado (Build Next.js código 0, 52 rotas, 100% SVG Lucide, zero emojis).
+
+- [x] **1. Reestruturação do Menu Lateral (`Sidebar.tsx`)**:
+  - Menu Accordion expansível para "MARKETING & AGÊNCIA" com a mesma anatomia do CRM comercial.
+  - Sub-itens dedicados:
+    * `[LayoutKanban]` Kanban de Produção (`/agency/marketing` e `/agency/marketing/kanban`)
+    * `[Briefcase]` Clientes & Escopos (`/agency/marketing/clients`)
+    * `[Calendar]` Cronograma (`/agency/marketing/schedule`)
+    * `[FolderArchive]` Biblioteca de Mídia (`/agency/marketing/media`)
+  - Indentação elegante (`pl-6`), tipografia slate-400 e destaque ativo (`bg-slate-800/60`, texto branco, borda lateral ciano `border-l-2 border-cyan-400`).
+- [x] **2. Purificação Visual Rigorosa (Zero Emojis & Ícones Minimalistas)**:
+  - 100% dos emojis removidos de títulos, cabeçalhos, botões, modais, tooltips e badges.
+  - Substituição por ícones SVG do `lucide-react` com traço fino (`strokeWidth={1.5}` ou `1.75`).
+  - Paleta escura de alta fidelidade (#050814, #0B1224, bordas slate-800, textos slate-200/slate-400).
+- [x] **3. Desacoplamento de Rotas e Limpeza do Kanban de Produção**:
+  - Abas secundárias removidas da página principal `/agency/marketing`.
+  - Resquícios do CRM comercial removidos: eliminada exibição de valores em dinheiro ("R$ 0,00") dos cabeçalhos das colunas de produção.
+  - Cabeçalhos de coluna exibem unicamente o título da etapa e o contador compacto (ex: "3 cards").
+  - Widget superior de Ponto Eletrônico & Auditoria mantido limpo e proeminente como barra de jornada ativa.
+- [x] **4. Telas Dedicadas Homologadas**:
+  - `/agency/marketing/clients`: Grid limpo e moderno com cards compactos dos clientes da agência, tags dos pacotes contratados e contadores de entregas do mês.
+  - `/agency/marketing/schedule`: Visão de calendário mensal/semanal focado nas datas de postagem e prazos das peças.
+  - `/agency/marketing/media`: Galeria de ativos com filtros em tempo real por cliente, formato (Feed, Reels, Carrossel, Stories) e status de aprovação.
+- [x] **5. Validação e Compilação**:
+  - `npx tsc --noEmit` executado com 0 erros.
+  - `npm run build` gerou 52 páginas estáticas/dinâmicas com código de saída 0.
+
+### 🟢 FASE 90: EXPANSÃO CORPORATIVA DE CLIENTES & ESCOPOS - "PROJETO DO CLIENTE" (19/10/2026)
+> **Status**: ✅ Concluído com Sucesso e Homologado (Padrão Corporativo Completo, Zero Degradê, Zero Emojis, Interface Idêntica ao Mockup Enviado).
+
+- [x] **1. Cadastro Padrão Corporativo Expandido (`MarketingClientModal.tsx`)**:
+  - Dados Cadastrais: Nome Fantasia / Marca, Razão Social, CNPJ formatado, Segmento / Nicho (ex: "Loja de defensivos agrícolas..."), Cidade / UF, Endereço completo.
+  - Contatos & Atendimento: Contato Principal, Cargo/Função, WhatsApp/Telefone, E-mail principal, Responsável Interno da Agência.
+  - Escopo & Contrato: Plano (Standard, Performance Pro, etc.), Status (Fechado, Ativo, Pausado, Cancelado), Mensalidade (Fee), Verba Mensal de Tráfego Ads, Vigência (meses), Metas de entregas mensais (Posts, Reels, Stories, Campanhas).
+  - Briefing & Materiais: Briefing completo do negócio, Escopo detalhado (inclusões e exclusões), Link da pasta no Google Drive/Figma, Tom de voz e diretrizes de marca, Regras da IA.
+  - Purificação Visual: Zero degradê, botões sólidos e discretos, zero emojis, ícones minimalistas `lucide-react`.
+- [x] **2. Busca e Destaque de Clientes na Listagem (`MarketingClientsTab.tsx`)**:
+  - Barra de busca em tempo real por nome, marca, CNPJ, segmento, cidade ou contato.
+  - Filtros rápidos por Status e Responsável da Equipe.
+  - Cards de clientes padronizados corporativos sem degradê, exibindo dados cadastrais, responsável, badges discretas e barras de progresso de entregas (Posts e Reels).
+  - Clique no card ou em "Ver Projeto" abre a tela completa de projeto do cliente.
+- [x] **3. Tela / Hub "PROJETO DO CLIENTE" (`MarketingClientDetailView.tsx`)**:
+  - Topo idêntico ao print do usuário:
+    * Label `PROJETO DO CLIENTE`
+    * Título em destaque (ex: `Agrosul`)
+    * Subtítulo: `[Segmento] • [Cidade - UF]`
+    * Botão superior direito: `← Clientes`
+    * Badges: `[ Fechado ]`, `[ 👤 Responsável ]`, `[ 💬 WhatsApp ]` (link direto wa.me), `Plano: Standard`, `Editar Ficha`.
+  - Abas de navegação completas:
+    * `Resumo`: Ficha cadastral corporativa, escopo contratado, metas mensais e briefing detalhado.
+    * `Cronograma`: Todas as peças do cliente no Kanban com formato, status, prazo e atalho para nova peça.
+    * `Materiais`: Link direto para pasta na nuvem (Google Drive), diretrizes visuais e ativos.
+    * `IA do cliente`: Regras de persona, tom de voz, termos proibidos e instruções de copy com salvamento instantâneo.
+    * `Conversa`: Bloco de anotações e alinhamentos internos da agência com o cliente.
+    * `Contrato`: Dados contratuais, mensalidade, vigência e termos do escopo acordado.
+    * `Histórico`: Linha do tempo vertical com marcadores circulares e linha conectora contínua (`Atualizado: [Cliente]`, `Cadastrado: [Cliente]`, autor e timestamp formatado `DD/MM/AAAA, HH:mm:ss`), com formulário para inclusão de eventos manuais.
+- [x] **4. Backend & Prisma**:
+  - `CreateMarketingClientDto` e `UpdateMarketingClientDto` expandidos.
+  - `agency-marketing.service.ts` gera logs automáticos de auditoria no histórico a cada cadastro ou edição.
+  - Novo endpoint `GET /agency/marketing/clients/:id` mapeado.
+- [x] **5. Validação**:
+  - TypeScript compilado com 0 erros (`npx tsc --noEmit`).
+  - Respostas HTTP 200 no servidor de desenvolvimento.
+
+---
+
 ## 🚀 Roadmap Futuro (Icebox / Banco de Ideias)
 *Esta seção armazena ideias arquiteturais avançadas e expansões de escopo para longo prazo. Não fazem parte da esteira atual de MVP/Produção.*
 

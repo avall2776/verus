@@ -159,7 +159,7 @@ export default function GlobalSearchBar() {
           }}
           onChange={(e) => handleQueryChange(e.target.value)}
           placeholder="Buscar leads, conversas..."
-          className="w-full bg-[#0B1224] border border-slate-800 rounded-full pl-10 pr-16 py-2 text-xs text-white outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] placeholder:text-slate-500"
+          className="w-full bg-white dark:bg-[#0B1224] border border-slate-800 rounded-full pl-10 pr-16 py-2 text-xs text-white outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] placeholder:text-slate-500"
         />
 
         {/* Loading ou Botão Limpar ou Atalho Ctrl K */}
@@ -188,7 +188,7 @@ export default function GlobalSearchBar() {
 
       {/* Dropdown Flutuante de Resultados em Tempo Real */}
       {isOpen && query.trim().length >= 2 && (
-        <div className="absolute left-0 mt-2 w-full sm:w-[480px] bg-[#0F172A] border border-slate-800 rounded-2xl shadow-2xl shadow-black/90 p-2 z-50 overflow-hidden flex flex-col text-slate-100 animate-fadeIn">
+        <div className="absolute left-0 mt-2 w-full sm:w-[480px] bg-white dark:bg-[#0F172A] border border-slate-800 rounded-2xl shadow-2xl shadow-black/90 p-2 z-50 overflow-hidden flex flex-col text-slate-100 animate-fadeIn">
           
           {/* Header dos Resultados */}
           <div className="px-3 py-2 border-b border-slate-800/70 flex items-center justify-between text-[11px] text-slate-400">
@@ -362,7 +362,7 @@ export default function GlobalSearchBar() {
           </div>
 
           {/* Rodapé do Dropdown */}
-          <div className="px-3 py-2 border-t border-slate-800/80 bg-[#0B1224]/80 flex items-center justify-between text-[10px] text-slate-400 rounded-b-xl">
+          <div className="px-3 py-2 border-t border-slate-800/80 bg-white/80 dark:bg-[#0B1224]/80 flex items-center justify-between text-[10px] text-slate-400 rounded-b-xl">
             <span>Pressione <kbd className="px-1 bg-slate-800 rounded text-slate-300 font-mono">Esc</kbd> para fechar</span>
             <span className="text-slate-500">Busca Global Vallor</span>
           </div>

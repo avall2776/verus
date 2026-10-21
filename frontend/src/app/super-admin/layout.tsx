@@ -137,13 +137,13 @@ export default function SuperAdminLayout({
   };
 
   return (
-    <div className="h-screen flex w-full overflow-hidden bg-[#070D1B] text-slate-100 font-sans">
+    <div className="h-screen flex w-full overflow-hidden bg-slate-50 dark:bg-[#070D1B] text-slate-100 font-sans">
       {/* Sidebar do Super Admin Monocromática (Desktop) */}
-      <aside className="hidden md:flex md:w-64 bg-[#0B1224] border-r border-slate-800 flex-col justify-between h-full transition-all duration-300 relative z-20 shrink-0">
+      <aside className="hidden md:flex md:w-64 bg-white dark:bg-[#0B1224] border-r border-slate-800 flex-col justify-between h-full transition-all duration-300 relative z-20 shrink-0">
         
         {/* Header da Sidebar */}
         <div>
-          <div className="h-16 flex items-center justify-center md:justify-start md:px-5 border-b border-slate-800 bg-[#070D1B]">
+          <div className="h-16 flex items-center justify-center md:justify-start md:px-5 border-b border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold shrink-0">
                 <Layers size={18} />
@@ -207,7 +207,7 @@ export default function SuperAdminLayout({
         </div>
 
         {/* Rodapé do Super Admin */}
-        <div className="p-3 border-t border-slate-800 flex flex-col gap-2 bg-[#070D1B]">
+        <div className="p-3 border-t border-slate-800 flex flex-col gap-2 bg-slate-50 dark:bg-[#070D1B]">
           <Link
             href="/dashboard"
             className="hidden md:flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition-all text-xs font-medium"
@@ -218,7 +218,7 @@ export default function SuperAdminLayout({
 
           <div 
             onClick={() => setIsProfileModalOpen(true)}
-            className="flex items-center justify-between p-2 rounded-lg bg-[#0B1224] border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 cursor-pointer transition-all group"
+            className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 cursor-pointer transition-all group"
             title="Editar Perfil (Nome, Foto e Dados)"
           >
             <div className="flex items-center gap-2 overflow-hidden" suppressHydrationWarning>
@@ -257,7 +257,7 @@ export default function SuperAdminLayout({
       {/* Área Principal */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Topbar Corporativa */}
-        <header className="h-14 border-b border-slate-800 bg-[#0B1224]/80 backdrop-blur-md flex items-center justify-between px-3 md:px-8 sticky top-0 z-10 w-full shrink-0">
+        <header className="h-14 border-b border-slate-800 bg-white/80 dark:bg-[#0B1224]/80 backdrop-blur-md flex items-center justify-between px-3 md:px-8 sticky top-0 z-10 w-full shrink-0">
           <div className="flex items-center gap-2.5">
             <button
               type="button"
@@ -284,7 +284,7 @@ export default function SuperAdminLayout({
               <span>Simulador de Telas</span>
             </button>
 
-            <div className="flex items-center gap-2 px-3 py-1 bg-[#070D1B] border border-slate-800 rounded-full">
+            <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-full">
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
               <span className="text-[11px] font-semibold text-slate-300">Infraestrutura Ativa</span>
             </div>
@@ -292,7 +292,7 @@ export default function SuperAdminLayout({
         </header>
         
         {/* Container do Conteúdo */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar bg-[#070D1B]">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar bg-slate-50 dark:bg-[#070D1B]">
           {children}
         </div>
       </main>
@@ -304,9 +304,9 @@ export default function SuperAdminLayout({
             className="fixed inset-0 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          <aside className="relative w-72 max-w-[85vw] bg-[#0B1224] border-r border-slate-800 flex flex-col justify-between h-full z-10 shadow-2xl animate-in slide-in-from-left duration-200">
+          <aside className="relative w-72 max-w-[85vw] bg-white dark:bg-[#0B1224] border-r border-slate-800 flex flex-col justify-between h-full z-10 shadow-2xl animate-in slide-in-from-left duration-200">
             <div>
-              <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800 bg-[#070D1B]">
+              <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold shrink-0">
                     <Layers size={18} />
@@ -376,7 +376,7 @@ export default function SuperAdminLayout({
               </nav>
             </div>
 
-            <div className="p-3 border-t border-slate-800 flex flex-col gap-2 bg-[#070D1B]">
+            <div className="p-3 border-t border-slate-800 flex flex-col gap-2 bg-slate-50 dark:bg-[#070D1B]">
               <Link
                 href="/dashboard"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -391,7 +391,7 @@ export default function SuperAdminLayout({
                   setIsMobileMenuOpen(false);
                   setIsProfileModalOpen(true);
                 }}
-                className="flex items-center justify-between p-2 rounded-lg bg-[#0B1224] border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 cursor-pointer transition-all group"
+                className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 cursor-pointer transition-all group"
               >
                 <div className="flex items-center gap-2 overflow-hidden">
                   <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm">

@@ -233,7 +233,7 @@ export default function SuperAdminSupportNotifier() {
         <div
           key={alert.id}
           role="alert"
-          className="pointer-events-auto bg-[#0B1224]/95 backdrop-blur-xl border border-blue-500/70 rounded-2xl shadow-2xl shadow-black/90 p-4 text-white animate-in slide-in-from-top-4 duration-300 ring-2 ring-blue-500/20"
+          className="pointer-events-auto bg-white/95 dark:bg-[#0B1224]/95 backdrop-blur-xl border border-blue-500/70 rounded-2xl shadow-2xl shadow-black/90 p-4 text-white animate-in slide-in-from-top-4 duration-300 ring-2 ring-blue-500/20"
         >
           {/* Topo do Card com Badge e Protocolo */}
           <div className="flex items-start justify-between gap-3">
@@ -277,7 +277,7 @@ export default function SuperAdminSupportNotifier() {
               Assunto: <span className="text-white">{alert.subject}</span>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-[#070D1B] border border-slate-800 text-slate-300 text-[11px] leading-relaxed line-clamp-2 italic">
+            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-slate-300 text-[11px] leading-relaxed line-clamp-2 italic">
               &ldquo;{alert.content}&rdquo;
             </div>
           </div>

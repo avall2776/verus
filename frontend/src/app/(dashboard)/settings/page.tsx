@@ -103,7 +103,7 @@ function SettingsContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#070D1B] border border-slate-800 text-xs text-slate-400">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-xs text-slate-400">
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
           <span>Ambiente Seguro Multi-Tenant</span>
         </div>
@@ -112,7 +112,7 @@ function SettingsContent() {
       {/* Layout de Abas: Navegação Lateral + Painel de Conteúdo */}
       <div className="flex flex-col lg:flex-row gap-6 flex-1 items-start">
         {/* Menu Lateral de Abas */}
-        <aside className="w-full lg:w-72 shrink-0 flex flex-col gap-1.5 bg-[#0B1224]/80 border border-slate-800/80 rounded-2xl p-3 shadow-xl backdrop-blur-sm">
+        <aside className="w-full lg:w-72 shrink-0 flex flex-col gap-1.5 bg-white/80 dark:bg-[#0B1224]/80 border border-slate-800/80 rounded-2xl p-3 shadow-xl backdrop-blur-sm">
           <div className="px-3 py-2 text-[10px] font-bold tracking-wider uppercase text-slate-400">
             Módulos de Configuração
           </div>
@@ -160,7 +160,7 @@ function SettingsContent() {
         </aside>
 
         {/* Painel Central de Conteúdo */}
-        <main className="flex-1 w-full min-w-0 bg-[#0B1224]/80 border border-slate-800/80 rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
+        <main className="flex-1 w-full min-w-0 bg-white/80 dark:bg-[#0B1224]/80 border border-slate-800/80 rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
           {activeTab === "company" && <CompanySettingsTab />}
           {activeTab === "plan" && <PlanSettingsTab />}
           {activeTab === "ai" && <AiSettingsTab />}

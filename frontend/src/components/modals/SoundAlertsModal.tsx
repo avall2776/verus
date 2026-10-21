@@ -183,7 +183,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="bg-[#0B1224] border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 flex flex-col gap-5 animate-in zoom-in-95 text-white"
+        className="bg-white dark:bg-[#0B1224] border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 flex flex-col gap-5 animate-in zoom-in-95 text-white"
       >
         {/* Cabeçalho */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
@@ -206,7 +206,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
         </div>
 
         {/* Master Mute Toggle */}
-        <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#070D1B] border border-slate-800">
+        <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
           <div className="flex items-center gap-2.5">
             {settings.masterMute ? (
               <VolumeX className="w-4 h-4 text-rose-400" />
@@ -236,8 +236,8 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
           {/* WhatsApp */}
           <div className={`p-3.5 rounded-xl border transition-all ${
             settings.whatsapp.enabled && !settings.masterMute
-              ? "bg-[#070D1B] border-slate-700/80"
-              : "bg-[#070D1B]/50 border-slate-800/60 opacity-60"
+              ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80"
+              : "bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5">
@@ -281,8 +281,8 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
           {/* Instagram */}
           <div className={`p-3.5 rounded-xl border transition-all ${
             settings.instagram.enabled && !settings.masterMute
-              ? "bg-[#070D1B] border-slate-700/80"
-              : "bg-[#070D1B]/50 border-slate-800/60 opacity-60"
+              ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80"
+              : "bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5">
@@ -326,8 +326,8 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
           {/* Suporte */}
           <div className={`p-3.5 rounded-xl border transition-all ${
             settings.support.enabled && !settings.masterMute
-              ? "bg-[#070D1B] border-slate-700/80"
-              : "bg-[#070D1B]/50 border-slate-800/60 opacity-60"
+              ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80"
+              : "bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5">
@@ -371,8 +371,8 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
           {/* Sistema */}
           <div className={`p-3.5 rounded-xl border transition-all ${
             settings.system.enabled && !settings.masterMute
-              ? "bg-[#070D1B] border-slate-700/80"
-              : "bg-[#070D1B]/50 border-slate-800/60 opacity-60"
+              ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80"
+              : "bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5">

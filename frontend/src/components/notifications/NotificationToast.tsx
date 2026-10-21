@@ -104,7 +104,7 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
   };
 
   return (
-    <div className="w-[360px] sm:w-[390px] rounded-2xl bg-[#0B1224]/95 backdrop-blur-xl border border-cyan-500/40 shadow-[0_12px_40px_rgba(0,0,0,0.7),0_0_20px_rgba(6,182,212,0.15)] p-4 text-white relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300">
+    <div className="w-[360px] sm:w-[390px] rounded-2xl bg-white/95 dark:bg-[#0B1224]/95 backdrop-blur-xl border border-cyan-500/40 shadow-[0_12px_40px_rgba(0,0,0,0.7),0_0_20px_rgba(6,182,212,0.15)] p-4 text-white relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300">
       {/* Luz ambiente no topo */}
       <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-48 h-12 bg-cyan-500/20 blur-2xl rounded-full pointer-events-none" />
 
@@ -241,7 +241,7 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
   };
 
   return (
-    <div className="w-[370px] sm:w-[410px] rounded-2xl bg-[#0B1224]/98 backdrop-blur-xl border-2 border-amber-500/70 shadow-[0_16px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(245,158,11,0.25)] p-4 text-white relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300">
+    <div className="w-[370px] sm:w-[410px] rounded-2xl bg-white/98 dark:bg-[#0B1224]/98 backdrop-blur-xl border-2 border-amber-500/70 shadow-[0_16px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(245,158,11,0.25)] p-4 text-white relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300">
       {/* Barra de brilho animada no topo */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-orange-400 to-amber-300 animate-pulse" />
 
@@ -455,7 +455,7 @@ export const LeadQualifiedToast: React.FC<LeadQualifiedToastProps> = ({
   if (isBlockedNotificationContext()) return null;
 
   return (
-    <div className="w-[380px] sm:w-[410px] rounded-2xl bg-[#0B1426]/95 backdrop-blur-2xl border border-amber-500/50 shadow-[0_12px_45px_rgba(0,0,0,0.8),0_0_25px_rgba(245,158,11,0.2)] p-4 text-white relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300">
+    <div className="w-[380px] sm:w-[410px] rounded-2xl bg-white/95 dark:bg-[#0B1426]/95 backdrop-blur-2xl border border-amber-500/50 shadow-[0_12px_45px_rgba(0,0,0,0.8),0_0_25px_rgba(245,158,11,0.2)] p-4 text-white relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300">
       {/* Luz ambiente dourada no topo */}
       <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-56 h-14 bg-gradient-to-r from-amber-500/30 to-orange-500/20 blur-2xl rounded-full pointer-events-none" />
 

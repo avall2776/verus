@@ -841,12 +841,11 @@ export class ChatService {
       }
     }
 
-    if (conversation.status === 'bot_active' && !isInternal) {
-      await this.prisma.conversation.update({
-        where: { id: conversationId },
-        data: { status: 'human_takeover' }
-      });
-    }
+    // Mantém a conversa ativa sem travar a IA em transbordo
+    await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { updatedAt: new Date() }
+    });
 
     // Emite a mensagem via WebSocket para atualizar todos os atendentes
     this.chatGateway.emitNewMessage(tenantId, msg);
@@ -916,12 +915,10 @@ export class ChatService {
       contact: { phone: conversation.contact.phone, name: conversation.contact.name, avatarUrl: conversation.contact.avatarUrl }
     });
 
-    if (conversation.status === 'bot_active' || conversation.status === 'waiting') {
-      await this.prisma.conversation.update({
-        where: { id: conversationId },
-        data: { status: 'human_takeover' }
-      });
-    }
+    await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { updatedAt: new Date() }
+    });
 
     const sendRes = await this.messagingService.sendTemplate({
       tenantId,
@@ -974,7 +971,7 @@ export class ChatService {
         data: {
           tenantId,
           contactId,
-          status: 'human_takeover',
+          status: 'bot_active',
           assignedTo: userId
         }
       });

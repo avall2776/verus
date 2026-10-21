@@ -23,79 +23,83 @@ model SuperAdmin {
 }
 
 model Plan {
-  id           String   @id @default(uuid())
-  name         String   // Basic, Pro, Enterprise
-  price        Decimal
-  hasCRM       Boolean  @default(false)
-  hasWhatsApp  Boolean  @default(true)
-  hasInstagram Boolean  @default(false)
-  hasAIAgent   Boolean  @default(false)
-  maxUsers     Int      @default(1)
-  maxAIMsgs    Int      @default(0)
-  maxWorkspaces Int     @default(1)
-  modules      Json?    // { crm, whatsapp, aiAgent, emailInbox, analytics, goals, proposalsContracts, automations, support, teamChat }
-  tenants      Tenant[]
+  id            String   @id @default(uuid())
+  name          String // Basic, Pro, Enterprise
+  price         Decimal
+  hasCRM        Boolean  @default(false)
+  hasWhatsApp   Boolean  @default(true)
+  hasInstagram  Boolean  @default(false)
+  hasAIAgent    Boolean  @default(false)
+  maxUsers      Int      @default(1)
+  maxAIMsgs     Int      @default(0)
+  maxWorkspaces Int      @default(1)
+  modules       Json? // { crm, whatsapp, aiAgent, emailInbox, analytics, goals, proposalsContracts, automations, support, teamChat }
+  tenants       Tenant[]
 }
 
 model Tenant {
-  id         String   @id @default(uuid())
-  name       String
-  cnpj       String?
-  logoUrl    String?
-  phone      String?
+  id                    String              @id @default(uuid())
+  name                  String
+  cnpj                  String?
+  logoUrl               String?
+  phone                 String?
   leadNotificationPhone String?
-  address    String?
-  email      String?
-  isActive   Boolean  @default(true)
-  planId     String
-  plan       Plan     @relation(fields: [planId], references: [id])
-  users      User[]
-  workspaces Workspace[]
-  contacts     Contact[]
-  departments  Department[]
-  quickReplies QuickReply[]
-  automations  Automation[]
-  channels     Channel[]
-  teamChannels TeamChannel[]
-  teamMessages TeamMessage[]
-  businessHours BusinessHours[]
-  whatsappInstances WhatsAppInstance[]
-  proposals    Proposal[]
-  goals        Goal[]
-  contracts    Contract[]
-  emails       EmailMessage[]
-  supportTickets SupportTicket[]
-  csatSurveys  CsatSurvey[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  address               String?
+  email                 String?
+  isActive              Boolean             @default(true)
+  planId                String
+  plan                  Plan                @relation(fields: [planId], references: [id])
+  users                 User[]
+  workspaces            Workspace[]
+  contacts              Contact[]
+  departments           Department[]
+  quickReplies          QuickReply[]
+  automations           Automation[]
+  channels              Channel[]
+  teamChannels          TeamChannel[]
+  teamMessages          TeamMessage[]
+  businessHours         BusinessHours[]
+  whatsappInstances     WhatsAppInstance[]
+  proposals             Proposal[]
+  goals                 Goal[]
+  contracts             Contract[]
+  emails                EmailMessage[]
+  supportTickets        SupportTicket[]
+  csatSurveys           CsatSurvey[]
+  marketingClients      MarketingClient[]
+  marketingCards        MarketingCard[]
+  marketingCampaigns    MarketingCampaign[]
+  marketingTimeLogs     MarketingTimeLog[]
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
 
-  documents  KnowledgeDocument[]
-  chunks     DocumentChunk[]
+  documents KnowledgeDocument[]
+  chunks    DocumentChunk[]
 
   // Configurações da IA
-  aiEnabled       Boolean  @default(true)
-  aiName          String? 
-  aiModel         String   @default("gpt-4o-mini")
+  aiEnabled       Boolean @default(true)
+  aiName          String?
+  aiModel         String  @default("gpt-4o-mini")
   aiPrompt        String?
   aiKnowledgeBase String?
   aiTemperature   Float   @default(0.7)
 
   // Transição Híbrida de Chaves OpenAI (BYOK & Trial de 7 dias)
-  aiTrialStartedAt      DateTime? @default(now())
-  aiTrialDays           Int       @default(7)
-  aiPlatformKeyAllowed  Boolean   @default(false) // Bypass do Super Admin (Modo Teste irrestrito)
-  aiCustomApiKey        String?   // Chave OpenAI do cliente (criptografada AES-256)
-  aiKeyType             String    @default("platform") // "platform" | "custom"
-  aiKeyStatus           String    @default("trial_active") // "trial_active" | "platform_authorized" | "byok_active" | "trial_expired"
-  aiLastKeyTestAt       DateTime?
-  aiTrialWarningSent    Boolean   @default(false)
-  trainingLogs          AgentTrainingLog[]
-  learningIncidents     AiLearningIncident[]
-  
+  aiTrialStartedAt     DateTime?            @default(now())
+  aiTrialDays          Int                  @default(7)
+  aiPlatformKeyAllowed Boolean              @default(false) // Bypass do Super Admin (Modo Teste irrestrito)
+  aiCustomApiKey       String? // Chave OpenAI do cliente (criptografada AES-256)
+  aiKeyType            String               @default("platform") // "platform" | "custom"
+  aiKeyStatus          String               @default("trial_active") // "trial_active" | "platform_authorized" | "byok_active" | "trial_expired"
+  aiLastKeyTestAt      DateTime?
+  aiTrialWarningSent   Boolean              @default(false)
+  trainingLogs         AgentTrainingLog[]
+  learningIncidents    AiLearningIncident[]
+
   metaToken         String?
   metaPhoneNumberId String?
-  whatsappSettings  Json?    // { antiBanEnabled: boolean, typingDelayMs: number, messageDelayMs: number }
-  emailSettings     Json?    // { provider: string, smtpHost?: string, smtpPort?: number, smtpSecure?: boolean, smtpUser?: string, smtpPass?: string, fromName?: string, fromEmail?: string, resendApiKey?: string, isActive?: boolean }
+  whatsappSettings  Json? // { antiBanEnabled: boolean, typingDelayMs: number, messageDelayMs: number }
+  emailSettings     Json? // { provider: string, smtpHost?: string, smtpPort?: number, smtpSecure?: boolean, smtpUser?: string, smtpPass?: string, fromName?: string, fromEmail?: string, resendApiKey?: string, isActive?: boolean }
 }
 
 // ------------------------------------------------------
@@ -103,30 +107,33 @@ model Tenant {
 // ------------------------------------------------------
 
 model User {
-  id                   String   @id @default(uuid())
+  id                   String             @id @default(uuid())
   name                 String
-  email                String   @unique
+  email                String             @unique
   password             String
-  rawPasswordEncrypted String?  // Senha reversível (criptografada AES-256) para visualização e testes pelo Super Admin
-  role                 String   // ADMIN, AGENT, SUPER_ADMIN
-  isActive             Boolean  @default(true)
-  isSuperAdmin         Boolean  @default(false)
-  permissions Json?   // { inbox: boolean, crm: boolean, chat: boolean, automations: boolean, settings: boolean, support: boolean }
-  avatarUrl String?
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  isOnline  Boolean  @default(false)
-  departments UserDepartment[]
-  deals     Deal[]
-  goals     Goal[]
-  sentTeamMessages     TeamMessage[] @relation("SentTeamMessages")
-  receivedTeamMessages TeamMessage[] @relation("ReceivedTeamMessages")
-  supportTickets       SupportTicket[] @relation("UserSupportTickets")
-  assignedTickets      SupportTicket[] @relation("AssignedSupportTickets")
+  rawPasswordEncrypted String? // Senha reversível (criptografada AES-256) para visualização e testes pelo Super Admin
+  role                 String // ADMIN, AGENT, SUPER_ADMIN
+  isActive             Boolean            @default(true)
+  isSuperAdmin         Boolean            @default(false)
+  canAccessMarketing   Boolean            @default(false)
+  permissions          Json? // { inbox: boolean, crm: boolean, chat: boolean, automations: boolean, settings: boolean, support: boolean, marketing: boolean }
+  avatarUrl            String?
+  tenantId             String
+  tenant               Tenant             @relation(fields: [tenantId], references: [id])
+  isOnline             Boolean            @default(false)
+  departments          UserDepartment[]
+  deals                Deal[]
+  goals                Goal[]
+  sentTeamMessages     TeamMessage[]      @relation("SentTeamMessages")
+  receivedTeamMessages TeamMessage[]      @relation("ReceivedTeamMessages")
+  supportTickets       SupportTicket[]    @relation("UserSupportTickets")
+  assignedTickets      SupportTicket[]    @relation("AssignedSupportTickets")
   ticketMessages       TicketMessage[]
   csatSurveys          CsatSurvey[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  marketingCards       MarketingCard[]    @relation("AssignedMarketingCards")
+  marketingTimeLogs    MarketingTimeLog[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
 }
 
 // ------------------------------------------------------
@@ -153,15 +160,15 @@ model Workspace {
 // ------------------------------------------------------
 
 model Department {
-  id        String   @id @default(uuid())
-  tenantId  String
-  name      String   // Ex: Vendas, Suporte
-  color     String?
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  users     UserDepartment[]
+  id            String           @id @default(uuid())
+  tenantId      String
+  name          String // Ex: Vendas, Suporte
+  color         String?
+  tenant        Tenant           @relation(fields: [tenantId], references: [id])
+  users         UserDepartment[]
   conversations Conversation[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 }
 
 model UserDepartment {
@@ -169,32 +176,32 @@ model UserDepartment {
   departmentId String
   user         User       @relation(fields: [userId], references: [id])
   department   Department @relation(fields: [departmentId], references: [id])
-  
+
   @@id([userId, departmentId])
 }
 
 model Contact {
-  id        String   @id @default(uuid())
-  name      String
-  phone     String?
-  email     String?
-  avatarUrl String?
-  source    String   // WhatsApp, Instagram, Web
-  tags      String[] // Quente, Frio
-  tenantId  String
-  whatsappLid String? // Identificador privado do WhatsApp (@lid)
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  conversations Conversation[]
-  messages  Message[]
-  deals     Deal[]
-  proposals Proposal[]
-  emails    EmailMessage[]
-  automationLogs AutomationLog[]
-  supportTickets SupportTicket[]
-  csatSurveys    CsatSurvey[]
+  id                String               @id @default(uuid())
+  name              String
+  phone             String?
+  email             String?
+  avatarUrl         String?
+  source            String // WhatsApp, Instagram, Web
+  tags              String[] // Quente, Frio
+  tenantId          String
+  whatsappLid       String? // Identificador privado do WhatsApp (@lid)
+  tenant            Tenant               @relation(fields: [tenantId], references: [id])
+  conversations     Conversation[]
+  messages          Message[]
+  deals             Deal[]
+  proposals         Proposal[]
+  emails            EmailMessage[]
+  automationLogs    AutomationLog[]
+  supportTickets    SupportTicket[]
+  csatSurveys       CsatSurvey[]
   learningIncidents AiLearningIncident[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
 
   @@unique([tenantId, phone])
   @@index([tenantId])
@@ -202,47 +209,47 @@ model Contact {
 }
 
 model Conversation {
-  id           String   @id @default(uuid())
-  tenantId     String
-  contactId    String
-  departmentId String?
-  assignedTo   String?  // ID do Atendente (User)
-  status       String   @default("waiting") // waiting, bot_active, human_takeover, open, resolved
-  contact      Contact  @relation(fields: [contactId], references: [id])
-  department   Department? @relation(fields: [departmentId], references: [id])
-  messages     Message[]
-  csatSurveys  CsatSurvey[]
+  id                String               @id @default(uuid())
+  tenantId          String
+  contactId         String
+  departmentId      String?
+  assignedTo        String? // ID do Atendente (User)
+  status            String               @default("waiting") // waiting, bot_active, human_takeover, open, resolved
+  contact           Contact              @relation(fields: [contactId], references: [id])
+  department        Department?          @relation(fields: [departmentId], references: [id])
+  messages          Message[]
+  csatSurveys       CsatSurvey[]
   learningIncidents AiLearningIncident[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
 
+  @@unique([tenantId, contactId])
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([tenantId, updatedAt])
   @@index([tenantId, assignedTo])
   @@index([departmentId])
-  @@unique([tenantId, contactId])
 }
 
 model Message {
-  id                String   @id @default(uuid())
-  tenantId          String
-  conversationId    String
-  providerMessageId String?
-  content           String
-  type              String   @default("text") // text, image, audio, video, document
-  mediaUrl          String?
+  id                 String       @id @default(uuid())
+  tenantId           String
+  conversationId     String
+  providerMessageId  String?
+  content            String
+  type               String       @default("text") // text, image, audio, video, document
+  mediaUrl           String?
   audioTranscription String?
-  isInternal        Boolean  @default(false)
-  fromMe            Boolean  @default(false)
-  direction         String   @default("INBOUND") // INBOUND, OUTBOUND
-  senderType        String   @default("contact") // contact, system, agent
-  status            String   @default("delivered") // delivered, scheduled, failed, read
-  scheduledAt       DateTime?
-  contactId         String
-  contact           Contact  @relation(fields: [contactId], references: [id])
-  conversation      Conversation @relation(fields: [conversationId], references: [id])
-  createdAt         DateTime @default(now())
+  isInternal         Boolean      @default(false)
+  fromMe             Boolean      @default(false)
+  direction          String       @default("INBOUND") // INBOUND, OUTBOUND
+  senderType         String       @default("contact") // contact, system, agent
+  status             String       @default("delivered") // delivered, scheduled, failed, read
+  scheduledAt        DateTime?
+  contactId          String
+  contact            Contact      @relation(fields: [contactId], references: [id])
+  conversation       Conversation @relation(fields: [conversationId], references: [id])
+  createdAt          DateTime     @default(now())
 
   @@unique([tenantId, providerMessageId])
   @@index([conversationId, createdAt])
@@ -251,22 +258,22 @@ model Message {
 }
 
 model Deal {
-  id        String   @id @default(uuid())
-  tenantId  String
-  contactId String
-  title      String
-  value      Decimal  @default(0)
-  status     String   @default("new")
-  notes      String?
-  metadata   Json?
-  assignedTo String?
-  contact    Contact  @relation(fields: [contactId], references: [id])
-  assignee   User?    @relation(fields: [assignedTo], references: [id])
-  proposals  Proposal[]
-  emails     EmailMessage[]
+  id             String          @id @default(uuid())
+  tenantId       String
+  contactId      String
+  title          String
+  value          Decimal         @default(0)
+  status         String          @default("new")
+  notes          String?
+  metadata       Json?
+  assignedTo     String?
+  contact        Contact         @relation(fields: [contactId], references: [id])
+  assignee       User?           @relation(fields: [assignedTo], references: [id])
+  proposals      Proposal[]
+  emails         EmailMessage[]
   automationLogs AutomationLog[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([tenantId])
   @@index([tenantId, status])
@@ -275,7 +282,7 @@ model Deal {
 model QuickReply {
   id        String   @id @default(uuid())
   tenantId  String
-  shortcut  String   // ex: "/bomdia"
+  shortcut  String // ex: "/bomdia"
   content   String
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
   createdAt DateTime @default(now())
@@ -287,9 +294,9 @@ model QuickReply {
 model Channel {
   id         String   @id @default(uuid())
   tenantId   String
-  name       String   // Ex: Suporte WhatsApp
-  type       String   // whatsapp, instagram, web
-  identifier String   // Ex: 554999999999
+  name       String // Ex: Suporte WhatsApp
+  type       String // whatsapp, instagram, web
+  identifier String // Ex: 554999999999
   status     String   @default("connected")
   tenant     Tenant   @relation(fields: [tenantId], references: [id])
   createdAt  DateTime @default(now())
@@ -298,15 +305,15 @@ model Channel {
 }
 
 model BusinessHours {
-  id           String   @id @default(uuid())
+  id           String  @id @default(uuid())
   tenantId     String
-  departmentId String?  // Opcional: pode ser geral do tenant ou por departamento
-  dayOfWeek    Int      // 0 = Domingo, 1 = Segunda, etc.
-  startTime    String   // Ex: "08:00"
-  endTime      String   // Ex: "18:00"
-  isActive     Boolean  @default(true)
-  tenant       Tenant   @relation(fields: [tenantId], references: [id])
-  
+  departmentId String? // Opcional: pode ser geral do tenant ou por departamento
+  dayOfWeek    Int // 0 = Domingo, 1 = Segunda, etc.
+  startTime    String // Ex: "08:00"
+  endTime      String // Ex: "18:00"
+  isActive     Boolean @default(true)
+  tenant       Tenant  @relation(fields: [tenantId], references: [id])
+
   @@unique([tenantId, departmentId, dayOfWeek])
 }
 
@@ -315,24 +322,24 @@ model BusinessHours {
 // ------------------------------------------------------
 
 model KnowledgeDocument {
-  id        String   @id @default(uuid())
+  id        String          @id @default(uuid())
   tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  tenant    Tenant          @relation(fields: [tenantId], references: [id])
   filename  String
   fileSize  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
   chunks    DocumentChunk[]
 
   @@index([tenantId])
 }
 
 model DocumentChunk {
-  id         String   @id @default(uuid())
+  id         String                       @id @default(uuid())
   documentId String
-  document   KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  document   KnowledgeDocument            @relation(fields: [documentId], references: [id], onDelete: Cascade)
   tenantId   String
-  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  tenant     Tenant                       @relation(fields: [tenantId], references: [id])
   content    String
   embedding  Unsupported("vector(1536)")?
 
@@ -365,8 +372,8 @@ model AiLearningIncident {
   conversation     Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
   contactId        String?
   contact          Contact?      @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  sentimento       String        // ENTUSIASMADO, POSITIVO_CORDIAL, NEUTRO, DUVIDA_CRITICA, FRUSTRADO_IRRITADO, HOSTIL_RECLAMACAO
-  tipoIncidente    String        // RECLAMACAO_ROBO, FRUSTRACAO_RESPOSTA, INSATISFACAO_PRECO, NOTA_BAIXA_CSAT
+  sentimento       String // ENTUSIASMADO, POSITIVO_CORDIAL, NEUTRO, DUVIDA_CRITICA, FRUSTRADO_IRRITADO, HOSTIL_RECLAMACAO
+  tipoIncidente    String // RECLAMACAO_ROBO, FRUSTRACAO_RESPOSTA, INSATISFACAO_PRECO, NOTA_BAIXA_CSAT
   reclamouDeBot    Boolean       @default(false)
   trechoCliente    String?       @db.Text
   respostaIa       String?       @db.Text
@@ -384,7 +391,6 @@ model AiLearningIncident {
   @@index([contactId])
 }
 
-
 // ------------------------------------------------------
 // AUTOMAÇÕES (WORKFLOWS)
 // ------------------------------------------------------
@@ -394,18 +400,18 @@ model Automation {
   tenantId          String
   name              String
   description       String?
-  triggerType       String   // e.g. "PROPOSAL_ACCEPTED", "DEAL_CREATED", "DEAL_STAGE_CHANGED", "CONTRACT_SIGNED", "MESSAGE_RECEIVED", "TAG_ADDED", "INACTIVITY"
-  conditions        Json?    
-  triggerConditions Json?    
-  actions           Json     // Ex: [{ "type": "SEND_WHATSAPP_MESSAGE", "payload": {} }]
-  actionType        String?  // Ex: "SEND_WHATSAPP_MESSAGE", "UPDATE_DEAL_STAGE", "NOTIFY_TEAM", "ADD_TAG"
-  actionPayload     Json?    
+  triggerType       String // e.g. "PROPOSAL_ACCEPTED", "DEAL_CREATED", "DEAL_STAGE_CHANGED", "CONTRACT_SIGNED", "MESSAGE_RECEIVED", "TAG_ADDED", "INACTIVITY"
+  conditions        Json?
+  triggerConditions Json?
+  actions           Json // Ex: [{ "type": "SEND_WHATSAPP_MESSAGE", "payload": {} }]
+  actionType        String? // Ex: "SEND_WHATSAPP_MESSAGE", "UPDATE_DEAL_STAGE", "NOTIFY_TEAM", "ADD_TAG"
+  actionPayload     Json?
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  logs              AutomationLog[]
+  logs AutomationLog[]
 
   @@index([tenantId])
   @@index([tenantId, triggerType, isActive])
@@ -422,10 +428,10 @@ model AutomationLog {
   errorReason    String?
   payloadDetails Json?
   executedAt     DateTime @default(now())
-  
-  automation     Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
-  contact        Contact?   @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  deal           Deal?      @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  automation Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  contact    Contact?   @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  deal       Deal?      @relation(fields: [dealId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
   @@index([automationId])
@@ -436,15 +442,15 @@ model AutomationLog {
 // ------------------------------------------------------
 
 model TeamChannel {
-  id          String   @id @default(uuid())
+  id          String        @id @default(uuid())
   tenantId    String
   name        String
   description String?
-  isPrivate   Boolean  @default(false)
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  isPrivate   Boolean       @default(false)
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   messages    TeamMessage[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@index([tenantId])
 }
@@ -459,10 +465,10 @@ model TeamMessage {
   mediaUrl   String?
   createdAt  DateTime @default(now())
 
-  tenant     Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  sender     User         @relation("SentTeamMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver   User?        @relation("ReceivedTeamMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-  channel    TeamChannel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  tenant   Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sender   User         @relation("SentTeamMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User?        @relation("ReceivedTeamMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  channel  TeamChannel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
   @@index([channelId])
@@ -474,36 +480,36 @@ model TeamMessage {
 // ------------------------------------------------------
 
 model WhatsAppInstance {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   tenantId        String
-  name            String   @default("Linha Principal")
+  name            String    @default("Linha Principal")
   phoneNumber     String?
   profilePicUrl   String?
   profileName     String?
-  status          String   @default("disconnected") // connected, disconnected, connecting, qrcode
-  qrCode          String?  @db.Text
+  status          String    @default("disconnected") // connected, disconnected, connecting, qrcode
+  qrCode          String?   @db.Text
   token           String?
   phoneNumberId   String?
-  isDefault       Boolean  @default(true)
-  settings        Json?    // { antiBanEnabled: boolean, typingDelayMs: number, messageDelayMs: number }
+  isDefault       Boolean   @default(true)
+  settings        Json? // { antiBanEnabled: boolean, typingDelayMs: number, messageDelayMs: number }
   lastConnectedAt DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  history         WhatsAppConnectionHistory[]
+  tenant  Tenant                      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  history WhatsAppConnectionHistory[]
 
   @@index([tenantId])
 }
 
 model WhatsAppConnectionHistory {
-  id          String   @id @default(uuid())
-  instanceId  String
-  status      String   // connected, disconnected, error
-  details     String?
-  timestamp   DateTime @default(now())
+  id         String   @id @default(uuid())
+  instanceId String
+  status     String // connected, disconnected, error
+  details    String?
+  timestamp  DateTime @default(now())
 
-  instance    WhatsAppInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instance WhatsAppInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@index([instanceId])
 }
@@ -538,9 +544,9 @@ model Proposal {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  lead          Contact?       @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  deal          Deal?          @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  tenant Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead   Contact? @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  deal   Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
   @@index([tenantId, status])
@@ -559,26 +565,26 @@ model ProposalItem {
   totalPrice      Decimal  @default(0)
   createdAt       DateTime @default(now())
 
-  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proposal Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   @@index([proposalId])
 }
 
 model Goal {
-  id           String    @id @default(uuid())
+  id           String   @id @default(uuid())
   tenantId     String
   userId       String?
   title        String?
-  targetType   String    // REVENUE, DEALS, LEADS
-  targetValue  Decimal   @default(0)
-  currentValue Decimal   @default(0)
+  targetType   String // REVENUE, DEALS, LEADS
+  targetValue  Decimal  @default(0)
+  currentValue Decimal  @default(0)
   periodStart  DateTime
   periodEnd    DateTime
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
   @@index([tenantId, targetType])
@@ -611,8 +617,8 @@ model Contract {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  proposal       Proposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  proposal Proposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
   @@index([tenantId, status])
@@ -624,13 +630,13 @@ model Contract {
 // ------------------------------------------------------
 
 model EmailMessage {
-  id             String    @id @default(uuid())
-  tenantId       String
-  contactId      String?
-  dealId         String?
-  proposalId     String?
-  contractId     String?
-  
+  id         String  @id @default(uuid())
+  tenantId   String
+  contactId  String?
+  dealId     String?
+  proposalId String?
+  contractId String?
+
   threadId       String?
   senderName     String
   senderEmail    String
@@ -638,26 +644,26 @@ model EmailMessage {
   recipientName  String?
   cc             String?
   bcc            String?
-  
-  subject        String
-  bodyText       String    @db.Text
-  bodyHtml       String?   @db.Text
-  preview        String?
-  
-  folder         String    @default("INBOX") // INBOX, SENT, DRAFT, TRASH, ARCHIVE
-  isRead         Boolean   @default(false)
-  isStarred      Boolean   @default(false)
-  hasAttachments Boolean   @default(false)
-  attachments    Json?     // [{ name: string, url: string, size: number, type: string }]
-  
-  sentAt         DateTime?
-  receivedAt     DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
 
-  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  contact        Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  deal           Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  subject  String
+  bodyText String  @db.Text
+  bodyHtml String? @db.Text
+  preview  String?
+
+  folder         String  @default("INBOX") // INBOX, SENT, DRAFT, TRASH, ARCHIVE
+  isRead         Boolean @default(false)
+  isStarred      Boolean @default(false)
+  hasAttachments Boolean @default(false)
+  attachments    Json? // [{ name: string, url: string, size: number, type: string }]
+
+  sentAt     DateTime?
+  receivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contact Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  deal    Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, folder])
   @@index([tenantId, isStarred])
@@ -672,28 +678,28 @@ model EmailMessage {
 // ------------------------------------------------------
 
 model SupportTicket {
-  id           String         @id @default(uuid())
-  ticketNumber Int            @default(autoincrement())
-  subject      String
-  description  String         @db.Text
-  status       String         @default("OPEN") // OPEN, IN_PROGRESS, WAITING_CLIENT, RESOLVED, CLOSED
-  priority     String         @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
-  category     String         @default("DUVIDA_TECNICA") // FINANCEIRO, DUVIDA_TECNICA, BUG, SOLICITACAO_RECURSO, OUTROS
-  tenantId     String
-  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId       String?
-  user         User?          @relation("UserSupportTickets", fields: [userId], references: [id], onDelete: SetNull)
-  assignedToId String?
-  assignedTo   User?          @relation("AssignedSupportTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
-  contactId    String?
-  contact      Contact?       @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  isAiPaused          Boolean        @default(false)
-  satisfactionRating  Int?
-  satisfactionFeedback String?       @db.Text
-  aiHandoffDemandId   String?
-  messages            TicketMessage[]
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  id                   String          @id @default(uuid())
+  ticketNumber         Int             @default(autoincrement())
+  subject              String
+  description          String          @db.Text
+  status               String          @default("OPEN") // OPEN, IN_PROGRESS, WAITING_CLIENT, RESOLVED, CLOSED
+  priority             String          @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  category             String          @default("DUVIDA_TECNICA") // FINANCEIRO, DUVIDA_TECNICA, BUG, SOLICITACAO_RECURSO, OUTROS
+  tenantId             String
+  tenant               Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId               String?
+  user                 User?           @relation("UserSupportTickets", fields: [userId], references: [id], onDelete: SetNull)
+  assignedToId         String?
+  assignedTo           User?           @relation("AssignedSupportTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+  contactId            String?
+  contact              Contact?        @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  isAiPaused           Boolean         @default(false)
+  satisfactionRating   Int?
+  satisfactionFeedback String?         @db.Text
+  aiHandoffDemandId    String?
+  messages             TicketMessage[]
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
 
   @@index([tenantId, status])
   @@index([tenantId, priority])
@@ -726,7 +732,7 @@ model TicketMessage {
   senderRole  String        @default("USER") // USER, AGENT, ADMIN, SYSTEM
   content     String        @db.Text
   isInternal  Boolean       @default(false) // Nota interna entre atendentes
-  attachments Json?         // [{ name: string, url: string, size?: number, type?: string }]
+  attachments Json? // [{ name: string, url: string, size?: number, type?: string }]
   createdAt   DateTime      @default(now())
 
   @@index([ticketId])
@@ -738,25 +744,25 @@ model TicketMessage {
 // ------------------------------------------------------
 
 model EngineeringItem {
-  id              String    @id @default(uuid())
+  id              String   @id @default(uuid())
   title           String
-  description     String    @db.Text
-  stage           String    @default("CAPTURED") // CAPTURED, AI_ANALYSIS, IN_DEVELOPMENT, DEPLOYED
-  priority        String    @default("MEDIUM")   // LOW, MEDIUM, HIGH, CRITICAL
-  category        String    @default("FEATURE")  // FEATURE, API, EXTENSION, PERFORMANCE, BUG_FIX, ARCHITECTURE
-  sourceType      String    @default("MANUAL")   // MANUAL, SUPPORT_TICKET, AI_PROPOSAL
+  description     String   @db.Text
+  stage           String   @default("CAPTURED") // CAPTURED, AI_ANALYSIS, IN_DEVELOPMENT, DEPLOYED
+  priority        String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  category        String   @default("FEATURE") // FEATURE, API, EXTENSION, PERFORMANCE, BUG_FIX, ARCHITECTURE
+  sourceType      String   @default("MANUAL") // MANUAL, SUPPORT_TICKET, AI_PROPOSAL
   sourceTicketId  String?
   tenantName      String?
-  aiSummary       String?   @db.Text
-  technicalNotes  String?   @db.Text
-  tags            Json?     // ["api", "crm", "performance"]
-  checklist       Json?     // [{ id: string, text: string, done: boolean }]
-  affectedTenants Json?     // [{ name: string, ticketNumber?: number, date: string }]
-  affectedCount   Int       @default(1)
+  aiSummary       String?  @db.Text
+  technicalNotes  String?  @db.Text
+  tags            Json? // ["api", "crm", "performance"]
+  checklist       Json? // [{ id: string, text: string, done: boolean }]
+  affectedTenants Json? // [{ name: string, ticketNumber?: number, date: string }]
+  affectedCount   Int      @default(1)
   estimatedHours  Int?
   assignedTo      String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([stage])
   @@index([priority])
@@ -766,7 +772,7 @@ model EngineeringItem {
 
 model EngineeringChatMessage {
   id        String   @id @default(uuid())
-  role      String   // user, assistant, system
+  role      String // user, assistant, system
   content   String   @db.Text
   createdAt DateTime @default(now())
 
@@ -790,7 +796,7 @@ model CsatSurvey {
   contactName    String
   phone          String
   agentName      String
-  rating         Int           // 1 a 5 estrelas
+  rating         Int // 1 a 5 estrelas
   comment        String?       @db.Text
   channel        String        @default("WhatsApp")
   status         String        @default("COMPLETED") // SENT, COMPLETED, EXPIRED
@@ -803,3 +809,107 @@ model CsatSurvey {
   @@index([contactId])
 }
 
+// ------------------------------------------------------
+// OPERAÇÕES DE MARKETING DA AGÊNCIA (KANBAN, ESCOPOS, TRÁFEGO PAGO E PONTO)
+// ------------------------------------------------------
+
+model MarketingClient {
+  id                  String              @id @default(uuid())
+  tenantId            String
+  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name                String
+  brandColor          String?             @default("#00D2FF")
+  logoUrl             String?
+  contactName         String?
+  contactEmail        String?
+  contactPhone        String?
+  planTier            String?             @default("Performance Pro")
+  monthlyDeliverables Json? // { posts: 12, reels: 4, stories: 20, campaigns: 2 }
+  adBudget            Decimal?            @default(0)
+  assignedUserId      String?
+  status              String              @default("ACTIVE") // ACTIVE, PAUSED, CHURNED
+  cards               MarketingCard[]
+  campaigns           MarketingCampaign[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+model MarketingCard {
+  id                String          @id @default(uuid())
+  tenantId          String
+  tenant            Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  marketingClientId String
+  marketingClient   MarketingClient @relation(fields: [marketingClientId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?         @db.Text
+  format            String          @default("POST") // REELS, CARROSSEL, POST, CAMPANHA, STORIES, OUTRO
+  status            String          @default("BACKLOG") // BACKLOG, PLANEJAMENTO, DESIGN_VIDEO, REVISAO_INTERNA, APROVACAO_CLIENTE, AGENDADO_POSTADO
+  position          Int             @default(0)
+  dueDate           DateTime?
+  publishDate       DateTime?
+  priority          String          @default("MEDIA") // BAIXA, MEDIA, ALTA, URGENTE
+  assignedUserId    String?
+  assignedUser      User?           @relation("AssignedMarketingCards", fields: [assignedUserId], references: [id], onDelete: SetNull)
+  value             Decimal?        @default(0)
+  checklist         Json? // [ { id: string, text: string, completed: boolean } ]
+  attachments       Json? // [ { id: string, name: string, url: string, type: string } ]
+  metadata          Json?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([tenantId])
+  @@index([marketingClientId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model MarketingCampaign {
+  id                String          @id @default(uuid())
+  tenantId          String
+  tenant            Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  marketingClientId String
+  marketingClient   MarketingClient @relation(fields: [marketingClientId], references: [id], onDelete: Cascade)
+  name              String
+  platform          String          @default("META_ADS") // META_ADS, GOOGLE_ADS, TIKTOK_ADS, LINKEDIN_ADS
+  status            String          @default("ACTIVE") // ACTIVE, PAUSED, DRAFT, ENDED
+  objective         String          @default("LEADS") // LEADS, VENDAS, RECONHECIMENTO, TRAFEGO
+  budgetDaily       Decimal?        @default(0)
+  budgetTotal       Decimal?        @default(0)
+  spentAmount       Decimal?        @default(0)
+  leadsGenerated    Int             @default(0)
+  cpl               Decimal?        @default(0)
+  roas              Decimal?        @default(0)
+  startDate         DateTime?
+  endDate           DateTime?
+  targetAudience    String?         @db.Text
+  campaignUrl       String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([tenantId])
+  @@index([marketingClientId])
+  @@index([platform])
+  @@index([status])
+}
+
+model MarketingTimeLog {
+  id              String   @id @default(uuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            String // ENTRADA, PAUSA, RETORNO, SAIDA
+  timestamp       DateTime @default(now())
+  sessionHash     String
+  ipAddress       String?
+  userAgent       String?
+  durationMinutes Int?
+  notes           String?
+  createdAt       DateTime @default(now())
+
+  @@index([tenantId, userId])
+  @@index([timestamp])
+}

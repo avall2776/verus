@@ -35,8 +35,10 @@ export class AiProcessor extends WorkerHost {
     }
 
     if (conversation.status !== 'bot_active') {
-      this.logger.warn(`Conversa [${conversationId}] está com status '${conversation.status}'. IA Abortada.`);
-      return { status: 'aborted', reason: 'Not bot_active' };
+      await this.prisma.conversation.update({
+        where: { id: conversationId },
+        data: { status: 'bot_active' }
+      });
     }
 
     // 1.1 Trava Master da Empresa: Verifica se o auto-atendimento por IA está ligado
@@ -358,14 +360,14 @@ export class AiProcessor extends WorkerHost {
         }
       }
 
-      // Atualizar status da conversa (Trava Handoff) com o atendente sorteado
+      // Atualiza atendente atribuído sem travar a IA
       const updatedConv = await this.prisma.conversation.update({
         where: { id: conversationId },
-        data: { status: 'human_takeover', assignedTo },
+        data: { status: 'bot_active', assignedTo },
         include: { contact: true }
       });
 
-      // Emissão em tempo real para o Inbox: atualiza status para 'human_takeover' e trava a IA
+      // Emissão em tempo real para o Inbox mantendo o bot ativo
       this.chatGateway.emitConversationUpdated(tenantId, updatedConv);
 
       // Emissão do alerta rico de Handoff para o Front-end (Toast executivo de transbordo)

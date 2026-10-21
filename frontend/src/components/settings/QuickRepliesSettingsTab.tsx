@@ -146,7 +146,7 @@ export default function QuickRepliesSettingsTab() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por atalho ou texto..."
-            className="w-full bg-[#070D1B] border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
 
@@ -162,7 +162,7 @@ export default function QuickRepliesSettingsTab() {
           <p className="text-xs font-semibold">Carregando macros...</p>
         </div>
       ) : filteredReplies.length === 0 ? (
-        <div className="p-12 text-center border border-dashed border-slate-800 rounded-2xl bg-[#070D1B]/40 space-y-3">
+        <div className="p-12 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-50/40 dark:bg-slate-50 dark:bg-[#070D1B]/40 space-y-3">
           <MessageSquare className="w-10 h-10 text-slate-600 mx-auto" />
           <p className="text-sm font-semibold text-slate-300">Nenhum atalho rápido encontrado</p>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
@@ -184,7 +184,7 @@ export default function QuickRepliesSettingsTab() {
           {filteredReplies.map((reply) => (
             <div
               key={reply.id}
-              className="p-4 rounded-xl bg-[#070D1B] border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col justify-between group"
+              className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col justify-between group"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
@@ -225,7 +225,7 @@ export default function QuickRepliesSettingsTab() {
       {/* Modal de Criação / Edição */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between p-5 border-b border-slate-800">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
@@ -258,7 +258,7 @@ export default function QuickRepliesSettingsTab() {
                     value={form.shortcut}
                     onChange={(e) => setForm({ ...form, shortcut: e.target.value.replace(/[\s\/]/g, "") })}
                     placeholder="ex: pix, boleto, suporte"
-                    className="w-full bg-[#070D1B] border border-slate-800 rounded-xl pl-7 pr-3.5 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 font-mono font-medium"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl pl-7 pr-3.5 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 font-mono font-medium"
                   />
                 </div>
                 <p className="text-[10px] text-slate-500 mt-1">
@@ -276,7 +276,7 @@ export default function QuickRepliesSettingsTab() {
                   value={form.content}
                   onChange={(e) => setForm({ ...form, content: e.target.value })}
                   placeholder="Digite a mensagem completa que será inserida no chat..."
-                  className="w-full bg-[#070D1B] border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 leading-relaxed resize-none"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 leading-relaxed resize-none"
                 />
               </div>
 

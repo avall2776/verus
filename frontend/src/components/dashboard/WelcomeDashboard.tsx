@@ -282,7 +282,7 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
       <div className="w-full max-w-4xl flex flex-col gap-6 relative z-10">
         
         {/* HERO CARD PRINCIPAL */}
-        <div className="anim-cascade-1 bg-[#0B1224]/90 border border-slate-800 rounded-3xl p-7 sm:p-9 shadow-2xl backdrop-blur-xl relative overflow-hidden group">
+        <div className="anim-cascade-1 bg-white/90 dark:bg-[#0B1224]/90 border border-slate-800 rounded-3xl p-7 sm:p-9 shadow-2xl backdrop-blur-xl relative overflow-hidden group">
           {/* Brilho sutil no canto do card */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -296,7 +296,7 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
                   <span>VALLOR ENTERPRISE CORE</span>
                 </span>
                 
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#070D1B] border border-slate-700/80 text-slate-300 text-xs font-semibold">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 dark:bg-[#070D1B] border border-slate-700/80 text-slate-300 text-xs font-semibold">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                   <span>Sessão Ativa: {userRole}</span>
                 </span>
@@ -327,7 +327,7 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
               {hasMetrics && onViewMetrics && (
                 <button
                   onClick={onViewMetrics}
-                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-[#070D1B] hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-blue-500/40 text-xs font-bold transition-all shadow-md group"
+                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-blue-500/40 text-xs font-bold transition-all shadow-md group"
                 >
                   <BarChart3 className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
                   <span>Ver Métricas do Dia</span>
@@ -338,7 +338,7 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
         </div>
 
         {/* CARD DICA DE PRODUTIVIDADE */}
-        <div className="anim-cascade-2 bg-[#070D1B]/90 border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-md shadow-lg">
+        <div className="anim-cascade-2 bg-slate-50/90 dark:bg-slate-50 dark:bg-[#070D1B]/90 border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-md shadow-lg">
           <div className="flex items-start sm:items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0 shadow-inner">
               <Lightbulb className="w-5 h-5" />
@@ -355,7 +355,7 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
             </div>
           </div>
 
-          <div className="text-[11px] text-slate-400 flex items-center gap-1.5 shrink-0 bg-[#0B1224] px-3 py-1.5 rounded-xl border border-slate-800/80">
+          <div className="text-[11px] text-slate-400 flex items-center gap-1.5 shrink-0 bg-white dark:bg-[#0B1224] px-3 py-1.5 rounded-xl border border-slate-800/80">
             <Clock className="w-3.5 h-3.5 text-emerald-400" />
             <span>Workspace pronto</span>
           </div>
@@ -379,11 +379,11 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="p-5 rounded-2xl bg-[#0B1224]/90 border border-slate-800 hover:border-blue-500/40 transition-all flex flex-col justify-between group hover:bg-[#0B1224] shadow-xl hover:shadow-blue-600/5 backdrop-blur-md relative overflow-hidden"
+                  className="p-5 rounded-2xl bg-white/90 dark:bg-[#0B1224]/90 border border-slate-800 hover:border-blue-500/40 transition-all flex flex-col justify-between group hover:bg-white dark:bg-[#0B1224] shadow-xl hover:shadow-blue-600/5 backdrop-blur-md relative overflow-hidden"
                 >
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 rounded-xl bg-[#070D1B] border border-slate-800 flex items-center justify-center text-blue-400 group-hover:scale-105 group-hover:border-blue-500/40 transition-all">
+                      <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 flex items-center justify-center text-blue-400 group-hover:scale-105 group-hover:border-blue-500/40 transition-all">
                         <Icon className="w-5 h-5" />
                       </div>
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${item.badgeColor}`}>

@@ -12,6 +12,25 @@ export declare class ContactsController {
         tags: string[];
         lastActive: string;
     }[]>;
+    createContact(tenantId: string, data: {
+        name: string;
+        phone?: string;
+        email?: string;
+        source?: string;
+        tags?: string[];
+    }): Promise<{
+        id: string;
+        name: string;
+        phone: string | null;
+        email: string | null;
+        avatarUrl: string | null;
+        source: string;
+        tags: string[];
+        tenantId: string;
+        whatsappLid: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
     updateContact(tenantId: string, contactId: string, data: {
         name?: string;
         phone?: string;

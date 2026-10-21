@@ -1,0 +1,349 @@
+[
+  {
+    "id": "voice-ai-agent",
+    "name": "Voice AI Agent",
+    "tagline": "Agente de IA autônomo para atendimento por voz em tempo real",
+    "category": "IA & PROCESSAMENTO DE VOZ",
+    "status": "EM_DESENVOLVIMENTO",
+    "isolationLevel": "100% Sandbox Isolada (Zero Mocks)",
+    "engine": "OpenAI Realtime / WebSockets / WebAudio API / Neural TTS",
+    "ports": "WSS :443 / WebRTC Opus 48kHz",
+    "targetLatency": "< 450ms (Ultra-Low Latency)",
+    "lastTestRun": "2026-10-19T12:38:12.301Z",
+    "lastTestStatus": "PASS",
+    "stabilityScore": 97,
+    "isIntegrated": false,
+    "description": "Agente conversacional por voz com baixa latência, detecção de interrupção (VAD), síntese neural e integração nativa com o CRM do Vallor.",
+    "architectureDetails": [
+      "Streaming bi-direcional de áudio PCM16 24kHz via WebSocket seguro",
+      "Detecção de voz ativa (VAD) para interrupção natural de fala do usuário",
+      "Síntese neural de fala com modelos OpenAI TTS e streaming de chunks",
+      "Roteamento de function calling para consulta de banco de dados e transbordo humano"
+    ],
+    "tasks": [
+      {
+        "id": "1",
+        "text": "Modelagem do pipeline WebAudio e AudioContext no navegador",
+        "done": true
+      },
+      {
+        "id": "2",
+        "text": "Configuração da rota WSS para streaming bi-direcional de PCM16",
+        "done": true
+      },
+      {
+        "id": "3",
+        "text": "Implementação do Voice Activity Detection (VAD) com Silero/WebRTC",
+        "done": false
+      },
+      {
+        "id": "4",
+        "text": "Integração de Function Calling no fluxo de voz (agendar, buscar contato)",
+        "done": false
+      },
+      {
+        "id": "5",
+        "text": "Homologação de failover para fallback de texto e transbordo humano",
+        "done": false
+      }
+    ],
+    "chatHistory": [
+      {
+        "id": "init-1",
+        "role": "assistant",
+        "content": "Olá! Sou o Copilot Técnico especializado no Voice AI Agent do Vallor. Posso orientar a programação do streaming PCM16, parâmetros de VAD e redução de latência no WebSockets. O que deseja programar agora?",
+        "createdAt": "2026-10-19T12:38:12.301Z"
+      }
+    ],
+    "logs": [
+      {
+        "timestamp": "2026-10-19T12:38:12.301Z",
+        "level": "INFO",
+        "message": "[VoiceAI-Sandbox] Ambiente de sandbox inicializado com isolamento de áudio."
+      }
+    ]
+  },
+  {
+    "id": "voip-sip-server",
+    "name": "Integração VoIP e Servidor SIP",
+    "tagline": "Motor proprietário de chamadas de áudio via FreeSWITCH/Asterisk",
+    "category": "TELEFONIA & CORE DE VOZ",
+    "status": "EM_DESENVOLVIMENTO",
+    "isolationLevel": "100% Sandbox Isolada (Zero Mocks)",
+    "engine": "FreeSWITCH 1.10 / Asterisk PBX / SIP Trunking / WebRTC Gateway",
+    "ports": "UDP/TCP 5060, WSS 7443, RTP 10000-20000",
+    "targetLatency": "< 80ms Jitter Buffer",
+    "lastTestRun": "2026-10-19T12:38:12.301Z",
+    "lastTestStatus": "PASS",
+    "stabilityScore": 98,
+    "isIntegrated": false,
+    "description": "Infraestrutura proprietária de telefonia IP para discagem ativa, chamadas receptivas, Softphone WebAudio DTMF (norma ITU-T Q.23), URA inteligente com IA e bilhetagem CDR.",
+    "architectureDetails": [
+      "Motor VoIP backend (VoipModule) e rotas de API (originate, hangup, dtmf, hold, transfer, CDR) 100% implementados",
+      "Softphone Corporativo com síntese acústica real de tons DTMF via WebAudio API (norma ITU-T Q.23) no Topbar e Engenharia",
+      "Subseção Produtos / Roadmap integrada e homologada no Super Admin (/super-admin/engineering)",
+      "Script de hardening de segurança da VPS (scripts/setup_vps_voip_security.sh): 4GB Swap, UFW e Fail2ban",
+      "[Ação Externa / Operacional Pendente]: Aguardando formalização da contratação e inserção de créditos pré-pagos no Tronco SIP (Direct Call)",
+      "[Próximo Passo Técnico]: Inserção das credenciais finais (Host SIP, porta, usuário, senha, WSS) no painel de configuração para disparo de chamadas reais e homologação final"
+    ],
+    "tasks": [
+      {
+        "id": "1",
+        "text": "Motor VoIP backend (VoipModule) e rotas de controle de chamada",
+        "done": true
+      },
+      {
+        "id": "2",
+        "text": "Softphone WebAudio DTMF (norma ITU-T Q.23) e controles em linha",
+        "done": true
+      },
+      {
+        "id": "3",
+        "text": "Subseção Produtos / Roadmap no Super Admin (/super-admin/engineering)",
+        "done": true
+      },
+      {
+        "id": "4",
+        "text": "Script de hardening de segurança da VPS (scripts/setup_vps_voip_security.sh)",
+        "done": true
+      },
+      {
+        "id": "5",
+        "text": "[PENDÊNCIA EXTERNA] Formalização da contratação e inserção de créditos pré-pagos no Tronco SIP (Direct Call)",
+        "done": false
+      },
+      {
+        "id": "6",
+        "text": "[PRÓXIMO PASSO TÉCNICO] Inserção de credenciais finais (Host, Porta, Usuário, Senha, WSS) no painel para homologação final",
+        "done": false
+      }
+    ],
+    "chatHistory": [
+      {
+        "id": "init-2",
+        "role": "assistant",
+        "content": "Olá! Sou o Copilot Técnico do Core VoIP & Servidor SIP. Registramos formalmente: Motor VoIP backend (VoipModule), rotas de API, Softphone WebAudio DTMF (norma ITU-T Q.23), subseção Produtos/Roadmap no Super Admin e script de hardening da VPS 100% concluídos e deployados com código 0 de erros. Aguardamos a contratação e créditos pré-pagos no Tronco SIP (Direct Call) para inserir as credenciais e homologar chamadas reais.",
+        "createdAt": "2026-10-19T12:38:12.301Z"
+      }
+    ],
+    "logs": [
+      {
+        "timestamp": "2026-10-19T12:38:12.301Z",
+        "level": "SUCCESS",
+        "message": "[VoIP-Core] VoipModule backend, rotas de controle e bilhetagem CDR implementados e deployados com código 0."
+      },
+      {
+        "timestamp": "2026-10-19T12:38:12.301Z",
+        "level": "SUCCESS",
+        "message": "[Softphone] Dialpad com síntese acústica dual-tone ITU-T Q.23 via WebAudio API ativo no Topbar e Engenharia."
+      },
+      {
+        "timestamp": "2026-10-19T12:38:12.301Z",
+        "level": "SUCCESS",
+        "message": "[Security] Script scripts/setup_vps_voip_security.sh concluído (4GB Swap, UFW SIP/WSS/RTP e Fail2ban)."
+      },
+      {
+        "timestamp": "2026-10-19T12:38:12.301Z",
+        "level": "WARN",
+        "message": "[Pendente-Operacional] Aguardando formalização da contratação e inserção de créditos pré-pagos no Tronco SIP (Direct Call)."
+      },
+      {
+        "timestamp": "2026-10-19T12:38:12.301Z",
+        "level": "INFO",
+        "message": "[Próximo-Passo-Técnico] Inserir credenciais finais (Host, Porta, Usuário, Senha, WSS) no painel para homologação final."
+      }
+    ]
+  },
+  {
+    "id": "suite-erp",
+    "name": "Suite ERP Gestão Empresarial",
+    "tagline": "Módulo corporativo de gestão financeira, fiscal e patrimonial",
+    "category": "ERP & GESTÃO CORPORATIVA",
+    "status": "EM_PLANEJAMENTO",
+    "isolationLevel": "100% Sandbox Isolada (Zero Mocks)",
+    "engine": "PostgreSQL ACID / Schema Isolation / Ledger Imutável / SPED",
+    "ports": "HTTPS REST / GraphQL / Event Bus",
+    "targetLatency": "< 120ms p99 Query Time",
+    "lastTestRun": "2026-10-19T12:38:12.301Z",
+    "lastTestStatus": "PASS",
+    "stabilityScore": 91,
+    "isIntegrated": false,
+    "description": "Backoffice empresarial unificado: DRE gerencial, fluxo de caixa diário, contas a pagar e receber, controle de estoque com custo médio ponderado e mensageria fiscal (NF-e/NFS-e).",
+    "architectureDetails": [
+      "Isolamento multi-tenant por schema de banco de dados com chave de partição única",
+      "Motor de partidas dobradas com auditoria contábil e ledger imutável",
+      "Conexão com SEFAZ para autorização e assinatura de XML de NF-e/NFS-e",
+      "Conciliação bancária automatizada com suporte a extratos OFX e Open Finance"
+    ],
+    "tasks": [
+      {
+        "id": "1",
+        "text": "Modelagem do schema contábil de partidas dobradas",
+        "done": false
+      },
+      {
+        "id": "2",
+        "text": "Estrutura de plano de contas e centros de custos por tenant",
+        "done": false
+      },
+      {
+        "id": "3",
+        "text": "Motor de conciliação bancária automática com extrato OFX",
+        "done": false
+      },
+      {
+        "id": "4",
+        "text": "Integração SEFAZ para emissão e validação fiscal de NF-e",
+        "done": false
+      },
+      {
+        "id": "5",
+        "text": "Módulo de controle de estoque com curva ABC e inventário",
+        "done": false
+      }
+    ],
+    "chatHistory": [
+      {
+        "id": "init-3",
+        "role": "assistant",
+        "content": "Olá! Sou o Copilot de Arquitetura da Suite ERP. Posso auxiliar na modelagem de schemas relacionais, regras fiscais (SPED/NF-e) e partidas dobradas contábeis. Vamos planejar as tabelas ou endpoints?",
+        "createdAt": "2026-10-19T12:38:12.301Z"
+      }
+    ],
+    "logs": [
+      {
+        "timestamp": "2026-10-19T12:38:12.301Z",
+        "level": "INFO",
+        "message": "[ERP-Sandbox] Namespace de isolamento do schema ERP configurado no PostgreSQL."
+      }
+    ]
+  },
+  {
+    "id": "billing-subscription",
+    "name": "Módulo de Faturamento e Assinatura",
+    "tagline": "Gateway multiprovedor de pagamentos, recorrência e tokenização de cartões",
+    "category": "FINTECH & MONETIZAÇÃO SAAS",
+    "status": "EM_HOMOLOGACAO",
+    "isolationLevel": "100% Sandbox Isolada (Zero Mocks)",
+    "engine": "Stripe API / Asaas API / Webhooks HMAC-SHA256 / PCI Vault",
+    "ports": "HTTPS TLS 1.3 / Idempotency-Key",
+    "targetLatency": "< 320ms Checkout Response",
+    "lastTestRun": "2026-10-19T12:38:12.301Z",
+    "lastTestStatus": "PASS",
+    "stabilityScore": 99,
+    "isIntegrated": false,
+    "description": "Motor unificado de cobrança SaaS: checkout transparente, assinaturas recorrentes mensal/anual, régua de cobrança automática via WhatsApp, split de pagamentos e tokenização PCI compliant.",
+    "architectureDetails": [
+      "Gateway multiprovedor com suporte simultâneo a Stripe, Asaas e MercadoPago",
+      "Validação criptográfica de webhooks via HMAC-SHA256 com proteção contra replay",
+      "Tokenização segura de dados de pagamento sem armazenamento direto de PAN/CVV",
+      "Régua de cobrança automatizada integrada a avisos de vencimento por WhatsApp"
+    ],
+    "tasks": [
+      {
+        "id": "1",
+        "text": "Endpoints de webhook seguros com assinatura HMAC-SHA256",
+        "done": true
+      },
+      {
+        "id": "2",
+        "text": "Tokenizador de cartão com vault seguro isolado",
+        "done": true
+      },
+      {
+        "id": "3",
+        "text": "Cálculo de upgrade/downgrade pro-rata entre planos",
+        "done": true
+      },
+      {
+        "id": "4",
+        "text": "Geração de Pix dinâmico com QR Code e expiração em tempo real",
+        "done": false
+      },
+      {
+        "id": "5",
+        "text": "Geração de faturas e recibos em PDF com link direto",
+        "done": false
+      }
+    ],
+    "chatHistory": [
+      {
+        "id": "init-4",
+        "role": "assistant",
+        "content": "Olá! Sou o Copilot de Fintech & Cobranças. Podemos validar os listeners de webhook, simular eventos de cobrança aprovada ou testar tokenização de cartões.",
+        "createdAt": "2026-10-19T12:38:12.301Z"
+      }
+    ],
+    "logs": [
+      {
+        "timestamp": "2026-10-19T12:38:12.301Z",
+        "level": "INFO",
+        "message": "[Billing-Sandbox] Gateway de webhooks em modo homologação escutando eventos de teste."
+      }
+    ]
+  },
+  {
+    "id": "onboarding-self-service",
+    "name": "Onboarding Self-Service",
+    "tagline": "Fluxo automatizado de entrada e provisionamento instantâneo de tenants",
+    "category": "PLG & AQUISIÇÃO ESCALÁVEL",
+    "status": "EM_HOMOLOGACAO",
+    "isolationLevel": "100% Sandbox Isolada (Zero Mocks)",
+    "engine": "Tenant Provisioner Engine / CNPJ Validator / Subdomain Router",
+    "ports": "HTTPS / JWT Multi-Tenant",
+    "targetLatency": "< 2.2s Provisionamento Total",
+    "lastTestRun": "2026-10-19T12:38:12.301Z",
+    "lastTestStatus": "PASS",
+    "stabilityScore": 98,
+    "isIntegrated": false,
+    "description": "Fluxo de aquisição Product-Led Growth (PLG): wizard de 4 passos com validação automática de CNPJ, auto-provisionamento de instâncias, concessão de trial assistido e trilha de primeiro valor.",
+    "architectureDetails": [
+      "Validador de dígitos verificadores de CNPJ e verificação de unicidade cadastral",
+      "Provisionamento atômico de novo Tenant, Workspace, Usuário Master e Canais",
+      "Subdomínio dinâmico e roteamento seguro de contexto multi-tenant",
+      "Trilha guiada com checklist interativo para atingir o milestone de Primeiro Valor"
+    ],
+    "tasks": [
+      {
+        "id": "1",
+        "text": "Validador algorítmico de CNPJ e proteção contra duplicidade",
+        "done": true
+      },
+      {
+        "id": "2",
+        "text": "Transação atômica de criação de tenant e usuário admin",
+        "done": true
+      },
+      {
+        "id": "3",
+        "text": "Mensageria de boas-vindas via e-mail e WhatsApp transacional",
+        "done": true
+      },
+      {
+        "id": "4",
+        "text": "Criação de base de demonstração (seed demo) para novos tenants",
+        "done": false
+      },
+      {
+        "id": "5",
+        "text": "Tour guiado e barra de progresso First Value Milestone",
+        "done": false
+      }
+    ],
+    "chatHistory": [
+      {
+        "id": "init-5",
+        "role": "assistant",
+        "content": "Olá! Sou o Copilot de Onboarding Self-Service. Posso orientar a implementação das etapas do wizard, regras de validação cadastral e provisionamento instantâneo de workspaces.",
+        "createdAt": "2026-10-19T12:38:12.301Z"
+      }
+    ],
+    "logs": [
+      {
+        "timestamp": "2026-10-19T12:38:12.301Z",
+        "level": "INFO",
+        "message": "[Onboarding-Sandbox] Motor de provisionamento de teste carregado."
+      }
+    ]
+  }
+]

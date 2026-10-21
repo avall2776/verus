@@ -151,14 +151,14 @@ export default function DepartmentsSettingsTab() {
       {/* Grid de Departamentos */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {departments.length === 0 ? (
-          <div className="col-span-full p-8 text-center text-xs text-slate-500 bg-[#070D1B] rounded-xl border border-slate-800/80">
+          <div className="col-span-full p-8 text-center text-xs text-slate-500 bg-slate-50 dark:bg-[#070D1B] rounded-xl border border-slate-800/80">
             Nenhum departamento cadastrado. Crie o primeiro para organizar seus atendimentos.
           </div>
         ) : (
           departments.map((dept) => (
             <div
               key={dept.id}
-              className="p-4 rounded-xl bg-[#070D1B] border border-slate-800/80 hover:border-slate-700 transition-colors flex flex-col justify-between space-y-3"
+              className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 hover:border-slate-700 transition-colors flex flex-col justify-between space-y-3"
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -214,7 +214,7 @@ export default function DepartmentsSettingsTab() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full max-w-md bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4"
+            className="w-full max-w-md bg-white dark:bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -237,7 +237,7 @@ export default function DepartmentsSettingsTab() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="Ex: Comercial, Suporte N1, Financeiro"
-                  className="w-full p-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -258,7 +258,7 @@ export default function DepartmentsSettingsTab() {
                 <label className="text-xs font-semibold text-slate-300 block mb-1">
                   Atendentes Vinculados ({selectedUsers.length})
                 </label>
-                <div className="max-h-36 overflow-y-auto space-y-1.5 p-2 rounded-xl bg-[#070D1B] border border-slate-800">
+                <div className="max-h-36 overflow-y-auto space-y-1.5 p-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
                   {users.length === 0 ? (
                     <span className="text-xs text-slate-500 block text-center p-2">Nenhum atendente disponível.</span>
                   ) : (

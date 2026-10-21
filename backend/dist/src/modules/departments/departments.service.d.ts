@@ -25,6 +25,7 @@ export declare class DepartmentsService {
                 rawPasswordEncrypted: string | null;
                 role: string;
                 isSuperAdmin: boolean;
+                canAccessMarketing: boolean;
                 permissions: import("@prisma/client/runtime/library").JsonValue | null;
                 isOnline: boolean;
             };

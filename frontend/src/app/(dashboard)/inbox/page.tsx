@@ -741,7 +741,7 @@ function InboxContent() {
           setContacts((prev) =>
             prev.map((c) =>
               c.id === activeChat
-                ? { ...c, isAi: false, status: 'human_takeover', lastMsg: '🎤 Mensagem de voz' }
+                ? { ...c, lastMsg: '🎤 Mensagem de voz' }
                 : c
             )
           );
@@ -1624,17 +1624,6 @@ function InboxContent() {
     }
   };
 
-  // Verificação de expiração da janela de 24 horas da Meta (WhatsApp Cloud API)
-  const is24hExpired = useMemo(() => {
-    if (!activeContactData || activeContactData.channel !== 'whatsapp') return false;
-    const inboundMessages = messages.filter(m => m.direction === 'INBOUND' && !m.isInternal);
-    if (inboundMessages.length === 0) return true;
-    const lastInbound = inboundMessages[inboundMessages.length - 1];
-    const lastInboundTime = new Date(lastInbound.createdAt).getTime();
-    if (isNaN(lastInboundTime)) return false;
-    const now = Date.now();
-    return (now - lastInboundTime) > 24 * 60 * 60 * 1000;
-  }, [activeContactData, messages]);
 
   const handleSendReopenTemplate = async (templateName: string = 'hello_world') => {
     if (!activeChat || isSendingTemplate) return;
@@ -1738,7 +1727,7 @@ function InboxContent() {
       
       // Auto-assume a conversa se era robô, já que um humano mandou a mensagem
       if (!isInternalMode) {
-        setContacts(prev => prev.map(c => c.id === activeChat ? { ...c, isAi: false, status: 'human_takeover', lastMsg: content } : c));
+        setContacts(prev => prev.map(c => c.id === activeChat ? { ...c, lastMsg: content } : c));
       }
 
       // Se o atendimento estava finalizado, reabre automaticamente no backend
@@ -1868,14 +1857,14 @@ function InboxContent() {
   const todayFirstResp = productivityData?.todayFirstResp ?? "0s";
 
   return (
-    <div className="flex h-full w-full bg-[#0B1224] overflow-hidden">
+    <div className="flex h-full w-full bg-slate-100 dark:bg-[#050814] text-slate-900 dark:text-slate-100 overflow-hidden">
       
       {/* 1. PAINEL ESQUERDO: Lista de Conversas (Padrão Estrutural WhatsApp Web com Master-Detail Mobile) */}
-      <div className={`${activeChat ? 'hidden md:flex' : 'flex'} w-full md:w-[360px] lg:w-[380px] flex-shrink-0 bg-[#0F172A] border-r border-slate-800/80 flex-col overflow-hidden z-10`}>
+      <div className={`${activeChat ? 'hidden md:flex' : 'flex'} w-full md:w-[360px] lg:w-[380px] flex-shrink-0 bg-white dark:bg-[#0B1224] border-r border-slate-200 dark:border-slate-800 flex-col overflow-hidden z-10`}>
         
         {/* Header Superior WhatsApp */}
         {/* Header Superior WhatsApp (Foto de Perfil da Linha Principal & Status) */}
-        <div className="px-3.5 py-3 bg-[#0B1224] border-b border-slate-800/80 flex items-center justify-between">
+        <div className="px-3.5 py-3 bg-white dark:bg-[#0B1224] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           {(() => {
             const effectiveStatus = activeInstance ? activeInstance.status : (waStatus?.status || 'disconnected');
             const isWaConnected = effectiveStatus === 'connected';
@@ -1886,12 +1875,12 @@ function InboxContent() {
             return (
               <div 
                 onClick={() => setShowInstanceDropdown(prev => !prev)}
-                className="flex items-center gap-2.5 cursor-pointer group p-1 -ml-1 rounded-xl hover:bg-slate-800/50 transition-all min-w-0"
+                className="flex items-center gap-2.5 cursor-pointer group p-1 -ml-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all min-w-0"
                 title="Clique para alternar linha / instância WhatsApp"
               >
                 {/* Foto de Perfil Circular da Instância (Linha Principal) */}
                 <div className="relative shrink-0">
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-[#17253D] border border-slate-700/80 flex items-center justify-center text-white font-bold text-xs shadow-md">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 dark:bg-[#17253D] border border-slate-200 dark:border-slate-700/80 flex items-center justify-center text-slate-700 dark:text-white font-bold text-xs shadow-md">
                     {isAvatarUrlValid(instancePic) ? (
                       <img 
                         src={instancePic!} 
@@ -1903,14 +1892,14 @@ function InboxContent() {
                         }}
                       />
                     ) : (
-                      <span className="text-xs text-blue-300 font-bold uppercase">
+                      <span className="text-xs text-blue-600 dark:text-blue-300 font-bold uppercase">
                         {instanceName.substring(0, 2).toUpperCase()}
                       </span>
                     )}
 
                   </div>
                   {/* Status de Presença */}
-                  <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#0B1224] ${
+                  <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-[#0B1224] ${
                     isWaConnected ? 'bg-emerald-400 animate-pulse' : isWaConnecting ? 'bg-amber-400' : 'bg-rose-500'
                   }`} />
                 </div>
@@ -1918,12 +1907,12 @@ function InboxContent() {
                 {/* Identificação da Linha */}
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-1">
-                    <span className="text-[13px] font-bold text-white tracking-tight truncate max-w-[130px] group-hover:text-blue-300 transition-colors">
+                    <span className="text-[13px] font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[130px] group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
                       {instanceName}
                     </span>
-                    <ChevronDown size={12} className={`text-slate-400 transition-transform ${showInstanceDropdown ? 'rotate-180 text-white' : ''}`} />
+                    <ChevronDown size={12} className={`text-slate-400 transition-transform ${showInstanceDropdown ? 'rotate-180 text-blue-600 dark:text-white' : ''}`} />
                   </div>
-                  <span className="text-[10px] text-slate-400 leading-tight truncate">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight truncate">
                     {isWaConnected ? (activeInstance?.phoneNumber || 'Conectado') : 'Desconectado'}
                   </span>
                 </div>
@@ -1938,17 +1927,17 @@ function InboxContent() {
               type="button"
               onClick={() => handleSyncOfflineMessages(true, true)}
               disabled={isSyncingOffline}
-              className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95 disabled:opacity-50"
+              className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white dark:border-transparent flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95 disabled:opacity-50"
               title="Sincronizar mensagens offline (últimas 24h)"
             >
-              <RefreshCw size={14} className={isSyncingOffline ? "animate-spin text-blue-400" : ""} />
+              <RefreshCw size={14} className={isSyncingOffline ? "animate-spin text-blue-500 dark:text-blue-400" : ""} />
             </button>
 
             {/* Botão Novo Chat */}
             <button
               type="button"
               onClick={() => setShowContactsModal(true)}
-              className="w-8 h-8 rounded-xl bg-white hover:bg-slate-200 text-slate-950 flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+              className="w-8 h-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
               title="Nova conversa / Contatos"
             >
               <Plus size={17} className="stroke-[2.5]" />
@@ -1959,8 +1948,8 @@ function InboxContent() {
               <button
                 type="button"
                 onClick={() => setShowLeftHeaderMenu(prev => !prev)}
-                className={`p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer ${
-                  showLeftHeaderMenu ? 'text-white bg-slate-800/80' : ''
+                className={`p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/80 transition-colors cursor-pointer ${
+                  showLeftHeaderMenu ? 'text-blue-600 bg-slate-100 dark:text-white dark:bg-slate-800/80' : ''
                 }`}
                 title="Mais opções"
               >
@@ -1976,7 +1965,7 @@ function InboxContent() {
                   />
                   <div 
                     onClick={(e) => e.stopPropagation()}
-                    className="absolute top-full right-0 mt-2 w-56 bg-[#0F172A] border border-slate-700/90 rounded-2xl shadow-[0_20px_45px_rgba(0,0,0,0.85)] py-1.5 z-50 animate-in fade-in zoom-in-95 text-xs text-slate-200 divide-y divide-slate-800/80"
+                    className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/90 rounded-2xl shadow-xl dark:shadow-[0_20px_45px_rgba(0,0,0,0.85)] py-1.5 z-50 animate-in fade-in zoom-in-95 text-xs text-slate-700 dark:text-slate-200 divide-y divide-slate-100 dark:divide-slate-800/80"
                   >
                     <div className="py-1">
                       <button
@@ -1985,9 +1974,9 @@ function InboxContent() {
                           setShowLeftHeaderMenu(false);
                           setShowGlobalScheduleCenter(true);
                         }}
-                        className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                        className="w-full px-3.5 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
                       >
-                        <CalendarClock size={15} className="text-cyan-400" />
+                        <CalendarClock size={15} className="text-cyan-600 dark:text-cyan-400" />
                         <span>Mensagens Agendadas</span>
                       </button>
                       <button
@@ -1996,9 +1985,9 @@ function InboxContent() {
                           setShowLeftHeaderMenu(false);
                           setShowVoipDialer(true);
                         }}
-                        className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                        className="w-full px-3.5 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
                       >
-                        <PhoneCall size={15} className="text-emerald-400" />
+                        <PhoneCall size={15} className="text-emerald-600 dark:text-emerald-400" />
                         <span>Discador Telefônico</span>
                       </button>
                     </div>
@@ -2009,9 +1998,9 @@ function InboxContent() {
                           setShowLeftHeaderMenu(false);
                           handleSyncOfflineMessages(true, true);
                         }}
-                        className="w-full px-3.5 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
+                        className="w-full px-3.5 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors cursor-pointer"
                       >
-                        <RefreshCw size={14} className={`text-blue-400 ${isSyncingOffline ? 'animate-spin' : ''}`} />
+                        <RefreshCw size={14} className={`text-blue-600 dark:text-blue-400 ${isSyncingOffline ? 'animate-spin' : ''}`} />
                         <span>Sincronizar mensagens offline (24h)</span>
                       </button>
                     </div>
@@ -2029,10 +2018,10 @@ function InboxContent() {
               className="fixed inset-0 z-20" 
               onClick={() => setShowInstanceDropdown(false)} 
             />
-            <div className="bg-[#0F172A] border-b border-slate-800/80 p-2.5 z-30 animate-in fade-in slide-in-from-top-1 relative shadow-2xl">
-              <div className="px-2 py-1 text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center justify-between mb-1.5">
+            <div className="bg-white dark:bg-[#0F172A] border-b border-slate-200 dark:border-slate-800/80 p-2.5 z-30 animate-in fade-in slide-in-from-top-1 relative shadow-xl dark:shadow-2xl">
+              <div className="px-2 py-1 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider flex items-center justify-between mb-1.5">
                 <span>Linhas / Instâncias WhatsApp</span>
-                <Link href="/settings/whatsapp" className="text-cyan-400 hover:underline text-[10px]">Configurar</Link>
+                <Link href="/settings/whatsapp" className="text-blue-600 dark:text-cyan-400 hover:underline text-[10px]">Configurar</Link>
               </div>
               <div className="max-h-48 overflow-y-auto flex flex-col gap-1">
                 {instances && instances.length > 0 ? (
@@ -2043,12 +2032,12 @@ function InboxContent() {
                         setActiveInstance(inst);
                         setShowInstanceDropdown(false);
                       }}
-                      className={`px-3 py-2 rounded-xl flex items-center justify-between hover:bg-slate-800/80 cursor-pointer transition-colors text-xs ${
-                        activeInstance?.id === inst.id ? 'bg-blue-600/20 text-white font-semibold border border-blue-500/30' : 'text-slate-300'
+                      className={`px-3 py-2 rounded-xl flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer transition-colors text-xs ${
+                        activeInstance?.id === inst.id ? 'bg-blue-50 text-blue-700 dark:bg-blue-600/20 dark:text-white font-semibold border border-blue-200 dark:border-blue-500/30' : 'text-slate-700 dark:text-slate-300'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-800 border border-slate-700/60 shrink-0 flex items-center justify-center text-[10px] font-bold text-white">
+                        <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 shrink-0 flex items-center justify-center text-[10px] font-bold text-slate-700 dark:text-white">
                           {isAvatarUrlValid(inst.profilePicUrl) ? (
                             <img 
                               src={inst.profilePicUrl!} 
@@ -2066,7 +2055,7 @@ function InboxContent() {
                         </div>
                         <span className="truncate">{inst.name}</span>
                       </div>
-                      <span className="text-[10px] text-slate-400 font-mono shrink-0 ml-2">{inst.phoneNumber || 'Ativa'}</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono shrink-0 ml-2">{inst.phoneNumber || 'Ativa'}</span>
                     </div>
                   ))
                 ) : (
@@ -2078,18 +2067,18 @@ function InboxContent() {
         )}
 
         {/* Barra de Busca WhatsApp */}
-        <div className="px-3 pt-2.5 pb-1.5 bg-[#0F172A]">
-          <div className="bg-[#111A2E] border border-slate-700/60 rounded-lg px-3 py-2 flex items-center gap-2 focus-within:border-slate-500 focus-within:bg-[#0B1224] transition-all">
+        <div className="px-3 pt-2.5 pb-1.5 bg-white dark:bg-[#0B1224]">
+          <div className="bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 flex items-center gap-2 focus-within:border-blue-500 dark:focus-within:border-slate-500 focus-within:bg-white dark:focus-within:bg-[#0B1224] transition-all">
             <Search size={15} className="text-slate-400 shrink-0" />
             <input 
               type="text" 
               placeholder="Pesquisar ou começar uma nova conversa" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent text-xs text-white placeholder:text-slate-400 outline-none"
+              className="w-full bg-transparent text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none"
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-white">
+              <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-700 dark:hover:text-white">
                 <X size={13} />
               </button>
             )}
@@ -2097,7 +2086,7 @@ function InboxContent() {
         </div>
 
         {/* Pílulas de Filtro (Padrão Exato WhatsApp Web - Imagem 2) */}
-        <div className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-800/60 bg-[#0F172A] shrink-0">
+        <div className="px-3 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-200 dark:border-slate-800/60 bg-white dark:bg-[#0B1224] shrink-0">
           <button
             type="button"
             onClick={() => {
@@ -2106,8 +2095,8 @@ function InboxContent() {
             }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
               activeFilterTab === 'all'
-                ? 'bg-[#1E293B] text-white border border-slate-700/80 shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'bg-blue-600 text-white font-medium shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
             }`}
           >
             Tudo
@@ -2121,13 +2110,15 @@ function InboxContent() {
             }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeFilterTab === 'unread'
-                ? 'bg-[#1E293B] text-white border border-slate-700/80 shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'bg-blue-600 text-white font-medium shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
             }`}
           >
             <span>Não lidas</span>
             {unreadCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-emerald-500 text-slate-950 font-bold text-[10px] flex items-center justify-center">
+              <span className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                activeFilterTab === 'unread' ? 'bg-white text-blue-600' : 'bg-emerald-500 text-white'
+              }`}>
                 {unreadCount}
               </span>
             )}
@@ -2142,13 +2133,17 @@ function InboxContent() {
             }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeFilterTab === 'waiting'
-                ? 'bg-[#1E293B] text-white border border-slate-700/80 shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'bg-blue-600 text-white font-medium shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
             }`}
           >
             <span>Aguardando</span>
             {waitingCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-amber-400/20 text-amber-400 border border-amber-400/30 text-[10px] font-bold">
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                activeFilterTab === 'waiting'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-amber-500/10 text-amber-600 border border-amber-500/20 dark:bg-amber-400/20 dark:text-amber-400 dark:border-amber-400/30'
+              }`}>
                 {waitingCount}
               </span>
             )}
@@ -2163,13 +2158,17 @@ function InboxContent() {
             }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
               activeFilterTab === 'mine'
-                ? 'bg-[#1E293B] text-white border border-slate-700/80 shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'bg-blue-600 text-white font-medium shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
             }`}
           >
             <span>Meus</span>
             {mineCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-bold">
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                activeFilterTab === 'mine'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-blue-500/10 text-blue-600 border border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30'
+              }`}>
                 {mineCount}
               </span>
             )}
@@ -2184,8 +2183,8 @@ function InboxContent() {
             }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
               activeFilterTab === 'resolved'
-                ? 'bg-[#1E293B] text-white border border-slate-700/80 shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'bg-blue-600 text-white font-medium shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
             }`}
           >
             Resolvidos
@@ -2202,19 +2201,19 @@ function InboxContent() {
           
           {isLoading && contacts.length === 0 ? (
             Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="p-3.5 border-b border-slate-800/40 flex items-center gap-3 animate-pulse">
-                <div className="w-12 h-12 rounded-full bg-slate-800 shrink-0" />
+              <div key={i} className="p-3.5 border-b border-slate-100 dark:border-slate-800/40 flex items-center gap-3 animate-pulse">
+                <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0" />
                 <div className="flex-1">
                   <div className="flex justify-between items-center mb-1.5">
-                    <div className="h-3.5 w-24 bg-slate-800 rounded" />
-                    <div className="h-2.5 w-10 bg-slate-800/60 rounded" />
+                    <div className="h-3.5 w-24 bg-slate-200 dark:bg-slate-800 rounded" />
+                    <div className="h-2.5 w-10 bg-slate-200/60 dark:bg-slate-800/60 rounded" />
                   </div>
-                  <div className="h-3 w-40 bg-slate-800/50 rounded" />
+                  <div className="h-3 w-40 bg-slate-200/50 dark:bg-slate-800/50 rounded" />
                 </div>
               </div>
             ))
           ) : filteredContacts.length === 0 ? (
-            <div className="p-8 text-center text-sm text-slate-500 flex flex-col items-center justify-center h-48">
+            <div className="p-8 text-center text-sm text-slate-400 dark:text-slate-500 flex flex-col items-center justify-center h-48">
               <span>Nenhuma conversa encontrada</span>
             </div>
           ) : (
@@ -2232,13 +2231,15 @@ function InboxContent() {
                   setActiveChat(contact.id);
                   setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, hasNewMessage: false, unread: 0 } : c));
                 }}
-                className={`flex items-center gap-3.5 px-3.5 py-3 cursor-pointer transition-colors relative group border-b border-slate-800/40 ${
-                  activeChat === contact.id ? 'bg-[#1E293B]' : 'hover:bg-slate-800/40'
+                className={`flex items-center gap-3.5 px-3.5 py-3 cursor-pointer transition-colors relative group border-b border-slate-100 dark:border-slate-800/40 ${
+                  activeChat === contact.id
+                    ? 'bg-blue-50/80 dark:bg-blue-950/40 border-l-4 border-blue-600'
+                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                 }`}
               >
                 {/* Avatar Circular 48x48 */}
                 <div className="relative shrink-0">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-800 border border-slate-700/60 flex items-center justify-center text-white font-bold text-sm shadow-inner">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center text-slate-700 dark:text-white font-bold text-sm shadow-inner">
                     {isAvatarUrlValid(contact.avatarUrl) ? (
                       <img 
                         src={contact.avatarUrl!} 
@@ -2258,7 +2259,7 @@ function InboxContent() {
                     </span>
                   </div>
                   {/* Status Indicator */}
-                  <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#0B1224] shadow-sm" />
+                  <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0B1224] shadow-sm" />
                 </div>
 
                 {/* Conteúdo do Card de Conversa (2 Linhas - Padrão WhatsApp Web) */}
@@ -2266,12 +2267,17 @@ function InboxContent() {
                   {/* Linha 1: Nome + Horário */}
                   <div className="flex items-center justify-between gap-2">
                     <h3 className={`text-[0.93rem] truncate ${
-                      contact.unread > 0 ? 'font-bold text-white' : (activeChat === contact.id ? 'font-semibold text-white' : 'font-medium text-slate-200')
+                      contact.unread > 0 
+                        ? 'font-bold text-slate-900 dark:text-white' 
+                        : (activeChat === contact.id 
+                            ? 'font-semibold text-blue-700 dark:text-white' 
+                            : 'font-semibold text-slate-900 dark:text-slate-200'
+                          )
                     }`}>
                       {formatContactDisplayName(contact.name, contact.phone)}
                     </h3>
                     <span className={`text-[11px] whitespace-nowrap shrink-0 ${
-                      contact.unread > 0 ? 'text-emerald-400 font-semibold' : 'text-slate-400'
+                      contact.unread > 0 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-400 dark:text-slate-500 text-xs'
                     }`}>
                       {contact.time || ''}
                     </span>
@@ -2281,10 +2287,10 @@ function InboxContent() {
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1 min-w-0 flex-1">
                       {contact.lastMessageDirection === 'OUTBOUND' && (
-                        <CheckCheck size={14} className="text-cyan-400 shrink-0 inline-block" />
+                        <CheckCheck size={14} className="text-cyan-600 dark:text-cyan-400 shrink-0 inline-block" />
                       )}
                       <p className={`text-xs truncate ${
-                        contact.unread > 0 ? 'text-slate-200 font-medium' : 'text-slate-400'
+                        contact.unread > 0 ? 'text-slate-800 dark:text-slate-200 font-medium' : 'text-slate-500 dark:text-slate-400'
                       }`}>
                         {contact.lastMessage || contact.lastMsg || 'Nenhuma mensagem recente'}
                       </p>
@@ -2292,12 +2298,12 @@ function InboxContent() {
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       {contact.unread > 0 && (
-                        <span className="min-w-[1.25rem] h-5 px-1.5 bg-emerald-500 text-slate-950 font-black text-[11px] rounded-full flex items-center justify-center shadow-[0_0_8px_rgba(16,185,129,0.5)]">
+                        <span className="min-w-[1.25rem] h-5 px-1.5 bg-emerald-500 text-white font-black text-[11px] rounded-full flex items-center justify-center shadow-[0_0_8px_rgba(16,185,129,0.5)]">
                           {contact.unread}
                         </span>
                       )}
                       {contact.status === 'bot_active' && (
-                        <span className="text-[10px] text-cyan-400 px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30 font-semibold">
+                        <span className="text-[10px] text-cyan-600 dark:text-cyan-400 px-1.5 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-500/30 font-semibold">
                           IA
                         </span>
                       )}
@@ -2310,11 +2316,11 @@ function InboxContent() {
       </div>
 
       {/* 2. PAINEL CENTRAL: Janela de Chat (Estrutura WhatsApp Corporativo VERSUS) */}
-      <div className={`${!activeChat ? 'hidden md:flex' : 'flex'} flex-1 w-full bg-[#0B1224] flex-col overflow-hidden relative border-r border-slate-800/80`}>
+      <div className={`${!activeChat ? 'hidden md:flex' : 'flex'} flex-1 w-full bg-slate-50 dark:bg-[#070D18] flex-col overflow-hidden relative border-r border-slate-200 dark:border-slate-800/80`}>
         
         {/* Textura/Papel de Parede Sutil Autêntico WhatsApp adaptado ao Dark Mode Corporativo (2.5% de opacidade) */}
         <div 
-          className="absolute inset-0 opacity-[0.025] pointer-events-none" 
+          className="absolute inset-0 opacity-[0.035] dark:opacity-[0.025] invert dark:invert-0 pointer-events-none" 
           style={{ 
             backgroundImage: WHATSAPP_WALLPAPER_BG, 
             backgroundRepeat: 'repeat', 
@@ -2329,29 +2335,29 @@ function InboxContent() {
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Painel de Produtividade</span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Painel de Produtividade</span>
               </div>
-              <div className="flex items-center gap-2 bg-[#0F172A] border border-gray-800 px-3.5 py-1.5 rounded-xl text-xs text-slate-300 shadow-sm">
-                <Calendar size={13} className="text-blue-400" />
+              <div className="flex items-center gap-2 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-gray-800 px-3.5 py-1.5 rounded-xl text-xs text-slate-700 dark:text-slate-300 shadow-sm">
+                <Calendar size={13} className="text-blue-500 dark:text-blue-400" />
                 <span className="capitalize font-medium">{currentFormattedDate}</span>
               </div>
             </div>
 
             {/* Centro: Card circular de produtividade com progresso e estatísticas reais */}
             <div className="flex flex-col items-center justify-center max-w-lg mx-auto w-full my-auto text-center">
-              <div className="w-full bg-[#0B1224] border border-slate-800 rounded-2xl p-8 shadow-2xl relative overflow-hidden backdrop-blur-md">
+              <div className="w-full bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl p-8 shadow-xl dark:shadow-2xl relative overflow-hidden backdrop-blur-md">
                 <div className="absolute -top-12 -right-12 w-36 h-36 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
                 <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-blue-600/5 rounded-full blur-2xl pointer-events-none"></div>
 
                 {/* Título e Saudação */}
                 <div className="mb-6">
-                  <span className="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20 inline-block mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-500/20 inline-block mb-2">
                     Seu Dia
                   </span>
-                  <h3 className="text-xl font-bold text-white">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                     Olá, {currentUserName}!
                   </h3>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Acompanhe o seu ritmo de produtividade e resoluções de hoje.
                   </p>
                 </div>
@@ -2366,7 +2372,8 @@ function InboxContent() {
                         cx="80"
                         cy="80"
                         r="68"
-                        stroke="#1E293B"
+                        stroke="currentColor"
+                        className="text-slate-200 dark:text-slate-800"
                         strokeWidth="10"
                         fill="transparent"
                       />
@@ -2393,24 +2400,24 @@ function InboxContent() {
 
                     {/* Conteúdo interno do círculo */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-4xl font-black text-white tracking-tight">
+                      <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                         {todayFinishedCount}
                       </span>
-                      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
+                      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">
                         Finalizados hoje
                       </span>
                     </div>
                   </div>
 
                   {/* Comparação com a média */}
-                  <div className="mt-4 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#070D1B] border border-slate-800 text-xs font-semibold">
-                    <TrendingUp size={14} className={todayFinishedCount >= avgDaily && todayFinishedCount > 0 ? "text-emerald-400" : "text-blue-400"} />
+                  <div className="mt-4 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-xs font-semibold">
+                    <TrendingUp size={14} className={todayFinishedCount >= avgDaily && todayFinishedCount > 0 ? "text-emerald-500 dark:text-emerald-400" : "text-blue-500 dark:text-blue-400"} />
                     {todayFinishedCount === 0 ? (
-                      <span className="text-slate-400">
+                      <span className="text-slate-500 dark:text-slate-400">
                         Nenhum atendimento finalizado hoje {avgDaily > 0 ? `(Média: ${avgDaily}/dia)` : `(Meta: ${dailyGoal})`}
                       </span>
                     ) : (
-                      <span className="text-slate-300">
+                      <span className="text-slate-700 dark:text-slate-300">
                         {finishedVsAveragePercent >= 0 ? `+${finishedVsAveragePercent}%` : `${finishedVsAveragePercent}%`} vs sua média diária ({avgDaily} atendimentos)
                       </span>
                     )}
@@ -2418,21 +2425,21 @@ function InboxContent() {
                 </div>
 
                 {/* Badges de Apoio */}
-                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-800 text-left text-xs">
-                  <div className="bg-[#070D1B] p-3.5 rounded-xl border border-slate-800">
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">TMA Médio Hoje</span>
-                    <span className="text-base font-bold text-white">{todayAvgTma}</span>
+                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-200 dark:border-slate-800 text-left text-xs">
+                  <div className="bg-slate-50 dark:bg-[#070D1B] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">TMA Médio Hoje</span>
+                    <span className="text-base font-bold text-slate-900 dark:text-white">{todayAvgTma}</span>
                   </div>
-                  <div className="bg-[#070D1B] p-3.5 rounded-xl border border-slate-800">
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">1ª Resposta Média</span>
-                    <span className="text-base font-bold text-white">{todayFirstResp}</span>
+                  <div className="bg-slate-50 dark:bg-[#070D1B] p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">1ª Resposta Média</span>
+                    <span className="text-base font-bold text-slate-900 dark:text-white">{todayFirstResp}</span>
                   </div>
                 </div>
               </div>
 
               {/* Texto Auxiliar no Rodapé */}
-              <div className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-400 bg-[#0B1224] px-5 py-2.5 rounded-xl border border-slate-800">
-                <MessageSquare size={15} className="text-blue-400 shrink-0" />
+              <div className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-600 dark:text-slate-400 bg-white dark:bg-[#0B1224] px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <MessageSquare size={15} className="text-blue-500 dark:text-blue-400 shrink-0" />
                 <span>Nada selecionado ainda. Escolha uma conversa para continuar.</span>
               </div>
             </div>
@@ -2442,7 +2449,7 @@ function InboxContent() {
         ) : (
           <>
             {/* Chat Header (Padrão Estrutural WhatsApp - Design Monocromático VERSUS) */}
-            <div className="h-16 px-2.5 sm:px-4 border-b border-slate-800/80 flex items-center justify-between bg-[#0B1224] z-20 shadow-sm shrink-0 w-full overflow-hidden">
+            <div className="h-16 px-2.5 sm:px-4 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between bg-white dark:bg-[#0B1224] z-30 shadow-sm shrink-0 w-full text-slate-900 dark:text-white">
               <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 overflow-hidden">
                 {/* Botão Voltar para Lista no Mobile (WhatsApp style) */}
                 <button
@@ -2451,7 +2458,7 @@ function InboxContent() {
                     e.stopPropagation();
                     setActiveChat(null);
                   }}
-                  className="md:hidden p-1.5 -ml-0.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/80 transition-colors shrink-0 cursor-pointer"
+                  className="md:hidden p-1.5 -ml-0.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors shrink-0 cursor-pointer"
                   title="Voltar para conversas"
                 >
                   <ArrowLeft size={20} />
@@ -2464,7 +2471,7 @@ function InboxContent() {
                 >
                   {/* Avatar WhatsApp com indicador de status */}
                   <div className="relative shrink-0">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-800 border border-slate-700/60 flex items-center justify-center text-white font-bold shrink-0 relative overflow-hidden shadow-inner text-xs sm:text-sm">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center text-slate-700 dark:text-white font-bold shrink-0 relative overflow-hidden shadow-inner text-xs sm:text-sm">
                       {(() => {
                         const isSelfOrMainLine = activeContactData.name?.includes('(você)') || (activeContactData.phone && activeInstance?.phoneNumber && activeContactData.phone.replace(/\D/g, '') === activeInstance.phoneNumber.replace(/\D/g, ''));
                         const rawContactPhoto = activeContactData.avatarUrl || (isSelfOrMainLine ? (activeInstance?.profilePicUrl || waStatus?.profilePicUrl) : null);
@@ -2489,30 +2496,25 @@ function InboxContent() {
                       </span>
                     </div>
                     {/* Status Indicator */}
-                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 border-2 border-[#0B1224]" />
+                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0B1224]" />
                   </div>
                   
                   {/* Título e Subtítulo WhatsApp */}
                   <div className="min-w-0 flex-1 overflow-hidden">
-                    <h2 className="text-xs sm:text-sm font-bold text-white truncate whitespace-nowrap group-hover:text-blue-300 transition-colors leading-tight">
+                    <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate whitespace-nowrap group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors leading-tight">
                       {formatContactDisplayName(activeContactData.name, activeContactData.phone)}
                     </h2>
-                    {activeContactData.status === 'human_takeover' ? (
-                      <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-amber-400 font-bold truncate whitespace-nowrap leading-tight mt-0.5">
-                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping shrink-0" />
-                        <span className="truncate">🚨 Transbordo da IA • Aguardando Atendente</span>
-                      </div>
-                    ) : activeContactData.isAi ? (
-                      <div className="flex items-center gap-1 text-[11px] sm:text-xs text-cyan-400 font-medium truncate whitespace-nowrap leading-tight mt-0.5">
+                    {activeContactData.isAi || activeContactData.status === 'bot_active' ? (
+                      <div className="flex items-center gap-1 text-[11px] sm:text-xs text-cyan-600 dark:text-cyan-400 font-medium truncate whitespace-nowrap leading-tight mt-0.5">
                         <BrainCircuit size={11} className="animate-pulse shrink-0" />
                         <span className="truncate">IA {aiAgentName} conversando...</span>
                       </div>
-                    ) : activeContactData.status === 'open' ? (
-                      <span className="text-[11px] sm:text-xs text-emerald-400 font-medium truncate whitespace-nowrap block leading-tight mt-0.5">online • Atendimento ativo</span>
+                    ) : activeContactData.status === 'open' || activeContactData.status === 'human_takeover' ? (
+                      <span className="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-medium truncate whitespace-nowrap block leading-tight mt-0.5">online • Atendimento ativo</span>
                     ) : activeContactData.status === 'waiting' ? (
-                      <span className="text-[11px] sm:text-xs text-amber-400 font-medium truncate whitespace-nowrap block leading-tight mt-0.5">Aguardando atendimento</span>
+                      <span className="text-[11px] sm:text-xs text-amber-600 dark:text-amber-400 font-medium truncate whitespace-nowrap block leading-tight mt-0.5">Aguardando atendimento</span>
                     ) : (
-                      <span className="text-[11px] sm:text-xs text-slate-400 font-medium truncate whitespace-nowrap block leading-tight mt-0.5">
+                      <span className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate whitespace-nowrap block leading-tight mt-0.5">
                         {activeContactData.phone?.includes('@lid') 
                           ? 'online • WhatsApp' 
                           : activeContactData.phone && activeContactData.name && activeContactData.name !== activeContactData.phone
@@ -2528,7 +2530,7 @@ function InboxContent() {
               <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-1.5">
                 {isResolved ? (
                   <div className="flex items-center gap-1 sm:gap-1.5 mr-0.5 sm:mr-1">
-                    <span className="hidden sm:inline-flex text-slate-300 text-[11px] font-semibold px-2 py-0.5 bg-slate-800/80 border border-slate-700/80 rounded-lg items-center gap-1">
+                    <span className="hidden sm:inline-flex text-slate-700 dark:text-slate-300 text-[11px] font-semibold px-2 py-0.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg items-center gap-1">
                       <Lock size={11} className="text-slate-400" />
                       Finalizado
                     </span>
@@ -2553,7 +2555,7 @@ function InboxContent() {
                       <UserCheck size={12} />
                       <span>Assumir</span>
                     </button>
-                    <button onClick={handleRelease} className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer">
+                    <button onClick={handleRelease} className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700/80 text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer">
                       <span>Finalizar</span>
                     </button>
                   </div>
@@ -2570,14 +2572,14 @@ function InboxContent() {
                       }}
                       className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border transition-all flex items-center gap-1 cursor-pointer text-xs font-semibold ${
                         showCrmDropdown
-                          ? 'bg-blue-600/25 text-blue-300 border-blue-500/60 shadow-lg shadow-blue-500/10'
+                          ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-600/25 dark:text-blue-300 dark:border-blue-500/60 shadow-lg shadow-blue-500/10'
                           : currentStageObj
                             ? `${currentStageObj.bgLight} ${currentStageObj.color} ${currentStageObj.borderLight} hover:brightness-125`
-                            : 'bg-[#1E293B]/80 text-slate-300 border-slate-700/80 hover:bg-slate-700/80 hover:text-white'
+                            : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 hover:text-slate-900 dark:bg-[#1E293B]/80 dark:text-slate-300 dark:border-slate-700/80 dark:hover:bg-slate-700/80 dark:hover:text-white'
                       }`}
                       title="Mover lead no Funil do CRM"
                     >
-                      <Workflow size={13} className={currentStageObj ? currentStageObj.color : 'text-blue-400'} />
+                      <Workflow size={13} className={currentStageObj ? currentStageObj.color : 'text-blue-600 dark:text-blue-400'} />
                       <span className="hidden md:inline font-medium text-[11px] max-w-[100px] truncate">
                         {currentStageObj ? currentStageObj.title : 'Funil CRM'}
                       </span>
@@ -2593,15 +2595,15 @@ function InboxContent() {
                         />
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="absolute top-full right-0 mt-2 w-64 bg-[#0B1224] border border-slate-700/90 rounded-2xl shadow-[0_25px_50px_rgba(0,0,0,0.9)] p-1.5 z-50 animate-in fade-in zoom-in-95 text-xs backdrop-blur-xl divide-y divide-slate-800/80"
+                          className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/90 rounded-2xl shadow-xl dark:shadow-[0_25px_50px_rgba(0,0,0,0.9)] p-1.5 z-50 animate-in fade-in zoom-in-95 text-xs backdrop-blur-xl divide-y divide-slate-100 dark:divide-slate-800/80"
                         >
                           <div className="px-3 py-2 flex items-center justify-between">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                              <Workflow size={12} className="text-blue-400" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                              <Workflow size={12} className="text-blue-600 dark:text-blue-400" />
                               Estágios do CRM
                             </span>
                             {isMovingStage && (
-                              <RefreshCw size={11} className="animate-spin text-blue-400" />
+                              <RefreshCw size={11} className="animate-spin text-blue-600 dark:text-blue-400" />
                             )}
                           </div>
                           <div className="py-1 max-h-72 overflow-y-auto custom-scrollbar flex flex-col gap-0.5">
@@ -2615,8 +2617,8 @@ function InboxContent() {
                                   onClick={() => handleMoveContactToStage(stage.id, stage.title)}
                                   className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer group ${
                                     isCurrent
-                                      ? 'bg-blue-600/20 text-white font-bold border border-blue-500/40 shadow-sm'
-                                      : 'hover:bg-slate-800/80 text-slate-300 hover:text-white'
+                                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-600/20 dark:text-white font-bold border border-blue-200 dark:border-blue-500/40 shadow-sm'
+                                      : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                                   }`}
                                 >
                                   <div className="flex items-center gap-2.5 min-w-0">
@@ -2624,7 +2626,7 @@ function InboxContent() {
                                     <span className="truncate text-xs">{stage.title}</span>
                                   </div>
                                   {isCurrent && (
-                                    <Check size={14} className="text-blue-400 shrink-0 ml-2" />
+                                    <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0 ml-2" />
                                   )}
                                 </button>
                               );
@@ -2641,7 +2643,9 @@ function InboxContent() {
                   type="button"
                   onClick={() => setShowSearchInChat(prev => !prev)}
                   className={`p-1.5 sm:p-2 rounded-full transition-colors cursor-pointer shrink-0 ${
-                    showSearchInChat ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    showSearchInChat 
+                      ? 'bg-slate-100 text-blue-600 dark:bg-slate-800 dark:text-white' 
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'
                   }`}
                   title="Pesquisar na conversa"
                 >
@@ -2652,7 +2656,7 @@ function InboxContent() {
                 <button
                   type="button"
                   onClick={() => setShowDeleteConvModal(true)}
-                  className="hidden sm:flex p-1.5 sm:p-2 rounded-full text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition-colors cursor-pointer shrink-0"
+                  className="hidden sm:flex p-1.5 sm:p-2 rounded-full text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-500/15 transition-colors cursor-pointer shrink-0"
                   title="Apagar conversa inteira"
                 >
                   <Trash2 size={18} />
@@ -2667,7 +2671,9 @@ function InboxContent() {
                       setShowChatOptionsMenu(prev => !prev);
                     }}
                     className={`p-1.5 sm:p-2 rounded-full transition-colors cursor-pointer ${
-                      showChatOptionsMenu ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                      showChatOptionsMenu 
+                        ? 'bg-slate-100 text-blue-600 dark:bg-slate-800 dark:text-white' 
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'
                     }`}
                     title="Mais opções do chat"
                   >
@@ -2683,7 +2689,7 @@ function InboxContent() {
                       />
                       <div 
                         onClick={(e) => e.stopPropagation()}
-                        className="absolute top-full right-0 mt-2 w-72 bg-[#0F172A] border border-slate-700/90 rounded-2xl shadow-[0_25px_50px_rgba(0,0,0,0.9)] py-2 z-50 animate-in fade-in zoom-in-95 text-xs divide-y divide-slate-800/80"
+                        className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/90 rounded-2xl shadow-xl dark:shadow-[0_25px_50px_rgba(0,0,0,0.9)] py-2 z-50 animate-in fade-in zoom-in-95 text-xs divide-y divide-slate-100 dark:divide-slate-800/80"
                       >
                       <div className="py-1">
                         <button
@@ -2692,14 +2698,14 @@ function InboxContent() {
                             setShowChatOptionsMenu(false);
                             setShowContactInfo(true);
                           }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 group-hover:bg-blue-500/25 transition-colors">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 group-hover:bg-blue-500/25 transition-colors">
                             <PanelRight size={16} />
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-white group-hover:text-blue-300 transition-colors">Dados do Contato</span>
-                            <span className="text-[11px] text-slate-300 leading-tight">Ver detalhes, tags e telefone</span>
+                            <span className="font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">Dados do Contato</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-300 leading-tight">Ver detalhes, tags e telefone</span>
                           </div>
                         </button>
 
@@ -2709,14 +2715,14 @@ function InboxContent() {
                             setShowChatOptionsMenu(false);
                             setShowHistoryModal(true);
                           }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 group-hover:bg-blue-500/25 transition-colors">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 group-hover:bg-blue-500/25 transition-colors">
                             <History size={16} />
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-white group-hover:text-blue-300 transition-colors">Histórico de Atendimento</span>
-                            <span className="text-[11px] text-slate-300 leading-tight">Ver eventos e métricas do ticket</span>
+                            <span className="font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">Histórico de Atendimento</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-300 leading-tight">Ver eventos e métricas do ticket</span>
                           </div>
                         </button>
 
@@ -2726,14 +2732,14 @@ function InboxContent() {
                             setShowChatOptionsMenu(false);
                             handleExportConversation();
                           }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 group-hover:bg-emerald-500/25 transition-colors">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:bg-emerald-500/25 transition-colors">
                             <FileDown size={16} />
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-white group-hover:text-emerald-300 transition-colors">Exportar Conversa</span>
-                            <span className="text-[11px] text-slate-300 leading-tight">Baixar transcrição completa (.txt)</span>
+                            <span className="font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">Exportar Conversa</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-300 leading-tight">Baixar transcrição completa (.txt)</span>
                           </div>
                         </button>
                       </div>
@@ -2745,19 +2751,19 @@ function InboxContent() {
                             setShowChatOptionsMenu(false);
                             setShowScheduledDrawer(true);
                           }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center justify-between transition-colors cursor-pointer group"
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center justify-between transition-colors cursor-pointer group"
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0 group-hover:bg-cyan-500/25 transition-colors">
+                            <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shrink-0 group-hover:bg-cyan-500/25 transition-colors">
                               <CalendarClock size={16} />
                             </div>
                             <div className="flex flex-col min-w-0">
-                              <span className="font-semibold text-white group-hover:text-cyan-300 transition-colors">Ver Mensagens Agendadas</span>
-                              <span className="text-[11px] text-slate-300 leading-tight">Fila de disparos deste contato</span>
+                              <span className="font-semibold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-300 transition-colors">Ver Mensagens Agendadas</span>
+                              <span className="text-[11px] text-slate-500 dark:text-slate-300 leading-tight">Fila de disparos deste contato</span>
                             </div>
                           </div>
                           {activeChat && (scheduledMessagesByChat[activeChat]?.length || 0) > 0 && (
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 shrink-0">
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 dark:bg-cyan-500/25 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/40 shrink-0">
                               {scheduledMessagesByChat[activeChat].length}
                             </span>
                           )}
@@ -2769,14 +2775,14 @@ function InboxContent() {
                             setShowChatOptionsMenu(false);
                             setShowScheduleModal(true);
                           }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 group-hover:bg-amber-500/25 transition-colors">
+                          <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 group-hover:bg-amber-500/25 transition-colors">
                             <Calendar size={16} />
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-white group-hover:text-amber-300 transition-colors">Agendar Nova Mensagem</span>
-                            <span className="text-[11px] text-slate-300 leading-tight">Programar envio de data e hora</span>
+                            <span className="font-semibold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors">Agendar Nova Mensagem</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-300 leading-tight">Programar envio de data e hora</span>
                           </div>
                         </button>
                       </div>
@@ -2792,16 +2798,16 @@ function InboxContent() {
                             }, 100);
                             toast.success(!isInternalMode ? "Modo Nota Interna ativado!" : "Modo WhatsApp ativado!");
                           }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-yellow-500/15 border border-yellow-500/30 flex items-center justify-center text-yellow-400 shrink-0 group-hover:bg-yellow-500/25 transition-colors">
+                          <div className="w-8 h-8 rounded-lg bg-yellow-500/15 border border-yellow-500/30 flex items-center justify-center text-yellow-600 dark:text-yellow-400 shrink-0 group-hover:bg-yellow-500/25 transition-colors">
                             <Lock size={16} />
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-white group-hover:text-yellow-300 transition-colors">
+                            <span className="font-semibold text-slate-900 dark:text-white group-hover:text-yellow-600 dark:group-hover:text-yellow-300 transition-colors">
                               {isInternalMode ? "Desativar Nota Interna" : "Nota Interna (Equipe)"}
                             </span>
-                            <span className="text-[11px] text-slate-300 leading-tight">Anotação privada invisível ao cliente</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-300 leading-tight">Anotação privada invisível ao cliente</span>
                           </div>
                         </button>
 
@@ -2812,16 +2818,16 @@ function InboxContent() {
                             handleCopyText(activeChat || '', 'chatId');
                             toast.success("ID do atendimento copiado!");
                           }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
+                          className="w-full px-4 py-2.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 flex items-center gap-3 transition-colors cursor-pointer group"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0 group-hover:bg-purple-500/25 transition-colors">
+                          <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0 group-hover:bg-purple-500/25 transition-colors">
                             <Copy size={16} />
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-white group-hover:text-purple-300 transition-colors">
+                            <span className="font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
                               {copiedField === 'chatId' ? 'ID Copiado!' : 'Copiar ID do Atendimento'}
                             </span>
-                            <span className="text-[11px] font-mono text-slate-400 truncate max-w-[190px]">
+                            <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate max-w-[190px]">
                               {activeChat || '---'}
                             </span>
                           </div>
@@ -2835,16 +2841,16 @@ function InboxContent() {
                             setShowChatOptionsMenu(false);
                             setShowDeleteConvModal(true);
                           }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-rose-500/15 flex items-center gap-3 transition-colors cursor-pointer group text-rose-400"
+                          className="w-full px-4 py-2.5 text-left hover:bg-rose-50 dark:hover:bg-rose-500/15 flex items-center gap-3 transition-colors cursor-pointer group text-rose-600 dark:text-rose-400"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0 group-hover:bg-rose-500/25 transition-colors">
+                          <div className="w-8 h-8 rounded-lg bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0 group-hover:bg-rose-500/25 transition-colors">
                             <Trash2 size={16} />
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-rose-400 group-hover:text-rose-300 transition-colors">
+                            <span className="font-semibold text-rose-600 dark:text-rose-400 group-hover:text-rose-700 dark:group-hover:text-rose-300 transition-colors">
                               Apagar Conversa
                             </span>
-                            <span className="text-[11px] text-slate-400 leading-tight">
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
                               Limpar histórico e excluir mensagens
                             </span>
                           </div>
@@ -2860,7 +2866,9 @@ function InboxContent() {
                   type="button"
                   onClick={() => setShowContactInfo(prev => !prev)}
                   className={`hidden md:flex p-2 rounded-full transition-colors cursor-pointer shrink-0 ${
-                    showContactInfo ? 'bg-slate-800 text-blue-400' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    showContactInfo 
+                      ? 'bg-blue-50 text-blue-600 dark:bg-slate-800 dark:text-blue-400' 
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60'
                   }`}
                   title="Dados do contato"
                 >
@@ -2871,18 +2879,18 @@ function InboxContent() {
 
             {/* Barra de Busca na Conversa (WhatsApp Web) */}
             {showSearchInChat && (
-              <div className="bg-[#0B1224] border-b border-slate-800/80 px-4 py-2.5 flex items-center gap-3 z-20 animate-in slide-in-from-top-1 duration-150">
+              <div className="bg-white dark:bg-[#0B1224] border-b border-slate-200 dark:border-slate-800/80 px-4 py-2.5 flex items-center gap-3 z-20 animate-in slide-in-from-top-1 duration-150">
                 <Search size={16} className="text-slate-400 shrink-0" />
                 <input
                   type="text"
                   value={chatSearchQuery}
                   onChange={(e) => setChatSearchQuery(e.target.value)}
                   placeholder="Pesquisar nesta conversa..."
-                  className="flex-1 bg-[#1E293B] border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-400 outline-none focus:border-blue-500/80"
+                  className="flex-1 bg-slate-100 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-500/80"
                   autoFocus
                 />
                 {chatSearchQuery && (
-                  <span className="text-[11px] text-slate-400 font-mono">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                     {messages.filter(m => m.content?.toLowerCase().includes(chatSearchQuery.toLowerCase())).length} encontrada(s)
                   </span>
                 )}
@@ -2892,7 +2900,7 @@ function InboxContent() {
                     setShowSearchInChat(false);
                     setChatSearchQuery('');
                   }}
-                  className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
+                  className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
                 >
                   <X size={16} />
                 </button>
@@ -2901,9 +2909,9 @@ function InboxContent() {
 
             {/* Banner de Modo Espiar */}
             {isPeeking && (
-              <div className="bg-amber-500/15 border-b border-amber-500/30 px-6 py-2.5 flex items-center justify-between text-amber-300 text-xs shrink-0 backdrop-blur-sm z-20">
+              <div className="bg-amber-50 dark:bg-amber-500/15 border-b border-amber-200 dark:border-amber-500/30 px-6 py-2.5 flex items-center justify-between text-amber-900 dark:text-amber-300 text-xs shrink-0 backdrop-blur-sm z-20">
                 <div className="flex items-center gap-2">
-                  <Eye size={15} className="text-amber-400 animate-pulse shrink-0" />
+                  <Eye size={15} className="text-amber-600 dark:text-amber-400 animate-pulse shrink-0" />
                   <span><strong>Modo Espiar Ativo:</strong> Visualizando conversa em modo somente-leitura. A IA ou fila continuam ativas.</span>
                 </div>
                 <button 
@@ -2916,36 +2924,6 @@ function InboxContent() {
               </div>
             )}
 
-            {/* Banner de Transbordo da IA (Aguardando Atendente Humano) */}
-            {activeContactData?.status === 'human_takeover' && (
-              <div className="bg-gradient-to-r from-amber-950/70 via-orange-950/50 to-slate-900/80 border-b border-amber-500/40 px-4 sm:px-6 py-2.5 flex items-center justify-between text-amber-200 text-xs shrink-0 backdrop-blur-md z-20 shadow-md">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 shadow-sm">
-                    <Sparkles size={14} className="animate-pulse" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-amber-300 uppercase tracking-wide text-[11px]">
-                        Transbordo da IA Ativo
-                      </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-400/30">
-                        IA Pausada
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-300 truncate mt-0.5">
-                      A IA encerrou o auto-atendimento e transferiu para você. Ela não responderá mais este lead automaticamente.
-                    </p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => handleTakeover(activeChat!)}
-                  className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)] cursor-pointer shrink-0 ml-3"
-                >
-                  <UserCheck size={13} />
-                  <span>Assumir no Meu Nome</span>
-                </button>
-              </div>
-            )}
 
             {/* Chat Messages (Padrão Estrutural WhatsApp com Ticks Inline e Balões Corporativos) */}
             <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-2.5 z-10 scrollbar-thin">
@@ -2981,7 +2959,7 @@ function InboxContent() {
                       {/* Pílula de Data Centralizada (WhatsApp Date Divider) */}
                       {showDateDivider && (
                         <div className="flex justify-center my-2">
-                          <div className="bg-[#111A2E]/95 text-slate-300 text-[11px] font-medium px-3.5 py-1 rounded-lg shadow-sm border border-slate-800/80 backdrop-blur-sm uppercase tracking-wide">
+                          <div className="bg-slate-200/90 text-slate-700 dark:bg-[#111A2E]/95 dark:text-slate-300 text-[11px] font-medium px-3.5 py-1 rounded-lg shadow-sm border border-slate-300/80 dark:border-slate-800/80 backdrop-blur-sm uppercase tracking-wide">
                             {currentDateLabel}
                           </div>
                         </div>
@@ -2991,10 +2969,10 @@ function InboxContent() {
                       <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] md:max-w-[65%] ${isMe ? 'self-end items-end' : 'self-start items-start'} relative group my-0.5`}>
                         <div className={`text-sm shadow-sm relative transition-all pt-1.5 pb-1.5 px-3 min-w-[85px] ${
                           msg.isInternal
-                            ? 'bg-[#281b0a] text-amber-100 rounded-lg rounded-tr-none border border-amber-500/30'
+                            ? 'bg-amber-50 text-amber-900 border border-amber-300 dark:bg-[#281b0a] dark:text-amber-100 dark:border-amber-500/30 rounded-lg rounded-tr-none'
                             : isMe
-                              ? 'bg-[#17253D] text-slate-100 rounded-lg rounded-tr-none border border-blue-900/30'
-                              : 'bg-[#1E293B] text-slate-100 rounded-lg rounded-tl-none border border-slate-700/40'
+                              ? 'bg-blue-600 text-white shadow-sm border border-blue-500/30 dark:bg-blue-600 dark:text-white dark:border-blue-700/30 rounded-lg rounded-tr-none'
+                              : 'bg-white text-slate-800 shadow-sm border border-slate-200/80 dark:bg-[#1E293B] dark:text-slate-100 dark:border-slate-700/50 rounded-lg rounded-tl-none'
                         }`}>
                           {/* Botão de Excluir Mensagem no Hover (Padrão WhatsApp Web) */}
                           {!msg.isInternal && (
@@ -3005,29 +2983,29 @@ function InboxContent() {
                                 handleDeleteMessage(msg.id);
                               }}
                               title={isMe ? "Apagar mensagem para todos no WhatsApp" : "Apagar mensagem do histórico"}
-                              className="absolute -top-2 -right-2 p-1.5 rounded-full bg-[#0F172A] border border-slate-700/80 text-slate-400 hover:text-rose-400 hover:border-rose-500/60 opacity-0 group-hover:opacity-100 transition-all shadow-lg z-20 cursor-pointer"
+                              className="absolute -top-2 -right-2 p-1.5 rounded-full bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-500/60 opacity-0 group-hover:opacity-100 transition-all shadow-lg z-20 cursor-pointer"
                             >
                               <Trash2 size={13} />
                             </button>
                           )}
                           {/* Cauda SVG do Balão WhatsApp */}
                           {msg.isInternal ? (
-                            <svg className="absolute -top-[0.5px] -right-2 text-[#281b0a] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
+                            <svg className="absolute -top-[0.5px] -right-2 text-amber-50 dark:text-[#281b0a] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
                               <path fill="currentColor" d="M0 0h6.5c1.1 0 1.8.9 1.3 1.9l-5.2 9.8c-.7 1.4-2.6.8-2.6-.8V0z" />
                             </svg>
                           ) : isMe ? (
-                            <svg className="absolute -top-[0.5px] -right-2 text-[#17253D] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
+                            <svg className="absolute -top-[0.5px] -right-2 text-blue-600 dark:text-blue-600 pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
                               <path fill="currentColor" d="M0 0h6.5c1.1 0 1.8.9 1.3 1.9l-5.2 9.8c-.7 1.4-2.6.8-2.6-.8V0z" />
                             </svg>
                           ) : (
-                            <svg className="absolute -top-[0.5px] -left-2 text-[#1E293B] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
+                            <svg className="absolute -top-[0.5px] -left-2 text-white dark:text-[#1E293B] pointer-events-none drop-shadow-sm" width="9" height="13" viewBox="0 0 9 13">
                               <path fill="currentColor" d="M9 0H2.5C1.4 0 .7.9 1.2 1.9l5.2 9.8c.7 1.4 2.6.8 2.6-.8V0z" />
                             </svg>
                           )}
 
                           {/* Identificador de Nota Interna */}
                           {msg.isInternal && (
-                            <div className="flex items-center gap-1.5 text-amber-400 font-bold mb-1 pb-0.5 border-b border-amber-500/20 text-[10px] uppercase tracking-wider">
+                            <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-bold mb-1 pb-0.5 border-b border-amber-300 dark:border-amber-500/20 text-[10px] uppercase tracking-wider">
                               <Lock size={10} />
                               <span>Nota Interna (Equipe)</span>
                             </div>
@@ -3035,8 +3013,8 @@ function InboxContent() {
 
                           {/* Pill de IA */}
                           {isAi && !msg.isInternal && (
-                            <div className="inline-flex items-center gap-1 bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1 shadow-sm">
-                              <Bot size={11} className="text-cyan-400 animate-pulse" />
+                            <div className="inline-flex items-center gap-1 bg-cyan-100 dark:bg-cyan-950/80 border border-cyan-300 dark:border-cyan-500/40 text-cyan-800 dark:text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1 shadow-sm">
+                              <Bot size={11} className="text-cyan-600 dark:text-cyan-400 animate-pulse" />
                               <span>IA {aiAgentName.toUpperCase()}</span>
                             </div>
                           )}
@@ -3046,7 +3024,7 @@ function InboxContent() {
                             <div className="mb-2">
                               <div 
                                 onClick={() => setLightboxImage({ url: getMediaUrl(msg.mediaUrl, 'image'), title: msg.content || 'Imagem' })}
-                                className="relative group cursor-pointer overflow-hidden rounded-xl border border-white/10 shadow-md inline-block max-w-full"
+                                className="relative group cursor-pointer overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 shadow-md inline-block max-w-full"
                                 title="Clique para expandir em tela cheia"
                               >
                                 <img 
@@ -3067,7 +3045,7 @@ function InboxContent() {
                           {/* Renderização de Vídeos (WhatsApp Nativo) */}
                           {(msg.type === 'video' || (!!msg.mediaUrl && /\.(mp4|mov|webm|mkv|avi)($|\?)/i.test(msg.mediaUrl))) && (
                             <div className="mb-2 max-w-[320px] sm:max-w-[380px]">
-                              <div className="relative overflow-hidden rounded-xl border border-white/10 shadow-md bg-black">
+                              <div className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 shadow-md bg-black">
                                 <video
                                   src={getMediaUrl(msg.mediaUrl, 'video')}
                                   controls
@@ -3078,21 +3056,21 @@ function InboxContent() {
                                 </video>
                               </div>
                               {msg.content && !msg.content.startsWith('📹') && (
-                                <p className="text-xs text-slate-300 mt-1 px-1">{msg.content}</p>
+                                <p className="text-xs text-slate-700 dark:text-slate-300 mt-1 px-1">{msg.content}</p>
                               )}
                             </div>
                           )}
 
                           {/* Renderização de Localização (Mapas e Coordenadas) */}
                           {(msg.type === 'location' || (!!msg.mediaUrl && msg.mediaUrl.includes('maps.google.com')) || msg.content?.includes('📍')) && (
-                            <div className="flex flex-col gap-2 p-3 my-1.5 rounded-xl bg-slate-900/80 border border-emerald-500/40 text-white max-w-[320px] shadow-lg">
+                            <div className="flex flex-col gap-2 p-3 my-1.5 rounded-xl bg-emerald-50 dark:bg-slate-900/80 border border-emerald-300 dark:border-emerald-500/40 text-slate-800 dark:text-white max-w-[320px] shadow-lg">
                               <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
                                   <MapPin size={18} />
                                 </div>
                                 <div className="min-w-0">
-                                  <h4 className="text-xs font-bold text-white truncate">Localização compartilhada</h4>
-                                  <p className="text-[11px] text-slate-300 truncate">
+                                  <h4 className="text-xs font-bold text-emerald-950 dark:text-white truncate">Localização compartilhada</h4>
+                                  <p className="text-[11px] text-emerald-800 dark:text-slate-300 truncate">
                                     {msg.content?.replace(/^📍\s*/, '') || 'Coordenadas do WhatsApp'}
                                   </p>
                                 </div>
@@ -3102,7 +3080,7 @@ function InboxContent() {
                                   href={msg.mediaUrl || (msg.content?.match(/https?:\/\/[^\s]+/)?.[0] || '#')}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/25 hover:bg-emerald-600/40 border border-emerald-500/40 text-emerald-300 hover:text-white text-xs font-semibold transition-colors mt-0.5"
+                                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-white text-xs font-semibold transition-colors mt-0.5"
                                 >
                                   <MapPin size={13} />
                                   <span>Abrir no Google Maps</span>
@@ -3121,8 +3099,8 @@ function InboxContent() {
                                   downloadName={`audio_${msg.id || Date.now()}.ogg`}
                                 />
                               ) : (
-                                <div className="flex items-center gap-2 p-3 rounded-2xl bg-[#0B1224] border border-amber-500/30 text-amber-300 text-xs shadow-md">
-                                  <Volume2 size={16} className="shrink-0 animate-pulse text-amber-400" />
+                                <div className="flex items-center gap-2 p-3 rounded-2xl bg-amber-50 dark:bg-[#0B1224] border border-amber-300 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs shadow-md">
+                                  <Volume2 size={16} className="shrink-0 animate-pulse text-amber-500 dark:text-amber-400" />
                                   <span>Processando áudio recebido...</span>
                                 </div>
                               )}
@@ -3137,19 +3115,19 @@ function InboxContent() {
                                       [audioKey]: !prev[audioKey]
                                     }));
                                   }}
-                                  className="flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer self-start"
+                                  className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors cursor-pointer self-start"
                                 >
                                   <FileText size={12} className="shrink-0" />
                                   <span>{expandedTranscriptions[audioKey] ? 'Ocultar transcrição' : 'Ver transcrição'}</span>
                                 </button>
 
                                 {expandedTranscriptions[audioKey] && (
-                                  <div className="bg-black/40 rounded-xl p-2.5 text-xs text-slate-200 border border-cyan-500/30 animate-in fade-in slide-in-from-top-1 shadow-inner">
-                                    <div className="flex items-center gap-1 text-[10px] text-cyan-400 font-bold uppercase tracking-wider mb-1">
+                                  <div className="bg-slate-100 dark:bg-black/40 rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-cyan-500/30 animate-in fade-in slide-in-from-top-1 shadow-inner">
+                                    <div className="flex items-center gap-1 text-[10px] text-blue-600 dark:text-cyan-400 font-bold uppercase tracking-wider mb-1">
                                       <Sparkles size={11} />
                                       <span>Transcrição Automática (IA)</span>
                                     </div>
-                                    <p className="italic text-slate-300 leading-relaxed text-[11px]">
+                                    <p className="italic text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
                                       "{msg.audioTranscription || (msg.content?.startsWith('🎤 [Áudio]: "') ? msg.content.replace(/^🎤 \[Áudio\]: "(.*)"$/, '$1') : 'Mensagem de voz recebida.')}"
                                     </p>
                                   </div>
@@ -3160,15 +3138,15 @@ function InboxContent() {
 
                           {/* Documentos e Anexos Diversos */}
                           {(msg.type === 'document' || (!!msg.mediaUrl && !/\.(mp4|mov|webm|ogg|opus|mp3|m4a|wav|jpg|jpeg|png|webp|gif)($|\?)/i.test(msg.mediaUrl) && !msg.mediaUrl.includes('maps.google.com') && msg.type !== 'audio' && msg.type !== 'video' && msg.type !== 'image' && msg.type !== 'location')) && (
-                            <div className="flex items-center gap-2.5 p-2.5 bg-black/30 rounded-xl border border-white/10 hover:bg-black/40 transition-colors mb-2 max-w-[340px]">
-                              <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shrink-0">
+                            <div className="flex items-center gap-2.5 p-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 dark:bg-black/30 dark:hover:bg-black/40 dark:border-white/10 rounded-xl transition-colors mb-2 max-w-[340px]">
+                              <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                                 <FileText size={18} />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <span className="text-xs truncate font-medium text-slate-200 block" title={msg.content || 'Documento anexo'}>
+                                <span className="text-xs truncate font-medium text-slate-800 dark:text-slate-200 block" title={msg.content || 'Documento anexo'}>
                                   {msg.content?.replace(/^📄\s*\[Documento:\s*([^\]]+)\][\s\S]*$/, '$1') || 'Documento anexo'}
                                 </span>
-                                <span className="text-[10px] text-slate-400 uppercase tracking-wider">
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                   {msg.mediaUrl ? (msg.mediaUrl.split('.').pop()?.split('?')[0] || 'ARQUIVO') : 'ARQUIVO'}
                                 </span>
                               </div>
@@ -3177,7 +3155,7 @@ function InboxContent() {
                                   href={getMediaUrl(msg.mediaUrl, 'document')} 
                                   target="_blank" 
                                   rel="noopener noreferrer" 
-                                  className="ml-auto text-blue-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+                                  className="ml-auto text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
                                   title="Abrir anexo"
                                 >
                                   <ExternalLink size={14} />
@@ -3193,7 +3171,11 @@ function InboxContent() {
                             )}
                             {/* Horário e Ticks WhatsApp (Float-Right Inline) */}
                             <span className={`inline-flex items-center gap-1 float-right ml-2.5 mt-1 select-none text-[11px] ${
-                              msg.isInternal ? 'text-amber-400/80' : 'text-slate-400'
+                              msg.isInternal 
+                                ? 'text-amber-700/80 dark:text-amber-400/80' 
+                                : isMe 
+                                  ? 'text-blue-100' 
+                                  : 'text-slate-400'
                             }`}>
                               <span>{new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                               {isMe && !msg.isInternal && (
@@ -3214,15 +3196,15 @@ function InboxContent() {
                                   className={`inline-flex items-center ${msg.status === 'failed' || msg.status === 'error' ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
                                 >
                                   {msg.status === 'read' ? (
-                                    <CheckCheck size={14} className="text-[#53bdeb] shrink-0" />
+                                    <CheckCheck size={14} className="text-white dark:text-[#53bdeb] shrink-0" />
                                   ) : msg.status === 'delivered' ? (
-                                    <CheckCheck size={14} className="text-slate-400 shrink-0" />
+                                    <CheckCheck size={14} className="text-blue-100 dark:text-slate-400 shrink-0" />
                                   ) : msg.status === 'sent' ? (
-                                    <Check size={14} className="text-slate-400 shrink-0" />
+                                    <Check size={14} className="text-blue-100 dark:text-slate-400 shrink-0" />
                                   ) : msg.status === 'failed' || msg.status === 'error' ? (
-                                    <AlertCircle size={13} className="text-rose-400 shrink-0" />
+                                    <AlertCircle size={13} className="text-rose-300 dark:text-rose-400 shrink-0" />
                                   ) : (
-                                    <Clock size={12} className="text-slate-400 shrink-0" />
+                                    <Clock size={12} className="text-blue-100 dark:text-slate-400 shrink-0" />
                                   )}
                                 </span>
                               )}
@@ -3234,7 +3216,7 @@ function InboxContent() {
                             <div className="mt-1 pt-1 border-t border-rose-500/20 flex items-center justify-between gap-2 text-[10px] text-rose-300">
                               <span className="flex items-center gap-1">
                                 <AlertCircle size={11} className="text-rose-400 shrink-0" />
-                                Não entregue (Janela 24h)
+                                Falha no envio
                               </span>
                               <button
                                 type="button"
@@ -3244,7 +3226,7 @@ function InboxContent() {
                                 }}
                                 className="text-cyan-400 hover:text-cyan-300 font-bold underline cursor-pointer"
                               >
-                                Reabrir com HSM
+                                Tentar Modelo HSM
                               </button>
                             </div>
                           )}
@@ -3259,16 +3241,16 @@ function InboxContent() {
             </div>
 
             {/* Chat Input Area (Estrutura e Formato Idênticos ao WhatsApp) */}
-            <div className="border-t border-slate-800/90 bg-[#0B1224] z-20 flex flex-col shrink-0">
+            <div className="border-t border-slate-200 dark:border-slate-800/90 bg-white dark:bg-[#0B1224] z-30 flex flex-col shrink-0">
               {/* Banner Informativo quando o Atendimento estiver Finalizado */}
               {isResolved && (
-                <div className="bg-[#0F172A]/95 border-b border-slate-800 px-3.5 py-2 flex items-center justify-between gap-2 shrink-0">
+                <div className="bg-slate-100 dark:bg-[#0F172A]/95 border-b border-slate-200 dark:border-slate-800 px-3.5 py-2 flex items-center justify-between gap-2 shrink-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-6 h-6 rounded-lg bg-slate-800 border border-slate-700/80 flex items-center justify-center text-slate-400 shrink-0">
+                    <div className="w-6 h-6 rounded-lg bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700/80 flex items-center justify-center text-slate-500 dark:text-slate-400 shrink-0">
                       <Lock size={12} />
                     </div>
                     <div className="min-w-0">
-                      <span className="text-[11px] text-slate-300 font-medium truncate block">
+                      <span className="text-[11px] text-slate-700 dark:text-slate-300 font-medium truncate block">
                         Atendimento finalizado. Enviar mensagem reabrirá automaticamente o ticket.
                       </span>
                     </div>
@@ -3284,44 +3266,20 @@ function InboxContent() {
                   </button>
                 </div>
               )}
-
-              {/* Banner de Janela de 24h Expirada (WhatsApp Cloud API) */}
-              {!isResolved && is24hExpired && (
-                <div className="bg-amber-950/80 border-b border-amber-500/40 px-3.5 py-2 flex items-center justify-between gap-3 shrink-0">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
-                      <AlertCircle size={13} />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-[11px] text-amber-200 font-medium block truncate">
-                        Janela de 24h expirada. Mensagens normais falharão até o cliente responder.
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowTemplateModal(true)}
-                    className="px-2.5 py-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer shadow-sm"
-                  >
-                    <Sparkles size={11} />
-                    <span>Reabrir com Modelo HSM</span>
-                  </button>
-                </div>
-              )}
                 
                 {/* File Preview */}
                 {selectedFile && (
-                  <div className="mx-3 mt-2.5 p-2.5 px-3 rounded-xl bg-[#0F172A] border border-blue-500/40 flex items-center justify-between shadow-lg">
+                  <div className="mx-3 mt-2.5 p-2.5 px-3 rounded-xl bg-slate-100 dark:bg-[#0F172A] border border-blue-500/40 flex items-center justify-between shadow-lg">
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <div className="w-9 h-9 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-blue-500/20 text-blue-500 dark:text-blue-400 flex items-center justify-center shrink-0">
                         {selectedFile.type.startsWith('image/') ? <ImageIcon size={18} /> : <FileText size={18} />}
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <span className="text-xs font-semibold text-white truncate max-w-[280px] sm:max-w-md">{selectedFile.name}</span>
-                        <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-slate-900 dark:text-white truncate max-w-[280px] sm:max-w-md">{selectedFile.name}</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                           <span>{(selectedFile.size / 1024).toFixed(1)} KB</span>
                           <span>•</span>
-                          <span className="text-blue-400 font-medium">{selectedFile.type.startsWith('image/') ? 'Foto / Imagem' : 'Documento'}</span>
+                          <span className="text-blue-600 dark:text-blue-400 font-medium">{selectedFile.type.startsWith('image/') ? 'Foto / Imagem' : 'Documento'}</span>
                         </span>
                       </div>
                     </div>
@@ -3329,7 +3287,7 @@ function InboxContent() {
                       type="button"
                       onClick={() => setSelectedFile(null)}
                       disabled={isUploadingMedia}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                       title="Descartar anexo"
                     >
                       <X size={16} />
@@ -3338,9 +3296,9 @@ function InboxContent() {
                 )}
 
                 {isPeeking ? (
-                  <div className="p-4 bg-[#0F172A] border-t border-amber-500/30 flex items-center justify-between shadow-lg">
-                    <div className="flex items-center gap-2.5 text-xs text-amber-300">
-                      <Lock size={15} className="text-amber-400 shrink-0" />
+                  <div className="p-4 bg-amber-50 dark:bg-[#0F172A] border-t border-amber-200 dark:border-amber-500/30 flex items-center justify-between shadow-lg">
+                    <div className="flex items-center gap-2.5 text-xs text-amber-900 dark:text-amber-300">
+                      <Lock size={15} className="text-amber-600 dark:text-amber-400 shrink-0" />
                       <span>Modo somente-leitura (Espiando). Envio bloqueado para não interferir no fluxo do bot ou fila.</span>
                     </div>
                     <button
@@ -3355,15 +3313,15 @@ function InboxContent() {
                   <>
                     {/* Indicador Sutil de Modo Nota Interna */}
                     {isInternalMode && (
-                      <div className="bg-amber-950/40 border-b border-amber-500/30 px-4 py-1.5 flex items-center justify-between text-amber-300 text-xs">
+                      <div className="bg-amber-100/70 dark:bg-amber-950/40 border-b border-amber-300 dark:border-amber-500/30 px-4 py-1.5 flex items-center justify-between text-amber-900 dark:text-amber-300 text-xs">
                         <div className="flex items-center gap-1.5">
-                          <Lock size={12} className="text-amber-400" />
+                          <Lock size={12} className="text-amber-600 dark:text-amber-400" />
                           <span className="font-semibold text-[11px]">Modo Nota Interna (Privado - visível apenas para a equipe)</span>
                         </div>
                         <button
                           type="button"
                           onClick={() => setIsInternalMode(false)}
-                          className="text-amber-400 hover:text-white text-[11px] underline cursor-pointer"
+                          className="text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-white text-[11px] underline cursor-pointer"
                         >
                           Voltar para WhatsApp
                         </button>
@@ -3371,18 +3329,18 @@ function InboxContent() {
                     )}
 
                     {/* Barra de Input Flutuante Nativa Padrão WhatsApp Web */}
-                    <div className="p-2 sm:p-2.5 px-2.5 sm:px-3 flex items-center gap-1.5 sm:gap-2 relative bg-[#0B1224] w-full max-w-full overflow-hidden shrink-0">
+                    <div className="p-2 sm:p-2.5 px-2.5 sm:px-3 flex items-center gap-1.5 sm:gap-2 relative bg-white dark:bg-[#0B1224] w-full max-w-full shrink-0">
                       {isRecording ? (
                         /* Painel de Gravação de Áudio WhatsApp */
-                        <div className="flex-1 bg-[#11192A] border border-rose-500/40 rounded-xl px-4 py-2 flex items-center justify-between animate-in fade-in duration-200 min-h-[44px]">
+                        <div className="flex-1 bg-rose-50 dark:bg-[#11192A] border border-rose-300 dark:border-rose-500/40 rounded-xl px-4 py-2 flex items-center justify-between animate-in fade-in duration-200 min-h-[44px]">
                           <div className="flex items-center gap-3">
                             <div className="relative flex items-center justify-center">
                               <div className="w-3 h-3 rounded-full bg-rose-500" />
                               <div className="w-3 h-3 rounded-full bg-rose-500 animate-ping absolute" />
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-xs font-bold text-rose-300">Gravando áudio...</span>
-                              <span className="text-[12px] font-mono text-white font-bold">{formatTimer(recordingTime)}</span>
+                              <span className="text-xs font-bold text-rose-700 dark:text-rose-300">Gravando áudio...</span>
+                              <span className="text-[12px] font-mono text-slate-900 dark:text-white font-bold">{formatTimer(recordingTime)}</span>
                             </div>
                             {/* Ondas Sonoras */}
                             <div className="flex items-center gap-1 h-5 ml-4">
@@ -3390,7 +3348,7 @@ function InboxContent() {
                                 <div
                                   key={idx}
                                   style={{ height: `${h}%` }}
-                                  className="w-1 bg-rose-400 rounded-full animate-pulse"
+                                  className="w-1 bg-rose-500 dark:bg-rose-400 rounded-full animate-pulse"
                                 />
                               ))}
                             </div>
@@ -3401,7 +3359,7 @@ function InboxContent() {
                               type="button"
                               onClick={cancelRecording}
                               disabled={isSendingAudio}
-                              className="p-2 rounded-lg bg-slate-800/80 hover:bg-rose-900/60 text-slate-400 hover:text-rose-300 transition-colors cursor-pointer"
+                              className="p-2 rounded-lg bg-slate-200 hover:bg-rose-100 text-slate-600 hover:text-rose-600 dark:bg-slate-800/80 dark:hover:bg-rose-900/60 dark:text-slate-400 dark:hover:text-rose-300 transition-colors cursor-pointer"
                               title="Descartar gravação"
                             >
                               <Trash2 size={16} />
@@ -3426,8 +3384,8 @@ function InboxContent() {
                             <button
                               type="button"
                               onClick={() => setShowEmojiPicker(prev => !prev)}
-                              className={`p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors cursor-pointer ${
-                                showEmojiPicker ? 'text-amber-400 bg-slate-800/80' : ''
+                              className={`p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer ${
+                                showEmojiPicker ? 'text-amber-500 dark:text-amber-400 bg-slate-100 dark:bg-slate-800/80' : ''
                               }`}
                               title="Emojis"
                             >
@@ -3435,30 +3393,33 @@ function InboxContent() {
                             </button>
 
                             {showEmojiPicker && (
-                              <div className="absolute bottom-12 left-0 w-72 bg-[#0F172A] border border-slate-700/80 shadow-[0_15px_35px_rgba(0,0,0,0.8)] rounded-2xl p-3 z-50 animate-in fade-in zoom-in-95">
-                                <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2">
-                                  <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Emojis Frequentes</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => setShowEmojiPicker(false)}
-                                    className="text-slate-400 hover:text-white p-0.5"
-                                  >
-                                    <X size={13} />
-                                  </button>
-                                </div>
-                                <div className="grid grid-cols-8 gap-1.5 max-h-48 overflow-y-auto">
-                                  {COMMON_EMOJIS.map((emoji, idx) => (
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
+                                <div className="absolute bottom-12 left-0 w-72 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 shadow-[0_15px_35px_rgba(0,0,0,0.15)] dark:shadow-[0_15px_35px_rgba(0,0,0,0.8)] rounded-2xl p-3 z-50 animate-in fade-in zoom-in-95">
+                                  <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800 mb-2">
+                                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Emojis Frequentes</span>
                                     <button
-                                      key={idx}
                                       type="button"
-                                      onClick={() => handleInsertEmoji(emoji)}
-                                      className="w-7 h-7 flex items-center justify-center text-base hover:bg-slate-800 rounded-lg transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                                      onClick={() => setShowEmojiPicker(false)}
+                                      className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5"
                                     >
-                                      {emoji}
+                                      <X size={13} />
                                     </button>
-                                  ))}
+                                  </div>
+                                  <div className="grid grid-cols-8 gap-1.5 max-h-48 overflow-y-auto">
+                                    {COMMON_EMOJIS.map((emoji, idx) => (
+                                      <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={() => handleInsertEmoji(emoji)}
+                                        className="w-7 h-7 flex items-center justify-center text-base hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                                      >
+                                        {emoji}
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
+                              </>
                             )}
                           </div>
 
@@ -3467,45 +3428,48 @@ function InboxContent() {
                             <button 
                               type="button"
                               onClick={() => setShowAttachments(!showAttachments)}
-                              className="p-1.5 sm:p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors cursor-pointer shrink-0"
+                              className="p-1.5 sm:p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer shrink-0"
                               title="Anexar arquivo ou atalhos"
                             >
                               <Paperclip size={20} />
                             </button>
                             
                             {showAttachments && (
-                              <div className="absolute bottom-12 left-0 bg-[#0F172A] border border-slate-700/90 shadow-[0_15px_35px_rgba(0,0,0,0.8)] rounded-2xl p-2 flex flex-col gap-1 w-56 z-50 animate-in slide-in-from-bottom-2">
-                                <label className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl cursor-pointer transition-colors">
-                                  <ImageIcon size={16} className="text-blue-400" /> Foto / Vídeo
-                                  <input ref={fileInputImageRef} type="file" className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
-                                </label>
-                                <label className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl cursor-pointer transition-colors">
-                                  <FileText size={16} className="text-cyan-400" /> Documento
-                                  <input ref={fileInputDocRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileSelect} />
-                                </label>
-                                <button 
-                                  type="button"
-                                  onClick={() => {
-                                    setShowAttachments(false);
-                                    startRecording();
-                                  }}
-                                  className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors text-left w-full cursor-pointer"
-                                >
-                                  <Mic size={16} className="text-rose-400" /> Gravar Áudio
-                                </button>
-                                <button 
-                                  type="button"
-                                  onClick={() => {
-                                    setShowAttachments(false);
-                                    setInputText('/');
-                                    setShowQuickReplies(true);
-                                    setTimeout(() => textareaRef.current?.focus(), 50);
-                                  }}
-                                  className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors text-left w-full cursor-pointer sm:hidden"
-                                >
-                                  <Zap size={16} className="text-amber-400" /> Respostas Rápidas (/)
-                                </button>
-                              </div>
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowAttachments(false)} />
+                                <div className="absolute bottom-12 left-0 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/90 shadow-[0_15px_35px_rgba(0,0,0,0.15)] dark:shadow-[0_15px_35px_rgba(0,0,0,0.8)] rounded-2xl p-2 flex flex-col gap-1 w-56 z-50 animate-in slide-in-from-bottom-2">
+                                  <label className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-xl cursor-pointer transition-colors">
+                                    <ImageIcon size={16} className="text-blue-500 dark:text-blue-400" /> Foto / Vídeo
+                                    <input ref={fileInputImageRef} type="file" className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
+                                  </label>
+                                  <label className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-xl cursor-pointer transition-colors">
+                                    <FileText size={16} className="text-cyan-600 dark:text-cyan-400" /> Documento
+                                    <input ref={fileInputDocRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileSelect} />
+                                  </label>
+                                  <button 
+                                    type="button"
+                                    onClick={() => {
+                                      setShowAttachments(false);
+                                      startRecording();
+                                    }}
+                                    className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-xl transition-colors text-left w-full cursor-pointer"
+                                  >
+                                    <Mic size={16} className="text-rose-500 dark:text-rose-400" /> Gravar Áudio
+                                  </button>
+                                  <button 
+                                    type="button"
+                                    onClick={() => {
+                                      setShowAttachments(false);
+                                      setInputText('/');
+                                      setShowQuickReplies(true);
+                                      setTimeout(() => textareaRef.current?.focus(), 50);
+                                    }}
+                                    className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white rounded-xl transition-colors text-left w-full cursor-pointer sm:hidden"
+                                  >
+                                    <Zap size={16} className="text-amber-500 dark:text-amber-400" /> Respostas Rápidas (/)
+                                  </button>
+                                </div>
+                              </>
                             )}
                           </div>
 
@@ -3529,8 +3493,8 @@ function InboxContent() {
                               }}
                               className={`p-2 rounded-full transition-colors cursor-pointer flex items-center justify-center font-mono font-bold text-sm ${
                                 showQuickReplies 
-                                  ? 'text-blue-400 bg-blue-500/20 ring-1 ring-blue-500/40' 
-                                  : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+                                  ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/20 ring-1 ring-blue-400 dark:ring-blue-500/40' 
+                                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80'
                               }`}
                               title="Respostas Rápidas & Catálogo (/)"
                             >
@@ -3539,16 +3503,16 @@ function InboxContent() {
                           </div>
 
                           {/* 3. Cápsula de Texto WhatsApp com Cantos Arredondados */}
-                          <div className={`flex-1 min-w-0 bg-[#1E293B] border rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 min-h-[42px] sm:min-h-[44px] max-h-36 flex items-center transition-all shadow-inner relative ${
+                          <div className={`flex-1 min-w-0 bg-slate-100 dark:bg-[#161F30] border rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 min-h-[42px] sm:min-h-[44px] max-h-36 flex items-center transition-all shadow-inner relative ${
                             isInternalMode 
-                              ? 'border-amber-500/50 bg-amber-950/15 focus-within:border-amber-500' 
-                              : 'border-slate-700/60 focus-within:border-blue-500/80 focus-within:ring-1 focus-within:ring-blue-500/20'
+                              ? 'border-amber-400 dark:border-amber-500/50 bg-amber-50/60 dark:bg-amber-950/15 focus-within:border-amber-500' 
+                              : 'border-slate-200 dark:border-slate-700 focus-within:border-blue-500/80 focus-within:ring-1 focus-within:ring-blue-500/20'
                           }`}>
                             <textarea 
                               ref={textareaRef}
                               placeholder={isInternalMode ? "Digite uma anotação privada... Visível apenas para a equipe" : "Digite uma mensagem (ou '/' para atalhos e catálogo)"} 
                               className={`w-full flex-1 min-w-0 bg-transparent text-[0.93rem] resize-none outline-none py-0.5 max-h-32 
-                                ${isInternalMode ? 'text-amber-100 placeholder:text-amber-500/50' : 'text-slate-100 placeholder:text-slate-400'}
+                                ${isInternalMode ? 'text-amber-950 dark:text-amber-100 placeholder:text-amber-600/60 dark:placeholder:text-amber-500/50' : 'text-slate-900 dark:text-slate-100 placeholder:text-slate-400'}
                               `}
                               rows={1}
                               value={inputText}
@@ -3606,94 +3570,97 @@ function InboxContent() {
                             
                             {/* Popover de Respostas Rápidas & Catálogo (Menu /) */}
                             {showQuickReplies && (
-                              <div className="absolute bottom-full left-0 mb-3 w-[360px] max-w-[90vw] bg-[#0F172A] border border-slate-700 shadow-[0_20px_50px_rgba(0,0,0,0.85)] rounded-2xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
-                                {/* Cabeçalho */}
-                                <div className="px-3.5 py-2.5 bg-slate-800/90 text-xs font-bold text-slate-200 border-b border-slate-700 flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <Zap size={13} className="text-amber-400" />
-                                    <span>Respostas Rápidas & Catálogo</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] text-slate-400 font-normal">Use ↑↓ e Enter</span>
-                                    <button 
-                                      type="button" 
-                                      onClick={() => setShowQuickReplies(false)} 
-                                      className="text-slate-400 hover:text-white p-0.5"
-                                    >
-                                      <X size={12} />
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {/* Lista de itens */}
-                                <div className="max-h-64 overflow-y-auto divide-y divide-slate-800/60">
-                                  {filteredSlashItems.length > 0 ? (
-                                    filteredSlashItems.map((item, idx) => {
-                                      const isSelected = idx === quickReplyIndex;
-                                      return (
-                                        <div 
-                                          key={item.id}
-                                          onClick={() => handleSelectSlashItem(item)}
-                                          onMouseEnter={() => setQuickReplyIndex(idx)}
-                                          className={`px-3.5 py-2.5 cursor-pointer transition-colors flex items-start gap-2.5 ${
-                                            isSelected 
-                                              ? 'bg-blue-600/20 border-l-2 border-blue-400 text-white' 
-                                              : 'hover:bg-slate-800/70 text-slate-300'
-                                          }`}
-                                        >
-                                          <div className="mt-0.5 p-1 rounded-md bg-slate-800/80 border border-slate-700/60 shrink-0">
-                                            {item.iconType === 'catalog' && <ShoppingBag size={14} className="text-emerald-400" />}
-                                            {item.iconType === 'image' && <ImageIcon size={14} className="text-blue-400" />}
-                                            {item.iconType === 'file' && <FileText size={14} className="text-cyan-400" />}
-                                            {item.iconType === 'audio' && <Mic size={14} className="text-rose-400" />}
-                                            {item.iconType === 'zap' && <Zap size={14} className="text-amber-400" />}
-                                          </div>
-
-                                          <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between gap-1 mb-0.5">
-                                              <span className="text-xs font-mono font-bold text-blue-400">{item.shortcut}</span>
-                                              {item.category === 'action' && (
-                                                <span className="text-[10px] px-1.5 py-0.2 bg-slate-800 text-slate-400 rounded border border-slate-700">ação</span>
-                                              )}
-                                            </div>
-                                            <div className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
-                                              {item.description}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })
-                                  ) : (
-                                    <div className="p-4 text-center">
-                                      <p className="text-xs text-slate-400 mb-2">
-                                        Nenhum atalho encontrado para <span className="font-mono text-blue-400 font-bold">/{quickReplyFilter}</span>
-                                      </p>
-                                      <a 
-                                        href="/settings?tab=quick-replies" 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 underline"
-                                      >
-                                        <Plus size={12} /> Criar nova resposta rápida
-                                      </a>
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowQuickReplies(false)} />
+                                <div className="absolute bottom-full left-0 mb-3 w-[360px] max-w-[90vw] bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.85)] rounded-2xl overflow-hidden z-50 animate-in slide-in-from-bottom-2">
+                                  {/* Cabeçalho */}
+                                  <div className="px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800/90 text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Zap size={13} className="text-amber-500 dark:text-amber-400" />
+                                      <span>Respostas Rápidas & Catálogo</span>
                                     </div>
-                                  )}
-                                </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">Use ↑↓ e Enter</span>
+                                      <button 
+                                        type="button" 
+                                        onClick={() => setShowQuickReplies(false)} 
+                                        className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5"
+                                      >
+                                        <X size={12} />
+                                      </button>
+                                    </div>
+                                  </div>
 
-                                {/* Rodapé informativo */}
-                                <div className="px-3 py-1.5 bg-[#0B1224] border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
-                                  <span>Dica: digite <code className="text-blue-300 font-mono">/catalogo</code>, <code className="text-blue-300 font-mono">/ola</code></span>
-                                  <a 
-                                    href="/settings?tab=quick-replies" 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="text-slate-400 hover:text-blue-300 transition-colors flex items-center gap-1"
-                                  >
-                                    <span>Gerenciar atalhos</span>
-                                    <ExternalLink size={10} />
-                                  </a>
+                                  {/* Lista de itens */}
+                                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800/60">
+                                    {filteredSlashItems.length > 0 ? (
+                                      filteredSlashItems.map((item, idx) => {
+                                        const isSelected = idx === quickReplyIndex;
+                                        return (
+                                          <div 
+                                            key={item.id} 
+                                            onClick={() => handleSelectSlashItem(item)}
+                                            onMouseEnter={() => setQuickReplyIndex(idx)}
+                                            className={`px-3.5 py-2.5 cursor-pointer transition-colors flex items-start gap-2.5 ${
+                                              isSelected 
+                                                ? 'bg-blue-50 dark:bg-blue-600/20 border-l-2 border-blue-600 dark:border-blue-400 text-slate-900 dark:text-white' 
+                                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/70 text-slate-700 dark:text-slate-300'
+                                            }`}
+                                          >
+                                            <div className="mt-0.5 p-1 rounded-md bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 shrink-0">
+                                              {item.iconType === 'catalog' && <ShoppingBag size={14} className="text-emerald-500 dark:text-emerald-400" />}
+                                              {item.iconType === 'image' && <ImageIcon size={14} className="text-blue-500 dark:text-blue-400" />}
+                                              {item.iconType === 'file' && <FileText size={14} className="text-cyan-500 dark:text-cyan-400" />}
+                                              {item.iconType === 'audio' && <Mic size={14} className="text-rose-500 dark:text-rose-400" />}
+                                              {item.iconType === 'zap' && <Zap size={14} className="text-amber-500 dark:text-amber-400" />}
+                                            </div>
+
+                                            <div className="flex-1 min-w-0">
+                                              <div className="flex items-center justify-between gap-1 mb-0.5">
+                                                <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">{item.shortcut}</span>
+                                                {item.category === 'action' && (
+                                                  <span className="text-[10px] px-1.5 py-0.2 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded border border-slate-300 dark:border-slate-700">ação</span>
+                                                )}
+                                              </div>
+                                              <div className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                                                {item.description}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })
+                                    ) : (
+                                      <div className="p-4 text-center">
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                                          Nenhum atalho encontrado para <span className="font-mono text-blue-600 dark:text-blue-400 font-bold">/{quickReplyFilter}</span>
+                                        </p>
+                                        <a 
+                                          href="/settings?tab=quick-replies" 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 underline"
+                                        >
+                                          <Plus size={12} /> Criar nova resposta rápida
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Rodapé informativo */}
+                                  <div className="px-3 py-1.5 bg-slate-50 dark:bg-[#0B1224] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                                    <span>Dica: digite <code className="text-blue-600 dark:text-blue-300 font-mono">/catalogo</code>, <code className="text-blue-600 dark:text-blue-300 font-mono">/ola</code></span>
+                                    <a 
+                                      href="/settings?tab=quick-replies" 
+                                      target="_blank" 
+                                      rel="noopener noreferrer" 
+                                      className="text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300 transition-colors flex items-center gap-1"
+                                    >
+                                      <span>Gerenciar atalhos</span>
+                                      <ExternalLink size={10} />
+                                    </a>
+                                  </div>
                                 </div>
-                              </div>
+                              </>
                             )}
                           </div>
 
@@ -3704,7 +3671,7 @@ function InboxContent() {
                               type="button"
                               onClick={startRecording}
                               title="Gravar mensagem de voz"
-                              className="p-1.5 sm:p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors cursor-pointer"
+                              className="p-1.5 sm:p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                             >
                               <Mic size={20} />
                             </button>
@@ -3721,7 +3688,7 @@ function InboxContent() {
                                       ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-[0_0_12px_rgba(217,119,6,0.4)] active:scale-95' 
                                       : 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)] active:scale-95'
                                     )
-                                  : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700/80'
+                                  : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700/80'
                                 }
                               `}
                             >
@@ -3738,31 +3705,32 @@ function InboxContent() {
                   </>
                 )}
               </div>
+
           </>
         )}
       </div>
 
       {/* 3. PAINEL DIREITO: Dados do Contato (Padrão WhatsApp Web com Overlay Mobile) */}
       {showContactInfo && activeContactData && (
-        <div className="fixed inset-0 z-50 md:relative md:inset-auto md:w-[320px] lg:w-[350px] flex-shrink-0 bg-[#0B1224] flex flex-col overflow-y-auto border-l border-slate-800/80 animate-in slide-in-from-right-2 duration-150">
+        <div className="fixed inset-0 z-50 md:relative md:inset-auto md:w-[320px] lg:w-[350px] flex-shrink-0 bg-white dark:bg-[#0B1224] flex flex-col overflow-y-auto border-l border-slate-200 dark:border-slate-800/80 animate-in slide-in-from-right-2 duration-150">
           {/* Header do Painel Direito */}
-          <div className="h-16 px-4 border-b border-slate-800/80 flex items-center justify-between bg-[#0B1224] shrink-0">
+          <div className="h-16 px-4 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between bg-white dark:bg-[#0B1224] shrink-0">
             <div className="flex items-center gap-3">
               <button 
                 type="button" 
                 onClick={() => setShowContactInfo(false)} 
-                className="p-1.5 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors cursor-pointer"
+                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                 title="Fechar"
               >
                 <X size={18} />
               </button>
-              <h3 className="text-sm font-bold text-white">Dados do contato</h3>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Dados do contato</h3>
             </div>
           </div>
 
           {/* Cartão de Perfil Circular */}
-          <div className="p-6 flex flex-col items-center border-b border-slate-800/80 relative bg-gradient-to-b from-[#17253D]/40 to-transparent">
-            <div className="w-24 h-24 rounded-full bg-slate-800 border-2 border-slate-700/80 flex items-center justify-center text-white font-black text-2xl shadow-xl mb-3 overflow-hidden relative">
+          <div className="p-6 flex flex-col items-center border-b border-slate-200 dark:border-slate-800/80 relative bg-gradient-to-b from-slate-100/60 dark:from-[#17253D]/40 to-transparent">
+            <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700/80 flex items-center justify-center text-slate-800 dark:text-white font-black text-2xl shadow-xl mb-3 overflow-hidden relative">
               {isAvatarUrlValid(activeContactData.avatarUrl) ? (
                 <img 
                   src={activeContactData.avatarUrl!} 
@@ -3780,7 +3748,7 @@ function InboxContent() {
               <span className={`avatar-initials ${activeContactData.avatarUrl ? "hidden" : ""}`}>
                 {getContactInitials(activeContactData.name, activeContactData.phone)}
               </span>
-              <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#0B1224] shadow-sm" />
+              <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0B1224] shadow-sm" />
             </div>
 
             {isEditingName ? (
@@ -3790,7 +3758,7 @@ function InboxContent() {
                   value={editingNameValue}
                   onChange={(e) => setEditingNameValue(e.target.value)}
                   placeholder="Nome do contato"
-                  className="bg-slate-900 border border-emerald-500/50 rounded px-2.5 py-1 text-sm text-white font-semibold outline-none text-center w-full focus:border-emerald-400"
+                  className="bg-slate-100 dark:bg-slate-900 border border-emerald-500/50 rounded px-2.5 py-1 text-sm text-slate-900 dark:text-white font-semibold outline-none text-center w-full focus:border-emerald-400"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleSaveContactName();
@@ -3801,7 +3769,7 @@ function InboxContent() {
                   type="button"
                   onClick={handleSaveContactName}
                   disabled={isSavingName}
-                  className="p-1 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                  className="p-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors cursor-pointer"
                   title="Salvar nome"
                 >
                   <Check size={16} />
@@ -3809,7 +3777,7 @@ function InboxContent() {
               </div>
             ) : (
               <div className="flex items-center gap-1.5 justify-center group/name">
-                <h2 className="text-base font-bold text-white text-center leading-snug">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white text-center leading-snug">
                   {formatContactDisplayName(activeContactData.name, activeContactData.phone)}
                 </h2>
                 <button
@@ -3818,7 +3786,7 @@ function InboxContent() {
                     setEditingNameValue(activeContactData.name === 'Cliente WhatsApp' ? '' : activeContactData.name || '');
                     setIsEditingName(true);
                   }}
-                  className="text-slate-400 hover:text-emerald-400 p-1 transition-colors cursor-pointer opacity-70 group-hover/name:opacity-100"
+                  className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 p-1 transition-colors cursor-pointer opacity-70 group-hover/name:opacity-100"
                   title="Editar nome do contato"
                 >
                   <Pencil size={12} />
@@ -3826,8 +3794,8 @@ function InboxContent() {
               </div>
             )}
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <p className="text-[11px] text-slate-400 font-medium">WhatsApp Cloud API</p>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">WhatsApp Cloud API</p>
             </div>
 
             {/* Atalhos Rápidos: Ligar VoIP, Ver no CRM, Copiar */}
@@ -3843,29 +3811,29 @@ function InboxContent() {
                     toast.error('Número de telefone não disponível para chamada.');
                   }
                 }}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-emerald-600/20 border border-slate-700/70 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 hover:border-emerald-500/50 hover:text-emerald-600 dark:hover:text-emerald-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
                 title="Iniciar chamada VoIP"
               >
-                <PhoneCall size={13} className="text-emerald-400" />
+                <PhoneCall size={13} className="text-emerald-600 dark:text-emerald-400" />
                 <span>Ligar</span>
               </button>
 
               <a
                 href="/crm"
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-blue-600/20 border border-slate-700/70 hover:border-blue-500/50 text-slate-300 hover:text-blue-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
                 title="Visualizar no CRM"
               >
-                <TrendingUp size={13} className="text-blue-400" />
+                <TrendingUp size={13} className="text-blue-600 dark:text-blue-400" />
                 <span>CRM</span>
               </a>
 
               <button
                 type="button"
                 onClick={() => handleCopyText(activeContactData.phone || activeContactData.name, 'lead-all')}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1E293B] hover:bg-purple-600/20 border border-slate-700/70 hover:border-purple-500/50 text-slate-300 hover:text-purple-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 hover:border-purple-500/50 hover:text-purple-600 dark:hover:text-purple-300 text-xs font-semibold transition-all cursor-pointer shadow-sm"
                 title="Copiar dados do contato"
               >
-                {copiedField === 'lead-all' ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} className="text-purple-400" />}
+                {copiedField === 'lead-all' ? <CheckCheck size={13} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={13} className="text-purple-600 dark:text-purple-400" />}
                 <span>{copiedField === 'lead-all' ? 'Copiado' : 'Copiar'}</span>
               </button>
             </div>
@@ -3874,19 +3842,19 @@ function InboxContent() {
           <div className="p-5 flex flex-col gap-5">
             {/* Informações de Contato */}
             <div className="flex flex-col gap-2.5">
-              <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-400 flex items-center justify-between">
+              <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400 flex items-center justify-between">
                 <span>Informações de Contato</span>
-                <span className="text-[9px] text-emerald-400/90 font-medium flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span className="text-[9px] text-emerald-600 dark:text-emerald-400/90 font-medium flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>
                   WhatsApp
                 </span>
               </h3>
 
               {/* Telefone */}
-              <div className="flex flex-col gap-1.5 p-2.5 bg-[#1E293B]/70 border border-slate-800/80 rounded-xl group hover:border-slate-700 transition-colors">
+              <div className="flex flex-col gap-1.5 p-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-slate-300 min-w-0 flex-1 mr-2">
-                    <div className="p-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800/40 text-emerald-400 shrink-0">
+                  <div className="flex items-center gap-2 text-xs text-slate-800 dark:text-slate-300 min-w-0 flex-1 mr-2">
+                    <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 shrink-0">
                       <Phone size={13} />
                     </div>
                     {isEditingPhone ? (
@@ -3895,7 +3863,7 @@ function InboxContent() {
                         value={editingPhoneValue}
                         onChange={(e) => setEditingPhoneValue(e.target.value)}
                         placeholder="Ex: +55 (54) 99999-9999"
-                        className="bg-slate-900 border border-emerald-500/50 rounded px-2 py-1 text-xs text-white outline-none font-mono focus:border-emerald-400 w-full"
+                        className="bg-white dark:bg-slate-900 border border-emerald-500/50 rounded px-2 py-1 text-xs text-slate-900 dark:text-white outline-none font-mono focus:border-emerald-400 w-full"
                         autoFocus
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') handleSaveContactPhone();
@@ -3904,8 +3872,8 @@ function InboxContent() {
                       />
                     ) : isLidPhoneNumber(activeContactData.phone) ? (
                       <div className="flex items-center gap-2 flex-wrap min-w-0">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 font-sans text-[11px] font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 font-sans text-[11px] font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse"></span>
                           WhatsApp Direto (LID)
                         </span>
                         <button
@@ -3914,13 +3882,13 @@ function InboxContent() {
                             setEditingPhoneValue('');
                             setIsEditingPhone(true);
                           }}
-                          className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium hover:underline cursor-pointer"
+                          className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 font-medium hover:underline cursor-pointer"
                         >
                           + Inserir número
                         </button>
                       </div>
                     ) : (
-                      <span className="truncate font-mono font-medium text-white text-xs" title={activeContactData.phone || ''}>
+                      <span className="truncate font-mono font-medium text-slate-900 dark:text-white text-xs" title={activeContactData.phone || ''}>
                         {formatDisplayPhoneNumber(activeContactData.phone)}
                       </span>
                     )}
@@ -3931,7 +3899,7 @@ function InboxContent() {
                         type="button"
                         onClick={handleSaveContactPhone}
                         disabled={isSavingPhone}
-                        className="p-1 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                        className="p-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors cursor-pointer"
                         title="Salvar telefone"
                       >
                         <Check size={14} />
@@ -3944,7 +3912,7 @@ function InboxContent() {
                             setEditingPhoneValue(isLidPhoneNumber(activeContactData.phone) ? '' : activeContactData.phone || '');
                             setIsEditingPhone(true);
                           }}
-                          className="text-slate-400 hover:text-emerald-400 p-1 transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
+                          className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 p-1 transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
                           title="Editar número de telefone"
                         >
                           <Pencil size={12} />
@@ -3953,10 +3921,10 @@ function InboxContent() {
                           <button
                             type="button"
                             onClick={() => handleCopyText(activeContactData.phone?.replace('@s.whatsapp.net', '').replace('@c.us', '').replace(/\D/g, ''), 'phone')}
-                            className="text-slate-500 hover:text-white p-1 transition-colors cursor-pointer"
+                            className="text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-white p-1 transition-colors cursor-pointer"
                             title="Copiar telefone"
                           >
-                            {copiedField === 'phone' ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                            {copiedField === 'phone' ? <CheckCheck size={13} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={13} />}
                           </button>
                         )}
                       </>
@@ -3966,9 +3934,9 @@ function InboxContent() {
               </div>
 
               {/* E-mail */}
-              <div className="flex items-center justify-between p-2.5 bg-[#1E293B]/70 border border-slate-800/80 rounded-xl group hover:border-slate-700 transition-colors">
-                <div className="flex items-center gap-2.5 text-xs text-slate-300 min-w-0">
-                  <div className="p-1.5 rounded-lg bg-blue-950/60 border border-blue-800/40 text-blue-400">
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+                <div className="flex items-center gap-2.5 text-xs text-slate-800 dark:text-slate-300 min-w-0">
+                  <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/40 text-blue-600 dark:text-blue-400">
                     <Mail size={13} />
                   </div>
                   <span className="truncate font-sans">{activeContactData.email || 'Sem e-mail'}</span>
@@ -3977,10 +3945,10 @@ function InboxContent() {
                   <button
                     type="button"
                     onClick={() => handleCopyText(activeContactData.email, 'email')}
-                    className="text-slate-500 hover:text-white p-1 transition-colors"
+                    className="text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-white p-1 transition-colors"
                     title="Copiar e-mail"
                   >
-                    {copiedField === 'email' ? <CheckCheck size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                    {copiedField === 'email' ? <CheckCheck size={13} className="text-emerald-600 dark:text-emerald-400" /> : <Copy size={13} />}
                   </button>
                 )}
               </div>
@@ -3989,11 +3957,11 @@ function InboxContent() {
             {/* Tags com Cores Dinâmicas */}
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
-                <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-400 flex items-center gap-1.5">
-                  <Tag size={11} className="text-blue-400" />
+                <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <Tag size={11} className="text-blue-600 dark:text-blue-400" />
                   <span>Etiquetas & Segmentos</span>
                 </h3>
-                <span className="text-[10px] text-slate-400 font-bold">{activeContactData.tags?.length || 0}</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{activeContactData.tags?.length || 0}</span>
               </div>
 
               {/* Tags Atuais */}
@@ -4011,7 +3979,7 @@ function InboxContent() {
                         <button 
                           type="button"
                           onClick={() => handleRemoveTag(activeContactData.contactId, tag)} 
-                          className="ml-1 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
+                          className="ml-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                           title="Remover etiqueta"
                         >
                           <X size={11} />
@@ -4020,7 +3988,7 @@ function InboxContent() {
                     );
                   })
                 ) : (
-                  <span className="text-xs text-slate-500 italic">Nenhuma etiqueta atribuída</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 italic">Nenhuma etiqueta atribuída</span>
                 )}
               </div>
 
@@ -4034,12 +4002,12 @@ function InboxContent() {
                     if (e.key === 'Enter') handleAddTag(activeContactData.contactId);
                   }}
                   placeholder="Criar nova etiqueta..." 
-                  className="flex-1 bg-[#1E293B] border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-blue-500/60 transition-all placeholder:text-slate-500"
+                  className="flex-1 bg-slate-50 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500/60 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
                 <button 
                   type="button"
                   onClick={() => handleAddTag(activeContactData.contactId)} 
-                  className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/40 text-xs px-3 rounded-lg font-bold transition-colors cursor-pointer"
+                  className="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 dark:bg-blue-600/20 dark:hover:bg-blue-600/30 dark:text-blue-400 dark:border-blue-500/40 text-xs px-3 rounded-lg font-bold transition-colors cursor-pointer"
                 >
                   <Plus size={14} />
                 </button>
@@ -4053,7 +4021,7 @@ function InboxContent() {
                     key={stag}
                     type="button"
                     onClick={(e) => handleQuickAddTag(e, activeContactData.contactId, stag)}
-                    className="text-[10px] text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-700/60 px-2 py-0.5 rounded-md border border-slate-700/50 transition-colors cursor-pointer"
+                    className="text-[10px] text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 dark:text-slate-400 dark:hover:text-white dark:bg-slate-800/60 dark:hover:bg-slate-700/60 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700/50 transition-colors cursor-pointer"
                   >
                     +{stag}
                   </button>
@@ -4062,50 +4030,50 @@ function InboxContent() {
             </div>
 
             {/* Atendimento & Status Operacional */}
-            <div className="bg-[#11192A] border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-3 shadow-inner">
-              <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Status Operacional</h3>
+            <div className="bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 flex flex-col gap-3 shadow-inner">
+              <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">Status Operacional</h3>
               
-              <div className={`w-full text-center py-2.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 border ${
+              <div className={`w-full text-center py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2 border ${
                 activeContactData.status === 'bot_active' 
-                  ? 'bg-cyan-950/40 text-cyan-300 border-cyan-700/50 shadow-[0_0_15px_rgba(6,182,212,0.15)]' 
+                  ? 'bg-cyan-50 text-cyan-800 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-700/50 shadow-[0_0_15px_rgba(6,182,212,0.15)]' 
                   : activeContactData.status === 'human_takeover'
-                  ? 'bg-amber-950/40 text-amber-300 border-amber-700/50 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
+                  ? 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700/50 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
                   : activeContactData.status === 'resolved' || activeContactData.status === 'closed'
-                  ? 'bg-slate-800/80 text-slate-400 border-slate-700/60'
-                  : 'bg-emerald-950/40 text-emerald-300 border-emerald-700/50 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
+                  ? 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/80 dark:text-slate-400 dark:border-slate-700/60'
+                  : 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-700/50 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
               }`}>
                 {activeContactData.status === 'bot_active' ? (
                   <>
-                    <Bot size={14} className="text-cyan-400 animate-pulse" />
+                    <Bot size={14} className="text-cyan-600 dark:text-cyan-400 animate-pulse" />
                     <span>IA {aiAgentName} em Atendimento</span>
                   </>
-                ) : activeContactData.status === 'human_takeover' ? (
+                ) : (activeContactData.status === 'human_takeover' || activeContactData.status === 'open') ? (
                   <>
-                    <Sparkles size={14} className="text-amber-400 animate-pulse" />
-                    <span>Transbordo da IA (Aguardando Atendente)</span>
+                    <UserCheck size={14} className="text-emerald-600 dark:text-emerald-400" />
+                    <span>Atendimento Ativo</span>
                   </>
                 ) : activeContactData.status === 'resolved' || activeContactData.status === 'closed' ? (
                   <>
-                    <Lock size={14} className="text-slate-400" />
+                    <Lock size={14} className="text-slate-500 dark:text-slate-400" />
                     <span>Ticket Finalizado</span>
                   </>
                 ) : (
                   <>
-                    <UserCheck size={14} className="text-emerald-400" />
+                    <UserCheck size={14} className="text-emerald-600 dark:text-emerald-400" />
                     <span>Atendente Humano</span>
                   </>
                 )}
               </div>
 
               {/* Informações Complementares */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80 text-[11px]">
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200 dark:border-slate-800/80 text-[11px]">
                 <div className="flex flex-col">
                   <span className="text-[10px] text-slate-500">Última Interação</span>
-                  <span className="text-slate-300 font-semibold">{activeContactData.time || 'Hoje'}</span>
+                  <span className="text-slate-700 dark:text-slate-300 font-semibold">{activeContactData.time || 'Hoje'}</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] text-slate-500">Atribuído a</span>
-                  <span className="text-slate-300 font-semibold">{currentUserName}</span>
+                  <span className="text-slate-700 dark:text-slate-300 font-semibold">{currentUserName}</span>
                 </div>
               </div>
             </div>
@@ -4116,37 +4084,37 @@ function InboxContent() {
       {/* MODAL DE TRANSFERENCIA */}
       {showTransferModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#1c1d22] border border-gray-800 w-full max-w-md rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-[#25262c] rounded-t-xl">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <div className="bg-white dark:bg-[#1c1d22] border border-slate-200 dark:border-gray-800 w-full max-w-md rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#25262c] rounded-t-xl">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <ArrowRightLeft size={18} className="text-primary" />
                 Transferir Conversa
               </h2>
-              <button onClick={() => setShowTransferModal(false)} className="text-gray-400 hover:text-white">
+              <button onClick={() => setShowTransferModal(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer">
                 <X size={20} />
               </button>
             </div>
             <div className="p-6">
-              <p className="text-sm text-gray-400 mb-4">
+              <p className="text-sm text-slate-600 dark:text-gray-400 mb-4">
                 Selecione o departamento para o qual deseja enviar este lead. A roleta distribuirá para um agente online automaticamente.
               </p>
               
               <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
                 {departments.length === 0 ? (
-                  <p className="text-xs text-gray-500 text-center">Nenhum departamento encontrado.</p>
+                  <p className="text-xs text-slate-500 dark:text-gray-500 text-center">Nenhum departamento encontrado.</p>
                 ) : (
                   departments.map(dept => (
                     <button
                       key={dept.id}
                       onClick={() => handleTransfer(dept.id)}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 hover:bg-gray-700/80 border border-gray-700 hover:border-primary transition-all text-left"
+                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-gray-800/50 dark:hover:bg-gray-700/80 border border-slate-200 dark:border-gray-700 hover:border-primary transition-all text-left cursor-pointer"
                     >
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${dept.color || '#3b82f6'}30` }}>
                         <Network size={16} style={{ color: dept.color || '#3b82f6' }} />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-bold text-white text-sm">{dept.name}</h4>
-                        <p className="text-xs text-gray-400">{dept.users?.length || 0} membros</p>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">{dept.name}</h4>
+                        <p className="text-xs text-slate-500 dark:text-gray-400">{dept.users?.length || 0} membros</p>
                       </div>
                     </button>
                   ))
@@ -4160,17 +4128,17 @@ function InboxContent() {
       {/* MODAL CENTRAL DE ASSUNÇÃO DE FILA / IA (PADRÃO LERO) */}
       {showTakeoverModal && selectedQueueChat && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-[#0F172A] border border-slate-700/80 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="px-6 py-5 border-b border-slate-800 bg-[#162038]/50 flex items-center justify-between">
+            <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#162038]/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(0,102,255,0.2)]">
                   <Bot size={20} />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-white tracking-tight">Atendimento em Fila</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Este atendimento está na fila <strong className="text-white">{selectedQueueChat.isAi ? `IA ${aiAgentName} Online` : 'Aguardando'}</strong>.
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Atendimento em Fila</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Este atendimento está na fila <strong className="text-slate-800 dark:text-white">{selectedQueueChat.isAi ? `IA ${aiAgentName} Online` : 'Aguardando'}</strong>.
                   </p>
                 </div>
               </div>
@@ -4179,7 +4147,7 @@ function InboxContent() {
                   setShowTakeoverModal(false);
                   setSelectedQueueChat(null);
                 }}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -4187,8 +4155,8 @@ function InboxContent() {
 
             {/* Informações do Lead */}
             <div className="p-6 space-y-4">
-              <div className="p-3.5 rounded-xl bg-[#1E293B]/70 border border-slate-700/50 flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-slate-700 to-slate-800 border border-slate-600 flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden relative">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#1E293B]/70 border border-slate-200 dark:border-slate-700/50 flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-full bg-slate-200 dark:bg-gradient-to-tr dark:from-slate-700 dark:to-slate-800 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-800 dark:text-white font-bold text-sm shrink-0 overflow-hidden relative">
                   {isAvatarUrlValid(selectedQueueChat.avatarUrl) ? (
                     <img 
                       src={selectedQueueChat.avatarUrl!} 
@@ -4209,24 +4177,24 @@ function InboxContent() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
-                    <h3 className="text-sm font-bold text-white truncate">{formatContactDisplayName(selectedQueueChat.name, selectedQueueChat.phone)}</h3>
-                    <span className="text-[10px] text-amber-400 font-medium bg-amber-950/60 border border-amber-800/40 px-2 py-0.5 rounded-full">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">{formatContactDisplayName(selectedQueueChat.name, selectedQueueChat.phone)}</h3>
+                    <span className="text-[10px] text-amber-700 dark:text-amber-400 font-medium bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800/40 px-2 py-0.5 rounded-full">
                       {selectedQueueChat.isAi ? 'IA Ativa' : 'Fila de Espera'}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 flex items-center gap-1.5">
-                    <Phone size={11} className="text-slate-500" />
+                  <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <Phone size={11} className="text-slate-400 dark:text-slate-500" />
                     <span>{selectedQueueChat.phone || 'Sem telefone'}</span>
                   </p>
                   {selectedQueueChat.lastMsg && (
-                    <p className="text-xs text-slate-400 truncate mt-1 italic">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-1 italic">
                       "{selectedQueueChat.lastMsg}"
                     </p>
                   )}
                 </div>
               </div>
 
-              <p className="text-xs text-slate-400 text-center">
+              <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
                 Escolha uma ação para continuar com este atendimento:
               </p>
 
@@ -4247,9 +4215,9 @@ function InboxContent() {
                     setShowTakeoverModal(false);
                     loadDepartmentsAndShowTransfer();
                   }}
-                  className="w-full py-2.5 px-4 bg-[#1E293B] hover:bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-200 hover:text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 dark:bg-[#1E293B] dark:hover:bg-slate-800 dark:border-slate-700 dark:hover:border-slate-600 dark:text-slate-200 dark:hover:text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
-                  <ArrowRightLeft size={15} className="text-blue-400" />
+                  <ArrowRightLeft size={15} className="text-blue-500 dark:text-blue-400" />
                   <span>Transferir atendimento</span>
                 </button>
 
@@ -4260,7 +4228,7 @@ function InboxContent() {
                     setActiveChat(selectedQueueChat.id);
                     setShowTakeoverModal(false);
                   }}
-                  className="w-full py-2 px-4 bg-transparent hover:bg-slate-800/40 text-slate-400 hover:text-slate-200 font-medium text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  className="w-full py-2 px-4 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800/40 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 font-medium text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
                   <Eye size={14} />
                   <span>Espiar conversa (somente leitura)</span>
@@ -4274,23 +4242,23 @@ function InboxContent() {
       {/* MODAL AGENDA DE CONTATOS */}
       {showContactsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-[#0F172A] border border-slate-700/80 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
-            <div className="px-6 py-4 border-b border-slate-800 bg-[#162038]/50 flex items-center justify-between">
+          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#162038]/50 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <BookUser size={18} className="text-blue-400" />
-                <h3 className="text-base font-bold text-white">Agenda de Contatos</h3>
+                <BookUser size={18} className="text-blue-600 dark:text-blue-400" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Agenda de Contatos</h3>
               </div>
-              <button onClick={() => setShowContactsModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+              <button onClick={() => setShowContactsModal(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer">
                 <X size={18} />
               </button>
             </div>
-            <div className="p-4 border-b border-slate-800">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800">
               <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                 <input 
                   type="text" 
                   placeholder="Pesquisar contato salvo..." 
-                  className="w-full bg-[#1E293B] border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white outline-none focus:border-blue-500"
+                  className="w-full bg-slate-50 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500"
                   value={contactModalSearch}
                   onChange={e => setContactModalSearch(e.target.value)}
                 />
@@ -4309,7 +4277,7 @@ function InboxContent() {
                 });
 
                 if (list.length === 0) {
-                  return <p className="text-xs text-slate-500 text-center py-6">Nenhum contato encontrado.</p>;
+                  return <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-6">Nenhum contato encontrado.</p>;
                 }
 
                 return list.map((c: any) => (
@@ -4328,10 +4296,10 @@ function InboxContent() {
                         setActiveChat(c.id);
                       }
                     }}
-                    className="p-3 rounded-xl bg-[#1E293B]/60 hover:bg-[#1E293B] border border-slate-800 hover:border-blue-500/50 flex items-center justify-between transition-all cursor-pointer group"
+                    className="p-3 rounded-xl bg-slate-50 dark:bg-[#1E293B]/60 hover:bg-slate-100 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 flex items-center justify-between transition-all cursor-pointer group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-slate-700 to-slate-800 flex items-center justify-center text-xs font-bold text-white relative overflow-hidden shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gradient-to-tr dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-xs font-bold text-slate-800 dark:text-white relative overflow-hidden shrink-0">
                         {isAvatarUrlValid(c.avatarUrl) ? (
                           <img 
                             src={c.avatarUrl!} 
@@ -4351,11 +4319,11 @@ function InboxContent() {
                         </span>
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">{formatContactDisplayName(c.name, c.phone)}</h4>
-                        <p className="text-[11px] text-slate-400">{c.phone || 'Sem telefone'}</p>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{formatContactDisplayName(c.name, c.phone)}</h4>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">{c.phone || 'Sem telefone'}</p>
                       </div>
                     </div>
-                    <span className="text-[10px] text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded">
+                    <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 px-2 py-0.5 rounded">
                       Conversar
                     </span>
                   </div>
@@ -4414,27 +4382,27 @@ function InboxContent() {
 
       {/* DISCADOR VOIP FLUTUANTE */}
       {showVoipDialer && (
-        <div className="fixed bottom-6 right-6 z-50 w-72 bg-[#0F172A] border border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
-          <div className="px-4 py-3 bg-[#162038] border-b border-slate-800 flex items-center justify-between">
+        <div className="fixed bottom-6 right-6 z-50 w-72 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
+          <div className="px-4 py-3 bg-slate-50 dark:bg-[#162038] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-xs font-bold text-white">Discador VoIP WebRTC</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white">Discador VoIP WebRTC</span>
             </div>
-            <button onClick={() => setShowVoipDialer(false)} className="text-slate-400 hover:text-white cursor-pointer">
+            <button onClick={() => setShowVoipDialer(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer">
               <X size={16} />
             </button>
           </div>
 
           <div className="p-4 space-y-3">
             {/* Display */}
-            <div className="bg-[#0B1224] border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-              <span className="text-base font-mono font-bold text-white tracking-wider truncate">
-                {voipNumber || <span className="text-slate-600">Digitar número...</span>}
+            <div className="bg-slate-50 dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex items-center justify-between">
+              <span className="text-base font-mono font-bold text-slate-900 dark:text-white tracking-wider truncate">
+                {voipNumber || <span className="text-slate-400 dark:text-slate-600">Digitar número...</span>}
               </span>
               {voipNumber && (
                 <button 
                   onClick={() => setVoipNumber(prev => prev.slice(0, -1))}
-                  className="text-slate-400 hover:text-red-400 text-xs px-1 cursor-pointer"
+                  className="text-slate-400 hover:text-red-500 text-xs px-1 cursor-pointer"
                 >
                   ✕
                 </button>
@@ -4452,7 +4420,7 @@ function InboxContent() {
                 <button
                   key={k.n}
                   onClick={() => setVoipNumber(prev => prev + k.n)}
-                  className="h-11 rounded-xl bg-[#1E293B] hover:bg-slate-700/80 border border-slate-800 hover:border-slate-600 text-white font-bold flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer"
+                  className="h-11 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1E293B] dark:hover:bg-slate-700/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-600 text-slate-900 dark:text-white font-bold flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer"
                 >
                   <span className="text-sm leading-none">{k.n}</span>
                   {k.l && <span className="text-[8px] text-slate-500 font-normal leading-none mt-0.5">{k.l}</span>}
@@ -4529,19 +4497,19 @@ function InboxContent() {
       {/* MODAL HISTÓRICO DE ATENDIMENTO */}
       {showHistoryModal && activeContactData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-[#0F172A] border border-slate-700/80 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
-            <div className="px-6 py-4 border-b border-slate-800 bg-[#162038]/50 flex items-center justify-between">
+          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700/80 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#162038]/50 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <History size={18} className="text-blue-400" />
+                <History size={18} className="text-blue-600 dark:text-blue-400" />
                 <div>
-                  <h3 className="text-base font-bold text-white">Histórico de Atendimento</h3>
-                  <p className="text-[11px] text-slate-400">{activeContactData.name} ({activeContactData.phone || 'Sem telefone'})</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Histórico de Atendimento</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">{activeContactData.name} ({activeContactData.phone || 'Sem telefone'})</p>
                 </div>
               </div>
               <button 
                 type="button"
                 onClick={() => setShowHistoryModal(false)} 
-                className="text-slate-400 hover:text-white cursor-pointer p-1 rounded-lg hover:bg-slate-800"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <X size={18} />
               </button>
@@ -4550,53 +4518,53 @@ function InboxContent() {
             <div className="p-6 overflow-y-auto space-y-4 text-xs">
               {/* Métricas Rápidas */}
               <div className="grid grid-cols-3 gap-2.5">
-                <div className="p-3 rounded-xl bg-[#1E293B] border border-slate-800">
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-800">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">Mensagens</span>
-                  <span className="text-base font-bold text-white">{messages.length}</span>
+                  <span className="text-base font-bold text-slate-900 dark:text-white">{messages.length}</span>
                 </div>
-                <div className="p-3 rounded-xl bg-[#1E293B] border border-slate-800">
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-800">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">Status</span>
-                  <span className="text-xs font-bold text-emerald-400 capitalize">{activeContactData.status || 'Aberto'}</span>
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 capitalize">{activeContactData.status || 'Aberto'}</span>
                 </div>
-                <div className="p-3 rounded-xl bg-[#1E293B] border border-slate-800">
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#1E293B] border border-slate-200 dark:border-slate-800">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-0.5">Atendente</span>
-                  <span className="text-xs font-bold text-white truncate block">{currentUserName}</span>
+                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate block">{currentUserName}</span>
                 </div>
               </div>
 
               {/* Linha do Tempo de Eventos */}
               <div className="space-y-3 pt-2">
-                <h4 className="font-bold text-slate-300 text-xs uppercase tracking-wider">Eventos do Atendimento</h4>
-                <div className="space-y-3 border-l-2 border-slate-800 pl-4 ml-2">
+                <h4 className="font-bold text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider">Eventos do Atendimento</h4>
+                <div className="space-y-3 border-l-2 border-slate-200 dark:border-slate-800 pl-4 ml-2">
                   <div className="relative">
-                    <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-4 ring-[#0F172A]" />
-                    <p className="font-semibold text-white text-xs">Atendimento Ativo</p>
-                    <p className="text-[11px] text-slate-400">Atribuído a {currentUserName} no Inbox Vallor</p>
+                    <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-white dark:ring-[#0F172A]" />
+                    <p className="font-semibold text-slate-900 dark:text-white text-xs">Atendimento Ativo</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Atribuído a {currentUserName} no Inbox Vallor</p>
                   </div>
                   <div className="relative">
-                    <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-blue-400 ring-4 ring-[#0F172A]" />
-                    <p className="font-semibold text-white text-xs">Mensagens Recebidas</p>
-                    <p className="text-[11px] text-slate-400">{activeContactData.time || 'Hoje'} - Sincronizado via WhatsApp Cloud API</p>
+                    <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-white dark:ring-[#0F172A]" />
+                    <p className="font-semibold text-slate-900 dark:text-white text-xs">Mensagens Recebidas</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{activeContactData.time || 'Hoje'} - Sincronizado via WhatsApp Cloud API</p>
                   </div>
                   <div className="relative">
-                    <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-purple-400 ring-4 ring-[#0F172A]" />
-                    <p className="font-semibold text-white text-xs">Contato Registrado</p>
-                    <p className="text-[11px] text-slate-400">Perfil salvo no diretório do tenant</p>
+                    <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-purple-500 ring-4 ring-white dark:ring-[#0F172A]" />
+                    <p className="font-semibold text-slate-900 dark:text-white text-xs">Contato Registrado</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Perfil salvo no diretório do tenant</p>
                   </div>
                 </div>
               </div>
 
               {/* Rodapé de Ações */}
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => {
                     setShowHistoryModal(false);
                     handleExportConversation();
                   }}
-                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer border border-slate-200 dark:border-transparent"
                 >
-                  <FileDown size={14} className="text-emerald-400" />
+                  <FileDown size={14} className="text-emerald-600 dark:text-emerald-400" />
                   <span>Exportar Transcrição (.txt)</span>
                 </button>
                 <button
@@ -4615,19 +4583,19 @@ function InboxContent() {
       {/* Modal de Confirmação: Apagar Conversa Inteira */}
       {showDeleteConvModal && activeContactData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-[#0B1224] border border-rose-500/40 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="bg-white dark:bg-[#0B1224] border border-rose-300 dark:border-rose-500/40 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/15 border border-rose-200 dark:border-rose-500/30 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
                 <Trash2 size={20} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white">Apagar Conversa?</h3>
-                <p className="text-xs text-slate-400">Esta ação não pode ser desfeita</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Apagar Conversa?</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Esta ação não pode ser desfeita</p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Deseja realmente apagar a conversa com <strong className="text-white">{activeContactData.name || activeContactData.phone}</strong>? Todas as mensagens, mídias e o histórico deste atendimento serão permanentemente excluídos.
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Deseja realmente apagar a conversa com <strong className="text-slate-900 dark:text-white">{activeContactData.name || activeContactData.phone}</strong>? Todas as mensagens, mídias e o histórico deste atendimento serão permanentemente excluídos.
             </p>
 
             <div className="flex items-center justify-end gap-2 pt-2">
@@ -4635,7 +4603,7 @@ function InboxContent() {
                 type="button"
                 disabled={isDeletingConv}
                 onClick={() => setShowDeleteConvModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50 border border-slate-200 dark:border-transparent"
               >
                 Cancelar
               </button>
@@ -4665,35 +4633,35 @@ function InboxContent() {
       {/* Modal de Envio de Modelo HSM (Reabertura da Janela de 24h Meta) */}
       {showTemplateModal && activeContactData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-[#0B1224] border border-cyan-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div className="bg-white dark:bg-[#0B1224] border border-cyan-300 dark:border-cyan-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-cyan-50 dark:bg-cyan-500/15 border border-cyan-200 dark:border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shrink-0">
                   <Sparkles size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Reabrir Janela de 24h (Meta HSM)</h3>
-                  <p className="text-xs text-slate-400">Envie um modelo aprovado pela Meta para retomar o contato</p>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">Reabrir Janela de 24h (Meta HSM)</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Envie um modelo aprovado pela Meta para retomar o contato</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowTemplateModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="bg-amber-950/40 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200/90 flex items-start gap-2.5">
-              <AlertCircle size={16} className="text-amber-400 shrink-0 mt-0.5" />
+            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-500/30 rounded-xl p-3 text-xs text-amber-900 dark:text-amber-200/90 flex items-start gap-2.5">
+              <AlertCircle size={16} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <span>
                 Mais de 24 horas se passaram desde a última mensagem do cliente. A Meta proíbe mensagens livres até que o cliente interaja com um modelo pré-aprovado.
               </span>
             </div>
 
             <div className="space-y-3">
-              <label className="text-xs font-semibold text-slate-300 block">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
                 Selecione o Modelo de Mensagem (HSM):
               </label>
               
@@ -4701,31 +4669,31 @@ function InboxContent() {
                 onClick={() => setSelectedTemplateName('hello_world')}
                 className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
                   selectedTemplateName === 'hello_world'
-                    ? 'bg-cyan-950/40 border-cyan-500/80 ring-1 ring-cyan-500/50'
-                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                    ? 'bg-cyan-50 dark:bg-cyan-950/40 border-cyan-500/80 ring-1 ring-cyan-500/50'
+                    : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-xs text-white">hello_world</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold">
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">hello_world</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-semibold">
                       Aprovado Universal Meta
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-mono">en_US</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">en_US</span>
                 </div>
-                <div className="p-2.5 bg-black/40 rounded-lg border border-white/5 text-xs text-slate-300 italic font-sans leading-relaxed">
+                <div className="p-2.5 bg-slate-100 dark:bg-black/40 rounded-lg border border-slate-200 dark:border-white/5 text-xs text-slate-700 dark:text-slate-300 italic font-sans leading-relaxed">
                   "Hello World! Welcome and congratulations on choosing our platform."
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 disabled={isSendingTemplate}
                 onClick={() => setShowTemplateModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50 border border-slate-200 dark:border-transparent"
               >
                 Cancelar
               </button>
@@ -4758,10 +4726,10 @@ function InboxContent() {
 export default function InboxPage() {
   return (
     <Suspense fallback={
-      <div className="flex h-[calc(100vh-4rem)] items-center justify-center bg-[#0B1224] text-white">
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center bg-slate-100 dark:bg-[#0B1224] text-slate-900 dark:text-white">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-sm text-slate-400">Carregando Caixa de Atendimento...</span>
+          <span className="text-sm text-slate-500 dark:text-slate-400">Carregando Caixa de Atendimento...</span>
         </div>
       </div>
     }>

@@ -38,6 +38,7 @@ let UsersController = class UsersController {
                 role: true,
                 isActive: true,
                 isSuperAdmin: true,
+                canAccessMarketing: true,
                 permissions: true,
                 avatarUrl: true,
                 isOnline: true,
@@ -67,6 +68,7 @@ let UsersController = class UsersController {
                 role: true,
                 isActive: true,
                 isSuperAdmin: true,
+                canAccessMarketing: true,
                 permissions: true,
                 avatarUrl: true,
                 tenantId: true,
@@ -179,6 +181,42 @@ let UsersController = class UsersController {
             },
         });
     }
+    async updatePermissions(req, id, body) {
+        const tenantId = req.user?.tenantId;
+        const targetUser = await this.prisma.user.findFirst({
+            where: { id, tenantId },
+        });
+        if (!targetUser) {
+            throw new common_1.BadRequestException('Usuário não encontrado na sua empresa.');
+        }
+        const perms = body.permissions || {};
+        const canAccessMarketing = body.canAccessMarketing !== undefined
+            ? Boolean(body.canAccessMarketing)
+            : Boolean(perms.marketing);
+        const updatedUser = await this.prisma.user.update({
+            where: { id },
+            data: {
+                permissions: perms,
+                canAccessMarketing,
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                isActive: true,
+                canAccessMarketing: true,
+                permissions: true,
+                avatarUrl: true,
+                isOnline: true,
+                tenantId: true,
+            },
+        });
+        return {
+            message: 'Permissões atualizadas com sucesso!',
+            user: updatedUser,
+        };
+    }
     async update(req, id, body) {
         const tenantId = req.user?.tenantId;
         const currentUserId = req.user?.id || req.user?.userId;
@@ -213,6 +251,15 @@ let UsersController = class UsersController {
         }
         if (body.permissions !== undefined) {
             updateData.permissions = body.permissions;
+            if (body.permissions?.marketing !== undefined) {
+                updateData.canAccessMarketing = Boolean(body.permissions.marketing);
+            }
+        }
+        if (body.canAccessMarketing !== undefined) {
+            updateData.canAccessMarketing = Boolean(body.canAccessMarketing);
+            if (updateData.permissions) {
+                updateData.permissions.marketing = updateData.canAccessMarketing;
+            }
         }
         if (body.isActive !== undefined) {
             if (id === currentUserId && body.isActive === false) {
@@ -241,6 +288,7 @@ let UsersController = class UsersController {
                 email: true,
                 role: true,
                 isActive: true,
+                canAccessMarketing: true,
                 permissions: true,
                 avatarUrl: true,
                 isOnline: true,
@@ -289,8 +337,10 @@ let UsersController = class UsersController {
             automations: role === 'ADMIN',
             settings: role === 'ADMIN',
             support: true,
+            marketing: Boolean(body.canAccessMarketing ?? false),
         };
         const permissions = body.permissions !== undefined ? body.permissions : defaultPermissions;
+        const canAccessMarketing = Boolean(body.canAccessMarketing ?? permissions?.marketing ?? false);
         const newUser = await this.prisma.user.create({
             data: {
                 name,
@@ -299,6 +349,7 @@ let UsersController = class UsersController {
                 rawPasswordEncrypted: (0, crypto_util_1.encryptApiKey)(rawPass),
                 role,
                 permissions,
+                canAccessMarketing,
                 isActive: true,
                 tenantId,
             },
@@ -308,6 +359,7 @@ let UsersController = class UsersController {
                 email: true,
                 role: true,
                 isActive: true,
+                canAccessMarketing: true,
                 permissions: true,
                 avatarUrl: true,
                 isOnline: true,
@@ -381,6 +433,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "updateProfile", null);
+__decorate([
+    (0, common_1.Patch)(':id/permissions'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "updatePermissions", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, common_1.Put)(':id'),

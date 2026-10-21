@@ -37,8 +37,10 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
             throw new Error(`Conversa ${conversationId} não encontrada.`);
         }
         if (conversation.status !== 'bot_active') {
-            this.logger.warn(`Conversa [${conversationId}] está com status '${conversation.status}'. IA Abortada.`);
-            return { status: 'aborted', reason: 'Not bot_active' };
+            await this.prisma.conversation.update({
+                where: { id: conversationId },
+                data: { status: 'bot_active' }
+            });
         }
         if (conversation.contact.tenant?.aiEnabled === false) {
             this.logger.warn(`Tenant [${conversation.contact.tenant?.name || tenantId}] com auto-atendimento por IA DESLIGADO nas Configurações. Abortando IA.`);
@@ -298,9 +300,20 @@ let AiProcessor = AiProcessor_1 = class AiProcessor extends bullmq_1.WorkerHost 
                     }
                 }
             }
-            await this.prisma.conversation.update({
+            const updatedConv = await this.prisma.conversation.update({
                 where: { id: conversationId },
-                data: { status: 'human_takeover', assignedTo }
+                data: { status: 'bot_active', assignedTo },
+                include: { contact: true }
+            });
+            this.chatGateway.emitConversationUpdated(tenantId, updatedConv);
+            this.chatGateway.server.to(tenantId).emit('aiHandoffAlert', {
+                conversationId,
+                contactId,
+                contactName: conversation.contact.name || aiResponse.nome_cliente || 'Lead WhatsApp',
+                phone: conversation.contact.phone,
+                product: aiResponse.produto_interesse,
+                reason: aiResponse.motivo_transferencia,
+                summary: aiResponse.resumo_atendimento,
             });
             const existingDealForHandoff = await this.prisma.deal.findFirst({
                 where: { tenantId, contactId },

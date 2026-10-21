@@ -39,6 +39,11 @@ export default function RootLayout({
         <link rel="icon" href="/vallor/Favicon_vallor.svg?v=4" type="image/svg+xml" />
         <link rel="alternate icon" href="/vallor/favicon.ico?v=4" />
         <link rel="apple-touch-icon" href="/vallor/Favicon_vallor.svg?v=4" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("versus_theme")||localStorage.getItem("theme");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;if(d){document.documentElement.classList.add("dark");document.documentElement.classList.remove("light");}else{document.documentElement.classList.remove("dark");document.documentElement.classList.add("light");}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body className={`${inter.className} bg-background text-text-primary custom-scrollbar`} suppressHydrationWarning>
         <Providers>

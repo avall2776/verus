@@ -343,7 +343,7 @@ export default function SuperAdminOperatorsPage() {
           <button
             onClick={fetchOperators}
             disabled={loading}
-            className="p-2.5 rounded-xl border border-slate-800 bg-[#0B1224] hover:bg-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold shadow-sm"
+            className="p-2.5 rounded-xl border border-slate-800 bg-white dark:bg-[#0B1224] hover:bg-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold shadow-sm"
             title="Atualizar Dados"
           >
             <RefreshCw size={14} className={loading ? "animate-spin text-blue-400" : ""} />
@@ -363,7 +363,7 @@ export default function SuperAdminOperatorsPage() {
       {/* Painel Analítico de Produtividade Diária (KPIs) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Card 1: Operadores */}
-        <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 space-y-1">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-1">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Total Operadores</span>
             <Users size={16} className="text-blue-400" />
@@ -379,7 +379,7 @@ export default function SuperAdminOperatorsPage() {
         </div>
 
         {/* Card 2: Atendimentos Hoje */}
-        <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 space-y-1">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-1">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Atendimentos Hoje</span>
             <Activity size={16} className="text-cyan-400" />
@@ -392,7 +392,7 @@ export default function SuperAdminOperatorsPage() {
         </div>
 
         {/* Card 3: Chamados Resolvidos */}
-        <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 space-y-1">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-1">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Chamados Fechados</span>
             <CheckCircle2 size={16} className="text-emerald-400" />
@@ -407,7 +407,7 @@ export default function SuperAdminOperatorsPage() {
         </div>
 
         {/* Card 4: TMR Médio Global */}
-        <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 space-y-1">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-1">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span className="font-semibold uppercase tracking-wider text-[10px]">Tempo Médio Resposta</span>
             <Clock size={16} className="text-amber-400" />
@@ -421,7 +421,7 @@ export default function SuperAdminOperatorsPage() {
       </div>
 
       {/* Barra de Filtros e Busca */}
-      <div className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="p-3.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
           <div className="relative w-full sm:w-72">
             <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
@@ -430,14 +430,14 @@ export default function SuperAdminOperatorsPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nome ou e-mail..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
             />
           </div>
 
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500 cursor-pointer"
+            className="px-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="ALL">Todos os Cargos</option>
             <option value="Atendente">Atendente de Suporte</option>
@@ -448,7 +448,7 @@ export default function SuperAdminOperatorsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500 cursor-pointer"
+            className="px-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="ALL">Todos os Status</option>
             <option value="ONLINE">Apenas Online</option>
@@ -463,10 +463,10 @@ export default function SuperAdminOperatorsPage() {
       </div>
 
       {/* Tabela de Operadores & Auditoria */}
-      <div className="rounded-2xl bg-[#0B1224] border border-slate-800 overflow-hidden shadow-sm">
+      <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#070D1B] text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+            <thead className="bg-slate-50 dark:bg-[#070D1B] text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
               <tr>
                 <th className="px-4 py-3 font-bold">Colaborador / Operador</th>
                 <th className="px-4 py-3 font-bold">Função / Cargo</th>
@@ -611,7 +611,7 @@ export default function SuperAdminOperatorsPage() {
       {/* MODAL 1: CADASTRO DE NOVO OPERADOR */}
       {isNewModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-[#0B1224] border border-slate-800 p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
             
             {/* Header Modal */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -645,7 +645,7 @@ export default function SuperAdminOperatorsPage() {
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2 text-xs">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-2 text-xs">
                   <div>
                     <span className="text-[10px] text-slate-500 uppercase font-mono block">E-mail:</span>
                     <span className="font-mono text-white font-semibold">{createdCredentials.email}</span>
@@ -691,7 +691,7 @@ export default function SuperAdminOperatorsPage() {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Ex: Lucas Gabriel"
-                      className="w-full p-2.5 rounded-xl text-xs bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+                      className="w-full p-2.5 rounded-xl text-xs bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>
 
@@ -705,7 +705,7 @@ export default function SuperAdminOperatorsPage() {
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="lucas@vallor.com"
-                      className="w-full p-2.5 rounded-xl text-xs bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+                      className="w-full p-2.5 rounded-xl text-xs bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>
 
@@ -716,7 +716,7 @@ export default function SuperAdminOperatorsPage() {
                     <select
                       value={formData.roleTitle}
                       onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
-                      className="w-full p-2.5 rounded-xl text-xs bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500 cursor-pointer"
+                      className="w-full p-2.5 rounded-xl text-xs bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value="Atendente de Suporte">Atendente de Suporte (Nível 1)</option>
                       <option value="Analista Pleno de Atendimento">Analista Pleno de Atendimento (Nível 2)</option>
@@ -725,7 +725,7 @@ export default function SuperAdminOperatorsPage() {
                   </div>
 
                   {/* Matriz de Permissões com Isolamento de Privilégios */}
-                  <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2.5">
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-2.5">
                     <span className="text-[11px] font-bold text-white flex items-center justify-between">
                       <span>Permissões de Acesso do Operador</span>
                       <span className="text-[10px] text-blue-400 font-normal">Security Boundary Ativo</span>
@@ -825,7 +825,7 @@ export default function SuperAdminOperatorsPage() {
       {/* MODAL 2: EDIÇÃO DE OPERADOR */}
       {isEditModalOpen && selectedOperator && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-[#0B1224] border border-slate-800 p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-slate-800 text-slate-300 border border-slate-700">
@@ -855,7 +855,7 @@ export default function SuperAdminOperatorsPage() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full p-2.5 rounded-xl text-xs bg-[#070D1B] border border-slate-700 text-white outline-none focus:border-blue-500 transition-colors"
+                    className="w-full p-2.5 rounded-xl text-xs bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
 
@@ -868,7 +868,7 @@ export default function SuperAdminOperatorsPage() {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full p-2.5 rounded-xl text-xs bg-[#070D1B] border border-slate-700 text-white outline-none focus:border-blue-500 transition-colors"
+                    className="w-full p-2.5 rounded-xl text-xs bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
 
@@ -879,7 +879,7 @@ export default function SuperAdminOperatorsPage() {
                   <select
                     value={formData.roleTitle}
                     onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
-                    className="w-full p-2.5 rounded-xl text-xs bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500 cursor-pointer"
+                    className="w-full p-2.5 rounded-xl text-xs bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500 cursor-pointer"
                   >
                     <option value="Atendente de Suporte">Atendente de Suporte</option>
                     <option value="Analista Pleno de Atendimento">Analista Pleno de Atendimento</option>
@@ -896,7 +896,7 @@ export default function SuperAdminOperatorsPage() {
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     placeholder="Deixe em branco para manter a senha atual"
-                    className="w-full p-2.5 rounded-xl text-xs bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+                    className="w-full p-2.5 rounded-xl text-xs bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
               </div>
@@ -926,7 +926,7 @@ export default function SuperAdminOperatorsPage() {
       {/* MODAL 3: AUDITORIA ESPIAR CONVERSA EM TEMPO REAL */}
       {isSpyModalOpen && selectedOperator && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-5xl h-[85vh] rounded-2xl bg-[#0B1224] border border-purple-500/40 p-6 shadow-2xl flex flex-col justify-between animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-full max-w-5xl h-[85vh] rounded-2xl bg-white dark:bg-[#0B1224] border border-purple-500/40 p-6 shadow-2xl flex flex-col justify-between animate-in fade-in zoom-in-95 duration-150">
             
             {/* Header com Banner de Auditoria Invisível */}
             <div className="border-b border-slate-800 pb-3 space-y-2 shrink-0">
@@ -972,7 +972,7 @@ export default function SuperAdminOperatorsPage() {
             <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-12 gap-4 py-3">
               
               {/* Coluna 1: Lista de Chamados deste Operador (col-span-4) */}
-              <div className="md:col-span-4 bg-[#070D1B] border border-slate-800 rounded-xl p-3 overflow-y-auto space-y-2">
+              <div className="md:col-span-4 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl p-3 overflow-y-auto space-y-2">
                 <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block px-1 mb-2">
                   Chamados Ativos do Atendente ({spyData?.activeTickets.length || 0})
                 </span>
@@ -995,8 +995,8 @@ export default function SuperAdminOperatorsPage() {
                         onClick={() => setSelectedSpyTicketIndex(idx)}
                         className={`p-3 rounded-xl border cursor-pointer transition-all ${
                           isSelected
-                            ? "bg-[#17253D] border-purple-500/60 shadow-md ring-1 ring-purple-500/30"
-                            : "bg-[#0B1224] border-slate-800 hover:border-slate-700"
+                            ? "bg-slate-100 dark:bg-[#17253D] border-purple-500/60 shadow-md ring-1 ring-purple-500/30"
+                            : "bg-white dark:bg-[#0B1224] border-slate-800 hover:border-slate-700"
                         }`}
                       >
                         <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mb-1">
@@ -1019,7 +1019,7 @@ export default function SuperAdminOperatorsPage() {
               </div>
 
               {/* Coluna 2: Chat em Tempo Real Auditado (col-span-8) */}
-              <div className="md:col-span-8 bg-[#070D1B] border border-slate-800 rounded-xl p-4 flex flex-col justify-between overflow-hidden">
+              <div className="md:col-span-8 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl p-4 flex flex-col justify-between overflow-hidden">
                 {spyData?.activeTickets && spyData.activeTickets[selectedSpyTicketIndex] ? (
                   (() => {
                     const ticket = spyData.activeTickets[selectedSpyTicketIndex];
@@ -1091,7 +1091,7 @@ export default function SuperAdminOperatorsPage() {
                                       className={`p-3 rounded-2xl text-xs space-y-1 ${
                                         isOperator
                                           ? "bg-blue-600 text-white rounded-br-none"
-                                          : "bg-[#0B1224] border border-slate-800 text-slate-100 rounded-bl-none"
+                                          : "bg-white dark:bg-[#0B1224] border border-slate-800 text-slate-100 rounded-bl-none"
                                       }`}
                                     >
                                       <div className="flex items-center justify-between gap-3 text-[10px] opacity-75">

@@ -206,7 +206,7 @@ export default function VersusPreloader({
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-8 bg-[#0B1224] overflow-hidden select-none transition-all duration-1000 ease-in-out pointer-events-none ${
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-8 bg-white dark:bg-[#0B1224] overflow-hidden select-none transition-all duration-1000 ease-in-out pointer-events-none ${
         isExiting
           ? "opacity-0 scale-105 filter blur-xl"
           : "opacity-100 scale-100 filter blur-0"

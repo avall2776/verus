@@ -193,7 +193,7 @@ export default function RelatorioPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#070D18] text-slate-100 flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-slate-100 dark:bg-[#070D18] text-slate-100 flex flex-col items-center justify-center p-6">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-cyan-400 flex items-center justify-center shadow-[0_0_30px_rgba(0,210,255,0.4)] animate-pulse">
             <Cpu className="text-white w-6 h-6 animate-spin" />
@@ -209,8 +209,8 @@ export default function RelatorioPage() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-[#070D18] text-slate-100 flex flex-col items-center justify-center p-6">
-        <div className="bg-[#0F172A] border border-rose-500/30 p-8 rounded-2xl max-w-md w-full text-center shadow-2xl">
+      <div className="min-h-screen bg-slate-100 dark:bg-[#070D18] text-slate-100 flex flex-col items-center justify-center p-6">
+        <div className="bg-white dark:bg-[#0F172A] border border-rose-500/30 p-8 rounded-2xl max-w-md w-full text-center shadow-2xl">
           <AlertCircle className="w-12 h-12 text-rose-400 mx-auto mb-3" />
           <h3 className="text-lg font-bold text-white">Falha ao Carregar Relatório</h3>
           <p className="text-xs text-slate-400 mt-2 mb-6">{error || 'Não foi possível ler o checklist.'}</p>
@@ -229,10 +229,10 @@ export default function RelatorioPage() {
   const { stats } = data;
 
   return (
-    <div className="min-h-screen bg-[#070D18] text-slate-100 font-sans selection:bg-cyan-500/20 selection:text-cyan-300">
+    <div className="min-h-screen bg-slate-100 dark:bg-[#070D18] text-slate-100 font-sans selection:bg-cyan-500/20 selection:text-cyan-300">
       
       {/* 1. TOPO / HEADER EXECUTIVO */}
-      <header className="sticky top-0 z-40 bg-[#0F172A]/90 backdrop-blur-md border-b border-slate-800 print:relative print:bg-white print:border-b-2 print:border-black">
+      <header className="sticky top-0 z-40 bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-md border-b border-slate-800 print:relative print:bg-white print:border-b-2 print:border-black">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-4">
           
           <div className="flex items-center gap-3">
@@ -304,7 +304,7 @@ export default function RelatorioPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Card 1: Progresso Global */}
-          <div className="p-4 rounded-2xl bg-[#0F172A] border border-slate-800/90 shadow-sm relative overflow-hidden group print:bg-white print:border-slate-300">
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-800/90 shadow-sm relative overflow-hidden group print:bg-white print:border-slate-300">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider print:text-slate-700">Progresso Geral</span>
               <span className="text-xs font-black text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 px-2 py-0.5 rounded-full print:text-black">
@@ -325,7 +325,7 @@ export default function RelatorioPage() {
           </div>
 
           {/* Card 2: Fase Ativa no Momento */}
-          <div className="p-4 rounded-2xl bg-[#0F172A] border border-slate-800/90 shadow-sm relative overflow-hidden print:bg-white print:border-slate-300">
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-800/90 shadow-sm relative overflow-hidden print:bg-white print:border-slate-300">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider print:text-slate-700">Fase em Andamento</span>
               <span className="flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-950/60 border border-amber-800/50 px-2 py-0.5 rounded-full print:text-black">
@@ -343,7 +343,7 @@ export default function RelatorioPage() {
           </div>
 
           {/* Card 3: Registro de Ponto Inviolável */}
-          <div className="p-4 rounded-2xl bg-[#0F172A] border border-slate-800/90 shadow-sm relative overflow-hidden print:bg-white print:border-slate-300">
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-800/90 shadow-sm relative overflow-hidden print:bg-white print:border-slate-300">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider print:text-slate-700">Registro de Ponto</span>
               <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-full print:text-black flex items-center gap-1">
@@ -368,7 +368,7 @@ export default function RelatorioPage() {
           </div>
 
           {/* Card 4: Infraestrutura & Produção */}
-          <div className="p-4 rounded-2xl bg-[#0F172A] border border-slate-800/90 shadow-sm relative overflow-hidden print:bg-white print:border-slate-300">
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-800/90 shadow-sm relative overflow-hidden print:bg-white print:border-slate-300">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider print:text-slate-700">Deploy & Produção</span>
               <ShieldCheck size={16} className="text-emerald-400 print:text-black" />
@@ -465,7 +465,7 @@ export default function RelatorioPage() {
           <div className="space-y-4">
             
             {/* Barra de Filtros e Busca */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#0F172A] p-3 rounded-2xl border border-slate-800/80 print:hidden">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-[#0F172A] p-3 rounded-2xl border border-slate-800/80 print:hidden">
               <div className="relative w-full sm:w-80">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input 
@@ -473,7 +473,7 @@ export default function RelatorioPage() {
                   placeholder="Buscar fase, tecnologia ou tarefa..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#162038] border border-slate-700/80 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 transition-all"
+                  className="w-full bg-slate-100 dark:bg-[#162038] border border-slate-700/80 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 transition-all"
                 />
               </div>
 
@@ -514,7 +514,7 @@ export default function RelatorioPage() {
             {/* Lista das Fases */}
             <div className="space-y-3 print:space-y-4">
               {filteredPhases.length === 0 ? (
-                <div className="p-12 text-center bg-[#0F172A] rounded-2xl border border-slate-800">
+                <div className="p-12 text-center bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-800">
                   <p className="text-sm text-slate-400">Nenhuma fase encontrada para os filtros selecionados.</p>
                 </div>
               ) : (
@@ -526,8 +526,8 @@ export default function RelatorioPage() {
                       key={phase.id}
                       className={`rounded-2xl border transition-all overflow-hidden print:bg-white print:border-slate-300 print:break-inside-avoid ${
                         phase.isCompleted 
-                          ? 'bg-[#0F172A] border-slate-800 hover:border-slate-700' 
-                          : 'bg-[#162038]/60 border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.08)]'
+                          ? 'bg-white dark:bg-[#0F172A] border-slate-800 hover:border-slate-700' 
+                          : 'bg-slate-50/60 dark:bg-slate-100 dark:bg-[#162038]/60 border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.08)]'
                       }`}
                     >
                       {/* Header da Fase */}
@@ -623,7 +623,7 @@ export default function RelatorioPage() {
           <div className="space-y-4">
             
             {/* Header da Aba */}
-            <div className="bg-[#0F172A] p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="bg-white dark:bg-[#0F172A] p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <Clock size={16} className="text-emerald-400" />
@@ -696,7 +696,7 @@ export default function RelatorioPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               
               {/* 1. Entrada / Início do Turno */}
-              <div className="p-3.5 rounded-xl bg-[#0F172A]/90 border border-emerald-500/40 shadow-sm relative">
+              <div className="p-3.5 rounded-xl bg-white/90 dark:bg-[#0F172A]/90 border border-emerald-500/40 shadow-sm relative">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">1º Registro · Manhã</span>
                   <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-full">
@@ -715,7 +715,7 @@ export default function RelatorioPage() {
               </div>
 
               {/* 2. Pausa para Almoço */}
-              <div className={`p-3.5 rounded-xl bg-[#0F172A]/90 border ${activeTimeclock?.lunchOutTime ? 'border-amber-500/40' : 'border-slate-800'} shadow-sm relative`}>
+              <div className={`p-3.5 rounded-xl bg-white/90 dark:bg-[#0F172A]/90 border ${activeTimeclock?.lunchOutTime ? 'border-amber-500/40' : 'border-slate-800'} shadow-sm relative`}>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">2º Registro · Meio-dia</span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTimeclock?.lunchOutTime ? 'text-amber-400 bg-amber-950/60 border border-amber-800/50' : 'text-slate-500 bg-slate-800/50'}`}>
@@ -734,7 +734,7 @@ export default function RelatorioPage() {
               </div>
 
               {/* 3. Retorno do Almoço */}
-              <div className={`p-3.5 rounded-xl bg-[#0F172A]/90 border ${activeTimeclock?.lunchInTime ? 'border-cyan-500/40' : 'border-slate-800'} shadow-sm relative`}>
+              <div className={`p-3.5 rounded-xl bg-white/90 dark:bg-[#0F172A]/90 border ${activeTimeclock?.lunchInTime ? 'border-cyan-500/40' : 'border-slate-800'} shadow-sm relative`}>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">3º Registro · Tarde</span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTimeclock?.lunchInTime ? 'text-cyan-400 bg-cyan-950/60 border border-cyan-800/50' : 'text-slate-500 bg-slate-800/50'}`}>
@@ -753,7 +753,7 @@ export default function RelatorioPage() {
               </div>
 
               {/* 4. Encerramento / Saída */}
-              <div className={`p-3.5 rounded-xl bg-[#0F172A]/90 border ${activeTimeclock?.exitTime ? 'border-purple-500/40' : 'border-slate-800'} shadow-sm relative`}>
+              <div className={`p-3.5 rounded-xl bg-white/90 dark:bg-[#0F172A]/90 border ${activeTimeclock?.exitTime ? 'border-purple-500/40' : 'border-slate-800'} shadow-sm relative`}>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">4º Registro · Fim do Dia</span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTimeclock?.exitTime ? 'text-purple-400 bg-purple-950/60 border border-purple-800/50' : 'text-slate-500 bg-slate-800/50'}`}>
@@ -789,7 +789,7 @@ export default function RelatorioPage() {
               {data.punchIns.map((punch, idx) => (
                 <div 
                   key={idx}
-                  className="p-4 rounded-xl bg-[#0F172A] border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-700 transition-all print:bg-white print:border-slate-300"
+                  className="p-4 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-700 transition-all print:bg-white print:border-slate-300"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl shrink-0 p-2 rounded-xl bg-slate-800/60 border border-slate-700/60">
@@ -838,7 +838,7 @@ export default function RelatorioPage() {
         {/* --- ABA 3: ROADMAP FUTURO (ICEBOX) --- */}
         {activeTab === 'roadmap' && (
           <div className="space-y-4">
-            <div className="bg-[#0F172A] p-4 rounded-2xl border border-slate-800">
+            <div className="bg-white dark:bg-[#0F172A] p-4 rounded-2xl border border-slate-800">
               <h3 className="text-sm font-bold text-white">Roadmap Futuro (Banco de Ideias)</h3>
               <p className="text-xs text-slate-400">Funcionalidades de expansão planejadas para os próximos ciclos.</p>
             </div>
@@ -847,7 +847,7 @@ export default function RelatorioPage() {
               {data.roadmapItems.map((item, idx) => (
                 <div 
                   key={idx}
-                  className="p-5 rounded-2xl bg-[#0F172A] border border-slate-800/90 flex flex-col justify-between gap-3 hover:border-purple-500/40 transition-all print:bg-white print:border-slate-300"
+                  className="p-5 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-800/90 flex flex-col justify-between gap-3 hover:border-purple-500/40 transition-all print:bg-white print:border-slate-300"
                 >
                   <div>
                     <div className="flex items-center gap-2 mb-2">
@@ -869,7 +869,7 @@ export default function RelatorioPage() {
 
         {/* --- ABA 4: MARKDOWN COMPLETO --- */}
         {activeTab === 'markdown' && (
-          <div className="p-6 rounded-2xl bg-[#0F172A] border border-slate-800 font-mono text-xs text-slate-300 whitespace-pre-wrap leading-relaxed overflow-x-auto print:bg-white print:text-black">
+          <div className="p-6 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-800 font-mono text-xs text-slate-300 whitespace-pre-wrap leading-relaxed overflow-x-auto print:bg-white print:text-black">
             {data.rawMarkdown}
           </div>
         )}
@@ -877,7 +877,7 @@ export default function RelatorioPage() {
       </main>
 
       {/* 3. RODAPÉ EXECUTIVO */}
-      <footer className="border-t border-slate-800/80 mt-12 py-6 bg-[#0B1224] text-center text-xs text-slate-500 print:hidden">
+      <footer className="border-t border-slate-800/80 mt-12 py-6 bg-white dark:bg-[#0B1224] text-center text-xs text-slate-500 print:hidden">
         <p className="font-semibold text-slate-400">Vallor · Sistema Omnichannel com IA e CRM Integrado</p>
         <p className="mt-1 text-[11px]">Relatório gerado automaticamente a partir do repositório oficial.</p>
       </footer>

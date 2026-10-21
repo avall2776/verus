@@ -478,7 +478,7 @@ function SupportPageContent() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16 animate-in fade-in duration-300">
       {/* Top Banner Corporativo */}
-      <div className="p-6 rounded-2xl bg-[#0B1224] border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-5 shadow-lg">
+      <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-5 shadow-lg">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-2xl bg-blue-600/10 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
             <LifeBuoy className="w-6 h-6" />
@@ -508,25 +508,25 @@ function SupportPageContent() {
 
       {/* Cards de Métricas e SLA */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-        <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800">
           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Total de Chamados</span>
           <span className="text-2xl font-black text-white mt-1 block">{counts.total}</span>
           <span className="text-[11px] text-slate-500">Histórico completo da empresa</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800">
           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Chamados em Aberto</span>
           <span className="text-2xl font-black text-blue-400 mt-1 block">{counts.open}</span>
           <span className="text-[11px] text-slate-500">Aguardando atendimento</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800">
           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Em Atendimento</span>
           <span className="text-2xl font-black text-indigo-400 mt-1 block">{counts.inProgress}</span>
           <span className="text-[11px] text-slate-500">Com operador ou equipe</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800">
           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Resolvidos</span>
           <span className="text-2xl font-black text-emerald-400 mt-1 block">{counts.resolved}</span>
           <span className="text-[11px] text-slate-500">Casos concluídos com êxito</span>
@@ -534,7 +534,7 @@ function SupportPageContent() {
       </div>
 
       {/* Barra de Abas Estilo Lero */}
-      <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[#0B1224] border border-slate-800 w-fit">
+      <div className="flex items-center gap-2 p-1.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 w-fit">
         <button
           type="button"
           onClick={() => setActiveTab("troubleshooting")}
@@ -579,7 +579,7 @@ function SupportPageContent() {
       {activeTab === "troubleshooting" && (
         <div className="space-y-6">
           {/* Busca Instantânea */}
-          <div className="p-6 rounded-2xl bg-[#0B1224] border border-slate-800 space-y-4">
+          <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-4">
             <div className="max-w-xl">
               <h3 className="text-sm font-bold text-white">Como podemos ajudar sua equipe hoje?</h3>
               <p className="text-xs text-slate-400 mt-1">Busque instruções de configuração, resoluções de WhatsApp, e-mail e regras de CRM.</p>
@@ -591,7 +591,7 @@ function SupportPageContent() {
                 value={knowledgeSearch}
                 onChange={(e) => setKnowledgeSearch(e.target.value)}
                 placeholder="Ex: Como reconectar WhatsApp, gerar senha de app do Gmail, calcular Run Rate..."
-                className="w-full pl-10 pr-4 py-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+                className="w-full pl-10 pr-4 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
               />
             </div>
           </div>
@@ -601,7 +601,7 @@ function SupportPageContent() {
             {filteredKnowledge.map((topic, idx) => {
               const Icon = topic.icon;
               return (
-                <div key={idx} className="p-5 rounded-2xl bg-[#0B1224] border border-slate-800 flex flex-col justify-between gap-4 hover:border-slate-700 transition-all">
+                <div key={idx} className="p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 flex flex-col justify-between gap-4 hover:border-slate-700 transition-all">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="w-8 h-8 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/30 flex items-center justify-center">
@@ -636,7 +636,7 @@ function SupportPageContent() {
           </div>
 
           {/* Banner de Chamado Direto */}
-          <div className="p-5 rounded-2xl bg-[#0B1224] border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-blue-600/15 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
                 <MessageSquare className="w-4 h-4" />
@@ -661,7 +661,7 @@ function SupportPageContent() {
       {(activeTab === "my_tickets" || activeTab === "admin_triage") && (
         <div className="space-y-4">
           {/* Barra de Filtros */}
-          <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+          <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative w-64">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
@@ -670,7 +670,7 @@ function SupportPageContent() {
                   value={searchFilter}
                   onChange={(e) => setSearchFilter(e.target.value)}
                   placeholder="Buscar por assunto ou número..."
-                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
@@ -678,7 +678,7 @@ function SupportPageContent() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500"
+                className="px-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500"
               >
                 <option value="ALL">Todos os Status</option>
                 <option value="OPEN">Abertos</option>
@@ -692,7 +692,7 @@ function SupportPageContent() {
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="px-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500"
+                className="px-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500"
               >
                 <option value="ALL">Todas Prioridades</option>
                 <option value="LOW">Baixa</option>
@@ -718,7 +718,7 @@ function SupportPageContent() {
             {/* Coluna 1: Lista de Chamados (lg:col-span-4 / oculta quando expandido) */}
             <div className={`${
               isSidebarCollapsed ? "hidden" : "lg:col-span-4 xl:col-span-4"
-            } rounded-2xl bg-[#0B1224] border border-slate-800 p-3 flex flex-col h-full overflow-hidden transition-all shadow-lg`}>
+            } rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 p-3 flex flex-col h-full overflow-hidden transition-all shadow-lg`}>
               <div className="flex items-center justify-between px-1.5 pb-2.5 border-b border-slate-800/80 mb-2">
                 <span className="text-xs font-bold text-slate-300">Chamados ({tickets.length})</span>
                 <button
@@ -754,7 +754,7 @@ function SupportPageContent() {
                         className={`p-3 rounded-xl border cursor-pointer transition-all ${
                           isSelected
                             ? "bg-slate-800/90 border-blue-500 shadow-md ring-1 ring-blue-500/30"
-                            : "bg-[#070D1B] border-slate-800/80 hover:border-slate-700 hover:bg-slate-800/50"
+                            : "bg-slate-50 dark:bg-[#070D1B] border-slate-800/80 hover:border-slate-700 hover:bg-slate-800/50"
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1.5">
@@ -792,11 +792,11 @@ function SupportPageContent() {
             {/* Coluna 2: Detalhes do Chamado & Chat Completo e Amplo (lg:col-span-8 ou 12) */}
             <div className={`${
               isSidebarCollapsed ? "lg:col-span-12" : "lg:col-span-8 xl:col-span-8"
-            } rounded-2xl bg-[#0B1224] border border-slate-800 flex flex-col h-full overflow-hidden transition-all shadow-xl`}>
+            } rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 flex flex-col h-full overflow-hidden transition-all shadow-xl`}>
               {selectedTicket ? (
                 <div className="flex flex-col h-full overflow-hidden">
                   {/* Cabeçalho do Chamado Selecionado */}
-                  <div className="p-4 border-b border-slate-800 bg-[#070D1B]/80 flex flex-col gap-2 shrink-0">
+                  <div className="p-4 border-b border-slate-800 bg-slate-50/80 dark:bg-slate-50 dark:bg-[#070D1B]/80 flex flex-col gap-2 shrink-0">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5 min-w-0">
                         {isSidebarCollapsed && (
@@ -834,7 +834,7 @@ function SupportPageContent() {
                         <select
                           value={selectedTicket.status}
                           onChange={(e) => handleUpdateStatus(e.target.value)}
-                          className="px-2.5 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500 font-semibold cursor-pointer"
+                          className="px-2.5 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500 font-semibold cursor-pointer"
                         >
                           <option value="OPEN">Aberto</option>
                           <option value="IN_PROGRESS">Em Atendimento</option>
@@ -887,7 +887,7 @@ function SupportPageContent() {
 
                     {/* Gaveta Retrátil de Dados Cadastrais da Empresa */}
                     {showCompanyDetails && selectedTicket.tenant && (
-                      <div className="mt-1 p-3 rounded-xl bg-[#0B1224] border border-slate-700/80 text-[11px] grid grid-cols-2 sm:grid-cols-4 gap-2 animate-in fade-in duration-150">
+                      <div className="mt-1 p-3 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-700/80 text-[11px] grid grid-cols-2 sm:grid-cols-4 gap-2 animate-in fade-in duration-150">
                         <div>
                           <span className="text-[10px] text-slate-500 block">E-mail:</span>
                           <span className="text-slate-300 truncate block font-medium">{selectedTicket.tenant.email || "Não cadastrado"}</span>
@@ -909,7 +909,7 @@ function SupportPageContent() {
                   </div>
 
                   {/* Barra de Abas Superiores com Controles de Canal */}
-                  <div className="py-2 px-4 border-b border-slate-800/80 bg-[#0B1224] flex items-center justify-between gap-2 shrink-0">
+                  <div className="py-2 px-4 border-b border-slate-800/80 bg-white dark:bg-[#0B1224] flex items-center justify-between gap-2 shrink-0">
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
@@ -947,10 +947,10 @@ function SupportPageContent() {
                   </div>
 
                   {/* Mensagens do Chamado (Timeline Ampla, Clara e Confortável) */}
-                  <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar bg-[#080E1C]/60">
+                  <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar bg-slate-50/60 dark:bg-slate-50 dark:bg-[#080E1C]/60">
                     {/* CARD FIXADO NO TOPO: SOLICITAÇÃO ORIGINAL DO CLIENTE */}
                     {selectedTicket.description && (
-                      <div className="mx-auto max-w-3xl bg-[#0B1224] border border-slate-800 rounded-xl p-3.5 shadow-sm">
+                      <div className="mx-auto max-w-3xl bg-white dark:bg-[#0B1224] border border-slate-800 rounded-xl p-3.5 shadow-sm">
                         <div className="flex items-center justify-between text-xs font-bold text-blue-400 border-b border-slate-800/80 pb-1.5 mb-2">
                           <span className="flex items-center gap-1.5">
                             <FileText size={14} className="text-blue-400" />
@@ -968,7 +968,7 @@ function SupportPageContent() {
 
                     {/* DIVISOR DE HISTÓRICO */}
                     <div className="flex items-center justify-center my-2">
-                      <span className="text-[10px] text-slate-500 bg-[#0B1224] px-3 py-1 rounded-full border border-slate-800 font-mono uppercase tracking-wider">
+                      <span className="text-[10px] text-slate-500 bg-white dark:bg-[#0B1224] px-3 py-1 rounded-full border border-slate-800 font-mono uppercase tracking-wider">
                         Histórico de Mensagens
                       </span>
                     </div>
@@ -996,7 +996,7 @@ function SupportPageContent() {
                                   : isAi
                                   ? "bg-gradient-to-br from-[#0c1f36] via-[#091626] to-[#071322] border border-cyan-500/40 text-slate-100 ring-1 ring-cyan-500/20 shadow-cyan-950/20"
                                   : isOperator
-                                  ? "bg-[#0F172A] border border-slate-700/80 text-slate-100 shadow-slate-950/40"
+                                  ? "bg-white dark:bg-[#0F172A] border border-slate-700/80 text-slate-100 shadow-slate-950/40"
                                   : "bg-blue-600/25 border border-blue-500/40 text-white shadow-blue-950/30"
                               }`}
                             >
@@ -1067,7 +1067,7 @@ function SupportPageContent() {
 
                   {/* Card de Pesquisa de Satisfação (CSAT) quando o chamado estiver Resolvido ou Fechado */}
                   {(selectedTicket.status === 'RESOLVED' || selectedTicket.status === 'CLOSED') && (
-                    <div className="p-3 bg-[#070D1B] border-t border-slate-800 shrink-0">
+                    <div className="p-3 bg-slate-50 dark:bg-[#070D1B] border-t border-slate-800 shrink-0">
                       {selectedTicket.satisfactionRating ? (
                         <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs shadow-sm">
                           <div className="flex items-center gap-3">
@@ -1094,7 +1094,7 @@ function SupportPageContent() {
                           </span>
                         </div>
                       ) : (
-                        <div className="p-3 rounded-xl bg-[#0B1224] border border-blue-500/30 space-y-2.5 shadow-md">
+                        <div className="p-3 rounded-xl bg-white dark:bg-[#0B1224] border border-blue-500/30 space-y-2.5 shadow-md">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Star size={16} className="text-amber-400 fill-amber-400" />
@@ -1135,7 +1135,7 @@ function SupportPageContent() {
                               value={csatFeedback}
                               onChange={(e) => setCsatFeedback(e.target.value)}
                               placeholder="Deixe um comentário sobre o atendimento (opcional)..."
-                              className="flex-1 p-2 rounded-xl text-xs bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+                              className="flex-1 p-2 rounded-xl text-xs bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
                             />
                             <button
                               type="button"
@@ -1153,7 +1153,7 @@ function SupportPageContent() {
                   )}
 
                   {/* Caixa de Resposta (Composer Amplo e Confortável) */}
-                  <form onSubmit={handleSendReply} className="p-3.5 border-t border-slate-800 bg-[#070D1B] space-y-2 shrink-0">
+                  <form onSubmit={handleSendReply} className="p-3.5 border-t border-slate-800 bg-slate-50 dark:bg-[#070D1B] space-y-2 shrink-0">
                     {/* Alerta de Confidencialidade se Nota Interna estiver ativa */}
                     {isInternalNote && (
                       <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-amber-950/30 border border-amber-500/40 text-[11px] text-amber-300">
@@ -1183,8 +1183,8 @@ function SupportPageContent() {
                         }
                         className={`flex-1 p-3 rounded-xl text-xs sm:text-sm outline-none transition-all resize-none text-white placeholder-slate-500 custom-scrollbar ${
                           isInternalNote
-                            ? "bg-[#0B1224] border border-amber-500/50 focus:border-amber-400 ring-1 ring-amber-500/20"
-                            : "bg-[#0B1224] border border-slate-700 focus:border-blue-500"
+                            ? "bg-white dark:bg-[#0B1224] border border-amber-500/50 focus:border-amber-400 ring-1 ring-amber-500/20"
+                            : "bg-white dark:bg-[#0B1224] border border-slate-700 focus:border-blue-500"
                         }`}
                       />
                       <button
@@ -1237,7 +1237,7 @@ function SupportPageContent() {
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="bg-[#0B1224] border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 flex flex-col gap-4 animate-in zoom-in-95 text-white"
+            className="bg-white dark:bg-[#0B1224] border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 flex flex-col gap-4 animate-in zoom-in-95 text-white"
           >
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2.5">
@@ -1269,7 +1269,7 @@ function SupportPageContent() {
                   value={newSubject}
                   onChange={(e) => setNewSubject(e.target.value)}
                   placeholder="Ex: Falha ao enviar contrato por e-mail ou Dúvida de Meta"
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
@@ -1281,7 +1281,7 @@ function SupportPageContent() {
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full px-3 py-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500"
                   >
                     <option value="DUVIDA_TECNICA">Dúvida Técnica</option>
                     <option value="BUG">Reporte de Falha / Bug</option>
@@ -1298,7 +1298,7 @@ function SupportPageContent() {
                   <select
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value)}
-                    className="w-full px-3 py-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-slate-200 outline-none focus:border-blue-500"
                   >
                     <option value="LOW">Baixa (Dúvida comum)</option>
                     <option value="MEDIUM">Média (Ajuste operacional)</option>
@@ -1318,7 +1318,7 @@ function SupportPageContent() {
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   placeholder="Descreva detalhadamente o ocorrido, telas envolvidas e passos para reproduzir o problema..."
-                  className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors resize-none"
+                  className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors resize-none"
                 />
               </div>
 
@@ -1355,7 +1355,7 @@ function SupportPageContent() {
 
 export default function SupportPage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-slate-950 text-slate-400">Carregando suporte...</div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-slate-100 dark:bg-slate-950 text-slate-400">Carregando suporte...</div>}>
       <SupportPageContent />
     </Suspense>
   );

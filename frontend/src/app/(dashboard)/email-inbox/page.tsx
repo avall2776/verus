@@ -534,7 +534,7 @@ export default function EmailInboxPage() {
           </div>
 
           {/* Rodapé de Status */}
-          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+          <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-950/60 border border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               Sincronizado
@@ -554,7 +554,7 @@ export default function EmailInboxPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por remetente, assunto..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
               />
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
@@ -771,7 +771,7 @@ export default function EmailInboxPage() {
                           href={att.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-blue-500/40 text-xs transition-colors group"
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950/60 border border-slate-800 hover:border-blue-500/40 text-xs transition-colors group"
                         >
                           <div className="flex items-center gap-2 truncate">
                             <FileText className="w-4 h-4 text-blue-400 shrink-0" />
@@ -795,7 +795,7 @@ export default function EmailInboxPage() {
                   value={quickReplyText}
                   onChange={(e) => setQuickReplyText(e.target.value)}
                   placeholder={`Responder para ${selectedEmail.senderName}...`}
-                  className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
+                  className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
                 />
                 <div className="flex items-center justify-between">
                   <button

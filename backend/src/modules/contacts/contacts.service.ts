@@ -11,6 +11,22 @@ export class ContactsService {
     private readonly whatsappService: WhatsappService,
   ) {}
 
+  async createContact(
+    tenantId: string,
+    data: { name: string; phone?: string; email?: string; source?: string; tags?: string[] },
+  ) {
+    return this.prisma.contact.create({
+      data: {
+        tenantId,
+        name: data.name.trim(),
+        phone: data.phone?.trim() || null,
+        email: data.email?.trim().toLowerCase() || null,
+        source: data.source || 'Manual',
+        tags: data.tags || ['Lead'],
+      },
+    });
+  }
+
   async findAll(tenantId: string) {
     const contacts = await this.prisma.contact.findMany({
       where: { tenantId },

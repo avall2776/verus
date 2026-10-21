@@ -148,7 +148,7 @@ export default function EmailComposerModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="w-full max-w-3xl bg-[#0B1224] border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-white"
+        className="w-full max-w-3xl bg-white dark:bg-[#0B1224] border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-white"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header do Composer */}
@@ -191,14 +191,14 @@ export default function EmailComposerModal({
                 value={recipientEmail}
                 onChange={(e) => setRecipientEmail(e.target.value)}
                 placeholder="cliente@empresa.com.br"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
               />
               <input
                 type="text"
                 value={recipientName}
                 onChange={(e) => setRecipientName(e.target.value)}
                 placeholder="Nome do contato (opcional)"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
@@ -213,7 +213,7 @@ export default function EmailComposerModal({
                   value={cc}
                   onChange={(e) => setCc(e.target.value)}
                   placeholder="gerencia@empresa.com.br"
-                  className="w-full px-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
               <div>
@@ -223,7 +223,7 @@ export default function EmailComposerModal({
                   value={bcc}
                   onChange={(e) => setBcc(e.target.value)}
                   placeholder="auditoria@vallor.com.br"
-                  className="w-full px-3 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
@@ -238,7 +238,7 @@ export default function EmailComposerModal({
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Ex: Proposta Comercial PROP-2026 - Apresentação de Solução"
-              className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
             />
           </div>
 
@@ -263,7 +263,7 @@ export default function EmailComposerModal({
               </button>
 
               {showProposalPicker && (
-                <div className="absolute left-0 top-full mt-1.5 w-72 max-h-48 overflow-y-auto rounded-xl bg-[#070D1B] border border-slate-700 shadow-2xl z-50 p-2 space-y-1">
+                <div className="absolute left-0 top-full mt-1.5 w-72 max-h-48 overflow-y-auto rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 shadow-2xl z-50 p-2 space-y-1">
                   {proposals.length === 0 ? (
                     <p className="text-[11px] text-slate-500 p-2 text-center">Nenhuma proposta encontrada.</p>
                   ) : (
@@ -298,7 +298,7 @@ export default function EmailComposerModal({
               </button>
 
               {showContractPicker && (
-                <div className="absolute left-0 top-full mt-1.5 w-72 max-h-48 overflow-y-auto rounded-xl bg-[#070D1B] border border-slate-700 shadow-2xl z-50 p-2 space-y-1">
+                <div className="absolute left-0 top-full mt-1.5 w-72 max-h-48 overflow-y-auto rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 shadow-2xl z-50 p-2 space-y-1">
                   {contracts.length === 0 ? (
                     <p className="text-[11px] text-slate-500 p-2 text-center">Nenhum contrato encontrado.</p>
                   ) : (
@@ -360,7 +360,7 @@ export default function EmailComposerModal({
               value={bodyText}
               onChange={(e) => setBodyText(e.target.value)}
               placeholder="Prezado cliente, segue em anexo a proposta para avaliação..."
-              className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 leading-relaxed font-sans resize-y"
+              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 leading-relaxed font-sans resize-y"
             />
           </div>
 

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { CrmService } from './crm.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { PlanGuard } from '../../shared/guards/plan.guard';
@@ -12,8 +12,14 @@ export class CrmController {
   constructor(private readonly crmService: CrmService) {}
 
   @Get()
-  async listDeals(@CurrentTenant() tenantId: string) {
-    return this.crmService.findAllDeals(tenantId);
+  async listDeals(
+    @CurrentTenant() tenantId: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('dateType') dateType?: 'created' | 'closed',
+    @Query('status') status?: string,
+  ) {
+    return this.crmService.findAllDeals(tenantId, { startDate, endDate, dateType, status });
   }
 
   @Get('users')

@@ -562,6 +562,54 @@ export declare class ChatController {
         scheduledAt: Date | null;
         conversationId: string;
     }>;
+    sendTemplateMessage(tenantId: string, conversationId: string, body: {
+        templateName?: string;
+        languageCode?: string;
+        components?: any[];
+        instanceId?: string;
+    }): Promise<{
+        success: boolean;
+        message: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            contactId: string;
+            status: string;
+            providerMessageId: string | null;
+            content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            isInternal: boolean;
+            fromMe: boolean;
+            direction: string;
+            senderType: string;
+            scheduledAt: Date | null;
+            conversationId: string;
+        };
+        error?: undefined;
+    } | {
+        success: boolean;
+        error: string;
+        message: {
+            id: string;
+            tenantId: string;
+            createdAt: Date;
+            contactId: string;
+            status: string;
+            providerMessageId: string | null;
+            content: string;
+            type: string;
+            mediaUrl: string | null;
+            audioTranscription: string | null;
+            isInternal: boolean;
+            fromMe: boolean;
+            direction: string;
+            senderType: string;
+            scheduledAt: Date | null;
+            conversationId: string;
+        };
+    }>;
     sendAudioMessage(tenantId: string, conversationId: string, file: Express.Multer.File, isInternal?: string | boolean, content?: string, instanceId?: string): Promise<{
         id: string;
         tenantId: string;

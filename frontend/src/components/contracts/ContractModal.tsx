@@ -159,7 +159,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl bg-[#090E1A]/95 border border-slate-800 shadow-2xl p-6 sm:p-8 text-white space-y-6 custom-scrollbar"
+        className="relative w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl bg-white/95 dark:bg-[#090E1A]/95 border border-slate-800 shadow-2xl p-6 sm:p-8 text-white space-y-6 custom-scrollbar"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -200,7 +200,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={selectedProposalId}
                 onChange={(e) => handleSelectProposal(e.target.value)}
                 disabled={loadingProposals}
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#060913] border border-slate-700 text-slate-200 focus:outline-none focus:border-cyan-500 transition-colors"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#060913] border border-slate-700 text-slate-200 focus:outline-none focus:border-cyan-500 transition-colors"
               >
                 <option value="">-- Contrato avulso (Preenchimento manual) --</option>
                 {proposals.map((prop) => {
@@ -230,7 +230,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Ex: Contrato de Prestação de Serviços & Licença de Software"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
               />
             </div>
 
@@ -244,7 +244,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
                 placeholder="Nome da Empresa ou Contratante"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
               />
             </div>
 
@@ -257,7 +257,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={clientDocument}
                 onChange={(e) => setClientDocument(e.target.value)}
                 placeholder="00.000.000/0001-00"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono"
               />
             </div>
 
@@ -270,7 +270,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={clientEmail}
                 onChange={(e) => setClientEmail(e.target.value)}
                 placeholder="diretoria@cliente.com.br"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
               />
             </div>
 
@@ -283,7 +283,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
                 placeholder="(11) 99999-9999"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono"
               />
             </div>
 
@@ -296,7 +296,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={clientAddress}
                 onChange={(e) => setClientAddress(e.target.value)}
                 placeholder="Av. Paulista, 1000, Sala 50 - São Paulo/SP"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
               />
             </div>
           </div>
@@ -314,7 +314,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={value}
                 onChange={(e) => setValue(parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-800 text-emerald-400 font-bold font-mono focus:outline-none focus:border-emerald-500"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-emerald-400 font-bold font-mono focus:outline-none focus:border-emerald-500"
               />
             </div>
 
@@ -326,7 +326,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-800 text-white focus:outline-none focus:border-cyan-500 font-mono"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-white focus:outline-none focus:border-cyan-500 font-mono"
               />
             </div>
 
@@ -338,7 +338,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-800 text-white focus:outline-none focus:border-cyan-500 font-mono"
+                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-white focus:outline-none focus:border-cyan-500 font-mono"
               />
             </div>
           </div>
@@ -353,7 +353,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Ex: Assinatura exigida pelo sócio administrador até a próxima sexta-feira."
-              className="w-full px-3.5 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
             />
           </div>
 

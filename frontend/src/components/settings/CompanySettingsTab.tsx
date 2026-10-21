@@ -108,28 +108,28 @@ export default function CompanySettingsTab() {
       {/* Métricas Rápidas */}
       {company?._count && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800/80">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
             <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
               <Users className="w-3.5 h-3.5 text-blue-400" />
               <span>Membros</span>
             </div>
             <span className="text-lg font-bold text-white font-mono">{company._count.users || 0}</span>
           </div>
-          <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800/80">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
             <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
               <FileText className="w-3.5 h-3.5 text-emerald-400" />
               <span>Contratos</span>
             </div>
             <span className="text-lg font-bold text-white font-mono">{company._count.contracts || 0}</span>
           </div>
-          <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800/80">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
             <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
               <Users className="w-3.5 h-3.5 text-indigo-400" />
               <span>Contatos CRM</span>
             </div>
             <span className="text-lg font-bold text-white font-mono">{company._count.contacts || 0}</span>
           </div>
-          <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800/80">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
             <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
               <CreditCard className="w-3.5 h-3.5 text-amber-400" />
               <span>Chamados</span>
@@ -151,7 +151,7 @@ export default function CompanySettingsTab() {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Ex: Nexus Logística e Tecnologia LTDA"
-              className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
               required
             />
           </div>
@@ -165,7 +165,7 @@ export default function CompanySettingsTab() {
               value={form.cnpj}
               onChange={(e) => setForm({ ...form, cnpj: e.target.value })}
               placeholder="00.000.000/0001-00"
-              className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
             />
           </div>
 
@@ -178,7 +178,7 @@ export default function CompanySettingsTab() {
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               placeholder="contato@empresa.com.br"
-              className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
             />
           </div>
 
@@ -191,7 +191,7 @@ export default function CompanySettingsTab() {
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               placeholder="+55 (11) 99999-9999"
-              className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
             />
           </div>
         </div>
@@ -213,13 +213,13 @@ export default function CompanySettingsTab() {
               value={form.leadNotificationPhone}
               onChange={(e) => setForm({ ...form, leadNotificationPhone: e.target.value })}
               placeholder="Ex: +55 (54) 99999-9999 ou 12036304... (ID do Grupo)"
-              className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-blue-500/30 text-white placeholder:text-slate-500 outline-none focus:border-blue-500 font-mono"
+              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-blue-500/30 text-white placeholder:text-slate-500 outline-none focus:border-blue-500 font-mono"
             />
           </div>
         </div>
 
         {/* Interruptor Master do Auto-Atendimento por IA */}
-        <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
@@ -267,7 +267,7 @@ export default function CompanySettingsTab() {
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
             placeholder="Avenida Paulista, 1000, Sala 50 - São Paulo, SP"
-            className="w-full p-3 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+            className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
           />
         </div>
 

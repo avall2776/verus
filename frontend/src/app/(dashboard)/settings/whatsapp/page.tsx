@@ -392,7 +392,7 @@ export default function WhatsAppSettingsPage() {
   if (contextLoading) return <div className="p-8 text-white font-sans">Carregando instâncias...</div>;
 
   return (
-    <div className="flex-1 flex flex-col bg-[#050A15] p-6 md:p-8 overflow-y-auto font-sans">
+    <div className="flex-1 flex flex-col bg-slate-100 dark:bg-[#050A15] p-6 md:p-8 overflow-y-auto font-sans">
       
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -427,8 +427,8 @@ export default function WhatsAppSettingsPage() {
               onClick={() => setActiveInstance(inst)}
               className={`flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border shrink-0 cursor-pointer ${
                 isSelected
-                  ? 'bg-[#161b22] border-emerald-500/60 text-white shadow-md'
-                  : 'bg-[#0B1224] border-gray-800 text-gray-400 hover:text-gray-200 hover:border-gray-700'
+                  ? 'bg-white dark:bg-[#161b22] border-emerald-500/60 text-white shadow-md'
+                  : 'bg-white dark:bg-[#0B1224] border-gray-800 text-gray-400 hover:text-gray-200 hover:border-gray-700'
               }`}
             >
               <div className="relative flex items-center justify-center w-2.5 h-2.5">
@@ -460,7 +460,7 @@ export default function WhatsAppSettingsPage() {
           <div className="lg:col-span-2 space-y-6">
             
             {/* Bloco de Perfil e Identificação da Instância */}
-            <div className="bg-[#0B1224] border border-gray-800 rounded-2xl p-5 shadow-sm">
+            <div className="bg-white dark:bg-[#0B1224] border border-gray-800 rounded-2xl p-5 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-4 border-b border-gray-800">
                 <div className="flex items-center gap-3.5">
                   <div 
@@ -520,7 +520,7 @@ export default function WhatsAppSettingsPage() {
                     type="text"
                     value={formData.name}
                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-blue-500/60 transition-colors"
+                    className="w-full bg-slate-100 dark:bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-blue-500/60 transition-colors"
                   />
                 </div>
                 <div>
@@ -530,7 +530,7 @@ export default function WhatsAppSettingsPage() {
                     value={formData.profileName}
                     onChange={e => setFormData({ ...formData, profileName: e.target.value })}
                     placeholder="Ex: Suporte Oficial"
-                    className="w-full bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-blue-500/60 transition-colors"
+                    className="w-full bg-slate-100 dark:bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-blue-500/60 transition-colors"
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -540,7 +540,7 @@ export default function WhatsAppSettingsPage() {
                     value={formData.phoneNumber}
                     onChange={e => setFormData({ ...formData, phoneNumber: e.target.value })}
                     placeholder="Ex: 5549999999999"
-                    className="w-full bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-blue-500/60 transition-colors"
+                    className="w-full bg-slate-100 dark:bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-blue-500/60 transition-colors"
                   />
                 </div>
 
@@ -560,8 +560,8 @@ export default function WhatsAppSettingsPage() {
                     onDrop={handleDrop}
                     className={`flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl border transition-all ${
                       isDragging 
-                        ? 'bg-[#161b22] border-emerald-500/80 shadow-lg shadow-emerald-950/20' 
-                        : 'bg-[#050A15] border-gray-800 hover:border-gray-700'
+                        ? 'bg-white dark:bg-[#161b22] border-emerald-500/80 shadow-lg shadow-emerald-950/20' 
+                        : 'bg-slate-100 dark:bg-[#050A15] border-gray-800 hover:border-gray-700'
                     }`}
                   >
                     {/* Avatar Preview */}
@@ -612,7 +612,7 @@ export default function WhatsAppSettingsPage() {
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={isUploadingImage}
-                          className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-[#161b22] hover:bg-[#21262d] text-gray-200 hover:text-white rounded-xl border border-gray-700 transition-colors cursor-pointer disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-white dark:bg-[#161b22] hover:bg-[#21262d] text-gray-200 hover:text-white rounded-xl border border-gray-700 transition-colors cursor-pointer disabled:opacity-50"
                         >
                           <Upload size={13} className="text-emerald-400" />
                           <span>{formData.profilePicUrl ? "Alterar Foto" : "Selecionar Foto"}</span>
@@ -643,7 +643,7 @@ export default function WhatsAppSettingsPage() {
                 onClick={() => setActiveTab('meta')}
                 className={`px-3.5 py-2 rounded-xl transition-colors cursor-pointer ${
                   activeTab === 'meta'
-                    ? 'bg-[#161b22] text-emerald-400 border border-emerald-800/40'
+                    ? 'bg-white dark:bg-[#161b22] text-emerald-400 border border-emerald-800/40'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
@@ -653,7 +653,7 @@ export default function WhatsAppSettingsPage() {
                 onClick={() => setActiveTab('qr')}
                 className={`px-3.5 py-2 rounded-xl transition-colors cursor-pointer ${
                   activeTab === 'qr'
-                    ? 'bg-[#161b22] text-emerald-400 border border-emerald-800/40'
+                    ? 'bg-white dark:bg-[#161b22] text-emerald-400 border border-emerald-800/40'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
@@ -663,7 +663,7 @@ export default function WhatsAppSettingsPage() {
                 onClick={() => setActiveTab('safety')}
                 className={`px-3.5 py-2 rounded-xl transition-colors cursor-pointer ${
                   activeTab === 'safety'
-                    ? 'bg-[#161b22] text-blue-400 border border-blue-800/40'
+                    ? 'bg-white dark:bg-[#161b22] text-blue-400 border border-blue-800/40'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
@@ -673,7 +673,7 @@ export default function WhatsAppSettingsPage() {
                 onClick={() => setActiveTab('history')}
                 className={`px-3.5 py-2 rounded-xl transition-colors cursor-pointer ${
                   activeTab === 'history'
-                    ? 'bg-[#161b22] text-purple-400 border border-purple-800/40'
+                    ? 'bg-white dark:bg-[#161b22] text-purple-400 border border-purple-800/40'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
@@ -683,7 +683,7 @@ export default function WhatsAppSettingsPage() {
 
             {/* CONTEÚDO DAS ABAS */}
             {activeTab === 'meta' && (
-              <div className="bg-[#0B1224] border border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
+              <div className="bg-white dark:bg-[#0B1224] border border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <Globe size={16} className="text-emerald-400" />
                   Credenciais Oficiais da Meta
@@ -695,7 +695,7 @@ export default function WhatsAppSettingsPage() {
                     value={formData.metaToken}
                     onChange={e => setFormData({ ...formData, metaToken: e.target.value })}
                     placeholder="EAAI... ou chave mascarada"
-                    className="w-full bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-emerald-500/60 transition-colors font-mono"
+                    className="w-full bg-slate-100 dark:bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-emerald-500/60 transition-colors font-mono"
                   />
                 </div>
                 <div>
@@ -705,7 +705,7 @@ export default function WhatsAppSettingsPage() {
                     value={formData.metaPhoneNumberId}
                     onChange={e => setFormData({ ...formData, metaPhoneNumberId: e.target.value })}
                     placeholder="Ex: 1045938592394"
-                    className="w-full bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-emerald-500/60 transition-colors font-mono"
+                    className="w-full bg-slate-100 dark:bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-emerald-500/60 transition-colors font-mono"
                   />
                 </div>
                 <div className="pt-2 flex items-center gap-3">
@@ -720,7 +720,7 @@ export default function WhatsAppSettingsPage() {
                   <button
                     onClick={() => handleConnect('meta')}
                     disabled={isConnecting}
-                    className="flex items-center gap-2 bg-[#161b22] hover:bg-[#21262d] text-emerald-400 border border-emerald-800/50 text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
+                    className="flex items-center gap-2 bg-white dark:bg-[#161b22] hover:bg-[#21262d] text-emerald-400 border border-emerald-800/50 text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
                   >
                     <RefreshCw size={13} className={isConnecting ? "animate-spin" : ""} />
                     <span>Testar & Conectar Meta API</span>
@@ -731,7 +731,7 @@ export default function WhatsAppSettingsPage() {
 
             {/* ABA DE CONEXÃO WEB (QR CODE) REFINADA */}
             {activeTab === 'qr' && (
-              <div className="bg-[#0B1224] border border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
+              <div className="bg-white dark:bg-[#0B1224] border border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
                 
                 {/* Se a instância já estiver conectada */}
                 {activeInstance.status === 'connected' ? (
@@ -751,7 +751,7 @@ export default function WhatsAppSettingsPage() {
                       <button
                         onClick={() => handleConnect('qr')}
                         disabled={isConnecting}
-                        className="flex items-center gap-2 bg-[#161b22] hover:bg-[#21262d] text-gray-300 hover:text-white text-xs font-semibold px-4 py-2.5 rounded-xl border border-gray-700 transition-colors cursor-pointer disabled:opacity-50"
+                        className="flex items-center gap-2 bg-white dark:bg-[#161b22] hover:bg-[#21262d] text-gray-300 hover:text-white text-xs font-semibold px-4 py-2.5 rounded-xl border border-gray-700 transition-colors cursor-pointer disabled:opacity-50"
                       >
                         <RefreshCw size={13} className={isConnecting ? "animate-spin" : ""} />
                         <span>Gerar Novo QR Code para Trocar Aparelho</span>
@@ -779,7 +779,7 @@ export default function WhatsAppSettingsPage() {
                             style={{ imageRendering: 'pixelated' }}
                           />
                           {qrCountdown === 0 && (
-                            <div className="absolute inset-0 bg-[#0B1224]/85 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center">
+                            <div className="absolute inset-0 bg-white/85 dark:bg-[#0B1224]/85 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center">
                               <AlertCircle size={32} className="text-amber-400 mb-2" />
                               <span className="text-xs font-bold text-white">QR Code Expirado</span>
                               <span className="text-[11px] text-gray-300 mt-1">Gere um novo código para parear</span>
@@ -827,7 +827,7 @@ export default function WhatsAppSettingsPage() {
                           onClick={handleSimulatePair}
                           disabled={isSimulatingPair}
                           title="Simular leitura imediata pelo celular"
-                          className="flex items-center gap-2 bg-[#161b22] hover:bg-[#21262d] text-emerald-400 border border-emerald-800/40 text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+                          className="flex items-center gap-2 bg-white dark:bg-[#161b22] hover:bg-[#21262d] text-emerald-400 border border-emerald-800/40 text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
                         >
                           <Smartphone size={14} className={isSimulatingPair ? "animate-pulse" : ""} />
                           <span>{isSimulatingPair ? "Pareando..." : "Simular Pareamento Celular"}</span>
@@ -841,7 +841,7 @@ export default function WhatsAppSettingsPage() {
             )}
 
             {activeTab === 'safety' && (
-              <div className="bg-[#0B1224] border border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
+              <div className="bg-white dark:bg-[#0B1224] border border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
                 <div className="flex items-center gap-2">
                   <ShieldCheck size={18} className="text-blue-400" />
                   <h3 className="text-sm font-bold text-white">Modo Anti-bloqueio & Ritmo Humano</h3>
@@ -850,7 +850,7 @@ export default function WhatsAppSettingsPage() {
                   Configure tempos de espera para simular digitação e intervalos naturais entre envios, reduzindo riscos de banimento pelo WhatsApp.
                 </p>
 
-                <label className="flex items-center gap-2.5 cursor-pointer bg-[#050A15] p-3 rounded-xl border border-gray-800">
+                <label className="flex items-center gap-2.5 cursor-pointer bg-slate-100 dark:bg-[#050A15] p-3 rounded-xl border border-gray-800">
                   <input
                     type="checkbox"
                     checked={formData.antiBanEnabled}
@@ -870,7 +870,7 @@ export default function WhatsAppSettingsPage() {
                       type="number"
                       value={formData.typingDelayMs}
                       onChange={e => setFormData({ ...formData, typingDelayMs: parseInt(e.target.value) || 0 })}
-                      className="w-full bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-blue-500/60 font-mono"
+                      className="w-full bg-slate-100 dark:bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-blue-500/60 font-mono"
                     />
                     <span className="text-[10px] text-gray-500 mt-1 block">Tempo simulando 'digitando...'</span>
                   </div>
@@ -880,7 +880,7 @@ export default function WhatsAppSettingsPage() {
                       type="number"
                       value={formData.messageDelayMs}
                       onChange={e => setFormData({ ...formData, messageDelayMs: parseInt(e.target.value) || 0 })}
-                      className="w-full bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-blue-500/60 font-mono"
+                      className="w-full bg-slate-100 dark:bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-blue-500/60 font-mono"
                     />
                     <span className="text-[10px] text-gray-500 mt-1 block">Intervalo antes da próxima mensagem</span>
                   </div>
@@ -900,7 +900,7 @@ export default function WhatsAppSettingsPage() {
             )}
 
             {activeTab === 'history' && (
-              <div className="bg-[#0B1224] border border-gray-800 rounded-2xl p-5 shadow-sm space-y-3">
+              <div className="bg-white dark:bg-[#0B1224] border border-gray-800 rounded-2xl p-5 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
                     <History size={16} className="text-purple-400" />
@@ -914,7 +914,7 @@ export default function WhatsAppSettingsPage() {
                     <p className="text-xs text-gray-500 italic text-center py-6">Nenhum evento registrado ainda.</p>
                   ) : (
                     activeInstance.history.map(h => (
-                      <div key={h.id} className="p-3 rounded-xl bg-[#050A15] border border-gray-800/80 flex items-center justify-between text-xs">
+                      <div key={h.id} className="p-3 rounded-xl bg-slate-100 dark:bg-[#050A15] border border-gray-800/80 flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2.5">
                           {h.status === 'connected' ? (
                             <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
@@ -942,10 +942,10 @@ export default function WhatsAppSettingsPage() {
 
           {/* COLUNA DIREITA: Card de Status em Tempo Real & Ações Imediatas */}
           <div className="space-y-6">
-            <div className="bg-[#0B1224] border border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <div className="bg-white dark:bg-[#0B1224] border border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
               <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status em Tempo Real</h2>
               
-              <div className="flex items-center gap-3.5 p-3.5 bg-[#050A15] rounded-xl border border-gray-800">
+              <div className="flex items-center gap-3.5 p-3.5 bg-slate-100 dark:bg-[#050A15] rounded-xl border border-gray-800">
                 <div className="relative flex items-center justify-center w-3 h-3">
                   {activeInstance.status === 'connected' ? (
                     <>
@@ -983,7 +983,7 @@ export default function WhatsAppSettingsPage() {
                 <button
                   onClick={handleSyncStatus}
                   disabled={isSyncing}
-                  className="w-full flex items-center justify-center gap-2 bg-[#161b22] hover:bg-[#21262d] text-gray-300 hover:text-white px-4 py-2.5 rounded-xl border border-gray-800 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 bg-white dark:bg-[#161b22] hover:bg-[#21262d] text-gray-300 hover:text-white px-4 py-2.5 rounded-xl border border-gray-800 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
                   title="Consulta o estado real da conexão no WhatsApp e reconecta automaticamente se a sessão foi interrompida"
                 >
                   <RefreshCw size={13} className={isSyncing ? "animate-spin text-cyan-400" : ""} />
@@ -1013,7 +1013,7 @@ export default function WhatsAppSettingsPage() {
             </div>
 
             {/* Guia Rápido */}
-            <div className="bg-[#0B1224] border border-gray-800 rounded-2xl p-5 shadow-sm text-xs text-gray-400 space-y-2">
+            <div className="bg-white dark:bg-[#0B1224] border border-gray-800 rounded-2xl p-5 shadow-sm text-xs text-gray-400 space-y-2">
               <span className="font-bold text-white block uppercase tracking-wider text-[10px]">Sobre Multi-Instâncias</span>
               <p>Cada workspace pode ter múltiplas linhas de atendimento dedicadas para diferentes setores ou filiais.</p>
               <p>A linha marcada como <strong>Principal</strong> é utilizada como canal prioritário para disparo da IA e novos transbordos.</p>
@@ -1026,7 +1026,7 @@ export default function WhatsAppSettingsPage() {
       {/* MODAL PARA CRIAR NOVA INSTÂNCIA */}
       {showNewInstanceModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0B1224] border border-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
+          <div className="bg-white dark:bg-[#0B1224] border border-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
             <h3 className="text-base font-bold text-white">Criar Nova Linha de WhatsApp</h3>
             <p className="text-xs text-gray-400">Adicione uma nova instância dedicada para este workspace.</p>
 
@@ -1039,7 +1039,7 @@ export default function WhatsAppSettingsPage() {
                   placeholder="Ex: WhatsApp Vendas São Paulo"
                   value={newInstanceName}
                   onChange={e => setNewInstanceName(e.target.value)}
-                  className="w-full bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-emerald-500/60"
+                  className="w-full bg-slate-100 dark:bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-emerald-500/60"
                 />
               </div>
 
@@ -1050,7 +1050,7 @@ export default function WhatsAppSettingsPage() {
                   placeholder="Ex: 554999999999"
                   value={newInstancePhone}
                   onChange={e => setNewInstancePhone(e.target.value)}
-                  className="w-full bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-emerald-500/60"
+                  className="w-full bg-slate-100 dark:bg-[#050A15] border border-gray-800 rounded-xl px-3.5 py-2 text-white text-xs outline-none focus:border-emerald-500/60"
                 />
               </div>
 

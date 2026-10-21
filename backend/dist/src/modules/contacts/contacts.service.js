@@ -20,6 +20,18 @@ let ContactsService = class ContactsService {
         this.automationsService = automationsService;
         this.whatsappService = whatsappService;
     }
+    async createContact(tenantId, data) {
+        return this.prisma.contact.create({
+            data: {
+                tenantId,
+                name: data.name.trim(),
+                phone: data.phone?.trim() || null,
+                email: data.email?.trim().toLowerCase() || null,
+                source: data.source || 'Manual',
+                tags: data.tags || ['Lead'],
+            },
+        });
+    }
     async findAll(tenantId) {
         const contacts = await this.prisma.contact.findMany({
             where: { tenantId },

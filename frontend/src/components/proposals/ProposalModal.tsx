@@ -374,7 +374,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
       <div 
-        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-2xl bg-[#0B1224] border border-slate-700/80 shadow-2xl shadow-cyan-950/40 text-slate-200 overflow-hidden"
+        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-700/80 shadow-2xl shadow-cyan-950/40 text-slate-200 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabeçalho do Modal */}
@@ -423,7 +423,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
               {/* Box de Upload do Logotipo */}
-              <div className="md:col-span-4 p-3.5 rounded-xl bg-[#070D1B] border border-slate-700/80 flex flex-col items-center justify-center text-center">
+              <div className="md:col-span-4 p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700/80 flex flex-col items-center justify-center text-center">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -491,7 +491,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                     value={issuerName}
                     onChange={(e) => setIssuerName(e.target.value)}
                     placeholder="Ex: Clínica Sorriso & Estética"
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
@@ -504,7 +504,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                     value={issuerDocument}
                     onChange={(e) => setIssuerDocument(e.target.value)}
                     placeholder="00.000.000/0001-00"
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
@@ -517,7 +517,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                     value={issuerPhone}
                     onChange={(e) => setIssuerPhone(e.target.value)}
                     placeholder="(11) 99999-9999"
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
@@ -530,7 +530,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                     value={issuerEmail}
                     onChange={(e) => setIssuerEmail(e.target.value)}
                     placeholder="comercial@suaempresa.com.br"
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
@@ -543,7 +543,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                     value={issuerAddress}
                     onChange={(e) => setIssuerAddress(e.target.value)}
                     placeholder="Rua, Número, Sala/Andar, Bairro, Cidade - UF"
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -567,7 +567,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ex: Proposta de Consultoria e Automação"
-                  className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -580,7 +580,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   placeholder="Ex: Carlos Eduardo Silveira"
-                  className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   required
                 />
               </div>
@@ -596,7 +596,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                     value={clientCompany}
                     onChange={(e) => setClientCompany(e.target.value)}
                     placeholder="Ex: Nexus Logística & Distribuição"
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -612,7 +612,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                     value={clientPhone}
                     onChange={(e) => setClientPhone(e.target.value)}
                     placeholder="(11) 98765-4321"
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -628,7 +628,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                     value={clientEmail}
                     onChange={(e) => setClientEmail(e.target.value)}
                     placeholder="carlos@nexuslog.com.br"
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -643,7 +643,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                     type="date"
                     value={validUntil}
                     onChange={(e) => setValidUntil(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white [color-scheme:dark] focus:outline-none focus:border-blue-500"
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white [color-scheme:dark] focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -671,7 +671,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
               {items.map((item, index) => (
                 <div
                   key={item.id}
-                  className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800 grid grid-cols-1 md:grid-cols-12 gap-3 items-center"
+                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 grid grid-cols-1 md:grid-cols-12 gap-3 items-center"
                 >
                   <div className="md:col-span-4">
                     <label className="block text-[11px] text-slate-400 mb-1">
@@ -758,7 +758,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                   min={0}
                   value={globalDiscount}
                   onChange={(e) => setGlobalDiscount(Math.max(0, Number(e.target.value)))}
-                  className="w-28 px-2 py-1 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500"
+                  className="w-28 px-2 py-1 text-sm rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -790,7 +790,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500"
+                className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500"
               >
                 <option value="50% Entrada + 50% na Entrega">50% Entrada + 50% na Entrega</option>
                 <option value="À Vista com 5% de Desconto">À Vista com 5% de Desconto</option>
@@ -808,7 +808,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                 type="text"
                 value={sellerName}
                 onChange={(e) => setSellerName(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500"
+                className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500"
               />
             </div>
 
@@ -821,7 +821,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Detalhes adicionais de SLA, garantia ou escopo do projeto..."
-                className="w-full px-3 py-2 text-sm rounded-lg bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
+                className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
               />
             </div>
           </div>

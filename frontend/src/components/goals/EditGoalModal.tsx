@@ -133,7 +133,7 @@ export function EditGoalModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="w-full max-w-lg rounded-2xl bg-[#0B1224] border border-slate-700/80 shadow-2xl text-slate-200 overflow-hidden"
+        className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-700/80 shadow-2xl text-slate-200 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -166,7 +166,7 @@ export function EditGoalModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Faturamento Mensal Q3"
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
               required
             />
           </div>
@@ -179,7 +179,7 @@ export function EditGoalModal({
               <select
                 value={targetType}
                 onChange={(e) => setTargetType(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               >
                 <option value="REVENUE">Receita (R$ Faturado)</option>
                 <option value="DEALS">Contratos / Vendas Fechadas</option>
@@ -194,7 +194,7 @@ export function EditGoalModal({
               <select
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               >
                 <option value="">Equipe Toda (Meta Global)</option>
                 {users.map((u) => (
@@ -224,7 +224,7 @@ export function EditGoalModal({
                 onChange={(e) => setTargetValue(Number(e.target.value))}
                 className={`w-full ${
                   targetType === "REVENUE" ? "pl-10" : "pl-3.5"
-                } pr-3.5 py-2.5 text-sm font-mono font-semibold rounded-xl bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
+                } pr-3.5 py-2.5 text-sm font-mono font-semibold rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
                 required
               />
             </div>
@@ -239,7 +239,7 @@ export function EditGoalModal({
                 type="date"
                 value={periodStart}
                 onChange={(e) => setPeriodStart(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 required
               />
             </div>
@@ -252,7 +252,7 @@ export function EditGoalModal({
                 type="date"
                 value={periodEnd}
                 onChange={(e) => setPeriodEnd(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 required
               />
             </div>

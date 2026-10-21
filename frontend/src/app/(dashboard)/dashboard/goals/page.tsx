@@ -261,7 +261,7 @@ export default function GoalsPage() {
           <button
             onClick={() => loadData(true)}
             disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0B1224] border border-slate-700/80 hover:border-slate-600 text-slate-300 hover:text-white text-xs font-semibold transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-700/80 hover:border-slate-600 text-slate-300 hover:text-white text-xs font-semibold transition-all disabled:opacity-50"
             title="Atualizar dados agora"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-blue-400" : ""}`} />
@@ -280,7 +280,7 @@ export default function GoalsPage() {
 
       {/* Hero: Motor Preditivo de Run Rate */}
       {summaryMetrics && (
-        <div className="p-6 rounded-2xl bg-[#0B1224] border border-slate-800 shadow-2xl relative overflow-hidden space-y-6">
+        <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 shadow-2xl relative overflow-hidden space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             <div className="space-y-3 max-w-2xl">
               <div className="flex items-center gap-3">
@@ -335,7 +335,7 @@ export default function GoalsPage() {
                     className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
                       selectedChannel === ch.id
                         ? "bg-blue-600 text-white shadow-sm shadow-blue-500/30 font-semibold"
-                        : "bg-[#070D1B] border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
+                        : "bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
                     }`}
                   >
                     {ch.label}
@@ -345,7 +345,7 @@ export default function GoalsPage() {
             </div>
 
             {/* Quick Metrics Badges (Monocromáticos e Sóbrios) */}
-            <div className="grid grid-cols-3 gap-3 shrink-0 bg-[#070D1B] p-4 rounded-xl border border-slate-800">
+            <div className="grid grid-cols-3 gap-3 shrink-0 bg-slate-50 dark:bg-[#070D1B] p-4 rounded-xl border border-slate-800">
               <div className="text-center px-2 border-r border-slate-800">
                 <span className="text-[10px] uppercase tracking-wider text-slate-400 block mb-1">
                   Dias Restantes
@@ -392,7 +392,7 @@ export default function GoalsPage() {
               <span className="font-bold text-white font-mono">{summaryMetrics.overallProgress}%</span>
             </div>
 
-            <div className="w-full h-3 bg-[#070D1B] rounded-full overflow-hidden p-0.5 border border-slate-800 relative">
+            <div className="w-full h-3 bg-slate-50 dark:bg-[#070D1B] rounded-full overflow-hidden p-0.5 border border-slate-800 relative">
               {/* Linha vertical que marca o ritmo de tempo decorrido no mês */}
               <div 
                 className="absolute top-0 bottom-0 w-0.5 bg-amber-400 z-10"
@@ -425,7 +425,7 @@ export default function GoalsPage() {
           </div>
 
           {/* Simulador Interativo de Aceleração */}
-          <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800/80 space-y-3">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-blue-400" />
@@ -483,7 +483,7 @@ export default function GoalsPage() {
 
       {/* Alerta Executivo de Aceleração Comercial (Quando Pace Gap é negativo ou status é At_risk/Behind) */}
       {summaryMetrics && (summaryMetrics.paceGap < 0 || summaryMetrics.healthStatus === "BEHIND" || summaryMetrics.healthStatus === "CRITICAL" || summaryMetrics.healthStatus === "AT_RISK") && (
-        <div className="p-5 rounded-2xl bg-[#0B1224] border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in shadow-xl">
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in shadow-xl">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
               <AlertTriangle className="w-5 h-5" />
@@ -517,7 +517,7 @@ export default function GoalsPage() {
             </a>
             <a
               href="/dashboard/analytics"
-              className="px-3.5 py-2 rounded-xl bg-[#070D1B] hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
               Ver Funil & Gargalos
@@ -539,7 +539,7 @@ export default function GoalsPage() {
         </div>
 
         {goals.length === 0 ? (
-          <div className="p-8 text-center rounded-2xl bg-[#0B1224] border border-slate-800 space-y-3">
+          <div className="p-8 text-center rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 space-y-3">
             <div className="w-12 h-12 mx-auto rounded-full bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
               <Target className="w-6 h-6" />
             </div>
@@ -568,7 +568,7 @@ export default function GoalsPage() {
               return (
                 <div
                   key={goal.id}
-                  className="p-5 rounded-2xl bg-[#0B1224] border border-slate-800/80 hover:border-blue-500/40 transition-all group flex flex-col justify-between space-y-4"
+                  className="p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800/80 hover:border-blue-500/40 transition-all group flex flex-col justify-between space-y-4"
                 >
                   <div className="space-y-2">
                     <div className="flex items-start justify-between">
@@ -614,7 +614,7 @@ export default function GoalsPage() {
                     </div>
 
                     {/* Barra de Progresso */}
-                    <div className="w-full h-2 bg-[#070D1B] rounded-full overflow-hidden mt-2 p-0.5 border border-slate-800">
+                    <div className="w-full h-2 bg-slate-50 dark:bg-[#070D1B] rounded-full overflow-hidden mt-2 p-0.5 border border-slate-800">
                       <div
                         className="h-full rounded-full bg-blue-600 transition-all duration-500"
                         style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
@@ -635,7 +635,7 @@ export default function GoalsPage() {
       </div>
 
       {/* Leaderboard Gamificado & Pódio dos Top 3 */}
-      <div className="p-6 rounded-2xl bg-[#0B1224] border border-slate-800/80 shadow-2xl space-y-6">
+      <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800/80 shadow-2xl space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
@@ -656,7 +656,7 @@ export default function GoalsPage() {
         </div>
 
         {ranking.length === 0 ? (
-          <div className="py-10 text-center text-slate-400 text-xs rounded-xl bg-[#070D1B] border border-slate-800">
+          <div className="py-10 text-center text-slate-400 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
             Nenhum contrato fechado no período atual para exibir o Leaderboard.
           </div>
         ) : (
@@ -667,7 +667,7 @@ export default function GoalsPage() {
               {ranking[1] && (
                 <div 
                   onClick={() => openSellerDrilldown(ranking[1].userId || ranking[1].id, ranking[1].name)}
-                  className="order-2 md:order-1 p-5 rounded-2xl bg-[#0B1224] border border-slate-800 relative flex flex-col justify-between hover:border-slate-700 cursor-pointer transition-all group"
+                  className="order-2 md:order-1 p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 relative flex flex-col justify-between hover:border-slate-700 cursor-pointer transition-all group"
                 >
                   <div className="flex items-center justify-between">
                     <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800/80 text-slate-300 border border-slate-700 flex items-center gap-1.5">
@@ -680,7 +680,7 @@ export default function GoalsPage() {
 
                   <div className="my-4 text-center">
                     <div className="w-14 h-14 mx-auto rounded-full bg-slate-700 p-0.5 shadow-md">
-                      <div className="w-full h-full rounded-full bg-[#070D1B] flex items-center justify-center text-base font-bold text-slate-200">
+                      <div className="w-full h-full rounded-full bg-slate-50 dark:bg-[#070D1B] flex items-center justify-center text-base font-bold text-slate-200">
                         {getInitials(ranking[1].name)}
                       </div>
                     </div>
@@ -699,7 +699,7 @@ export default function GoalsPage() {
                           <span
                             key={b.id}
                             title={`${b.title}: ${b.description}`}
-                            className="text-xs px-1.5 py-0.5 rounded bg-[#070D1B] border border-slate-800 text-slate-300 flex items-center gap-1 cursor-help"
+                            className="text-xs px-1.5 py-0.5 rounded bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-slate-300 flex items-center gap-1 cursor-help"
                           >
                             <span>{b.icon}</span>
                             <span className="text-[10px] font-semibold">{b.title}</span>
@@ -728,7 +728,7 @@ export default function GoalsPage() {
               {ranking[0] && (
                 <div 
                   onClick={() => openSellerDrilldown(ranking[0].userId || ranking[0].id, ranking[0].name)}
-                  className="order-1 md:order-2 p-6 rounded-2xl bg-[#0B1224] border-2 border-blue-500/40 relative flex flex-col justify-between shadow-xl shadow-blue-500/5 md:-translate-y-2 hover:border-blue-500/70 cursor-pointer transition-all group"
+                  className="order-1 md:order-2 p-6 rounded-2xl bg-white dark:bg-[#0B1224] border-2 border-blue-500/40 relative flex flex-col justify-between shadow-xl shadow-blue-500/5 md:-translate-y-2 hover:border-blue-500/70 cursor-pointer transition-all group"
                 >
                   <div className="flex items-center justify-between">
                     <span className="px-3 py-1 rounded-lg text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30 flex items-center gap-1.5 shadow-sm">
@@ -741,7 +741,7 @@ export default function GoalsPage() {
 
                   <div className="my-5 text-center">
                     <div className="w-18 h-18 mx-auto rounded-full bg-blue-600/20 border border-blue-500/30 p-1 shadow-md">
-                      <div className="w-16 h-16 rounded-full bg-[#070D1B] flex items-center justify-center text-lg font-black text-blue-400">
+                      <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-[#070D1B] flex items-center justify-center text-lg font-black text-blue-400">
                         {getInitials(ranking[0].name)}
                       </div>
                     </div>
@@ -760,7 +760,7 @@ export default function GoalsPage() {
                           <span
                             key={b.id}
                             title={`${b.title}: ${b.description}`}
-                            className="text-xs px-2 py-0.5 rounded-lg bg-[#070D1B] border border-slate-800 text-slate-300 flex items-center gap-1 cursor-help"
+                            className="text-xs px-2 py-0.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-slate-300 flex items-center gap-1 cursor-help"
                           >
                             <span>{b.icon}</span>
                             <span className="text-[10px] font-bold">{b.title}</span>
@@ -789,7 +789,7 @@ export default function GoalsPage() {
               {ranking[2] && (
                 <div 
                   onClick={() => openSellerDrilldown(ranking[2].userId || ranking[2].id, ranking[2].name)}
-                  className="order-3 p-5 rounded-2xl bg-[#0B1224] border border-slate-800 relative flex flex-col justify-between hover:border-slate-700 cursor-pointer transition-all group"
+                  className="order-3 p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 relative flex flex-col justify-between hover:border-slate-700 cursor-pointer transition-all group"
                 >
                   <div className="flex items-center justify-between">
                     <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800/80 text-slate-300 border border-slate-700 flex items-center gap-1.5">
@@ -802,7 +802,7 @@ export default function GoalsPage() {
 
                   <div className="my-4 text-center">
                     <div className="w-14 h-14 mx-auto rounded-full bg-slate-700 p-0.5 shadow-md">
-                      <div className="w-full h-full rounded-full bg-[#0B1224] flex items-center justify-center text-base font-bold text-slate-200">
+                      <div className="w-full h-full rounded-full bg-white dark:bg-[#0B1224] flex items-center justify-center text-base font-bold text-slate-200">
                         {getInitials(ranking[2].name)}
                       </div>
                     </div>
@@ -821,7 +821,7 @@ export default function GoalsPage() {
                           <span
                             key={b.id}
                             title={`${b.title}: ${b.description}`}
-                            className="text-xs px-1.5 py-0.5 rounded bg-[#070D1B] border border-slate-800 text-slate-300 flex items-center gap-1 cursor-help"
+                            className="text-xs px-1.5 py-0.5 rounded bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-slate-300 flex items-center gap-1 cursor-help"
                           >
                             <span>{b.icon}</span>
                             <span className="text-[10px] font-semibold">{b.title}</span>
@@ -850,7 +850,7 @@ export default function GoalsPage() {
             {/* Tabela de Classificação Geral da Equipe */}
             <div className="overflow-x-auto rounded-xl border border-slate-800">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#070D1B] text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                <thead className="bg-slate-50 dark:bg-[#070D1B] text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                   <tr>
                     <th className="p-3.5">Posição</th>
                     <th className="p-3.5">Consultor Comercial</th>
@@ -862,7 +862,7 @@ export default function GoalsPage() {
                     <th className="p-3.5 text-right">Ação</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 bg-[#0B1224]/50">
+                <tbody className="divide-y divide-slate-800/60 bg-white/50 dark:bg-[#0B1224]/50">
                   {ranking.map((rep) => (
                     <tr key={rep.userId || rep.id} className="hover:bg-slate-800/30 transition-colors">
                       <td className="p-3.5 font-bold font-mono text-slate-300">
@@ -879,7 +879,7 @@ export default function GoalsPage() {
                               <span
                                 key={b.id}
                                 title={`${b.title}: ${b.description}`}
-                                className="text-xs px-1.5 py-0.5 rounded bg-[#070D1B] border border-slate-800 cursor-help"
+                                className="text-xs px-1.5 py-0.5 rounded bg-slate-50 dark:bg-[#070D1B] border border-slate-800 cursor-help"
                               >
                                 {b.icon}
                               </span>

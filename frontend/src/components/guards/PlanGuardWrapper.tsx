@@ -121,7 +121,7 @@ export default function PlanGuardWrapper({ children }: PlanGuardWrapperProps) {
   if (routeRestriction) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-200">
-        <div className="max-w-md w-full bg-[#070D1B] border border-slate-800 rounded-3xl p-8 shadow-2xl flex flex-col items-center">
+        <div className="max-w-md w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-3xl p-8 shadow-2xl flex flex-col items-center">
           <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-5 shadow-[0_0_25px_rgba(245,158,11,0.2)]">
             <Lock size={32} />
           </div>

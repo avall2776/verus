@@ -177,7 +177,7 @@ export default function AutomationsSettingsTab() {
           <button
             onClick={fetchData}
             disabled={isRefreshing}
-            className="p-2 rounded-xl text-slate-400 hover:text-white bg-[#070D1B] border border-slate-800 hover:border-slate-700 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white bg-slate-50 dark:bg-[#070D1B] border border-slate-800 hover:border-slate-700 transition-colors"
             title="Atualizar dados"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-blue-400" : ""}`} />
@@ -225,7 +225,7 @@ export default function AutomationsSettingsTab() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Filtrar automações..."
-              className="w-full bg-[#070D1B] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
             />
           </div>
         )}
@@ -239,7 +239,7 @@ export default function AutomationsSettingsTab() {
         </div>
       ) : activeSubTab === "rules" ? (
         filteredAutomations.length === 0 ? (
-          <div className="p-12 text-center border border-dashed border-slate-800 rounded-2xl bg-[#070D1B]/40 space-y-3">
+          <div className="p-12 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-50/40 dark:bg-slate-50 dark:bg-[#070D1B]/40 space-y-3">
             <Zap className="w-10 h-10 text-slate-600 mx-auto" />
             <p className="text-sm font-semibold text-slate-300">Nenhuma regra de automação configurada</p>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
@@ -259,7 +259,7 @@ export default function AutomationsSettingsTab() {
               return (
                 <div
                   key={auto.id}
-                  className="p-4 rounded-xl bg-[#070D1B] border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -325,7 +325,7 @@ export default function AutomationsSettingsTab() {
           </div>
         )
       ) : logs.length === 0 ? (
-        <div className="p-12 text-center border border-dashed border-slate-800 rounded-2xl bg-[#070D1B]/40 space-y-2">
+        <div className="p-12 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-50/40 dark:bg-slate-50 dark:bg-[#070D1B]/40 space-y-2">
           <Clock className="w-10 h-10 text-slate-600 mx-auto" />
           <p className="text-sm font-semibold text-slate-300">Nenhum registro de execução ainda</p>
           <p className="text-xs text-slate-500">
@@ -337,7 +337,7 @@ export default function AutomationsSettingsTab() {
           {logs.slice(0, 20).map((log) => (
             <div
               key={log.id}
-              className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800/80 flex items-center justify-between gap-4"
+              className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 flex items-center justify-between gap-4"
             >
               <div className="flex items-center gap-3">
                 {log.status === "SUCCESS" ? (

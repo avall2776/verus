@@ -257,7 +257,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-[#0B1224] border border-slate-800/80 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div className="bg-white dark:bg-[#0B1224] border border-slate-800/80 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         {/* MODAL HEADER */}
         <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/40">
           <div className="flex items-center gap-3">
@@ -392,7 +392,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="Ex: Boas-vindas pós aceite de proposta comercial"
-                    className="w-full bg-[#050A15] border border-slate-700/70 rounded-xl px-4 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-medium text-sm"
+                    className="w-full bg-slate-100 dark:bg-[#050A15] border border-slate-700/70 rounded-xl px-4 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-medium text-sm"
                   />
                   <Zap
                     size={18}
@@ -413,7 +413,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                   onChange={e => setDescription(e.target.value)}
                   placeholder="Ex: Envia WhatsApp com link de onboarding e move o card do CRM para 'Ganho'."
                   rows={4}
-                  className="w-full bg-[#050A15] border border-slate-700/70 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-sm resize-none"
+                  className="w-full bg-slate-100 dark:bg-[#050A15] border border-slate-700/70 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-sm resize-none"
                 />
               </div>
 
@@ -449,7 +449,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                         className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3.5 relative ${
                           isSelected
                             ? `${t.color} ring-1 ring-cyan-400 shadow-lg shadow-cyan-500/10`
-                            : "bg-[#050A15]/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/40"
+                            : "bg-slate-50/60 dark:bg-slate-100 dark:bg-[#050A15]/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/40"
                         }`}
                       >
                         <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 shrink-0 mt-0.5">
@@ -491,7 +491,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                         setTriggerConditions(prev => ({ ...prev, minValue: e.target.value }))
                       }
                       placeholder="Ex: 5000 (Deixe em branco para qualquer valor)"
-                      className="w-full bg-[#050A15] border border-slate-700/70 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-500"
+                      className="w-full bg-slate-100 dark:bg-[#050A15] border border-slate-700/70 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-500"
                     />
                   </div>
                 )}
@@ -506,7 +506,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                       onChange={e =>
                         setTriggerConditions(prev => ({ ...prev, stage: e.target.value }))
                       }
-                      className="w-full bg-[#050A15] border border-slate-700/70 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-500"
+                      className="w-full bg-slate-100 dark:bg-[#050A15] border border-slate-700/70 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-500"
                     >
                       <option value="">Qualquer Etapa</option>
                       <option value="leads">Novos Leads</option>
@@ -531,7 +531,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                         setTriggerConditions(prev => ({ ...prev, tag: e.target.value }))
                       }
                       placeholder="Ex: vip, prioridade-alta, retorno-agendado"
-                      className="w-full bg-[#050A15] border border-slate-700/70 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-500"
+                      className="w-full bg-slate-100 dark:bg-[#050A15] border border-slate-700/70 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-500"
                     />
                   </div>
                 )}
@@ -550,7 +550,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                           timeoutMinutes: Number(e.target.value)
                         }))
                       }
-                      className="w-full bg-[#050A15] border border-slate-700/70 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-500"
+                      className="w-full bg-slate-100 dark:bg-[#050A15] border border-slate-700/70 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-cyan-500"
                     />
                     <p className="text-[11px] text-slate-500 mt-1">
                       Exemplo: 60 = 1 hora de silêncio do contato antes de disparar o lembrete.
@@ -583,7 +583,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                         className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
                           isSelected
                             ? "border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-400"
-                            : "bg-[#050A15]/60 border-slate-800 hover:border-slate-700 text-slate-300"
+                            : "bg-slate-50/60 dark:bg-slate-100 dark:bg-[#050A15]/60 border-slate-800 hover:border-slate-700 text-slate-300"
                         }`}
                       >
                         <div className="flex items-center justify-between mb-2">
@@ -606,7 +606,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
 
               {/* CONFIGURAÇÃO DA AÇÃO ESPECÍFICA */}
               {actionType === "SEND_WHATSAPP" && (
-                <div className="space-y-4 p-5 rounded-2xl bg-[#050A15] border border-slate-800">
+                <div className="space-y-4 p-5 rounded-2xl bg-slate-100 dark:bg-[#050A15] border border-slate-800">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
                       <Send size={14} className="text-emerald-400" />
@@ -659,7 +659,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               )}
 
               {actionType === "UPDATE_DEAL_STAGE" && (
-                <div className="p-5 rounded-2xl bg-[#050A15] border border-slate-800 space-y-3">
+                <div className="p-5 rounded-2xl bg-slate-100 dark:bg-[#050A15] border border-slate-800 space-y-3">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
                     Selecione a Etapa de Destino no CRM:
                   </label>
@@ -678,7 +678,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               )}
 
               {actionType === "CREATE_TASK" && (
-                <div className="p-5 rounded-2xl bg-[#050A15] border border-slate-800 space-y-3">
+                <div className="p-5 rounded-2xl bg-slate-100 dark:bg-[#050A15] border border-slate-800 space-y-3">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
                     Título da Tarefa:
                   </label>
@@ -695,7 +695,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               )}
 
               {actionType === "ADD_TAG" && (
-                <div className="p-5 rounded-2xl bg-[#050A15] border border-slate-800 space-y-3">
+                <div className="p-5 rounded-2xl bg-slate-100 dark:bg-[#050A15] border border-slate-800 space-y-3">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
                     Tag a ser adicionada no Contato:
                   </label>
@@ -710,7 +710,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               )}
 
               {actionType === "NOTIFY_USER" && (
-                <div className="p-5 rounded-2xl bg-[#050A15] border border-slate-800 space-y-3">
+                <div className="p-5 rounded-2xl bg-slate-100 dark:bg-[#050A15] border border-slate-800 space-y-3">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
                     Mensagem de Alerta para o Time:
                   </label>

@@ -43,6 +43,7 @@ const search_module_1 = require("./modules/search/search.module");
 const operators_module_1 = require("./modules/operators/operators.module");
 const engineering_module_1 = require("./modules/engineering/engineering.module");
 const voip_module_1 = require("./modules/voip/voip.module");
+const agency_marketing_module_1 = require("./modules/agency-marketing/agency-marketing.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer
@@ -87,6 +88,7 @@ exports.AppModule = AppModule = __decorate([
             operators_module_1.OperatorsModule,
             engineering_module_1.EngineeringModule,
             voip_module_1.VoipModule,
+            agency_marketing_module_1.AgencyMarketingModule,
         ],
         controllers: [],
         providers: [],

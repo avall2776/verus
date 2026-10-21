@@ -289,11 +289,11 @@ export default function CompanyXRayModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-slate-100"
+        className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-[#070D1B]">
+        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#070D1B]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold shrink-0">
               <Building2 size={22} />
@@ -338,7 +338,7 @@ export default function CompanyXRayModal({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 px-5 pt-3 border-b border-slate-800 bg-[#070D1B]">
+        <div className="flex items-center gap-2 px-5 pt-3 border-b border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
           {[
             { key: "cadastro", label: "Dados Cadastrais", icon: Building2 },
             { key: "metricas", label: "Métricas & Uso", icon: Activity },
@@ -377,7 +377,7 @@ export default function CompanyXRayModal({
               {activeTab === "cadastro" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-3">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-3">
                       <h3 className="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2">
                         <Building2 size={14} /> Identificação Fiscal & Cadastral
                       </h3>
@@ -411,7 +411,7 @@ export default function CompanyXRayModal({
                       </div>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-3">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-3">
                       <h3 className="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2">
                         <Mail size={14} /> Contato & Localização
                       </h3>
@@ -439,7 +439,7 @@ export default function CompanyXRayModal({
                   </div>
 
                   {/* Usuários Cadastrados */}
-                  <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-3">
+                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                       <div>
                         <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
@@ -506,7 +506,7 @@ export default function CompanyXRayModal({
                               {/* Senha de Acesso */}
                               <td className="py-2.5">
                                 {u.savedPassword ? (
-                                  <div className="inline-flex items-center gap-1.5 bg-[#070D1B] border border-slate-800 px-2 py-1 rounded-lg">
+                                  <div className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 px-2 py-1 rounded-lg">
                                     <span className="font-mono text-[11px] text-slate-200">
                                       {revealedPasswords[u.id] ? u.savedPassword : "••••••••"}
                                     </span>
@@ -598,26 +598,26 @@ export default function CompanyXRayModal({
               {activeTab === "metricas" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
                       <span className="text-[11px] text-slate-400 font-semibold block uppercase">Operadores</span>
                       <p className="text-2xl font-black text-white mt-1 font-mono">{data.metrics.totalUsers}</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
                       <span className="text-[11px] text-slate-400 font-semibold block uppercase">Contatos (Leads)</span>
                       <p className="text-2xl font-black text-white mt-1 font-mono">{data.metrics.totalContacts}</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
                       <span className="text-[11px] text-slate-400 font-semibold block uppercase">Deals no CRM</span>
                       <p className="text-2xl font-black text-white mt-1 font-mono">{data.metrics.totalDeals}</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
                       <span className="text-[11px] text-slate-400 font-semibold block uppercase">Contratos Emitidos</span>
                       <p className="text-2xl font-black text-white mt-1 font-mono">{data.metrics.totalContracts}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-2">
                       <span className="text-xs font-bold text-slate-300 block uppercase">Contratos Assinados & Faturamento</span>
                       <div className="flex items-baseline gap-2">
                         <span className="text-2xl font-black text-emerald-400 font-mono">
@@ -628,7 +628,7 @@ export default function CompanyXRayModal({
                       <p className="text-[11px] text-slate-400">Volume financeiro gerado e formalizado através dos módulos de propostas e contratos.</p>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-2">
                       <span className="text-xs font-bold text-slate-300 block uppercase">Pipeline Ativo no CRM</span>
                       <div className="flex items-baseline gap-2">
                         <span className="text-2xl font-black text-blue-400 font-mono">
@@ -646,7 +646,7 @@ export default function CompanyXRayModal({
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Card WhatsApp */}
-                    <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-3">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-3">
                       <div className="flex items-center justify-between">
                         <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
                           <PhoneCall size={14} className="text-emerald-400" /> WhatsApp Cloud API
@@ -677,7 +677,7 @@ export default function CompanyXRayModal({
                     </div>
 
                     {/* Card SMTP */}
-                    <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-3">
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-3">
                       <div className="flex items-center justify-between">
                         <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
                           <Mail size={14} className="text-blue-400" /> Transporte de E-mail (SMTP)
@@ -730,7 +730,7 @@ export default function CompanyXRayModal({
                       {data.recentTickets?.map((ticket: any) => (
                         <div 
                           key={ticket.id}
-                          className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800 hover:border-slate-700 transition-colors flex items-center justify-between"
+                          className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 hover:border-slate-700 transition-colors flex items-center justify-between"
                         >
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
@@ -776,7 +776,7 @@ export default function CompanyXRayModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-slate-800 bg-[#070D1B] flex items-center justify-between">
+        <div className="p-4 border-t border-slate-800 bg-slate-50 dark:bg-[#070D1B] flex items-center justify-between">
           <button
             onClick={() => setIsEditModalOpen(true)}
             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs font-semibold transition-colors"
@@ -817,10 +817,10 @@ export default function CompanyXRayModal({
       {editingUser && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div 
-            className="bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden text-slate-100"
+            className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden text-slate-100"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-[#070D1B]">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#070D1B]">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
                   <Edit2 size={16} />
@@ -848,7 +848,7 @@ export default function CompanyXRayModal({
                   required
                   value={userFormData.name}
                   onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
-                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all"
                   placeholder="Ex: Ana Clara Lima"
                 />
               </div>
@@ -862,7 +862,7 @@ export default function CompanyXRayModal({
                   required
                   value={userFormData.email}
                   onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
-                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all font-mono"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all font-mono"
                   placeholder="usuario@empresa.com.br"
                 />
               </div>
@@ -875,7 +875,7 @@ export default function CompanyXRayModal({
                   <select
                     value={userFormData.role}
                     onChange={(e) => setUserFormData({ ...userFormData, role: e.target.value })}
-                    className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition-all"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition-all"
                   >
                     <option value="ADMIN">Administrador (ADMIN)</option>
                     <option value="AGENT">Atendente (AGENT)</option>
@@ -889,7 +889,7 @@ export default function CompanyXRayModal({
                   <select
                     value={userFormData.isActive ? "true" : "false"}
                     onChange={(e) => setUserFormData({ ...userFormData, isActive: e.target.value === "true" })}
-                    className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition-all"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition-all"
                   >
                     <option value="true">Ativo</option>
                     <option value="false">Bloqueado</option>
@@ -923,10 +923,10 @@ export default function CompanyXRayModal({
       {passwordUser && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div 
-            className="bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden text-slate-100"
+            className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden text-slate-100"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-[#070D1B]">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#070D1B]">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
                   <KeyRound size={16} />
@@ -949,7 +949,7 @@ export default function CompanyXRayModal({
                 <>
                   {/* Visualização da Senha Atual Cadastrada para Testes Imediatos */}
                   {passwordUser.savedPassword ? (
-                    <div className="p-3.5 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2">
+                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                           Senha Atual Salva
@@ -958,7 +958,7 @@ export default function CompanyXRayModal({
                           Pronta para Acesso / Testes
                         </span>
                       </div>
-                      <div className="flex items-center justify-between gap-2 bg-[#0B1224] p-2.5 rounded-lg border border-slate-800">
+                      <div className="flex items-center justify-between gap-2 bg-white dark:bg-[#0B1224] p-2.5 rounded-lg border border-slate-800">
                         <span className="font-mono text-xs font-bold text-slate-100 tracking-wider">
                           {showCurrentPassword ? passwordUser.savedPassword : "••••••••••••"}
                         </span>
@@ -1019,11 +1019,11 @@ export default function CompanyXRayModal({
                       value={newPasswordInput}
                       onChange={(e) => setNewPasswordInput(e.target.value)}
                       placeholder="Digite a senha que você desejar (ex: minhaSenha123)"
-                      className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all font-mono"
+                      className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all font-mono"
                     />
                   </div>
 
-                  <label className="flex items-start gap-2.5 p-3 rounded-xl bg-[#070D1B] border border-slate-800 cursor-pointer hover:border-slate-700 transition-colors">
+                  <label className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 cursor-pointer hover:border-slate-700 transition-colors">
                     <input
                       type="checkbox"
                       checked={sendEmailCheckbox}
@@ -1064,11 +1064,11 @@ export default function CompanyXRayModal({
                     <span>Senha atualizada e gravada com sucesso no banco de dados!</span>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2">
+                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-2">
                     <span className="text-[11px] text-slate-400 font-semibold block uppercase">
                       Nova Senha Gravada:
                     </span>
-                    <div className="flex items-center justify-between gap-2 bg-[#0B1224] p-3 rounded-lg border border-slate-800">
+                    <div className="flex items-center justify-between gap-2 bg-white dark:bg-[#0B1224] p-3 rounded-lg border border-slate-800">
                       <span className="font-mono text-sm font-bold text-blue-400 tracking-wider">
                         {generatedResult.temporaryPassword}
                       </span>
@@ -1123,10 +1123,10 @@ export default function CompanyXRayModal({
       {deletingUser && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div 
-            className="bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden text-slate-100"
+            className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden text-slate-100"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-[#070D1B]">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#070D1B]">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">
                   <Trash2 size={16} />
@@ -1182,10 +1182,10 @@ export default function CompanyXRayModal({
       {isCreateUserOpen && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div 
-            className="bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden text-slate-100"
+            className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden text-slate-100"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-[#070D1B]">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#070D1B]">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
                   <UserPlus size={16} />
@@ -1214,7 +1214,7 @@ export default function CompanyXRayModal({
                   value={newUserFormData.name}
                   onChange={(e) => setNewUserFormData({ ...newUserFormData, name: e.target.value })}
                   placeholder="Ex: João da Silva"
-                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all"
                 />
               </div>
 
@@ -1228,7 +1228,7 @@ export default function CompanyXRayModal({
                   value={newUserFormData.email}
                   onChange={(e) => setNewUserFormData({ ...newUserFormData, email: e.target.value })}
                   placeholder="Ex: joao@empresa.com.br"
-                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all font-mono"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all font-mono"
                 />
               </div>
 
@@ -1240,7 +1240,7 @@ export default function CompanyXRayModal({
                   <select
                     value={newUserFormData.role}
                     onChange={(e) => setNewUserFormData({ ...newUserFormData, role: e.target.value })}
-                    className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition-all"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition-all"
                   >
                     <option value="AGENT">Atendente (AGENT)</option>
                     <option value="ADMIN">Administrador (ADMIN)</option>
@@ -1254,7 +1254,7 @@ export default function CompanyXRayModal({
                   <select
                     value={newUserFormData.isActive ? "true" : "false"}
                     onChange={(e) => setNewUserFormData({ ...newUserFormData, isActive: e.target.value === "true" })}
-                    className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition-all"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2.5 text-xs text-white outline-none transition-all"
                   >
                     <option value="true">Ativo</option>
                     <option value="false">Bloqueado</option>
@@ -1281,7 +1281,7 @@ export default function CompanyXRayModal({
                   value={newUserFormData.password}
                   onChange={(e) => setNewUserFormData({ ...newUserFormData, password: e.target.value })}
                   placeholder="Digite a senha (mínimo 6 caracteres)"
-                  className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all font-mono"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all font-mono"
                 />
               </div>
 

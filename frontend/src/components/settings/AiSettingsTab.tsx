@@ -146,7 +146,7 @@ export default function AiSettingsTab() {
   return (
     <div className="space-y-8 animate-in fade-in duration-150">
       {/* 1. STATUS GERAL & BANNER DE DEGUSTAÇÃO / BYOK */}
-      <div className="rounded-2xl bg-[#0B1224] border border-slate-800 p-6 space-y-5">
+      <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 p-6 space-y-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
@@ -246,7 +246,7 @@ export default function AiSettingsTab() {
       </div>
 
       {/* 2. CHAVE ATIVA OU CONFIGURAÇÃO DE NOVA CHAVE */}
-      <div className="rounded-2xl bg-[#0B1224] border border-slate-800 p-6 space-y-6">
+      <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 p-6 space-y-6">
         <div className="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
           <Key className="w-4 h-4 text-blue-400" />
           <h3 className="text-sm font-bold uppercase tracking-wider text-white">
@@ -255,7 +255,7 @@ export default function AiSettingsTab() {
         </div>
 
         {status?.hasCustomKey && (
-          <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-300">Chave Cadastrada:</span>
@@ -307,7 +307,7 @@ export default function AiSettingsTab() {
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
                 placeholder="sk-proj-abc123456789xyz..."
-                className="w-full bg-[#070D1B] border border-slate-800 rounded-xl pl-3.5 pr-10 py-2.5 text-xs font-mono text-white placeholder-slate-600 outline-none focus:border-slate-600 transition-colors"
+                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl pl-3.5 pr-10 py-2.5 text-xs font-mono text-white placeholder-slate-600 outline-none focus:border-slate-600 transition-colors"
               />
               <button
                 type="button"
@@ -348,7 +348,7 @@ export default function AiSettingsTab() {
       </div>
 
       {/* 3. ASSISTENTE PASSO A PASSO PARA O CLIENTE GERAR A CHAVE NA OPENAI */}
-      <div className="rounded-2xl bg-[#0B1224] border border-slate-800 p-6 space-y-5">
+      <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 p-6 space-y-5">
         <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
           <div className="flex items-center gap-2.5">
             <HelpCircle className="w-4 h-4 text-blue-400" />
@@ -369,7 +369,7 @@ export default function AiSettingsTab() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Passo 1 */}
-          <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2 relative">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-2 relative">
             <span className="w-6 h-6 rounded-lg bg-slate-800 text-slate-300 font-mono text-xs font-bold flex items-center justify-center">
               1
             </span>
@@ -380,7 +380,7 @@ export default function AiSettingsTab() {
           </div>
 
           {/* Passo 2 */}
-          <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2 relative">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-2 relative">
             <span className="w-6 h-6 rounded-lg bg-slate-800 text-slate-300 font-mono text-xs font-bold flex items-center justify-center">
               2
             </span>
@@ -391,7 +391,7 @@ export default function AiSettingsTab() {
           </div>
 
           {/* Passo 3 */}
-          <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2 relative">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-2 relative">
             <span className="w-6 h-6 rounded-lg bg-slate-800 text-slate-300 font-mono text-xs font-bold flex items-center justify-center">
               3
             </span>
@@ -402,7 +402,7 @@ export default function AiSettingsTab() {
           </div>
 
           {/* Passo 4 */}
-          <div className="p-4 rounded-xl bg-[#070D1B] border border-slate-800 space-y-2 relative">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-2 relative">
             <span className="w-6 h-6 rounded-lg bg-slate-800 text-slate-300 font-mono text-xs font-bold flex items-center justify-center">
               4
             </span>

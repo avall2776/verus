@@ -46,23 +46,24 @@ const nextConfig = {
   },
 
   async rewrites() {
+    const backendTarget = process.env.BACKEND_URL || 'http://localhost:3001';
     return [
       {
         source: '/api-backend/:path*',
-        destination: 'http://187.127.10.166:3001/:path*',
+        destination: `${backendTarget}/:path*`,
       },
       {
         source: '/socket.io/:path*',
-        destination: 'http://187.127.10.166:3001/socket.io/:path*',
+        destination: `${backendTarget}/socket.io/:path*`,
       },
       {
         source: '/api-backend/:path*',
-        destination: 'http://187.127.10.166:3001/:path*',
+        destination: `${backendTarget}/:path*`,
         basePath: false,
       },
       {
         source: '/socket.io/:path*',
-        destination: 'http://187.127.10.166:3001/socket.io/:path*',
+        destination: `${backendTarget}/socket.io/:path*`,
         basePath: false,
       },
     ];

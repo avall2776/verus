@@ -7,7 +7,7 @@ export default function DashboardLoading() {
       {/* Glow de Fundo */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
 
-      <div className="relative z-10 flex flex-col items-center gap-4 bg-[#0B1224]/80 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl max-w-sm w-full mx-4 text-center">
+      <div className="relative z-10 flex flex-col items-center gap-4 bg-white/80 dark:bg-[#0B1224]/80 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl max-w-sm w-full mx-4 text-center">
         {/* Ícone com Pulso e Anel Cibernético */}
         <div className="relative flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-b from-blue-600/20 to-cyan-500/10 border border-cyan-500/30 text-cyan-400 shadow-[0_0_25px_rgba(0,210,255,0.2)]">
           <Cpu className="w-8 h-8 animate-pulse text-cyan-400" />

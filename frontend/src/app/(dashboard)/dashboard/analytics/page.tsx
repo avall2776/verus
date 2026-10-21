@@ -28,7 +28,7 @@ import BottleneckAuditModal from "@/components/analytics/BottleneckAuditModal";
 function CustomChartTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
-      <div className="p-3 rounded-xl bg-[#0B1224] border border-slate-700/80 shadow-2xl backdrop-blur-md text-xs space-y-1 z-50">
+      <div className="p-3 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-700/80 shadow-2xl backdrop-blur-md text-xs space-y-1 z-50">
         <p className="font-bold text-white border-b border-slate-800 pb-1">{label}</p>
         {payload.map((item: any, idx: number) => (
           <div key={idx} className="flex items-center justify-between gap-4 text-slate-300">
@@ -457,7 +457,7 @@ export default function AnalyticsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Donut Chart de Distribuição de Receita por Canal */}
-          <div className="p-4 rounded-xl bg-slate-950/40 border border-slate-800/80 flex flex-col items-center justify-center">
+          <div className="p-4 rounded-xl bg-slate-100 dark:bg-slate-950/40 border border-slate-800/80 flex flex-col items-center justify-center">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
               Participação no Faturamento (R$)
             </h4>
@@ -495,7 +495,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Tabela de Canais com Ações de Drilldown */}
-          <div className="lg:col-span-2 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/40">
+          <div className="lg:col-span-2 overflow-x-auto rounded-xl border border-slate-800 bg-slate-100 dark:bg-slate-950/40">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-900 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
                 <tr>
@@ -600,7 +600,7 @@ export default function AnalyticsPage() {
             {bottlenecksData?.departmentBottlenecks?.map((item, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/50 border border-slate-800 text-xs"
+                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950/50 border border-slate-800 text-xs"
               >
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${

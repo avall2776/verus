@@ -701,9 +701,9 @@ export default function EngineeringDashboard() {
   });
 
   return (
-    <div className="flex flex-col h-full bg-[#070D1B] text-slate-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-[#070D1B] text-slate-100 overflow-hidden font-sans">
       {/* HEADER SUPERIOR */}
-      <header className="p-4 md:px-6 border-b border-slate-800 bg-[#0B1224] flex flex-wrap items-center justify-between gap-4 shrink-0">
+      <header className="p-4 md:px-6 border-b border-slate-800 bg-white dark:bg-[#0B1224] flex flex-wrap items-center justify-between gap-4 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0 shadow-sm shadow-cyan-500/10">
             <Cpu size={22} />
@@ -726,7 +726,7 @@ export default function EngineeringDashboard() {
         {/* CONTROLES DO TOPO: Alternador de Abas, Sincronizar Deploy & Nova Iniciativa */}
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* Alternador de Abas Principais */}
-          <div className="flex items-center p-1 bg-[#070D1B] border border-slate-800 rounded-lg">
+          <div className="flex items-center p-1 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg">
             <button
               onClick={() => setActiveTab("kanban")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
@@ -799,7 +799,7 @@ export default function EngineeringDashboard() {
               <button
                 onClick={fetchProducts}
                 disabled={loadingProducts}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0B1224] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#0B1224] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
                 title="Atualizar telemetria dos produtos"
               >
                 <RefreshCw size={13} className={loadingProducts ? "animate-spin" : ""} />
@@ -827,8 +827,8 @@ export default function EngineeringDashboard() {
 
       {/* MÉTRICAS DE TOPO (KPIs) - Visíveis apenas no Pipeline & Backlog */}
       {activeTab === "kanban" && (
-        <section className="px-4 md:px-6 py-3 border-b border-slate-800/80 bg-[#091020] grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0">
-          <div className="bg-[#0B1224] border border-slate-800 rounded-lg p-2.5 flex items-center justify-between">
+        <section className="px-4 md:px-6 py-3 border-b border-slate-800/80 bg-slate-100 dark:bg-[#091020] grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg p-2.5 flex items-center justify-between">
             <div>
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Iniciativas</p>
               <p className="text-lg font-black text-white">{stats.total}</p>
@@ -838,7 +838,7 @@ export default function EngineeringDashboard() {
             </div>
           </div>
 
-          <div className="bg-[#0B1224] border border-amber-500/20 rounded-lg p-2.5 flex items-center justify-between">
+          <div className="bg-white dark:bg-[#0B1224] border border-amber-500/20 rounded-lg p-2.5 flex items-center justify-between">
             <div>
               <p className="text-[10px] text-amber-400 uppercase font-bold tracking-wider">Capturadas</p>
               <p className="text-lg font-black text-amber-300">{stats.captured}</p>
@@ -848,7 +848,7 @@ export default function EngineeringDashboard() {
             </div>
           </div>
 
-          <div className="bg-[#0B1224] border border-purple-500/20 rounded-lg p-2.5 flex items-center justify-between">
+          <div className="bg-white dark:bg-[#0B1224] border border-purple-500/20 rounded-lg p-2.5 flex items-center justify-between">
             <div>
               <p className="text-[10px] text-purple-400 uppercase font-bold tracking-wider">Em Análise IA</p>
               <p className="text-lg font-black text-purple-300">{stats.aiAnalysis}</p>
@@ -858,7 +858,7 @@ export default function EngineeringDashboard() {
             </div>
           </div>
 
-          <div className="bg-[#0B1224] border border-blue-500/20 rounded-lg p-2.5 flex items-center justify-between">
+          <div className="bg-white dark:bg-[#0B1224] border border-blue-500/20 rounded-lg p-2.5 flex items-center justify-between">
             <div>
               <p className="text-[10px] text-blue-400 uppercase font-bold tracking-wider">Em Desenvolvimento</p>
               <p className="text-lg font-black text-blue-300">{stats.inDevelopment}</p>
@@ -868,7 +868,7 @@ export default function EngineeringDashboard() {
             </div>
           </div>
 
-          <div className="bg-[#0B1224] border border-emerald-500/20 rounded-lg p-2.5 flex items-center justify-between col-span-2 md:col-span-1">
+          <div className="bg-white dark:bg-[#0B1224] border border-emerald-500/20 rounded-lg p-2.5 flex items-center justify-between col-span-2 md:col-span-1">
             <div>
               <p className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">Deploy Realizado</p>
               <p className="text-lg font-black text-emerald-300">{stats.deployed}</p>
@@ -882,8 +882,8 @@ export default function EngineeringDashboard() {
 
       {/* MÉTRICAS DE TOPO (KPIs) - Produtos e Módulos em R&D */}
       {activeTab === "products" && (
-        <section className="px-4 md:px-6 py-3 border-b border-slate-800/80 bg-[#091020] grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0">
-          <div className="bg-[#0B1224] border border-slate-800 rounded-lg p-2.5 flex items-center justify-between">
+        <section className="px-4 md:px-6 py-3 border-b border-slate-800/80 bg-slate-100 dark:bg-[#091020] grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg p-2.5 flex items-center justify-between">
             <div>
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total em R&D</p>
               <p className="text-lg font-black text-white">{products.length}</p>
@@ -893,7 +893,7 @@ export default function EngineeringDashboard() {
             </div>
           </div>
 
-          <div className="bg-[#0B1224] border border-amber-500/20 rounded-lg p-2.5 flex items-center justify-between">
+          <div className="bg-white dark:bg-[#0B1224] border border-amber-500/20 rounded-lg p-2.5 flex items-center justify-between">
             <div>
               <p className="text-[10px] text-amber-400 uppercase font-bold tracking-wider">Em Planejamento</p>
               <p className="text-lg font-black text-amber-300">
@@ -905,7 +905,7 @@ export default function EngineeringDashboard() {
             </div>
           </div>
 
-          <div className="bg-[#0B1224] border border-blue-500/20 rounded-lg p-2.5 flex items-center justify-between">
+          <div className="bg-white dark:bg-[#0B1224] border border-blue-500/20 rounded-lg p-2.5 flex items-center justify-between">
             <div>
               <p className="text-[10px] text-blue-400 uppercase font-bold tracking-wider">Em Desenvolvimento</p>
               <p className="text-lg font-black text-blue-300">
@@ -917,7 +917,7 @@ export default function EngineeringDashboard() {
             </div>
           </div>
 
-          <div className="bg-[#0B1224] border border-purple-500/20 rounded-lg p-2.5 flex items-center justify-between">
+          <div className="bg-white dark:bg-[#0B1224] border border-purple-500/20 rounded-lg p-2.5 flex items-center justify-between">
             <div>
               <p className="text-[10px] text-purple-400 uppercase font-bold tracking-wider">Em Homologação</p>
               <p className="text-lg font-black text-purple-300">
@@ -929,7 +929,7 @@ export default function EngineeringDashboard() {
             </div>
           </div>
 
-          <div className="bg-[#0B1224] border border-emerald-500/20 rounded-lg p-2.5 flex items-center justify-between col-span-2 md:col-span-1">
+          <div className="bg-white dark:bg-[#0B1224] border border-emerald-500/20 rounded-lg p-2.5 flex items-center justify-between col-span-2 md:col-span-1">
             <div>
               <p className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">Em Produção</p>
               <p className="text-lg font-black text-emerald-300">
@@ -947,8 +947,8 @@ export default function EngineeringDashboard() {
       {activeTab === "kanban" ? (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* BARRA DE FILTROS & VISÃO DUPLA (KANBAN VS TABELA) */}
-          <div className="p-3 md:px-6 bg-[#070D1B] border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
-            <div className="flex items-center gap-2 flex-1 min-w-[240px] max-w-md bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-1.5">
+          <div className="p-3 md:px-6 bg-slate-50 dark:bg-[#070D1B] border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-2 flex-1 min-w-[240px] max-w-md bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-1.5">
               <Search size={14} className="text-slate-500 shrink-0" />
               <input
                 type="text"
@@ -961,7 +961,7 @@ export default function EngineeringDashboard() {
 
             <div className="flex items-center gap-2.5 flex-wrap">
               {/* Alternador Kanban vs Tabela */}
-              <div className="flex items-center p-1 bg-[#0B1224] border border-slate-800 rounded-lg">
+              <div className="flex items-center p-1 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg">
                 <button
                   onClick={() => setViewMode("kanban")}
                   className={`p-1.5 rounded-md text-xs font-bold transition-all ${
@@ -987,7 +987,7 @@ export default function EngineeringDashboard() {
               </div>
 
               {/* Filtro Categoria */}
-              <div className="flex items-center gap-1.5 bg-[#0B1224] border border-slate-800 rounded-lg px-2.5 py-1">
+              <div className="flex items-center gap-1.5 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg px-2.5 py-1">
                 <Filter size={12} className="text-slate-500" />
                 <span className="text-[10px] font-bold text-slate-400 uppercase">Categoria:</span>
                 <select
@@ -995,35 +995,35 @@ export default function EngineeringDashboard() {
                   onChange={(e) => setCategoryFilter(e.target.value)}
                   className="bg-transparent text-xs font-semibold text-white outline-none cursor-pointer"
                 >
-                  <option value="ALL" className="bg-[#0B1224]">Todas</option>
-                  <option value="FEATURE" className="bg-[#0B1224]">Nova Feature</option>
-                  <option value="API" className="bg-[#0B1224]">Nova API</option>
-                  <option value="EXTENSION" className="bg-[#0B1224]">Nova Extensão</option>
-                  <option value="PERFORMANCE" className="bg-[#0B1224]">Performance</option>
-                  <option value="BUG_FIX" className="bg-[#0B1224]">Bug Fix</option>
-                  <option value="ARCHITECTURE" className="bg-[#0B1224]">Arquitetura</option>
+                  <option value="ALL" className="bg-white dark:bg-[#0B1224]">Todas</option>
+                  <option value="FEATURE" className="bg-white dark:bg-[#0B1224]">Nova Feature</option>
+                  <option value="API" className="bg-white dark:bg-[#0B1224]">Nova API</option>
+                  <option value="EXTENSION" className="bg-white dark:bg-[#0B1224]">Nova Extensão</option>
+                  <option value="PERFORMANCE" className="bg-white dark:bg-[#0B1224]">Performance</option>
+                  <option value="BUG_FIX" className="bg-white dark:bg-[#0B1224]">Bug Fix</option>
+                  <option value="ARCHITECTURE" className="bg-white dark:bg-[#0B1224]">Arquitetura</option>
                 </select>
               </div>
 
               {/* Filtro Prioridade */}
-              <div className="flex items-center gap-1.5 bg-[#0B1224] border border-slate-800 rounded-lg px-2.5 py-1">
+              <div className="flex items-center gap-1.5 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg px-2.5 py-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase">Prioridade:</span>
                 <select
                   value={priorityFilter}
                   onChange={(e) => setPriorityFilter(e.target.value)}
                   className="bg-transparent text-xs font-semibold text-white outline-none cursor-pointer"
                 >
-                  <option value="ALL" className="bg-[#0B1224]">Todas</option>
-                  <option value="LOW" className="bg-[#0B1224]">Baixa</option>
-                  <option value="MEDIUM" className="bg-[#0B1224]">Média</option>
-                  <option value="HIGH" className="bg-[#0B1224]">Alta</option>
-                  <option value="CRITICAL" className="bg-[#0B1224]">Crítica</option>
+                  <option value="ALL" className="bg-white dark:bg-[#0B1224]">Todas</option>
+                  <option value="LOW" className="bg-white dark:bg-[#0B1224]">Baixa</option>
+                  <option value="MEDIUM" className="bg-white dark:bg-[#0B1224]">Média</option>
+                  <option value="HIGH" className="bg-white dark:bg-[#0B1224]">Alta</option>
+                  <option value="CRITICAL" className="bg-white dark:bg-[#0B1224]">Crítica</option>
                 </select>
               </div>
 
               <button
                 onClick={fetchBacklog}
-                className="p-1.5 bg-[#0B1224] border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white rounded-lg transition-all cursor-pointer"
+                className="p-1.5 bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white rounded-lg transition-all cursor-pointer"
                 title="Atualizar Backlog"
               >
                 <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
@@ -1034,7 +1034,7 @@ export default function EngineeringDashboard() {
           {/* VISUALIZAÇÃO KANBAN (DRAG AND DROP) */}
           {viewMode === "kanban" ? (
             <DragDropContext onDragEnd={handleDragEnd}>
-              <div className="flex-1 overflow-x-auto p-4 md:px-6 bg-[#070D1B]">
+              <div className="flex-1 overflow-x-auto p-4 md:px-6 bg-slate-50 dark:bg-[#070D1B]">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 min-w-[1050px] h-full items-start">
                   {STAGES.map((col) => {
                     const colItems = items.filter((item) => item.stage === col.id);
@@ -1046,14 +1046,14 @@ export default function EngineeringDashboard() {
                           <div
                             ref={provided.innerRef}
                             {...provided.droppableProps}
-                            className={`bg-[#0B1224] border rounded-xl flex flex-col max-h-full overflow-hidden shadow-sm transition-all ${
+                            className={`bg-white dark:bg-[#0B1224] border rounded-xl flex flex-col max-h-full overflow-hidden shadow-sm transition-all ${
                               snapshot.isDraggingOver
-                                ? "border-cyan-500/60 bg-[#0c162f] shadow-lg shadow-cyan-500/10"
+                                ? "border-cyan-500/60 bg-slate-100 dark:bg-[#0c162f] shadow-lg shadow-cyan-500/10"
                                 : "border-slate-800"
                             }`}
                           >
                             {/* Cabeçalho da Coluna */}
-                            <div className="p-3 border-b border-slate-800/80 bg-[#091020] flex items-center justify-between shrink-0">
+                            <div className="p-3 border-b border-slate-800/80 bg-slate-100 dark:bg-[#091020] flex items-center justify-between shrink-0">
                               <div className="flex items-center gap-2">
                                 <div className={`w-6 h-6 rounded-md flex items-center justify-center ${col.bg} ${col.border} border`}>
                                   <ColIcon size={14} className={col.color} />
@@ -1088,9 +1088,9 @@ export default function EngineeringDashboard() {
                                           ref={dragProvided.innerRef}
                                           {...dragProvided.draggableProps}
                                           {...dragProvided.dragHandleProps}
-                                          className={`p-3.5 bg-[#0F172A] border rounded-xl transition-all shadow-sm flex flex-col gap-2.5 group cursor-grab active:cursor-grabbing ${
+                                          className={`p-3.5 bg-white dark:bg-[#0F172A] border rounded-xl transition-all shadow-sm flex flex-col gap-2.5 group cursor-grab active:cursor-grabbing ${
                                             dragSnapshot.isDragging
-                                              ? "border-cyan-400 bg-[#17233f] shadow-2xl scale-[1.02] ring-2 ring-cyan-500/30"
+                                              ? "border-cyan-400 bg-slate-100 dark:bg-[#17233f] shadow-2xl scale-[1.02] ring-2 ring-cyan-500/30"
                                               : "border-slate-800 hover:border-slate-700 hover:shadow-md"
                                           }`}
                                         >
@@ -1137,7 +1137,7 @@ export default function EngineeringDashboard() {
 
                                           {/* Checklist Mini Status */}
                                           {checklistCount > 0 && (
-                                            <div className="flex items-center gap-2 text-[10px] text-slate-400 bg-[#070D1B] px-2 py-1 rounded-lg border border-slate-800/80">
+                                            <div className="flex items-center gap-2 text-[10px] text-slate-400 bg-slate-50 dark:bg-[#070D1B] px-2 py-1 rounded-lg border border-slate-800/80">
                                               <CheckSquare size={11} className={checklistDone === checklistCount ? "text-emerald-400" : "text-blue-400"} />
                                               <span>{checklistDone}/{checklistCount} tarefas concluídas</span>
                                               <div className="flex-1 bg-slate-800 h-1.5 rounded-full overflow-hidden ml-1">
@@ -1214,11 +1214,11 @@ export default function EngineeringDashboard() {
             </DragDropContext>
           ) : (
             /* VISUALIZAÇÃO EM TABELA / LISTA (ESTILO CRM) */
-            <div className="flex-1 overflow-auto p-4 md:px-6 bg-[#070D1B]">
-              <div className="bg-[#0B1224] border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+            <div className="flex-1 overflow-auto p-4 md:px-6 bg-slate-50 dark:bg-[#070D1B]">
+              <div className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-xl overflow-hidden shadow-sm">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-800 bg-[#091020] text-[10px] uppercase font-bold text-slate-400">
+                    <tr className="border-b border-slate-800 bg-slate-100 dark:bg-[#091020] text-[10px] uppercase font-bold text-slate-400">
                       <th
                         onClick={() => {
                           setTableSortField("title");
@@ -1360,12 +1360,12 @@ export default function EngineeringDashboard() {
         </div>
       ) : activeTab === "products" ? (
         /* TAB 2: PRODUTOS E MÓDULOS EM DESENVOLVIMENTO (SANDBOX & HOMOLOGAÇÃO) */
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-[#070D1B]">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-slate-50 dark:bg-[#070D1B]">
           
           {/* BARRA DE PESQUISA & FILTROS DE STATUS DOS PRODUTOS */}
-          <div className="p-3 md:px-6 bg-[#070D1B] border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="p-3 md:px-6 bg-slate-50 dark:bg-[#070D1B] border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
             {/* Input de Busca */}
-            <div className="flex items-center gap-2 flex-1 min-w-[240px] max-w-md bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-1.5">
+            <div className="flex items-center gap-2 flex-1 min-w-[240px] max-w-md bg-white dark:bg-[#0B1224] border border-slate-800 rounded-lg px-3 py-1.5">
               <Search size={14} className="text-slate-500 shrink-0" />
               <input
                 type="text"
@@ -1398,7 +1398,7 @@ export default function EngineeringDashboard() {
                     className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                       isActive
                         ? "bg-blue-600/20 text-blue-300 border border-blue-500/40 shadow-sm"
-                        : "bg-[#0B1224] text-slate-400 hover:text-white border border-slate-800"
+                        : "bg-white dark:bg-[#0B1224] text-slate-400 hover:text-white border border-slate-800"
                     }`}
                   >
                     {filter.label}
@@ -1473,13 +1473,13 @@ export default function EngineeringDashboard() {
                     <div
                       key={prod.id}
                       onClick={() => handleOpenProductSandbox(prod)}
-                      className="bg-[#0B1224] border border-slate-800 hover:border-slate-700 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 group cursor-pointer shadow-lg hover:shadow-xl hover:shadow-blue-950/20"
+                      className="bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-slate-700 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 group cursor-pointer shadow-lg hover:shadow-xl hover:shadow-blue-950/20"
                     >
                       {/* Topo do Card: Categoria, Status & Badge de Isolamento */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between gap-2 flex-wrap">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-[#070D1B] border border-slate-800 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-800 flex items-center justify-center">
                               {getProductIcon(prod.id)}
                             </div>
                             <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 uppercase tracking-wider">
@@ -1502,7 +1502,7 @@ export default function EngineeringDashboard() {
                         </div>
 
                         {/* Especificações Técnicas Rápidas */}
-                        <div className="p-2.5 rounded-xl bg-[#070D1B] border border-slate-800/80 space-y-1.5 font-mono text-[11px]">
+                        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 space-y-1.5 font-mono text-[11px]">
                           <div className="flex items-center justify-between text-slate-400">
                             <span className="flex items-center gap-1.5 text-slate-500">
                               <Code size={12} />
@@ -1558,7 +1558,7 @@ export default function EngineeringDashboard() {
                           <button
                             onClick={(e) => handleQuickTest(prod.id, e)}
                             disabled={quickTestingId === prod.id}
-                            className="px-2.5 py-1.5 rounded-lg bg-[#070D1B] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                             title="Disparar bateria rápida de testes"
                           >
                             <Play size={12} className={quickTestingId === prod.id ? "animate-spin text-blue-400" : ""} />
@@ -1599,9 +1599,9 @@ export default function EngineeringDashboard() {
         </div>
       ) : (
         /* TAB 3: CHAT DEDICADO COM A IA (FULLSCREEN CHATGPT / OPENAI STYLE) */
-        <div className="flex-1 flex flex-col min-h-0 bg-[#070D1B] overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 bg-slate-50 dark:bg-[#070D1B] overflow-hidden">
           {/* SUB-HEADER ELEGANTE DO AGENTE IA */}
-          <div className="px-4 md:px-6 py-2.5 bg-[#0B1224]/80 backdrop-blur border-b border-slate-800 flex items-center justify-between shrink-0">
+          <div className="px-4 md:px-6 py-2.5 bg-white/80 dark:bg-[#0B1224]/80 backdrop-blur border-b border-slate-800 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-300 shadow-sm">
@@ -1659,7 +1659,7 @@ export default function EngineeringDashboard() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full text-left">
                     <button
                       onClick={() => handleSendChatMessage("Quero criar uma nova integração com gateway de pagamento Pix para gerar cobranças automáticas no CRM. Como arquitetar isso no backend NestJS e frontend Next.js?")}
-                      className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800 hover:border-cyan-500/50 hover:bg-[#0E172E] transition-all group cursor-pointer text-left flex flex-col gap-1.5 shadow-sm"
+                      className="p-3.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-cyan-500/50 hover:bg-[#0E172E] transition-all group cursor-pointer text-left flex flex-col gap-1.5 shadow-sm"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-cyan-400 group-hover:text-cyan-300">
@@ -1674,7 +1674,7 @@ export default function EngineeringDashboard() {
 
                     <button
                       onClick={() => handleSendChatMessage("Analise o backlog atual de feedbacks capturados do suporte e me dê as 3 prioridades críticas de arquitetura para a plataforma.")}
-                      className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800 hover:border-purple-500/50 hover:bg-[#0E172E] transition-all group cursor-pointer text-left flex flex-col gap-1.5 shadow-sm"
+                      className="p-3.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-purple-500/50 hover:bg-[#0E172E] transition-all group cursor-pointer text-left flex flex-col gap-1.5 shadow-sm"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-purple-400 group-hover:text-purple-300">
@@ -1689,7 +1689,7 @@ export default function EngineeringDashboard() {
 
                     <button
                       onClick={() => handleSendChatMessage("Projete a arquitetura de uma nova API RESTful e Webhook para integração de novos canais de mensageria no Vallor.")}
-                      className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800 hover:border-blue-500/50 hover:bg-[#0E172E] transition-all group cursor-pointer text-left flex flex-col gap-1.5 shadow-sm"
+                      className="p-3.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-blue-500/50 hover:bg-[#0E172E] transition-all group cursor-pointer text-left flex flex-col gap-1.5 shadow-sm"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-blue-400 group-hover:text-blue-300">
@@ -1704,7 +1704,7 @@ export default function EngineeringDashboard() {
 
                     <button
                       onClick={() => handleSendChatMessage("Como otimizar a performance de entrega e renderização do feed de mensagens no Live Chat utilizando cache Redis e Socket.io?")}
-                      className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800 hover:border-amber-500/50 hover:bg-[#0E172E] transition-all group cursor-pointer text-left flex flex-col gap-1.5 shadow-sm"
+                      className="p-3.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-amber-500/50 hover:bg-[#0E172E] transition-all group cursor-pointer text-left flex flex-col gap-1.5 shadow-sm"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-amber-400 group-hover:text-amber-300">
@@ -1727,19 +1727,19 @@ export default function EngineeringDashboard() {
                     </span>
                     <button
                       onClick={() => handleSendChatMessage("Quero criar uma nova integração com gateway de pagamento Pix para gerar cobranças automáticas no CRM. Como arquitetar isso?")}
-                      className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0B1224] border border-slate-800 hover:border-cyan-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
+                      className="text-[11px] px-2.5 py-1 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-cyan-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
                     >
                       💳 Nova API Pix
                     </button>
                     <button
                       onClick={() => handleSendChatMessage("Analise o backlog atual de feedbacks capturados do suporte e me dê as 3 prioridades críticas de arquitetura.")}
-                      className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0B1224] border border-slate-800 hover:border-purple-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
+                      className="text-[11px] px-2.5 py-1 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-purple-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
                     >
                       💡 Priorizar Backlog
                     </button>
                     <button
                       onClick={() => handleSendChatMessage("Projete a arquitetura de uma nova API RESTful e Webhook para integração de novos canais de mensageria no Vallor.")}
-                      className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0B1224] border border-slate-800 hover:border-blue-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
+                      className="text-[11px] px-2.5 py-1 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-blue-500/40 text-slate-300 hover:text-white transition-all whitespace-nowrap cursor-pointer"
                     >
                       🔌 Arquitetar API & Webhook
                     </button>
@@ -1781,7 +1781,7 @@ export default function EngineeringDashboard() {
                           <div
                             className={`p-4 md:p-5 rounded-2xl text-xs md:text-sm leading-relaxed border shadow-md ${
                               isAI
-                                ? "bg-[#0B1224] border-slate-800 text-slate-200"
+                                ? "bg-white dark:bg-[#0B1224] border-slate-800 text-slate-200"
                                 : "bg-blue-600 text-white border-blue-500/80 rounded-tr-sm ml-auto"
                             }`}
                           >
@@ -1810,7 +1810,7 @@ export default function EngineeringDashboard() {
                               {/* Copiar Resposta Completa */}
                               <button
                                 onClick={() => handleCopyMessage(msg.content)}
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0B1224] hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white text-xs transition-all cursor-pointer"
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white text-xs transition-all cursor-pointer"
                                 title="Copiar resposta completa"
                               >
                                 <Copy size={13} />
@@ -1838,7 +1838,7 @@ export default function EngineeringDashboard() {
                   <div className="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-300 shrink-0 shadow-sm">
                     <Bot size={16} />
                   </div>
-                  <div className="p-4 rounded-2xl bg-[#0B1224] border border-slate-800 text-slate-300 text-xs flex items-center gap-3 shadow-md">
+                  <div className="p-4 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 text-slate-300 text-xs flex items-center gap-3 shadow-md">
                     <RefreshCw size={14} className="animate-spin text-purple-400" />
                     <div className="space-y-0.5">
                       <p className="font-semibold text-white">O Engenheiro Chefe está raciocinando...</p>
@@ -1857,7 +1857,7 @@ export default function EngineeringDashboard() {
             <div className="max-w-4xl mx-auto w-full">
               {/* BARRA DE GRAVAÇÃO DE ÁUDIO ATIVA */}
               {isRecording ? (
-                <div className="bg-[#0B1224] border border-rose-500/50 rounded-2xl p-3 px-4 shadow-xl flex items-center justify-between gap-4 animate-in fade-in">
+                <div className="bg-white dark:bg-[#0B1224] border border-rose-500/50 rounded-2xl p-3 px-4 shadow-xl flex items-center justify-between gap-4 animate-in fade-in">
                   <div className="flex items-center gap-3">
                     <span className="relative flex h-3 w-3">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -1896,7 +1896,7 @@ export default function EngineeringDashboard() {
                   </div>
                 </div>
               ) : isTranscribing ? (
-                <div className="bg-[#0B1224] border border-cyan-500/40 rounded-2xl p-3 px-4 shadow-xl flex items-center gap-3">
+                <div className="bg-white dark:bg-[#0B1224] border border-cyan-500/40 rounded-2xl p-3 px-4 shadow-xl flex items-center gap-3">
                   <RefreshCw size={16} className="animate-spin text-cyan-400" />
                   <div>
                     <p className="text-xs font-bold text-cyan-300">Processando áudio com OpenAI Whisper...</p>
@@ -1905,7 +1905,7 @@ export default function EngineeringDashboard() {
                 </div>
               ) : (
                 /* CAPSULA DE TEXTO PADRÃO CHATGPT */
-                <div className="bg-[#0B1224] border border-slate-800 focus-within:border-purple-500/60 rounded-2xl p-3 shadow-xl transition-all">
+                <div className="bg-white dark:bg-[#0B1224] border border-slate-800 focus-within:border-purple-500/60 rounded-2xl p-3 shadow-xl transition-all">
                   <textarea
                     rows={2}
                     value={chatInput}
@@ -1963,8 +1963,8 @@ export default function EngineeringDashboard() {
       {/* MODAL: + NOVA FRENTE TÉCNICA (MANUAL) */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="p-4 border-b border-slate-800 bg-[#070D1B] flex items-center justify-between">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="p-4 border-b border-slate-800 bg-slate-50 dark:bg-[#070D1B] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
                   <Plus size={16} />
@@ -1993,7 +1993,7 @@ export default function EngineeringDashboard() {
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder="Ex: Criar Nova API REST de Webhooks para Integrações Externas"
-                  className="w-full bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -2005,7 +2005,7 @@ export default function EngineeringDashboard() {
                   <select
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
-                    className="w-full bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-500"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-500"
                   >
                     <option value="FEATURE">Nova Feature</option>
                     <option value="API">Nova API / Webhook</option>
@@ -2023,7 +2023,7 @@ export default function EngineeringDashboard() {
                   <select
                     value={formPriority}
                     onChange={(e) => setFormPriority(e.target.value)}
-                    className="w-full bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-500"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-500"
                   >
                     <option value="LOW">Baixa</option>
                     <option value="MEDIUM">Média</option>
@@ -2041,7 +2041,7 @@ export default function EngineeringDashboard() {
                   <select
                     value={formStage}
                     onChange={(e) => setFormStage(e.target.value)}
-                    className="w-full bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-500"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-500"
                   >
                     <option value="CAPTURED">Ideias Capturadas</option>
                     <option value="AI_ANALYSIS">Em Análise por IA</option>
@@ -2059,7 +2059,7 @@ export default function EngineeringDashboard() {
                     value={formAssignedTo}
                     onChange={(e) => setFormAssignedTo(e.target.value)}
                     placeholder="Ex: Time Backend, Vitor"
-                    className="w-full bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -2074,7 +2074,7 @@ export default function EngineeringDashboard() {
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   placeholder="Descreva o escopo técnico, regras de negócio e objetivo final..."
-                  className="w-full bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500 resize-none"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500 resize-none"
                 />
               </div>
 
@@ -2087,7 +2087,7 @@ export default function EngineeringDashboard() {
                   value={formTags}
                   onChange={(e) => setFormTags(e.target.value)}
                   placeholder="api, webhook, redis, seguranca"
-                  className="w-full bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500"
+                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -2115,9 +2115,9 @@ export default function EngineeringDashboard() {
       {/* MODAL ENTERPRISE DE INICIATIVA (NÍVEL DEALMODAL CRM) */}
       {selectedItem && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
             {/* Header do Modal */}
-            <div className="p-4 border-b border-slate-800 bg-[#070D1B] flex items-center justify-between shrink-0">
+            <div className="p-4 border-b border-slate-800 bg-slate-50 dark:bg-[#070D1B] flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
                   <Cpu size={18} />
@@ -2148,7 +2148,7 @@ export default function EngineeringDashboard() {
             </div>
 
             {/* Abas do Modal Enterprise */}
-            <div className="px-5 border-b border-slate-800 bg-[#091020] flex items-center gap-4 text-xs font-bold shrink-0">
+            <div className="px-5 border-b border-slate-800 bg-slate-100 dark:bg-[#091020] flex items-center gap-4 text-xs font-bold shrink-0">
               <button
                 onClick={() => setModalTab("overview")}
                 className={`py-3 border-b-2 transition-all cursor-pointer ${
@@ -2208,13 +2208,13 @@ export default function EngineeringDashboard() {
               {modalTab === "overview" && (
                 <div className="space-y-4">
                   {/* Badges & Controles de Estágio e Responsável */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3.5 bg-[#070D1B] border border-slate-800 rounded-xl">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3.5 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl">
                     <div className="space-y-1.5">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Estágio do Kanban:</span>
                       <select
                         value={selectedItem.stage}
                         onChange={(e) => handleMoveStage(selectedItem, e.target.value)}
-                        className="w-full bg-[#0B1224] border border-slate-700 text-xs font-bold text-cyan-300 rounded-lg p-2 outline-none cursor-pointer"
+                        className="w-full bg-white dark:bg-[#0B1224] border border-slate-700 text-xs font-bold text-cyan-300 rounded-lg p-2 outline-none cursor-pointer"
                       >
                         {STAGES.map((s) => (
                           <option key={s.id} value={s.id}>
@@ -2231,7 +2231,7 @@ export default function EngineeringDashboard() {
                         defaultValue={selectedItem.assignedTo || ""}
                         onBlur={(e) => handleUpdateAssignee(e.target.value)}
                         placeholder="Ex: Time Backend, Vitor"
-                        className="w-full bg-[#0B1224] border border-slate-700 text-xs font-semibold text-white rounded-lg p-2 outline-none focus:border-blue-500"
+                        className="w-full bg-white dark:bg-[#0B1224] border border-slate-700 text-xs font-semibold text-white rounded-lg p-2 outline-none focus:border-blue-500"
                       />
                     </div>
                   </div>
@@ -2242,7 +2242,7 @@ export default function EngineeringDashboard() {
                       <FileText size={13} className="text-blue-400" />
                       <span>Descrição da Iniciativa & Relato</span>
                     </h4>
-                    <div className="p-3.5 bg-[#070D1B] border border-slate-800 rounded-xl text-xs text-slate-300 whitespace-pre-wrap leading-relaxed font-mono">
+                    <div className="p-3.5 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl text-xs text-slate-300 whitespace-pre-wrap leading-relaxed font-mono">
                       {selectedItem.description}
                     </div>
                   </div>
@@ -2253,7 +2253,7 @@ export default function EngineeringDashboard() {
                       <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                         Histórico & Notas Técnicas
                       </h4>
-                      <div className="p-3 bg-[#070D1B] border border-slate-800 rounded-xl text-xs text-slate-400 whitespace-pre-wrap">
+                      <div className="p-3 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl text-xs text-slate-400 whitespace-pre-wrap">
                         {selectedItem.technicalNotes}
                       </div>
                     </div>
@@ -2288,7 +2288,7 @@ export default function EngineeringDashboard() {
                         selectedItem.affectedTenants.map((tenant: any, idx: number) => (
                           <div
                             key={idx}
-                            className="p-3 bg-[#070D1B] border border-slate-800 rounded-lg flex items-center justify-between"
+                            className="p-3 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg flex items-center justify-between"
                           >
                             <div className="flex items-center gap-2">
                               <Building2 size={14} className="text-cyan-400" />
@@ -2305,7 +2305,7 @@ export default function EngineeringDashboard() {
                           </div>
                         ))
                       ) : (
-                        <div className="p-3 bg-[#070D1B] border border-slate-800 rounded-lg text-xs text-slate-400">
+                        <div className="p-3 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg text-xs text-slate-400">
                           {selectedItem.tenantName || "Empresa solicitante única"}
                         </div>
                       )}
@@ -2337,7 +2337,7 @@ export default function EngineeringDashboard() {
                         }
                       }}
                       placeholder="Adicionar nova sub-tarefa técnica (ex: Criar migration no Prisma)..."
-                      className="flex-1 bg-[#070D1B] border border-slate-800 rounded-lg p-2 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500"
+                      className="flex-1 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg p-2 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500"
                     />
                     <button
                       type="button"
@@ -2358,7 +2358,7 @@ export default function EngineeringDashboard() {
                           className={`p-3 rounded-lg border flex items-center gap-3 transition-all cursor-pointer ${
                             task.done
                               ? "bg-emerald-950/15 border-emerald-500/30 text-emerald-200"
-                              : "bg-[#070D1B] border-slate-800 text-slate-300 hover:border-slate-700"
+                              : "bg-slate-50 dark:bg-[#070D1B] border-slate-800 text-slate-300 hover:border-slate-700"
                           }`}
                         >
                           <div className={`w-4 h-4 rounded flex items-center justify-center border ${task.done ? "bg-emerald-500 border-emerald-500 text-slate-950" : "border-slate-600"}`}>
@@ -2397,11 +2397,11 @@ export default function EngineeringDashboard() {
                   </div>
 
                   {selectedItem.aiSummary ? (
-                    <div className="p-4 bg-[#0B1224] border border-purple-500/30 rounded-xl text-xs text-purple-100 leading-relaxed shadow-md">
+                    <div className="p-4 bg-white dark:bg-[#0B1224] border border-purple-500/30 rounded-xl text-xs text-purple-100 leading-relaxed shadow-md">
                       <MarkdownRenderer content={selectedItem.aiSummary} />
                     </div>
                   ) : (
-                    <div className="p-6 bg-[#070D1B] border border-dashed border-purple-500/30 rounded-xl text-center">
+                    <div className="p-6 bg-slate-50 dark:bg-[#070D1B] border border-dashed border-purple-500/30 rounded-xl text-center">
                       <p className="text-xs text-slate-400 mb-3">
                         Nenhum parecer técnico gerado ainda para esta iniciativa.
                       </p>
@@ -2420,7 +2420,7 @@ export default function EngineeringDashboard() {
             </div>
 
             {/* Rodapé do Modal */}
-            <div className="p-4 border-t border-slate-800 bg-[#070D1B] flex items-center justify-between shrink-0">
+            <div className="p-4 border-t border-slate-800 bg-slate-50 dark:bg-[#070D1B] flex items-center justify-between shrink-0">
               <button
                 onClick={() => handleDeleteItem(selectedItem.id)}
                 className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-rose-500/10 transition-all cursor-pointer"

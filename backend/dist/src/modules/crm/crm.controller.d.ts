@@ -2,7 +2,7 @@ import { CrmService } from './crm.service';
 export declare class CrmController {
     private readonly crmService;
     constructor(crmService: CrmService);
-    listDeals(tenantId: string): Promise<({
+    listDeals(tenantId: string, startDate?: string, endDate?: string, dateType?: 'created' | 'closed', status?: string): Promise<({
         contact: {
             id: string;
             name: string;

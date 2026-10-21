@@ -1071,7 +1071,7 @@ let EmailsService = EmailsService_1 = class EmailsService {
                     senderEmail: 'fernanda@inovareodonto.com.br',
                     recipientEmail: 'comercial@versus.com.br',
                     recipientName: 'Equipe VERSUS',
-                    subject: 'Dúvida sobre integração da IA Vitor com prontuário eletrônico',
+                    subject: 'Dúvida sobre integração do Agente de IA com prontuário eletrônico',
                     bodyText: `Bom dia equipe VERSUS,\n\nGostaríamos de tirar uma dúvida técnica: a IA consegue consultar os horários vagos dos dentistas via webhook e já sugerir a consulta diretamente na janela de conversa do WhatsApp?\n\nFicamos no aguardo para formalizar o fechamento do plano Enterprise.\n\nAbraços,\nFernanda Takahashi\nGestora de Atendimento | Inovare Odontologia`,
                     preview: 'Gostaríamos de tirar uma dúvida técnica: a IA consegue consultar os horários vagos dos dentistas...',
                     folder: 'INBOX',

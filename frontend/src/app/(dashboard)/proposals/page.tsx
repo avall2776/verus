@@ -401,8 +401,8 @@ export default function ProposalsPage() {
               </button>
 
               {/* Tooltip Hover Explicativo de Alta Densidade (Nunca Cortado) */}
-              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
-                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-[#070D1B] border-t border-l border-slate-700/90 rotate-45" />
+              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
+                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-slate-50 dark:bg-[#070D1B] border-t border-l border-slate-700/90 rotate-45" />
                 <div className="flex items-center gap-1.5 font-bold text-white text-xs border-b border-slate-800 pb-1.5">
                   <DollarSign className="w-3.5 h-3.5 text-cyan-400" />
                   Total em Propostas (Pipeline)
@@ -455,8 +455,8 @@ export default function ProposalsPage() {
               </button>
 
               {/* Tooltip Hover Explicativo */}
-              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
-                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-[#070D1B] border-t border-l border-slate-700/90 rotate-45" />
+              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
+                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-slate-50 dark:bg-[#070D1B] border-t border-l border-slate-700/90 rotate-45" />
                 <div className="flex items-center gap-1.5 font-bold text-white text-xs border-b border-slate-800 pb-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   Receita Convertida & Fechamento
@@ -509,8 +509,8 @@ export default function ProposalsPage() {
               </button>
 
               {/* Tooltip Hover Explicativo */}
-              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
-                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-[#070D1B] border-t border-l border-slate-700/90 rotate-45" />
+              <div className="absolute top-full left-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
+                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-slate-50 dark:bg-[#070D1B] border-t border-l border-slate-700/90 rotate-45" />
                 <div className="flex items-center gap-1.5 font-bold text-white text-xs border-b border-slate-800 pb-1.5">
                   <Award className="w-3.5 h-3.5 text-blue-400" />
                   Média por Cliente Negociado
@@ -562,8 +562,8 @@ export default function ProposalsPage() {
               </button>
 
               {/* Tooltip Hover Explicativo posicionado à direita para evitar transbordar a tela */}
-              <div className="absolute top-full right-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
-                <div className="absolute -top-1.5 right-4 w-3 h-3 bg-[#070D1B] border-t border-r border-slate-700/90 rotate-45" />
+              <div className="absolute top-full right-0 mt-2 z-50 w-72 sm:w-80 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700/90 text-xs text-slate-300 shadow-2xl shadow-black/95 backdrop-blur-xl pointer-events-none transition-all duration-200 opacity-0 group-hover/tip:opacity-100 scale-95 group-hover/tip:scale-100 space-y-2">
+                <div className="absolute -top-1.5 right-4 w-3 h-3 bg-slate-50 dark:bg-[#070D1B] border-t border-r border-slate-700/90 rotate-45" />
                 <div className="flex items-center gap-1.5 font-bold text-white text-xs border-b border-slate-800 pb-1.5">
                   <Percent className="w-3.5 h-3.5 text-purple-400" />
                   Taxa de Conversão de Propostas
@@ -649,7 +649,7 @@ export default function ProposalsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar por cliente, código ou vendedor..."
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
             />
           </div>
         </div>
@@ -661,7 +661,7 @@ export default function ProposalsPage() {
             Carregando propostas comerciais...
           </div>
         ) : filteredProposals.length === 0 ? (
-          <div className="p-12 text-center flex flex-col items-center justify-center space-y-3 bg-[#070D1B]/40 rounded-xl border border-dashed border-slate-800">
+          <div className="p-12 text-center flex flex-col items-center justify-center space-y-3 bg-slate-50/40 dark:bg-slate-50 dark:bg-[#070D1B]/40 rounded-xl border border-dashed border-slate-800">
             <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
               <FolderOpen className="w-7 h-7" />
             </div>

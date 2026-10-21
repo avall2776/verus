@@ -91,7 +91,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShor
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="bg-[#0B1224] border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl p-6 flex flex-col gap-5 animate-in zoom-in-95 text-white max-h-[85vh] overflow-hidden"
+        className="bg-white dark:bg-[#0B1224] border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl p-6 flex flex-col gap-5 animate-in zoom-in-95 text-white max-h-[85vh] overflow-hidden"
       >
         {/* Cabeçalho */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
@@ -123,12 +123,12 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShor
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder="Buscar atalho..."
-              className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+              className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
             />
           </div>
 
           {/* Toggle de SO */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-[#070D1B] border border-slate-800 shrink-0">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 shrink-0">
             <button
               type="button"
               onClick={() => setOs("win")}
@@ -175,7 +175,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShor
                     {group.items.map((item, idx) => (
                       <div 
                         key={idx}
-                        className="flex items-center justify-between p-3 rounded-xl bg-[#070D1B] border border-slate-800 hover:border-slate-700/80 transition-colors"
+                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 hover:border-slate-700/80 transition-colors"
                       >
                         <span className="text-xs text-slate-300 font-medium">{item.desc}</span>
                         <div className="flex items-center gap-1">

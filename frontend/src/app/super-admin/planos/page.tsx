@@ -336,7 +336,7 @@ export default function SuperAdminPlansPage() {
           <button
             onClick={fetchPlans}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B1224] border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-colors"
           >
             <RefreshCw size={13} className={loading ? "animate-spin text-blue-400" : ""} />
             <span>Atualizar</span>
@@ -355,7 +355,7 @@ export default function SuperAdminPlansPage() {
 
       {/* Modal/Formulário de Criação de Novo Plano */}
       {isCreating && (
-        <form onSubmit={handleCreatePlan} className="p-6 rounded-2xl bg-[#0B1224] border border-blue-500/40 space-y-5 animate-in fade-in duration-200 shadow-2xl">
+        <form onSubmit={handleCreatePlan} className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-blue-500/40 space-y-5 animate-in fade-in duration-200 shadow-2xl">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <div className="flex items-center gap-2">
               <Sparkles size={16} className="text-blue-400" />
@@ -379,7 +379,7 @@ export default function SuperAdminPlansPage() {
                 value={newPlanName}
                 onChange={(e) => setNewPlanName(e.target.value)}
                 placeholder="Ex: Start, Enterprise Plus"
-                className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
               />
             </div>
 
@@ -392,7 +392,7 @@ export default function SuperAdminPlansPage() {
                 value={newPlanPrice}
                 onChange={(e) => setNewPlanPrice(e.target.value)}
                 placeholder="Ex: 199.90"
-                className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
               />
             </div>
 
@@ -402,7 +402,7 @@ export default function SuperAdminPlansPage() {
                 type="number"
                 value={newMaxUsers}
                 onChange={(e) => setNewMaxUsers(e.target.value)}
-                className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
               />
             </div>
 
@@ -412,7 +412,7 @@ export default function SuperAdminPlansPage() {
                 type="number"
                 value={newMaxAIMsgs}
                 onChange={(e) => setNewMaxAIMsgs(e.target.value)}
-                className="w-full bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 focus:border-blue-500 rounded-lg px-3 py-2 text-xs text-white outline-none"
               />
             </div>
           </div>
@@ -460,7 +460,7 @@ export default function SuperAdminPlansPage() {
                     className={`p-3 rounded-xl border transition-all cursor-pointer select-none flex flex-col justify-between gap-2 ${
                       active 
                         ? "bg-blue-950/20 border-blue-500/40 text-white" 
-                        : "bg-[#070D1B] border-slate-800 text-slate-400 hover:border-slate-700"
+                        : "bg-slate-50 dark:bg-[#070D1B] border-slate-800 text-slate-400 hover:border-slate-700"
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -506,7 +506,7 @@ export default function SuperAdminPlansPage() {
           <span className="text-xs font-medium">Carregando matriz de planos e permissões...</span>
         </div>
       ) : plans.length === 0 ? (
-        <div className="text-center py-16 bg-[#0B1224] border border-slate-800 rounded-2xl text-slate-400 text-xs">
+        <div className="text-center py-16 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl text-slate-400 text-xs">
           Nenhum plano cadastrado. Clique em "Criar Novo Plano" acima para iniciar.
         </div>
       ) : (
@@ -518,10 +518,10 @@ export default function SuperAdminPlansPage() {
             return (
               <div 
                 key={plan.id}
-                className="flex flex-col rounded-2xl bg-[#0B1224] border border-slate-800 hover:border-slate-700/80 transition-all shadow-xl overflow-hidden"
+                className="flex flex-col rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 hover:border-slate-700/80 transition-all shadow-xl overflow-hidden"
               >
                 {/* Header do Card do Plano */}
-                <div className="p-5 border-b border-slate-800/80 bg-[#070D1B]/70 space-y-4">
+                <div className="p-5 border-b border-slate-800/80 bg-slate-50/70 dark:bg-slate-50 dark:bg-[#070D1B]/70 space-y-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex-1">
                       <span className="text-[10px] uppercase tracking-wider font-bold text-blue-400 block mb-1">
@@ -531,14 +531,14 @@ export default function SuperAdminPlansPage() {
                         type="text"
                         value={plan.name}
                         onChange={(e) => handleUpdateLimit(plan.id, "name", e.target.value)}
-                        className="text-base font-bold text-white bg-transparent border-b border-transparent hover:border-slate-700 focus:border-blue-500 focus:bg-[#0B1224] rounded px-1.5 py-0.5 outline-none transition-colors w-full"
+                        className="text-base font-bold text-white bg-transparent border-b border-transparent hover:border-slate-700 focus:border-blue-500 focus:bg-white dark:bg-[#0B1224] rounded px-1.5 py-0.5 outline-none transition-colors w-full"
                         title="Clique para editar o nome do plano"
                       />
                     </div>
 
                     <div className="text-right shrink-0">
                       <span className="text-[10px] text-slate-400 font-semibold block mb-0.5">Mensalidade</span>
-                      <div className="flex items-center justify-end gap-1 bg-[#0B1224] px-2.5 py-1 rounded-lg border border-slate-800">
+                      <div className="flex items-center justify-end gap-1 bg-white dark:bg-[#0B1224] px-2.5 py-1 rounded-lg border border-slate-800">
                         <span className="text-xs font-bold text-slate-400">R$</span>
                         <input
                           type="number"
@@ -554,7 +554,7 @@ export default function SuperAdminPlansPage() {
 
                   {/* Limites Operacionais & Cotas */}
                   <div className="grid grid-cols-2 gap-2.5 pt-1">
-                    <div className="p-2.5 rounded-xl bg-[#0B1224] border border-slate-800/90 flex flex-col gap-1">
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800/90 flex flex-col gap-1">
                       <div className="flex items-center justify-between text-slate-400">
                         <span className="text-[10px] font-bold uppercase tracking-wider">Operadores</span>
                         <Users size={12} className="text-blue-400" />
@@ -570,7 +570,7 @@ export default function SuperAdminPlansPage() {
                       </div>
                     </div>
 
-                    <div className="p-2.5 rounded-xl bg-[#0B1224] border border-slate-800/90 flex flex-col gap-1">
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800/90 flex flex-col gap-1">
                       <div className="flex items-center justify-between text-slate-400">
                         <span className="text-[10px] font-bold uppercase tracking-wider">Cota IA</span>
                         <Bot size={12} className="text-blue-400" />
@@ -626,8 +626,8 @@ export default function SuperAdminPlansPage() {
                           onClick={() => handleToggleModule(plan.id, mod.key)}
                           className={`group cursor-pointer select-none rounded-xl p-3 border transition-all duration-150 flex items-center justify-between gap-3 ${
                             isActive
-                              ? "bg-[#070D1B] border-slate-700/80 border-l-4 border-l-blue-500 shadow-sm"
-                              : "bg-[#070D1B]/40 border-slate-800/40 border-l-4 border-l-slate-800 opacity-45 hover:opacity-75"
+                              ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80 border-l-4 border-l-blue-500 shadow-sm"
+                              : "bg-slate-50/40 dark:bg-slate-50 dark:bg-[#070D1B]/40 border-slate-800/40 border-l-4 border-l-slate-800 opacity-45 hover:opacity-75"
                           }`}
                         >
                           <div className="flex items-start gap-2.5 flex-1 min-w-0">
@@ -682,7 +682,7 @@ export default function SuperAdminPlansPage() {
                 </div>
 
                 {/* Botão de Ação Salvar */}
-                <div className="p-4 bg-[#070D1B]/80 border-t border-slate-800 flex items-center justify-between gap-3">
+                <div className="p-4 bg-slate-50/80 dark:bg-slate-50 dark:bg-[#070D1B]/80 border-t border-slate-800 flex items-center justify-between gap-3">
                   <span className="text-[10px] text-slate-500 font-medium">
                     {isSaving ? "Persistindo matriz..." : "Modificações salvas localmente"}
                   </span>

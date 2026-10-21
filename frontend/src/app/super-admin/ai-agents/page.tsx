@@ -719,7 +719,7 @@ export default function SuperAdminAiAgentsPage() {
         {/* CONTROLES SUPER ADMIN: SELETOR DE EMPRESA + BOTÃO DE SALVAR */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Seletor de Tenant */}
-          <div className="flex items-center gap-2 bg-[#0B1224] border border-slate-800 rounded-xl px-3 py-2 text-xs">
+          <div className="flex items-center gap-2 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-xl px-3 py-2 text-xs">
             <Building2 size={16} className="text-slate-400 shrink-0" />
             <span className="text-slate-400 font-medium hidden sm:inline">Empresa:</span>
             <select
@@ -729,7 +729,7 @@ export default function SuperAdminAiAgentsPage() {
               className="bg-transparent text-white font-semibold outline-none cursor-pointer pr-2 max-w-[180px] truncate"
             >
               {tenants.map((t) => (
-                <option key={t.id} value={t.id} className="bg-[#0B1224] text-white">
+                <option key={t.id} value={t.id} className="bg-white dark:bg-[#0B1224] text-white">
                   {t.name}
                 </option>
               ))}
@@ -750,9 +750,9 @@ export default function SuperAdminAiAgentsPage() {
 
       {loadingConfig ? (
         <div className="space-y-6 animate-pulse">
-          <div className="h-44 rounded-2xl bg-[#0B1224] border border-slate-800" />
-          <div className="h-96 rounded-2xl bg-[#0B1224] border border-slate-800" />
-          <div className="h-64 rounded-2xl bg-[#0B1224] border border-slate-800" />
+          <div className="h-44 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800" />
+          <div className="h-96 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800" />
+          <div className="h-64 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800" />
         </div>
       ) : (
         /* LAYOUT FLUIDO E CONTÍNUO: SEM CAIXAS ANINHADAS E SEM SCROLL INTERNO PRESO */
@@ -762,7 +762,7 @@ export default function SuperAdminAiAgentsPage() {
           <div className="lg:col-span-7 space-y-8">
             
             {/* SEÇÃO 0: GOVERNANÇA DE CHAVES OPENAI & MODO TESTE (SUPER ADMIN) */}
-            <div className={`rounded-2xl bg-[#0B1224] border p-6 space-y-5 transition-all shadow-lg ${
+            <div className={`rounded-2xl bg-white dark:bg-[#0B1224] border p-6 space-y-5 transition-all shadow-lg ${
               tenantAiStatus?.aiPlatformKeyAllowed 
                 ? "border-emerald-500/40 shadow-emerald-950/20" 
                 : "border-slate-800"
@@ -807,7 +807,7 @@ export default function SuperAdminAiAgentsPage() {
               <div className={`p-4 rounded-xl border transition-all ${
                 tenantAiStatus?.aiPlatformKeyAllowed 
                   ? "bg-emerald-950/20 border-emerald-500/30" 
-                  : "bg-[#070D1B] border-slate-800"
+                  : "bg-slate-50 dark:bg-[#070D1B] border-slate-800"
               }`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
@@ -877,7 +877,7 @@ export default function SuperAdminAiAgentsPage() {
             </div>
 
             {/* SEÇÃO 1: IDENTIDADE DO AGENTE & MOTOR COGNITIVO */}
-            <div className="rounded-2xl bg-[#0B1224] border border-slate-800 p-6 space-y-6">
+            <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 p-6 space-y-6">
               <div className="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
                 <ShieldCheck size={18} className="text-slate-300" />
                 <h2 className="text-sm font-bold uppercase tracking-wider text-white">
@@ -896,7 +896,7 @@ export default function SuperAdminAiAgentsPage() {
                     value={config.aiName}
                     onChange={handleChange}
                     placeholder="Ex: Vitor (IA)"
-                    className="w-full bg-[#070D1B] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-slate-600 transition-colors"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-slate-600 transition-colors"
                   />
                   <p className="text-[11px] text-slate-500">
                     Nome com o qual o robô se apresenta aos clientes nas conversas.
@@ -911,7 +911,7 @@ export default function SuperAdminAiAgentsPage() {
                     name="aiModel"
                     value={config.aiModel}
                     onChange={handleChange}
-                    className="w-full bg-[#070D1B] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs font-medium text-white outline-none focus:border-slate-600 transition-colors cursor-pointer"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs font-medium text-white outline-none focus:border-slate-600 transition-colors cursor-pointer"
                   >
                     <option value="gpt-4o-mini">GPT-4o Mini (Recomendado • Ultra Rápido e Econômico)</option>
                     <option value="gpt-4o">GPT-4 Omni (Raciocínio Complexo & Multimodal)</option>
@@ -933,7 +933,7 @@ export default function SuperAdminAiAgentsPage() {
                       key={p.id}
                       type="button"
                       onClick={() => applyPreset(p.prompt)}
-                      className="p-3.5 text-left rounded-xl bg-[#070D1B] border border-slate-800 hover:border-slate-700 hover:bg-slate-900/60 transition-all text-xs group cursor-pointer"
+                      className="p-3.5 text-left rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 hover:border-slate-700 hover:bg-slate-900/60 transition-all text-xs group cursor-pointer"
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-bold text-white group-hover:text-slate-200">
@@ -953,7 +953,7 @@ export default function SuperAdminAiAgentsPage() {
             </div>
 
             {/* SEÇÃO 1.5: CANAL DE TREINAMENTO & MENTORIA DA IA DO CLIENTE */}
-            <div className="rounded-2xl bg-[#0B1224] border border-cyan-500/40 p-6 space-y-5 shadow-xl shadow-cyan-950/20 ring-1 ring-cyan-500/20">
+            <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-cyan-500/40 p-6 space-y-5 shadow-xl shadow-cyan-950/20 ring-1 ring-cyan-500/20">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-cyan-500/20 pb-4">
                 <div className="flex items-center gap-2.5">
                   <div className="w-10 h-10 rounded-xl bg-cyan-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-300 shrink-0">
@@ -1007,7 +1007,7 @@ export default function SuperAdminAiAgentsPage() {
                   </div>
                 )}
 
-                <div className="flex flex-col gap-2.5 bg-[#070D1B] border border-cyan-500/40 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400/30 rounded-2xl p-3 transition-all">
+                <div className="flex flex-col gap-2.5 bg-slate-50 dark:bg-[#070D1B] border border-cyan-500/40 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400/30 rounded-2xl p-3 transition-all">
                   <textarea
                     ref={trainingInputRef}
                     value={trainingFeedback}
@@ -1081,7 +1081,7 @@ export default function SuperAdminAiAgentsPage() {
                         </div>
 
                         {log.quotedText && (
-                          <div className="p-2 rounded-lg bg-[#070D1B] border border-cyan-500/20 text-[11px] text-slate-300 italic border-l-2 border-l-cyan-400">
+                          <div className="p-2 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-cyan-500/20 text-[11px] text-slate-300 italic border-l-2 border-l-cyan-400">
                             <span className="text-[10px] text-cyan-400 font-bold block not-italic uppercase mb-0.5">
                               Trecho Discutido:
                             </span>
@@ -1118,7 +1118,7 @@ export default function SuperAdminAiAgentsPage() {
             </div>
 
             {/* SEÇÃO 1.8: RADAR DE SENTIMENTOS & OPORTUNIDADES DE APRENDIZADO CONTÍNUO (FASE 86) */}
-            <div className="rounded-2xl bg-[#0B1224] border border-amber-500/30 p-6 space-y-5 shadow-xl shadow-amber-950/20 ring-1 ring-amber-500/10">
+            <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-amber-500/30 p-6 space-y-5 shadow-xl shadow-amber-950/20 ring-1 ring-amber-500/10">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-500/20 pb-4">
                 <div className="flex items-center gap-2.5">
                   <div className="w-10 h-10 rounded-xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0">
@@ -1207,7 +1207,7 @@ export default function SuperAdminAiAgentsPage() {
                           isPending
                             ? "bg-gradient-to-br from-[#1c1409]/70 to-[#0F1420] border-amber-500/40 shadow-sm"
                             : isAssimilated
-                            ? "bg-[#0A151C]/60 border-emerald-500/30"
+                            ? "bg-slate-50/60 dark:bg-[#0A151C]/60 border-emerald-500/30"
                             : "bg-slate-900/40 border-slate-800 opacity-60"
                         }`}
                       >
@@ -1255,7 +1255,7 @@ export default function SuperAdminAiAgentsPage() {
 
                         {/* O que o cliente falou */}
                         {inc.trechoCliente && (
-                          <div className="p-2.5 rounded-lg bg-[#070D1B] border border-slate-800/80 text-xs text-slate-300 border-l-2 border-l-amber-400">
+                          <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 text-xs text-slate-300 border-l-2 border-l-amber-400">
                             <span className="text-[10px] uppercase font-bold text-amber-400 block mb-0.5">
                               💬 O que o cliente disse no WhatsApp:
                             </span>
@@ -1365,7 +1365,7 @@ export default function SuperAdminAiAgentsPage() {
             </div>
 
             {/* SEÇÃO 2: INSTRUÇÕES DO SISTEMA (SYSTEM PROMPT) */}
-            <div className="rounded-2xl bg-[#0B1224] border border-slate-800 p-6 space-y-4">
+            <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 p-6 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-4">
                 <div className="flex items-center gap-2.5">
                   <Terminal size={18} className="text-slate-300" />
@@ -1389,10 +1389,10 @@ export default function SuperAdminAiAgentsPage() {
                 value={config.aiPrompt}
                 onChange={handleChange}
                 placeholder="Insira as diretrizes detalhadas de atendimento, regras de qualificação, perguntas permitidas e limites de atuação do robô..."
-                className="w-full min-h-[380px] bg-[#070D1B] border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-200 placeholder-slate-600 outline-none focus:border-slate-600 leading-relaxed transition-colors resize-y"
+                className="w-full min-h-[380px] bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-200 placeholder-slate-600 outline-none focus:border-slate-600 leading-relaxed transition-colors resize-y"
               />
 
-              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-[#070D1B] border border-slate-800 text-xs text-slate-400">
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-xs text-slate-400">
                 <Info size={16} className="text-slate-400 shrink-0 mt-0.5" />
                 <p>
                   <strong>Dica de Engenharia:</strong> Oriente o atendente a fazer no máximo 1 pergunta por mensagem e a manter frases objetivas para evitar que o lead abandone a conversa no WhatsApp.
@@ -1401,7 +1401,7 @@ export default function SuperAdminAiAgentsPage() {
             </div>
 
             {/* SEÇÃO 3: BASE DE CONHECIMENTO (RAG & MEMÓRIA DE TEXTO) */}
-            <div className="rounded-2xl bg-[#0B1224] border border-slate-800 p-6 space-y-6">
+            <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 p-6 space-y-6">
               <div className="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
                 <BookOpen size={18} className="text-slate-300" />
                 <div>
@@ -1431,7 +1431,7 @@ export default function SuperAdminAiAgentsPage() {
                   value={config.aiKnowledgeBase}
                   onChange={handleChange}
                   placeholder="Ex: Planos mensais: Starter (R$ 197/mês), Pro (R$ 497/mês). Horário de funcionamento: Seg a Sex das 08h às 18h..."
-                  className="w-full min-h-[180px] bg-[#070D1B] border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-200 placeholder-slate-600 outline-none focus:border-slate-600 leading-relaxed transition-colors resize-y"
+                  className="w-full min-h-[180px] bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-200 placeholder-slate-600 outline-none focus:border-slate-600 leading-relaxed transition-colors resize-y"
                 />
               </div>
 
@@ -1441,7 +1441,7 @@ export default function SuperAdminAiAgentsPage() {
                   Documentos & Manuais em PDF (Indexação Vetorial)
                 </span>
 
-                <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl bg-[#070D1B] border border-slate-800">
+                <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
                   <div className="flex-1">
                     <p className="text-xs font-medium text-white">Fazer upload de novo arquivo PDF</p>
                     <p className="text-[11px] text-slate-500">
@@ -1466,7 +1466,7 @@ export default function SuperAdminAiAgentsPage() {
                     {documents.map((doc) => (
                       <div
                         key={doc.id}
-                        className="flex items-center justify-between p-3 rounded-xl bg-[#070D1B] border border-slate-800 text-xs"
+                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-xs"
                       >
                         <div className="flex items-center gap-2.5 truncate">
                           <FileText size={16} className="text-slate-400 shrink-0" />
@@ -1497,7 +1497,7 @@ export default function SuperAdminAiAgentsPage() {
             </div>
 
             {/* SEÇÃO 4: CALIBRAÇÃO & TEMPERATURA */}
-            <div className="rounded-2xl bg-[#0B1224] border border-slate-800 p-6 space-y-5">
+            <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 p-6 space-y-5">
               <div className="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
                 <Sliders size={18} className="text-slate-300" />
                 <div>
@@ -1510,7 +1510,7 @@ export default function SuperAdminAiAgentsPage() {
                 </div>
               </div>
 
-              <div className="space-y-3 bg-[#070D1B] border border-slate-800 p-4 rounded-xl">
+              <div className="space-y-3 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 p-4 rounded-xl">
                 <div className="flex justify-between items-center text-xs">
                   <span className="font-semibold text-white">Temperatura do Modelo</span>
                   <span className="font-mono font-bold text-white bg-slate-800 border border-slate-700 px-2 py-0.5 rounded">
@@ -1545,10 +1545,10 @@ export default function SuperAdminAiAgentsPage() {
 
           {/* COLUNA DIREITA: PLAYGROUND DE TESTE EM TEMPO REAL (5 COLUNAS) */}
           <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-6">
-            <div className="rounded-2xl bg-[#0B1224] border border-slate-800 flex flex-col overflow-hidden shadow-xl">
+            <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 flex flex-col overflow-hidden shadow-xl">
               
               {/* Header do Playground */}
-              <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-[#070D1B]">
+              <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-white">
                     <MessageSquare size={16} />
@@ -1574,7 +1574,7 @@ export default function SuperAdminAiAgentsPage() {
               </div>
 
               {/* Quick Chips de Simulação Rápida */}
-              <div className="p-3 border-b border-slate-800/80 bg-[#070D1B]/50 flex flex-wrap gap-1.5">
+              <div className="p-3 border-b border-slate-800/80 bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 flex flex-wrap gap-1.5">
                 {QUICK_PROMPTS.map((q, idx) => (
                   <button
                     key={idx}
@@ -1590,7 +1590,7 @@ export default function SuperAdminAiAgentsPage() {
               </div>
 
               {/* Área de Mensagens da Conversa */}
-              <div className="p-4 space-y-4 min-h-[380px] max-h-[500px] overflow-y-auto custom-scrollbar bg-[#070D1B]">
+              <div className="p-4 space-y-4 min-h-[380px] max-h-[500px] overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-[#070D1B]">
                 {messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center py-16 space-y-3">
                     <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400">
@@ -1618,7 +1618,7 @@ export default function SuperAdminAiAgentsPage() {
                         className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed ${
                           m.role === "user"
                             ? "bg-slate-800 text-white rounded-tr-sm border border-slate-700"
-                            : "bg-[#0B1224] text-slate-200 rounded-tl-sm border border-slate-800 shadow-sm"
+                            : "bg-white dark:bg-[#0B1224] text-slate-200 rounded-tl-sm border border-slate-800 shadow-sm"
                         }`}
                       >
                         <MarkdownRenderer content={m.content} />
@@ -1652,7 +1652,7 @@ export default function SuperAdminAiAgentsPage() {
               {/* Caixa de Entrada do Playground */}
               <form
                 onSubmit={handleSendMessage}
-                className="p-3 border-t border-slate-800 bg-[#0B1224] flex items-center gap-2"
+                className="p-3 border-t border-slate-800 bg-white dark:bg-[#0B1224] flex items-center gap-2"
               >
                 <input
                   type="text"
@@ -1660,7 +1660,7 @@ export default function SuperAdminAiAgentsPage() {
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   placeholder="Digite uma mensagem para simular..."
                   disabled={isGenerating}
-                  className="flex-1 bg-[#070D1B] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-slate-600 transition-colors"
+                  className="flex-1 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-slate-600 transition-colors"
                 />
                 <button
                   type="submit"
@@ -1675,7 +1675,7 @@ export default function SuperAdminAiAgentsPage() {
             </div>
 
             {/* Banner de Governança Segura */}
-            <div className="p-4 rounded-xl bg-[#0B1224] border border-slate-800 text-xs text-slate-400 space-y-1">
+            <div className="p-4 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 text-xs text-slate-400 space-y-1">
               <p className="font-semibold text-white">🔒 Governança Restrita Super Admin</p>
               <p className="text-[11px] text-slate-400 leading-relaxed">
                 Este módulo foi realocado exclusivamente para este console. Clientes e usuários comuns não possuem permissão de editar parâmetros e prompts cognitivos da IA.

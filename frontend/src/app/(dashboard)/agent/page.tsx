@@ -38,7 +38,7 @@ export default function LegacyAgentRedirectPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 text-center max-w-lg mx-auto space-y-6 font-sans">
-      <div className="w-16 h-16 rounded-2xl bg-[#0B1224] border border-slate-800 flex items-center justify-center text-slate-300 shadow-xl">
+      <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800 flex items-center justify-center text-slate-300 shadow-xl">
         <Lock size={28} />
       </div>
 
@@ -74,7 +74,7 @@ export default function LegacyAgentRedirectPage() {
         )}
       </div>
 
-      <div className="p-3.5 rounded-xl bg-[#0B1224] border border-slate-800/80 text-[11px] text-slate-400 w-full text-left">
+      <div className="p-3.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800/80 text-[11px] text-slate-400 w-full text-left">
         <div className="flex items-center gap-2 font-semibold text-slate-300 mb-1">
           <ShieldCheck size={14} className="text-slate-400" />
           <span>Precisa de ajustes no seu bot?</span>

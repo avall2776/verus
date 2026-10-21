@@ -6,6 +6,25 @@ export declare class ContactsService {
     private readonly automationsService;
     private readonly whatsappService;
     constructor(prisma: PrismaService, automationsService: AutomationsService, whatsappService: WhatsappService);
+    createContact(tenantId: string, data: {
+        name: string;
+        phone?: string;
+        email?: string;
+        source?: string;
+        tags?: string[];
+    }): Promise<{
+        id: string;
+        name: string;
+        phone: string | null;
+        email: string | null;
+        avatarUrl: string | null;
+        source: string;
+        tags: string[];
+        tenantId: string;
+        whatsappLid: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
     findAll(tenantId: string): Promise<{
         id: string;
         name: string;

@@ -5,7 +5,7 @@ import {
   X, MessageSquare, ExternalLink, Calendar, CheckSquare, RefreshCw, 
   Trash2, Tag, User as UserIcon, Paperclip, Upload, FileText, Download, 
   RotateCcw, CheckCircle2, XCircle, Clock, Phone, Mail, ChevronRight, Plus, Send, 
-  AlertCircle, Check, DollarSign, ArrowUpRight, PencilLine, Edit3,
+  AlertCircle, Check, DollarSign, ArrowUpRight, PencilLine, Edit3, MessageCircle,
   Building2, MapPin, Briefcase, UserCog, Video, Users, Bell, Globe, Link2, ChevronDown
 } from "lucide-react";
 import { format } from "date-fns";
@@ -211,7 +211,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
         onClick={onClose}
       >
-        <div className="bg-[#161b22] border border-gray-800 w-full max-w-5xl h-[650px] rounded-2xl flex flex-col shadow-2xl p-6 animate-pulse">
+        <div className="bg-white dark:bg-[#161b22] border border-gray-800 w-full max-w-5xl h-[650px] rounded-2xl flex flex-col shadow-2xl p-6 animate-pulse">
           {/* Header Skeleton */}
           <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-6">
             <div className="flex items-center gap-4">
@@ -398,12 +398,15 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
   const handleReactivateDeal = async () => {
     try {
       const activeStage = "qualified";
+      const updatedMetadata = { ...(deal.metadata || {}), closedAt: null };
       await onUpdate(deal.id, { 
         status: activeStage, 
         lossReason: null, 
-        lossComment: null 
+        lossComment: null,
+        metadata: updatedMetadata
       });
       deal.status = activeStage;
+      deal.metadata = updatedMetadata;
       
       const newEvt = {
         id: `evt-${Date.now()}`,
@@ -423,9 +426,15 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
   // Alterar Etapa
   const handleStageChange = async (newStatus: string) => {
     try {
-      await onUpdate(deal.id, { status: newStatus });
+      const isClosing = ['won', 'lost', 'disqualified'].includes(newStatus);
+      const updatedMetadata = {
+        ...(deal.metadata || {}),
+        closedAt: isClosing ? (deal.metadata?.closedAt || new Date().toISOString()) : null
+      };
+      await onUpdate(deal.id, { status: newStatus, metadata: updatedMetadata });
       const stageName = PIPELINE_STAGES.find(s => s.id === newStatus)?.title || newStatus;
       deal.status = newStatus;
+      deal.metadata = updatedMetadata;
 
       const newEvt = {
         id: `evt-${Date.now()}`,
@@ -449,12 +458,18 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
   const handleConfirmLoss = async () => {
     try {
       const reasonText = lossReason === 'outro' ? (lossComment || 'Outro') : (lossReason || 'Perda confirmada');
+      const updatedMetadata = {
+        ...(deal.metadata || {}),
+        closedAt: deal.metadata?.closedAt || new Date().toISOString()
+      };
       await onUpdate(deal.id, {
         status: 'lost',
         lossReason: reasonText,
-        lossComment
+        lossComment,
+        metadata: updatedMetadata
       });
       deal.status = 'lost';
+      deal.metadata = updatedMetadata;
       const newEvt = {
         id: `evt-${Date.now()}`,
         type: "stage_change",
@@ -717,12 +732,12 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-[#161b22] border border-gray-800 w-full max-w-5xl max-h-[92vh] rounded-2xl flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden relative">
+      <div className="bg-white dark:bg-[#161b22] border border-gray-800 w-full max-w-5xl max-h-[92vh] rounded-2xl flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden relative">
         
         {/* ========================================================================= */}
         {/* 1. CABEÇALHO DO DEALMODAL (Padrão Clean Executivo Lero)                    */}
         {/* ========================================================================= */}
-        <div className="flex flex-wrap items-center justify-between px-6 lg:px-8 py-4.5 border-b border-gray-800/80 bg-[#161b22] shrink-0 gap-4">
+        <div className="flex flex-wrap items-center justify-between px-6 lg:px-8 py-4.5 border-b border-slate-200 dark:border-gray-800/80 bg-white dark:bg-[#161b22] shrink-0 gap-4">
           {/* Avatar + Lead + Telefone + Badge de Status */}
           <div className="flex items-center gap-4 min-w-0">
             <div className={`w-12 h-12 rounded-full border-2 ${currentStage.border} flex items-center justify-center ${currentStage.bg} ${currentStage.color} font-black text-lg shadow-md shrink-0`}>
@@ -731,7 +746,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
             
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="text-[11px] font-mono text-gray-400 bg-gray-900 border border-gray-800 px-2 py-0.5 rounded">
+                <span className="text-[11px] font-mono text-slate-600 dark:text-gray-400 bg-slate-100 dark:bg-gray-900 border border-slate-200 dark:border-gray-800 px-2 py-0.5 rounded">
                   #{safeId}
                 </span>
                 
@@ -742,12 +757,12 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                     onChange={e => setTempName(e.target.value)}
                     onBlur={handleUpdateContact}
                     onKeyDown={e => e.key === 'Enter' && handleUpdateContact()}
-                    className="text-lg font-bold text-white bg-gray-800 border border-primary px-2 py-0.5 rounded-lg outline-none"
+                    className="text-lg font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-gray-800 border border-blue-600 px-2 py-0.5 rounded-lg outline-none"
                   />
                 ) : (
                   <div className="flex items-center gap-1.5 group">
                     <h2 
-                      className="text-lg font-bold text-white hover:text-primary cursor-pointer transition-colors truncate"
+                      className="text-lg font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-primary cursor-pointer transition-colors truncate"
                       onClick={() => setShowEditContactModal(true)}
                       title="Clique para editar contato"
                     >
@@ -756,7 +771,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                     <button
                       type="button"
                       onClick={() => setShowEditContactModal(true)}
-                      className="text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-gray-800/60 opacity-60 group-hover:opacity-100 flex items-center gap-1"
+                      className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-1 rounded hover:bg-slate-100 dark:hover:bg-gray-800/60 opacity-70 group-hover:opacity-100 flex items-center gap-1"
                       title="Editar todas as informações do contato"
                     >
                       <PencilLine className="w-3.5 h-3.5" />
@@ -772,23 +787,23 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               </div>
 
               {/* Telefone Clicável com WhatsApp */}
-              <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
+              <div className="mt-1 flex items-center gap-3 text-xs text-slate-500 dark:text-gray-400">
                 {deal.contact?.phone ? (
                   <a 
                     href={`https://wa.me/${deal.contact.phone.replace(/\D/g, '')}`} 
                     target="_blank" 
                     rel="noreferrer"
-                    className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                    className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 font-medium transition-colors"
                   >
-                    <span className="text-[#25D366]">🟢</span>
+                    <MessageCircle size={13} className="text-[#25D366] shrink-0" />
                     <span>{deal.contact.phone}</span>
                   </a>
                 ) : (
-                  <span className="text-gray-500 italic">Sem telefone</span>
+                  <span className="text-slate-400 dark:text-gray-500 italic">Sem telefone</span>
                 )}
                 {deal.contact?.email && (
-                  <span className="text-gray-400 flex items-center gap-1">
-                    <Mail size={12} className="text-gray-500" /> {deal.contact.email}
+                  <span className="text-slate-500 dark:text-gray-400 flex items-center gap-1">
+                    <Mail size={12} className="text-slate-400 dark:text-gray-500" /> {deal.contact.email}
                   </span>
                 )}
               </div>
@@ -798,24 +813,24 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
           {/* Valor do Negócio + Botão Fechar */}
           <div className="flex items-center gap-5 ml-auto">
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Valor do Negócio</span>
-              <div className="flex items-center gap-1.5 bg-[#0d1117] px-3.5 py-1.5 rounded-xl border border-gray-800 shadow-inner group">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-0.5">Valor do Negócio</span>
+              <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-[#0d1117] px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-gray-800 shadow-inner group">
                 {isEditingValue ? (
                   <div className="flex items-center gap-1">
-                    <span className="text-emerald-400 font-bold text-sm">R$</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">R$</span>
                     <input 
                       autoFocus
                       value={tempValue}
                       onChange={e => setTempValue(e.target.value)}
                       onBlur={handleUpdateValue}
                       onKeyDown={e => e.key === 'Enter' && handleUpdateValue()}
-                      className="w-28 bg-transparent text-emerald-400 font-black font-mono text-lg text-right outline-none"
+                      className="w-28 bg-transparent text-emerald-600 dark:text-emerald-400 font-black font-mono text-lg text-right outline-none"
                     />
                   </div>
                 ) : (
                   <>
                     <span 
-                      className="text-emerald-400 font-black font-mono text-xl cursor-pointer hover:text-emerald-300 transition-colors"
+                      className="text-emerald-600 dark:text-emerald-400 font-black font-mono text-xl cursor-pointer hover:text-emerald-500 transition-colors"
                       onClick={() => { setTempValue((deal.value ? Number(deal.value) : 0).toFixed(2).replace('.', ',')); setIsEditingValue(true); }}
                       title="Clique para editar o valor"
                     >
@@ -824,7 +839,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                     <button
                       type="button"
                       onClick={() => { setTempValue((deal.value ? Number(deal.value) : 0).toFixed(2).replace('.', ',')); setIsEditingValue(true); }}
-                      className="text-gray-400 hover:text-emerald-400 transition-colors p-0.5 rounded opacity-60 group-hover:opacity-100"
+                      className="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors p-0.5 rounded opacity-70 group-hover:opacity-100"
                       title="Editar valor"
                     >
                       <PencilLine className="w-3.5 h-3.5" />
@@ -836,7 +851,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
 
             <button 
               onClick={onClose} 
-              className="p-2 hover:bg-gray-800/80 rounded-xl text-gray-400 hover:text-white transition-colors border border-transparent hover:border-gray-700"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-gray-800/80 rounded-xl text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors border border-transparent hover:border-slate-200 dark:hover:border-gray-700"
               title="Fechar (Esc)"
             >
               <X size={20} />
@@ -853,87 +868,116 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
           <div className="flex-1 overflow-y-auto p-6 lg:p-7 space-y-5 custom-scrollbar border-r border-gray-800/60">
             
             {/* SEÇÃO 0: INFORMAÇÕES DO CONTATO (PADRÃO LERO) */}
-            <div className="bg-[#161b22] border border-gray-800/60 rounded-xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4 border-b border-gray-800/60 pb-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200 flex items-center gap-2">
-                  <UserIcon size={14} className="text-gray-400" /> Informações do Contato
+            <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/60 rounded-xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-gray-800/60 pb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-gray-200 flex items-center gap-2">
+                  <UserIcon size={14} className="text-blue-600 dark:text-blue-400" /> Informações do Contato
                 </h3>
                 <button
                   type="button"
                   onClick={() => setShowEditContactModal(true)}
-                  className="flex items-center gap-1.5 text-xs font-medium text-gray-300 hover:text-white bg-[#0d1117] hover:bg-[#21262d] border border-gray-800/80 px-2.5 py-1 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white bg-slate-50 hover:bg-slate-100 dark:bg-[#0d1117] dark:hover:bg-[#21262d] border border-slate-200 dark:border-gray-800/80 px-2.5 py-1 rounded-lg transition-colors shadow-xs"
                   title="Editar informações completas do contato"
                 >
-                  <PencilLine size={13} className="text-gray-400" />
+                  <PencilLine size={13} className="text-slate-500 dark:text-gray-400" />
                   <span>Editar Contato</span>
                 </button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
-                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Nome Completo</span>
-                  <span className="text-xs font-semibold text-white truncate block">
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-gray-400 uppercase block mb-0.5">Nome Completo</span>
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white truncate block">
                     {deal.contact?.name || deal.title || "Não informado"}
                   </span>
                 </div>
 
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl">
-                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">WhatsApp / Telefone</span>
-                  <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
-                    <span>🟢</span> {deal.contact?.phone || ""}
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-gray-400 uppercase block mb-0.5">WhatsApp / Telefone</span>
+                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                    <MessageCircle size={12} className="text-[#25D366] shrink-0" />
+                    <span>{deal.contact?.phone || ""}</span>
                   </span>
                 </div>
 
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl min-h-[58px]">
-                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">E-mail</span>
-                  <span className="text-xs font-semibold text-gray-300 truncate block">
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-3 rounded-xl min-h-[58px]">
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-gray-400 uppercase block mb-0.5">E-mail</span>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-gray-300 truncate block">
                     {deal.contact?.email || deal.metadata?.contact?.email || deal.metadata?.email || ""}
                   </span>
                 </div>
 
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl min-h-[58px]">
-                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Cargo & Empresa</span>
-                  <span className="text-xs font-semibold text-gray-300 truncate block">
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-3 rounded-xl min-h-[58px]">
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-gray-400 uppercase block mb-0.5">Cargo & Empresa</span>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-gray-300 truncate block">
                     {[deal.contact?.role || deal.metadata?.contact?.role || deal.metadata?.role, deal.contact?.company || deal.metadata?.contact?.company || deal.metadata?.company].filter(Boolean).join(' • ') || ""}
                   </span>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-3 rounded-xl min-h-[58px]">
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-gray-400 uppercase block mb-0.5 flex items-center gap-1">
+                    <Calendar size={11} className="text-blue-600 dark:text-blue-400" /> Data de Início (Criação)
+                  </span>
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white font-mono block">
+                    {safeFormatDate(deal.metadata?.startDate || deal.createdAt)}
+                  </span>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-3 rounded-xl min-h-[58px]">
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-gray-400 uppercase block mb-0.5 flex items-center gap-1">
+                    <CheckCircle2 size={11} className="text-emerald-500" /> Data de Fechamento (Fim)
+                  </span>
+                  {deal.metadata?.closedAt ? (
+                    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 font-mono block">
+                      {safeFormatDate(deal.metadata.closedAt)}
+                    </span>
+                  ) : ['won', 'lost', 'disqualified'].includes(deal.status) ? (
+                    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 font-mono block">
+                      {safeFormatDate(deal.updatedAt)}
+                    </span>
+                  ) : (
+                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400/90 italic block">
+                      Negociação em andamento
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* SEÇÃO 1: DESCRIÇÃO & RESPOSTAS DE FORMULÁRIO (META ADS / CRM) */}
-            <div className="bg-[#161b22] border border-gray-800/60 rounded-xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4 border-b border-gray-800/60 pb-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200 flex items-center gap-2">
-                  <ExternalLink size={14} className="text-gray-400" /> Respostas de Formulário & Metadados
+            <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/60 rounded-xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-gray-800/60 pb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-gray-200 flex items-center gap-2">
+                  <ExternalLink size={14} className="text-blue-600 dark:text-blue-400" /> Respostas de Formulário & Metadados
                 </h3>
-                <span className="text-[10px] font-medium text-gray-400 bg-[#0d1117] border border-gray-800/80 px-2.5 py-0.5 rounded-md uppercase">
+                <span className="text-[10px] font-medium text-slate-600 dark:text-gray-400 bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/80 px-2.5 py-0.5 rounded-md uppercase">
                   Origem: {deal.contact?.source || deal.metadata?.source || 'WhatsApp'}
                 </span>
               </div>
 
               {/* Grid Formatado de Respostas Meta Ads */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl min-h-[58px]">
-                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Formulário de Captação</span>
-                  <span className="text-xs font-semibold text-white">
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-3 rounded-xl min-h-[58px]">
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-gray-400 uppercase block mb-0.5">Formulário de Captação</span>
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white">
                     {deal.metadata?.formName || deal.metadata?.campaign || deal.contact?.campaign || ""}
                   </span>
                 </div>
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl min-h-[58px]">
-                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Modelo de Interesse</span>
-                  <span className="text-xs font-semibold text-gray-200">
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-3 rounded-xl min-h-[58px]">
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-gray-400 uppercase block mb-0.5">Modelo de Interesse</span>
+                  <span className="text-xs font-semibold text-slate-800 dark:text-gray-200">
                     {deal.metadata?.model || deal.metadata?.product || (deal.title && !['Atendimento Comercial', 'Novo Lead', 'Nova Oportunidade', deal.contact?.name].includes(deal.title) ? deal.title : '') || ""}
                   </span>
                 </div>
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl min-h-[58px]">
-                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Cidade / UF</span>
-                  <span className="text-xs font-semibold text-gray-300">
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-3 rounded-xl min-h-[58px]">
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-gray-400 uppercase block mb-0.5">Cidade / UF</span>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-gray-300">
                     {deal.metadata?.city || deal.contact?.city || deal.contact?.address || ""}
                   </span>
                 </div>
-                <div className="bg-[#0d1117] border border-gray-800/60 p-3 rounded-xl min-h-[58px]">
-                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">E-mail Cadastrado</span>
-                  <span className="text-xs font-semibold text-gray-300 truncate block">
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-3 rounded-xl min-h-[58px]">
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-gray-400 uppercase block mb-0.5">E-mail Cadastrado</span>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-gray-300 truncate block">
                     {deal.contact?.email || deal.metadata?.email || ""}
                   </span>
                 </div>
@@ -941,15 +985,15 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
 
               {/* Campos Customizados (deal.customFields) */}
               {customFieldsEntries.length > 0 && (
-                <div className="mb-4 pt-3 border-t border-gray-800/60">
-                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">
+                <div className="mb-4 pt-3 border-t border-slate-200 dark:border-gray-800/60">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2 block">
                     Campos Personalizados
                   </span>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                     {customFieldsEntries.map(([key, value]) => (
-                      <div key={key} className="bg-[#0d1117] border border-gray-800/60 p-2.5 rounded-xl text-xs flex justify-between items-center">
-                        <span className="text-gray-400 font-medium">{key}:</span>
-                        <span className="text-white font-bold">{String(value)}</span>
+                      <div key={key} className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-2.5 rounded-xl text-xs flex justify-between items-center">
+                        <span className="text-slate-500 dark:text-gray-400 font-medium">{key}:</span>
+                        <span className="text-slate-900 dark:text-white font-bold">{String(value)}</span>
                       </div>
                     ))}
                   </div>
@@ -958,15 +1002,15 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
 
               {/* Anotações do Atendente / Histórico */}
               <div className="flex items-center justify-between mt-5 mb-2.5">
-                <span className="text-xs font-bold text-gray-300">Anotações do Negócio</span>
+                <span className="text-xs font-bold text-slate-800 dark:text-gray-300">Anotações do Negócio</span>
                 {!isEditingNotes && (
                   <button 
                     type="button"
                     onClick={() => { setTempNotes(deal.notes || ''); setIsEditingNotes(true); }}
-                    className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white font-medium transition-colors group"
+                    className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white font-medium transition-colors group"
                     title="Editar anotações"
                   >
-                    <PencilLine className="w-3.5 h-3.5 text-gray-400 group-hover:text-white transition-colors" />
+                    <PencilLine className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-white transition-colors" />
                     <span>Editar Anotações</span>
                   </button>
                 )}
@@ -977,26 +1021,26 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                   <textarea 
                     value={tempNotes}
                     onChange={e => setTempNotes(e.target.value)}
-                    className="w-full bg-[#0d1117] border border-gray-700/80 rounded-xl p-3.5 text-xs text-white resize-y min-h-[100px] outline-none focus:border-blue-700/60"
+                    className="w-full bg-slate-50 dark:bg-[#0d1117] border border-slate-300 dark:border-gray-700/80 rounded-xl p-3.5 text-xs text-slate-900 dark:text-white resize-y min-h-[100px] outline-none focus:border-blue-600 placeholder:text-slate-400 dark:placeholder:text-gray-500"
                     placeholder="Digite anotações ou observações comerciais..."
                   />
                   <div className="flex justify-end gap-2">
-                    <button onClick={() => setIsEditingNotes(false)} className="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors">Cancelar</button>
-                    <button onClick={handleUpdateNotes} className="px-3.5 py-1.5 text-xs bg-[#161b22] hover:bg-[#21262d] text-white border border-gray-700 font-semibold rounded-lg transition-colors">Salvar</button>
+                    <button onClick={() => setIsEditingNotes(false)} className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-white transition-colors">Cancelar</button>
+                    <button onClick={handleUpdateNotes} className="px-3.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors shadow-sm">Salvar</button>
                   </div>
                 </div>
               ) : (
-                <div className="bg-[#0d1117] border border-gray-800/60 rounded-xl p-3.5 text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 rounded-xl p-3.5 text-xs text-slate-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
                   {deal.notes || deal.metadata?.resumo || ""}
                 </div>
               )}
             </div>
 
             {/* SEÇÃO 2: ANEXOS (ÁREA DE UPLOAD E LISTAGEM DE ARQUIVOS) */}
-            <div className="bg-[#161b22] border border-gray-800/60 rounded-xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4 border-b border-gray-800/60 pb-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200 flex items-center gap-2">
-                  <Paperclip size={14} className="text-gray-400" /> Anexos da Oportunidade ({attachments.length})
+            <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/60 rounded-xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-gray-800/60 pb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-gray-200 flex items-center gap-2">
+                  <Paperclip size={14} className="text-blue-600 dark:text-blue-400" /> Anexos da Oportunidade ({attachments.length})
                 </h3>
                 
                 {/* Botão de Upload com Input File Oculto */}
@@ -1009,31 +1053,31 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                 <button 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1.5 text-xs font-medium text-gray-200 bg-[#161b22] hover:bg-[#21262d] border border-gray-800 px-3 py-1.5 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-gray-200 bg-white hover:bg-slate-50 dark:bg-[#161b22] dark:hover:bg-[#21262d] border border-slate-300 dark:border-gray-800 px-3 py-1.5 rounded-lg transition-colors shadow-xs"
                 >
-                  <Upload size={13} className="text-gray-400" /> Anexar Arquivo
+                  <Upload size={13} className="text-blue-600 dark:text-blue-400" /> Anexar Arquivo
                 </button>
               </div>
 
               {/* Lista de Arquivos Anexados */}
               <div className="space-y-2.5">
                 {attachments.length === 0 ? (
-                  <div className="text-center py-6 text-gray-500 text-xs italic border border-dashed border-gray-800/80 rounded-xl">
+                  <div className="text-center py-6 text-slate-500 dark:text-gray-500 text-xs italic border border-dashed border-slate-200 dark:border-gray-800/80 rounded-xl">
                     Nenhum arquivo anexado a esta oportunidade. Clique em "Anexar Arquivo" acima.
                   </div>
                 ) : (
                   attachments.map(att => (
                     <div 
                       key={att.id}
-                      className="flex items-center justify-between p-3 bg-[#0d1117] border border-gray-800/60 hover:border-gray-700/80 rounded-xl transition-colors"
+                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 hover:border-slate-300 dark:hover:border-gray-700/80 rounded-xl transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-gray-900 border border-slate-200 dark:border-gray-800 flex items-center justify-center text-slate-500 dark:text-gray-400 shrink-0">
                           <FileText size={16} />
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-xs font-bold text-white truncate max-w-[320px]">{att.name}</span>
-                          <span className="text-[10px] text-gray-400">{att.size} • Anexado em {att.date}</span>
+                          <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[320px]">{att.name}</span>
+                          <span className="text-[10px] text-slate-500 dark:text-gray-400">{att.size} • Anexado em {att.date}</span>
                         </div>
                       </div>
 
@@ -1041,7 +1085,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                         <button
                           type="button"
                           onClick={() => toast.success(`Baixando ${att.name}...`)}
-                          className="p-1.5 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors"
+                          className="p-1.5 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
                           title="Baixar arquivo"
                         >
                           <Download size={14} />
@@ -1049,7 +1093,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                         <button
                           type="button"
                           onClick={() => handleRemoveAttachment(att.id)}
-                          className="p-1.5 hover:bg-rose-950/40 rounded-lg text-gray-400 hover:text-rose-400 transition-colors"
+                          className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                           title="Remover anexo"
                         >
                           <Trash2 size={14} />
@@ -1062,10 +1106,10 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
             </div>
 
             {/* SEÇÃO 3: TIMELINE DO CARD (HISTÓRICO CRONOLÓGICO) */}
-            <div className="bg-[#161b22] border border-gray-800/60 rounded-xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4 border-b border-gray-800/60 pb-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200 flex items-center gap-2">
-                  <Clock size={14} className="text-gray-400" /> Timeline do Card & Histórico
+            <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/60 rounded-xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-gray-800/60 pb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-gray-200 flex items-center gap-2">
+                  <Clock size={14} className="text-blue-600 dark:text-blue-400" /> Timeline do Card & Histórico
                 </h3>
               </div>
 
@@ -1077,22 +1121,22 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                   onChange={e => setNewTimelineNote(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddTimelineNote()}
                   placeholder="Adicionar nota rápida à timeline do negócio..."
-                  className="flex-1 bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder:text-gray-500 outline-none focus:border-blue-700/60 transition-colors"
+                  className="flex-1 bg-slate-50 dark:bg-[#0d1117] border border-slate-300 dark:border-gray-800 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-500 outline-none focus:border-blue-600 transition-colors"
                 />
                 <button
                   type="button"
                   onClick={handleAddTimelineNote}
-                  className="bg-[#161b22] hover:bg-[#21262d] text-gray-200 border border-gray-800 text-xs font-medium px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors shrink-0"
+                  className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors shrink-0 shadow-xs"
                 >
-                  <Send size={13} className="text-gray-400" /> Registrar
+                  <Send size={13} /> Registrar
                 </button>
               </div>
 
               {/* Linha Cronológica */}
-              <div className="relative pl-6 border-l-2 border-gray-800/80 space-y-4">
+              <div className="relative pl-6 border-l-2 border-slate-200 dark:border-gray-800/80 space-y-4">
                 {timelineEvents.map((evt, idx) => (
                   <div key={evt.id || idx} className="relative">
-                    <div className={`absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full border-2 border-[#161b22] ${
+                    <div className={`absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-[#161b22] ${
                       evt.type === 'created' ? 'bg-blue-500/80' :
                       evt.type === 'reactivated' ? 'bg-blue-400/80' :
                       evt.type === 'task' ? 'bg-amber-400/80' :
@@ -1101,19 +1145,19 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                     }`}></div>
 
                     <div className="flex items-baseline justify-between text-xs">
-                      <span className="font-semibold text-gray-200">{evt.title}</span>
-                      <span className="text-[10px] text-gray-500">
+                      <span className="font-semibold text-slate-800 dark:text-gray-200">{evt.title}</span>
+                      <span className="text-[10px] text-slate-500 dark:text-gray-500">
                         {safeFormatDate(evt.date)}
                       </span>
                     </div>
 
-                    <div className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1.5">
-                      <div className="w-3.5 h-3.5 rounded-full bg-gray-800 text-[8px] flex items-center justify-center font-bold text-white">
+                    <div className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
+                      <div className="w-3.5 h-3.5 rounded-full bg-slate-200 dark:bg-gray-800 text-[8px] flex items-center justify-center font-bold text-slate-700 dark:text-white">
                         {evt.author?.[0] || "S"}
                       </div>
                       <span>{evt.author || "Sistema"}</span>
                       {evt.stage && (
-                        <span className="text-[10px] font-mono bg-gray-900 border border-gray-800 px-1.5 py-0.2 rounded text-gray-400">
+                        <span className="text-[10px] font-mono bg-slate-100 dark:bg-gray-900 border border-slate-200 dark:border-gray-800 px-1.5 py-0.2 rounded text-slate-600 dark:text-gray-400">
                           {String(evt.stage).toUpperCase()}
                         </span>
                       )}
@@ -1128,7 +1172,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
           {/* ========================================================================= */}
           {/* COLUNA DIREITA: PAINEL DE AÇÕES RÁPIDAS (PADRÃO LERO)                     */}
           {/* ========================================================================= */}
-          <div className="w-full lg:w-[350px] bg-[#13171f]/80 p-6 lg:p-7 flex flex-col gap-5 overflow-y-auto custom-scrollbar shrink-0 border-t lg:border-t-0 border-gray-800/60">
+          <div className="w-full lg:w-[350px] bg-slate-50/80 dark:bg-slate-50 dark:bg-[#13171f]/80 p-6 lg:p-7 flex flex-col gap-5 overflow-y-auto custom-scrollbar shrink-0 border-t lg:border-t-0 border-gray-800/60">
             
             {/* ETAPA ATUAL & RESPONSÁVEL */}
             <div className="space-y-4">
@@ -1137,12 +1181,12 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                   Etapa do Funil
                 </label>
                 <select 
-                  className="w-full bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                  className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
                   value={deal.status || "new"}
                   onChange={(e) => handleStageChange(e.target.value)}
                 >
                   {PIPELINE_STAGES.map(s => (
-                    <option key={s.id} value={s.id} className="bg-[#161b22] text-white">
+                    <option key={s.id} value={s.id} className="bg-white dark:bg-[#161b22] text-white">
                       {s.title}
                     </option>
                   ))}
@@ -1154,13 +1198,13 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                   Responsável pelo Negócio
                 </label>
                 <select 
-                  className="w-full bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                  className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
                   value={deal.assignedTo?.id || (typeof deal.assignedTo === 'string' ? deal.assignedTo : "")}
                   onChange={(e) => onUpdate(deal.id, { assignedTo: e.target.value || null })}
                 >
-                  <option value="" className="bg-[#161b22]">Nenhum (Fila Geral)</option>
+                  <option value="" className="bg-white dark:bg-[#161b22]">Nenhum (Fila Geral)</option>
                   {users.map(u => (
-                    <option key={u.id} value={u.id} className="bg-[#161b22]">
+                    <option key={u.id} value={u.id} className="bg-white dark:bg-[#161b22]">
                       {u.name} {u.role ? `(${u.role})` : ''}
                     </option>
                   ))}
@@ -1226,7 +1270,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                     router.push(`/inbox`);
                   }
                 }} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-[#161b22] border border-gray-800 hover:bg-[#21262d] hover:border-gray-700 transition-colors"
+                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-white dark:bg-[#161b22] border border-gray-800 hover:bg-slate-100 dark:bg-[#21262d] hover:border-gray-700 transition-colors"
               >
                 <MessageSquare size={14} className="text-gray-400" />
                 <span>Ver Conversa no WhatsApp</span>
@@ -1236,7 +1280,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               <button 
                 type="button"
                 onClick={() => loadChat('send')} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-[#161b22] border border-gray-800 hover:bg-[#21262d] hover:border-gray-700 transition-colors"
+                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-white dark:bg-[#161b22] border border-gray-800 hover:bg-slate-100 dark:bg-[#21262d] hover:border-gray-700 transition-colors"
               >
                 <Send size={14} className="text-gray-400" />
                 <span>Enviar Mensagem Rápida</span>
@@ -1249,7 +1293,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                   setActivityTab('task');
                   setShowActivityModal(true);
                 }} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-[#161b22] border border-gray-800 hover:bg-[#21262d] hover:border-gray-700 transition-colors"
+                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-white dark:bg-[#161b22] border border-gray-800 hover:bg-slate-100 dark:bg-[#21262d] hover:border-gray-700 transition-colors"
               >
                 <CheckSquare size={14} className="text-gray-400" />
                 <span>Criar Tarefa</span>
@@ -1262,7 +1306,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                   setActivityTab('event');
                   setShowActivityModal(true);
                 }} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-[#161b22] border border-gray-800 hover:bg-[#21262d] hover:border-gray-700 transition-colors"
+                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-white dark:bg-[#161b22] border border-gray-800 hover:bg-slate-100 dark:bg-[#21262d] hover:border-gray-700 transition-colors"
               >
                 <Calendar size={14} className="text-gray-400" />
                 <span>Criar Evento</span>
@@ -1272,7 +1316,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               <button 
                 type="button"
                 onClick={() => setShowEditContactModal(true)} 
-                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-[#161b22] border border-gray-800 hover:bg-[#21262d] hover:border-gray-700 transition-colors"
+                className="flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-medium text-gray-200 bg-white dark:bg-[#161b22] border border-gray-800 hover:bg-slate-100 dark:bg-[#21262d] hover:border-gray-700 transition-colors"
                 title="Editar informações completas do contato"
               >
                 <UserCog size={14} className="text-gray-400" />
@@ -1280,11 +1324,35 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               </button>
             </div>
 
-            {/* Rodapé da Coluna Direita */}
-            <div className="mt-auto pt-5 border-t border-gray-800/60 flex flex-col gap-2">
-              <span className="text-[10px] text-gray-500 text-center">
-                Criado em: {safeFormatDate(deal.createdAt)}
-              </span>
+            {/* Rodapé da Coluna Direita: Auditoria de Datas da Negociação */}
+            <div className="mt-auto pt-4 border-t border-gray-800/60 flex flex-col gap-2">
+              <div className="bg-slate-100/60 dark:bg-[#0d1117]/60 p-3 rounded-xl border border-gray-800/60 flex flex-col gap-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-gray-400 flex items-center gap-1.5">
+                    <Calendar size={12} className="text-primary" /> Data de Início:
+                  </span>
+                  <span className="text-white font-mono font-semibold">
+                    {safeFormatDate(deal.metadata?.startDate || deal.createdAt)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-gray-800/40">
+                  <span className="text-gray-400 flex items-center gap-1.5">
+                    <CheckCircle2 size={12} className="text-emerald-500 shrink-0" /> Fechamento:
+                  </span>
+                  {deal.metadata?.closedAt ? (
+                    <span className="text-emerald-400 font-mono font-bold">
+                      {safeFormatDate(deal.metadata.closedAt)}
+                    </span>
+                  ) : ['won', 'lost', 'disqualified'].includes(deal.status) ? (
+                    <span className="text-emerald-400 font-mono font-bold">
+                      {safeFormatDate(deal.updatedAt)}
+                    </span>
+                  ) : (
+                    <span className="text-blue-400 italic">Em andamento</span>
+                  )}
+                </div>
+              </div>
 
               <button 
                 type="button"
@@ -1308,12 +1376,12 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
         {/* ========================================================================= */}
         {showEditContactModal && (
           <div className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-[#161b22] border border-gray-800 w-full max-w-2xl rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
+            <div className="bg-white dark:bg-[#161b22] border border-gray-800 w-full max-w-2xl rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
               
               {/* Topo do Modal */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800/80 bg-[#161b22] shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800/80 bg-white dark:bg-[#161b22] shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#0d1117] border border-gray-800 flex items-center justify-center text-gray-300">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#0d1117] border border-gray-800 flex items-center justify-center text-gray-300">
                     <UserCog size={16} />
                   </div>
                   <div>
@@ -1344,7 +1412,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       value={editContactData.name}
                       onChange={e => setEditContactData(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="Nome completo do lead..."
-                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
                     />
                   </div>
 
@@ -1358,7 +1426,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       value={editContactData.phone}
                       onChange={e => setEditContactData(prev => ({ ...prev, phone: e.target.value }))}
                       placeholder="+55 (11) 99999-9999"
-                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
                     />
                   </div>
 
@@ -1371,7 +1439,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       type="date" 
                       value={editContactData.birthDate}
                       onChange={e => setEditContactData(prev => ({ ...prev, birthDate: e.target.value }))}
-                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-blue-700/60 transition-colors"
                     />
                   </div>
 
@@ -1385,7 +1453,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       value={editContactData.email}
                       onChange={e => setEditContactData(prev => ({ ...prev, email: e.target.value }))}
                       placeholder="email@cliente.com.br"
-                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
                     />
                   </div>
 
@@ -1399,7 +1467,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       value={editContactData.role}
                       onChange={e => setEditContactData(prev => ({ ...prev, role: e.target.value }))}
                       placeholder="Ex: Produtor Rural, Diretor de Compras"
-                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
                     />
                   </div>
 
@@ -1413,7 +1481,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       value={editContactData.document}
                       onChange={e => setEditContactData(prev => ({ ...prev, document: e.target.value }))}
                       placeholder="000.000.000-00 ou CNPJ"
-                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
                     />
                   </div>
 
@@ -1425,14 +1493,14 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                     <select 
                       value={editContactData.type}
                       onChange={e => setEditContactData(prev => ({ ...prev, type: e.target.value }))}
-                      className="w-full bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3.5 py-2.5 text-xs font-medium outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
                     >
-                      <option value="Lead" className="bg-[#161b22]">Lead (Potencial Cliente)</option>
-                      <option value="Cliente" className="bg-[#161b22]">Cliente Ativo</option>
-                      <option value="Ex-Cliente" className="bg-[#161b22]">Ex-Cliente</option>
-                      <option value="Fornecedor" className="bg-[#161b22]">Fornecedor</option>
-                      <option value="Parceiro" className="bg-[#161b22]">Parceiro Comercial</option>
-                      <option value="Outro" className="bg-[#161b22]">Outro</option>
+                      <option value="Lead" className="bg-white dark:bg-[#161b22]">Lead (Potencial Cliente)</option>
+                      <option value="Cliente" className="bg-white dark:bg-[#161b22]">Cliente Ativo</option>
+                      <option value="Ex-Cliente" className="bg-white dark:bg-[#161b22]">Ex-Cliente</option>
+                      <option value="Fornecedor" className="bg-white dark:bg-[#161b22]">Fornecedor</option>
+                      <option value="Parceiro" className="bg-white dark:bg-[#161b22]">Parceiro Comercial</option>
+                      <option value="Outro" className="bg-white dark:bg-[#161b22]">Outro</option>
                     </select>
                   </div>
 
@@ -1446,7 +1514,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       value={editContactData.address}
                       onChange={e => setEditContactData(prev => ({ ...prev, address: e.target.value }))}
                       placeholder="Endereço, Cidade - UF, CEP..."
-                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
                     />
                   </div>
 
@@ -1462,7 +1530,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                         value={editContactData.company}
                         onChange={e => setEditContactData(prev => ({ ...prev, company: e.target.value }))}
                         placeholder="Nome da empresa vinculada..."
-                        className="w-full bg-[#0d1117] border border-gray-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                        className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
                       />
                     </div>
                   </div>
@@ -1478,14 +1546,14 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                         value={editContactData.campaign}
                         onChange={e => setEditContactData(prev => ({ ...prev, campaign: e.target.value }))}
                         placeholder="Campanha"
-                        className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                        className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
                       />
                       <input 
                         type="text" 
                         value={editContactData.source}
                         onChange={e => setEditContactData(prev => ({ ...prev, source: e.target.value }))}
                         placeholder="Origem"
-                        className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                        className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
                       />
                     </div>
                   </div>
@@ -1499,7 +1567,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       value={editContactData.notes}
                       onChange={e => setEditContactData(prev => ({ ...prev, notes: e.target.value }))}
                       placeholder="Observações importantes, detalhes comerciais ou histórico do contato..."
-                      className="w-full bg-[#0d1117] border border-gray-800 rounded-xl p-3.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 resize-y min-h-[90px] leading-relaxed transition-colors"
+                      className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl p-3.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 resize-y min-h-[90px] leading-relaxed transition-colors"
                     />
                   </div>
 
@@ -1507,7 +1575,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               </div>
 
               {/* Botões Inferiores */}
-              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-800/80 bg-[#161b22] shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-800/80 bg-white dark:bg-[#161b22] shrink-0">
                 <button
                   type="button"
                   onClick={handleDeleteContact}
@@ -1546,7 +1614,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
         {/* ========================================================================= */}
         {showLossModal && (
           <div className="absolute inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-[#161b22] border border-gray-800 w-full max-w-sm rounded-xl p-5 shadow-2xl animate-in zoom-in-95">
+            <div className="bg-white dark:bg-[#161b22] border border-gray-800 w-full max-w-sm rounded-xl p-5 shadow-2xl animate-in zoom-in-95">
               <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
                 <XCircle size={16} className="text-rose-400" /> Marcar como Perdido
               </h3>
@@ -1559,7 +1627,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                   <select
                     value={lossReason}
                     onChange={e => setLossReason(e.target.value)}
-                    className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-700/60"
+                    className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-700/60"
                   >
                     <option value="">Selecione um motivo...</option>
                     <option value="preco">Preço / Orçamento alto</option>
@@ -1576,7 +1644,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                     value={lossComment}
                     onChange={e => setLossComment(e.target.value)}
                     placeholder="Detalhes adicionais sobre a perda..."
-                    className="w-full bg-[#0d1117] border border-gray-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-700/60 resize-none h-20"
+                    className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-blue-700/60 resize-none h-20"
                   />
                 </div>
               </div>
@@ -1604,17 +1672,17 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
         {/* ========================================================================= */}
         {showActivityModal && (
           <div className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-[#161b22] border border-gray-800 w-full max-w-xl rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
+            <div className="bg-white dark:bg-[#161b22] border border-gray-800 w-full max-w-xl rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-auto">
               
               {/* TOPO COM ABAS CÁPSULA (EVENTO / TAREFA) E BOTÃO FECHAR */}
-              <div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-800/80 bg-[#161b22] shrink-0">
-                <div className="flex items-center p-1 bg-[#0d1117] border border-gray-800 rounded-xl">
+              <div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-800/80 bg-white dark:bg-[#161b22] shrink-0">
+                <div className="flex items-center p-1 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl">
                   <button
                     type="button"
                     onClick={() => setActivityTab('event')}
                     className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                       activityTab === 'event'
-                        ? 'bg-[#21262d] text-white shadow-sm border border-gray-700'
+                        ? 'bg-slate-100 dark:bg-[#21262d] text-white shadow-sm border border-gray-700'
                         : 'text-gray-400 hover:text-gray-200'
                     }`}
                   >
@@ -1626,7 +1694,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                     onClick={() => setActivityTab('task')}
                     className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                       activityTab === 'task'
-                        ? 'bg-[#21262d] text-white shadow-sm border border-gray-700'
+                        ? 'bg-slate-100 dark:bg-[#21262d] text-white shadow-sm border border-gray-700'
                         : 'text-gray-400 hover:text-gray-200'
                     }`}
                   >
@@ -1645,10 +1713,10 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               </div>
 
               {/* FAIXA: VINCULADO A */}
-              <div className="px-6 py-2.5 bg-[#0d1117]/60 border-b border-gray-800/60 flex items-center justify-between text-xs">
+              <div className="px-6 py-2.5 bg-slate-100 dark:bg-[#0d1117]/60 border-b border-gray-800/60 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2 text-gray-400">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Vinculado a:</span>
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#161b22] border border-gray-800 rounded-md text-gray-200 font-medium">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-[#161b22] border border-gray-800 rounded-md text-gray-200 font-medium">
                     <UserIcon size={12} className="text-gray-400" />
                     <span className="truncate max-w-[280px]">
                       {deal.contact?.name || deal.title || "Contato / Negócio"}
@@ -1679,7 +1747,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       }
                     }}
                     placeholder={activityTab === 'task' ? "Adicione um título da tarefa..." : "Adicione um título do evento..."}
-                    className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
+                    className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors"
                   />
                 </div>
 
@@ -1695,7 +1763,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       }
                     }}
                     placeholder="Adicione mais detalhes..."
-                    className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors resize-none h-20"
+                    className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60 transition-colors resize-none h-20"
                   />
                 </div>
 
@@ -1715,7 +1783,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                             type="date"
                             value={taskFormData.date}
                             onChange={e => setTaskFormData(prev => ({ ...prev, date: e.target.value }))}
-                            className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                            className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
                           />
                         </div>
 
@@ -1725,7 +1793,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                               type="time"
                               value={taskFormData.time}
                               onChange={e => setTaskFormData(prev => ({ ...prev, time: e.target.value }))}
-                              className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                              className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
                             />
                           </div>
                         ) : (
@@ -1741,7 +1809,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                             type="checkbox"
                             checked={taskFormData.allDay}
                             onChange={e => setTaskFormData(prev => ({ ...prev, allDay: e.target.checked }))}
-                            className="w-3.5 h-3.5 rounded bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
+                            className="w-3.5 h-3.5 rounded bg-slate-100 dark:bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
                           />
                           <span className="text-xs text-gray-300">Dia inteiro</span>
                         </label>
@@ -1762,7 +1830,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                           <select
                             value={taskFormData.category}
                             onChange={e => setTaskFormData(prev => ({ ...prev, category: e.target.value }))}
-                            className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
+                            className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
                           >
                             <option value="Ligação">Ligação</option>
                             <option value="WhatsApp">WhatsApp</option>
@@ -1780,7 +1848,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                           <select
                             value={taskFormData.priority}
                             onChange={e => setTaskFormData(prev => ({ ...prev, priority: e.target.value }))}
-                            className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
+                            className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
                           >
                             <option value="Baixa">Baixa</option>
                             <option value="Média">Média</option>
@@ -1795,7 +1863,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                           <select
                             value={taskFormData.assignedTo}
                             onChange={e => setTaskFormData(prev => ({ ...prev, assignedTo: e.target.value }))}
-                            className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
+                            className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
                           >
                             <option value="">Fila Geral (Todos)</option>
                             {users.map(u => (
@@ -1830,7 +1898,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                         <button
                           type="button"
                           onClick={() => taskAttachmentInputRef.current?.click()}
-                          className="px-3 py-2 bg-[#0d1117] hover:bg-[#21262d] border border-dashed border-gray-700 hover:border-gray-500 rounded-xl text-xs font-medium text-gray-300 transition-colors flex items-center gap-1.5"
+                          className="px-3 py-2 bg-slate-100 dark:bg-[#0d1117] hover:bg-slate-100 dark:bg-[#21262d] border border-dashed border-gray-700 hover:border-gray-500 rounded-xl text-xs font-medium text-gray-300 transition-colors flex items-center gap-1.5"
                         >
                           <Upload size={13} className="text-gray-400" />
                           <span>Adicionar arquivo</span>
@@ -1839,7 +1907,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                         {taskFormData.attachments.map(att => (
                           <div
                             key={att.id}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0d1117] border border-gray-800 rounded-xl text-xs text-gray-300 group"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl text-xs text-gray-300 group"
                           >
                             <Paperclip size={12} className="text-gray-400" />
                             <span className="max-w-[140px] truncate">{att.name}</span>
@@ -1877,14 +1945,14 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                               type="date"
                               value={eventFormData.startDate}
                               onChange={e => setEventFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                              className="flex-1 bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                              className="flex-1 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
                             />
                             {!eventFormData.allDay && (
                               <input
                                 type="time"
                                 value={eventFormData.startTime}
                                 onChange={e => setEventFormData(prev => ({ ...prev, startTime: e.target.value }))}
-                                className="w-24 bg-[#0d1117] border border-gray-800 rounded-xl px-2 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                                className="w-24 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-2 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
                               />
                             )}
                           </div>
@@ -1898,7 +1966,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                                 type="date"
                                 value={eventFormData.endDate}
                                 onChange={e => setEventFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                                className="flex-1 bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
+                                className="flex-1 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer"
                               />
                             ) : null}
                             {!eventFormData.allDay && (
@@ -1906,7 +1974,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                                 type="time"
                                 value={eventFormData.endTime}
                                 onChange={e => setEventFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                                className={`${eventFormData.differentEndDay ? 'w-24' : 'w-full'} bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer`}
+                                className={`${eventFormData.differentEndDay ? 'w-24' : 'w-full'} bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 transition-colors cursor-pointer`}
                               />
                             )}
                           </div>
@@ -1919,7 +1987,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                             type="checkbox"
                             checked={eventFormData.allDay}
                             onChange={e => setEventFormData(prev => ({ ...prev, allDay: e.target.checked }))}
-                            className="w-3.5 h-3.5 rounded bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
+                            className="w-3.5 h-3.5 rounded bg-slate-100 dark:bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
                           />
                           <span className="text-xs text-gray-300">Dia inteiro</span>
                         </label>
@@ -1929,7 +1997,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                             type="checkbox"
                             checked={eventFormData.differentEndDay}
                             onChange={e => setEventFormData(prev => ({ ...prev, differentEndDay: e.target.checked }))}
-                            className="w-3.5 h-3.5 rounded bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
+                            className="w-3.5 h-3.5 rounded bg-slate-100 dark:bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
                           />
                           <span className="text-xs text-gray-300">Termina em outro dia</span>
                         </label>
@@ -1948,7 +2016,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                         <select
                           value={eventFormData.calendarType}
                           onChange={e => setEventFormData(prev => ({ ...prev, calendarType: e.target.value }))}
-                          className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
+                          className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
                         >
                           <option value="company">Agenda da Empresa (Equipe)</option>
                           <option value="private">Agenda Privada (Apenas Eu)</option>
@@ -1963,7 +2031,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                         <select
                           value={eventFormData.locationType}
                           onChange={e => setEventFormData(prev => ({ ...prev, locationType: e.target.value }))}
-                          className="w-full bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
+                          className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-700/60 cursor-pointer"
                         >
                           <option value="Google Meet">Google Meet</option>
                           <option value="Microsoft Teams">Microsoft Teams</option>
@@ -1985,7 +2053,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                             value={eventFormData.locationDetails}
                             onChange={e => setEventFormData(prev => ({ ...prev, locationDetails: e.target.value }))}
                             placeholder="Ex: Av. Paulista, 1000 - Sala 42"
-                            className="w-full bg-[#0d1117] border border-gray-800 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60"
+                            className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder:text-gray-600 outline-none focus:border-blue-700/60"
                           />
                         </div>
                       </div>
@@ -2000,7 +2068,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       </label>
                       
                       <div className="flex flex-wrap gap-2">
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0d1117] border border-gray-800 rounded-xl text-xs text-gray-200">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl text-xs text-gray-200">
                           <UserIcon size={13} className="text-gray-400" />
                           <span>{deal.contact?.name || deal.title || "Contato"} (Cliente)</span>
                         </div>
@@ -2021,8 +2089,8 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                               }}
                               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors border ${
                                 isSelected
-                                  ? 'bg-[#21262d] text-white border-blue-600/60'
-                                  : 'bg-[#0d1117] text-gray-400 border-gray-800 hover:text-gray-200'
+                                  ? 'bg-slate-100 dark:bg-[#21262d] text-white border-blue-600/60'
+                                  : 'bg-slate-100 dark:bg-[#0d1117] text-gray-400 border-gray-800 hover:text-gray-200'
                               }`}
                             >
                               <Users size={12} className={isSelected ? "text-blue-400" : "text-gray-500"} />
@@ -2038,7 +2106,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                             type="checkbox"
                             checked={eventFormData.notifyReminder}
                             onChange={e => setEventFormData(prev => ({ ...prev, notifyReminder: e.target.checked }))}
-                            className="w-3.5 h-3.5 rounded bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
+                            className="w-3.5 h-3.5 rounded bg-slate-100 dark:bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
                           />
                           <span className="text-xs text-gray-300 flex items-center gap-1.5">
                             <Bell size={12} className="text-gray-400" />
@@ -2051,7 +2119,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                             type="checkbox"
                             checked={eventFormData.sendEmailInvite}
                             onChange={e => setEventFormData(prev => ({ ...prev, sendEmailInvite: e.target.checked }))}
-                            className="w-3.5 h-3.5 rounded bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
+                            className="w-3.5 h-3.5 rounded bg-slate-100 dark:bg-[#0d1117] border border-gray-700 text-blue-600 focus:ring-0 cursor-pointer"
                           />
                           <span className="text-xs text-gray-300 flex items-center gap-1.5">
                             <Mail size={12} className="text-gray-400" />
@@ -2066,7 +2134,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               </div>
 
               {/* RODAPÉ COM BOTÕES DE AÇÃO */}
-              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-800/80 bg-[#161b22] shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-800/80 bg-white dark:bg-[#161b22] shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowActivityModal(false)}
@@ -2081,7 +2149,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                       <button
                         type="button"
                         onClick={() => handleSaveTask(true)}
-                        className="px-4 py-2 bg-[#21262d] hover:bg-gray-700 text-gray-200 border border-gray-700 font-semibold text-xs rounded-xl transition-all shadow-sm"
+                        className="px-4 py-2 bg-slate-100 dark:bg-[#21262d] hover:bg-gray-700 text-gray-200 border border-gray-700 font-semibold text-xs rounded-xl transition-all shadow-sm"
                       >
                         Criar e adicionar outra
                       </button>
@@ -2115,8 +2183,8 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
         {/* INNER CHAT DRAWER (Mensagem Rápida)                                       */}
         {/* ========================================================================= */}
         {chatMode !== 'none' && (
-          <div className="absolute inset-0 z-50 bg-[#161b22] flex flex-col animate-in slide-in-from-bottom-10 duration-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-[#161b22] shrink-0">
+          <div className="absolute inset-0 z-50 bg-white dark:bg-[#161b22] flex flex-col animate-in slide-in-from-bottom-10 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-white dark:bg-[#161b22] shrink-0">
               <div className="flex items-center gap-3">
                 <h2 className="text-sm font-bold text-white flex items-center gap-2">
                   <MessageSquare size={16} className="text-gray-400" />
@@ -2132,7 +2200,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
               <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">Carregando histórico...</div>
             ) : (
               <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-                <div className="flex-1 flex flex-col bg-[#0d1117] p-4 overflow-y-auto custom-scrollbar gap-3">
+                <div className="flex-1 flex flex-col bg-slate-100 dark:bg-[#0d1117] p-4 overflow-y-auto custom-scrollbar gap-3">
                   {(!chatData?.messages || chatData.messages.length === 0) ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-gray-500 text-xs italic">
                       Nenhuma mensagem prévia registrada para este contato.
@@ -2146,7 +2214,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                             msg.isInternal 
                               ? 'bg-amber-500/10 text-amber-200 border border-amber-500/30' 
                               : isMe 
-                                ? 'bg-[#1e293b] text-white border border-gray-700 rounded-br-none' 
+                                ? 'bg-slate-100 dark:bg-[#1e293b] text-white border border-gray-700 rounded-br-none' 
                                 : 'bg-gray-800/80 text-gray-200 border border-gray-700/50 rounded-bl-none'
                           }`}>
                             {msg.content}
@@ -2160,7 +2228,7 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                   )}
                 </div>
 
-                <div className="w-full md:w-[360px] bg-[#161b22] border-t md:border-t-0 md:border-l border-gray-800 p-4 flex flex-col gap-3">
+                <div className="w-full md:w-[360px] bg-white dark:bg-[#161b22] border-t md:border-t-0 md:border-l border-gray-800 p-4 flex flex-col gap-3">
                   <div className="flex gap-4 border-b border-gray-800 pb-2">
                     <button 
                       onClick={() => setIsInternal(false)}
@@ -2180,12 +2248,12 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                     value={chatInput}
                     onChange={e => setChatInput(e.target.value)}
                     placeholder={isInternal ? "Escreva uma anotação privada..." : "Digite sua mensagem via WhatsApp..."}
-                    className="flex-1 bg-[#0d1117] border border-gray-800 rounded-lg p-3 text-xs text-white outline-none focus:border-blue-700/60 resize-none min-h-[140px]"
+                    className="flex-1 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-lg p-3 text-xs text-white outline-none focus:border-blue-700/60 resize-none min-h-[140px]"
                   />
 
                   <button 
                     onClick={handleSendMsg}
-                    className="w-full bg-[#161b22] hover:bg-[#21262d] text-gray-200 border border-gray-700 font-semibold text-xs py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-sm"
+                    className="w-full bg-white dark:bg-[#161b22] hover:bg-slate-100 dark:bg-[#21262d] text-gray-200 border border-gray-700 font-semibold text-xs py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-sm"
                   >
                     <Send size={14} className="text-gray-400" /> Enviar Mensagem
                   </button>

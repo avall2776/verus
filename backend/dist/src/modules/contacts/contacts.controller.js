@@ -24,6 +24,9 @@ let ContactsController = class ContactsController {
     async listContacts(tenantId) {
         return this.contactsService.findAll(tenantId);
     }
+    async createContact(tenantId, data) {
+        return this.contactsService.createContact(tenantId, data);
+    }
     async updateContact(tenantId, contactId, data) {
         return this.contactsService.updateContact(tenantId, contactId, data);
     }
@@ -39,6 +42,14 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], ContactsController.prototype, "listContacts", null);
+__decorate([
+    (0, common_1.Post)(),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], ContactsController.prototype, "createContact", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

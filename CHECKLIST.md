@@ -2488,6 +2488,90 @@ Este documento rastreia de forma contínua e duradoura todo o histórico de dese
 
 ---
 
+### 🚀 FASE 87: MÓDULO DE GESTÃO E OPERAÇÕES DE MARKETING COM CONTROLE GRANULAR DE ACESSO (19/10/2026 - FULL-STACK ENTERPRISE)
+> **Status**: ✅ Concluído com Sucesso e Homologado (Build Next.js código 0, 48 rotas, Build NestJS código 0, 100% SVG corporativo, zero emojis).
+
+- [x] **1. Controle de Permissões e Governança no Banco de Dados (Prisma & Supabase)**:
+  - [x] Adicionada flag direta `canAccessMarketing Boolean @default(false)` no model `User`.
+  - [x] Expandido o campo `permissions Json?` no model `User` com suporte a granularidade de módulos (`ATENDIMENTO_COMERCIAL`, `OPERACOES_MARKETING`, `CONFIGURACOES_GERAIS`, `marketing: boolean`).
+  - [x] Modelada a entidade `MarketingClient` com plano contratado, entregas mensais acordadas (`monthlyDeliverables`), cor de marca e verba de tráfego.
+  - [x] Modelada a entidade `MarketingCard` para esteira Kanban com 6 colunas, formatos de mídia, prioridade, prazos e checklists dinâmicos.
+  - [x] Modelada a entidade `MarketingCampaign` para gestão de campanhas de tráfego pago (Meta Ads, Google Ads, TikTok Ads, CPL, ROAS, leads gerados).
+  - [x] Modelada a entidade `MarketingTimeLog` para ponto eletrônico com hash criptográfico SHA-256 de auditoria atrelado a login, IP e timestamp.
+  - [x] Executado `npx prisma generate` com sincronização completa do client Prisma.
+
+- [x] **2. Backend NestJS - Guard de Proteção e Endpoints de Operações**:
+  - [x] Criado `MarketingModuleGuard` em `marketing-module.guard.ts` validando SuperAdmin, Admin e flag `canAccessMarketing` com resiliência a banco de dados.
+  - [x] Criado módulo `AgencyMarketingModule`, `AgencyMarketingController` e `AgencyMarketingService` protegendo rotas `/agency/marketing/*` e `/api/agency/marketing/*`.
+  - [x] Endpoints Kanban: `GET /cards`, `POST /cards`, `PATCH /cards/reorder`, `PATCH /cards/:id`, `DELETE /cards/:id`.
+  - [x] Endpoints Clientes: `GET /clients`, `POST /clients`, `PATCH /clients/:id`, `DELETE /clients/:id`, `GET /clients/:id/pieces`.
+  - [x] Endpoints Tráfego Pago: `GET /campaigns`, `POST /campaigns`, `PATCH /campaigns/:id`, `DELETE /campaigns/:id`, `GET /campaigns/summary`.
+  - [x] Endpoints Cronograma: `GET /schedule`.
+  - [x] Endpoints Ponto Eletrônico: `POST /time-clock` (com geração de SHA-256), `GET /time-clock/today`, `GET /time-clock/history`.
+  - [x] Atualizado `users.controller.ts` com suporte a `canAccessMarketing` e endpoint dedicado `PATCH /users/:id/permissions`.
+
+- [x] **3. Gestão de Usuários no Frontend (`/settings?tab=users`)**:
+  - [x] Seletor/toggle explícito no modal de criação e no modal de edição de membros da equipe: "Acesso a Operações de Marketing (Equipe da Agência)".
+  - [x] Atualizada tipagem `UserPermissions` para incluir `marketing: boolean`.
+  - [x] Badge visual corporativa "Marketing" nos cards de usuários da equipe com acesso liberado.
+  - [x] Persistência imediata via API e integração reativa de dados.
+
+- [x] **4. Sidebar & Navegação Segura por Permissão**:
+  - [x] Adicionado grupo "MARKETING & AGÊNCIA" com o item "Operações de Marketing" apontando para `/agency/marketing`.
+  - [x] Ocultação absoluta da opção na Sidebar se o usuário não possuir a permissão ativa.
+  - [x] Proteção e blindagem direta de rota no Next.js (`/agency/marketing`): redirecionamento automático para `/dashboard` com toast de acesso restrito caso o operador não tenha permissão.
+
+- [x] **5. Interface do Módulo Operações de Marketing (`/agency/marketing`)**:
+  - [x] Design System Corporativo: Dark Glassmorphism elegante, paleta monocromática (#0B1224, #050814, slate, acentos ciano #00D2FF e azul #0055FF), zero emojis, tipografia e ícones SVG de alto padrão.
+  - [x] Widget de Ponto Eletrônico & Monitoramento no topo com botões [Entrada], [Pausa / Almoço], [Retorno], [Saída], cronômetro de jornada em tempo real e visualizador de hash SHA-256 com modal de extrato de auditoria.
+  - [x] A. Kanban de Produção Operacional: esteira de 6 colunas ([Backlog], [Planejamento/Copy], [Design & Vídeo], [Revisão Interna], [Aprovação Cliente], [Agendado/Postado]), drag-and-drop `@hello-pangea/dnd` com atualização otimista, cards compactos com badge do cliente, formato, avatar do responsável, urgência de prazo e checklist.
+  - [x] B. Gestão de Clientes & Escopos: fichas padronizadas, entregas mensais acordadas com barras de progresso (Posts, Reels), verba de anúncios e modal de histórico de peças.
+  - [x] C. Aba Tráfego Pago: KPI cards de investimento, leads gerados, CPL médio e ROAS médio, filtros por plataforma (Meta Ads, Google Ads, TikTok Ads) e modal de lançamento e edição de campanhas.
+  - [x] D. Cronograma & Calendário: visão mensal/semanal sincronizada com cards de postagem e entrega, navegação de mês e filtros por cliente e responsável.
+
+- [x] **6. Validação, Homologação e Compilação Estrita**:
+  - [x] `npx prisma generate` executado com código de saída 0.
+  - [x] `npm run build` no backend validado com código de saída 0.
+  - [x] `npx tsc --noEmit` no frontend validado com código de saída 0.
+  - [x] `npm run build` no frontend validado com código de saída 0 (48 rotas geradas).
+
+### Fase 88: Paridade Absoluta do Kanban e Modal de Operações de Marketing com o CRM Comercial (Padrão Lero)
+- [x] **1. Barra Superior e Controles do Funil Idênticos ao CRM Comercial**:
+  - [x] Nome do Funil Editável inline com persistência local no `localStorage` ("Operações de Marketing (Kanban)").
+  - [x] Seletores de visualização multi-modo: `[Quadro]` (Kanban), `[Tabela]` (Grid analítico) e `[Linha do Tempo]` (Cronograma semanal).
+  - [x] Barra de pesquisa ágil (`Buscar oportunidade...`) com filtro universal por título, cliente, formato, responsável e observações.
+  - [x] Pílulas de filtros rápidos: `Tudo`, `Minhas` (demandas atribuídas ao usuário logado), `Contatos` (clientes), `Empresas` (formatos) e botão `Neutro` (alternância para paleta monocromática sóbria).
+  - [x] Ações executivas integradas: `+ Nova Etapa` (modal de criação de colunas), `Gerenciar Etapas` (modal de reordenação e exclusão) e `Fullscreen` (expansão em tela cheia).
+- [x] **2. Colunas e Redimensionamento no Kanban**:
+  - [x] Topo estilizado com borda colorida (`border-t-2`), título em caixa alta, botão recolher (`Minimize2`), contador de cards e valor financeiro consolidado em pílula `bg-[#0B1224]`.
+  - [x] Colapso dinâmico de colunas para faixa estreita de 60px com título rotacionado a -90 graus e contador.
+  - [x] Divisores entre colunas com redimensionamento por arraste (`cursor-col-resize`).
+  - [x] Botão `+ Adicionar novo cartão` no rodapé de 100% das colunas, abrindo o modal pré-configurado para aquela etapa.
+- [x] **3. Estrutura e Design do Cartão (Paridade com DealCard)**:
+  - [x] Topo: `#ID` na cor da coluna e badge de prioridade estilizado (`URGENTE`, `ALTA`, `MÉDIA`, `BAIXA`).
+  - [x] Identificação: Avatar circular com anel na cor da etapa, título da peça e subtítulo com ponto verde `🟢 WhatsApp / Cliente`.
+  - [x] Caixa escura de metadados (`bg-[#0d1117]`): origem, resumo do briefing e acordeão expansível `⌵ Mais / ⌃ Menos` com checklist, prazos e botão "Copiar descrição".
+  - [x] Gaveta de ações no hover: autor de criação e botões rápidos de Chat, Calendário, Checklist e Abrir Demanda (`↗`).
+  - [x] Destaque de valor financeiro / verba em verde esmeralda (`💲 R$ ...`) e avatar do responsável no rodapé.
+- [x] **4. Modal de Demanda em Split-View (Paridade com DealModal)**:
+  - [x] Janela ampla `max-w-5xl h-[90vh]` em Dark Glassmorphism com cabeçalho rico (avatar grande, título editável inline, cliente, formato, etapa e verba/investimento editável com formato monetário).
+  - [x] Coluna Esquerda:
+    * Informações da conta e cliente com botão para abrir a ficha completa.
+    * Editor de copy, briefing e roteiro com textarea expansível.
+    * Checklist interativo com checkboxes reativas, adição e exclusão.
+    * Gerenciador de anexos com upload simulado, listagem, download e remoção.
+    * Timeline cronológica com registro de notas rápidas em tempo real.
+  - [x] Coluna Direita (Sidebar):
+    * Seletores de Etapa do funil, Cliente vinculado, Responsável da agência, Formato da peça e Prioridade.
+    * Controles de data: Prazo de Entrega e Data de Publicação.
+    * Botões de ação rápida: `[Concluir / Postado]` (verde) e `[Revisão / Ajustes]` (âmbar).
+    * Botão primário "Salvar Alterações" e botão "Excluir Demanda".
+- [x] **5. Validação & Compilação**:
+  - [x] `npx tsc --noEmit` validado com código de saída 0.
+  - [x] `npm run build` do Next.js validado com sucesso (código de saída 0, 48 rotas geradas).
+
+---
+
 ## 📅 Próxima Sprint (Segunda-feira)
 
 - [ ] **Bugfix: Falha de Persistência na Ingestão (API Error):** Investigar e corrigir o alerta "Falha de API, verifique sua conexão com a internet ou o estado da VPS". O sistema carrega as parcelas (ex: MT) no mapa WebGL, mas a transação falha ao tentar salvar os dados na tabela local `propriedades_rurais`, impedindo que os leads apareçam na grelha.

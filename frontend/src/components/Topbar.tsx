@@ -6,6 +6,7 @@ import { Menu, ShieldAlert, ShieldCheck, ArrowLeft, MonitorSmartphone } from "lu
 import NotificationsPopover from "@/components/notifications/NotificationsPopover";
 import GlobalSearchBar from "@/components/search/GlobalSearchBar";
 import DeviceSandboxModal from "@/components/super-admin/DeviceSandboxModal";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useMobileMenu } from "@/contexts/MobileMenuContext";
 import { getStoredUserSync, clearUserCache } from "@/lib/userCache";
 import toast from "react-hot-toast";
@@ -66,13 +67,13 @@ export default function Topbar() {
   const isSuperAdmin = currentUser?.isSuperAdmin === true || currentUser?.role === "SUPER_ADMIN";
 
   return (
-    <header className="h-16 border-b border-slate-800 bg-[#0B1224]/80 backdrop-blur-md flex items-center justify-between px-3 md:px-8 sticky top-0 z-20 w-full shrink-0 print:hidden">
+    <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/85 dark:bg-[#0B1224]/80 backdrop-blur-md flex items-center justify-between px-3 md:px-8 sticky top-0 z-20 w-full shrink-0 print:hidden transition-colors duration-200">
       {/* Mobile Menu Button & Busca Global Reativa */}
       <div className="flex items-center gap-2 md:gap-4 flex-1 max-w-xl min-w-0">
         <button 
           type="button"
           onClick={toggleMenu}
-          className="md:hidden text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800/60 transition-colors shrink-0 cursor-pointer"
+          className="md:hidden text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors shrink-0 cursor-pointer"
           title="Menu de navegação"
           aria-label="Abrir menu"
         >
@@ -92,10 +93,10 @@ export default function Topbar() {
           <button
             type="button"
             onClick={() => setIsSandboxOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 hover:border-slate-600 text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
             title="Simulador de Viewports (Celular, Tablet e Desktop) - Alt + S"
           >
-            <MonitorSmartphone size={14} className="text-emerald-400 shrink-0" />
+            <MonitorSmartphone size={14} className="text-emerald-500 dark:text-emerald-400 shrink-0" />
             <span className="hidden md:inline">Simulador</span>
           </button>
         )}
@@ -105,24 +106,27 @@ export default function Topbar() {
           <button
             type="button"
             onClick={handleExitSupportMode}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all shadow-sm cursor-pointer active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-sm shadow-blue-600/20 cursor-pointer active:scale-95"
             title="Sair do Modo Suporte e retornar ao Console Super Admin"
           >
-            <ArrowLeft size={13} className="shrink-0 text-amber-400" />
+            <ArrowLeft size={13} className="shrink-0 text-white" />
             <span className="hidden sm:inline">Voltar ao Super Admin</span>
             <span className="sm:hidden text-[11px]">Super Admin</span>
           </button>
         ) : isSuperAdmin ? (
           <Link
             href="/super-admin/companies"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-semibold transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-blue-600/10 dark:bg-blue-600/20 hover:bg-blue-600/20 dark:hover:bg-blue-600/30 text-blue-600 dark:text-blue-300 border border-blue-500/30 dark:border-blue-500/40 text-xs font-semibold transition-all shadow-sm active:scale-95"
             title="Acessar o Console Super Admin"
           >
-            <ShieldCheck size={14} className="text-blue-400 shrink-0" />
+            <ShieldCheck size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
             <span className="hidden sm:inline">Super Admin</span>
             <span className="sm:hidden text-[11px]">Admin</span>
           </Link>
         ) : null}
+
+        {/* Alternador de Tema Dia e Noite */}
+        <ThemeToggle />
 
         {/* Central de Notificações Global (Popover Interativo em Tempo Real) */}
         <NotificationsPopover />

@@ -47,7 +47,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#070D1B]/95 backdrop-blur-xl border-t border-slate-800/80 md:hidden flex items-center justify-around px-2 py-1.5 safe-area-pb shadow-[0_-10px_25px_rgba(0,0,0,0.6)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#070D1B]/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800/80 md:hidden flex items-center justify-around px-2 py-1.5 safe-area-pb shadow-[0_-10px_25px_rgba(0,0,0,0.06)] dark:shadow-[0_-10px_25px_rgba(0,0,0,0.6)] transition-colors duration-200">
       {navItems.map((item) => {
         const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
         const Icon = item.icon;
@@ -58,16 +58,16 @@ export default function BottomNav() {
             href={item.href}
             prefetch={true}
             className={`flex flex-col items-center justify-center flex-1 py-1 transition-all duration-150 relative rounded-xl ${
-              isActive ? "text-blue-400 font-bold" : "text-slate-400 hover:text-slate-200"
+              isActive ? "text-blue-600 dark:text-blue-400 font-bold" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
             <div className="relative">
-              <Icon size={20} className={isActive ? "text-blue-400 scale-110 transition-transform" : "transition-transform"} />
+              <Icon size={20} className={isActive ? "text-blue-600 dark:text-blue-400 scale-110 transition-transform" : "transition-transform"} />
               {item.badge && (
-                <span className="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
               )}
             </div>
-            <span className={`text-[10px] mt-1 tracking-tight ${isActive ? "text-white" : "text-slate-400"}`}>
+            <span className={`text-[10px] mt-1 tracking-tight ${isActive ? "text-slate-900 dark:text-white font-semibold" : "text-slate-500 dark:text-slate-400"}`}>
               {item.label}
             </span>
           </Link>
@@ -78,11 +78,11 @@ export default function BottomNav() {
       <button
         type="button"
         onClick={openMenu}
-        className="flex flex-col items-center justify-center flex-1 py-1 text-slate-400 hover:text-white transition-colors cursor-pointer"
+        className="flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
         aria-label="Abrir Menu Completo"
       >
         <Menu size={20} />
-        <span className="text-[10px] mt-1 text-slate-400 tracking-tight">Menu</span>
+        <span className="text-[10px] mt-1 text-slate-500 dark:text-slate-400 tracking-tight">Menu</span>
       </button>
     </nav>
   );

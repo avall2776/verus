@@ -20,9 +20,23 @@ let CrmService = CrmService_1 = class CrmService {
         this.automationsService = automationsService;
         this.logger = new common_1.Logger(CrmService_1.name);
     }
-    async findAllDeals(tenantId) {
+    async findAllDeals(tenantId, filters) {
+        const where = { tenantId };
+        if (filters?.status && filters.status !== 'all') {
+            where.status = filters.status;
+        }
+        if (filters?.startDate || filters?.endDate) {
+            const field = filters.dateType === 'closed' ? 'updatedAt' : 'createdAt';
+            where[field] = {};
+            if (filters.startDate) {
+                where[field].gte = new Date(filters.startDate);
+            }
+            if (filters.endDate) {
+                where[field].lte = new Date(filters.endDate);
+            }
+        }
         return this.prisma.deal.findMany({
-            where: { tenantId },
+            where,
             include: {
                 contact: {
                     select: {

@@ -184,22 +184,22 @@ export default function ScheduleModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div 
-        className="bg-[#0B1224] border border-slate-700/90 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
+        className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/90 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="schedule-modal-title"
       >
         {/* Cabeçalho do Modal */}
-        <div className="px-6 py-4 border-b border-slate-800 bg-[#111A33]/80 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#111A33]/80 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-accent shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-accent shadow-sm">
               <CalendarClock size={18} />
             </div>
             <div>
-              <h3 id="schedule-modal-title" className="text-sm sm:text-base font-bold text-white tracking-wide">
+              <h3 id="schedule-modal-title" className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-wide">
                 Agendamento de Mensagem
               </h3>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Programe envios automáticos para o contato no momento desejado
               </p>
             </div>
@@ -207,7 +207,7 @@ export default function ScheduleModal({
           <button 
             type="button"
             onClick={onClose} 
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
             aria-label="Fechar modal"
           >
             <X size={18} />
@@ -218,24 +218,24 @@ export default function ScheduleModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
           {/* Destinatário */}
           <div>
-            <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
               Destinatário
             </label>
-            <div className="p-3 rounded-xl bg-[#162038] border border-slate-700/80 flex items-center justify-between gap-3">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#162038] border border-slate-200 dark:border-slate-700/80 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 flex-shrink-0">
                   <User size={14} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-white truncate">
+                  <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                     {activeContact?.name || "Nenhum chat selecionado"}
                   </p>
-                  <p className="text-[11px] font-mono text-slate-400 truncate">
+                  <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
                     {activeContact?.phone || "Telefone não disponível"}
                   </p>
                 </div>
               </div>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20 flex-shrink-0">
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/20 flex-shrink-0">
                 WhatsApp
               </span>
             </div>
@@ -244,8 +244,8 @@ export default function ScheduleModal({
           {/* Atalhos rápidos de agendamento */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Sparkles size={12} className="text-accent" />
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <Sparkles size={12} className="text-blue-600 dark:text-accent" />
                 <span>Atalhos Rápidos</span>
               </label>
             </div>
@@ -253,43 +253,43 @@ export default function ScheduleModal({
               <button
                 type="button"
                 onClick={() => handleSetQuickSchedule("1h")}
-                className="py-1.5 px-2.5 rounded-lg bg-[#162038] hover:bg-[#1E2C4F] border border-slate-700/70 hover:border-accent/40 text-[11px] font-medium text-slate-300 hover:text-white transition-all text-center cursor-pointer"
+                className="py-1.5 px-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-[#162038] dark:hover:bg-[#1E2C4F] border border-slate-200 hover:border-blue-400 dark:border-slate-700/70 dark:hover:border-accent/40 text-[11px] font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-all text-center cursor-pointer shadow-sm"
               >
                 Em 1 hora
               </button>
               <button
                 type="button"
                 onClick={() => handleSetQuickSchedule("18h")}
-                className="py-1.5 px-2.5 rounded-lg bg-[#162038] hover:bg-[#1E2C4F] border border-slate-700/70 hover:border-accent/40 text-[11px] font-medium text-slate-300 hover:text-white transition-all text-center cursor-pointer"
+                className="py-1.5 px-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-[#162038] dark:hover:bg-[#1E2C4F] border border-slate-200 hover:border-blue-400 dark:border-slate-700/70 dark:hover:border-accent/40 text-[11px] font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-all text-center cursor-pointer shadow-sm"
               >
                 Hoje 18:00
               </button>
               <button
                 type="button"
                 onClick={() => handleSetQuickSchedule("tomorrow9")}
-                className="py-1.5 px-2.5 rounded-lg bg-[#162038] hover:bg-[#1E2C4F] border border-slate-700/70 hover:border-accent/40 text-[11px] font-medium text-slate-300 hover:text-white transition-all text-center cursor-pointer"
+                className="py-1.5 px-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-[#162038] dark:hover:bg-[#1E2C4F] border border-slate-200 hover:border-blue-400 dark:border-slate-700/70 dark:hover:border-accent/40 text-[11px] font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-all text-center cursor-pointer shadow-sm"
               >
                 Amanhã 09:00
               </button>
               <button
                 type="button"
                 onClick={() => handleSetQuickSchedule("monday9")}
-                className="py-1.5 px-2.5 rounded-lg bg-[#162038] hover:bg-[#1E2C4F] border border-slate-700/70 hover:border-accent/40 text-[11px] font-medium text-slate-300 hover:text-white transition-all text-center cursor-pointer"
+                className="py-1.5 px-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-[#162038] dark:hover:bg-[#1E2C4F] border border-slate-200 hover:border-blue-400 dark:border-slate-700/70 dark:hover:border-accent/40 text-[11px] font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-all text-center cursor-pointer shadow-sm"
               >
                 Segunda 09:00
               </button>
             </div>
           </div>
 
-          {/* ESTRUTURA REATORADA: Inputs de Data e Horário lado a lado perfeitamente alinhados */}
+          {/* Inputs de Data e Horário lado a lado perfeitamente alinhados */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {/* Input Data de Envio */}
             <div className="space-y-1.5">
               <label 
                 htmlFor="schedule-date-input"
-                className="flex items-center gap-1.5 text-xs font-semibold text-slate-300"
+                className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300"
               >
-                <Calendar size={13} className="text-accent" />
+                <Calendar size={13} className="text-blue-600 dark:text-accent" />
                 <span>Data de Envio</span>
               </label>
               <div className="relative flex items-center">
@@ -299,7 +299,7 @@ export default function ScheduleModal({
                   min={minDate}
                   value={scheduleDate}
                   onChange={(e) => setScheduleDate(e.target.value)}
-                  className="w-full h-11 bg-[#162038] border border-slate-700/90 rounded-xl px-3.5 text-xs text-white outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-all [color-scheme:dark] shadow-inner"
+                  className="w-full h-11 bg-slate-50 dark:bg-[#162038] border border-slate-200 dark:border-slate-700/90 rounded-xl px-3.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500 dark:focus:border-accent focus:ring-1 focus:ring-blue-500/50 dark:focus:ring-accent/50 transition-all shadow-inner"
                   required
                 />
               </div>
@@ -309,9 +309,9 @@ export default function ScheduleModal({
             <div className="space-y-1.5">
               <label 
                 htmlFor="schedule-time-input"
-                className="flex items-center gap-1.5 text-xs font-semibold text-slate-300"
+                className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300"
               >
-                <Clock size={13} className="text-accent" />
+                <Clock size={13} className="text-blue-600 dark:text-accent" />
                 <span>Horário</span>
               </label>
               <div className="relative flex items-center">
@@ -320,7 +320,7 @@ export default function ScheduleModal({
                   type="time" 
                   value={scheduleTime}
                   onChange={(e) => setScheduleTime(e.target.value)}
-                  className="w-full h-11 bg-[#162038] border border-slate-700/90 rounded-xl px-3.5 text-xs text-white outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-all [color-scheme:dark] shadow-inner"
+                  className="w-full h-11 bg-slate-50 dark:bg-[#162038] border border-slate-200 dark:border-slate-700/90 rounded-xl px-3.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500 dark:focus:border-accent focus:ring-1 focus:ring-blue-500/50 dark:focus:ring-accent/50 transition-all shadow-inner"
                   required
                 />
               </div>
@@ -329,10 +329,10 @@ export default function ScheduleModal({
 
           {/* Badge informativo de previsão com formatação amigável */}
           {formattedPreview && (
-            <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center gap-2 text-xs text-blue-300 animate-in fade-in duration-150">
-              <CheckCircle2 size={14} className="text-accent flex-shrink-0" />
+            <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 flex items-center gap-2 text-xs text-blue-700 dark:text-blue-300 animate-in fade-in duration-150">
+              <CheckCircle2 size={14} className="text-blue-600 dark:text-accent flex-shrink-0" />
               <span>
-                Programado para: <strong className="text-white font-medium">{formattedPreview}</strong> (fuso local)
+                Programado para: <strong className="text-slate-900 dark:text-white font-medium">{formattedPreview}</strong> (fuso local)
               </span>
             </div>
           )}
@@ -342,7 +342,7 @@ export default function ScheduleModal({
             <div className="flex items-center justify-between">
               <label 
                 htmlFor="schedule-message-textarea"
-                className="text-xs font-semibold text-slate-300"
+                className="text-xs font-semibold text-slate-700 dark:text-slate-300"
               >
                 Mensagem Programada
               </label>
@@ -356,15 +356,15 @@ export default function ScheduleModal({
               value={scheduleMessage}
               onChange={(e) => setScheduleMessage(e.target.value)}
               placeholder="Olá! Conforme combinamos, estou enviando este lembrete..."
-              className="w-full bg-[#162038] border border-slate-700/90 rounded-xl p-3 text-xs text-white placeholder-slate-500 outline-none focus:border-accent focus:ring-1 focus:ring-accent/50 transition-all resize-none shadow-inner"
+              className="w-full bg-slate-50 dark:bg-[#162038] border border-slate-200 dark:border-slate-700/90 rounded-xl p-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-blue-500 dark:focus:border-accent focus:ring-1 focus:ring-blue-500/50 dark:focus:ring-accent/50 transition-all resize-none shadow-inner"
               required
             />
           </div>
 
           {/* Mensagem de Erro / Validação */}
           {errorMessage && (
-            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-2.5 text-xs text-red-300 animate-in shake duration-150">
-              <AlertCircle size={15} className="text-red-400 flex-shrink-0" />
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 flex items-center gap-2.5 text-xs text-red-700 dark:text-red-300 animate-in shake duration-150">
+              <AlertCircle size={15} className="text-red-500 dark:text-red-400 flex-shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
@@ -375,7 +375,7 @@ export default function ScheduleModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="w-1/3 py-2.5 bg-[#162038] hover:bg-[#1E2C4F] border border-slate-700/80 text-slate-300 hover:text-white font-semibold text-xs rounded-xl transition-all cursor-pointer disabled:opacity-50"
+              className="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#162038] dark:hover:bg-[#1E2C4F] border border-slate-200 dark:border-slate-700/80 text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white font-semibold text-xs rounded-xl transition-all cursor-pointer disabled:opacity-50"
             >
               Cancelar
             </button>

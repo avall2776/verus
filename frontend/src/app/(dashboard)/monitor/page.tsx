@@ -268,18 +268,18 @@ export default function MonitorPage() {
   const getAssigneeCount = (userId: string) => conversations.filter(c => c.assignedTo === userId).length;
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#050A15]">
+    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-100 dark:bg-[#050A15]">
       {/* HEADER & TOOLBAR */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between p-6 border-b border-gray-800 bg-[#0B1224] shrink-0 gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between p-6 border-b border-slate-200 dark:border-gray-800 bg-white dark:bg-[#0B1224] shrink-0 gap-4">
         <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-3">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
             Monitor: {filteredConversations.length} atendimentos ativos
-            <div className="flex items-center gap-1 text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full font-medium border border-blue-500/20">
+            <div className="flex items-center gap-1 text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full font-medium border border-blue-500/20">
               <RefreshCw size={10} className={refreshCountdown < 3 ? 'animate-spin' : ''} />
               atualiza em {refreshCountdown}s
             </div>
           </h1>
-          <p className="text-sm text-gray-400 mt-1">Visão em tempo real organizada por setor com SLAs automáticos.</p>
+          <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">Visão em tempo real organizada por setor com SLAs automáticos.</p>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
@@ -287,7 +287,7 @@ export default function MonitorPage() {
           <select 
             value={filterSla}
             onChange={(e) => setFilterSla(e.target.value)}
-            className="bg-[#050A15] border border-gray-700 text-sm text-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+            className="bg-slate-50 dark:bg-[#050A15] border border-slate-200 dark:border-gray-700 text-sm text-slate-800 dark:text-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
           >
             <option value="all">Todas as Interações</option>
             <option value="bot">Aguardando Chatbot / Fila Inicial</option>
@@ -302,7 +302,7 @@ export default function MonitorPage() {
           <select 
             value={filterAssignee}
             onChange={(e) => setFilterAssignee(e.target.value)}
-            className="bg-[#050A15] border border-gray-700 text-sm text-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+            className="bg-slate-50 dark:bg-[#050A15] border border-slate-200 dark:border-gray-700 text-sm text-slate-800 dark:text-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
           >
             <option value="all">Todos os Operadores</option>
             <option value="none">Na Fila (Sem Operador)</option>
@@ -316,17 +316,17 @@ export default function MonitorPage() {
           </select>
 
           {/* View Mode Toggle */}
-          <div className="flex bg-[#050A15] rounded-lg border border-gray-700 p-1">
+          <div className="flex bg-slate-100 dark:bg-[#050A15] rounded-lg border border-slate-200 dark:border-gray-700 p-1">
             <button 
               onClick={() => setLayoutMode('grid')}
-              className={`p-1.5 rounded-md transition-colors ${layoutMode === 'grid' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+              className={`p-1.5 rounded-md transition-colors ${layoutMode === 'grid' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-gray-500 dark:hover:text-gray-300'}`}
               title="Modo Confortável (Grid)"
             >
               <LayoutGrid size={16} />
             </button>
             <button 
               onClick={() => setLayoutMode('table')}
-              className={`p-1.5 rounded-md transition-colors ${layoutMode === 'table' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+              className={`p-1.5 rounded-md transition-colors ${layoutMode === 'table' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-gray-500 dark:hover:text-gray-300'}`}
               title="Modo Compacto (Tabela)"
             >
               <List size={16} />
@@ -336,7 +336,7 @@ export default function MonitorPage() {
       </div>
 
       {/* CONTENT AREA */}
-      <div className="flex-1 overflow-y-auto p-6 bg-[#050A15] custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-6 bg-slate-100 dark:bg-[#050A15] custom-scrollbar">
         {isLoading && conversations.length === 0 ? (
           <div className="text-center text-gray-500 py-20 flex flex-col items-center gap-3">
             <Activity className="animate-pulse opacity-50 text-blue-500" size={32} />
@@ -353,16 +353,16 @@ export default function MonitorPage() {
               const isCollapsed = expandedDepts[deptName] === false;
               
               return (
-                <div key={deptName} className="flex flex-col bg-[#0B1224] rounded-xl border border-gray-800 overflow-hidden shadow-sm">
+                <div key={deptName} className="flex flex-col bg-white dark:bg-[#0B1224] rounded-xl border border-slate-200 dark:border-gray-800 overflow-hidden shadow-sm">
                   {/* Accordion Header */}
                   <div 
                     onClick={() => toggleDept(deptName)}
-                    className="flex items-center justify-between p-4 bg-gray-900/30 hover:bg-gray-800/40 cursor-pointer border-b border-gray-800 transition-colors"
+                    className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 dark:bg-gray-900/30 dark:hover:bg-gray-800/40 cursor-pointer border-b border-slate-200 dark:border-gray-800 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      {isCollapsed ? <ChevronRight size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-400" />}
-                      <h2 className="text-base font-bold text-white uppercase tracking-wider">{deptName}</h2>
-                      <span className="bg-blue-500/20 text-blue-400 text-xs font-bold px-2.5 py-0.5 rounded-full border border-blue-500/30">
+                      {isCollapsed ? <ChevronRight size={18} className="text-slate-400 dark:text-gray-500" /> : <ChevronDown size={18} className="text-slate-500 dark:text-gray-400" />}
+                      <h2 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider">{deptName}</h2>
+                      <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold px-2.5 py-0.5 rounded-full border border-blue-500/20 dark:border-blue-500/30">
                         {deptConvs.length}
                       </span>
                     </div>
@@ -384,17 +384,17 @@ export default function MonitorPage() {
                                   setShowTransferInline(false);
                                   setTransferDeptId('');
                                 }}
-                                className="relative bg-[#0b101b] hover:bg-[#111726] border border-slate-800/90 hover:border-slate-700/80 rounded-xl p-3 flex flex-col justify-between transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md group min-h-[135px]"
+                                className="relative bg-white hover:bg-slate-50 dark:bg-[#0b101b] dark:hover:bg-[#111726] border border-slate-200 hover:border-blue-400 dark:border-slate-800/90 dark:hover:border-slate-700/80 rounded-xl p-3 flex flex-col justify-between transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md group min-h-[135px]"
                               >
                                 {/* Topo do Card */}
                                 <div>
                                   <div className="flex items-start justify-between gap-1.5">
                                     <div className="min-w-0 flex-1">
-                                      <h3 className="text-slate-100 font-semibold text-sm truncate" title={conv.contact.name}>
+                                      <h3 className="text-slate-900 dark:text-slate-100 font-semibold text-sm truncate" title={conv.contact.name}>
                                         {conv.contact.name || 'Contato Sem Nome'}
                                       </h3>
-                                      <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5 truncate">
-                                        <Phone size={10} className="text-slate-500 shrink-0" />
+                                      <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5 truncate">
+                                        <Phone size={10} className="text-slate-400 dark:text-slate-500 shrink-0" />
                                         <span>{formatPhone(conv.contact.phone)}</span>
                                       </p>
                                     </div>
@@ -406,13 +406,13 @@ export default function MonitorPage() {
 
                                   {/* Centro do Card: Atraso Crítico / Alerta */}
                                   {sla.isUnanswered && sla.diffMins >= 15 ? (
-                                    <div className="mt-2.5 mb-1 px-2 py-1 rounded bg-red-500/10 border border-red-500/25 flex items-center gap-1.5 text-[11px] text-red-400 font-medium">
-                                      <AlertCircle size={12} className="shrink-0 text-red-400 animate-pulse" />
+                                    <div className="mt-2.5 mb-1 px-2 py-1 rounded bg-red-500/10 border border-red-500/25 flex items-center gap-1.5 text-[11px] text-red-600 dark:text-red-400 font-medium">
+                                      <AlertCircle size={12} className="shrink-0 text-red-500 dark:text-red-400 animate-pulse" />
                                       <span className="truncate">sem resposta há {sla.timeStr}</span>
                                     </div>
                                   ) : conv.lastMessage ? (
-                                    <p className="text-[11px] text-slate-500 truncate mt-2 mb-1">
-                                      <span className="text-slate-400 font-medium">{conv.lastMessage.fromMe ? 'Atendente: ' : 'Cliente: '}</span>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-2 mb-1">
+                                      <span className="text-slate-700 dark:text-slate-300 font-medium">{conv.lastMessage.fromMe ? 'Atendente: ' : 'Cliente: '}</span>
                                       {conv.lastMessage.content}
                                     </p>
                                   ) : (
@@ -421,17 +421,17 @@ export default function MonitorPage() {
                                 </div>
 
                                 {/* Rodapé do Card */}
-                                <div className="border-t border-slate-800/80 pt-2 mt-auto flex items-center justify-between">
+                                <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2 mt-auto flex items-center justify-between">
                                   <div className="flex items-center gap-1.5 min-w-0">
-                                    <div className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-200 text-[9px] uppercase shrink-0">
+                                    <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-slate-700 dark:text-slate-200 text-[9px] uppercase shrink-0">
                                       {conv.assignee ? conv.assignee.name.substring(0, 2) : 'FL'}
                                     </div>
-                                    <span className={`text-xs truncate max-w-[120px] font-medium ${conv.assignee ? 'text-slate-300' : 'text-amber-400/90'}`}>
+                                    <span className={`text-xs truncate max-w-[120px] font-medium ${conv.assignee ? 'text-slate-700 dark:text-slate-300' : 'text-amber-600 dark:text-amber-400/90'}`}>
                                       {conv.assignee ? conv.assignee.name : 'Aguardando na Fila'}
                                     </span>
                                   </div>
 
-                                  <MoreHorizontal size={14} className="text-slate-600 group-hover:text-slate-400 transition-colors shrink-0" />
+                                  <MoreHorizontal size={14} className="text-slate-400 hover:text-slate-600 dark:text-slate-600 dark:hover:text-slate-400 transition-colors shrink-0" />
                                 </div>
                               </div>
                             );
@@ -439,17 +439,17 @@ export default function MonitorPage() {
                         </div>
                       ) : (
                         /* TABLE MODE */
-                        <div className="overflow-x-auto rounded-lg border border-gray-800">
+                        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-gray-800">
                           <table className="w-full text-left border-collapse">
                             <thead>
-                              <tr className="bg-gray-900/50 text-gray-400 text-xs uppercase tracking-wider">
+                              <tr className="bg-slate-50 dark:bg-gray-900/50 text-slate-500 dark:text-gray-400 text-xs uppercase tracking-wider">
                                 <th className="p-3 font-semibold">Contato</th>
                                 <th className="p-3 font-semibold">Status SLA</th>
                                 <th className="p-3 font-semibold">Atendente</th>
                                 <th className="p-3 font-semibold text-right">Ações</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-800 text-sm">
+                            <tbody className="divide-y divide-slate-100 dark:divide-gray-800 text-sm">
                               {deptConvs.map(conv => {
                                 const sla = getSLAInfo(conv);
                                 return (
@@ -460,11 +460,11 @@ export default function MonitorPage() {
                                       setShowTransferInline(false);
                                       setTransferDeptId('');
                                     }}
-                                    className="hover:bg-gray-800/30 transition-colors cursor-pointer"
+                                    className="hover:bg-slate-50 dark:hover:bg-gray-800/30 transition-colors cursor-pointer"
                                   >
                                     <td className="p-3">
-                                      <div className="font-bold text-gray-200">{conv.contact.name}</div>
-                                      <div className="text-xs text-gray-500">{conv.contact.phone}</div>
+                                      <div className="font-bold text-slate-900 dark:text-gray-200">{conv.contact.name}</div>
+                                      <div className="text-xs text-slate-500 dark:text-gray-500">{conv.contact.phone}</div>
                                     </td>
                                     <td className="p-3">
                                       <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-xs font-bold ${sla.colorClass}`}>
@@ -473,7 +473,7 @@ export default function MonitorPage() {
                                       </div>
                                     </td>
                                     <td className="p-3">
-                                      <span className={`font-medium ${conv.assignee ? 'text-blue-400' : 'text-yellow-500'}`}>
+                                      <span className={`font-medium ${conv.assignee ? 'text-blue-600 dark:text-blue-400' : 'text-amber-600 dark:text-yellow-500'}`}>
                                         {conv.assignee ? conv.assignee.name : 'Aguardando na Fila'}
                                       </span>
                                     </td>
@@ -518,20 +518,20 @@ export default function MonitorPage() {
           onClick={() => setSelectedCard(null)}
         >
           <div 
-            className="bg-[#161b26] border border-slate-700 rounded-2xl p-5 shadow-2xl w-full max-w-sm text-slate-200 animate-in zoom-in-95 duration-150 relative"
+            className="bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-2xl w-full max-w-sm text-slate-800 dark:text-slate-200 animate-in zoom-in-95 duration-150 relative"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Popover Header */}
-            <div className="flex items-center justify-between pb-3.5 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   Card de Atendimento
                 </span>
               </div>
               <button 
                 onClick={() => setSelectedCard(null)} 
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X size={16} />
               </button>
@@ -540,37 +540,37 @@ export default function MonitorPage() {
             {/* Detalhes do Contato */}
             <div className="py-4 space-y-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">NOME</span>
-                <p className="text-sm font-semibold text-slate-100 mt-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">NOME</span>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
                   {selectedCard.contact.name || 'Contato Sem Nome'}
                 </p>
               </div>
 
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">TELEFONE</span>
-                <p className="text-sm text-slate-300 font-mono mt-0.5 flex items-center gap-1.5">
-                  <Phone size={12} className="text-emerald-400" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">TELEFONE</span>
+                <p className="text-sm text-slate-700 dark:text-slate-300 font-mono mt-0.5 flex items-center gap-1.5">
+                  <Phone size={12} className="text-emerald-500 dark:text-emerald-400" />
                   {formatPhone(selectedCard.contact.phone)}
                 </p>
               </div>
 
               <div className="pt-1">
-                <span className="text-xs text-slate-400 flex items-center gap-1.5">
-                  <Clock size={12} className="text-blue-400" />
+                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <Clock size={12} className="text-blue-500 dark:text-blue-400" />
                   {formatStartTime(selectedCard.updatedAt)}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200 dark:border-slate-800/80">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">OPERADOR</span>
-                  <p className={`text-xs font-medium mt-0.5 truncate ${selectedCard.assignee ? 'text-slate-200' : 'text-amber-400'}`}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">OPERADOR</span>
+                  <p className={`text-xs font-medium mt-0.5 truncate ${selectedCard.assignee ? 'text-slate-800 dark:text-slate-200' : 'text-amber-600 dark:text-amber-400'}`}>
                     {selectedCard.assignee ? selectedCard.assignee.name : 'Na Fila Geral'}
                   </p>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">SETOR</span>
-                  <p className="text-xs font-medium text-slate-200 mt-0.5 truncate">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">SETOR</span>
+                  <p className="text-xs font-medium text-slate-800 dark:text-slate-200 mt-0.5 truncate">
                     {selectedCard.department?.name || 'Sem Setor'}
                   </p>
                 </div>
@@ -592,15 +592,15 @@ export default function MonitorPage() {
 
               {/* Seletor Inline de Transferência */}
               {showTransferInline && (
-                <div className="p-3 bg-slate-900/90 border border-slate-700/80 rounded-xl space-y-2 animate-in fade-in duration-100">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                <div className="p-3 bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700/80 rounded-xl space-y-2 animate-in fade-in duration-100">
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                     Escolha o Setor de Destino:
                   </label>
                   <div className="flex gap-2">
                     <select 
                       value={transferDeptId} 
                       onChange={(e) => setTransferDeptId(e.target.value)}
-                      className="flex-1 bg-[#161b26] border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-blue-500"
+                      className="flex-1 bg-white dark:bg-[#161b26] border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-blue-500"
                     >
                       <option value="">Selecione o setor...</option>
                       {departments.map(d => (
@@ -620,7 +620,7 @@ export default function MonitorPage() {
             </div>
 
             {/* Barra de Ações Rápidas */}
-            <div className="pt-3 border-t border-slate-800 grid grid-cols-3 gap-2">
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 grid grid-cols-3 gap-2">
               <button
                 onClick={() => {
                   router.push(`/inbox?contactId=${selectedCard.contact.id}&conversationId=${selectedCard.id}`);
@@ -634,7 +634,7 @@ export default function MonitorPage() {
 
               <button
                 onClick={() => handleTakeover(selectedCard.id, selectedCard.contact?.id)}
-                className="bg-emerald-600/90 hover:bg-emerald-500 text-white font-semibold text-xs py-2 px-2 rounded-lg flex items-center justify-center gap-1 transition-all shadow-sm cursor-pointer"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs py-2 px-2 rounded-lg flex items-center justify-center gap-1 transition-all shadow-sm cursor-pointer"
                 title="Assumir Atendimento"
               >
                 <UserPlus size={13} />
@@ -645,8 +645,8 @@ export default function MonitorPage() {
                 onClick={() => setShowTransferInline(prev => !prev)}
                 className={`font-semibold text-xs py-2 px-2 rounded-lg flex items-center justify-center gap-1 transition-all border cursor-pointer ${
                   showTransferInline 
-                    ? 'bg-slate-700 border-slate-600 text-white' 
-                    : 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 text-slate-300'
+                    ? 'bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-800 dark:text-white' 
+                    : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
                 }`}
                 title="Transferir para outro setor"
               >
@@ -659,29 +659,29 @@ export default function MonitorPage() {
       )}
 
       {/* FOOTER: ONLINE USERS & SLA LEGEND */}
-      <div className="border-t border-gray-800 bg-[#0B1224] shrink-0 p-4 pb-2">
+      <div className="border-t border-slate-200 dark:border-gray-800 bg-white dark:bg-[#0B1224] shrink-0 p-4 pb-2">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           
           {/* Online Users List */}
           <div className="flex-1 flex flex-col gap-2 overflow-hidden">
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
               <Users size={12} /> Colaboradores ({users.filter(u => u.isOnline).length} Online)
             </h4>
             <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
               {users.length === 0 ? (
-                <div className="text-xs text-gray-500 italic">Nenhum colaborador carregado.</div>
+                <div className="text-xs text-slate-400 dark:text-gray-500 italic">Nenhum colaborador carregado.</div>
               ) : (
                 users.map(u => (
-                  <div key={u.id} className="flex items-center gap-2 bg-[#050A15] border border-gray-800 px-3 py-1.5 rounded-lg shrink-0">
+                  <div key={u.id} className="flex items-center gap-2 bg-slate-50 dark:bg-[#050A15] border border-slate-200 dark:border-gray-800 px-3 py-1.5 rounded-lg shrink-0">
                     <div className="relative">
-                      <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center font-bold text-white text-[10px] uppercase">
+                      <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-gray-700 flex items-center justify-center font-bold text-slate-700 dark:text-white text-[10px] uppercase">
                         {u.name.substring(0,2)}
                       </div>
-                      <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[#050A15] ${u.isOnline ? 'bg-emerald-500' : 'bg-gray-600'}`}></div>
+                      <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white dark:border-[#050A15] ${u.isOnline ? 'bg-emerald-500' : 'bg-slate-400 dark:bg-gray-600'}`}></div>
                     </div>
                     <div className="flex flex-col">
-                      <span className={`text-[11px] font-bold leading-tight ${u.isOnline ? 'text-gray-200' : 'text-gray-500'}`}>{u.name}</span>
-                      <span className="text-[9px] text-gray-600">{getAssigneeCount(u.id)} chats ativos</span>
+                      <span className={`text-[11px] font-bold leading-tight ${u.isOnline ? 'text-slate-800 dark:text-gray-200' : 'text-slate-400 dark:text-gray-500'}`}>{u.name}</span>
+                      <span className="text-[9px] text-slate-500 dark:text-gray-600">{getAssigneeCount(u.id)} chats ativos</span>
                     </div>
                   </div>
                 ))
@@ -690,8 +690,8 @@ export default function MonitorPage() {
           </div>
 
           {/* SLA Legend */}
-          <div className="flex flex-col gap-2 lg:border-l lg:border-gray-800 lg:pl-6 shrink-0 pt-2 lg:pt-0">
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Legenda de SLA</h4>
+          <div className="flex flex-col gap-2 lg:border-l lg:border-slate-200 dark:lg:border-gray-800 lg:pl-6 shrink-0 pt-2 lg:pt-0">
+            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Legenda de SLA</h4>
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>

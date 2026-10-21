@@ -287,11 +287,11 @@ export default function WorkspaceManagerModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="w-full max-w-2xl bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-2xl bg-white dark:bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header do Modal */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-[#070D1B]/60">
+        <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-50 dark:bg-[#070D1B]/60">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
               <Building2 className="w-5 h-5" />
@@ -318,7 +318,7 @@ export default function WorkspaceManagerModal({
         </div>
 
         {/* Barra de Uso e Métricas */}
-        <div className="px-6 py-3.5 bg-[#070D1B] border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="px-6 py-3.5 bg-slate-50 dark:bg-[#070D1B] border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="text-xs font-semibold text-slate-300">
               Workspaces utilizados:{" "}
@@ -401,7 +401,7 @@ export default function WorkspaceManagerModal({
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="Ex: Filial Matriz, Unidade Sul, Atendimento SP"
-                  className="w-full p-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
                   required
                 />
               </div>
@@ -416,7 +416,7 @@ export default function WorkspaceManagerModal({
                   onChange={(e) => setFormDescription(e.target.value)}
                   placeholder="Descreva a finalidade desta unidade, localização ou setor específico..."
                   rows={2}
-                  className="w-full p-2.5 text-xs rounded-xl bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500 resize-none"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500 resize-none"
                 />
               </div>
 
@@ -444,7 +444,7 @@ export default function WorkspaceManagerModal({
                   </div>
 
                   <div className="flex-1 flex items-center gap-2">
-                    <label className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#070D1B] hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold cursor-pointer transition-colors">
+                    <label className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold cursor-pointer transition-colors">
                       <Upload className="w-4 h-4 text-blue-400" />
                       <span>Selecionar Arquivo</span>
                       <input
@@ -501,7 +501,7 @@ export default function WorkspaceManagerModal({
                         className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
                           isSelected
                             ? "bg-slate-800 border-blue-500 shadow-md"
-                            : "bg-[#070D1B] border-slate-800 hover:border-slate-700"
+                            : "bg-slate-50 dark:bg-[#070D1B] border-slate-800 hover:border-slate-700"
                         }`}
                       >
                         <span
@@ -518,7 +518,7 @@ export default function WorkspaceManagerModal({
 
                 {/* Custom Color Input */}
                 <div className="flex items-center gap-3 pt-1">
-                  <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[#070D1B] border border-slate-700 text-xs">
+                  <div className="flex items-center gap-2 p-1.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-xs">
                     <input
                       type="color"
                       value={formThemeColor}
@@ -572,8 +572,8 @@ export default function WorkspaceManagerModal({
                     key={ws.id}
                     className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
                       isActive
-                        ? "bg-[#070D1B] border-blue-500/50 shadow-lg shadow-blue-500/5"
-                        : "bg-[#070D1B]/50 border-slate-800/80 hover:bg-[#070D1B] hover:border-slate-700"
+                        ? "bg-slate-50 dark:bg-[#070D1B] border-blue-500/50 shadow-lg shadow-blue-500/5"
+                        : "bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 border-slate-800/80 hover:bg-slate-50 dark:bg-[#070D1B] hover:border-slate-700"
                     }`}
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
@@ -654,7 +654,7 @@ export default function WorkspaceManagerModal({
         </div>
 
         {/* Rodapé do Modal */}
-        <div className="p-4 bg-[#070D1B]/80 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+        <div className="p-4 bg-slate-50/80 dark:bg-slate-50 dark:bg-[#070D1B]/80 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-blue-400" />
             <span>Dados isolados por Tenant & Workspace</span>

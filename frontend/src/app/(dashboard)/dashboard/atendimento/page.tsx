@@ -101,12 +101,12 @@ function MetricKpiCardWithComparison({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`bg-[#0B1224] p-4 rounded-xl border border-slate-800/80 ${borderHoverClass} transition-all flex flex-col justify-between cursor-pointer h-full group`}>
+      <div className={`bg-white dark:bg-[#0B1224] p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 ${borderHoverClass} transition-all flex flex-col justify-between cursor-pointer h-full group shadow-sm`}>
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-400 group-hover:text-slate-200 transition-colors">
+          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">
             {title}
           </span>
-          <div className="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-blue-400">
+          <div className="w-5 h-5 rounded flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-blue-500">
             <Info size={13} />
           </div>
         </div>
@@ -115,7 +115,7 @@ function MetricKpiCardWithComparison({
           <span className={`text-2xl font-bold ${colorClass}`}>{value}</span>
         </div>
 
-        <div className="flex items-center gap-1 text-[11px] text-slate-400">
+        <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
           <Icon size={12} className={colorClass} />
           <span className="truncate">{subtitle}</span>
         </div>
@@ -123,51 +123,51 @@ function MetricKpiCardWithComparison({
 
       {/* POPUP / HOVERCARD SUSPENSO */}
       {isHovered && (
-        <div className="absolute top-full left-0 mt-2 z-50 w-72 bg-[#161b26] border border-slate-700 rounded-xl p-3.5 shadow-2xl animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2.5">
-            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+        <div className="absolute top-full left-0 mt-2 z-50 w-72 bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 shadow-2xl animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800 mb-2.5">
+            <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
               <Icon size={13} className={colorClass} />
               {title}
             </span>
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider">Comparativo</span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">Comparativo</span>
           </div>
 
           <table className="w-full text-left text-[11px]">
             <thead>
-              <tr className="text-slate-500 border-b border-slate-800/80">
+              <tr className="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800/80">
                 <th className="pb-1 font-medium">Período</th>
                 <th className="pb-1 text-center font-medium">Total</th>
                 <th className="pb-1 text-center font-medium">Dias Úteis</th>
                 <th className="pb-1 text-right font-medium">Média/dia</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50">
               <tr>
-                <td className="py-1.5 font-semibold text-slate-200">Atual</td>
-                <td className="py-1.5 text-center font-bold text-white">
+                <td className="py-1.5 font-semibold text-slate-800 dark:text-slate-200">Atual</td>
+                <td className="py-1.5 text-center font-bold text-slate-900 dark:text-white">
                   {isTime ? value : currentTotal}
                 </td>
-                <td className="py-1.5 text-center text-slate-400">{workingDays}d</td>
-                <td className="py-1.5 text-right font-semibold text-slate-200">
+                <td className="py-1.5 text-center text-slate-600 dark:text-slate-400">{workingDays}d</td>
+                <td className="py-1.5 text-right font-semibold text-slate-800 dark:text-slate-200">
                   {isTime ? '-' : curAvg.toFixed(1)}
                 </td>
               </tr>
               <tr>
-                <td className="py-1.5 text-slate-400">Anterior</td>
-                <td className="py-1.5 text-center text-slate-400">
+                <td className="py-1.5 text-slate-500 dark:text-slate-400">Anterior</td>
+                <td className="py-1.5 text-center text-slate-500 dark:text-slate-400">
                   {isTime ? '-' : previousTotal}
                 </td>
-                <td className="py-1.5 text-center text-slate-500">{prevWorkingDays}d</td>
-                <td className="py-1.5 text-right text-slate-400">
+                <td className="py-1.5 text-center text-slate-500 dark:text-slate-500">{prevWorkingDays}d</td>
+                <td className="py-1.5 text-right text-slate-500 dark:text-slate-400">
                   {isTime ? '-' : prevAvg.toFixed(1)}
                 </td>
               </tr>
             </tbody>
           </table>
 
-          <div className="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
-            <span className="text-slate-400">Variação vs anterior:</span>
-            <span className={`font-bold flex items-center gap-0.5 ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+          <div className="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px]">
+            <span className="text-slate-600 dark:text-slate-400">Variação vs anterior:</span>
+            <span className={`font-bold flex items-center gap-0.5 ${isPositive ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}>
               {isPositive ? <ArrowUp size={11} /> : <ArrowDown size={11} />}
               {Math.abs(diffPercent).toFixed(1)}%
             </span>
@@ -743,7 +743,7 @@ export default function AtendimentoAnalyticsDashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-[#050A15] p-6 text-slate-400 gap-3 min-h-screen">
+      <div className="flex-1 flex flex-col items-center justify-center bg-slate-100 dark:bg-[#050A15] p-6 text-slate-500 dark:text-slate-400 gap-3 min-h-screen">
         <RefreshCw className="animate-spin text-blue-500" size={32} />
         <span className="text-sm font-medium">Consolidando métricas e inteligência operacional...</span>
       </div>
@@ -751,20 +751,20 @@ export default function AtendimentoAnalyticsDashboard() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-[#050A15] text-slate-200 overflow-y-auto">
+    <div className="flex-1 flex flex-col min-h-screen bg-slate-100 dark:bg-[#050A15] text-slate-800 dark:text-slate-200 overflow-y-auto">
       {/* TOP HEADER */}
-      <div className="border-b border-slate-800/80 bg-[#0B1224]/70 backdrop-blur px-6 py-5 sticky top-0 z-30">
+      <div className="border-b border-slate-200 dark:border-slate-800/80 bg-white/95 dark:bg-[#0B1224]/70 backdrop-blur px-6 py-5 sticky top-0 z-30">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              <div className="w-9 h-9 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
                 <Headphones size={20} />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                   Suíte de Análises & Inteligência Operacional
                 </h1>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Auditoria de SLA, fluxos de conversação e controle financeiro de IA em tempo real.
                 </p>
               </div>
@@ -772,13 +772,13 @@ export default function AtendimentoAnalyticsDashboard() {
           </div>
 
           {/* MAIN TABS */}
-          <div className="flex items-center gap-1 bg-[#141C30] p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#141C30] p-1 rounded-xl border border-slate-200 dark:border-slate-800">
             <button
               onClick={() => setActiveTab('atendimento')}
               className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
                 activeTab === 'atendimento'
                   ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50'
               }`}
             >
               <Headphones size={15} />
@@ -790,10 +790,10 @@ export default function AtendimentoAnalyticsDashboard() {
               className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
                 activeTab === 'csat'
                   ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50'
               }`}
             >
-              <Star size={15} className="text-amber-400" />
+              <Star size={15} className="text-amber-500 dark:text-amber-400" />
               <span>Pesquisas (CSAT)</span>
             </button>
 
@@ -802,27 +802,27 @@ export default function AtendimentoAnalyticsDashboard() {
               className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
                 activeTab === 'ai_costs'
                   ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50'
               }`}
             >
-              <Sparkles size={15} className="text-purple-400" />
+              <Sparkles size={15} className="text-purple-500 dark:text-purple-400" />
               <span>Custos de IA</span>
             </button>
           </div>
         </div>
 
         {/* SUB-BAR / FILTERS */}
-        <div className="mt-4 pt-4 border-t border-slate-800/60 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             {/* View Mode Switcher (Only in Atendimento) */}
             {activeTab === 'atendimento' && (
-              <div className="flex items-center bg-[#11192A] p-1 rounded-lg border border-slate-800 mr-2">
+              <div className="flex items-center bg-slate-100 dark:bg-[#11192A] p-1 rounded-lg border border-slate-200 dark:border-slate-800 mr-2">
                 <button
                   onClick={() => setViewMode('charts')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                     viewMode === 'charts'
-                      ? 'bg-blue-600/30 border border-blue-500/50 text-blue-300 font-semibold'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-blue-600 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50'
                   }`}
                 >
                   <TrendingUp size={14} />
@@ -830,10 +830,10 @@ export default function AtendimentoAnalyticsDashboard() {
                 </button>
                 <button
                   onClick={() => setViewMode('reports')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                     viewMode === 'reports'
-                      ? 'bg-blue-600/30 border border-blue-500/50 text-blue-300 font-semibold'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-blue-600 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50'
                   }`}
                 >
                   <Layers size={14} />
@@ -845,15 +845,15 @@ export default function AtendimentoAnalyticsDashboard() {
             {/* BOTÃO MODAL DIAS ÚTEIS */}
             <button
               onClick={() => setShowWorkingDaysModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#11192A] hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 font-medium transition-all cursor-pointer mr-2 shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 dark:bg-[#11192A] dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200 font-semibold transition-all cursor-pointer mr-2 shadow-sm"
               title="Configurar Dias de Operação e Feriados"
             >
-              <CalendarDays size={14} className="text-blue-400" />
+              <CalendarDays size={14} className="text-blue-500 dark:text-blue-400" />
               <span>Dias Úteis ({workingDays}d)</span>
             </button>
 
             {/* Quick Period Buttons */}
-            <div className="flex items-center gap-1 bg-[#11192A] p-1 rounded-lg border border-slate-800">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#11192A] p-1 rounded-lg border border-slate-200 dark:border-slate-800">
               {(['today', '7d', '15d', '30d', '90d'] as const).map((p) => (
                 <button
                   key={p}
@@ -861,8 +861,10 @@ export default function AtendimentoAnalyticsDashboard() {
                     setPeriod(p);
                     setShowDatePickerPopover(false);
                   }}
-                  className={`px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
-                    period === p ? 'bg-slate-700 text-white font-semibold' : 'text-slate-400 hover:text-slate-200'
+                  className={`px-2.5 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
+                    period === p
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/50'
                   }`}
                 >
                   {p === 'today' ? 'Hoje' : p === '7d' ? '7 dias' : p === '15d' ? '15 dias' : p === '30d' ? '30 dias' : '90 dias'}
@@ -873,8 +875,10 @@ export default function AtendimentoAnalyticsDashboard() {
               <div className="relative" ref={datePickerRef}>
                 <button
                   onClick={() => setShowDatePickerPopover(!showDatePickerPopover)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
-                    period === 'custom' ? 'bg-blue-600 text-white font-semibold' : 'text-slate-400 hover:text-slate-200'
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
+                    period === 'custom'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/50'
                   }`}
                 >
                   <Calendar size={13} />
@@ -887,10 +891,10 @@ export default function AtendimentoAnalyticsDashboard() {
 
                 {/* CALENDÁRIO POPOVER VISUAL (PADRÃO LERO) */}
                 {showDatePickerPopover && (
-                  <div className="absolute top-full left-0 mt-2 z-50 w-80 bg-[#161b26] border border-slate-700 rounded-xl p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
-                      <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                        <Calendar size={14} className="text-blue-400" />
+                  <div className="absolute top-full left-0 mt-2 z-50 w-80 bg-white dark:bg-[#161b26] border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 mb-3">
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <Calendar size={14} className="text-blue-500 dark:text-blue-400" />
                         Selecione o Período
                       </h4>
                       <div className="flex items-center gap-1">
@@ -900,11 +904,11 @@ export default function AtendimentoAnalyticsDashboard() {
                             prev.setMonth(prev.getMonth() - 1);
                             setPickerMonth(prev);
                           }}
-                          className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
+                          className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                         >
                           <ChevronLeft size={14} />
                         </button>
-                        <span className="text-xs font-semibold text-slate-200 capitalize">
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 capitalize">
                           {pickerMonth.toLocaleString('pt-BR', { month: 'short', year: 'numeric' })}
                         </span>
                         <button
@@ -913,7 +917,7 @@ export default function AtendimentoAnalyticsDashboard() {
                             next.setMonth(next.getMonth() + 1);
                             setPickerMonth(next);
                           }}
-                          className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
+                          className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                         >
                           <ChevronRight size={14} />
                         </button>
@@ -921,7 +925,7 @@ export default function AtendimentoAnalyticsDashboard() {
                     </div>
 
                     {/* Grade de Dias */}
-                    <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-slate-500 mb-2 font-medium">
+                    <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-slate-500 dark:text-slate-400 mb-2 font-medium">
                       <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
                     </div>
 
@@ -950,8 +954,8 @@ export default function AtendimentoAnalyticsDashboard() {
                               isStart || isEnd
                                 ? 'bg-blue-600 text-white font-bold shadow-sm'
                                 : isInRange
-                                ? 'bg-blue-600/20 text-blue-300'
-                                : 'text-slate-300 hover:bg-slate-800'
+                                ? 'bg-blue-100 dark:bg-blue-600/20 text-blue-700 dark:text-blue-300'
+                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                             }`}
                           >
                             {dayNum}
@@ -960,14 +964,14 @@ export default function AtendimentoAnalyticsDashboard() {
                       })}
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-                      <span className="text-slate-400 text-[11px]">
+                    <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+                      <span className="text-slate-600 dark:text-slate-400 text-[11px]">
                         {tempStart ? (tempEnd ? `${tempStart} até ${tempEnd}` : `Início: ${tempStart}`) : 'Clique no início e fim'}
                       </span>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setShowDatePickerPopover(false)}
-                          className="px-2.5 py-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"
+                          className="px-2.5 py-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded hover:bg-slate-100 dark:hover:bg-slate-800"
                         >
                           Cancelar
                         </button>
@@ -989,9 +993,9 @@ export default function AtendimentoAnalyticsDashboard() {
             <button
               onClick={() => fetchAllData(true)}
               disabled={isRefreshing}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 transition-all cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-sm transition-all cursor-pointer disabled:opacity-50"
             >
-              <RefreshCw size={13} className={isRefreshing ? 'animate-spin text-blue-400' : ''} />
+              <RefreshCw size={13} className={isRefreshing ? 'animate-spin text-blue-500 dark:text-blue-400' : ''} />
               <span>{isRefreshing ? 'Atualizando...' : 'Recarregar'}</span>
             </button>
           </div>
@@ -1015,8 +1019,8 @@ export default function AtendimentoAnalyticsDashboard() {
                     value={overview?.total || 0}
                     subtitle={`${overview?.finished || 0} finalizados`}
                     icon={CheckCircle}
-                    colorClass="text-white"
-                    borderHoverClass="hover:border-slate-700"
+                    colorClass="text-slate-900 dark:text-white"
+                    borderHoverClass="hover:border-slate-400 dark:hover:border-slate-700"
                     currentTotal={overview?.total || 0}
                     previousTotal={Math.max(Math.round((overview?.total || 0) * 0.88), 0)}
                     workingDays={workingDays}
@@ -1105,14 +1109,14 @@ export default function AtendimentoAnalyticsDashboard() {
                 </div>
 
                 {/* 2. MAIN COMPOSED CHART */}
-                <div className="bg-[#0B1224] border border-slate-800 rounded-xl p-6">
+                <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-6">
                     <div>
-                      <h3 className="text-base font-bold text-white flex items-center gap-2">
-                        <TrendingUp size={18} className="text-blue-400" />
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <TrendingUp size={18} className="text-blue-500 dark:text-blue-400" />
                         Evolução Diária de Volume e Tempo Médio de Atendimento
                       </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         Barras: Volume de finalizados e em andamento | Linha: TMA médio diário em minutos
                       </p>
                     </div>
@@ -1120,15 +1124,15 @@ export default function AtendimentoAnalyticsDashboard() {
                     <div className="flex items-center gap-4 text-xs font-medium">
                       <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                        <span className="text-slate-300">Finalizados</span>
+                        <span className="text-slate-600 dark:text-slate-300">Finalizados</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded bg-blue-500"></div>
-                        <span className="text-slate-300">Em Andamento</span>
+                        <span className="text-slate-600 dark:text-slate-300">Em Andamento</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-3 h-0.5 bg-amber-400"></div>
-                        <span className="text-slate-300">TMA (min)</span>
+                        <span className="text-slate-600 dark:text-slate-300">TMA (min)</span>
                       </div>
                     </div>
                   </div>
@@ -1136,7 +1140,7 @@ export default function AtendimentoAnalyticsDashboard() {
                   <div className="h-[320px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart data={chartsData?.timeline || []}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#94A3B8" opacity={0.2} vertical={false} />
                         <XAxis dataKey="label" stroke="#64748B" fontSize={12} tickLine={false} />
                         <YAxis yAxisId="left" stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
                         <YAxis yAxisId="right" orientation="right" stroke="#F59E0B" fontSize={12} tickLine={false} axisLine={false} unit="m" />
@@ -1147,6 +1151,7 @@ export default function AtendimentoAnalyticsDashboard() {
                             borderRadius: "8px",
                             boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)",
                             fontSize: "12px",
+                            color: "#fff"
                           }}
                         />
                         <Bar yAxisId="left" dataKey="finished" name="Finalizados" fill="#10B981" radius={[4, 4, 0, 0]} stackId="a" />
@@ -1162,10 +1167,10 @@ export default function AtendimentoAnalyticsDashboard() {
                   {/* Fileira 1: Status, Motivo de Finalização e Setor */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Status Donut */}
-                    <div className="bg-[#0B1224] border border-slate-800 rounded-xl p-5 flex flex-col justify-between">
+                    <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col justify-between shadow-sm">
                       <div>
-                        <h4 className="text-sm font-bold text-white mb-1">Por Status</h4>
-                        <span className="text-xs text-slate-400 mb-4 block">Proporção da fila de atendimento</span>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Por Status</h4>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 mb-4 block">Proporção da fila de atendimento</span>
                       </div>
                       <div className="h-52 w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -1183,7 +1188,7 @@ export default function AtendimentoAnalyticsDashboard() {
                                 <Cell key={`cell-st-${index}`} fill={entry.color || '#3B82F6'} />
                               ))}
                             </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: "#0B1224", borderColor: "#334155", borderRadius: "8px" }} />
+                            <Tooltip contentStyle={{ backgroundColor: "#0B1224", borderColor: "#334155", borderRadius: "8px", color: "#fff" }} />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
@@ -1192,19 +1197,19 @@ export default function AtendimentoAnalyticsDashboard() {
                           <div key={st.name} className="flex items-center justify-between">
                             <div className="flex items-center gap-2 truncate">
                               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: st.color }}></span>
-                              <span className="text-slate-300 truncate">{st.name}</span>
+                              <span className="text-slate-600 dark:text-slate-300 truncate">{st.name}</span>
                             </div>
-                            <span className="font-semibold text-white ml-2 shrink-0">{st.value}</span>
+                            <span className="font-semibold text-slate-900 dark:text-white ml-2 shrink-0">{st.value}</span>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     {/* Close Reason Donut */}
-                    <div className="bg-[#0B1224] border border-slate-800 rounded-xl p-5 flex flex-col justify-between">
+                    <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col justify-between shadow-sm">
                       <div>
-                        <h4 className="text-sm font-bold text-white mb-1">Por Motivo de Finalização</h4>
-                        <span className="text-xs text-slate-400 mb-4 block">Classificação dos desfechos</span>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Por Motivo de Finalização</h4>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 mb-4 block">Classificação dos desfechos</span>
                       </div>
                       <div className="h-52 w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -1222,7 +1227,7 @@ export default function AtendimentoAnalyticsDashboard() {
                                 <Cell key={`cell-reason-${index}`} fill={entry.color} />
                               ))}
                             </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: "#0B1224", borderColor: "#334155", borderRadius: "8px" }} />
+                            <Tooltip contentStyle={{ backgroundColor: "#0B1224", borderColor: "#334155", borderRadius: "8px", color: "#fff" }} />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
@@ -1231,19 +1236,19 @@ export default function AtendimentoAnalyticsDashboard() {
                           <div key={cr.name} className="flex items-center justify-between">
                             <div className="flex items-center gap-2 truncate">
                               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cr.color }}></span>
-                              <span className="text-slate-300 truncate">{cr.name}</span>
+                              <span className="text-slate-600 dark:text-slate-300 truncate">{cr.name}</span>
                             </div>
-                            <span className="font-semibold text-white ml-2 shrink-0">{cr.value}</span>
+                            <span className="font-semibold text-slate-900 dark:text-white ml-2 shrink-0">{cr.value}</span>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     {/* Department Donut */}
-                    <div className="bg-[#0B1224] border border-slate-800 rounded-xl p-5 flex flex-col justify-between">
+                    <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col justify-between shadow-sm">
                       <div>
-                        <h4 className="text-sm font-bold text-white mb-1">Por Setor / Equipe</h4>
-                        <span className="text-xs text-slate-400 mb-4 block">Distribuição entre departamentos</span>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Por Setor / Equipe</h4>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 mb-4 block">Distribuição entre departamentos</span>
                       </div>
                       <div className="h-52 w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -1261,7 +1266,7 @@ export default function AtendimentoAnalyticsDashboard() {
                                 <Cell key={`cell-dept-${index}`} fill={entry.color || '#8B5CF6'} />
                               ))}
                             </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: "#0B1224", borderColor: "#334155", borderRadius: "8px" }} />
+                            <Tooltip contentStyle={{ backgroundColor: "#0B1224", borderColor: "#334155", borderRadius: "8px", color: "#fff" }} />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
@@ -1270,9 +1275,9 @@ export default function AtendimentoAnalyticsDashboard() {
                           <div key={dp.name} className="flex items-center justify-between">
                             <div className="flex items-center gap-2 truncate">
                               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: dp.color }}></span>
-                              <span className="text-slate-300 truncate">{dp.name}</span>
+                              <span className="text-slate-600 dark:text-slate-300 truncate">{dp.name}</span>
                             </div>
-                            <span className="font-semibold text-white ml-2 shrink-0">{dp.value}</span>
+                            <span className="font-semibold text-slate-900 dark:text-white ml-2 shrink-0">{dp.value}</span>
                           </div>
                         ))}
                       </div>
@@ -1282,10 +1287,10 @@ export default function AtendimentoAnalyticsDashboard() {
                   {/* Fileira 2: Por Usuário e Por Dia da Semana */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* User Donut */}
-                    <div className="bg-[#0B1224] border border-slate-800 rounded-xl p-5 flex flex-col justify-between">
+                    <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col justify-between shadow-sm">
                       <div>
-                        <h4 className="text-sm font-bold text-white mb-1">Por Usuário</h4>
-                        <span className="text-xs text-slate-400 mb-4 block">Distribuição percentual de chamados por operador</span>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Por Usuário</h4>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 mb-4 block">Distribuição percentual de chamados por operador</span>
                       </div>
                       <div className="h-52 w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -1303,7 +1308,7 @@ export default function AtendimentoAnalyticsDashboard() {
                                 <Cell key={`cell-user-${index}`} fill={entry.color} />
                               ))}
                             </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: "#0B1224", borderColor: "#334155", borderRadius: "8px" }} />
+                            <Tooltip contentStyle={{ backgroundColor: "#0B1224", borderColor: "#334155", borderRadius: "8px", color: "#fff" }} />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
@@ -1312,32 +1317,32 @@ export default function AtendimentoAnalyticsDashboard() {
                           <div key={u.name} className="flex items-center justify-between">
                             <div className="flex items-center gap-2 truncate">
                               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: u.color }}></span>
-                              <span className="text-slate-300 truncate">{u.name}</span>
+                              <span className="text-slate-600 dark:text-slate-300 truncate">{u.name}</span>
                             </div>
-                            <span className="font-semibold text-white ml-2 shrink-0">{u.value} chamados</span>
+                            <span className="font-semibold text-slate-900 dark:text-white ml-2 shrink-0">{u.value} chamados</span>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     {/* Day of Week Chart */}
-                    <div className="bg-[#0B1224] border border-slate-800 rounded-xl p-5 flex flex-col justify-between">
+                    <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col justify-between shadow-sm">
                       <div>
-                        <h4 className="text-sm font-bold text-white mb-1">Por Dia da Semana</h4>
-                        <span className="text-xs text-slate-400 mb-4 block">Concentração semanal de chamados</span>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Por Dia da Semana</h4>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 mb-4 block">Concentração semanal de chamados</span>
                       </div>
                       <div className="h-52 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={chartsData?.distributions?.byDayOfWeek || []}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#94A3B8" opacity={0.2} vertical={false} />
                             <XAxis dataKey="name" stroke="#64748B" fontSize={11} tickLine={false} />
                             <YAxis stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} />
-                            <Tooltip contentStyle={{ backgroundColor: "#0B1224", borderColor: "#334155", borderRadius: "8px" }} />
+                            <Tooltip contentStyle={{ backgroundColor: "#0B1224", borderColor: "#334155", borderRadius: "8px", color: "#fff" }} />
                             <Bar dataKey="value" name="Tickets" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
-                      <div className="mt-2 text-center text-xs text-slate-500">
+                      <div className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
                         Distribuição do fluxo de atendimento nos dias úteis e finais de semana
                       </div>
                     </div>
@@ -1345,15 +1350,15 @@ export default function AtendimentoAnalyticsDashboard() {
                 </div>
 
                 {/* 4. AGENT PERFORMANCE TABLE (PADRÃO LERO COM ORDENAÇÃO E EXPORTAÇÃO) */}
-                <div className="bg-[#0B1224] border border-slate-800 rounded-xl overflow-hidden shadow-md">
+                <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-md">
                   {/* CABEÇALHO DO CARD (LINHA 1: TÍTULO + BOTÃO EXPORTAR) */}
-                  <div className="px-6 py-4 border-b border-slate-800 bg-[#0E1528] flex items-center justify-between gap-4">
+                  <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0E1528] flex items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                        <UserCheck size={16} className="text-emerald-400" />
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <UserCheck size={16} className="text-emerald-500 dark:text-emerald-400" />
                         Desempenho por Colaborador
                       </h3>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                         Indicadores individuais de produtividade, SLA de primeira resposta e satisfação
                       </p>
                     </div>
@@ -1361,24 +1366,24 @@ export default function AtendimentoAnalyticsDashboard() {
                     {/* BOTÃO EXPORTAR NO CANTO SUPERIOR DIREITO */}
                     <button
                       onClick={handleExportAgentsCSV}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#11192A] hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold text-xs transition-colors shadow-sm cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 dark:bg-[#11192A] dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 font-semibold text-xs transition-colors shadow-sm cursor-pointer"
                       title="Exportar dados dos colaboradores em CSV"
                     >
-                      <Download size={13} className="text-blue-400" />
+                      <Download size={13} className="text-blue-500 dark:text-blue-400" />
                       <span>Exportar</span>
                     </button>
                   </div>
 
                   {/* LINHA PRÓPRIA DEDICADA PARA O CAMPO DE BUSCA (LINHA 2) */}
-                  <div className="px-6 py-3 border-b border-slate-800/80 bg-[#0B1224]">
+                  <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#0B1224]">
                     <div className="relative w-full max-w-md">
-                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                       <input
                         type="text"
                         placeholder="Buscar por nome..."
                         value={agentSearchText}
                         onChange={(e) => setAgentSearchText(e.target.value)}
-                        className="bg-[#11192A] border border-slate-800 text-xs pl-8 pr-3 py-2 rounded-lg text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 w-full transition-all"
+                        className="bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 text-xs pl-8 pr-3 py-2 rounded-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 w-full transition-all"
                       />
                     </div>
                   </div>
@@ -1386,18 +1391,18 @@ export default function AtendimentoAnalyticsDashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
                       <thead>
-                        <tr className="border-b border-slate-800 bg-[#11192A] text-slate-400 select-none">
+                        <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#11192A] text-slate-600 dark:text-slate-400 select-none">
                           {/* Coluna Usuário */}
                           <th
                             onClick={() => handleSortAgents('name')}
-                            className="py-2.5 px-6 font-semibold cursor-pointer hover:text-white transition-colors"
+                            className="py-2.5 px-6 font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
                           >
                             <div className="flex items-center gap-1.5">
                               <span>Usuário</span>
                               {agentSortField === 'name' ? (
-                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-400" /> : <ArrowDown size={12} className="text-blue-400" />
+                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-500 dark:text-blue-400" /> : <ArrowDown size={12} className="text-blue-500 dark:text-blue-400" />
                               ) : (
-                                <ArrowUpDown size={11} className="text-slate-600 hover:text-slate-400" />
+                                <ArrowUpDown size={11} className="text-slate-400 hover:text-slate-600 dark:text-slate-600 dark:hover:text-slate-400" />
                               )}
                             </div>
                           </th>
@@ -1405,14 +1410,14 @@ export default function AtendimentoAnalyticsDashboard() {
                           {/* Coluna Pendentes */}
                           <th
                             onClick={() => handleSortAgents('pendingCount')}
-                            className="py-2.5 px-4 font-semibold text-center cursor-pointer hover:text-white transition-colors"
+                            className="py-2.5 px-4 font-semibold text-center cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
                           >
                             <div className="flex items-center justify-center gap-1.5">
                               <span>Pendentes</span>
                               {agentSortField === 'pendingCount' ? (
-                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-400" /> : <ArrowDown size={12} className="text-blue-400" />
+                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-500 dark:text-blue-400" /> : <ArrowDown size={12} className="text-blue-500 dark:text-blue-400" />
                               ) : (
-                                <ArrowUpDown size={11} className="text-slate-600 hover:text-slate-400" />
+                                <ArrowUpDown size={11} className="text-slate-400 hover:text-slate-600 dark:text-slate-600 dark:hover:text-slate-400" />
                               )}
                             </div>
                           </th>
@@ -1420,14 +1425,14 @@ export default function AtendimentoAnalyticsDashboard() {
                           {/* Coluna Atendendo */}
                           <th
                             onClick={() => handleSortAgents('inProgressCount')}
-                            className="py-2.5 px-4 font-semibold text-center cursor-pointer hover:text-white transition-colors"
+                            className="py-2.5 px-4 font-semibold text-center cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
                           >
                             <div className="flex items-center justify-center gap-1.5">
                               <span>Atendendo</span>
                               {agentSortField === 'inProgressCount' ? (
-                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-400" /> : <ArrowDown size={12} className="text-blue-400" />
+                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-500 dark:text-blue-400" /> : <ArrowDown size={12} className="text-blue-500 dark:text-blue-400" />
                               ) : (
-                                <ArrowUpDown size={11} className="text-slate-600 hover:text-slate-400" />
+                                <ArrowUpDown size={11} className="text-slate-400 hover:text-slate-600 dark:text-slate-600 dark:hover:text-slate-400" />
                               )}
                             </div>
                           </th>
@@ -1435,14 +1440,14 @@ export default function AtendimentoAnalyticsDashboard() {
                           {/* Coluna Finalizados */}
                           <th
                             onClick={() => handleSortAgents('finishedCount')}
-                            className="py-2.5 px-4 font-semibold text-center cursor-pointer hover:text-white transition-colors"
+                            className="py-2.5 px-4 font-semibold text-center cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
                           >
                             <div className="flex items-center justify-center gap-1.5">
                               <span>Finalizados</span>
                               {agentSortField === 'finishedCount' ? (
-                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-400" /> : <ArrowDown size={12} className="text-blue-400" />
+                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-500 dark:text-blue-400" /> : <ArrowDown size={12} className="text-blue-500 dark:text-blue-400" />
                               ) : (
-                                <ArrowUpDown size={11} className="text-slate-600 hover:text-slate-400" />
+                                <ArrowUpDown size={11} className="text-slate-400 hover:text-slate-600 dark:text-slate-600 dark:hover:text-slate-400" />
                               )}
                             </div>
                           </th>
@@ -1450,14 +1455,14 @@ export default function AtendimentoAnalyticsDashboard() {
                           {/* Coluna Total */}
                           <th
                             onClick={() => handleSortAgents('total')}
-                            className="py-2.5 px-4 font-semibold text-center cursor-pointer hover:text-white transition-colors"
+                            className="py-2.5 px-4 font-semibold text-center cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
                           >
                             <div className="flex items-center justify-center gap-1.5">
                               <span>Total</span>
                               {agentSortField === 'total' ? (
-                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-400" /> : <ArrowDown size={12} className="text-blue-400" />
+                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-500 dark:text-blue-400" /> : <ArrowDown size={12} className="text-blue-500 dark:text-blue-400" />
                               ) : (
-                                <ArrowUpDown size={11} className="text-slate-600 hover:text-slate-400" />
+                                <ArrowUpDown size={11} className="text-slate-400 hover:text-slate-600 dark:text-slate-600 dark:hover:text-slate-400" />
                               )}
                             </div>
                           </th>
@@ -1465,14 +1470,14 @@ export default function AtendimentoAnalyticsDashboard() {
                           {/* Coluna Avaliações */}
                           <th
                             onClick={() => handleSortAgents('csatAvg')}
-                            className="py-2.5 px-4 font-semibold text-center cursor-pointer hover:text-white transition-colors"
+                            className="py-2.5 px-4 font-semibold text-center cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
                           >
                             <div className="flex items-center justify-center gap-1.5">
                               <span>Avaliações</span>
                               {agentSortField === 'csatAvg' ? (
-                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-400" /> : <ArrowDown size={12} className="text-blue-400" />
+                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-500 dark:text-blue-400" /> : <ArrowDown size={12} className="text-blue-500 dark:text-blue-400" />
                               ) : (
-                                <ArrowUpDown size={11} className="text-slate-600 hover:text-slate-400" />
+                                <ArrowUpDown size={11} className="text-slate-400 hover:text-slate-600 dark:text-slate-600 dark:hover:text-slate-400" />
                               )}
                             </div>
                           </th>
@@ -1480,14 +1485,14 @@ export default function AtendimentoAnalyticsDashboard() {
                           {/* Coluna 1ª Resposta */}
                           <th
                             onClick={() => handleSortAgents('avgFirstResponse')}
-                            className="py-2.5 px-4 font-semibold text-center cursor-pointer hover:text-white transition-colors"
+                            className="py-2.5 px-4 font-semibold text-center cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
                           >
                             <div className="flex items-center justify-center gap-1.5">
                               <span>1ª Resposta</span>
                               {agentSortField === 'avgFirstResponse' ? (
-                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-400" /> : <ArrowDown size={12} className="text-blue-400" />
+                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-500 dark:text-blue-400" /> : <ArrowDown size={12} className="text-blue-500 dark:text-blue-400" />
                               ) : (
-                                <ArrowUpDown size={11} className="text-slate-600 hover:text-slate-400" />
+                                <ArrowUpDown size={11} className="text-slate-400 hover:text-slate-600 dark:text-slate-600 dark:hover:text-slate-400" />
                               )}
                             </div>
                           </th>
@@ -1495,20 +1500,20 @@ export default function AtendimentoAnalyticsDashboard() {
                           {/* Coluna TMA */}
                           <th
                             onClick={() => handleSortAgents('avgTma')}
-                            className="py-2.5 px-6 font-semibold text-right cursor-pointer hover:text-white transition-colors"
+                            className="py-2.5 px-6 font-semibold text-right cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
                           >
                             <div className="flex items-center justify-end gap-1.5">
                               <span>TMA</span>
                               {agentSortField === 'avgTma' ? (
-                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-400" /> : <ArrowDown size={12} className="text-blue-400" />
+                                agentSortOrder === 'asc' ? <ArrowUp size={12} className="text-blue-500 dark:text-blue-400" /> : <ArrowDown size={12} className="text-blue-500 dark:text-blue-400" />
                               ) : (
-                                <ArrowUpDown size={11} className="text-slate-600 hover:text-slate-400" />
+                                <ArrowUpDown size={11} className="text-slate-400 hover:text-slate-600 dark:text-slate-600 dark:hover:text-slate-400" />
                               )}
                             </div>
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/60">
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
                         {sortedAndFilteredAgents.length === 0 ? (
                           <tr>
                             <td colSpan={8} className="py-8 text-center text-slate-500">
@@ -1517,15 +1522,15 @@ export default function AtendimentoAnalyticsDashboard() {
                           </tr>
                         ) : (
                           sortedAndFilteredAgents.map((ag) => (
-                            <tr key={ag.id} className="hover:bg-slate-800/30 transition-colors">
+                            <tr key={ag.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                               <td className="py-2.5 px-6">
                                 <div className="flex items-center gap-2.5">
-                                  <div className="w-7 h-7 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                  <div className="w-7 h-7 rounded-full bg-blue-600/20 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
                                     {ag.name.substring(0, 2).toUpperCase()}
                                   </div>
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-semibold text-slate-100 text-xs">{ag.name}</span>
-                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-800 border border-slate-700 text-slate-300">
+                                    <span className="font-semibold text-slate-800 dark:text-slate-100 text-xs">{ag.name}</span>
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
                                       {ag.role === 'ADMIN' ? 'Admin' : ag.role === 'SUPERVISOR' ? 'Supervisor' : 'Agente'}
                                     </span>
                                     {ag.isOnline && (
@@ -1544,23 +1549,23 @@ export default function AtendimentoAnalyticsDashboard() {
                                   {ag.inProgressCount}
                                 </span>
                               </td>
-                              <td className="py-2.5 px-4 text-center text-slate-300 font-medium">
+                              <td className="py-2.5 px-4 text-center text-slate-700 dark:text-slate-300 font-medium">
                                 {ag.finishedCount}
                               </td>
-                              <td className="py-2.5 px-4 text-center font-semibold text-slate-100">
+                              <td className="py-2.5 px-4 text-center font-semibold text-slate-900 dark:text-slate-100">
                                 {ag.total}
                               </td>
-                              <td className="py-2.5 px-4 text-center font-medium text-amber-400">
+                              <td className="py-2.5 px-4 text-center font-medium text-amber-500 dark:text-amber-400">
                                 <div className="flex items-center justify-center gap-1">
                                   <Star size={12} fill="currentColor" />
                                   <span>{ag.csatAvg}</span>
-                                  <span className="text-[10px] text-slate-500 font-normal">({Math.max(ag.finishedCount, 1)})</span>
+                                  <span className="text-[10px] text-slate-400 font-normal">({Math.max(ag.finishedCount, 1)})</span>
                                 </div>
                               </td>
-                              <td className="py-2.5 px-4 text-center text-slate-300 font-medium">
+                              <td className="py-2.5 px-4 text-center text-slate-700 dark:text-slate-300 font-medium">
                                 {ag.avgFirstResponse}
                               </td>
-                              <td className="py-2.5 px-6 text-right text-slate-300 font-medium">
+                              <td className="py-2.5 px-6 text-right text-slate-700 dark:text-slate-300 font-medium">
                                 {ag.avgTma}
                               </td>
                             </tr>
@@ -1573,9 +1578,9 @@ export default function AtendimentoAnalyticsDashboard() {
               </>
             ) : (
               /* VIEW MODE 2: DETAILED REPORTS (AUDIT TICKETS WITH SUB-TABS) */
-              <div className="bg-[#0B1224] border border-slate-800 rounded-xl overflow-hidden">
+              <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
                 {/* SUB-ABAS NO MODO RELATÓRIOS DETALHADOS (PADRÃO LERO) */}
-                <div className="px-6 pt-4 border-b border-slate-800 bg-[#0E1528] flex items-center gap-2 overflow-x-auto custom-scrollbar">
+                <div className="px-6 pt-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0E1528] flex items-center gap-2 overflow-x-auto custom-scrollbar">
                   {[
                     { id: 'atendimentos', label: 'Atendimentos', icon: MessageSquare },
                     { id: 'motivos', label: 'Motivos', icon: Layers },
@@ -1593,8 +1598,8 @@ export default function AtendimentoAnalyticsDashboard() {
                         onClick={() => setReportsSubTab(sub.id as any)}
                         className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                           isActive
-                            ? 'border-blue-500 text-blue-400'
-                            : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                            ? 'border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400'
+                            : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
                         }`}
                       >
                         <SubIcon size={14} />
@@ -1604,20 +1609,20 @@ export default function AtendimentoAnalyticsDashboard() {
                   })}
                 </div>
 
-                <div className="p-5 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                      <Layers size={16} className="text-blue-400" />
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Layers size={16} className="text-blue-500 dark:text-blue-400" />
                       Auditoria de {reportsSubTab.charAt(0).toUpperCase() + reportsSubTab.slice(1)}
                     </h3>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Rastreabilidade e dados detalhados filtrados por {reportsSubTab}
                     </p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
                     <div className="relative">
-                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                       <input
                         type="text"
                         placeholder="Buscar por lead ou fone..."
@@ -1626,7 +1631,7 @@ export default function AtendimentoAnalyticsDashboard() {
                           setTicketSearch(e.target.value);
                           setTicketPage(1);
                         }}
-                        className="bg-[#11192A] border border-slate-800 text-xs pl-8 pr-3 py-1.5 rounded-lg text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 w-48"
+                        className="bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 text-xs pl-8 pr-3 py-1.5 rounded-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 w-48"
                       />
                     </div>
 
@@ -1636,7 +1641,7 @@ export default function AtendimentoAnalyticsDashboard() {
                         setTicketStatus(e.target.value);
                         setTicketPage(1);
                       }}
-                      className="bg-[#11192A] border border-slate-800 text-xs px-3 py-1.5 rounded-lg text-slate-300 focus:outline-none focus:border-blue-500 cursor-pointer"
+                      className="bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 text-xs px-3 py-1.5 rounded-lg text-slate-800 dark:text-slate-300 focus:outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value="all">Todos os Status</option>
                       <option value="resolved">Resolvidos</option>
@@ -1658,7 +1663,7 @@ export default function AtendimentoAnalyticsDashboard() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-slate-800 bg-[#11192A] text-slate-400">
+                      <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#11192A] text-slate-600 dark:text-slate-400">
                         <th className="py-3 px-4 font-semibold">Protocolo</th>
                         <th className="py-3 px-4 font-semibold">Lead / Contato</th>
                         <th className="py-3 px-4 font-semibold">Atendente</th>
@@ -1669,7 +1674,7 @@ export default function AtendimentoAnalyticsDashboard() {
                         <th className="py-3 px-4 font-semibold text-right">Criado em</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60">
+                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
                       {ticketsData.tickets.length === 0 ? (
                         <tr>
                           <td colSpan={8} className="py-12 text-center text-slate-500">
@@ -1678,38 +1683,38 @@ export default function AtendimentoAnalyticsDashboard() {
                         </tr>
                       ) : (
                         ticketsData.tickets.map((t: any) => (
-                          <tr key={t.id} className="hover:bg-slate-800/30 transition-colors">
-                            <td className="py-3 px-4 font-mono text-slate-400">
+                          <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                            <td className="py-3 px-4 font-mono text-slate-500 dark:text-slate-400">
                               #{t.id.substring(0, 8)}
                             </td>
                             <td className="py-3 px-4">
-                              <span className="font-semibold text-slate-200 block">{t.contactName}</span>
-                              <span className="text-[11px] text-slate-500">{t.phone}</span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200 block">{t.contactName}</span>
+                              <span className="text-[11px] text-slate-400">{t.phone}</span>
                             </td>
-                            <td className="py-3 px-4 text-slate-300 font-medium">
+                            <td className="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium">
                               {t.agentName}
                             </td>
-                            <td className="py-3 px-4 text-slate-400">
+                            <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
                               {t.departmentName}
                             </td>
                             <td className="py-3 px-4">
                               <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
                                 t.status === 'resolved' 
-                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' 
+                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' 
                                   : t.status === 'waiting'
-                                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                                  : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                                  : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30'
                               }`}>
                                 {t.status === 'resolved' ? 'Resolvido' : t.status === 'waiting' ? 'Aguardando' : 'Atendimento'}
                               </span>
                             </td>
-                            <td className="py-3 px-4 text-center font-medium text-slate-300">
+                            <td className="py-3 px-4 text-center font-medium text-slate-700 dark:text-slate-300">
                               {t.durationMinutes} min
                             </td>
-                            <td className="py-3 px-4 text-slate-400">
+                            <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
                               {t.closeReason}
                             </td>
-                            <td className="py-3 px-4 text-right text-slate-400 font-mono text-[11px]">
+                            <td className="py-3 px-4 text-right text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                               {new Date(t.createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
                             </td>
                           </tr>
@@ -1720,7 +1725,7 @@ export default function AtendimentoAnalyticsDashboard() {
                 </div>
 
                 {/* PAGINATION */}
-                <div className="p-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                   <span>
                     Exibindo <strong>{ticketsData.tickets.length}</strong> de <strong>{ticketsData.total}</strong> chamados
                   </span>
@@ -1728,17 +1733,17 @@ export default function AtendimentoAnalyticsDashboard() {
                     <button
                       onClick={() => setTicketPage((p) => Math.max(p - 1, 1))}
                       disabled={ticketPage <= 1}
-                      className="p-1.5 rounded-lg border border-slate-800 hover:bg-slate-800 text-slate-300 disabled:opacity-40 cursor-pointer"
+                      className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 cursor-pointer"
                     >
                       <ChevronLeft size={16} />
                     </button>
-                    <span className="font-medium text-slate-200">
+                    <span className="font-medium text-slate-800 dark:text-slate-200">
                       Página {ticketsData.page} de {ticketsData.totalPages || 1}
                     </span>
                     <button
                       onClick={() => setTicketPage((p) => Math.min(p + 1, ticketsData.totalPages || 1))}
                       disabled={ticketPage >= (ticketsData.totalPages || 1)}
-                      className="p-1.5 rounded-lg border border-slate-800 hover:bg-slate-800 text-slate-300 disabled:opacity-40 cursor-pointer"
+                      className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 cursor-pointer"
                     >
                       <ChevronRight size={16} />
                     </button>
@@ -1748,24 +1753,22 @@ export default function AtendimentoAnalyticsDashboard() {
             )}
           </>
         )}
-
-        {/* ========================================================= */}
         {/* TAB 2: PESQUISAS (CSAT) - PADRÃO LERO                     */}
         {/* ========================================================= */}
         {activeTab === 'csat' && (
           <div className="space-y-6">
             {/* 1. FILTROS DEDICADOS DA ABA PESQUISAS */}
-            <div className="bg-[#0B1224] border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+            <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
               <div className="flex flex-1 flex-wrap items-center gap-3">
                 {/* Input Buscar por nome, telefone... */}
                 <div className="relative flex-1 min-w-[240px] max-w-md">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                   <input
                     type="text"
                     placeholder="Buscar por nome, telefone..."
                     value={surveySearch}
                     onChange={(e) => setSurveySearch(e.target.value)}
-                    className="bg-[#11192A] border border-slate-800 text-xs pl-8 pr-3 py-2 rounded-lg text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 w-full transition-all"
+                    className="bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 text-xs pl-8 pr-3 py-2 rounded-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 w-full transition-all"
                   />
                 </div>
 
@@ -1774,7 +1777,7 @@ export default function AtendimentoAnalyticsDashboard() {
                   <select
                     value={surveyAgentFilter}
                     onChange={(e) => setSurveyAgentFilter(e.target.value)}
-                    className="bg-[#11192A] border border-slate-800 text-xs px-3 py-2 rounded-lg text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none pr-8"
+                    className="bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 text-xs px-3 py-2 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none pr-8"
                   >
                     <option value="all">Todos os colaboradores</option>
                     {agents.map((ag) => (
@@ -1783,15 +1786,15 @@ export default function AtendimentoAnalyticsDashboard() {
                       </option>
                     ))}
                   </select>
-                  <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500">
+                  <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
                     <User size={12} />
                   </div>
                 </div>
 
                 {/* Filtro de Data Visual */}
-                <div className="flex items-center gap-1.5 bg-[#11192A] px-3 py-2 rounded-lg border border-slate-800 text-xs text-slate-300">
-                  <Calendar size={13} className="text-blue-400 shrink-0" />
-                  <span className="text-[11px] font-medium text-slate-300">
+                <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-[#11192A] px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300">
+                  <Calendar size={13} className="text-blue-500 dark:text-blue-400 shrink-0" />
+                  <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
                     {new Date(dateRange.startDate).toLocaleDateString('pt-BR')} até {new Date(dateRange.endDate).toLocaleDateString('pt-BR')}
                   </span>
                 </div>
@@ -1810,31 +1813,31 @@ export default function AtendimentoAnalyticsDashboard() {
             {/* 2. 4 CARDS KPI (DADOS 100% REAIS DO SUPABASE) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Card 1: Média Geral */}
-              <div className="bg-[#0B1224] p-5 rounded-xl border border-slate-800/80 flex flex-col justify-between shadow-sm">
+              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Média Geral</span>
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Média Geral</span>
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400 flex items-center justify-center">
                     <Star size={16} fill="currentColor" />
                   </div>
                 </div>
                 <div className="my-3 flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white">
+                  <span className="text-3xl font-black text-slate-900 dark:text-white">
                     {csatData?.csatScore !== undefined && csatData?.csatScore !== null
                       ? csatData.csatScore.toFixed(1)
                       : '0.0'}
                   </span>
-                  <span className="text-slate-500 font-bold text-sm">/ 5.0</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-bold text-sm">/ 5.0</span>
                 </div>
-                <div className="flex items-center gap-1 text-amber-400">
+                <div className="flex items-center gap-1 text-amber-500 dark:text-amber-400">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
                       size={13}
                       fill={i < Math.round(csatData?.csatScore || 0) ? "currentColor" : "none"}
-                      className={i < Math.round(csatData?.csatScore || 0) ? "text-amber-400" : "text-slate-600"}
+                      className={i < Math.round(csatData?.csatScore || 0) ? "text-amber-500 dark:text-amber-400" : "text-slate-300 dark:text-slate-600"}
                     />
                   ))}
-                  <span className="text-[11px] text-slate-400 ml-1.5 font-medium">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 ml-1.5 font-medium">
                     {csatData?.csatScore >= 4.5
                       ? 'Classificação Excelente'
                       : csatData?.csatScore >= 3.5
@@ -1847,75 +1850,75 @@ export default function AtendimentoAnalyticsDashboard() {
               </div>
 
               {/* Card 2: Total de Pesquisas */}
-              <div className="bg-[#0B1224] p-5 rounded-xl border border-slate-800/80 flex flex-col justify-between shadow-sm">
+              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total de Pesquisas</span>
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total de Pesquisas</span>
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 dark:text-blue-400 flex items-center justify-center">
                     <Send size={16} />
                   </div>
                 </div>
                 <div className="my-3">
-                  <span className="text-3xl font-black text-blue-400">
+                  <span className="text-3xl font-black text-blue-600 dark:text-blue-400">
                     {csatData?.totalSurveys ?? 0}
                   </span>
                 </div>
-                <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
                   Disparadas via WhatsApp após encerramento
                 </span>
               </div>
 
               {/* Card 3: Respostas */}
-              <div className="bg-[#0B1224] p-5 rounded-xl border border-slate-800/80 flex flex-col justify-between shadow-sm">
+              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Respostas</span>
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Respostas</span>
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 flex items-center justify-center">
                     <CheckCircle size={16} />
                   </div>
                 </div>
                 <div className="my-3">
-                  <span className="text-3xl font-black text-emerald-400">
+                  <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
                     {csatData?.responsesCount ?? (csatData?.totalSurveys ?? 0)}
                   </span>
                 </div>
-                <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
                   Avaliações preenchidas pelos clientes
                 </span>
               </div>
 
               {/* Card 4: Taxa de Resposta */}
-              <div className="bg-[#0B1224] p-5 rounded-xl border border-slate-800/80 flex flex-col justify-between shadow-sm">
+              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col justify-between shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Taxa de Resposta</span>
-                  <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Taxa de Resposta</span>
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-500 dark:text-cyan-400 flex items-center justify-center">
                     <TrendingUp size={16} />
                   </div>
                 </div>
                 <div className="my-3">
-                  <span className="text-3xl font-black text-cyan-400">
+                  <span className="text-3xl font-black text-cyan-600 dark:text-cyan-400">
                     {csatData?.responseRate !== undefined ? `${csatData.responseRate}%` : '0%'}
                   </span>
                 </div>
-                <span className="text-[11px] text-emerald-400/90 font-medium flex items-center gap-1">
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400/90 font-medium flex items-center gap-1">
                   {csatData?.responseRate > 50 ? 'Alto engajamento no canal receptivo' : 'Taxa de resposta operacional'}
                 </span>
               </div>
             </div>
 
             {/* 3. TABELA / LISTA: TODAS AS PESQUISAS (PADRÃO LERO) */}
-            <div className="bg-[#0B1224] border border-slate-800 rounded-xl overflow-hidden shadow-md">
-              <div className="px-6 py-4 border-b border-slate-800 bg-[#0E1528] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-md">
+              <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0E1528] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <Star size={16} className="text-amber-400" />
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Star size={16} className="text-amber-500 dark:text-amber-400" />
                     Todas as Pesquisas
                   </h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     Histórico detalhado de notas, atendentes responsáveis e feedbacks recebidos
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#11192A] text-slate-300 border border-slate-700">
+                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-[#11192A] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                     {filteredSurveys.length} {filteredSurveys.length === 1 ? 'pesquisa' : 'pesquisas'}
                   </span>
                 </div>
@@ -1924,7 +1927,7 @@ export default function AtendimentoAnalyticsDashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b border-slate-800 bg-[#11192A] text-slate-400">
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#11192A] text-slate-600 dark:text-slate-400">
                       <th className="py-3 px-6 font-semibold">Contato</th>
                       <th className="py-3 px-4 font-semibold">Telefone</th>
                       <th className="py-3 px-4 font-semibold">Colaborador</th>
@@ -1933,15 +1936,15 @@ export default function AtendimentoAnalyticsDashboard() {
                       <th className="py-3 px-6 font-semibold text-right">Data</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
                     {filteredSurveys.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="py-14 text-center text-slate-500">
                           <div className="flex flex-col items-center justify-center gap-2">
-                            <div className="w-12 h-12 rounded-full bg-slate-800/60 border border-slate-700 flex items-center justify-center text-slate-400 mb-1">
-                              <Star size={20} className="text-slate-500" />
+                            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 mb-1">
+                              <Star size={20} className="text-slate-400 dark:text-slate-500" />
                             </div>
-                            <p className="font-semibold text-slate-200 text-sm">Nenhuma pesquisa encontrada</p>
+                            <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">Nenhuma pesquisa encontrada</p>
                             <p className="text-xs text-slate-500 max-w-sm">
                               {surveySearch || surveyAgentFilter !== 'all'
                                 ? 'Nenhum feedback corresponde aos filtros aplicados. Tente alterar a busca ou selecionar outro colaborador.'
@@ -1952,42 +1955,42 @@ export default function AtendimentoAnalyticsDashboard() {
                       </tr>
                     ) : (
                       filteredSurveys.map((s) => (
-                        <tr key={s.id} className="hover:bg-slate-800/30 transition-colors">
+                        <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                           <td className="py-3.5 px-6">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-7 h-7 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-xs shrink-0">
+                              <div className="w-7 h-7 rounded-full bg-amber-500/10 text-amber-500 dark:text-amber-400 flex items-center justify-center font-bold text-xs shrink-0">
                                 {s.contactName.substring(0, 2).toUpperCase()}
                               </div>
-                              <span className="font-semibold text-slate-100">{s.contactName}</span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-100">{s.contactName}</span>
                             </div>
                           </td>
-                          <td className="py-3.5 px-4 font-mono text-slate-400">
+                          <td className="py-3.5 px-4 font-mono text-slate-500 dark:text-slate-400">
                             {s.phone}
                           </td>
-                          <td className="py-3.5 px-4 text-slate-300 font-medium">
+                          <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-medium">
                             <div className="flex items-center gap-2">
-                              <div className="w-5 h-5 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center text-[10px] font-bold">
+                              <div className="w-5 h-5 rounded-full bg-blue-600/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[10px] font-bold">
                                 {s.agentName.substring(0, 1).toUpperCase()}
                               </div>
                               <span>{s.agentName}</span>
                             </div>
                           </td>
                           <td className="py-3.5 px-4 text-center">
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 dark:text-amber-400 font-bold">
                               <Star size={11} fill="currentColor" />
                               <span>{s.rating}.0</span>
                             </div>
                           </td>
                           <td className="py-3.5 px-6 max-w-md">
                             {s.comment ? (
-                              <p className="text-slate-300 italic truncate" title={s.comment}>
+                              <p className="text-slate-700 dark:text-slate-300 italic truncate" title={s.comment}>
                                 "{s.comment}"
                               </p>
                             ) : (
-                              <span className="text-slate-500 italic">Sem comentário adicional</span>
+                              <span className="text-slate-400 dark:text-slate-500 italic">Sem comentário adicional</span>
                             )}
                           </td>
-                          <td className="py-3.5 px-6 text-right font-mono text-slate-400">
+                          <td className="py-3.5 px-6 text-right font-mono text-slate-500 dark:text-slate-400">
                             {s.createdAt}
                           </td>
                         </tr>
@@ -2006,51 +2009,51 @@ export default function AtendimentoAnalyticsDashboard() {
         {activeTab === 'ai_costs' && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-[#0B1224] p-5 rounded-xl border border-slate-800 flex flex-col justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Gasto 7 dias (USD)</span>
+              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gasto 7 dias (USD)</span>
                 <div className="my-3">
-                  <span className="text-3xl font-black text-white">${aiCosts?.spent7d || '0.00'}</span>
+                  <span className="text-3xl font-black text-slate-900 dark:text-white">${aiCosts?.spent7d || '0.00'}</span>
                 </div>
-                <span className="text-[11px] text-purple-400 flex items-center gap-1 font-medium">
+                <span className="text-[11px] text-purple-600 dark:text-purple-400 flex items-center gap-1 font-medium">
                   <Sparkles size={12} /> OpenAI API gpt-4o-mini
                 </span>
               </div>
 
-              <div className="bg-[#0B1224] p-5 rounded-xl border border-slate-800 flex flex-col justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Gasto 15 dias (USD)</span>
+              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gasto 15 dias (USD)</span>
                 <div className="my-3">
-                  <span className="text-3xl font-black text-purple-300">${aiCosts?.spent15d || '0.00'}</span>
+                  <span className="text-3xl font-black text-purple-600 dark:text-purple-300">${aiCosts?.spent15d || '0.00'}</span>
                 </div>
                 <span className="text-[11px] text-slate-500">Consumo acumulado</span>
               </div>
 
-              <div className="bg-[#0B1224] p-5 rounded-xl border border-slate-800 flex flex-col justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Gasto 30 dias (USD)</span>
+              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gasto 30 dias (USD)</span>
                 <div className="my-3">
-                  <span className="text-3xl font-black text-emerald-400">${aiCosts?.spent30d || '0.00'}</span>
+                  <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">${aiCosts?.spent30d || '0.00'}</span>
                 </div>
-                <span className="text-[11px] text-emerald-400/80 font-medium">Dentro do limite do plano</span>
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400/80 font-medium">Dentro do limite do plano</span>
               </div>
 
-              <div className="bg-[#0B1224] p-5 rounded-xl border border-slate-800 flex flex-col justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Projeção Mensal</span>
+              <div className="bg-white dark:bg-[#0B1224] p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Projeção Mensal</span>
                 <div className="my-3">
-                  <span className="text-3xl font-black text-amber-400">${aiCosts?.projectionMonth || '0.00'}</span>
+                  <span className="text-3xl font-black text-amber-500 dark:text-amber-400">${aiCosts?.projectionMonth || '0.00'}</span>
                 </div>
-                <span className="text-[11px] text-amber-400/80 font-medium">Estimativa com base no volume</span>
+                <span className="text-[11px] text-amber-600 dark:text-amber-400/80 font-medium">Estimativa com base no volume</span>
               </div>
             </div>
 
             {/* Daily Evolution Chart */}
-            <div className="bg-[#0B1224] border border-slate-800 rounded-xl p-6">
-              <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2">
-                <DollarSign size={18} className="text-emerald-400" />
+            <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                <DollarSign size={18} className="text-emerald-500 dark:text-emerald-400" />
                 Evolução Diária de Custo por Execução (USD $)
               </h3>
               <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={aiCosts?.dailyCostEvolution || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#94A3B8" opacity={0.2} vertical={false} />
                     <XAxis dataKey="label" stroke="#64748B" fontSize={12} tickLine={false} />
                     <YAxis stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} unit="$" />
                     <Tooltip
@@ -2058,6 +2061,7 @@ export default function AtendimentoAnalyticsDashboard() {
                         backgroundColor: "#0B1224",
                         borderColor: "#334155",
                         borderRadius: "8px",
+                        color: "#fff"
                       }}
                     />
                     <Bar dataKey="cost" name="Custo USD ($)" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
@@ -2067,14 +2071,14 @@ export default function AtendimentoAnalyticsDashboard() {
             </div>
 
             {/* Executions Table */}
-            <div className="bg-[#0B1224] border border-slate-800 rounded-xl overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-800">
-                <h3 className="text-sm font-bold text-white">Últimas Execuções de Inteligência Artificial</h3>
+            <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+              <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0E1528]">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Últimas Execuções de Inteligência Artificial</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b border-slate-800 bg-[#11192A] text-slate-400">
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#11192A] text-slate-600 dark:text-slate-400">
                       <th className="py-3 px-6 font-semibold">ID</th>
                       <th className="py-3 px-4 font-semibold">Modelo</th>
                       <th className="py-3 px-4 font-semibold">Contexto / Lead</th>
@@ -2083,15 +2087,15 @@ export default function AtendimentoAnalyticsDashboard() {
                       <th className="py-3 px-6 font-semibold text-right">Custo USD</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
                     {aiCosts?.detailedExecutions?.map((ex: any) => (
-                      <tr key={ex.id} className="hover:bg-slate-800/30 transition-colors">
+                      <tr key={ex.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                         <td className="py-3 px-6 font-mono text-slate-500">{ex.id}</td>
-                        <td className="py-3 px-4 font-semibold text-purple-400">{ex.model}</td>
-                        <td className="py-3 px-4 text-slate-300">{ex.contactName}</td>
-                        <td className="py-3 px-4 text-center font-mono text-slate-400">{ex.promptTokens}</td>
-                        <td className="py-3 px-4 text-center font-mono text-slate-400">{ex.completionTokens}</td>
-                        <td className="py-3 px-6 text-right font-mono font-bold text-emerald-400">
+                        <td className="py-3 px-4 font-semibold text-purple-600 dark:text-purple-400">{ex.model}</td>
+                        <td className="py-3 px-4 text-slate-700 dark:text-slate-300">{ex.contactName}</td>
+                        <td className="py-3 px-4 text-center font-mono text-slate-600 dark:text-slate-400">{ex.promptTokens}</td>
+                        <td className="py-3 px-4 text-center font-mono text-slate-600 dark:text-slate-400">{ex.completionTokens}</td>
+                        <td className="py-3 px-6 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
                           ${ex.costUsd.toFixed(5)}
                         </td>
                       </tr>
@@ -2108,22 +2112,22 @@ export default function AtendimentoAnalyticsDashboard() {
       {/* MODAL: CONFIGURAÇÃO DE DIAS ÚTEIS DA EMPRESA (PADRÃO LERO) */}
       {/* ========================================================= */}
       {showWorkingDaysModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="bg-[#0B1224] border border-slate-800 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-[#11192A]">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#11192A]">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                <div className="w-8 h-8 rounded-lg bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
                   <CalendarDays size={18} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm">Configuração de Dias Úteis & Expediente</h3>
-                  <p className="text-[11px] text-slate-400">Define os dias contabilizados para métricas de SLA e médias diárias</p>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-sm">Configuração de Dias Úteis & Expediente</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Define os dias contabilizados para métricas de SLA e médias diárias</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowWorkingDaysModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -2134,10 +2138,10 @@ export default function AtendimentoAnalyticsDashboard() {
               {/* Seção 1: Dias de Operação */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-bold text-white text-xs uppercase tracking-wider text-slate-300">
+                  <h4 className="font-bold text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider">
                     1. Dias de Operação da Semana
                   </h4>
-                  <span className="text-[11px] text-blue-400 font-semibold">
+                  <span className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold">
                     {operatingDays.length} dias selecionados
                   </span>
                 </div>
@@ -2162,12 +2166,12 @@ export default function AtendimentoAnalyticsDashboard() {
                         }}
                         className={`py-3 rounded-xl border flex flex-col items-center justify-center gap-1 font-semibold transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-blue-600/20 border-blue-500 text-blue-300 shadow-sm'
-                            : 'bg-[#11192A] border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700'
+                            ? 'bg-blue-600 text-white border-blue-600 dark:bg-blue-600/20 dark:border-blue-500 dark:text-blue-300 shadow-sm'
+                            : 'bg-slate-50 dark:bg-[#11192A] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
                         }`}
                       >
                         <span>{day.short}</span>
-                        {isSelected && <Check size={12} className="text-blue-400" />}
+                        {isSelected && <Check size={12} className="text-white dark:text-blue-400" />}
                       </button>
                     );
                   })}
@@ -2176,18 +2180,18 @@ export default function AtendimentoAnalyticsDashboard() {
 
               {/* Seção 2: Feriados Nacionais */}
               <div>
-                <h4 className="font-bold text-white text-xs uppercase tracking-wider text-slate-300 mb-3">
+                <h4 className="font-bold text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider mb-3">
                   2. Feriados Nacionais
                 </h4>
                 <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
                   {holidays.filter(h => !h.isCustom).map((holiday) => (
                     <div
                       key={holiday.id}
-                      className="flex items-center justify-between p-2.5 rounded-lg bg-[#11192A] border border-slate-800/80"
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800/80"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[11px] text-slate-400 w-12">{holiday.date}</span>
-                        <span className="font-medium text-slate-200">{holiday.name}</span>
+                        <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 w-12">{holiday.date}</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-200">{holiday.name}</span>
                       </div>
                       <button
                         type="button"
@@ -2196,8 +2200,8 @@ export default function AtendimentoAnalyticsDashboard() {
                         }}
                         className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
                           holiday.enabled
-                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-slate-800 text-slate-500 border border-slate-700'
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                            : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-500 border border-slate-300 dark:border-slate-700'
                         }`}
                       >
                         {holiday.enabled ? 'Pausa / Folga' : 'Trabalho Normal'}
@@ -2209,7 +2213,7 @@ export default function AtendimentoAnalyticsDashboard() {
 
               {/* Seção 3: Feriados Customizados da Empresa */}
               <div>
-                <h4 className="font-bold text-white text-xs uppercase tracking-wider text-slate-300 mb-3">
+                <h4 className="font-bold text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider mb-3">
                   3. Feriados Municipais / Empresa
                 </h4>
 
@@ -2219,13 +2223,13 @@ export default function AtendimentoAnalyticsDashboard() {
                     placeholder="Nome do feriado municipal..."
                     value={newHolidayName}
                     onChange={(e) => setNewHolidayName(e.target.value)}
-                    className="flex-1 bg-[#11192A] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+                    className="flex-1 bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
                   />
                   <input
                     type="date"
                     value={newHolidayDate}
                     onChange={(e) => setNewHolidayDate(e.target.value)}
-                    className="bg-[#11192A] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
+                    className="bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   />
                   <button
                     type="button"
@@ -2256,20 +2260,20 @@ export default function AtendimentoAnalyticsDashboard() {
                 {/* Lista de Feriados Customizados */}
                 <div className="space-y-1.5 max-h-32 overflow-y-auto custom-scrollbar">
                   {holidays.filter(h => h.isCustom).length === 0 ? (
-                    <span className="text-[11px] text-slate-500 italic block text-center py-2">
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 italic block text-center py-2">
                       Nenhum feriado municipal personalizado cadastrado.
                     </span>
                   ) : (
                     holidays.filter(h => h.isCustom).map((h) => (
-                      <div key={h.id} className="flex items-center justify-between p-2 rounded bg-[#11192A] border border-slate-800 text-xs">
+                      <div key={h.id} className="flex items-center justify-between p-2 rounded bg-slate-50 dark:bg-[#11192A] border border-slate-200 dark:border-slate-800 text-xs">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-slate-400">{h.date}</span>
-                          <span className="text-slate-200 font-medium">{h.name}</span>
+                          <span className="font-mono text-slate-500 dark:text-slate-400">{h.date}</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-medium">{h.name}</span>
                         </div>
                         <button
                           type="button"
                           onClick={() => setHolidays(holidays.filter(item => item.id !== h.id))}
-                          className="text-slate-500 hover:text-rose-400 p-1"
+                          className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 p-1 cursor-pointer"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -2281,11 +2285,11 @@ export default function AtendimentoAnalyticsDashboard() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-slate-800 bg-[#11192A] flex items-center justify-end gap-3">
+            <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#11192A] flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setShowWorkingDaysModal(false)}
-                className="px-4 py-2 rounded-lg border border-slate-800 hover:bg-slate-800 text-slate-300 font-medium text-xs cursor-pointer"
+                className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs cursor-pointer"
               >
                 Cancelar
               </button>

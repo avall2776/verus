@@ -38,18 +38,18 @@ export default function SupportModeBanner() {
   if (!targetTenantId) return null;
 
   return (
-    <div className="bg-gradient-to-r from-amber-600/25 via-amber-500/20 to-amber-600/25 border-b border-amber-500/40 px-3 py-2 md:px-6 md:py-2.5 flex items-center justify-between z-30 shrink-0 backdrop-blur-md shadow-lg shadow-amber-950/20 animate-in fade-in slide-in-from-top-1 duration-200">
+    <div className="bg-blue-50 dark:bg-blue-950/40 border-b border-blue-200 dark:border-blue-800/60 px-3 py-2 md:px-6 md:py-2.5 flex items-center justify-between z-30 shrink-0 backdrop-blur-md shadow-sm animate-in fade-in slide-in-from-top-1 duration-200">
       <div className="flex items-center gap-2 md:gap-3 min-w-0">
-        <span className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
+        <span className="p-1.5 rounded-lg bg-blue-600/15 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-600/40 shrink-0">
           <ShieldAlert size={16} className="animate-pulse" />
         </span>
         <div className="flex items-center gap-1.5 md:gap-2 truncate text-xs md:text-sm">
-          <span className="font-bold text-amber-300 shrink-0">Modo Suporte:</span>
-          <span className="text-white font-semibold truncate flex items-center gap-1">
-            <Building2 size={13} className="text-amber-400 shrink-0 inline" />
+          <span className="font-bold text-blue-900 dark:text-blue-200 shrink-0">Modo Suporte:</span>
+          <span className="text-slate-900 dark:text-white font-bold truncate flex items-center gap-1">
+            <Building2 size={13} className="text-blue-600 dark:text-blue-400 shrink-0 inline" />
             <span className="truncate">{targetTenantName || "Empresa Cliente"}</span>
           </span>
-          <span className="hidden md:inline text-[11px] text-amber-400/80 font-mono">
+          <span className="hidden md:inline text-[11px] text-blue-700 dark:text-blue-300/80 font-mono font-medium">
             (Auditoria Super Admin)
           </span>
         </div>
@@ -58,7 +58,7 @@ export default function SupportModeBanner() {
       <button
         type="button"
         onClick={handleExitSupportMode}
-        className="bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20 cursor-pointer shrink-0 ml-2"
+        className="bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/20 cursor-pointer shrink-0 ml-2"
         title="Encerrar visualização desta empresa e voltar para lista de empresas"
       >
         <ArrowLeft size={14} />

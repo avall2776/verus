@@ -1,0 +1,20 @@
+{
+  "providerName": "Direct Call Telecom",
+  "sipHost": "187.127.10.166",
+  "sipPort": 5060,
+  "sipUsername": "versus_trunk_01",
+  "sipPassword": "VrsPabx#2026@Sec",
+  "webrtcWssUrl": "wss://187.127.10.166:7443",
+  "directCallToken": "",
+  "stunServer": "stun:stun.l.google.com:19302",
+  "turnServer": "",
+  "autoRecord": true,
+  "enabled": true,
+  "codecs": [
+    "Opus",
+    "PCMU",
+    "PCMA",
+    "G.729"
+  ],
+  "updatedAt": "2026-10-19T12:38:12.297Z"
+}
