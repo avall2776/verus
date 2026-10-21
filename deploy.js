@@ -12,7 +12,6 @@ conn.on('ready', () => {
     git reset --hard origin/main && 
     cd /root/verus/backend && 
     npm install --legacy-peer-deps && 
-    npx prisma db push &&
     npx prisma generate &&
     npm run build && 
     pm2 restart all --update-env &&
