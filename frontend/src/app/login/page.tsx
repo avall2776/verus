@@ -350,7 +350,7 @@ export default function LoginPage() {
       <AnimatePresence>
         {cardState === "booting" && (
           <VersusPreloader
-            durationMs={2800}
+            durationMs={15000}
             forcePlay={true}
             onComplete={handleFinishBoot}
           />

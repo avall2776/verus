@@ -261,7 +261,7 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
       <AnimatePresence>
         {showPreloader && (
           <VersusPreloader
-            durationMs={2800}
+            durationMs={15000}
             forcePlay={forcePlayPreloader}
             onComplete={handlePreloaderComplete}
           />
