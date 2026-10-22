@@ -608,7 +608,7 @@ export default function Sidebar() {
               >
                 {/* Logo Oficial Horizontal da VALLOR */}
                 <img 
-                  src="/Logo_valor_01.svg" 
+                  src="/vallor/Logo_valor_01.svg" 
                   alt="VALLOR" 
                   className={`h-7 w-auto max-w-[145px] object-contain transition-all ${
                     !isDark && !isWhatsApp ? "invert brightness-0 opacity-90" : "opacity-95"
@@ -638,7 +638,7 @@ export default function Sidebar() {
               >
                 {/* Ícone Circular Oficial Vallor */}
                 <img 
-                  src="/Favicon_vallor.svg" 
+                  src="/vallor/Favicon_vallor.svg" 
                   alt="VALLOR" 
                   className="w-7 h-7 object-contain transition-transform group-hover:scale-110 drop-shadow-sm"
                 />
@@ -1104,7 +1104,7 @@ export default function Sidebar() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
-                  src="/Logo_valor_01.svg" 
+                  src="/vallor/Logo_valor_01.svg" 
                   alt="VALLOR" 
                   className={`h-7 w-auto max-w-[145px] object-contain transition-all ${
                     !isDark && !isWhatsApp ? "invert brightness-0 opacity-90" : "opacity-95"

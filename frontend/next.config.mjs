@@ -84,6 +84,30 @@ const nextConfig = {
         permanent: false,
       },
       {
+        source: '/Logo_valor_01.svg',
+        destination: '/vallor/Logo_valor_01.svg',
+        basePath: false,
+        permanent: false,
+      },
+      {
+        source: '/Logo_valor_02.svg',
+        destination: '/vallor/Logo_valor_02.svg',
+        basePath: false,
+        permanent: false,
+      },
+      {
+        source: '/Favicon_vallor.svg',
+        destination: '/vallor/Favicon_vallor.svg',
+        basePath: false,
+        permanent: false,
+      },
+      {
+        source: '/icon-vallor.png',
+        destination: '/vallor/icon-vallor.png',
+        basePath: false,
+        permanent: false,
+      },
+      {
         source: '/sounds/:path*',
         destination: '/vallor/sounds/:path*',
         basePath: false,
