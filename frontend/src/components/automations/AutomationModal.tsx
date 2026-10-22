@@ -267,7 +267,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
             <div>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 Construtor de Automação Comercial
-                <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 font-mono font-medium">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 font-mono font-bold">
                   Enterprise
                 </span>
               </h2>
@@ -286,7 +286,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
         </div>
 
         {/* STEPPER PROGRESS */}
-        <div className="px-8 py-3 bg-slate-100/70 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800/60 flex items-center justify-between">
+        <div className="px-8 py-3 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800/60 flex items-center justify-between">
           <div className="flex items-center gap-8 w-full max-w-2xl mx-auto">
             {/* Step 1 */}
             <div
@@ -296,9 +296,9 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                   step === 1
-                    ? "bg-cyan-500 text-slate-950 ring-4 ring-cyan-500/20 shadow-lg shadow-cyan-500/30"
+                    ? "bg-blue-600 text-white ring-4 ring-blue-500/20 shadow-sm"
                     : step > 1
-                    ? "bg-emerald-500 text-slate-950"
+                    ? "bg-emerald-500 text-white"
                     : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
@@ -306,7 +306,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               </div>
               <span
                 className={`text-xs font-semibold ${
-                  step === 1 ? "text-cyan-600 dark:text-cyan-400" : step > 1 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"
+                  step === 1 ? "text-blue-600 dark:text-blue-400" : step > 1 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"
                 }`}
               >
                 Identificação
@@ -315,7 +315,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
 
             <div className="flex-1 h-[2px] bg-slate-200 dark:bg-slate-800">
               <div
-                className="h-full bg-cyan-500 transition-all duration-300"
+                className="h-full bg-blue-600 transition-all duration-300"
                 style={{ width: step === 1 ? "0%" : step === 2 ? "50%" : "100%" }}
               />
             </div>
@@ -328,9 +328,9 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                   step === 2
-                    ? "bg-cyan-500 text-slate-950 ring-4 ring-cyan-500/20 shadow-lg shadow-cyan-500/30"
+                    ? "bg-blue-600 text-white ring-4 ring-blue-500/20 shadow-sm"
                     : step > 2
-                    ? "bg-emerald-500 text-slate-950"
+                    ? "bg-emerald-500 text-white"
                     : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
@@ -338,7 +338,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               </div>
               <span
                 className={`text-xs font-semibold ${
-                  step === 2 ? "text-cyan-600 dark:text-cyan-400" : step > 2 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"
+                  step === 2 ? "text-blue-600 dark:text-blue-400" : step > 2 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"
                 }`}
               >
                 Gatilho (QUANDO)
@@ -347,7 +347,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
 
             <div className="flex-1 h-[2px] bg-slate-200 dark:bg-slate-800">
               <div
-                className="h-full bg-cyan-500 transition-all duration-300"
+                className="h-full bg-blue-600 transition-all duration-300"
                 style={{ width: step === 3 ? "100%" : "0%" }}
               />
             </div>
@@ -360,7 +360,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                   step === 3
-                    ? "bg-cyan-500 text-slate-950 ring-4 ring-cyan-500/20 shadow-lg shadow-cyan-500/30"
+                    ? "bg-blue-600 text-white ring-4 ring-blue-500/20 shadow-sm"
                     : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
@@ -368,7 +368,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               </div>
               <span
                 className={`text-xs font-semibold ${
-                  step === 3 ? "text-cyan-600 dark:text-cyan-400" : "text-slate-500 dark:text-slate-400"
+                  step === 3 ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"
                 }`}
               >
                 Ação (ENTÃO)
@@ -753,7 +753,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-2"
+                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2"
               >
                 Avançar <ArrowRight size={16} />
               </button>
@@ -762,7 +762,7 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
                 type="button"
                 disabled={isSubmitting}
                 onClick={handleSaveAutomation}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>Salvando Automação...</>

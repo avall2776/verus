@@ -172,7 +172,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
             <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${
               isWhatsApp
                 ? "bg-[#00A884]/15 border border-[#00A884]/30 text-[#00A884]"
-                : "bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/30 text-cyan-600 dark:text-cyan-400"
+                : "bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400"
             }`}>
               <ShieldCheck className="w-5 h-5" />
             </div>
@@ -184,7 +184,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 <span className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded-full border font-bold ${
                   isWhatsApp
                     ? "bg-[#00A884]/15 text-[#00A884] border-[#00A884]/30"
-                    : "bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/20"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                 }`}>
                   Assinatura Eletrônica
                 </span>
@@ -214,9 +214,9 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
               : "bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800"
           }`}>
             <label className={`text-xs font-semibold flex items-center gap-2 ${
-              isWhatsApp ? "text-[#00A884]" : "text-cyan-700 dark:text-cyan-300"
+              isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"
             }`}>
-              <Sparkles className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-cyan-600 dark:text-cyan-400"}`} />
+              <Sparkles className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />
               Importar dados de Proposta Aceita (Opcional)
             </label>
             <div className="flex gap-2 items-center">
@@ -227,7 +227,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 className={`w-full px-3.5 py-2 text-xs rounded-xl focus:outline-none transition-colors ${
                   isWhatsApp
                     ? "bg-[#111B21] border border-[#222D34] text-[#E9EDEF] focus:border-[#00A884]"
-                    : "bg-white dark:bg-[#060913] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-cyan-500"
+                    : "bg-white dark:bg-[#060913] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-blue-600"
                 }`}
               >
                 <option value="">-- Contrato avulso (Preenchimento manual) --</option>
@@ -447,10 +447,10 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
             <button
               type="submit"
               disabled={loading}
-              className={`flex items-center gap-2 px-5 py-2 text-xs rounded-xl font-semibold transition-all disabled:opacity-50 cursor-pointer text-white shadow-sm ${
+              className={`flex items-center gap-2 px-5 py-2.5 text-xs rounded-xl font-bold transition-all disabled:opacity-50 cursor-pointer text-white shadow-sm ${
                 isWhatsApp
                   ? "bg-[#00A884] hover:bg-[#02906F]"
-                  : "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-md shadow-cyan-500/20"
+                  : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
               {loading ? (

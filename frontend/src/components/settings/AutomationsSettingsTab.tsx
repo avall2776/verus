@@ -104,51 +104,51 @@ export default function AutomationsSettingsTab() {
         return {
           label: "Proposta Aceita",
           icon: <FileCheck className="w-3.5 h-3.5" />,
-          color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+          color: "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20",
         };
       case "CONTRACT_SIGNED":
         return {
           label: "Contrato Assinado",
           icon: <Award className="w-3.5 h-3.5" />,
-          color: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+          color: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20",
         };
       case "DEAL_CREATED":
         return {
           label: "Nova Oportunidade",
           icon: <DollarSign className="w-3.5 h-3.5" />,
-          color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
+          color: "text-cyan-700 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20",
         };
       case "DEAL_STAGE_CHANGED":
       case "STAGE_CHANGED":
         return {
           label: "Etapa de Funil",
           icon: <Kanban className="w-3.5 h-3.5" />,
-          color: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+          color: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20",
         };
       case "MESSAGE_RECEIVED":
         return {
           label: "Mensagem Recebida",
           icon: <MessageSquare className="w-3.5 h-3.5" />,
-          color: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+          color: "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20",
         };
       case "TAG_ADDED":
         return {
           label: "Tag Adicionada",
           icon: <Tag className="w-3.5 h-3.5" />,
-          color: "text-violet-400 bg-violet-500/10 border-violet-500/20",
+          color: "text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 border-violet-200 dark:border-violet-500/20",
         };
       case "INACTIVITY_TIMEOUT":
       case "INACTIVITY":
         return {
           label: "Inatividade",
           icon: <Clock className="w-3.5 h-3.5" />,
-          color: "text-orange-400 bg-orange-500/10 border-orange-500/20",
+          color: "text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20",
         };
       default:
         return {
           label: type,
           icon: <Zap className="w-3.5 h-3.5" />,
-          color: "text-slate-400 bg-slate-500/10 border-slate-500/20",
+          color: "text-slate-700 dark:text-slate-400 bg-slate-100 dark:bg-slate-500/10 border-slate-200 dark:border-slate-500/20",
         };
     }
   };

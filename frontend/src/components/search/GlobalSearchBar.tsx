@@ -158,8 +158,8 @@ export default function GlobalSearchBar() {
             if (query.trim().length >= 2) setIsOpen(true);
           }}
           onChange={(e) => handleQueryChange(e.target.value)}
-          placeholder="Buscar leads, conversas..."
-          className="w-full bg-white dark:bg-[#0B1224] border border-slate-300 dark:border-slate-800 rounded-full pl-10 pr-16 py-2 text-xs text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] placeholder:text-slate-400 dark:placeholder:text-slate-500"
+          placeholder="Buscar..."
+          className="w-full bg-white dark:bg-[#0B1224] border border-slate-300 dark:border-slate-800 rounded-full pl-9 sm:pl-10 pr-8 sm:pr-16 py-2 text-xs text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] placeholder:text-slate-400 dark:placeholder:text-slate-500"
         />
 
         {/* Loading ou Botão Limpar ou Atalho Ctrl K */}

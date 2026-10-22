@@ -112,7 +112,7 @@ export function ContractPreviewModal({
             <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${
               isWhatsApp
                 ? "bg-[#00A884]/15 border border-[#00A884]/30 text-[#00A884]"
-                : "bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/30 text-cyan-600 dark:text-cyan-400"
+                : "bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400"
             }`}>
               <ShieldCheck className="w-5 h-5" />
             </div>
@@ -147,7 +147,7 @@ export function ContractPreviewModal({
               }`}
               title="Abrir PDF Oficial para Impressão"
             >
-              <Printer className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-cyan-600 dark:text-cyan-400"}`} />
+              <Printer className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-slate-600 dark:text-slate-400"}`} />
               Imprimir / PDF
             </button>
 
@@ -191,7 +191,7 @@ export function ContractPreviewModal({
               <span className={`text-[11px] uppercase tracking-wider font-semibold flex items-center gap-1.5 ${
                 isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"
               }`}>
-                <Building2 className={`w-3.5 h-3.5 ${isWhatsApp ? "text-[#00A884]" : "text-cyan-600 dark:text-cyan-400"}`} /> Contratada (Emitente)
+                <Building2 className={`w-3.5 h-3.5 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} /> Contratada (Emitente)
               </span>
               <div className={`font-bold text-sm ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"}`}>
                 {contract.issuer?.name || "Vallor Tecnologia & Inteligência Comercial"}

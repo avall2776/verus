@@ -80,13 +80,13 @@ export default function CompanySettingsTab() {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header da Aba */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-blue-400" />
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             Dados Cadastrais da Empresa
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Informações institucionais e fiscais utilizadas nos módulos operacionais e contratos.
           </p>
         </div>
@@ -95,12 +95,12 @@ export default function CompanySettingsTab() {
           <button
             type="button"
             onClick={() => router.push("/settings?tab=plan")}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/20 hover:border-blue-500/40 text-xs font-semibold text-blue-300 transition-all group"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-600/10 hover:bg-blue-100 dark:hover:bg-blue-600/20 border border-blue-200 dark:border-blue-500/20 text-xs font-semibold text-blue-700 dark:text-blue-300 transition-all group"
             title="Clique para ver os detalhes da assinatura e limites"
           >
-            <ShieldCheck className="w-4 h-4 text-blue-400" />
+            <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <span>Plano {company.plan.name}</span>
-            <ChevronRight className="w-3.5 h-3.5 text-blue-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+            <ChevronRight className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 opacity-60 group-hover:opacity-100 transition-opacity" />
           </button>
         )}
       </div>
@@ -108,33 +108,33 @@ export default function CompanySettingsTab() {
       {/* Métricas Rápidas */}
       {company?._count && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
-            <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
-              <Users className="w-3.5 h-3.5 text-blue-400" />
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs mb-1">
+              <Users className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
               <span>Membros</span>
             </div>
-            <span className="text-lg font-bold text-white font-mono">{company._count.users || 0}</span>
+            <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.users || 0}</span>
           </div>
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
-            <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
-              <FileText className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs mb-1">
+              <FileText className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>Contratos</span>
             </div>
-            <span className="text-lg font-bold text-white font-mono">{company._count.contracts || 0}</span>
+            <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.contracts || 0}</span>
           </div>
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
-            <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
-              <Users className="w-3.5 h-3.5 text-indigo-400" />
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs mb-1">
+              <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>Contatos CRM</span>
             </div>
-            <span className="text-lg font-bold text-white font-mono">{company._count.contacts || 0}</span>
+            <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.contacts || 0}</span>
           </div>
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
-            <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
-              <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs mb-1">
+              <CreditCard className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>Chamados</span>
             </div>
-            <span className="text-lg font-bold text-white font-mono">{company._count.supportTickets || 0}</span>
+            <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.supportTickets || 0}</span>
           </div>
         </div>
       )}
@@ -143,7 +143,7 @@ export default function CompanySettingsTab() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               Razão Social / Nome Fantasia *
             </label>
             <input
@@ -151,13 +151,13 @@ export default function CompanySettingsTab() {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Ex: Nexus Logística e Tecnologia LTDA"
-              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600"
               required
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               CNPJ ou CPF
             </label>
             <input
@@ -165,12 +165,12 @@ export default function CompanySettingsTab() {
               value={form.cnpj}
               onChange={(e) => setForm({ ...form, cnpj: e.target.value })}
               placeholder="00.000.000/0001-00"
-              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               E-mail Comercial
             </label>
             <input
@@ -178,12 +178,12 @@ export default function CompanySettingsTab() {
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               placeholder="contato@empresa.com.br"
-              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               Telefone / WhatsApp Oficial
             </label>
             <input
@@ -191,20 +191,20 @@ export default function CompanySettingsTab() {
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               placeholder="+55 (11) 99999-9999"
-              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600"
             />
           </div>
         </div>
 
         {/* Notificação de Leads Qualificados (Multi-Tenant) */}
-        <div className="p-4 rounded-xl bg-blue-950/20 border border-blue-500/20 space-y-2">
-          <div className="flex items-center gap-2 text-blue-400">
+        <div className="p-4 rounded-xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-500/20 space-y-2">
+          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
             <BellRing className="w-4 h-4" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-blue-300">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
               WhatsApp da Central / Alerta de Novos Leads
             </h3>
           </div>
-          <p className="text-[11px] text-slate-400 leading-relaxed">
+          <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
             Informe o número de WhatsApp do gerente comercial ou o ID de grupo da equipe de vendas para onde a IA enviará os alertas imediatos de <strong>Novos Leads Qualificados</strong>.
           </p>
           <div className="pt-1">
@@ -213,29 +213,29 @@ export default function CompanySettingsTab() {
               value={form.leadNotificationPhone}
               onChange={(e) => setForm({ ...form, leadNotificationPhone: e.target.value })}
               placeholder="Ex: +55 (54) 99999-9999 ou 12036304... (ID do Grupo)"
-              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-blue-500/30 text-white placeholder:text-slate-500 outline-none focus:border-blue-500 font-mono"
+              className="w-full p-3 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-blue-300 dark:border-blue-500/30 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600 font-mono"
             />
           </div>
         </div>
 
         {/* Interruptor Master do Auto-Atendimento por IA */}
-        <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                 Auto-Atendimento por IA (WhatsApp)
               </span>
               <span
                 className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${
                   form.aiEnabled
-                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                    : "bg-red-500/10 text-red-400 border-red-500/30"
+                    ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30"
+                    : "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30"
                 }`}
               >
                 {form.aiEnabled ? "Ligado" : "Desligado"}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed max-w-xl">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl">
               Quando desligado, o robô para de responder novas mensagens e todos os novos chamados caem diretamente para atendimento humano no Inbox.
             </p>
           </div>
@@ -259,7 +259,7 @@ export default function CompanySettingsTab() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
             Endereço Completo da Sede
           </label>
           <input
@@ -267,7 +267,7 @@ export default function CompanySettingsTab() {
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
             placeholder="Avenida Paulista, 1000, Sala 50 - São Paulo, SP"
-            className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-blue-500"
+            className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600"
           />
         </div>
 
@@ -275,7 +275,7 @@ export default function CompanySettingsTab() {
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors shadow-sm disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors shadow-sm disabled:opacity-50"
           >
             {saving ? (
               <>

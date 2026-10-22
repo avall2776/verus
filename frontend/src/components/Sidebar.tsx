@@ -1195,7 +1195,7 @@ export default function Sidebar() {
             )}
 
             {/* Itens de Navegação Mobile */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-1">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 pb-16 flex flex-col gap-1">
               {visibleGroups.map((group) => (
                 <div key={group.title} className="mb-4">
                   <div className="px-2 py-1 mb-1 text-[10px] font-bold text-slate-500 dark:text-gray-400 tracking-wider uppercase">

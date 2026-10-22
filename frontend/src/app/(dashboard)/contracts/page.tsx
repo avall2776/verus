@@ -169,7 +169,7 @@ export default function ContractsPage() {
           <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${
             isWhatsApp
               ? "bg-[#00A884]/15 border border-[#00A884]/30 text-[#00A884]"
-              : "bg-cyan-50 dark:bg-gradient-to-tr dark:from-cyan-500/20 dark:to-blue-600/20 border border-cyan-200 dark:border-cyan-500/30 text-cyan-600 dark:text-cyan-400"
+              : "bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400"
           }`}>
             <ScrollText className="w-5 h-5" />
           </div>
@@ -179,7 +179,7 @@ export default function ContractsPage() {
               <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium font-mono border ${
                 isWhatsApp
                   ? "bg-[#00A884]/15 text-[#00A884] border-[#00A884]/30"
-                  : "bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/30"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
               }`}>
                 {contracts.length} {contracts.length === 1 ? "registro" : "registros"}
               </span>
@@ -201,15 +201,15 @@ export default function ContractsPage() {
             }`}
             title="Atualizar lista"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""} ${isWhatsApp ? "text-[#00A884]" : "text-cyan-600 dark:text-cyan-400"}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""} ${isWhatsApp ? "text-[#00A884]" : "text-slate-600 dark:text-slate-400"}`} />
           </button>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs shadow-sm transition-all active:scale-[0.98] cursor-pointer text-white ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition-all active:scale-[0.98] cursor-pointer text-white ${
               isWhatsApp
                 ? "bg-[#00A884] hover:bg-[#02906F]"
-                : "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-md shadow-cyan-500/20"
+                : "bg-blue-600 hover:bg-blue-700 shadow-sm"
             }`}
           >
             <Plus className="w-4 h-4" />
@@ -259,17 +259,17 @@ export default function ContractsPage() {
         <div className={`p-5 rounded-2xl border shadow-sm relative overflow-hidden group transition-all ${
           isWhatsApp
             ? "bg-[#111B21] border-[#222D34] hover:border-[#00A884]/40"
-            : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80 hover:border-cyan-500/30 backdrop-blur-md"
+            : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80 hover:border-blue-500/30 backdrop-blur-md"
         }`}>
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
           <span className={`text-xs uppercase tracking-wider font-semibold ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>
             Conformidade Jurídica
           </span>
-          <div className={`text-2xl font-extrabold mt-2 ${isWhatsApp ? "text-[#00A884]" : "text-cyan-600 dark:text-cyan-400"}`}>
+          <div className={`text-2xl font-extrabold mt-2 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`}>
             MP 2.200-2 & Lei 14.063
           </div>
           <span className={`text-xs flex items-center gap-1.5 mt-2 font-medium ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>
-            <ShieldCheck className={`w-3.5 h-3.5 ${isWhatsApp ? "text-[#00A884]" : "text-cyan-600 dark:text-cyan-400"}`} /> Carimbo de tempo, IP & Trilha Auditada
+            <ShieldCheck className={`w-3.5 h-3.5 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} /> Carimbo de tempo, IP & Trilha Auditada
           </span>
         </div>
       </div>
@@ -291,7 +291,7 @@ export default function ContractsPage() {
               className={`w-full pl-9 pr-3 py-2 text-xs rounded-xl focus:outline-none transition-colors ${
                 isWhatsApp
                   ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] placeholder:text-[#8696A0] focus:border-[#00A884]"
-                  : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-cyan-500"
+                  : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-blue-600"
               }`}
             />
           </div>
@@ -304,7 +304,7 @@ export default function ContractsPage() {
               className={`px-3 py-2 text-xs rounded-xl focus:outline-none transition-colors ${
                 isWhatsApp
                   ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] focus:border-[#00A884]"
-                  : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:border-cyan-500"
+                  : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:border-blue-600"
               }`}
             >
               <option value="all">Todos os Status</option>
@@ -318,7 +318,7 @@ export default function ContractsPage() {
         {/* Conteúdo da Tabela / Estado Vazio */}
         {loading ? (
           <div className="py-20 text-center space-y-3">
-            <RefreshCw className={`w-8 h-8 animate-spin mx-auto opacity-70 ${isWhatsApp ? "text-[#00A884]" : "text-cyan-600 dark:text-cyan-400"}`} />
+            <RefreshCw className={`w-8 h-8 animate-spin mx-auto opacity-70 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />
             <p className={`text-xs ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>Carregando contratos digitais sincronizados...</p>
           </div>
         ) : filtered.length === 0 ? (
@@ -330,7 +330,7 @@ export default function ContractsPage() {
             <div className={`w-14 h-14 rounded-3xl border flex items-center justify-center mx-auto ${
               isWhatsApp
                 ? "bg-[#00A884]/15 border-[#00A884]/30 text-[#00A884]"
-                : "bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20 text-cyan-600 dark:text-cyan-400"
+                : "bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400"
             }`}>
               <ScrollText className="w-7 h-7" />
             </div>
@@ -345,10 +345,10 @@ export default function ContractsPage() {
             {!(search || statusFilter !== "all") && (
               <button
                 onClick={() => setIsModalOpen(true)}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-xs shadow-sm transition-all cursor-pointer text-white ${
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs shadow-sm transition-all cursor-pointer text-white ${
                   isWhatsApp
                     ? "bg-[#00A884] hover:bg-[#02906F]"
-                    : "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-md shadow-cyan-500/20"
+                    : "bg-blue-600 hover:bg-blue-700 shadow-sm"
                 }`}
               >
                 <Plus className="w-4 h-4" />
