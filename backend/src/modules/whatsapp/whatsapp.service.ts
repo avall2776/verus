@@ -64,8 +64,8 @@ export class WhatsappService {
     return {
       serverUrl: process.env.EVOLUTION_API_URL || 'http://localhost:8080',
       apiKey: process.env.EVOLUTION_API_KEY || 'verto123',
-      // No Docker da VPS, 172.17.0.1 é a bridge padrão (docker0) que conecta ao host na porta 3001
-      webhookBaseUrl: process.env.EVOLUTION_WEBHOOK_URL || 'http://172.17.0.1:3001',
+      // No Docker da VPS, 172.16.0.1 é a bridge padrão (docker0) que conecta ao host na porta 3001
+      webhookBaseUrl: process.env.EVOLUTION_WEBHOOK_URL || 'http://172.16.0.1:3001',
     };
   }
 
@@ -316,7 +316,7 @@ export class WhatsappService {
           });
         }
 
-        // Garante webhook configurado no Evolution API com endereço bridge 172.17.0.1 e webhook_base64 ativado
+        // Garante webhook configurado no Evolution API com endereço bridge 172.16.0.1 e webhook_base64 ativado
         try {
           const webhookUrl = `${webhookBaseUrl}/webhooks/evolution/${tenantId}`;
           await axios.post(

@@ -1214,9 +1214,10 @@ function InboxContent() {
         };
       });
     },
-    staleTime: 30000,
+    staleTime: 10000,
+    refetchInterval: 60000, // Sincronização automática em background a cada 1 minuto (solicitada pelo usuário)
     retry: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 
   // Limpa o indicador global de não lidas ao entrar na tela de Atendimento
@@ -1344,6 +1345,13 @@ function InboxContent() {
 
     fetchMessages();
     fetchScheduled();
+
+    // Polling de segurança em background para a conversa ativa (atualiza a cada 60s caso perca evento do WebSocket)
+    const backgroundChatInterval = setInterval(() => {
+      fetchMessages();
+    }, 60000);
+
+    return () => clearInterval(backgroundChatInterval);
   }, [activeChat]);
 
   // 3. Ouvir WebSocket para mensagens em tempo real
