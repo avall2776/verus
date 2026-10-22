@@ -256,11 +256,10 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
 
   return (
     <div className="relative w-full flex flex-col items-center justify-center min-h-[calc(100vh-140px)] py-8 px-4 overflow-hidden">
-      {/* Preloader de Alto Impacto com Three.js */}
+      {/* Preloader Cinematográfico de Alto Impacto da Marca VALLOR */}
       {showPreloader && (
         <VersusPreloader
-          durationMs={6000}
-          userName={userName}
+          durationMs={2800}
           forcePlay={forcePlayPreloader}
           onComplete={handlePreloaderComplete}
         />
@@ -368,7 +367,10 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
             {/* Ações de Topo: Boot e Métricas */}
             <div className="shrink-0 flex flex-wrap md:flex-col gap-2.5">
               <button
-                onClick={() => setShowPreloader(true)}
+                onClick={() => {
+                  setForcePlayPreloader(true);
+                  setShowPreloader(true);
+                }}
                 className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-sm group cursor-pointer border ${
                   isWhatsApp
                     ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:border-emerald-400"

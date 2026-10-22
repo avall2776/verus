@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import * as THREE from "three";
+import VersusPreloader from "@/components/ui/VersusPreloader";
 
 // ================= COMPONENTE OCEANO DE DADOS (BOLINHAS DO FUNDO THREE.JS) =================
 const BackgroundParticles = () => {
@@ -151,21 +152,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  // Fluxo de estados: 'form' -> 'evaporating' (fade-out do card) -> 'booting' (preloader 15s)
+  // Fluxo de estados: 'form' -> 'evaporating' (fade-out do card) -> 'booting' (preloader cinematográfico)
   const [cardState, setCardState] = useState<"form" | "evaporating" | "booting">("form");
-  const [authUserName, setAuthUserName] = useState<string>("");
-  const [bootProgress, setBootProgress] = useState(0);
-  const [isExiting, setIsExiting] = useState(false);
-
-  // 15 segundos exatos de imersão corporativa
-  const BOOT_DURATION_MS = 15000;
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return "Bom dia";
-    if (hour >= 12 && hour < 18) return "Boa tarde";
-    return "Boa noite";
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,10 +175,6 @@ export default function LoginPage() {
       } catch (e) {}
 
       // Extrai o primeiro nome real do usuário autenticado (ex: "Felipe")
-      const rawName = data.user?.name || "";
-      const firstName = rawName.split(" ")[0] || "Felipe";
-      setAuthUserName(firstName);
-
       try {
         sessionStorage.removeItem("versus_boot_completed");
       } catch (e) {}
@@ -209,64 +193,28 @@ export default function LoginPage() {
     }
   };
 
-  // Temporizador de 15 segundos exatos com atualização contínua
-  useEffect(() => {
-    if (cardState !== "booting") return;
-
-    const startTime = Date.now();
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(100, Math.floor((elapsed / BOOT_DURATION_MS) * 100));
-      setBootProgress(progress);
-
-      if (progress >= 100) {
-        clearInterval(interval);
-        handleFinishBoot();
-      }
-    }, 40);
-
-    return () => clearInterval(interval);
-  }, [cardState]);
-
-  // Transição suave automática para o Dashboard
+  // Transição automática para o Dashboard ao concluir o Preloader
   const handleFinishBoot = () => {
-    if (isExiting) return;
-    setIsExiting(true);
-
     try {
       sessionStorage.setItem("versus_boot_completed", "true");
     } catch (e) {}
 
-    setTimeout(() => {
-      try {
-        const stored = localStorage.getItem("versus_user");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed.isSuperAdmin || parsed.role === "SUPER_ADMIN") {
-            router.push("/super-admin/companies");
-            return;
-          }
+    try {
+      const stored = localStorage.getItem("versus_user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.isSuperAdmin || parsed.role === "SUPER_ADMIN") {
+          router.push("/super-admin/companies");
+          return;
         }
-      } catch (e) {}
-      router.push("/dashboard");
-    }, 1000);
-  };
-
-  // Texto dinâmico alternando o carregamento das ferramentas do sistema
-  const getToolStatusText = (progress: number) => {
-    if (progress < 20) return "Carregando Operação de Atendimento...";
-    if (progress < 40) return "Carregando Chat da Equipe...";
-    if (progress < 60) return "Carregando Funil Comercial & CRM...";
-    if (progress < 80) return "Sincronizando Módulos de Inteligência Artificial...";
-    if (progress < 95) return "Carregando Painel Executivo & Métricas...";
-    return "Ambiente pronto para operação!";
+      }
+    } catch (e) {}
+    router.push("/dashboard");
   };
 
   return (
     <div
-      className={`flex min-h-screen items-center justify-center relative overflow-hidden bg-[#0B1224] select-none transition-all duration-1000 ease-in-out ${
-        isExiting ? "opacity-0 scale-105 filter blur-xl pointer-events-none" : "opacity-100 scale-100"
-      }`}
+      className="flex min-h-screen items-center justify-center relative overflow-hidden bg-[#0B1224] select-none transition-all duration-700 ease-in-out"
     >
       {/* Background: Bolinhas do fundo com movimento em Three.js */}
       <BackgroundParticles />
@@ -396,33 +344,14 @@ export default function LoginPage() {
       )}
 
       {/* ========================================================== */}
-      {/* 2. PRELOADER LIMPO E CENTRALIZADO (SEM LOGO 'V' / BOTÕES)  */}
+      {/* 2. PRELOADER CINEMATOGRÁFICO DA MARCA VALLOR (TECH ENTERPRISE) */}
       {/* ========================================================== */}
       {cardState === "booting" && (
-        <div className="fixed inset-0 z-20 flex flex-col items-center justify-center p-8 pointer-events-none animate-[fadeIn_0.8s_ease-out_forwards]">
-          <div className="flex flex-col items-center justify-center text-center space-y-6 max-w-xl mx-auto px-4">
-            
-            {/* Texto de Boas-Vindas */}
-            <h2 className="text-3xl sm:text-5xl font-bold text-white tracking-wide flex items-center justify-center gap-3.5 drop-shadow-[0_8px_30px_rgba(0,0,0,0.9)]">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_12px_#3b82f6]" />
-              <span>{getGreeting()}, {authUserName || "Operador"}</span>
-            </h2>
-
-            {/* Barra de Status Centralizada */}
-            <div className="w-72 sm:w-96 h-[3px] bg-slate-800/80 rounded-full overflow-hidden relative shadow-inner">
-              <div
-                className="h-full bg-gradient-to-r from-blue-700 via-blue-500 to-blue-400 transition-all duration-150"
-                style={{ width: `${bootProgress}%` }}
-              />
-            </div>
-
-            {/* Texto de Status das Ferramentas (Alternância Dinâmica) */}
-            <p className="text-sm sm:text-base font-mono tracking-wider text-slate-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] transition-all duration-300">
-              {getToolStatusText(bootProgress)}
-            </p>
-
-          </div>
-        </div>
+        <VersusPreloader
+          durationMs={2800}
+          forcePlay={true}
+          onComplete={handleFinishBoot}
+        />
       )}
     </div>
   );
