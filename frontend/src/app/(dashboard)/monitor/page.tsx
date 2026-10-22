@@ -271,27 +271,56 @@ export default function MonitorPage() {
   // Auxiliares p/ select de Atendentes
   const getAssigneeCount = (userId: string) => conversations.filter(c => c.assignedTo === userId).length;
 
+  const handleManualRefresh = async () => {
+    toast.loading("Atualizando torre de controle...", { id: "refresh-monitor" });
+    await fetchData();
+    toast.success("Torre de controle atualizada!", { id: "refresh-monitor" });
+  };
+
   return (
     <div className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-100 dark:bg-[#050A15]">
       {/* HEADER & TOOLBAR */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between p-6 border-b border-slate-200 dark:border-gray-800 bg-white dark:bg-[#0B1224] shrink-0 gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            Monitor: {filteredConversations.length} atendimentos ativos
-            <div className="flex items-center gap-1 text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full font-medium border border-blue-500/20">
-              <RefreshCw size={10} className={refreshCountdown < 3 ? 'animate-spin' : ''} />
-              atualiza em {refreshCountdown}s
-            </div>
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">Visão em tempo real organizada por setor com SLAs automáticos.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between p-3.5 sm:p-4 md:p-6 border-b border-slate-200 dark:border-gray-800 bg-white dark:bg-[#0B1224] shrink-0 gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 shrink-0">
+              <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 shrink-0" />
+              <span>Monitor</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border border-slate-200 dark:border-slate-700 shrink-0">
+                {filteredConversations.length} {filteredConversations.length === 1 ? "ativo" : "ativos"}
+              </span>
+            </h1>
+
+            {/* Indicador de Auto-refresh: Discreto, animado e clicável para atualizar na hora */}
+            <button
+              type="button"
+              onClick={handleManualRefresh}
+              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group shrink-0"
+              title="Clique para sincronizar o monitor agora"
+            >
+              <RefreshCw
+                size={12}
+                className={`text-blue-500 transition-transform duration-300 ${
+                  refreshCountdown < 3 ? "animate-spin" : "group-hover:rotate-180"
+                }`}
+              />
+              <span className="text-slate-400 dark:text-slate-500">atualiza em</span>
+              <span className="font-mono font-bold text-slate-700 dark:text-slate-200">
+                {refreshCountdown}s
+              </span>
+            </button>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5 truncate">
+            Visão em tempo real organizada por setor com SLAs automáticos.
+          </p>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           {/* SLA Filter */}
           <select 
             value={filterSla}
             onChange={(e) => setFilterSla(e.target.value)}
-            className="bg-slate-50 dark:bg-[#050A15] border border-slate-200 dark:border-gray-700 text-sm text-slate-800 dark:text-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+            className="flex-1 sm:flex-none bg-slate-50 dark:bg-[#050A15] border border-slate-200 dark:border-gray-700 text-xs sm:text-sm text-slate-800 dark:text-gray-200 rounded-lg px-2.5 py-1.5 sm:px-3 sm:py-2 outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="all">Todas as Interações</option>
             <option value="bot">Aguardando Chatbot / Fila Inicial</option>
@@ -306,7 +335,7 @@ export default function MonitorPage() {
           <select 
             value={filterAssignee}
             onChange={(e) => setFilterAssignee(e.target.value)}
-            className="bg-slate-50 dark:bg-[#050A15] border border-slate-200 dark:border-gray-700 text-sm text-slate-800 dark:text-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
+            className="flex-1 sm:flex-none bg-slate-50 dark:bg-[#050A15] border border-slate-200 dark:border-gray-700 text-xs sm:text-sm text-slate-800 dark:text-gray-200 rounded-lg px-2.5 py-1.5 sm:px-3 sm:py-2 outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="all">Todos os Operadores</option>
             <option value="none">Na Fila (Sem Operador)</option>
@@ -320,20 +349,20 @@ export default function MonitorPage() {
           </select>
 
           {/* View Mode Toggle */}
-          <div className="flex bg-slate-100 dark:bg-[#050A15] rounded-lg border border-slate-200 dark:border-gray-700 p-1">
+          <div className="flex bg-slate-100 dark:bg-[#050A15] rounded-lg border border-slate-200 dark:border-gray-700 p-1 shrink-0">
             <button 
               onClick={() => setLayoutMode('grid')}
-              className={`p-1.5 rounded-md transition-colors ${layoutMode === 'grid' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-gray-500 dark:hover:text-gray-300'}`}
+              className={`p-1.5 rounded-md transition-colors cursor-pointer ${layoutMode === 'grid' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-gray-500 dark:hover:text-gray-300'}`}
               title="Modo Confortável (Grid)"
             >
-              <LayoutGrid size={16} />
+              <LayoutGrid size={15} />
             </button>
             <button 
               onClick={() => setLayoutMode('table')}
-              className={`p-1.5 rounded-md transition-colors ${layoutMode === 'table' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-gray-500 dark:hover:text-gray-300'}`}
+              className={`p-1.5 rounded-md transition-colors cursor-pointer ${layoutMode === 'table' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:text-gray-500 dark:hover:text-gray-300'}`}
               title="Modo Compacto (Tabela)"
             >
-              <List size={16} />
+              <List size={15} />
             </button>
           </div>
         </div>
@@ -663,7 +692,7 @@ export default function MonitorPage() {
       )}
 
       {/* FOOTER: ONLINE USERS & SLA LEGEND */}
-      <div className="border-t border-slate-200 dark:border-gray-800 bg-white dark:bg-[#0B1224] shrink-0 p-4 pb-2">
+      <div className="border-t border-slate-200 dark:border-gray-800 bg-white dark:bg-[#0B1224] shrink-0 p-3 sm:p-4 pb-20 md:pb-2">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           
           {/* Online Users List */}

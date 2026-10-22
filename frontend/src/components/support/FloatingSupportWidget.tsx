@@ -352,9 +352,9 @@ export default function FloatingSupportWidget() {
           ? { left: `${position.x}px`, top: `${position.y}px`, bottom: "auto", right: "auto" }
           : undefined
       }
-      className={`fixed z-50 select-none print:hidden ${
-        !position ? "bottom-20 right-4 md:bottom-6 md:right-6" : ""
-      } ${pathname === '/inbox' ? 'hidden md:block' : ''}`}
+      className={`fixed z-50 select-none print:hidden hidden md:block ${
+        !position ? "bottom-6 right-6" : ""
+      }`}
     >
       {/* ========================================================================= */}
       {/* POPOVER / MODAL EXPANSÍVEL ("SUPORTE VERSUS")                             */}

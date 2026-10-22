@@ -93,7 +93,7 @@ export default function Topbar() {
           <button
             type="button"
             onClick={() => setIsSandboxOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 text-xs font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
             title="Simulador de Viewports (Celular, Tablet e Desktop) - Alt + S"
           >
             <MonitorSmartphone size={14} className="text-emerald-500 dark:text-emerald-400 shrink-0" />

@@ -283,18 +283,20 @@ export default function EmailInboxPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-start sm:items-center gap-3 min-w-0">
+          <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-sm shrink-0 mt-0.5 sm:mt-0 ${
             isWhatsApp
               ? "bg-[#00A884]/15 border border-[#00A884]/30 text-[#00A884]"
               : "bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400"
           }`}>
             <Mail className="w-5 h-5" />
           </div>
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-              Inbox Unificado de E-mails
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-base sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                Inbox Unificado de E-mails
+              </h1>
               <span 
                 onClick={() => setCurrentTab("settings")}
                 title={
@@ -304,7 +306,7 @@ export default function EmailInboxPage() {
                         : `Falha na Conexão: ${transportStatus.connectionError || 'Verifique credenciais'}. Clique para ajustar.`)
                     : "E-mail não configurado. Clique para configurar as credenciais."
                 }
-                className={`text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border font-bold flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 ${
+                className={`text-[10px] uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border font-bold inline-flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 shrink-0 whitespace-nowrap ${
                   transportStatus?.connected
                     ? isWhatsApp
                       ? "bg-[#00A884]/15 text-[#00A884] border-[#00A884]/30 hover:bg-[#00A884]/25"
@@ -316,7 +318,7 @@ export default function EmailInboxPage() {
                     : "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-500/30 hover:bg-blue-100 dark:hover:bg-blue-500/20"
                 }`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full ${
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                   transportStatus?.connected ? (isWhatsApp ? "bg-[#00A884] animate-pulse" : "bg-emerald-500 dark:bg-emerald-400 animate-pulse") : transportStatus?.configured ? "bg-amber-500 dark:bg-amber-400" : (isWhatsApp ? "bg-[#8696A0]" : "bg-blue-500 dark:bg-blue-400")
                 }`} />
                 {transportStatus?.connected
@@ -325,18 +327,18 @@ export default function EmailInboxPage() {
                   ? "CONFIGURADO (PENDENTE)"
                   : "CONFIGURAR E-MAIL"}
               </span>
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            </div>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
               Gerencie tratativas comerciais, envie orçamentos e centralize trocas de mensagens por e-mail
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <button
             onClick={handleSyncInbox}
             disabled={isRefreshing}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-sm disabled:opacity-50 cursor-pointer ${
+            className={`flex items-center justify-center p-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs font-semibold transition-all shadow-sm disabled:opacity-50 cursor-pointer ${
               isWhatsApp
                 ? "bg-[#202C33] hover:bg-[#2A3942] border border-[#222D34] text-[#E9EDEF]"
                 : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700"
@@ -354,14 +356,14 @@ export default function EmailInboxPage() {
               setComposerInitialBody("");
               setIsComposerOpen(true);
             }}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs shadow-sm transition-colors cursor-pointer text-white ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl font-semibold text-xs shadow-sm transition-colors cursor-pointer text-white ${
               isWhatsApp
                 ? "bg-[#00A884] hover:bg-[#02906F]"
                 : "bg-blue-600 hover:bg-blue-500"
             }`}
           >
-            <Plus className="w-4 h-4" />
-            Escrever Novo E-mail
+            <Plus className="w-4 h-4 shrink-0" />
+            <span>Escrever Novo E-mail</span>
           </button>
         </div>
       </div>
@@ -432,7 +434,7 @@ export default function EmailInboxPage() {
         }} />
       ) : (
         /* Container 3-Pane Enterprise */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[760px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 min-h-[500px] lg:h-[760px]">
         {/* PANE 1: Pastas e Navegação Lateral (col-span-3) */}
         <div className={`lg:col-span-3 rounded-2xl p-4 flex flex-col justify-between shadow-sm border ${
           isWhatsApp

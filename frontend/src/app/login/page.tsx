@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import * as THREE from "three";
+import { AnimatePresence } from "framer-motion";
 import VersusPreloader from "@/components/ui/VersusPreloader";
 
 // ================= COMPONENTE OCEANO DE DADOS (BOLINHAS DO FUNDO THREE.JS) =================
@@ -346,13 +347,15 @@ export default function LoginPage() {
       {/* ========================================================== */}
       {/* 2. PRELOADER CINEMATOGRÁFICO DA MARCA VALLOR (TECH ENTERPRISE) */}
       {/* ========================================================== */}
-      {cardState === "booting" && (
-        <VersusPreloader
-          durationMs={2800}
-          forcePlay={true}
-          onComplete={handleFinishBoot}
-        />
-      )}
+      <AnimatePresence>
+        {cardState === "booting" && (
+          <VersusPreloader
+            durationMs={2800}
+            forcePlay={true}
+            onComplete={handleFinishBoot}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -20,6 +20,7 @@ import {
   Cpu
 } from "lucide-react";
 import * as THREE from "three";
+import { AnimatePresence } from "framer-motion";
 import VersusPreloader from "@/components/ui/VersusPreloader";
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -257,13 +258,15 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
   return (
     <div className="relative w-full flex flex-col items-center justify-center min-h-[calc(100vh-140px)] py-8 px-4 overflow-hidden">
       {/* Preloader Cinematográfico de Alto Impacto da Marca VALLOR */}
-      {showPreloader && (
-        <VersusPreloader
-          durationMs={2800}
-          forcePlay={forcePlayPreloader}
-          onComplete={handlePreloaderComplete}
-        />
-      )}
+      <AnimatePresence>
+        {showPreloader && (
+          <VersusPreloader
+            durationMs={2800}
+            forcePlay={forcePlayPreloader}
+            onComplete={handlePreloaderComplete}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Estilos e Animações em Cascata de Alta Fidelidade */}
       <style dangerouslySetInnerHTML={{ __html: `
