@@ -390,7 +390,13 @@ export default function FloatingSupportWidget() {
                   ? "bg-blue-50 border-blue-200"
                   : "bg-blue-600/15 border-blue-500/30"
               }`}>
-                <img src="/vallor/Favicon_vallor.svg?v=4" alt="Vallor" className="w-full h-full object-contain" />
+                {isWhatsApp ? (
+                  <svg viewBox="0 0 256 256" className="w-full h-full">
+                    <circle cx="128" cy="128" r="98" fill="none" stroke="#00A884" strokeWidth="48" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  <img src="/vallor/Favicon_vallor.svg?v=4" alt="Vallor" className="w-full h-full object-contain" />
+                )}
               </div>
               <div>
                 <div className="flex items-center gap-2">
