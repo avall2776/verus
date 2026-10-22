@@ -611,7 +611,7 @@ export default function Sidebar() {
                   src="/vallor/Logo_valor_02.svg" 
                   alt="VALLOR" 
                   className={`h-8 w-auto max-w-[165px] object-contain transition-all ${
-                    !isDark && !isWhatsApp ? "invert brightness-0 opacity-90" : "opacity-95"
+                    !isDark && !isWhatsApp ? "brightness-0 opacity-85" : "opacity-95"
                   }`}
                 />
               </Link>
@@ -1107,7 +1107,7 @@ export default function Sidebar() {
                   src="/vallor/Logo_valor_02.svg" 
                   alt="VALLOR" 
                   className={`h-8 w-auto max-w-[165px] object-contain transition-all ${
-                    !isDark && !isWhatsApp ? "invert brightness-0 opacity-90" : "opacity-95"
+                    !isDark && !isWhatsApp ? "brightness-0 opacity-85" : "opacity-95"
                   }`}
                 />
               </Link>
