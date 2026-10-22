@@ -288,6 +288,7 @@ export default function VersusPreloader({
 
   return (
     <motion.aside
+      id="versus-preloader"
       role="status"
       aria-live="polite"
       aria-label="Carregando plataforma VALLOR"
@@ -461,13 +462,14 @@ export default function VersusPreloader({
           className="mt-5 flex items-center justify-center select-none"
         >
           <span
-            className="text-xs sm:text-[14px] font-medium tracking-[0.36em] uppercase transition-colors text-cyan-400/95 drop-shadow-[0_0_16px_rgba(0,210,255,0.35)]"
+            className="text-xs sm:text-[14px] font-medium tracking-[0.36em] uppercase preloader-brand-blue drop-shadow-[0_0_16px_rgba(0,210,255,0.35)]"
+            style={{ color: "#38bdf8" }}
           >
             by Avall
           </span>
         </motion.div>
 
-        {/* 6. TELEMETRIA E BARRA DE PROGRESSO DE ALTA FIDELIDADE (LEGÍVEL E CONFORTÁVEL) */}
+        {/* 6. TELEMETRIA E BARRA DE PROGRESSO DE ALTA FIDELIDADE (AZUL E BRANCO PADRÃO) */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={stage >= 1 ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
@@ -477,21 +479,27 @@ export default function VersusPreloader({
           {/* Trilho de Progresso com Preenchimento Gradativo em Tempo Real */}
           <div className="relative w-full h-[2.5px] rounded-full overflow-hidden bg-slate-800/90">
             <motion.div
-              className="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-blue-600 via-cyan-400 to-blue-400 shadow-[0_0_14px_#00D2FF]"
-              style={{ width: `${progressPercent}%` }}
+              className="h-full rounded-full transition-all duration-700 preloader-progress-bar"
+              style={{
+                width: `${progressPercent}%`,
+                background: "linear-gradient(90deg, #2563eb 0%, #38bdf8 50%, #60a5fa 100%)",
+                boxShadow: "0 0 14px rgba(56, 189, 248, 0.6)",
+              }}
             />
           </div>
 
-          {/* Linha com Status Legível e Contador Numérico de Percentual */}
+          {/* Linha com Status Legível e Contador Numérico de Percentual (Branco e Azul) */}
           <div className="w-full flex items-center justify-between text-[10px] sm:text-[11px] font-mono tracking-wider">
             <p
               key={statusText}
-              className="uppercase font-semibold transition-all duration-500 animate-fadeIn text-cyan-400"
+              className="uppercase font-semibold transition-all duration-500 animate-fadeIn preloader-brand-white"
+              style={{ color: "#ffffff" }}
             >
               {statusText}
             </p>
             <span
-              className="font-mono font-bold shrink-0 ml-3 text-cyan-400/80"
+              className="font-mono font-bold shrink-0 ml-3 preloader-brand-blue"
+              style={{ color: "#38bdf8" }}
             >
               {progressPercent}%
             </span>
@@ -501,7 +509,8 @@ export default function VersusPreloader({
         {/* 7. BOTÃO DISCRETO PARA PULAR [ESC] (CASO O OPERADOR DESEJE AGILIDADE) */}
         <button
           onClick={finishBootNow}
-          className="mt-8 text-[10px] font-mono tracking-[0.25em] text-slate-500 hover:text-slate-300 transition-colors uppercase cursor-pointer"
+          className="mt-8 text-[10px] font-mono tracking-[0.25em] text-slate-400 hover:text-white transition-colors uppercase cursor-pointer"
+          style={{ color: "#94a3b8" }}
           title="Pressione ESC ou clique para entrar imediatamente no sistema"
         >
           Pular Introdução [ESC]
@@ -509,7 +518,7 @@ export default function VersusPreloader({
 
       </div>
 
-      {/* ESTILOS DE ANIMAÇÃO NATIVOS */}
+      {/* ESTILOS DE ANIMAÇÃO E ISOLAMENTO VISUAL CONTRA TONS VERDES */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes fadeInAnim {
           from { opacity: 0; transform: translateY(4px); }
@@ -517,6 +526,27 @@ export default function VersusPreloader({
         }
         .animate-fadeIn {
           animation: fadeInAnim 0.4s ease-out forwards;
+        }
+        #versus-preloader,
+        html.theme-whatsapp #versus-preloader,
+        .theme-whatsapp #versus-preloader {
+          background-color: #070D1B !important;
+        }
+        #versus-preloader .preloader-brand-blue,
+        html.theme-whatsapp #versus-preloader .preloader-brand-blue,
+        .theme-whatsapp #versus-preloader .preloader-brand-blue {
+          color: #38bdf8 !important;
+        }
+        #versus-preloader .preloader-brand-white,
+        html.theme-whatsapp #versus-preloader .preloader-brand-white,
+        .theme-whatsapp #versus-preloader .preloader-brand-white {
+          color: #ffffff !important;
+        }
+        #versus-preloader .preloader-progress-bar,
+        html.theme-whatsapp #versus-preloader .preloader-progress-bar,
+        .theme-whatsapp #versus-preloader .preloader-progress-bar {
+          background: linear-gradient(90deg, #2563eb 0%, #38bdf8 50%, #60a5fa 100%) !important;
+          box-shadow: 0 0 14px rgba(56, 189, 248, 0.6) !important;
         }
       `}} />
     </motion.aside>

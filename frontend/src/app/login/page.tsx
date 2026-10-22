@@ -225,6 +225,7 @@ export default function LoginPage() {
 
   return (
     <div
+      id="versus-login-screen"
       className="flex min-h-screen items-center justify-center relative overflow-hidden bg-[#0B1224] select-none transition-all duration-700 ease-in-out"
     >
       {/* Background: Bolinhas do fundo com movimento em Three.js */}
@@ -297,8 +298,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-950/60 border border-slate-800 text-white rounded-[10px] px-4 py-[0.85rem] text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.25)] focus:bg-slate-950/90 placeholder:text-slate-600"
-                  placeholder="admin@verto.com"
+                  className="w-full bg-slate-950/60 border border-slate-800 text-white rounded-[10px] px-4 py-[0.85rem] text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.25)] focus:bg-slate-950/90 login-input-field"
                   required
                 />
               </div>
@@ -312,7 +312,7 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-950/60 border border-slate-800 text-white rounded-[10px] pl-4 pr-12 py-[0.85rem] text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.25)] focus:bg-slate-950/90 placeholder:text-slate-600"
+                    className="w-full bg-slate-950/60 border border-slate-800 text-white rounded-[10px] pl-4 pr-12 py-[0.85rem] text-[0.95rem] outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.25)] focus:bg-slate-950/90 login-input-field"
                     placeholder="••••••••••••"
                     required
                   />
@@ -329,7 +329,8 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-[0.95rem] rounded-[10px] mt-4 text-[0.88rem] tracking-wider uppercase transition-all hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer"
+                className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-[0.95rem] rounded-[10px] mt-4 text-[0.88rem] tracking-wider uppercase transition-all hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer login-submit-btn"
+                style={{ backgroundColor: "#2563eb", color: "#ffffff" }}
               >
                 {loading ? (
                   <>
@@ -353,6 +354,37 @@ export default function LoginPage() {
           </div>
         </div>
       )}
+
+      {/* ISOLAÇÃO ABSOLUTA DA TELA DE LOGIN: IMPEDE QUALQUER COR VERDE DO TEMA WHATSAPP */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        #versus-login-screen,
+        html.theme-whatsapp #versus-login-screen,
+        .theme-whatsapp #versus-login-screen {
+          background-color: #0B1224 !important;
+        }
+        #versus-login-screen .login-input-field:focus,
+        html.theme-whatsapp #versus-login-screen .login-input-field:focus,
+        .theme-whatsapp #versus-login-screen .login-input-field:focus {
+          border-color: #3b82f6 !important;
+          box-shadow: 0 0 15px rgba(59, 130, 246, 0.35) !important;
+          outline: none !important;
+        }
+        #versus-login-screen .login-submit-btn,
+        html.theme-whatsapp #versus-login-screen .login-submit-btn,
+        .theme-whatsapp #versus-login-screen .login-submit-btn {
+          background-color: #2563eb !important;
+          background-image: none !important;
+          color: #ffffff !important;
+          box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4) !important;
+        }
+        #versus-login-screen .login-submit-btn:hover,
+        html.theme-whatsapp #versus-login-screen .login-submit-btn:hover,
+        .theme-whatsapp #versus-login-screen .login-submit-btn:hover {
+          background-color: #1d4ed8 !important;
+          background-image: none !important;
+          box-shadow: 0 6px 25px rgba(37, 99, 235, 0.55) !important;
+        }
+      `}} />
 
       {/* ========================================================== */}
       {/* 2. PRELOADER CINEMATOGRÁFICO DA MARCA VALLOR (TECH ENTERPRISE) */}

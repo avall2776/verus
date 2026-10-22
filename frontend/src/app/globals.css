@@ -812,4 +812,59 @@ html:not(.dark) {
   }
 }
 
+/* =========================================================================
+   PROTEÇÃO INSTITUCIONAL: LOGIN E PRELOADER SÃO SEMPRE AZUL CORPORATIVO E BRANCO
+   Nenhuma regra do tema WhatsApp ou Clean pode afetar o Login ou o Preloader
+   ========================================================================= */
+html.theme-whatsapp #versus-login-screen,
+.theme-whatsapp #versus-login-screen {
+  background-color: #0B1224 !important;
+}
+
+html.theme-whatsapp #versus-login-screen .login-input-field:focus,
+.theme-whatsapp #versus-login-screen .login-input-field:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.35) !important;
+  outline: none !important;
+}
+
+html.theme-whatsapp #versus-login-screen .login-submit-btn,
+.theme-whatsapp #versus-login-screen .login-submit-btn {
+  background-color: #2563eb !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4) !important;
+}
+
+html.theme-whatsapp #versus-login-screen .login-submit-btn:hover,
+.theme-whatsapp #versus-login-screen .login-submit-btn:hover {
+  background-color: #1d4ed8 !important;
+  background-image: none !important;
+  box-shadow: 0 6px 25px rgba(37, 99, 235, 0.55) !important;
+}
+
+html.theme-whatsapp #versus-preloader,
+.theme-whatsapp #versus-preloader {
+  background-color: #070D1B !important;
+}
+
+html.theme-whatsapp #versus-preloader .preloader-brand-blue,
+.theme-whatsapp #versus-preloader .preloader-brand-blue,
+html.theme-whatsapp #versus-preloader [class*="text-cyan"],
+.theme-whatsapp #versus-preloader [class*="text-cyan"] {
+  color: #38bdf8 !important;
+}
+
+html.theme-whatsapp #versus-preloader .preloader-brand-white,
+.theme-whatsapp #versus-preloader .preloader-brand-white {
+  color: #ffffff !important;
+}
+
+html.theme-whatsapp #versus-preloader .preloader-progress-bar,
+.theme-whatsapp #versus-preloader .preloader-progress-bar {
+  background: linear-gradient(90deg, #2563eb 0%, #38bdf8 50%, #60a5fa 100%) !important;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.6) !important;
+}
+
+
 

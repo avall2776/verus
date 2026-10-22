@@ -23,7 +23,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       // Se estiver na tela de login, o tema visual é estritamente o azul clássico ("dark")
-      if (typeof window !== "undefined" && window.location.pathname.startsWith("/login")) {
+      if (typeof window !== "undefined" && window.location.pathname.indexOf("login") !== -1) {
         setThemeState("dark");
         if (typeof document !== "undefined") {
           const root = document.documentElement;
@@ -68,7 +68,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const applyThemeClass = (t: Theme) => {
     if (typeof document !== "undefined") {
       // Na tela de login, NUNCA permite alteração de classes para clean ou whatsapp
-      if (typeof window !== "undefined" && window.location.pathname.startsWith("/login")) {
+      if (typeof window !== "undefined" && window.location.pathname.indexOf("login") !== -1) {
         const root = document.documentElement;
         root.classList.add("dark");
         root.classList.remove("light", "theme-whatsapp");

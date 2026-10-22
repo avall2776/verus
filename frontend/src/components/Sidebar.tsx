@@ -347,11 +347,17 @@ export default function Sidebar() {
     localStorage.removeItem('versus_scheduled_messages');
     localStorage.removeItem('crm_columns');
     localStorage.removeItem('crm_columns_widths');
-    localStorage.removeItem('crm_funnel_name');
     sessionStorage.clear();
 
-    // 2. Redirecionamento completo para /login para descarregar a memória RAM da aba (evitando resquício de cache entre contas)
-    window.location.href = '/login';
+    // 2. Garante que o próximo carregamento /login inicie no tema corporativo clássico azul
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light', 'theme-whatsapp');
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+
+    // 3. Redirecionamento completo para /vallor/login para descarregar a memória RAM da aba
+    window.location.href = '/vallor/login';
   };
 
   // Garante que o status do WhatsApp seja sincronizado ao montar a Sidebar em tela autenticada
