@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { DatabaseModule } from '../../shared/database/database.module';
 import { MessagingModule } from '../messaging/messaging.module';
 import { AuthModule } from '../auth/auth.module';
+import { AiModule } from '../ai/ai.module';
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
 import { ChatAliasController } from './chat-alias.controller';
@@ -15,6 +16,7 @@ import { ChatGateway } from './chat.gateway';
     DatabaseModule,
     MessagingModule,
     AuthModule,
+    AiModule,
     BullModule.registerQueue({ name: 'scheduled-messages' }),
   ],
   providers: [ChatService, ChatGateway],

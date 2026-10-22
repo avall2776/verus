@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Query, Param, UseGuards } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
@@ -22,5 +22,13 @@ export class ChatAliasController {
     @Query('force') force?: string,
   ) {
     return this.chatService.syncOfflineMessages(tenantId, force === 'true' || force === '1');
+  }
+
+  @Post('messages/:messageId/transcribe')
+  async transcribeAudioMessage(
+    @CurrentTenant() tenantId: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.chatService.transcribeAudioMessage(tenantId, messageId);
   }
 }

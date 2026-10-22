@@ -195,6 +195,7 @@ function InboxContent() {
   const [contextMenuContactId, setContextMenuContactId] = useState<string | null>(null);
   const [mutedContactIds, setMutedContactIds] = useState<string[]>([]);
   const [expandedTranscriptions, setExpandedTranscriptions] = useState<{ [key: string]: boolean }>({});
+  const [transcribingMessageIds, setTranscribingMessageIds] = useState<{ [key: string]: boolean }>({});
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
   const [showLeftHeaderMenu, setShowLeftHeaderMenu] = useState(false);
   const [showDeleteConvModal, setShowDeleteConvModal] = useState(false);
@@ -1591,6 +1592,22 @@ function InboxContent() {
       }
     };
 
+    const handleMessageTranscribed = (payload: { messageId: string; conversationId: string; audioTranscription: string }) => {
+      if (activeChat === payload.conversationId || !activeChat) {
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === payload.messageId
+              ? { ...m, audioTranscription: payload.audioTranscription }
+              : m
+          )
+        );
+        setExpandedTranscriptions(prev => ({
+          ...prev,
+          [payload.messageId]: true,
+        }));
+      }
+    };
+
     socket.on('newMessage', handleNewMessage);
     socket.on('conversationUpdated', handleConversationUpdated);
     socket.on('conversationTransferred', handleConversationTransferred);
@@ -1598,6 +1615,7 @@ function InboxContent() {
     socket.on('messageStatusUpdated', handleMessageStatusUpdated);
     socket.on('messageDeleted', handleMessageDeleted);
     socket.on('conversationDeleted', handleConversationDeleted);
+    socket.on('messageTranscribed', handleMessageTranscribed);
 
     return () => {
       socket.off('newMessage', handleNewMessage);
@@ -1607,8 +1625,33 @@ function InboxContent() {
       socket.off('messageStatusUpdated', handleMessageStatusUpdated);
       socket.off('messageDeleted', handleMessageDeleted);
       socket.off('conversationDeleted', handleConversationDeleted);
+      socket.off('messageTranscribed', handleMessageTranscribed);
     };
   }, [socket, activeChat, activeTab, activeFilterTab, selectedDepartmentFilter, refetchConversations, refetchCounts]);
+
+  // Transcrição de áudio sob demanda (on-demand) com Whisper
+  const handleTranscribeAudio = async (messageId: string) => {
+    if (!messageId || transcribingMessageIds[messageId]) return;
+    setTranscribingMessageIds(prev => ({ ...prev, [messageId]: true }));
+    try {
+      const res = await api.post(`/conversations/messages/${messageId}/transcribe`);
+      const transcription = res.data?.audioTranscription;
+      if (transcription) {
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === messageId ? { ...m, audioTranscription: transcription } : m
+          )
+        );
+        setExpandedTranscriptions(prev => ({ ...prev, [messageId]: true }));
+        toast.success('Áudio transcrito com sucesso!');
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Erro ao transcrever áudio.';
+      toast.error(msg);
+    } finally {
+      setTranscribingMessageIds(prev => ({ ...prev, [messageId]: false }));
+    }
+  };
 
   // Derivar contato ativo
   const activeContactData = contacts.find(c => c.id === activeChat);
@@ -3449,32 +3492,56 @@ function InboxContent() {
                                 </div>
                               )}
 
-                              {/* Botão de Expansão "Ver transcrição" */}
+                              {/* Botão de Expansão / Transcrição de Áudio sob demanda */}
                               <div className="px-1 flex flex-col gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setExpandedTranscriptions(prev => ({
-                                      ...prev,
-                                      [audioKey]: !prev[audioKey]
-                                    }));
-                                  }}
-                                  className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors cursor-pointer self-start"
-                                >
-                                  <FileText size={12} className="shrink-0" />
-                                  <span>{expandedTranscriptions[audioKey] ? 'Ocultar transcrição' : 'Ver transcrição'}</span>
-                                </button>
+                                {msg.audioTranscription ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setExpandedTranscriptions(prev => ({
+                                          ...prev,
+                                          [audioKey]: !prev[audioKey]
+                                        }));
+                                      }}
+                                      className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors cursor-pointer self-start"
+                                    >
+                                      <FileText size={12} className="shrink-0" />
+                                      <span>{expandedTranscriptions[audioKey] ? 'Ocultar transcrição' : 'Ver transcrição'}</span>
+                                    </button>
 
-                                {expandedTranscriptions[audioKey] && (
-                                  <div className="bg-slate-100 dark:bg-black/40 rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-cyan-500/30 animate-in fade-in slide-in-from-top-1 shadow-inner">
-                                    <div className="flex items-center gap-1 text-[10px] text-blue-600 dark:text-cyan-400 font-bold uppercase tracking-wider mb-1">
-                                      <Sparkles size={11} />
-                                      <span>Transcrição Automática (IA)</span>
-                                    </div>
-                                    <p className="italic text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
-                                      "{msg.audioTranscription || (msg.content?.startsWith('🎤 [Áudio]: "') ? msg.content.replace(/^🎤 \[Áudio\]: "(.*)"$/, '$1') : 'Mensagem de voz recebida.')}"
-                                    </p>
-                                  </div>
+                                    {expandedTranscriptions[audioKey] && (
+                                      <div className="bg-slate-100 dark:bg-black/40 rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-cyan-500/30 animate-in fade-in slide-in-from-top-1 shadow-inner">
+                                        <div className="flex items-center gap-1 text-[10px] text-blue-600 dark:text-cyan-400 font-bold uppercase tracking-wider mb-1">
+                                          <Sparkles size={11} />
+                                          <span>Transcrição por IA</span>
+                                        </div>
+                                        <p className="italic text-slate-700 dark:text-slate-300 leading-relaxed text-[11px]">
+                                          "{msg.audioTranscription}"
+                                        </p>
+                                      </div>
+                                    )}
+                                  </>
+                                ) : !msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') && (
+                                  <button
+                                    type="button"
+                                    disabled={transcribingMessageIds[msg.id]}
+                                    onClick={() => handleTranscribeAudio(msg.id)}
+                                    className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-600 hover:text-blue-700 dark:text-cyan-400 dark:hover:text-cyan-300 disabled:opacity-50 transition-colors cursor-pointer self-start mt-0.5"
+                                    title="Transcrever áudio sob demanda com IA"
+                                  >
+                                    {transcribingMessageIds[msg.id] ? (
+                                      <>
+                                        <RefreshCw size={12} className="shrink-0 animate-spin" />
+                                        <span>Transcrevendo áudio...</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Sparkles size={12} className="shrink-0" />
+                                        <span>Transcrever áudio</span>
+                                      </>
+                                    )}
+                                  </button>
                                 )}
                               </div>
                             </div>
@@ -3954,20 +4021,46 @@ function InboxContent() {
                                             }`}
                                           >
                                             <div className="mt-0.5 p-1 rounded-md bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 shrink-0">
-                                              {item.iconType === 'catalog' && <ShoppingBag size={14} className="text-emerald-500 dark:text-emerald-400" />}
-                                              {item.iconType === 'image' && <ImageIcon size={14} className="text-blue-500 dark:text-blue-400" />}
-                                              {item.iconType === 'file' && <FileText size={14} className="text-cyan-500 dark:text-cyan-400" />}
-                                              {item.iconType === 'audio' && <Mic size={14} className="text-rose-500 dark:text-rose-400" />}
-                                              {item.iconType === 'zap' && <Zap size={14} className="text-amber-500 dark:text-amber-400" />}
+                                              {item.type === 'document' && <FileText size={14} className="text-rose-500 dark:text-rose-400" />}
+                                              {item.type === 'image' && <ImageIcon size={14} className="text-purple-500 dark:text-purple-400" />}
+                                              {item.type === 'video' && <Video size={14} className="text-emerald-500 dark:text-emerald-400" />}
+                                              {(!item.type || item.type === 'text') && item.iconType === 'catalog' && <ShoppingBag size={14} className="text-emerald-500 dark:text-emerald-400" />}
+                                              {(!item.type || item.type === 'text') && item.iconType === 'image' && <ImageIcon size={14} className="text-blue-500 dark:text-blue-400" />}
+                                              {(!item.type || item.type === 'text') && item.iconType === 'file' && <FileText size={14} className="text-cyan-500 dark:text-cyan-400" />}
+                                              {(!item.type || item.type === 'text') && item.iconType === 'audio' && <Mic size={14} className="text-rose-500 dark:text-rose-400" />}
+                                              {(!item.type || item.type === 'text') && item.iconType === 'zap' && <Zap size={14} className="text-amber-500 dark:text-amber-400" />}
                                             </div>
 
                                             <div className="flex-1 min-w-0">
                                               <div className="flex items-center justify-between gap-1 mb-0.5">
-                                                <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">{item.shortcut}</span>
-                                                {item.category === 'action' && (
-                                                  <span className="text-[10px] px-1.5 py-0.2 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded border border-slate-300 dark:border-slate-700">ação</span>
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                  <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">{item.shortcut}</span>
+                                                  {item.isMedia && (
+                                                    <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                                                      item.type === 'document'
+                                                        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                                                        : item.type === 'video'
+                                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                                        : 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20'
+                                                    }`}>
+                                                      {item.type === 'document' ? 'PDF NATIVO' : item.type === 'video' ? 'VÍDEO NATIVO' : 'FOTO NATIVA'}
+                                                    </span>
+                                                  )}
+                                                  {item.category === 'action' && (
+                                                    <span className="text-[10px] px-1.5 py-0.2 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded border border-slate-300 dark:border-slate-700">ação</span>
+                                                  )}
+                                                </div>
+                                                {item.fileName && (
+                                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate max-w-[130px]" title={item.fileName}>
+                                                    {item.fileName}
+                                                  </span>
                                                 )}
                                               </div>
+                                              {item.title && item.title !== item.shortcut && (
+                                                <div className="text-[11px] font-bold text-slate-800 dark:text-slate-100 truncate mb-0.5">
+                                                  {item.title}
+                                                </div>
+                                              )}
                                               <div className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
                                                 {item.description}
                                               </div>

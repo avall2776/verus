@@ -746,6 +746,11 @@ export declare class ChatController {
         success: boolean;
         messageId: string;
     }>;
+    transcribeAudioMessage(tenantId: string, messageId: string): Promise<{
+        messageId: string;
+        audioTranscription: string;
+        cached: boolean;
+    }>;
     sendMessageToContact(tenantId: string, contactId: string, payload: SendMessageDto, req: any): Promise<{
         id: string;
         tenantId: string;

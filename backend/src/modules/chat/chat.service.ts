@@ -10,6 +10,7 @@ const execAsync = promisify(exec);
 import axios from 'axios';
 import { MessagingService } from '../messaging/messaging.service';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
+import { AiService } from '../ai/ai.service';
 import { ChatGateway } from './chat.gateway';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -22,6 +23,7 @@ export class ChatService {
     private readonly prisma: PrismaService,
     private readonly messagingService: MessagingService,
     private readonly whatsappService: WhatsappService,
+    private readonly aiService: AiService,
     private readonly chatGateway: ChatGateway,
     @InjectQueue('scheduled-messages') private readonly scheduledQueue: Queue,
   ) {}
@@ -1634,6 +1636,106 @@ export class ChatService {
     } finally {
       ChatService.activeSyncs.delete(tenantId);
     }
+  }
+
+  async transcribeAudioMessage(tenantId: string, messageId: string) {
+    const message = await this.prisma.message.findFirst({
+      where: { id: messageId, tenantId },
+    });
+
+    if (!message) {
+      throw new NotFoundException('Mensagem não encontrada.');
+    }
+
+    if (message.audioTranscription) {
+      return {
+        messageId: message.id,
+        audioTranscription: message.audioTranscription,
+        cached: true,
+      };
+    }
+
+    if (!message.mediaUrl) {
+      throw new BadRequestException('Mensagem não possui arquivo de áudio associado.');
+    }
+
+    // Se for áudio do Lero antigo cujo bucket foi desativado
+    if (message.mediaUrl.includes('supabase.co') && message.mediaUrl.includes('lvdphjhftfjdifnzuazd')) {
+      throw new BadRequestException('Áudio histórico do CRM anterior desativado. Arquivo não disponível para transcrição.');
+    }
+
+    let buffer: Buffer | null = null;
+    const mediaUrl = message.mediaUrl;
+    const cleanUrl = mediaUrl.split('?')[0];
+    const basename = path.basename(cleanUrl);
+
+    // Candidatos locais em uploads
+    const candidatePaths = [
+      path.join(process.cwd(), 'uploads', 'audio', basename),
+      path.join(process.cwd(), 'uploads', 'media', basename),
+      path.join(process.cwd(), 'uploads', basename),
+    ];
+
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        try {
+          buffer = fs.readFileSync(p);
+          break;
+        } catch {}
+      }
+    }
+
+    // Se não encontrou localmente e é URL remota http(s), baixar via axios
+    if (!buffer && (mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://'))) {
+      try {
+        const resp = await axios.get(mediaUrl, {
+          responseType: 'arraybuffer',
+          timeout: 15000,
+        });
+        buffer = Buffer.from(resp.data);
+      } catch (err: any) {
+        this.logger.error(`Erro ao obter áudio para transcrição (${mediaUrl}): ${err.message}`);
+        throw new BadRequestException('Não foi possível baixar o arquivo de áudio para transcrição.');
+      }
+    }
+
+    if (!buffer) {
+      throw new BadRequestException('Arquivo de áudio não encontrado no servidor.');
+    }
+
+    let mimeType = 'audio/ogg';
+    if (basename.endsWith('.mp3')) mimeType = 'audio/mpeg';
+    else if (basename.endsWith('.m4a')) mimeType = 'audio/mp4';
+    else if (basename.endsWith('.wav')) mimeType = 'audio/wav';
+
+    const transcription = await this.aiService.transcribeAudio(buffer, basename, mimeType);
+
+    if (!transcription) {
+      throw new BadRequestException('Não foi possível transcrever o áudio ou nenhum áudio inteligível detectado.');
+    }
+
+    const updated = await this.prisma.message.update({
+      where: { id: message.id },
+      data: {
+        audioTranscription: transcription,
+      },
+    });
+
+    try {
+      this.chatGateway.emitMessageTranscribed(tenantId, {
+        messageId: updated.id,
+        conversationId: updated.conversationId,
+        audioTranscription: transcription,
+      });
+    } catch (e: any) {
+      this.logger.warn(`Falha ao emitir socket messageTranscribed: ${e.message}`);
+    }
+
+    return {
+      messageId: updated.id,
+      audioTranscription: transcription,
+      cached: false,
+    };
   }
 }
 

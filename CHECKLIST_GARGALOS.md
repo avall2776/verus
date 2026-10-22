@@ -70,9 +70,27 @@ Plano de modernização estrutural e resolução gradual dos 6 gargalos prioriza
 
 ---
 
-### [PENDENTE] 04. Upgrade do Atalho '/' (Catálogo de Arquivos/Produtos via Drive)
-- **Status:** Pendente
-- **Descrição:** Envio rápido de PDFs, fotos e materiais do catálogo corporativo diretamente através do atalho `/` no chat.
+### [CONCLUÍDO] 04. Upgrade do Atalho '/' (Catálogo de Arquivos/Produtos via Drive)
+- **Status:** Concluído (Integração com Google Drive sob demanda com streaming em memória e Base64, zero consumo de disco/banco, cadastro de catálogos/PDFs/fotos/vídeos em Configurações, detecção automática de links do Drive, atalho `/` no chat com disparo de mídia nativa no WhatsApp do lead; compilação NestJS `nest build` código 0, compilação Next.js `npm run build` 52/52 páginas estáticas geradas com código 0).
+- **Descrição:** Envio rápido de PDFs, fotos e materiais do catálogo corporativo diretamente através do atalho `/` no chat, com armazenamento 100% no Google Drive e entrega do anexo nativo no WhatsApp do cliente (sem links de texto).
+- **Recursos Entregues:**
+  1. **Modelo de Dados & Metadados Leves (`QuickReply` via Prisma PostgreSQL):**
+     - Adição dos campos `title`, `type` (`text` | `document` | `image` | `video`), `mediaUrl`, `mediaDriveId`, `fileName` e `updatedAt`.
+     - Armazenamento 100% desacoplado: o banco guarda apenas ~200 bytes de metadados por item, preservando o disco do servidor VPS livre de gigabytes de materiais.
+  2. **Streaming Proxy e Conversão para WhatsApp ([google-drive.helper.ts](file:///c:/Users/Usuario/.gemini/antigravity-ide/scratch/VERSUS/backend/src/shared/helpers/google-drive.helper.ts)):**
+     - Utilitário backend para extração automática de IDs do Google Drive (`extractGoogleDriveId`), detecção de MIME types e fallback resiliente via Google Drive API Key (`GOOGLE_DRIVE_API_KEY`) e link direto UC (`export=download`).
+     - Conversão em tempo de execução para buffer Base64 (para disparo ultra rápido na Evolution API) e endpoint público de streaming pass-through `GET /media/drive-stream/:driveId` em [media.controller.ts](file:///c:/Users/Usuario/.gemini/antigravity-ide/scratch/VERSUS/backend/src/modules/chat/media.controller.ts) para compatibilidade nativa com Meta Cloud API e WhatsApp Web.
+  3. **Disparo de Mídia Nativa ([messaging.service.ts](file:///c:/Users/Usuario/.gemini/antigravity-ide/scratch/VERSUS/backend/src/modules/messaging/messaging.service.ts) e [chat.service.ts](file:///c:/Users/Usuario/.gemini/antigravity-ide/scratch/VERSUS/backend/src/modules/chat/chat.service.ts)):**
+     - Suporte nativo a envio de `document` (PDFs/DOCX), `image` (fotos/catálogos visuais) e `video` (vídeos de demonstração) com nome do arquivo customizado (`fileName`) e legenda comercial (`content`).
+     - O destinatário no WhatsApp recebe o **arquivo real** aberto ou com botão de download nativo, nunca um link HTML de navegador.
+  4. **Painel de Gestão e Cadastro do Catálogo ([QuickRepliesSettingsTab.tsx](file:///c:/Users/Usuario/.gemini/antigravity-ide/scratch/VERSUS/frontend/src/components/settings/QuickRepliesSettingsTab.tsx)):**
+     - Segmentação por abas/filtros: *Todos*, *PDFs / Catálogos*, *Fotos / Imagens*, *Vídeos* e *Textos Rápidos*.
+     - Modal completo para cadastro rápido com seletor de tipo de material, atalho `/`, título, link do Google Drive com detector em tempo real, nome do arquivo no WhatsApp e legenda comercial.
+     - Indicador visual `Google Drive (5 TB Nuvem)` em cada card, botão de cópia de atalho e atalho para abrir o arquivo original.
+  5. **Atalho `/` no Chat do WhatsApp ([inbox/page.tsx](file:///c:/Users/Usuario/.gemini/antigravity-ide/scratch/VERSUS/frontend/src/app/(dashboard)/inbox/page.tsx)):**
+     - Menu popup do `/` integrado com listagem dinâmica de catálogos e mídias cadastradas.
+     - Badges semânticos coloridos: `[PDF NATIVO]` (rosa/vermelho), `[FOTO NATIVA]` (roxo), `[VÍDEO NATIVO]` (esmeralda) e exibição do nome do arquivo.
+     - Ao clicar ou selecionar com Enter um item de catálogo/mídia, o sistema faz o disparo direto do arquivo para o WhatsApp do cliente via API e insere a mensagem na conversa com feedback de toast imediato.
 
 ---
 

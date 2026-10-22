@@ -1,16 +1,18 @@
 import { PrismaService } from '../../shared/database/prisma.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
+import { AiService } from '../ai/ai.service';
 import { ChatGateway } from './chat.gateway';
 import { Queue } from 'bullmq';
 export declare class ChatService {
     private readonly prisma;
     private readonly messagingService;
     private readonly whatsappService;
+    private readonly aiService;
     private readonly chatGateway;
     private readonly scheduledQueue;
     private readonly logger;
-    constructor(prisma: PrismaService, messagingService: MessagingService, whatsappService: WhatsappService, chatGateway: ChatGateway, scheduledQueue: Queue);
+    constructor(prisma: PrismaService, messagingService: MessagingService, whatsappService: WhatsappService, aiService: AiService, chatGateway: ChatGateway, scheduledQueue: Queue);
     getConversationCounts(tenantId: string, userId: string, userRole: string, departmentId?: string): Promise<{
         waiting: number;
         mine: number;
@@ -687,5 +689,10 @@ export declare class ChatService {
     syncOfflineMessages(tenantId: string, force?: boolean): Promise<{
         syncedCount: number;
         updatedCount: number;
+    }>;
+    transcribeAudioMessage(tenantId: string, messageId: string): Promise<{
+        messageId: string;
+        audioTranscription: string;
+        cached: boolean;
     }>;
 }

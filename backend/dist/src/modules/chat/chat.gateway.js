@@ -63,6 +63,14 @@ let ChatGateway = ChatGateway_1 = class ChatGateway {
             this.logger.warn('WebSocket server not initialized yet, skipping emitMessageDeleted');
         }
     }
+    emitMessageTranscribed(tenantId, payload) {
+        if (this.server) {
+            this.server.to(tenantId).emit('messageTranscribed', payload);
+        }
+        else {
+            this.logger.warn('WebSocket server not initialized yet, skipping emitMessageTranscribed');
+        }
+    }
     emitConversationDeleted(tenantId, payload) {
         if (this.server) {
             this.server.to(tenantId).emit('conversationDeleted', payload);

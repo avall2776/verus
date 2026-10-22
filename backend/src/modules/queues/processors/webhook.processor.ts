@@ -138,24 +138,9 @@ export class WebhookProcessor extends WorkerHost {
         mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
       }
 
-      // Transcrição Automática via Whisper (Speech-to-Text)
-      const audioBuffer = getLocalBuffer(mediaUrl);
-      if (audioBuffer) {
-        this.logger.log(`[Multimodal Audio] Transcrevendo áudio recebido de ${remoteJid}...`);
-        const transcription = await this.aiService.transcribeAudio(
-          audioBuffer,
-          path.basename(mediaUrl || 'audio.ogg'),
-          mimeType
-        );
-        if (transcription) {
-          audioTranscription = transcription;
-          content = `🎤 [Áudio]: "${transcription}"`;
-        } else {
-          content = '🎤 Mensagem de voz';
-        }
-      } else {
-        content = '🎤 Mensagem de voz';
-      }
+      // Transcrição de áudio configurada para sob demanda (on-demand): economiza tokens e reduz latência
+      content = '🎤 Mensagem de voz';
+      audioTranscription = null;
     } else if (isImage) {
       msgType = 'image';
       const imgObj = message.image;

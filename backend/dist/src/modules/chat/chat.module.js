@@ -12,6 +12,7 @@ const bullmq_1 = require("@nestjs/bullmq");
 const database_module_1 = require("../../shared/database/database.module");
 const messaging_module_1 = require("../messaging/messaging.module");
 const auth_module_1 = require("../auth/auth.module");
+const ai_module_1 = require("../ai/ai.module");
 const chat_service_1 = require("./chat.service");
 const chat_controller_1 = require("./chat.controller");
 const chat_alias_controller_1 = require("./chat-alias.controller");
@@ -27,6 +28,7 @@ exports.ChatModule = ChatModule = __decorate([
             database_module_1.DatabaseModule,
             messaging_module_1.MessagingModule,
             auth_module_1.AuthModule,
+            ai_module_1.AiModule,
             bullmq_1.BullModule.registerQueue({ name: 'scheduled-messages' }),
         ],
         providers: [chat_service_1.ChatService, chat_gateway_1.ChatGateway],

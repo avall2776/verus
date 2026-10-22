@@ -25,14 +25,16 @@ const execAsync = (0, util_1.promisify)(child_process_1.exec);
 const axios_1 = require("axios");
 const messaging_service_1 = require("../messaging/messaging.service");
 const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
+const ai_service_1 = require("../ai/ai.service");
 const chat_gateway_1 = require("./chat.gateway");
 const bullmq_1 = require("@nestjs/bullmq");
 const bullmq_2 = require("bullmq");
 let ChatService = ChatService_1 = class ChatService {
-    constructor(prisma, messagingService, whatsappService, chatGateway, scheduledQueue) {
+    constructor(prisma, messagingService, whatsappService, aiService, chatGateway, scheduledQueue) {
         this.prisma = prisma;
         this.messagingService = messagingService;
         this.whatsappService = whatsappService;
+        this.aiService = aiService;
         this.chatGateway = chatGateway;
         this.scheduledQueue = scheduledQueue;
         this.logger = new common_1.Logger(ChatService_1.name);
@@ -1362,16 +1364,104 @@ let ChatService = ChatService_1 = class ChatService {
             ChatService_1.activeSyncs.delete(tenantId);
         }
     }
+    async transcribeAudioMessage(tenantId, messageId) {
+        const message = await this.prisma.message.findFirst({
+            where: { id: messageId, tenantId },
+        });
+        if (!message) {
+            throw new common_1.NotFoundException('Mensagem não encontrada.');
+        }
+        if (message.audioTranscription) {
+            return {
+                messageId: message.id,
+                audioTranscription: message.audioTranscription,
+                cached: true,
+            };
+        }
+        if (!message.mediaUrl) {
+            throw new common_1.BadRequestException('Mensagem não possui arquivo de áudio associado.');
+        }
+        if (message.mediaUrl.includes('supabase.co') && message.mediaUrl.includes('lvdphjhftfjdifnzuazd')) {
+            throw new common_1.BadRequestException('Áudio histórico do CRM anterior desativado. Arquivo não disponível para transcrição.');
+        }
+        let buffer = null;
+        const mediaUrl = message.mediaUrl;
+        const cleanUrl = mediaUrl.split('?')[0];
+        const basename = path.basename(cleanUrl);
+        const candidatePaths = [
+            path.join(process.cwd(), 'uploads', 'audio', basename),
+            path.join(process.cwd(), 'uploads', 'media', basename),
+            path.join(process.cwd(), 'uploads', basename),
+        ];
+        for (const p of candidatePaths) {
+            if (fs.existsSync(p)) {
+                try {
+                    buffer = fs.readFileSync(p);
+                    break;
+                }
+                catch { }
+            }
+        }
+        if (!buffer && (mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://'))) {
+            try {
+                const resp = await axios_1.default.get(mediaUrl, {
+                    responseType: 'arraybuffer',
+                    timeout: 15000,
+                });
+                buffer = Buffer.from(resp.data);
+            }
+            catch (err) {
+                this.logger.error(`Erro ao obter áudio para transcrição (${mediaUrl}): ${err.message}`);
+                throw new common_1.BadRequestException('Não foi possível baixar o arquivo de áudio para transcrição.');
+            }
+        }
+        if (!buffer) {
+            throw new common_1.BadRequestException('Arquivo de áudio não encontrado no servidor.');
+        }
+        let mimeType = 'audio/ogg';
+        if (basename.endsWith('.mp3'))
+            mimeType = 'audio/mpeg';
+        else if (basename.endsWith('.m4a'))
+            mimeType = 'audio/mp4';
+        else if (basename.endsWith('.wav'))
+            mimeType = 'audio/wav';
+        const transcription = await this.aiService.transcribeAudio(buffer, basename, mimeType);
+        if (!transcription) {
+            throw new common_1.BadRequestException('Não foi possível transcrever o áudio ou nenhum áudio inteligível detectado.');
+        }
+        const updated = await this.prisma.message.update({
+            where: { id: message.id },
+            data: {
+                audioTranscription: transcription,
+            },
+        });
+        try {
+            this.chatGateway.emitMessageTranscribed(tenantId, {
+                messageId: updated.id,
+                conversationId: updated.conversationId,
+                audioTranscription: transcription,
+            });
+        }
+        catch (e) {
+            this.logger.warn(`Falha ao emitir socket messageTranscribed: ${e.message}`);
+        }
+        return {
+            messageId: updated.id,
+            audioTranscription: transcription,
+            cached: false,
+        };
+    }
 };
 exports.ChatService = ChatService;
 ChatService.activeSyncs = new Set();
 ChatService.lastSyncTimes = new Map();
 exports.ChatService = ChatService = ChatService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __param(4, (0, bullmq_1.InjectQueue)('scheduled-messages')),
+    __param(5, (0, bullmq_1.InjectQueue)('scheduled-messages')),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         messaging_service_1.MessagingService,
         whatsapp_service_1.WhatsappService,
+        ai_service_1.AiService,
         chat_gateway_1.ChatGateway,
         bullmq_2.Queue])
 ], ChatService);

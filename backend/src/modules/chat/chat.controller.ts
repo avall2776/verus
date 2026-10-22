@@ -261,6 +261,14 @@ export class ChatController {
     return this.chatService.cancelScheduledMessage(tenantId, messageId);
   }
 
+  @Post('messages/:messageId/transcribe')
+  async transcribeAudioMessage(
+    @CurrentTenant() tenantId: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.chatService.transcribeAudioMessage(tenantId, messageId);
+  }
+
   @Post('contact/:contactId/messages')
   async sendMessageToContact(
     @CurrentTenant() tenantId: string,

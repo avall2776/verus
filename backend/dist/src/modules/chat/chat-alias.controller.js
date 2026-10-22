@@ -27,6 +27,9 @@ let ChatAliasController = class ChatAliasController {
     async syncOfflineMessagesGet(tenantId, force) {
         return this.chatService.syncOfflineMessages(tenantId, force === 'true' || force === '1');
     }
+    async transcribeAudioMessage(tenantId, messageId) {
+        return this.chatService.transcribeAudioMessage(tenantId, messageId);
+    }
 };
 exports.ChatAliasController = ChatAliasController;
 __decorate([
@@ -45,6 +48,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], ChatAliasController.prototype, "syncOfflineMessagesGet", null);
+__decorate([
+    (0, common_1.Post)('messages/:messageId/transcribe'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('messageId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ChatAliasController.prototype, "transcribeAudioMessage", null);
 exports.ChatAliasController = ChatAliasController = __decorate([
     (0, common_1.Controller)('chat'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

@@ -10,4 +10,9 @@ export declare class ChatAliasController {
         syncedCount: number;
         updatedCount: number;
     }>;
+    transcribeAudioMessage(tenantId: string, messageId: string): Promise<{
+        messageId: string;
+        audioTranscription: string;
+        cached: boolean;
+    }>;
 }

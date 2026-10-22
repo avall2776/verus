@@ -130,21 +130,8 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             else if (mediaId) {
                 mediaUrl = await this.whatsappService.downloadAndSaveMedia(tenantId, mediaId, mimeType);
             }
-            const audioBuffer = getLocalBuffer(mediaUrl);
-            if (audioBuffer) {
-                this.logger.log(`[Multimodal Audio] Transcrevendo áudio recebido de ${remoteJid}...`);
-                const transcription = await this.aiService.transcribeAudio(audioBuffer, path.basename(mediaUrl || 'audio.ogg'), mimeType);
-                if (transcription) {
-                    audioTranscription = transcription;
-                    content = `🎤 [Áudio]: "${transcription}"`;
-                }
-                else {
-                    content = '🎤 Mensagem de voz';
-                }
-            }
-            else {
-                content = '🎤 Mensagem de voz';
-            }
+            content = '🎤 Mensagem de voz';
+            audioTranscription = null;
         }
         else if (isImage) {
             msgType = 'image';
