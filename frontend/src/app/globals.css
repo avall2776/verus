@@ -318,6 +318,15 @@ html:not(.dark) {
 .theme-whatsapp .dark\:bg-\[\#0F172A\],
 .theme-whatsapp [class*="bg-[#0F172A]"],
 .theme-whatsapp [class*="bg-[#0f172a]"],
+.theme-whatsapp .bg-\[\#090E1A\],
+.theme-whatsapp .dark\:bg-\[\#090E1A\],
+.theme-whatsapp [class*="bg-[#090E1A]"],
+.theme-whatsapp .bg-\[\#080D1A\],
+.theme-whatsapp .dark\:bg-\[\#080D1A\],
+.theme-whatsapp [class*="bg-[#080D1A]"],
+.theme-whatsapp .bg-\[\#060913\],
+.theme-whatsapp .dark\:bg-\[\#060913\],
+.theme-whatsapp [class*="bg-[#060913]"],
 .theme-whatsapp .bg-slate-900,
 .theme-whatsapp .dark\:bg-slate-900,
 .theme-whatsapp .bg-gray-900,
@@ -535,6 +544,19 @@ html:not(.dark) {
 .theme-whatsapp .dark\:hover\:bg-cyan-500:hover {
   background-color: #02906F !important;
   color: #FFFFFF !important;
+}
+
+.theme-whatsapp [class*="from-cyan-600"][class*="to-blue-600"],
+.theme-whatsapp .from-cyan-600.to-blue-600 {
+  background-image: none !important;
+  background-color: #00A884 !important;
+  color: #FFFFFF !important;
+}
+
+.theme-whatsapp [class*="from-cyan-600"][class*="to-blue-600"]:hover,
+.theme-whatsapp .hover\:from-cyan-500:hover {
+  background-image: none !important;
+  background-color: #02906F !important;
 }
 
 .theme-whatsapp .text-blue-700,

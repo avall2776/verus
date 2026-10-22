@@ -8,6 +8,7 @@ import {
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { Contract } from "@/types/commercial";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface ContractModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ interface ProposalOption {
 }
 
 export function ContractModal({ isOpen, onClose, onContractCreated }: ContractModalProps) {
+  const { isWhatsApp } = useTheme();
   const [loading, setLoading] = useState(false);
   const [proposals, setProposals] = useState<ProposalOption[]>([]);
   const [loadingProposals, setLoadingProposals] = useState(false);
@@ -99,32 +101,28 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
 
     const prop = proposals.find((p) => p.id === proposalId);
     if (prop) {
-      setTitle(`Contrato de Prestação de Serviços - ${prop.title}`);
-      setClientName(prop.clientName || "");
-      setClientEmail(prop.clientEmail || "");
-      setClientPhone(prop.clientPhone || "");
+      if (prop.title) setTitle(`Contrato - ${prop.title}`);
+      if (prop.clientName) setClientName(prop.clientName);
+      if (prop.clientEmail) setClientEmail(prop.clientEmail);
+      if (prop.clientPhone) setClientPhone(prop.clientPhone);
       if (prop.clientDocument) setClientDocument(prop.clientDocument);
       if (prop.clientAddress) setClientAddress(prop.clientAddress);
-      setValue(prop.total || 0);
-      if (prop.validUntil) {
-        setValidUntil(prop.validUntil);
-        setEndDate(prop.validUntil);
-      }
-      toast.success(`Dados da proposta ${prop.code} preenchidos com sucesso!`);
+      if (prop.total) setValue(prop.total);
+      if (prop.validUntil) setValidUntil(prop.validUntil);
+      toast.success(`Dados da proposta ${prop.code} importados!`);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!clientName.trim()) {
-      toast.error("Por favor, preencha o nome do cliente / contratante.");
+    if (!title.trim() || !clientName.trim() || !value) {
+      toast.error("Por favor, preencha o título, nome do cliente e o valor do contrato.");
       return;
     }
 
     setLoading(true);
     try {
-      const payload: any = {
+      const payload = {
         title: title.trim(),
         clientName: clientName.trim(),
         clientEmail: clientEmail.trim() || undefined,
@@ -159,30 +157,50 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl bg-white dark:bg-[#090E1A] border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 text-slate-900 dark:text-white space-y-6 custom-scrollbar"
+        className={`relative w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl border shadow-2xl p-6 sm:p-8 space-y-6 custom-scrollbar ${
+          isWhatsApp
+            ? "bg-[#111B21] border-[#222D34] text-[#E9EDEF]"
+            : "bg-white dark:bg-[#090E1A] border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-4">
+        <div className={`flex items-center justify-between border-b pb-4 ${
+          isWhatsApp ? "border-[#222D34]" : "border-slate-200 dark:border-slate-800/80"
+        }`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shadow-sm">
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${
+              isWhatsApp
+                ? "bg-[#00A884]/15 border border-[#00A884]/30 text-[#00A884]"
+                : "bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/30 text-cyan-600 dark:text-cyan-400"
+            }`}>
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+              <h2 className={`text-xl font-bold tracking-tight flex items-center gap-2 ${
+                isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"
+              }`}>
                 Emitir Novo Contrato Digital
-                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/20">
+                <span className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded-full border font-bold ${
+                  isWhatsApp
+                    ? "bg-[#00A884]/15 text-[#00A884] border-[#00A884]/30"
+                    : "bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/20"
+                }`}>
                   Assinatura Eletrônica
                 </span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className={`text-xs ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>
                 Gere a minuta oficial com validade jurídica, vinculando ou não a uma proposta comercial
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
+            className={`p-2 rounded-xl transition-colors cursor-pointer ${
+              isWhatsApp
+                ? "text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#202C33]"
+                : "text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80"
+            }`}
           >
             <X className="w-5 h-5" />
           </button>
@@ -190,9 +208,15 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Seletor de Proposta Comercial Existente */}
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 space-y-2">
-            <label className="text-xs font-semibold text-cyan-700 dark:text-cyan-300 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+          <div className={`p-4 rounded-2xl border space-y-2 ${
+            isWhatsApp
+              ? "bg-[#202C33] border-[#222D34]"
+              : "bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800"
+          }`}>
+            <label className={`text-xs font-semibold flex items-center gap-2 ${
+              isWhatsApp ? "text-[#00A884]" : "text-cyan-700 dark:text-cyan-300"
+            }`}>
+              <Sparkles className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-cyan-600 dark:text-cyan-400"}`} />
               Importar dados de Proposta Aceita (Opcional)
             </label>
             <div className="flex gap-2 items-center">
@@ -200,7 +224,11 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={selectedProposalId}
                 onChange={(e) => handleSelectProposal(e.target.value)}
                 disabled={loadingProposals}
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-[#060913] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-cyan-500 transition-colors"
+                className={`w-full px-3.5 py-2 text-xs rounded-xl focus:outline-none transition-colors ${
+                  isWhatsApp
+                    ? "bg-[#111B21] border border-[#222D34] text-[#E9EDEF] focus:border-[#00A884]"
+                    : "bg-white dark:bg-[#060913] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-cyan-500"
+                }`}
               >
                 <option value="">-- Contrato avulso (Preenchimento manual) --</option>
                 {proposals.map((prop) => {
@@ -213,7 +241,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 })}
               </select>
             </div>
-            <p className="text-[11px] text-slate-500">
+            <p className={`text-[11px] ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500"}`}>
               Ao selecionar uma proposta, o cliente, o valor e o objeto contratual serão preenchidos automaticamente.
             </p>
           </div>
@@ -221,7 +249,7 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
           {/* Dados Gerais do Contrato */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2 space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              <label className={`text-xs font-medium ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
                 Título / Objeto do Contrato *
               </label>
               <input
@@ -230,13 +258,17 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Ex: Contrato de Prestação de Serviços & Licença de Software"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                className={`w-full px-3.5 py-2 text-xs rounded-xl focus:outline-none transition-colors ${
+                  isWhatsApp
+                    ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] placeholder:text-[#8696A0] focus:border-[#00A884]"
+                    : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-cyan-500"
+                }`}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" /> Nome do Cliente / Razão Social *
+              <label className={`text-xs font-medium flex items-center gap-1.5 ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
+                <User className={`w-3.5 h-3.5 ${isWhatsApp ? "text-[#00A884]" : "text-cyan-600 dark:text-cyan-400"}`} /> Nome do Cliente / Razão Social *
               </label>
               <input
                 type="text"
@@ -244,12 +276,16 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
                 placeholder="Nome da Empresa ou Contratante"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                className={`w-full px-3.5 py-2 text-xs rounded-xl focus:outline-none transition-colors ${
+                  isWhatsApp
+                    ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] placeholder:text-[#8696A0] focus:border-[#00A884]"
+                    : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-cyan-500"
+                }`}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              <label className={`text-xs font-medium ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
                 CPF / CNPJ do Contratante
               </label>
               <input
@@ -257,12 +293,16 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={clientDocument}
                 onChange={(e) => setClientDocument(e.target.value)}
                 placeholder="00.000.000/0001-00"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono"
+                className={`w-full px-3.5 py-2 text-xs rounded-xl focus:outline-none font-mono transition-colors ${
+                  isWhatsApp
+                    ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] placeholder:text-[#8696A0] focus:border-[#00A884]"
+                    : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-cyan-500 font-mono"
+                }`}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              <label className={`text-xs font-medium ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
                 E-mail para Assinatura
               </label>
               <input
@@ -270,12 +310,16 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={clientEmail}
                 onChange={(e) => setClientEmail(e.target.value)}
                 placeholder="diretoria@cliente.com.br"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                className={`w-full px-3.5 py-2 text-xs rounded-xl focus:outline-none transition-colors ${
+                  isWhatsApp
+                    ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] placeholder:text-[#8696A0] focus:border-[#00A884]"
+                    : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-cyan-500"
+                }`}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              <label className={`text-xs font-medium ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
                 Telefone / WhatsApp
               </label>
               <input
@@ -283,12 +327,16 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
                 placeholder="(11) 99999-9999"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono"
+                className={`w-full px-3.5 py-2 text-xs rounded-xl focus:outline-none font-mono transition-colors ${
+                  isWhatsApp
+                    ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] placeholder:text-[#8696A0] focus:border-[#00A884]"
+                    : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-cyan-500 font-mono"
+                }`}
               />
             </div>
 
             <div className="sm:col-span-2 space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              <label className={`text-xs font-medium ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
                 Endereço Completo do Contratante
               </label>
               <input
@@ -296,16 +344,24 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={clientAddress}
                 onChange={(e) => setClientAddress(e.target.value)}
                 placeholder="Av. Paulista, 1000, Sala 50 - São Paulo/SP"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                className={`w-full px-3.5 py-2 text-xs rounded-xl focus:outline-none transition-colors ${
+                  isWhatsApp
+                    ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] placeholder:text-[#8696A0] focus:border-[#00A884]"
+                    : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-cyan-500"
+                }`}
               />
             </div>
           </div>
 
           {/* Valores e Prazos */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80">
+          <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl border ${
+            isWhatsApp
+              ? "bg-[#202C33] border-[#222D34]"
+              : "bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80"
+          }`}>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <DollarSign className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Valor do Contrato (R$) *
+              <label className={`text-xs font-medium flex items-center gap-1.5 ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
+                <DollarSign className={`w-3.5 h-3.5 ${isWhatsApp ? "text-[#00A884]" : "text-emerald-600 dark:text-emerald-400"}`} /> Valor do Contrato (R$) *
               </label>
               <input
                 type="number"
@@ -314,38 +370,50 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
                 value={value}
                 onChange={(e) => setValue(parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 font-bold font-mono focus:outline-none focus:border-emerald-500"
+                className={`w-full px-3.5 py-2 text-xs rounded-xl font-bold font-mono focus:outline-none transition-colors ${
+                  isWhatsApp
+                    ? "bg-[#111B21] border border-[#222D34] text-[#00A884] focus:border-[#00A884]"
+                    : "bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 focus:border-emerald-500"
+                }`}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" /> Início da Vigência
+              <label className={`text-xs font-medium flex items-center gap-1.5 ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
+                <Calendar className={`w-3.5 h-3.5 ${isWhatsApp ? "text-[#00A884]" : "text-cyan-600 dark:text-cyan-400"}`} /> Início da Vigência
               </label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white focus:outline-none focus:border-cyan-500 font-mono"
+                className={`w-full px-3.5 py-2 text-xs rounded-xl font-mono focus:outline-none transition-colors ${
+                  isWhatsApp
+                    ? "bg-[#111B21] border border-[#222D34] text-[#E9EDEF] focus:border-[#00A884]"
+                    : "bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white focus:border-cyan-500 font-mono"
+                }`}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" /> Término da Vigência
+              <label className={`text-xs font-medium flex items-center gap-1.5 ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
+                <Calendar className={`w-3.5 h-3.5 ${isWhatsApp ? "text-[#00A884]" : "text-cyan-600 dark:text-cyan-400"}`} /> Término da Vigência
               </label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white focus:outline-none focus:border-cyan-500 font-mono"
+                className={`w-full px-3.5 py-2 text-xs rounded-xl font-mono focus:outline-none transition-colors ${
+                  isWhatsApp
+                    ? "bg-[#111B21] border border-[#222D34] text-[#E9EDEF] focus:border-[#00A884]"
+                    : "bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white focus:border-cyan-500 font-mono"
+                }`}
               />
             </div>
           </div>
 
           {/* Observações Internas */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+            <label className={`text-xs font-medium ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
               Observações / Instruções Específicas
             </label>
             <textarea
@@ -353,23 +421,37 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Ex: Assinatura exigida pelo sócio administrador até a próxima sexta-feira."
-              className="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              className={`w-full px-3.5 py-2 text-xs rounded-xl focus:outline-none transition-colors ${
+                isWhatsApp
+                  ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] placeholder:text-[#8696A0] focus:border-[#00A884]"
+                  : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-cyan-500"
+              }`}
             />
           </div>
 
           {/* Footer com Ações */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800/80">
+          <div className={`flex items-center justify-end gap-3 pt-4 border-t ${
+            isWhatsApp ? "border-[#222D34]" : "border-slate-200 dark:border-slate-800/80"
+          }`}>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium"
+              className={`px-4 py-2 text-xs rounded-xl border font-medium transition-colors cursor-pointer ${
+                isWhatsApp
+                  ? "border-[#222D34] text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#202C33]"
+                  : "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 px-5 py-2 text-xs rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold shadow-md shadow-cyan-500/20 transition-all disabled:opacity-50"
+              className={`flex items-center gap-2 px-5 py-2 text-xs rounded-xl font-semibold transition-all disabled:opacity-50 cursor-pointer text-white shadow-sm ${
+                isWhatsApp
+                  ? "bg-[#00A884] hover:bg-[#02906F]"
+                  : "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-md shadow-cyan-500/20"
+              }`}
             >
               {loading ? (
                 <>
