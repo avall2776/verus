@@ -1574,7 +1574,7 @@ export default function SuperAdminAiAgentsPage() {
               </div>
 
               {/* Quick Chips de Simulação Rápida */}
-              <div className="p-3 border-b border-slate-800/80 bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 flex flex-wrap gap-1.5">
+              <div className="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-100/80 dark:bg-[#070D1B] flex flex-wrap gap-1.5">
                 {QUICK_PROMPTS.map((q, idx) => (
                   <button
                     key={idx}
@@ -1582,7 +1582,7 @@ export default function SuperAdminAiAgentsPage() {
                     onClick={() => {
                       setCurrentMessage(q);
                     }}
-                    className="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60 transition-colors cursor-pointer text-left"
+                    className="text-[10px] px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60 transition-colors cursor-pointer text-left shadow-sm dark:shadow-none"
                   >
                     {q}
                   </button>

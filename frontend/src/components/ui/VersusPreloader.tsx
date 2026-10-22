@@ -23,6 +23,13 @@ export default function VersusPreloader({
   const [resolvedUserName, setResolvedUserName] = useState<string>(userName || "");
   const [progress, setProgress] = useState<number>(0);
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "Bom dia";
+    if (hour >= 12 && hour < 18) return "Boa tarde";
+    return "Boa noite";
+  };
+
   // Tenta resolver o nome do usuário se não foi passado via props
   useEffect(() => {
     if (userName) {
@@ -225,7 +232,7 @@ export default function VersusPreloader({
         {/* Texto de Boas-Vindas */}
         <h2 className="text-3xl sm:text-5xl font-bold text-white tracking-wide flex items-center justify-center gap-3.5 drop-shadow-[0_8px_30px_rgba(0,0,0,0.9)]">
           <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_12px_#3b82f6]" />
-          <span>Bem-vindo de volta, {resolvedUserName || "Felipe"}</span>
+          <span>{getGreeting()}, {resolvedUserName || "Operador"}</span>
         </h2>
 
         {/* Barra de Status Centralizada */}

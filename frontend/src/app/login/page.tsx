@@ -160,6 +160,13 @@ export default function LoginPage() {
   // 15 segundos exatos de imersão corporativa
   const BOOT_DURATION_MS = 15000;
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "Bom dia";
+    if (hour >= 12 && hour < 18) return "Boa tarde";
+    return "Boa noite";
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -398,7 +405,7 @@ export default function LoginPage() {
             {/* Texto de Boas-Vindas */}
             <h2 className="text-3xl sm:text-5xl font-bold text-white tracking-wide flex items-center justify-center gap-3.5 drop-shadow-[0_8px_30px_rgba(0,0,0,0.9)]">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_12px_#3b82f6]" />
-              <span>Bem-vindo de volta, {authUserName || "Felipe"}</span>
+              <span>{getGreeting()}, {authUserName || "Operador"}</span>
             </h2>
 
             {/* Barra de Status Centralizada */}

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import * as THREE from "three";
 import VersusPreloader from "@/components/ui/VersusPreloader";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface WelcomeDashboardProps {
   onViewMetrics?: () => void;
@@ -145,11 +146,47 @@ const WelcomeParticlesBackground = () => {
 
 // ================= COMPONENTE PRINCIPAL WELCOMEDASHBOARD =================
 export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: WelcomeDashboardProps) {
+  const { theme, isWhatsApp, isClean } = useTheme();
   const [userName, setUserName] = useState<string>("Operador");
   const [userRole, setUserRole] = useState<string>("Atendente");
   const [companyName, setCompanyName] = useState<string>("Vallor");
   const [showPreloader, setShowPreloader] = useState<boolean>(false);
   const [forcePlayPreloader, setForcePlayPreloader] = useState<boolean>(false);
+
+  // Saudação Dinâmica Inteligente baseada no turno do dia (não mofada/estática)
+  const [greetingData, setGreetingData] = useState<{ greeting: string; subText: string }>({
+    greeting: "Bom dia",
+    subText: "Tenha um excelente e produtivo dia de trabalho",
+  });
+
+  useEffect(() => {
+    const calculateGreeting = () => {
+      const now = new Date();
+      const hour = now.getHours();
+
+      if (hour >= 5 && hour < 12) {
+        setGreetingData({
+          greeting: "Bom dia",
+          subText: "Tenha um excelente e produtivo dia de trabalho",
+        });
+      } else if (hour >= 12 && hour < 18) {
+        setGreetingData({
+          greeting: "Boa tarde",
+          subText: "Ótima tarde de atendimentos, conversões e negociações",
+        });
+      } else {
+        setGreetingData({
+          greeting: "Boa noite",
+          subText: "Finalizando o expediente com eficiência e inteligência",
+        });
+      }
+    };
+
+    calculateGreeting();
+    // Atualiza a cada 60s para acompanhar o turno do operador
+    const timer = setInterval(calculateGreeting, 60 * 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     try {
@@ -282,34 +319,49 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
       <div className="w-full max-w-4xl flex flex-col gap-6 relative z-10">
         
         {/* HERO CARD PRINCIPAL */}
-        <div className="anim-cascade-1 bg-white/90 dark:bg-[#0B1224]/90 border border-slate-800 rounded-3xl p-7 sm:p-9 shadow-2xl backdrop-blur-xl relative overflow-hidden group">
+        <div className={`anim-cascade-1 rounded-3xl p-7 sm:p-9 shadow-sm dark:shadow-2xl backdrop-blur-xl relative overflow-hidden group transition-colors border ${
+          isWhatsApp
+            ? "bg-[#111b21]/95 border-[#202c33]"
+            : "bg-white/95 dark:bg-[#0B1224]/90 border-slate-200 dark:border-slate-800"
+        }`}>
           {/* Brilho sutil no canto do card */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+          <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl pointer-events-none ${
+            isWhatsApp ? "bg-emerald-500/10" : "bg-blue-600/10"
+          }`} />
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
             <div className="space-y-3.5">
               
               {/* Badges de Identidade e Sessão */}
               <div className="flex flex-wrap items-center gap-2.5">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-600/15 border border-blue-500/30 text-blue-400 text-xs font-bold tracking-wide">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide border ${
+                  isWhatsApp
+                    ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
+                    : "bg-blue-600/10 dark:bg-blue-600/15 border-blue-500/20 dark:border-blue-500/30 text-blue-600 dark:text-blue-400"
+                }`}>
                   <Cpu className="w-3.5 h-3.5" />
                   <span>VALLOR ENTERPRISE CORE</span>
                 </span>
                 
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 dark:bg-[#070D1B] border border-slate-700/80 text-slate-300 text-xs font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                  isWhatsApp
+                    ? "bg-[#202c33] border-[#2a3942] text-slate-300"
+                    : "bg-slate-100 dark:bg-[#070D1B] border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-300"
+                }`}>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
                   <span>Sessão Ativa: {userRole}</span>
                 </span>
               </div>
 
-              {/* Saudação de Alto Impacto */}
-              <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
-                Bem-vindo de volta, <span className="text-blue-400">{userName}</span>!
+              {/* Saudação de Alto Impacto Inteligente */}
+              <h1 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight flex flex-wrap items-center gap-2">
+                <span>{greetingData.greeting},</span>
+                <span className={isWhatsApp ? "text-emerald-400" : "text-blue-600 dark:text-blue-400"}>{userName}</span>!
               </h1>
 
-              {/* Frase de Impacto Institucional */}
-              <p className="text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed">
-                A mais avançada plataforma corporativa de inteligência em vendas, atendimento omnichannel e automações empresariais para <strong className="text-white font-bold">{companyName}</strong>.
+              {/* Frase de Impacto Institucional Contextual */}
+              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
+                {greetingData.subText} na mais avançada plataforma corporativa de inteligência em vendas, atendimento omnichannel e automações empresariais para <strong className="text-slate-900 dark:text-white font-bold">{companyName}</strong>.
               </p>
             </div>
 
@@ -317,19 +369,27 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
             <div className="shrink-0 flex flex-wrap md:flex-col gap-2.5">
               <button
                 onClick={() => setShowPreloader(true)}
-                className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:border-cyan-400 text-xs font-bold transition-all shadow-md group"
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-sm group cursor-pointer border ${
+                  isWhatsApp
+                    ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:border-emerald-400"
+                    : "bg-cyan-50 dark:bg-cyan-500/10 hover:bg-cyan-100 dark:hover:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-500/30 hover:border-cyan-400"
+                }`}
                 title="Executar animação cinematográfica de boot do sistema"
               >
-                <Sparkles className="w-4 h-4 text-cyan-400 group-hover:rotate-12 transition-transform" />
+                <Sparkles className={`w-4 h-4 group-hover:rotate-12 transition-transform ${isWhatsApp ? "text-emerald-400" : "text-cyan-600 dark:text-cyan-400"}`} />
                 <span>Boot do Sistema (Preloader)</span>
               </button>
 
               {hasMetrics && onViewMetrics && (
                 <button
                   onClick={onViewMetrics}
-                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-blue-500/40 text-xs font-bold transition-all shadow-md group"
+                  className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-sm group cursor-pointer border ${
+                    isWhatsApp
+                      ? "bg-[#202c33] hover:bg-[#2a3942] text-slate-200 border-[#2a3942] hover:border-emerald-500/40"
+                      : "bg-slate-100 dark:bg-[#070D1B] hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-blue-500/40"
+                  }`}
                 >
-                  <BarChart3 className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
+                  <BarChart3 className={`w-4 h-4 group-hover:scale-110 transition-transform ${isWhatsApp ? "text-emerald-400" : "text-blue-600 dark:text-blue-400"}`} />
                   <span>Ver Métricas do Dia</span>
                 </button>
               )}
@@ -337,26 +397,44 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
           </div>
         </div>
 
-        {/* CARD DICA DE PRODUTIVIDADE */}
-        <div className="anim-cascade-2 bg-slate-50/90 dark:bg-slate-50 dark:bg-[#070D1B]/90 border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-md shadow-lg">
+        {/* CARD DICA DE PRODUTIVIDADE COM SUPORTE TOTAL A TEMAS (CLEAN, DARK, WHATSAPP) */}
+        <div className={`anim-cascade-2 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-md shadow-sm dark:shadow-lg transition-colors border ${
+          isWhatsApp
+            ? "bg-[#111b21]/95 border-[#202c33]"
+            : "bg-white/95 dark:bg-[#070D1B]/95 border-slate-200 dark:border-slate-800/80"
+        }`}>
           <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0 shadow-inner">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-inner border ${
+              isWhatsApp
+                ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
+                : "bg-blue-50 dark:bg-blue-600/10 border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400"
+            }`}>
               <Lightbulb className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-[11px] font-black text-blue-400 uppercase tracking-wider">
+                <span className={`text-[11px] font-black uppercase tracking-wider ${
+                  isWhatsApp ? "text-emerald-400" : "text-blue-600 dark:text-blue-400"
+                }`}>
                   Dica de Produtividade do Dia
                 </span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Pressione <kbd className="px-2 py-0.5 rounded-lg bg-slate-800 border border-slate-700 font-mono text-xs text-blue-300 font-bold shadow-sm">Ctrl + K</kbd> para comandos rápidos ou expanda as categorias na barra lateral para acessar seus módulos operacionais.
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Pressione <kbd className={`px-2 py-0.5 rounded-lg font-mono text-xs font-bold shadow-sm border ${
+                  isWhatsApp
+                    ? "bg-[#202c33] border-[#2a3942] text-emerald-300"
+                    : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-300"
+                }`}>Ctrl + K</kbd> para comandos rápidos ou expanda as categorias na barra lateral para acessar seus módulos operacionais.
               </p>
             </div>
           </div>
 
-          <div className="text-[11px] text-slate-400 flex items-center gap-1.5 shrink-0 bg-white dark:bg-[#0B1224] px-3 py-1.5 rounded-xl border border-slate-800/80">
-            <Clock className="w-3.5 h-3.5 text-emerald-400" />
+          <div className={`text-[11px] flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-xl border ${
+            isWhatsApp
+              ? "bg-[#202c33] border-[#2a3942] text-slate-300"
+              : "bg-slate-50 dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 text-slate-600 dark:text-slate-400"
+          }`}>
+            <Clock className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
             <span>Workspace pronto</span>
           </div>
         </div>
@@ -364,10 +442,10 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
         {/* CARDS DE ACESSO RÁPIDO AOS MÓDULOS */}
         <div className="anim-cascade-3 space-y-3">
           <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Módulos Operacionais em Destaque
             </span>
-            <span className="text-[11px] text-slate-500">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500">
               Clique em qualquer módulo ou use o menu à esquerda
             </span>
           </div>
@@ -379,11 +457,19 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="p-5 rounded-2xl bg-white/90 dark:bg-[#0B1224]/90 border border-slate-800 hover:border-blue-500/40 transition-all flex flex-col justify-between group hover:bg-white dark:bg-[#0B1224] shadow-xl hover:shadow-blue-600/5 backdrop-blur-md relative overflow-hidden"
+                  className={`p-5 rounded-2xl border transition-all flex flex-col justify-between group shadow-sm hover:shadow-md dark:shadow-xl dark:hover:shadow-blue-600/5 backdrop-blur-md relative overflow-hidden ${
+                    isWhatsApp
+                      ? "bg-[#111b21]/95 border-[#202c33] hover:border-emerald-500/40"
+                      : "bg-white/95 dark:bg-[#0B1224]/90 border-slate-200 dark:border-slate-800 hover:border-blue-500/40"
+                  }`}
                 >
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 flex items-center justify-center text-blue-400 group-hover:scale-105 group-hover:border-blue-500/40 transition-all">
+                      <div className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all group-hover:scale-105 ${
+                        isWhatsApp
+                          ? "bg-[#202c33] border-[#2a3942] text-emerald-400 group-hover:border-emerald-500/40"
+                          : "bg-slate-100 dark:bg-[#070D1B] border-slate-200 dark:border-slate-800 text-blue-600 dark:text-blue-400 group-hover:border-blue-500/40"
+                      }`}>
                         <Icon className="w-5 h-5" />
                       </div>
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${item.badgeColor}`}>
@@ -391,17 +477,25 @@ export default function WelcomeDashboard({ onViewMetrics, hasMetrics = true }: W
                       </span>
                     </div>
 
-                    <h3 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors flex items-center gap-1.5">
+                    <h3 className={`text-sm font-bold text-slate-900 dark:text-white transition-colors flex items-center gap-1.5 ${
+                      isWhatsApp ? "group-hover:text-emerald-400" : "group-hover:text-blue-600 dark:group-hover:text-blue-400"
+                    }`}>
                       {item.title}
-                      <ArrowRight className="w-3.5 h-3.5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-blue-400" />
+                      <ArrowRight className={`w-3.5 h-3.5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all ${
+                        isWhatsApp ? "text-emerald-400" : "text-blue-600 dark:text-blue-400"
+                      }`} />
                     </h3>
 
-                    <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
                       {item.description}
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400 group-hover:text-slate-200 transition-colors">
+                  <div className={`mt-4 pt-3 border-t flex items-center justify-between text-[11px] transition-colors ${
+                    isWhatsApp
+                      ? "border-[#202c33] text-slate-400 group-hover:text-slate-200"
+                      : "border-slate-100 dark:border-slate-800/60 text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200"
+                  }`}>
                     <span>Iniciar Operação</span>
                     <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </div>
