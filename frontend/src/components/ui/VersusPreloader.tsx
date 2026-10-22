@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import * as THREE from "three";
-import { useTheme } from "@/contexts/ThemeContext";
 import { VallGlyph, RGlyph } from "./VallorGlyphs";
 
 interface VersusPreloaderProps {
@@ -13,23 +12,17 @@ interface VersusPreloaderProps {
   userName?: string;
 }
 
-// ================= COMPONENTE OCEANO DE DADOS THREE.JS (EFEITO PARADOXO / ONDULAÇÃO DE PARTÍCULAS) =================
-// Idêntico ao efeito visual da tela de login, sem quadradinhos, com ondulação 3D suave e interação de mouse
-const PreloaderParticles = ({
-  isWhatsApp,
-  isCleanTheme,
-}: {
-  isWhatsApp?: boolean;
-  isCleanTheme?: boolean;
-}) => {
+// ================= COMPONENTE OCEANO DE DADOS THREE.JS (AZUL CLÁSSICO FIXO DA VALLOR) =================
+// Idêntico ao efeito visual da tela de login: azul corporativo clássico, sem quadradinhos, ondulação 3D contínua
+const PreloaderParticles = () => {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
 
     const scene = new THREE.Scene();
-    // Fundo azul corporativo profundo e imersivo
-    const bgColor = isWhatsApp ? 0x052e24 : isCleanTheme ? 0xf1f5f9 : 0x070d1b;
+    // Fundo azul corporativo clássico e profundo (#070D1B)
+    const bgColor = 0x070d1b;
     scene.fog = new THREE.FogExp2(bgColor, 0.022);
 
     const camera = new THREE.PerspectiveCamera(
@@ -60,7 +53,7 @@ const PreloaderParticles = ({
     }
     const circleTexture = new THREE.CanvasTexture(canvas);
 
-    // Grid 3D de Partículas (Onda com as bolinhas / paradoxo)
+    // Grid 3D de Partículas (Onda com bolinhas / efeito paradoxo)
     const SEPARATION = 3,
       AMOUNTX = 70,
       AMOUNTY = 70;
@@ -80,20 +73,14 @@ const PreloaderParticles = ({
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
-    // Cor corporativa adaptativa (azul clássico na escuridão, esmeralda no WhatsApp)
-    const particleColor = isWhatsApp
-      ? 0x10b981
-      : isCleanTheme
-        ? 0x2563eb
-        : 0x3b82f6;
-
+    // Cor azul corporativo clássica da plataforma
     const material = new THREE.PointsMaterial({
-      color: particleColor,
+      color: 0x3b82f6,
       size: 0.28,
       map: circleTexture,
       alphaTest: 0.3,
       transparent: true,
-      opacity: isCleanTheme ? 0.4 : 0.65,
+      opacity: 0.65,
     });
 
     const particles = new THREE.Points(geometry, material);
@@ -162,20 +149,19 @@ const PreloaderParticles = ({
       material.dispose();
       renderer.dispose();
     };
-  }, [isWhatsApp, isCleanTheme]);
+  }, []);
 
   return <div ref={mountRef} className="absolute inset-0 z-0 pointer-events-none overflow-hidden" />;
 };
 
 // ================= COMPONENTE PRINCIPAL VERSUSPRELOADER =================
+// 100% FIXO NO AZUL CLÁSSICO CORPORATIVO DA VALLOR (NUNCA MUDA COM TEMA CLEAN OU WHATSAPP)
 export default function VersusPreloader({
   onComplete,
-  durationMs = 15000, // 15 segundos solicitados pelo usuário para leitura confortável e ritmo cinematográfico
+  durationMs = 15000, // 15 segundos solicitados pelo usuário para leitura confortável
   forcePlay = false,
 }: VersusPreloaderProps) {
-  const { isDark, isWhatsApp } = useTheme();
-
-  // Estágios da animação (tempo estendido para 15s):
+  // Estágios da animação:
   // 0 = Initial Spin (0s - 3s): Círculo "O" gira isolado e centrado no meio da tela
   // 1 = Reveal Word (3s - 5.5s): "O" desloca lateralmente revelando "VALL" e "R"
   // 2 = Signature & Telemetry (5.5s - 13.5s): "by Avall" surge e telemetria de inicialização é exibida
@@ -185,29 +171,9 @@ export default function VersusPreloader({
   const [isFinished, setIsFinished] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Status de telemetria legível e com tempo suficiente para o usuário ler com tranquilidade
+  // Status de telemetria legível com ritmo cinematográfico
   const [statusText, setStatusText] = useState("INICIALIZANDO MOTOR CENTRAL VALLOR...");
-  const [progressPercent, setProgressPercent] = useState(12);
-
-  // Fallback seguro de tema baseado em classes DOM
-  const [domTheme, setDomTheme] = useState<{ isDark: boolean; isWhatsApp: boolean }>({
-    isDark: true,
-    isWhatsApp: false,
-  });
-
-  useEffect(() => {
-    if (typeof document !== "undefined") {
-      const root = document.documentElement;
-      setDomTheme({
-        isDark: root.classList.contains("dark") || isDark,
-        isWhatsApp: root.classList.contains("theme-whatsapp") || isWhatsApp,
-      });
-    }
-  }, [isDark, isWhatsApp]);
-
-  const effectiveIsWhatsApp = isWhatsApp || domTheme.isWhatsApp;
-  const effectiveIsDark = isDark || domTheme.isDark;
-  const isCleanTheme = !effectiveIsDark && !effectiveIsWhatsApp;
+  const [progressPercent, setProgressPercent] = useState(14);
 
   // Detecção de viewport para cálculo dinâmico de coordenadas
   useEffect(() => {
@@ -276,7 +242,7 @@ export default function VersusPreloader({
       setProgressPercent(100);
     }, 11500);
 
-    // 5. Aos 14.2 segundos: Transição de saída suave (scale 1.03 + blur 8px)
+    // 5. Aos 14.2 segundos: Transição de saída suave (scale 1.03 + blur 10px)
     const exitLeadTime = 800;
     const exitDelay = Math.max(2000, durationMs - exitLeadTime);
     const tExit = setTimeout(() => {
@@ -334,41 +300,25 @@ export default function VersusPreloader({
       transition={{ duration: 0.75, ease: [0.4, 0, 0.2, 1] }}
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden select-none"
       style={{
-        backgroundColor: effectiveIsWhatsApp
-          ? "#0B141A"
-          : isCleanTheme
-            ? "#F8FAFC"
-            : "#070D1B",
+        backgroundColor: "#070D1B",
         pointerEvents: isExiting ? "none" : "auto",
       }}
     >
-      {/* 1. FUNDO THREE.JS: OCEANO DE DADOS COM ONDULAÇÃO 3D E PARADOXO (SEM QUADRADINHOS) */}
-      <PreloaderParticles
-        isWhatsApp={effectiveIsWhatsApp}
-        isCleanTheme={isCleanTheme}
-      />
+      {/* 1. FUNDO THREE.JS: OCEANO DE DADOS AZUL CORPORATIVO (SEM QUADRADINHOS) */}
+      <PreloaderParticles />
 
-      {/* 2. GRADIENTE RADIAL SUAVE SOBREPOSTO (DEEP NAVY / OBSIDIANA) */}
+      {/* 2. GRADIENTE RADIAL AZUL MARINHO PROFUNDO (DEEP NAVY / OBSIDIANA) */}
       <div
         className="absolute inset-0 pointer-events-none transition-opacity duration-700 z-[1]"
         style={{
-          background: effectiveIsWhatsApp
-            ? "radial-gradient(ellipse at 50% 50%, rgba(5, 46, 36, 0.5) 0%, rgba(11, 20, 26, 0.85) 60%, #0B141A 100%)"
-            : isCleanTheme
-              ? "radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.8) 0%, rgba(241, 245, 249, 0.85) 60%, #F8FAFC 100%)"
-              : "radial-gradient(ellipse at 50% 50%, rgba(11, 25, 44, 0.6) 0%, rgba(7, 13, 27, 0.9) 55%, #050814 100%)",
+          background:
+            "radial-gradient(ellipse at 50% 50%, rgba(11, 25, 44, 0.65) 0%, rgba(7, 13, 27, 0.92) 55%, #050814 100%)",
         }}
       />
 
-      {/* 3. AURA LUMINOSA TRANSLÚCIDA (BACKLIGHT GLOW MACIO ATRÁS DO LOGO) */}
+      {/* 3. AURA LUMINOSA TRANSLÚCIDA (BACKLIGHT GLOW AZUL/CIANO ATRÁS DO LOGO) */}
       <div
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] sm:w-[500px] h-[200px] rounded-full blur-[100px] pointer-events-none transition-all duration-700 animate-pulse z-[2] ${
-          effectiveIsWhatsApp
-            ? "bg-gradient-to-r from-emerald-600/35 via-teal-400/25 to-emerald-500/35"
-            : isCleanTheme
-              ? "bg-gradient-to-r from-blue-300/40 via-cyan-200/35 to-blue-300/40"
-              : "bg-gradient-to-r from-blue-600/40 via-cyan-400/35 to-blue-500/40"
-        }`}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] sm:w-[500px] h-[200px] rounded-full blur-[100px] pointer-events-none transition-all duration-700 animate-pulse z-[2] bg-gradient-to-r from-blue-600/40 via-cyan-400/35 to-blue-500/40"
         style={{ animationDuration: "3.2s" }}
       />
 
@@ -396,13 +346,7 @@ export default function VersusPreloader({
             className="shrink-0 flex items-center justify-end overflow-hidden"
           >
             <VallGlyph
-              className={`h-full w-auto select-none pointer-events-none transition-all ${
-                isCleanTheme
-                  ? "brightness-0 opacity-85"
-                  : effectiveIsWhatsApp
-                    ? "brightness-100 opacity-95 drop-shadow-[0_0_25px_rgba(16,185,129,0.3)]"
-                    : "brightness-100 opacity-95 drop-shadow-[0_2px_20px_rgba(255,255,255,0.12)]"
-              }`}
+              className="h-full w-auto select-none pointer-events-none transition-all brightness-100 opacity-95 drop-shadow-[0_2px_20px_rgba(255,255,255,0.12)]"
             />
           </motion.div>
 
@@ -435,35 +379,15 @@ export default function VersusPreloader({
                 viewBox="6 6 244 244"
                 className="w-full h-full"
                 style={{
-                  filter: effectiveIsWhatsApp
-                    ? "drop-shadow(0 0 16px rgba(16, 185, 129, 0.55))"
-                    : isCleanTheme
-                      ? "drop-shadow(0 0 12px rgba(37, 99, 235, 0.4))"
-                      : "drop-shadow(0 0 22px rgba(0, 210, 255, 0.65))",
+                  filter: "drop-shadow(0 0 22px rgba(0, 210, 255, 0.65))",
                 }}
               >
                 <defs>
-                  {/* Gradiente vetorial dinâmico da marca VALLOR */}
+                  {/* Gradiente vetorial azul corporativo da marca VALLOR */}
                   <linearGradient id="preloaderMainSpinnerGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-                    {effectiveIsWhatsApp ? (
-                      <>
-                        <stop offset="0%" stopColor="#059669" />
-                        <stop offset="50%" stopColor="#34D399" />
-                        <stop offset="100%" stopColor="#10B981" />
-                      </>
-                    ) : isCleanTheme ? (
-                      <>
-                        <stop offset="0%" stopColor="#1D4ED8" />
-                        <stop offset="50%" stopColor="#38BDF8" />
-                        <stop offset="100%" stopColor="#2563EB" />
-                      </>
-                    ) : (
-                      <>
-                        <stop offset="0%" stopColor="#00A8FF" />
-                        <stop offset="50%" stopColor="#00E5FF" />
-                        <stop offset="100%" stopColor="#2563EB" />
-                      </>
-                    )}
+                    <stop offset="0%" stopColor="#00A8FF" />
+                    <stop offset="50%" stopColor="#00E5FF" />
+                    <stop offset="100%" stopColor="#2563EB" />
                   </linearGradient>
                 </defs>
 
@@ -473,13 +397,7 @@ export default function VersusPreloader({
                   cy="128"
                   r="98"
                   fill="none"
-                  stroke={
-                    effectiveIsWhatsApp
-                      ? "rgba(16, 185, 129, 0.18)"
-                      : isCleanTheme
-                        ? "rgba(37, 99, 235, 0.14)"
-                        : "rgba(0, 168, 255, 0.22)"
-                  }
+                  stroke="rgba(0, 168, 255, 0.22)"
                   strokeWidth="48"
                 />
 
@@ -526,13 +444,7 @@ export default function VersusPreloader({
             className="shrink-0 flex items-center justify-start overflow-hidden"
           >
             <RGlyph
-              className={`h-full w-auto select-none pointer-events-none transition-all ${
-                isCleanTheme
-                  ? "brightness-0 opacity-85"
-                  : effectiveIsWhatsApp
-                    ? "brightness-100 opacity-95 drop-shadow-[0_0_25px_rgba(16,185,129,0.3)]"
-                    : "brightness-100 opacity-95 drop-shadow-[0_2px_20px_rgba(255,255,255,0.12)]"
-              }`}
+              className="h-full w-auto select-none pointer-events-none transition-all brightness-100 opacity-95 drop-shadow-[0_2px_20px_rgba(255,255,255,0.12)]"
             />
           </motion.div>
         </div>
@@ -549,13 +461,7 @@ export default function VersusPreloader({
           className="mt-5 flex items-center justify-center select-none"
         >
           <span
-            className={`text-xs sm:text-[14px] font-medium tracking-[0.36em] uppercase transition-colors ${
-              effectiveIsWhatsApp
-                ? "text-emerald-400/95 drop-shadow-[0_0_14px_rgba(16,185,129,0.4)]"
-                : isCleanTheme
-                  ? "text-slate-600 font-semibold"
-                  : "text-slate-300 dark:text-cyan-400/95 drop-shadow-[0_0_16px_rgba(0,210,255,0.35)]"
-            }`}
+            className="text-xs sm:text-[14px] font-medium tracking-[0.36em] uppercase transition-colors text-cyan-400/95 drop-shadow-[0_0_16px_rgba(0,210,255,0.35)]"
           >
             by Avall
           </span>
@@ -569,15 +475,9 @@ export default function VersusPreloader({
           className="mt-8 flex flex-col items-center gap-3 w-full max-w-[340px] sm:max-w-[420px]"
         >
           {/* Trilho de Progresso com Preenchimento Gradativo em Tempo Real */}
-          <div className="relative w-full h-[2.5px] rounded-full overflow-hidden bg-slate-800/90 dark:bg-slate-800/90">
+          <div className="relative w-full h-[2.5px] rounded-full overflow-hidden bg-slate-800/90">
             <motion.div
-              className={`h-full rounded-full transition-all duration-700 ${
-                effectiveIsWhatsApp
-                  ? "bg-gradient-to-r from-emerald-600 via-teal-400 to-emerald-400 shadow-[0_0_12px_#10B981]"
-                  : isCleanTheme
-                    ? "bg-gradient-to-r from-blue-500 to-indigo-600"
-                    : "bg-gradient-to-r from-blue-600 via-cyan-400 to-blue-400 shadow-[0_0_14px_#00D2FF]"
-              }`}
+              className="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-blue-600 via-cyan-400 to-blue-400 shadow-[0_0_14px_#00D2FF]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -586,24 +486,12 @@ export default function VersusPreloader({
           <div className="w-full flex items-center justify-between text-[10px] sm:text-[11px] font-mono tracking-wider">
             <p
               key={statusText}
-              className={`uppercase font-semibold transition-all duration-500 animate-fadeIn ${
-                effectiveIsWhatsApp
-                  ? "text-emerald-400"
-                  : isCleanTheme
-                    ? "text-slate-600"
-                    : "text-cyan-400"
-              }`}
+              className="uppercase font-semibold transition-all duration-500 animate-fadeIn text-cyan-400"
             >
               {statusText}
             </p>
             <span
-              className={`font-mono font-bold shrink-0 ml-3 ${
-                effectiveIsWhatsApp
-                  ? "text-emerald-400/80"
-                  : isCleanTheme
-                    ? "text-slate-500"
-                    : "text-cyan-400/80"
-              }`}
+              className="font-mono font-bold shrink-0 ml-3 text-cyan-400/80"
             >
               {progressPercent}%
             </span>
@@ -613,7 +501,7 @@ export default function VersusPreloader({
         {/* 7. BOTÃO DISCRETO PARA PULAR [ESC] (CASO O OPERADOR DESEJE AGILIDADE) */}
         <button
           onClick={finishBootNow}
-          className="mt-8 text-[10px] font-mono tracking-[0.25em] text-slate-500 hover:text-slate-300 dark:text-slate-500 dark:hover:text-slate-300 transition-colors uppercase cursor-pointer"
+          className="mt-8 text-[10px] font-mono tracking-[0.25em] text-slate-500 hover:text-slate-300 transition-colors uppercase cursor-pointer"
           title="Pressione ESC ou clique para entrar imediatamente no sistema"
         >
           Pular Introdução [ESC]

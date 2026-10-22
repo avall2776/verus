@@ -156,6 +156,16 @@ export default function LoginPage() {
   // Fluxo de estados: 'form' -> 'evaporating' (fade-out do card) -> 'booting' (preloader cinematográfico)
   const [cardState, setCardState] = useState<"form" | "evaporating" | "booting">("form");
 
+  // A tela de login é SEMPRE no azul clássico corporativo (dark)
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const root = document.documentElement;
+      root.classList.add("dark");
+      root.classList.remove("light", "theme-whatsapp");
+      root.setAttribute("data-theme", "dark");
+    }
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");

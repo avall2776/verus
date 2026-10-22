@@ -19,16 +19,29 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("dark");
   const [mounted, setMounted] = useState(false);
 
-  // Inicialização no cliente respeitando localStorage e preferência do SO
+  // Inicialização no cliente: Primeiro acesso SEMPRE no azul clássico ("dark")
   useEffect(() => {
     try {
+      // Se estiver na tela de login, o tema visual é estritamente o azul clássico ("dark")
+      if (typeof window !== "undefined" && window.location.pathname.startsWith("/login")) {
+        setThemeState("dark");
+        if (typeof document !== "undefined") {
+          const root = document.documentElement;
+          root.classList.add("dark");
+          root.classList.remove("light", "theme-whatsapp");
+          root.setAttribute("data-theme", "dark");
+        }
+        setMounted(true);
+        return;
+      }
+
       const storedTheme = (localStorage.getItem("versus_theme") || localStorage.getItem("theme")) as Theme | null;
       if (storedTheme === "dark" || storedTheme === "light" || storedTheme === "whatsapp") {
         setThemeState(storedTheme);
         applyThemeClass(storedTheme);
       } else {
-        const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-        const initialTheme: Theme = prefersDark ? "dark" : "light";
+        // Primeiro acesso do usuário: SEMPRE AZUL CLÁSSICO ("dark"), sem herdar tema claro do SO
+        const initialTheme: Theme = "dark";
         setThemeState(initialTheme);
         applyThemeClass(initialTheme);
       }
@@ -54,6 +67,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const applyThemeClass = (t: Theme) => {
     if (typeof document !== "undefined") {
+      // Na tela de login, NUNCA permite alteração de classes para clean ou whatsapp
+      if (typeof window !== "undefined" && window.location.pathname.startsWith("/login")) {
+        const root = document.documentElement;
+        root.classList.add("dark");
+        root.classList.remove("light", "theme-whatsapp");
+        root.setAttribute("data-theme", "dark");
+        return;
+      }
+
       const root = document.documentElement;
       if (t === "whatsapp") {
         root.classList.add("dark", "theme-whatsapp");
