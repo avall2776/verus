@@ -155,25 +155,36 @@ export default function AgencyMarketingPage() {
     <div className="flex flex-col h-full w-full max-w-[1600px] mx-auto gap-5 pb-10 animate-in fade-in duration-200">
       
       {/* 1. Header Executivo do Kanban de Produção */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-wide flex items-center gap-2">
-              <LayoutKanban className="w-6 h-6 text-blue-600 dark:text-cyan-400" strokeWidth={1.75} />
-              <span>Kanban de Produção</span>
-            </h1>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-cyan-500/15 text-blue-700 dark:text-cyan-300 border border-blue-200 dark:border-cyan-500/30">
-              Operacional
-            </span>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-wide flex items-center gap-2">
+                <LayoutKanban className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-cyan-400 shrink-0" strokeWidth={1.75} />
+                <span>Kanban de Produção</span>
+              </h1>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-cyan-500/15 text-blue-700 dark:text-cyan-300 border border-blue-200 dark:border-cyan-500/30">
+                Operacional
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+              Fluxo contínuo de criação, revisão técnica, aprovação de clientes e agendamento.
+            </p>
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-            Fluxo contínuo de criação, revisão técnica, aprovação de clientes e agendamento.
-          </p>
+
+          <button
+            onClick={() => loadModuleData(true)}
+            disabled={refreshing}
+            className="md:hidden p-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors shrink-0"
+            title="Sincronizar esteira"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin text-blue-600 dark:text-cyan-400" : ""}`} strokeWidth={1.75} />
+          </button>
         </div>
 
-        {/* Resumo Operacional e Botão de Sincronização */}
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-4 px-4 py-2 rounded-xl bg-white dark:bg-[#0B1224]/80 border border-slate-200 dark:border-slate-800 text-xs shadow-xs">
+        {/* Resumo Operacional e Botão de Sincronização no Desktop */}
+        <div className="hidden md:flex items-center gap-3">
+          <div className="flex items-center gap-4 px-4 py-2 rounded-xl bg-white dark:bg-[#0B1224]/80 border border-slate-200 dark:border-slate-800 text-xs shadow-xs">
             <div>
               <span className="text-[10px] text-slate-500 uppercase font-bold block">No Fluxo</span>
               <span className="font-bold text-slate-900 dark:text-white font-mono">{cards.length}</span>

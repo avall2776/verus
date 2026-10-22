@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Headphones, X, Building2, User } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
+import { isSoundChannelMuted, getChannelVolumeMultiplier } from "@/lib/soundSettings";
 
 export interface SupportAlertData {
   id: string; // ID único do alerta para a fila visual
@@ -54,6 +55,11 @@ export default function SuperAdminSupportNotifier() {
   const playSynthesizedChime = useCallback(() => {
     try {
       if (typeof window === "undefined") return;
+      if (isSoundChannelMuted("support")) return;
+
+      const volumeMultiplier = getChannelVolumeMultiplier("support");
+      if (volumeMultiplier <= 0) return;
+
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
@@ -64,7 +70,7 @@ export default function SuperAdminSupportNotifier() {
       const gain1 = ctx.createGain();
       osc1.type = "sine";
       osc1.frequency.setValueAtTime(659.25, ctx.currentTime);
-      gain1.gain.setValueAtTime(0.35, ctx.currentTime);
+      gain1.gain.setValueAtTime(0.35 * volumeMultiplier, ctx.currentTime);
       gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
       osc1.connect(gain1);
       gain1.connect(ctx.destination);
@@ -78,7 +84,7 @@ export default function SuperAdminSupportNotifier() {
           const gain2 = ctx.createGain();
           osc2.type = "sine";
           osc2.frequency.setValueAtTime(880, ctx.currentTime);
-          gain2.gain.setValueAtTime(0.4, ctx.currentTime);
+          gain2.gain.setValueAtTime(0.4 * volumeMultiplier, ctx.currentTime);
           gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.65);
           osc2.connect(gain2);
           gain2.connect(ctx.destination);
@@ -93,9 +99,13 @@ export default function SuperAdminSupportNotifier() {
   const playChimeSound = useCallback(() => {
     try {
       if (typeof window === "undefined") return;
+      if (isSoundChannelMuted("support")) return;
+
+      const volumeMultiplier = getChannelVolumeMultiplier("support");
+      if (volumeMultiplier <= 0) return;
 
       const audio = new Audio("/vallor/sounds/notification-glass.wav");
-      audio.volume = 0.85;
+      audio.volume = Math.max(0, Math.min(1, 0.85 * volumeMultiplier));
       const promise = audio.play();
 
       if (promise !== undefined) {

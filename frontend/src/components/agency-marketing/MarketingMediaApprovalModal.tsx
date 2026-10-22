@@ -222,10 +222,10 @@ export default function MarketingMediaApprovalModal({
         </div>
 
         {/* Corpo do Modal: Split 2 Colunas */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden divide-y lg:divide-y-0 lg:divide-x divide-slate-800">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden divide-y lg:divide-y-0 lg:divide-x divide-slate-800">
           
           {/* Coluna Esquerda: Reprodutor de Vídeo ou Visualizador de Imagem */}
-          <div className="flex-1 bg-slate-900 dark:bg-[#050814] flex flex-col justify-between p-4 overflow-y-auto">
+          <div className="flex-1 bg-slate-900 dark:bg-[#050814] flex flex-col justify-between p-4 shrink-0 lg:shrink lg:overflow-y-auto">
             
             {/* Área Central de Visualização de Mídia */}
             <div className="flex-1 flex items-center justify-center min-h-[320px] max-h-[560px] relative rounded-2xl overflow-hidden bg-black/40 border border-slate-800/80">
@@ -321,7 +321,7 @@ export default function MarketingMediaApprovalModal({
           </div>
 
           {/* Coluna Direita: Informações & Painel de Aprovação Executiva */}
-          <div className="w-full lg:w-96 p-5 flex flex-col justify-between gap-4 overflow-y-auto custom-scrollbar">
+          <div className="w-full lg:w-96 p-5 flex flex-col justify-between gap-4 shrink-0 lg:overflow-y-auto custom-scrollbar">
             
             <div className="space-y-4 text-xs">
               

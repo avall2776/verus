@@ -8,6 +8,14 @@ import { showLeadMessageToast, showTransferAlertToast, showLeadQualifiedToast } 
 import { sanitizeAvatarUrl } from '@/lib/avatarUtils';
 
 import { getStoredToken } from '@/lib/api';
+import { 
+  getSoundSettings, 
+  isSoundChannelMuted, 
+  getChannelVolumeMultiplier, 
+  SOUND_SETTINGS_EVENT,
+  SoundSettings,
+  DEFAULT_SOUND_SETTINGS
+} from '@/lib/soundSettings';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -16,7 +24,7 @@ interface SocketContextType {
   clearGlobalUnread: () => void;
   notificationPermission: NotificationPermission;
   requestNotificationPermission: () => Promise<NotificationPermission>;
-  playNotificationSound: (isHighPriority?: boolean) => void;
+  playNotificationSound: (isHighPriority?: boolean, channel?: 'whatsapp' | 'instagram' | 'support' | 'system') => void;
 }
 
 const SocketContext = createContext<SocketContextType>({
@@ -41,6 +49,27 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastSoundTriggeredRef = useRef<{ [key: string]: number }>({});
+  const soundSettingsRef = useRef<SoundSettings>(DEFAULT_SOUND_SETTINGS);
+
+  // Sincroniza configurações de som em tempo real
+  useEffect(() => {
+    soundSettingsRef.current = getSoundSettings();
+
+    const handleSoundSettingsChange = (e: any) => {
+      if (e?.detail) {
+        soundSettingsRef.current = { ...DEFAULT_SOUND_SETTINGS, ...e.detail };
+      } else {
+        soundSettingsRef.current = getSoundSettings();
+      }
+    };
+
+    window.addEventListener(SOUND_SETTINGS_EVENT, handleSoundSettingsChange);
+    window.addEventListener('storage', handleSoundSettingsChange);
+    return () => {
+      window.removeEventListener(SOUND_SETTINGS_EVENT, handleSoundSettingsChange);
+      window.removeEventListener('storage', handleSoundSettingsChange);
+    };
+  }, []);
 
   const clearGlobalUnread = useCallback(() => {
     setHasGlobalUnread((prev) => (prev ? false : prev));
@@ -106,13 +135,33 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     return false;
   }, []);
 
-  // Dispara áudio de notificação profissional (Arquivos Acústicos Reais + Fallback Sintetizado)
-  const playNotificationSound = useCallback((isHighPriority = false) => {
+  // Dispara áudio de notificação profissional respeitando rigorosamente preferências e silenciamento
+  const playNotificationSound = useCallback((
+    isHighPriority = false,
+    channel: 'whatsapp' | 'instagram' | 'support' | 'system' = 'whatsapp'
+  ) => {
     try {
       if (typeof window === 'undefined') return;
       if (isUnauthenticatedOrPublic()) return;
 
-      // 1. Tenta reproduzir arquivo de áudio acústico de alta qualidade
+      // 1. Verificação em tempo real de Silenciamento Mestre ou por Canal
+      const currentSettings = getSoundSettings();
+      soundSettingsRef.current = currentSettings;
+
+      if (currentSettings.masterMute) {
+        // Silenciar Todos os Sons ativado: interrompe imediatamente qualquer áudio
+        return;
+      }
+
+      if (isSoundChannelMuted(channel)) {
+        // Canal específico (ex: whatsapp ou instagram) desativado pelo operador
+        return;
+      }
+
+      const volumeMultiplier = getChannelVolumeMultiplier(channel);
+      if (volumeMultiplier <= 0) return;
+
+      // 2. Tenta reproduzir arquivo de áudio acústico de alta qualidade
       const preset = localStorage.getItem('versus_sound_preset') || 'glass';
       let soundPath = '/vallor/sounds/notification.wav';
 
@@ -125,23 +174,30 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       const audio = new Audio(soundPath);
-      audio.volume = isHighPriority ? 0.75 : 0.65;
+      const baseVolume = isHighPriority ? 0.75 : 0.65;
+      audio.volume = Math.max(0, Math.min(1, baseVolume * volumeMultiplier));
       
       const playPromise = audio.play();
       if (playPromise !== undefined) {
-        playPromise.catch((playErr) => {
+        playPromise.catch(() => {
           // Fallback resiliente via Web Audio API caso o navegador bloqueie áudio externo
-          playSynthesizedFallback(isHighPriority);
+          playSynthesizedFallback(isHighPriority, volumeMultiplier);
         });
       }
     } catch (e) {
-      playSynthesizedFallback(isHighPriority);
+      const volumeMultiplier = getChannelVolumeMultiplier(channel);
+      if (volumeMultiplier > 0 && !getSoundSettings().masterMute) {
+        playSynthesizedFallback(isHighPriority, volumeMultiplier);
+      }
     }
   }, [isUnauthenticatedOrPublic]);
 
-  const playSynthesizedFallback = (isHighPriority = false) => {
+  const playSynthesizedFallback = (isHighPriority = false, volumeMultiplier = 0.8) => {
     try {
       if (typeof window === 'undefined') return;
+      const currentSettings = getSoundSettings();
+      if (currentSettings.masterMute || volumeMultiplier <= 0) return;
+
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
 
@@ -160,7 +216,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         osc.frequency.setValueAtTime(1046.5, now); // C6
         osc.frequency.exponentialRampToValueAtTime(1318.5, now + 0.1); // E6
         gain.gain.setValueAtTime(0.001, now);
-        gain.gain.linearRampToValueAtTime(0.12, now + 0.02);
+        gain.gain.linearRampToValueAtTime(0.12 * volumeMultiplier, now + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -175,7 +231,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, st);
           gain.gain.setValueAtTime(0.001, st);
-          gain.gain.linearRampToValueAtTime(0.15, st + 0.02);
+          gain.gain.linearRampToValueAtTime(0.15 * volumeMultiplier, st + 0.02);
           gain.gain.exponentialRampToValueAtTime(0.0001, st + 0.3);
           osc.connect(gain);
           gain.connect(ctx.destination);
@@ -208,14 +264,16 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }, [isUnauthenticatedOrPublic]);
 
   // Disparo de Desktop / Web Push Notifications
-  const dispatchDesktopNotification = useCallback((title: string, options: { body: string; tag?: string; url?: string }) => {
+  const dispatchDesktopNotification = useCallback((title: string, options: { body: string; tag?: string; url?: string; channel?: 'whatsapp' | 'instagram' | 'support' | 'system' }) => {
     try {
       if (isUnauthenticatedOrPublic()) return;
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        const isMuted = getSoundSettings().masterMute || (options.channel ? isSoundChannelMuted(options.channel) : false);
         const notif = new Notification(title, {
           body: options.body,
           icon: '/vallor/favicon.ico',
           tag: options.tag || 'versus_notification',
+          silent: isMuted,
         });
 
         notif.onclick = () => {
@@ -342,7 +400,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         },
         router
       );
-      playNotificationSound(true);
+      playNotificationSound(true, 'system');
       triggerVibration(true);
       triggerTabBlink("🚨 [1] LEAD QUALIFICADO!");
       
@@ -350,7 +408,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         dispatchDesktopNotification("🚨 Vallor · Lead Qualificado!", {
           body: "Um novo lead atingiu critérios de qualificação e aguarda contato humano.",
           tag: `deal_${deal?.id || 'alert'}`,
-          url: "/crm"
+          url: "/crm",
+          channel: 'system'
         });
       }
     });
@@ -370,7 +429,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         },
         router
       );
-      playNotificationSound(true);
+      playNotificationSound(true, 'system');
       triggerVibration(true);
       triggerTabBlink("🚨 [1] TRANSBORDO IA!");
 
@@ -378,7 +437,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         dispatchDesktopNotification(`🚨 Transbordo: ${data?.contactName || 'Lead Qualificado'}`, {
           body: data?.reason || "A IA transferiu este lead para você no chat.",
           tag: `handoff_${data?.conversationId || 'alert'}`,
-          url: data?.conversationId ? `/inbox?conversationId=${data.conversationId}` : "/inbox"
+          url: data?.conversationId ? `/inbox?conversationId=${data.conversationId}` : "/inbox",
+          channel: 'system'
         });
       }
     });
@@ -418,13 +478,21 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           setHasGlobalUnread(true);
         }
 
+        // Determina o canal (WhatsApp vs Instagram)
+        const isInstagram = 
+          msg.channel === 'INSTAGRAM' || 
+          msg.conversation?.channel === 'INSTAGRAM' || 
+          msg.source === 'INSTAGRAM' || 
+          msg.provider === 'INSTAGRAM';
+        const channelType: 'whatsapp' | 'instagram' = isInstagram ? 'instagram' : 'whatsapp';
+
         // Debounce acústico inteligente: Toca o chime e vibra apenas 1 vez por contato a cada 3.5 segundos
         const now = Date.now();
         const soundKey = convId || contactPhone || 'global_inbound';
         const lastPlayed = lastSoundTriggeredRef.current[soundKey] || 0;
 
         if (now - lastPlayed > 3500) {
-          playNotificationSound(false);
+          playNotificationSound(false, channelType);
           triggerVibration(false);
           lastSoundTriggeredRef.current[soundKey] = now;
         }
@@ -435,7 +503,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           dispatchDesktopNotification(`Vallor · ${contactName}`, {
             body: content.length > 80 ? `${content.substring(0, 80)}...` : content || 'Enviou uma nova mensagem',
             tag: `msg_${convId || 'general'}`,
-            url: convId ? `/inbox?conversationId=${convId}` : '/inbox'
+            url: convId ? `/inbox?conversationId=${convId}` : '/inbox',
+            channel: channelType
           });
         }
       }
@@ -464,7 +533,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Alerta sonoro de alta prioridade e vibração
-      playNotificationSound(true);
+      playNotificationSound(true, 'system');
       triggerVibration(true);
       triggerTabBlink(`⚡ [TRANSFERÊNCIA] ${contactName}`);
 
@@ -473,7 +542,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         dispatchDesktopNotification(`⚡ Vallor · Lead Transferido para Você!`, {
           body: `${contactName} foi transferido para ${departmentName} por ${transferredBy}. Clique para assumir.`,
           tag: `transfer_${convId || 'general'}`,
-          url: convId ? `/inbox?conversationId=${convId}` : '/inbox'
+          url: convId ? `/inbox?conversationId=${convId}` : '/inbox',
+          channel: 'system'
         });
       }
     });

@@ -743,7 +743,7 @@ export default function Sidebar() {
                       title={!isExpanded ? item.name : undefined}
                       className={`
                         flex items-center gap-3 rounded-lg transition-all duration-200 relative group
-                        ${isExpanded ? (isMarketingGroup ? 'pl-6 pr-3 py-2' : 'px-3 py-2') : 'w-10 h-10 justify-center'}
+                        ${isExpanded ? 'px-3 py-2' : 'w-10 h-10 justify-center'}
                         ${isActive 
                           ? isWhatsApp
                             ? 'text-[#00A884] bg-[#00A884]/15 border-l-2 border-[#00A884] font-semibold shadow-sm'
@@ -1195,7 +1195,7 @@ export default function Sidebar() {
             )}
 
             {/* Itens de Navegação Mobile */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 pb-16 flex flex-col gap-1">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 pb-28 flex flex-col gap-1">
               {visibleGroups.map((group) => (
                 <div key={group.title} className="mb-4">
                   <div className="px-2 py-1 mb-1 text-[10px] font-bold text-slate-500 dark:text-gray-400 tracking-wider uppercase">
@@ -1205,7 +1205,6 @@ export default function Sidebar() {
                     {group.items.map((item) => {
                       const itemBase = item.href.split('?')[0];
                       const isMarketingMain = item.href === '/agency/marketing';
-                      const isMarketingGroup = group.title === "MARKETING & AGÊNCIA";
                       const isActive = item.href.includes('?')
                         ? pathname === itemBase
                         : isMarketingMain
@@ -1219,7 +1218,7 @@ export default function Sidebar() {
                           key={item.href}
                           href={item.href}
                           onClick={closeMobileMenu}
-                          className={`flex items-center gap-3 ${isMarketingGroup ? 'pl-6 pr-3' : 'px-3'} py-2.5 rounded-xl font-medium text-sm transition-all duration-150 ${
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 ${
                             isActive
                               ? isWhatsApp
                                 ? 'bg-[#00A884]/15 text-[#00A884] font-semibold border-l-2 border-[#00A884]'
@@ -1246,7 +1245,7 @@ export default function Sidebar() {
             </div>
 
             {/* Rodapé Mobile / Operador */}
-            <div className="p-3 border-t border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#070D1B] flex flex-col gap-2">
+            <div className="p-3 border-t border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#070D1B] flex flex-col gap-2 shrink-0">
               {/* Atalho Console Super Admin no Mobile Footer */}
               {(currentUser?.isSuperAdmin || currentUser?.role === 'SUPER_ADMIN' || targetTenantId) && (
                 <button

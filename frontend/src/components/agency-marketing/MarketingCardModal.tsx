@@ -620,11 +620,11 @@ export default function MarketingCardModal({
         {/* ========================================================================= */}
         {/* 2. CORPO DO MODAL (DUAS COLUNAS: CONTEÚDO PRINCIPAL & LATERAL DE AÇÕES)   */}
         {/* ========================================================================= */}
-        <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
+        <div className="flex-1 overflow-y-auto lg:overflow-hidden flex flex-col lg:flex-row">
           {/* --------------------------------------------------------------------- */}
           {/* COLUNA ESQUERDA: Ficha do Cliente, Copy, Checklist, Anexos e Timeline */}
           {/* --------------------------------------------------------------------- */}
-          <div className="flex-1 overflow-y-auto p-5 lg:p-6 space-y-4 custom-scrollbar border-r border-gray-800/60">
+          <div className="flex-1 lg:overflow-y-auto p-4 sm:p-5 lg:p-6 space-y-4 custom-scrollbar border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-gray-800/60">
             {/* SEÇÃO 0: INFORMAÇÕES DO CLIENTE (PADRÃO LERO) */}
             <div className="bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-xl p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3 border-b border-gray-800/60 pb-2.5">
@@ -1029,7 +1029,7 @@ export default function MarketingCardModal({
           {/* --------------------------------------------------------------------- */}
           {/* COLUNA DIREITA: PAINEL DE AÇÕES E PARÂMETROS (PADRÃO CRM LERO)        */}
           {/* --------------------------------------------------------------------- */}
-          <div className="w-full lg:w-[340px] bg-slate-50 dark:bg-[#13171f]/90 p-5 lg:p-6 flex flex-col gap-4 overflow-y-auto custom-scrollbar shrink-0 border-t lg:border-t-0 border-slate-200 dark:border-gray-800/60">
+          <div className="w-full lg:w-[340px] bg-slate-50 dark:bg-[#13171f]/90 p-4 sm:p-5 lg:p-6 flex flex-col gap-4 lg:overflow-y-auto custom-scrollbar shrink-0 border-t-0 lg:border-l border-slate-200 dark:border-gray-800/60">
             {/* ETAPA DO KANBAN */}
             <div>
               <label className="text-[11px] font-semibold text-slate-700 dark:text-gray-400 uppercase tracking-wider mb-1.5 block">

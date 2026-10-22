@@ -617,7 +617,7 @@ export default function MarketingKanban({
                   {idx < columns.length - 1 && (
                     <div
                       onMouseDown={(e) => handleResizeStart(e, col.id)}
-                      className="w-1.5 hover:w-2 shrink-0 h-full rounded-full hover:bg-slate-700/50 cursor-col-resize transition-all self-stretch"
+                      className="hidden sm:block w-1.5 hover:w-2 shrink-0 h-full rounded-full hover:bg-slate-700/50 cursor-col-resize transition-all self-stretch"
                     />
                   )}
                 </React.Fragment>

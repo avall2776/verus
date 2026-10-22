@@ -3,30 +3,15 @@
 import React, { useState, useEffect } from "react";
 import { 
   Volume2, VolumeX, Bell, Smartphone, Instagram, 
-  LifeBuoy, Settings2, Play, Check, X, Sparkles 
+  LifeBuoy, Settings2, Play, Check, X 
 } from "lucide-react";
 import toast from "react-hot-toast";
-
-interface SoundChannelConfig {
-  enabled: boolean;
-  volume: number; // 0 to 100
-}
-
-export interface SoundSettings {
-  masterMute: boolean;
-  whatsapp: SoundChannelConfig;
-  instagram: SoundChannelConfig;
-  support: SoundChannelConfig;
-  system: SoundChannelConfig;
-}
-
-const DEFAULT_SETTINGS: SoundSettings = {
-  masterMute: false,
-  whatsapp: { enabled: true, volume: 80 },
-  instagram: { enabled: true, volume: 75 },
-  support: { enabled: true, volume: 90 },
-  system: { enabled: true, volume: 70 },
-};
+import { 
+  getSoundSettings, 
+  saveSoundSettings, 
+  SoundSettings, 
+  DEFAULT_SOUND_SETTINGS 
+} from "@/lib/soundSettings";
 
 interface SoundAlertsModalProps {
   isOpen: boolean;
@@ -34,18 +19,13 @@ interface SoundAlertsModalProps {
 }
 
 export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalProps) {
-  const [settings, setSettings] = useState<SoundSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<SoundSettings>(DEFAULT_SOUND_SETTINGS);
   const [playingChannel, setPlayingChannel] = useState<string | null>(null);
 
-  // Carregar configurações do localStorage
+  // Carregar configurações sincronizadas
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("versus_sound_settings");
-      if (stored) {
-        setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(stored) });
-      }
-    } catch (e) {
-      console.warn("Erro ao carregar configurações de som:", e);
+    if (isOpen) {
+      setSettings(getSoundSettings());
     }
   }, [isOpen]);
 
@@ -144,31 +124,49 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
     }
   };
 
+  const handleToggleMasterMute = () => {
+    const updated: SoundSettings = { ...settings, masterMute: !settings.masterMute };
+    setSettings(updated);
+    saveSoundSettings(updated); // Persiste imediatamente em tempo real!
+    if (updated.masterMute) {
+      toast("Todos os avisos sonoros foram silenciados instantaneamente.", { icon: "🔇" });
+    } else {
+      toast.success("Avisos sonoros reativados.");
+    }
+  };
+
   const handleToggleChannel = (channel: keyof Omit<SoundSettings, "masterMute">) => {
-    setSettings((prev) => ({
-      ...prev,
-      [channel]: {
-        ...prev[channel],
-        enabled: !prev[channel].enabled,
-      },
-    }));
+    setSettings((prev) => {
+      const updated: SoundSettings = {
+        ...prev,
+        [channel]: {
+          ...prev[channel],
+          enabled: !prev[channel].enabled,
+        },
+      };
+      saveSoundSettings(updated); // Sincronização reativa
+      return updated;
+    });
   };
 
   const handleVolumeChange = (channel: keyof Omit<SoundSettings, "masterMute">, val: number) => {
-    setSettings((prev) => ({
-      ...prev,
-      [channel]: {
-        ...prev[channel],
-        volume: val,
-      },
-    }));
+    setSettings((prev) => {
+      const updated: SoundSettings = {
+        ...prev,
+        [channel]: {
+          ...prev[channel],
+          volume: val,
+        },
+      };
+      saveSoundSettings(updated); // Atualiza volume imediatamente
+      return updated;
+    });
   };
 
   const handleSave = () => {
     try {
-      localStorage.setItem("versus_sound_settings", JSON.stringify(settings));
-      window.dispatchEvent(new CustomEvent("sound_settings_updated", { detail: settings }));
-      toast.success("Preferências de som salvas!");
+      saveSoundSettings(settings);
+      toast.success("Preferências de som salvas com sucesso!");
       onClose();
     } catch (e) {
       console.error(e);
@@ -183,49 +181,50 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="bg-white dark:bg-[#0B1224] border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 flex flex-col gap-5 animate-in zoom-in-95 text-white"
+        className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 flex flex-col gap-5 animate-in zoom-in-95 text-slate-900 dark:text-white"
       >
         {/* Cabeçalho */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-600/10 text-blue-400 border border-blue-500/30 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-600/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center">
               <Volume2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Alertas Sonoros & Notificações</h3>
-              <p className="text-[11px] text-slate-400">Controles independentes de áudio por canal de atendimento</p>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Alertas Sonoros & Notificações</h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Controles independentes de áudio por canal de atendimento</p>
             </div>
           </div>
           <button 
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Master Mute Toggle */}
-        <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
+        <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
             {settings.masterMute ? (
-              <VolumeX className="w-4 h-4 text-rose-400" />
+              <VolumeX className="w-5 h-5 text-rose-500" />
             ) : (
-              <Bell className="w-4 h-4 text-blue-400" />
+              <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             )}
             <div>
-              <span className="text-xs font-bold text-white block">Silenciar Todos os Sons</span>
-              <span className="text-[10px] text-slate-400">Desativa instantaneamente avisos sonoros de todas as fontes</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white block">Silenciar Todos os Sons</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">Desativa instantaneamente avisos sonoros de todas as fontes</span>
             </div>
           </div>
           <button
             type="button"
-            onClick={() => setSettings((p) => ({ ...p, masterMute: !p.masterMute }))}
-            className={`w-11 h-6 rounded-full transition-colors relative p-0.5 ${
-              settings.masterMute ? "bg-rose-500" : "bg-slate-700"
+            onClick={handleToggleMasterMute}
+            aria-label="Silenciar todos os sons"
+            className={`w-11 h-6 rounded-full transition-colors relative p-0.5 cursor-pointer ${
+              settings.masterMute ? "bg-rose-500" : "bg-slate-300 dark:bg-slate-700"
             }`}
           >
-            <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
+            <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
               settings.masterMute ? "translate-x-5" : "translate-x-0"
             }`} />
           </button>
@@ -236,20 +235,20 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
           {/* WhatsApp */}
           <div className={`p-3.5 rounded-xl border transition-all ${
             settings.whatsapp.enabled && !settings.masterMute
-              ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80"
-              : "bg-slate-50/50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
+              ? "bg-white dark:bg-[#070D1B] border-slate-200 dark:border-slate-700/80 shadow-xs"
+              : "bg-slate-50/70 dark:bg-[#070D1B]/50 border-slate-200 dark:border-slate-800/60 opacity-60"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5">
-                <Smartphone className="w-4 h-4 text-blue-400" />
-                <span className="text-xs font-bold text-slate-200">WhatsApp (Mensagens Recebidas)</span>
+                <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-200">WhatsApp (Mensagens Recebidas)</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => playPreviewTone("whatsapp")}
                   disabled={playingChannel === "whatsapp" || !settings.whatsapp.enabled || settings.masterMute}
-                  className="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold text-slate-300 border border-slate-700 flex items-center gap-1 transition-colors disabled:opacity-40"
+                  className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1 transition-colors disabled:opacity-40 cursor-pointer"
                 >
                   <Play className="w-2.5 h-2.5" /> Testar
                 </button>
@@ -262,7 +261,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-[10px] text-slate-400 w-12">Volume:</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 w-12">Volume:</span>
               <input 
                 type="range"
                 min="0"
@@ -270,9 +269,9 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
                 disabled={!settings.whatsapp.enabled || settings.masterMute}
                 value={settings.whatsapp.volume}
                 onChange={(e) => handleVolumeChange("whatsapp", Number(e.target.value))}
-                className="flex-1 accent-blue-600 h-1.5 bg-slate-800 rounded-lg cursor-pointer disabled:opacity-40"
+                className="flex-1 accent-blue-600 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer disabled:opacity-40"
               />
-              <span className="text-[10px] text-slate-400 font-mono w-8 text-right">
+              <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono w-8 text-right font-medium">
                 {settings.whatsapp.volume}%
               </span>
             </div>
@@ -281,20 +280,20 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
           {/* Instagram */}
           <div className={`p-3.5 rounded-xl border transition-all ${
             settings.instagram.enabled && !settings.masterMute
-              ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80"
-              : "bg-slate-50/50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
+              ? "bg-white dark:bg-[#070D1B] border-slate-200 dark:border-slate-700/80 shadow-xs"
+              : "bg-slate-50/70 dark:bg-[#070D1B]/50 border-slate-200 dark:border-slate-800/60 opacity-60"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5">
-                <Instagram className="w-4 h-4 text-blue-400" />
-                <span className="text-xs font-bold text-slate-200">Instagram Direct & Comentários</span>
+                <Instagram className="w-4 h-4 text-pink-500" />
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-200">Instagram Direct & Comentários</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => playPreviewTone("instagram")}
                   disabled={playingChannel === "instagram" || !settings.instagram.enabled || settings.masterMute}
-                  className="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold text-slate-300 border border-slate-700 flex items-center gap-1 transition-colors disabled:opacity-40"
+                  className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1 transition-colors disabled:opacity-40 cursor-pointer"
                 >
                   <Play className="w-2.5 h-2.5" /> Testar
                 </button>
@@ -307,7 +306,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-[10px] text-slate-400 w-12">Volume:</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 w-12">Volume:</span>
               <input 
                 type="range"
                 min="0"
@@ -315,9 +314,9 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
                 disabled={!settings.instagram.enabled || settings.masterMute}
                 value={settings.instagram.volume}
                 onChange={(e) => handleVolumeChange("instagram", Number(e.target.value))}
-                className="flex-1 accent-blue-600 h-1.5 bg-slate-800 rounded-lg cursor-pointer disabled:opacity-40"
+                className="flex-1 accent-blue-600 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer disabled:opacity-40"
               />
-              <span className="text-[10px] text-slate-400 font-mono w-8 text-right">
+              <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono w-8 text-right font-medium">
                 {settings.instagram.volume}%
               </span>
             </div>
@@ -326,20 +325,20 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
           {/* Suporte */}
           <div className={`p-3.5 rounded-xl border transition-all ${
             settings.support.enabled && !settings.masterMute
-              ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80"
-              : "bg-slate-50/50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
+              ? "bg-white dark:bg-[#070D1B] border-slate-200 dark:border-slate-700/80 shadow-xs"
+              : "bg-slate-50/70 dark:bg-[#070D1B]/50 border-slate-200 dark:border-slate-800/60 opacity-60"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5">
-                <LifeBuoy className="w-4 h-4 text-blue-400" />
-                <span className="text-xs font-bold text-slate-200">Central de Suporte (Chamados & Respostas)</span>
+                <LifeBuoy className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-200">Central de Suporte (Chamados & Respostas)</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => playPreviewTone("support")}
                   disabled={playingChannel === "support" || !settings.support.enabled || settings.masterMute}
-                  className="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold text-slate-300 border border-slate-700 flex items-center gap-1 transition-colors disabled:opacity-40"
+                  className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1 transition-colors disabled:opacity-40 cursor-pointer"
                 >
                   <Play className="w-2.5 h-2.5" /> Testar
                 </button>
@@ -352,7 +351,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-[10px] text-slate-400 w-12">Volume:</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 w-12">Volume:</span>
               <input 
                 type="range"
                 min="0"
@@ -360,9 +359,9 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
                 disabled={!settings.support.enabled || settings.masterMute}
                 value={settings.support.volume}
                 onChange={(e) => handleVolumeChange("support", Number(e.target.value))}
-                className="flex-1 accent-blue-600 h-1.5 bg-slate-800 rounded-lg cursor-pointer disabled:opacity-40"
+                className="flex-1 accent-blue-600 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer disabled:opacity-40"
               />
-              <span className="text-[10px] text-slate-400 font-mono w-8 text-right">
+              <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono w-8 text-right font-medium">
                 {settings.support.volume}%
               </span>
             </div>
@@ -371,20 +370,20 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
           {/* Sistema */}
           <div className={`p-3.5 rounded-xl border transition-all ${
             settings.system.enabled && !settings.masterMute
-              ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80"
-              : "bg-slate-50/50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
+              ? "bg-white dark:bg-[#070D1B] border-slate-200 dark:border-slate-700/80 shadow-xs"
+              : "bg-slate-50/70 dark:bg-[#070D1B]/50 border-slate-200 dark:border-slate-800/60 opacity-60"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5">
-                <Settings2 className="w-4 h-4 text-blue-400" />
-                <span className="text-xs font-bold text-slate-200">Sistema (Alertas CRM & Metas)</span>
+                <Settings2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-200">Sistema (Alertas CRM & Metas)</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => playPreviewTone("system")}
                   disabled={playingChannel === "system" || !settings.system.enabled || settings.masterMute}
-                  className="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold text-slate-300 border border-slate-700 flex items-center gap-1 transition-colors disabled:opacity-40"
+                  className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1 transition-colors disabled:opacity-40 cursor-pointer"
                 >
                   <Play className="w-2.5 h-2.5" /> Testar
                 </button>
@@ -397,7 +396,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-[10px] text-slate-400 w-12">Volume:</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 w-12">Volume:</span>
               <input 
                 type="range"
                 min="0"
@@ -405,9 +404,9 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
                 disabled={!settings.system.enabled || settings.masterMute}
                 value={settings.system.volume}
                 onChange={(e) => handleVolumeChange("system", Number(e.target.value))}
-                className="flex-1 accent-blue-600 h-1.5 bg-slate-800 rounded-lg cursor-pointer disabled:opacity-40"
+                className="flex-1 accent-blue-600 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer disabled:opacity-40"
               />
-              <span className="text-[10px] text-slate-400 font-mono w-8 text-right">
+              <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono w-8 text-right font-medium">
                 {settings.system.volume}%
               </span>
             </div>
@@ -415,18 +414,18 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
         </div>
 
         {/* Rodapé com Ações */}
-        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-800">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800 transition-colors"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
           >
             Cancelar
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md flex items-center gap-1.5"
+            className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
           >
             <Check className="w-3.5 h-3.5" />
             Salvar Preferências
