@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 // =========================================================================
 // TYPES & CONFIGURAÇÕES PADRÃO
@@ -182,6 +183,7 @@ function MetricKpiCardWithComparison({
 // MAIN PAGE COMPONENT
 // =========================================================================
 export default function AtendimentoAnalyticsDashboard() {
+  const { isWhatsApp } = useTheme();
   // Navigation Tabs
   const [activeTab, setActiveTab] = useState<'atendimento' | 'csat' | 'ai_costs'>('atendimento');
   const [viewMode, setViewMode] = useState<'charts' | 'reports'>('charts');
@@ -364,7 +366,9 @@ export default function AtendimentoAnalyticsDashboard() {
   // Mapeamentos para Gráficos Donut (Por Usuário & Por Motivo de Finalização)
   const userDistribution = useMemo(() => {
     if (!agents || agents.length === 0) return [];
-    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1', '#14B8A6'];
+    const colors = isWhatsApp
+      ? ['#00A884', '#10B981', '#F59E0B', '#02906F', '#25D366', '#056162', '#128C7E', '#8B5CF6']
+      : ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1', '#14B8A6'];
     const active = agents
       .map((ag, i) => ({
         name: ag.name,
@@ -377,7 +381,7 @@ export default function AtendimentoAnalyticsDashboard() {
       return [{ name: 'Sem atendimentos', value: 1, color: '#475569' }];
     }
     return active;
-  }, [agents]);
+  }, [agents, isWhatsApp]);
 
   const closeReasonDistribution = useMemo(() => {
     if (chartsData?.distributions?.byCloseReason && chartsData.distributions.byCloseReason.length > 0) {
@@ -1127,7 +1131,7 @@ export default function AtendimentoAnalyticsDashboard() {
                         <span className="text-slate-600 dark:text-slate-300">Finalizados</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded bg-blue-500"></div>
+                        <div className={`w-3 h-3 rounded ${isWhatsApp ? 'bg-[#00A884]' : 'bg-blue-500'}`}></div>
                         <span className="text-slate-600 dark:text-slate-300">Em Andamento</span>
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -1146,8 +1150,8 @@ export default function AtendimentoAnalyticsDashboard() {
                         <YAxis yAxisId="right" orientation="right" stroke="#F59E0B" fontSize={12} tickLine={false} axisLine={false} unit="m" />
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: "#0B1224",
-                            borderColor: "#334155",
+                            backgroundColor: isWhatsApp ? "#111B21" : "#0B1224",
+                            borderColor: isWhatsApp ? "#222D34" : "#334155",
                             borderRadius: "8px",
                             boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)",
                             fontSize: "12px",
@@ -1155,7 +1159,7 @@ export default function AtendimentoAnalyticsDashboard() {
                           }}
                         />
                         <Bar yAxisId="left" dataKey="finished" name="Finalizados" fill="#10B981" radius={[4, 4, 0, 0]} stackId="a" />
-                        <Bar yAxisId="left" dataKey="inProgress" name="Em Andamento" fill="#3B82F6" radius={[4, 4, 0, 0]} stackId="a" />
+                        <Bar yAxisId="left" dataKey="inProgress" name="Em Andamento" fill={isWhatsApp ? "#00A884" : "#3B82F6"} radius={[4, 4, 0, 0]} stackId="a" />
                         <Line yAxisId="right" type="monotone" dataKey="avgTmaMinutes" name="TMA Médio" stroke="#F59E0B" strokeWidth={3} dot={{ r: 4, fill: '#F59E0B' }} />
                       </ComposedChart>
                     </ResponsiveContainer>
@@ -1184,24 +1188,30 @@ export default function AtendimentoAnalyticsDashboard() {
                               paddingAngle={4}
                               dataKey="value"
                             >
-                              {chartsData?.distributions?.byStatus?.map((entry: any, index: number) => (
-                                <Cell key={`cell-st-${index}`} fill={entry.color || '#3B82F6'} />
-                              ))}
+                              {chartsData?.distributions?.byStatus?.map((entry: any, index: number) => {
+                                const fillCol = (isWhatsApp && (entry.color === '#3B82F6' || entry.color === '#3b82f6')) 
+                                  ? '#00A884' 
+                                  : (entry.color || (isWhatsApp ? '#00A884' : '#3B82F6'));
+                                return <Cell key={`cell-st-${index}`} fill={fillCol} />;
+                              })}
                             </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: "#0B1224", borderColor: "#334155", borderRadius: "8px", color: "#fff" }} />
+                            <Tooltip contentStyle={{ backgroundColor: isWhatsApp ? "#111B21" : "#0B1224", borderColor: isWhatsApp ? "#222D34" : "#334155", borderRadius: "8px", color: "#fff" }} />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
                       <div className="mt-2 space-y-1.5 text-xs max-h-36 overflow-y-auto custom-scrollbar pr-1">
-                        {chartsData?.distributions?.byStatus?.map((st: any) => (
-                          <div key={st.name} className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 truncate">
-                              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: st.color }}></span>
-                              <span className="text-slate-600 dark:text-slate-300 truncate">{st.name}</span>
+                        {chartsData?.distributions?.byStatus?.map((st: any) => {
+                          const dotCol = (isWhatsApp && (st.color === '#3B82F6' || st.color === '#3b82f6')) ? '#00A884' : st.color;
+                          return (
+                            <div key={st.name} className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 truncate">
+                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: dotCol }}></span>
+                                <span className="text-slate-600 dark:text-slate-300 truncate">{st.name}</span>
+                              </div>
+                              <span className="font-semibold text-slate-900 dark:text-white ml-2 shrink-0">{st.value}</span>
                             </div>
-                            <span className="font-semibold text-slate-900 dark:text-white ml-2 shrink-0">{st.value}</span>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -1337,8 +1347,8 @@ export default function AtendimentoAnalyticsDashboard() {
                             <CartesianGrid strokeDasharray="3 3" stroke="#94A3B8" opacity={0.2} vertical={false} />
                             <XAxis dataKey="name" stroke="#64748B" fontSize={11} tickLine={false} />
                             <YAxis stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} />
-                            <Tooltip contentStyle={{ backgroundColor: "#0B1224", borderColor: "#334155", borderRadius: "8px", color: "#fff" }} />
-                            <Bar dataKey="value" name="Tickets" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                            <Tooltip contentStyle={{ backgroundColor: isWhatsApp ? "#111B21" : "#0B1224", borderColor: isWhatsApp ? "#222D34" : "#334155", borderRadius: "8px", color: "#fff" }} />
+                            <Bar dataKey="value" name="Tickets" fill={isWhatsApp ? "#00A884" : "#3B82F6"} radius={[4, 4, 0, 0]} />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>

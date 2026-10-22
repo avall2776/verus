@@ -10,6 +10,7 @@ import {
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { useSocket } from "@/components/ui/SocketProvider";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface MonitorConversation {
   id: string;
@@ -39,6 +40,7 @@ interface Department {
 export default function MonitorPage() {
   const router = useRouter();
   const { socket } = useSocket();
+  const { isWhatsApp } = useTheme();
   const [conversations, setConversations] = useState<MonitorConversation[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
@@ -202,8 +204,10 @@ export default function MonitorPage() {
     let label = "Normal";
 
     if (diffHours >= 24) {
-      colorClass = "bg-purple-500/10 text-purple-400 border-purple-500/30";
-      dotClass = "bg-purple-500";
+      colorClass = isWhatsApp 
+        ? "bg-emerald-500/15 text-[#00A884] border-[#00A884]/30" 
+        : "bg-purple-500/10 text-purple-400 border-purple-500/30";
+      dotClass = isWhatsApp ? "bg-[#00A884]" : "bg-purple-500";
       label = "> 24h em Atendimento";
     } else if (diffMins >= 60 && isUnanswered) {
       colorClass = "bg-red-500/10 text-red-400 border-red-500/30";
@@ -710,7 +714,7 @@ export default function MonitorPage() {
                 &gt; 1 hora
               </div>
               <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium">
-                <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                <span className={`w-2 h-2 rounded-full ${isWhatsApp ? 'bg-[#00A884]' : 'bg-purple-500'}`}></span>
                 &gt; 24h
               </div>
             </div>

@@ -125,7 +125,7 @@ export default function Sidebar() {
   const { hasGlobalUnread } = useSocket();
   const { status: waStatus, refreshStatus: refreshWaStatus } = useWhatsApp();
   const { isOpen: isMobileOpen, closeMenu: closeMobileMenu } = useMobileMenu();
-  const { isWhatsApp } = useTheme();
+  const { isDark, isWhatsApp } = useTheme();
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
@@ -597,145 +597,52 @@ export default function Sidebar() {
       >
       <div className="flex flex-col h-full overflow-hidden">
         
-        {/* Header / Workspace & Tenant Selector */}
-        <div className="h-16 flex items-center justify-between border-b border-slate-200 dark:border-gray-800 px-3 shrink-0 relative">
+        {/* Header Institucional: Logotipo Oficial VALLOR */}
+        <div className="h-16 flex items-center justify-between border-b border-slate-200 dark:border-gray-800 px-4 shrink-0 relative">
           {isExpanded ? (
-            <div className="flex items-center justify-between w-full gap-1">
-              <div 
-                onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
-                className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-800/50 p-1.5 rounded-xl transition-colors min-w-0 flex-1 select-none"
-                title="Clique para alternar ou gerenciar workspaces"
+            <div className="flex items-center justify-between w-full">
+              <Link 
+                href="/dashboard" 
+                className="flex items-center gap-2 group transition-transform active:scale-95 select-none"
+                title="VALLOR - Ir para a Visão Geral"
               >
-                <div 
-                  className={`w-8 h-8 rounded-xl border flex items-center justify-center font-black text-white shrink-0 shadow-sm overflow-hidden ${
-                    isWhatsApp ? 'border-[#00A884]/40' : 'border-blue-500/30'
+                {/* Logo Oficial Horizontal da VALLOR */}
+                <img 
+                  src="/Logo_valor_01.svg" 
+                  alt="VALLOR" 
+                  className={`h-7 w-auto max-w-[145px] object-contain transition-all ${
+                    !isDark && !isWhatsApp ? "invert brightness-0 opacity-90" : "opacity-95"
                   }`}
-                  style={{ backgroundColor: isWhatsApp ? "#00A884" : (activeWorkspace?.themeColor || "#2563EB") }}
-                >
-                  {activeWorkspace?.logoUrl ? (
-                    <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                  ) : (
-                    <span>{(activeWorkspace?.name || targetTenantName || "W").charAt(0).toUpperCase()}</span>
-                  )}
-                </div>
-                <div className="flex flex-col overflow-hidden min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-xs font-bold text-slate-800 dark:text-white truncate leading-tight">
-                      {targetTenantName ? (activeWorkspace?.name || targetTenantName) : (activeWorkspace?.name || "Workspace Principal")}
-                    </span>
-                    {targetTenantId && (
-                      <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold border border-amber-500/30 shrink-0">
-                        Suporte
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[10px] text-slate-500 dark:text-gray-400 truncate">
-                    {targetTenantName ? `${targetTenantName} (Suporte)` : (currentUser?.tenantName ? `${currentUser.tenantName}` : "VALLOR INC.")}
-                  </span>
-                </div>
-                <ChevronDown 
-                  size={14} 
-                  className={`text-gray-400 dark:text-gray-500 ml-auto transition-transform duration-200 ${isWorkspaceDropdownOpen ? "rotate-180 text-blue-500" : ""}`} 
                 />
-              </div>
+              </Link>
 
-              {/* Botão de Alternância de Tema no topo da Sidebar */}
-              <ThemeToggle className="shrink-0" />
+              {/* Botão para alternar recolhimento da Sidebar */}
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                title="Recolher menu lateral"
+                aria-label="Recolher menu lateral"
+              >
+                <ChevronRight size={16} className="rotate-180 transition-transform" />
+              </button>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2 mx-auto">
-              <div 
-                onClick={() => {
-                  setIsExpanded(true);
-                  setIsWorkspaceDropdownOpen(true);
-                }}
-                className={`w-8 h-8 rounded-xl border flex items-center justify-center font-black text-white shrink-0 mx-auto shadow-sm cursor-pointer overflow-hidden ${
-                  isWhatsApp ? 'border-[#00A884]/40' : 'border-blue-500/30'
-                }`}
-                style={{ backgroundColor: isWhatsApp ? "#00A884" : (activeWorkspace?.themeColor || "#2563EB") }}
-                title={targetTenantName ? `${activeWorkspace?.name || targetTenantName} (Modo Suporte)` : (activeWorkspace?.name || "Workspace")}
+            <div className="flex items-center justify-center w-full">
+              <button 
+                type="button"
+                onClick={toggleSidebar}
+                className="flex items-center justify-center p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all active:scale-95 cursor-pointer group"
+                title="Expandir menu lateral"
+                aria-label="Expandir menu lateral"
               >
-                {activeWorkspace?.logoUrl ? (
-                  <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                ) : (
-                  <span>{(activeWorkspace?.name || targetTenantName || "W").charAt(0).toUpperCase()}</span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Dropdown de Seleção de Workspaces */}
-          {isExpanded && isWorkspaceDropdownOpen && (
-            <div className="absolute top-16 left-3 right-3 bg-white dark:bg-[#0B1224] border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Workspaces / Unidades
-              </div>
-
-              <div className="max-h-48 overflow-y-auto custom-scrollbar divide-y divide-slate-800/40 my-1">
-                {workspaces.length === 0 ? (
-                  <div className="p-3 text-center text-[11px] text-slate-400">
-                    Nenhum workspace secundário configurado.
-                  </div>
-                ) : (
-                  workspaces.map((ws) => {
-                    const isSelected = activeWorkspace?.id === ws.id;
-                    return (
-                      <button
-                        key={ws.id}
-                        type="button"
-                        onClick={() => {
-                          setActiveWorkspace(ws);
-                          localStorage.setItem("versus_active_workspace", JSON.stringify(ws));
-                          setIsWorkspaceDropdownOpen(false);
-                          toast.success(`Workspace "${ws.name}" ativado!`);
-                          window.dispatchEvent(new Event("workspace_switched"));
-                        }}
-                        className={`w-full flex items-center gap-2.5 p-2 rounded-xl text-left transition-colors ${
-                          isSelected
-                            ? "bg-blue-600/15 text-white"
-                            : "hover:bg-slate-800/60 text-slate-300 hover:text-white"
-                        }`}
-                      >
-                        <div
-                          className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden"
-                          style={{ backgroundColor: isWhatsApp ? "#00A884" : (ws.themeColor || "#2563EB") }}
-                        >
-                          {ws.logoUrl ? (
-                            <img src={ws.logoUrl} alt={ws.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <span>{ws.name.charAt(0).toUpperCase()}</span>
-                          )}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-semibold truncate">{ws.name}</div>
-                          {ws.isDefault && (
-                            <span className="text-[9px] text-blue-400">Principal</span>
-                          )}
-                        </div>
-
-                        {isSelected && (
-                          <Check size={14} className="text-blue-400 shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-
-              <div className="pt-2 border-t border-slate-800/80 mt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsWorkspaceDropdownOpen(false);
-                    setIsWorkspaceModalOpen(true);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] hover:bg-slate-800 text-blue-400 hover:text-blue-300 text-xs font-bold transition-colors border border-slate-800 hover:border-blue-500/30 shadow-sm"
-                >
-                  <Building2 size={14} />
-                  <span>Gerenciar Workspaces</span>
-                </button>
-              </div>
+                {/* Ícone Circular Oficial Vallor */}
+                <img 
+                  src="/Favicon_vallor.svg" 
+                  alt="VALLOR" 
+                  className="w-7 h-7 object-contain transition-transform group-hover:scale-110 drop-shadow-sm"
+                />
+              </button>
             </div>
           )}
         </div>
@@ -923,6 +830,104 @@ export default function Sidebar() {
                   </span>
                 </div>
 
+                {/* Gestão Integrada de Workspace / Empresa */}
+                <div className="p-2 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/80 mb-1">
+                  <div className="flex items-center justify-between gap-1 mb-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Building2 size={13} className="text-blue-500 dark:text-blue-400 shrink-0" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Workspace Ativo
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        setIsWorkspaceModalOpen(true);
+                      }}
+                      className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer"
+                    >
+                      Gerenciar
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
+                    className="w-full flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/80 hover:border-blue-500/50 transition-colors text-left cursor-pointer select-none"
+                    title="Alternar unidade / workspace"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div 
+                        className="w-5 h-5 rounded-md flex items-center justify-center font-bold text-[9px] text-white shrink-0 overflow-hidden shadow-xs"
+                        style={{ backgroundColor: isWhatsApp ? "#00A884" : (activeWorkspace?.themeColor || "#2563EB") }}
+                      >
+                        {activeWorkspace?.logoUrl ? (
+                          <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                        ) : (
+                          <span>{(activeWorkspace?.name || targetTenantName || "W").charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <span className="text-xs font-semibold text-slate-800 dark:text-white truncate">
+                        {targetTenantName ? (activeWorkspace?.name || targetTenantName) : (activeWorkspace?.name || "Workspace Principal")}
+                      </span>
+                      {targetTenantId && (
+                        <span className="text-[8px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold border border-amber-500/30 shrink-0">
+                          Suporte
+                        </span>
+                      )}
+                    </div>
+                    <ChevronDown size={13} className={`text-slate-400 transition-transform duration-200 shrink-0 ${isWorkspaceDropdownOpen ? "rotate-180 text-blue-500" : ""}`} />
+                  </button>
+
+                  {/* Dropdown de Unidades / Workspaces Expandível */}
+                  {isWorkspaceDropdownOpen && (
+                    <div className="mt-1.5 max-h-36 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-[#0B1224] p-1 animate-in fade-in duration-150">
+                      {workspaces.length === 0 ? (
+                        <div className="p-2 text-center text-[10px] text-slate-400">
+                          Nenhum workspace secundário cadastrado.
+                        </div>
+                      ) : (
+                        workspaces.map((ws) => {
+                          const isSelected = activeWorkspace?.id === ws.id;
+                          return (
+                            <button
+                              key={ws.id}
+                              type="button"
+                              onClick={() => {
+                                setActiveWorkspace(ws);
+                                localStorage.setItem("versus_active_workspace", JSON.stringify(ws));
+                                setIsWorkspaceDropdownOpen(false);
+                                setIsUserMenuOpen(false);
+                                toast.success(`Workspace "${ws.name}" ativado!`);
+                                window.dispatchEvent(new Event("workspace_switched"));
+                              }}
+                              className={`w-full flex items-center gap-2 p-1.5 rounded-md text-left transition-colors cursor-pointer ${
+                                isSelected
+                                  ? "bg-blue-600/15 text-blue-600 dark:text-blue-300 font-semibold"
+                                  : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300"
+                              }`}
+                            >
+                              <div
+                                className="w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-white shrink-0 overflow-hidden"
+                                style={{ backgroundColor: isWhatsApp ? "#00A884" : (ws.themeColor || "#2563EB") }}
+                              >
+                                {ws.logoUrl ? (
+                                  <img src={ws.logoUrl} alt={ws.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <span>{ws.name.charAt(0).toUpperCase()}</span>
+                                )}
+                              </div>
+                              <span className="text-[11px] truncate flex-1">{ws.name}</span>
+                              {isSelected && <Check size={12} className="text-blue-500 shrink-0" />}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Opção 1: Meu Perfil & Foto */}
                 <button
                   type="button"
@@ -1055,7 +1060,7 @@ export default function Sidebar() {
                     <Edit2 size={11} className="text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                   </div>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                    {currentUser?.role === 'ADMIN' ? 'Administrador' : 'Operador'} • <span className="text-blue-600 dark:text-blue-400 font-medium">Menu</span>
+                    {targetTenantName ? (activeWorkspace?.name || targetTenantName) : (activeWorkspace?.name || currentUser?.tenantName || "Verto Comercial")} • <span className="text-blue-600 dark:text-blue-400 font-medium">Menu</span>
                   </span>
                 </div>
               )}
@@ -1089,31 +1094,23 @@ export default function Sidebar() {
 
           {/* Drawer Lateral */}
           <aside className="relative w-[300px] max-w-[85vw] bg-white dark:bg-[#0B1224] border-r border-slate-200 dark:border-gray-800 flex flex-col justify-between h-full z-10 shadow-2xl animate-in slide-in-from-left duration-200">
-            {/* Header Mobile Drawer */}
+            {/* Header Mobile Drawer: Logotipo Oficial VALLOR */}
             <div className="h-16 flex items-center justify-between border-b border-slate-200 dark:border-gray-800 px-4 shrink-0 bg-white dark:bg-[#0B1224]">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div 
-                  className={`w-8 h-8 rounded-xl border flex items-center justify-center font-black text-white shrink-0 shadow-sm overflow-hidden ${
-                    isWhatsApp ? 'border-[#00A884]/40' : 'border-blue-500/30'
+              <Link
+                href="/dashboard"
+                onClick={closeMobileMenu}
+                className="flex items-center gap-2 group transition-transform active:scale-95 select-none"
+                title="VALLOR - Ir para a Visão Geral"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src="/Logo_valor_01.svg" 
+                  alt="VALLOR" 
+                  className={`h-7 w-auto max-w-[145px] object-contain transition-all ${
+                    !isDark && !isWhatsApp ? "invert brightness-0 opacity-90" : "opacity-95"
                   }`}
-                  style={{ backgroundColor: isWhatsApp ? "#00A884" : (activeWorkspace?.themeColor || "#2563EB") }}
-                >
-                  {activeWorkspace?.logoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                  ) : (
-                    <span>{(activeWorkspace?.name || targetTenantName || "V").charAt(0).toUpperCase()}</span>
-                  )}
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-slate-800 dark:text-white truncate">
-                    {targetTenantName ? (activeWorkspace?.name || targetTenantName) : (activeWorkspace?.name || "Workspace Principal")}
-                  </span>
-                  <span className="text-[10px] text-slate-500 dark:text-gray-400 truncate">
-                    {targetTenantName ? `${targetTenantName} (Suporte)` : (currentUser?.tenantName ? currentUser.tenantName : "VALLOR")}
-                  </span>
-                </div>
-              </div>
+                />
+              </Link>
 
               <div className="flex items-center gap-1.5">
                 <ThemeToggle />
@@ -1228,7 +1225,38 @@ export default function Sidebar() {
                 </button>
               )}
 
-              <div className="flex items-center justify-between p-2 rounded-xl bg-gray-900/60 border border-gray-800">
+              {/* Atalho de Workspace no Mobile */}
+              <button
+                type="button"
+                onClick={() => {
+                  closeMobileMenu();
+                  setIsWorkspaceModalOpen(true);
+                }}
+                className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-gray-900/60 border border-slate-200 dark:border-gray-800 hover:border-blue-500/40 transition-colors text-left"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div
+                    className="w-5 h-5 rounded-md flex items-center justify-center font-bold text-[9px] text-white shrink-0 overflow-hidden shadow-xs"
+                    style={{ backgroundColor: isWhatsApp ? "#00A884" : (activeWorkspace?.themeColor || "#2563EB") }}
+                  >
+                    {activeWorkspace?.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={activeWorkspace.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{(activeWorkspace?.name || targetTenantName || "W").charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[9px] uppercase font-bold text-slate-500 dark:text-gray-400">Workspace Ativo</span>
+                    <span className="text-xs font-semibold text-slate-800 dark:text-white truncate">
+                      {targetTenantName ? (activeWorkspace?.name || targetTenantName) : (activeWorkspace?.name || "Workspace Principal")}
+                    </span>
+                  </div>
+                </div>
+                <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold shrink-0">Trocar</span>
+              </button>
+
+              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-gray-900/60 border border-slate-200 dark:border-gray-800">
                 <div 
                   className="flex items-center gap-2.5 min-w-0 cursor-pointer"
                   onClick={() => {
@@ -1236,7 +1264,7 @@ export default function Sidebar() {
                     setIsProfileModalOpen(true);
                   }}
                 >
-                  <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                  <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
                     {isAvatarUrlValid(currentUser?.avatarUrl) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img 
@@ -1244,17 +1272,20 @@ export default function Sidebar() {
                         alt="Avatar" 
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover" 
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = 'none';
+                        }}
                       />
                     ) : (
                       currentUser?.name?.[0]?.toUpperCase() || "U"
                     )}
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-bold text-white truncate">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
                       {currentUser?.name || "Usuário"}
                     </span>
-                    <span className="text-[10px] text-gray-400 truncate">
-                      {currentUser?.role === 'ADMIN' ? 'Administrador' : 'Operador'}
+                    <span className="text-[10px] text-slate-500 dark:text-gray-400 truncate">
+                      {targetTenantName ? (activeWorkspace?.name || targetTenantName) : (activeWorkspace?.name || currentUser?.tenantName || "Verto Comercial")}
                     </span>
                   </div>
                 </div>
@@ -1265,7 +1296,7 @@ export default function Sidebar() {
                     closeMobileMenu();
                     handleLogout();
                   }}
-                  className="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-gray-800 transition-colors"
+                  className="p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg hover:bg-slate-200 dark:hover:bg-gray-800 transition-colors"
                   title="Sair da conta"
                 >
                   <LogOut size={16} />

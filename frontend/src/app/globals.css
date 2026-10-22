@@ -256,10 +256,18 @@ html:not(.dark) {
 .theme-whatsapp,
 .theme-whatsapp body,
 .theme-whatsapp main,
+.theme-whatsapp .bg-\[\#050A15\],
+.theme-whatsapp .dark\:bg-\[\#050A15\],
+.theme-whatsapp .bg-\[\#050a15\],
+.theme-whatsapp .dark\:bg-\[\#050a15\],
+.theme-whatsapp [class*="bg-[#050A15]"],
+.theme-whatsapp [class*="bg-[#050a15]"],
 .theme-whatsapp .bg-\[\#050814\],
 .theme-whatsapp .dark\:bg-\[\#050814\],
 .theme-whatsapp .bg-\[\#070D1B\],
 .theme-whatsapp .dark\:bg-\[\#070D1B\],
+.theme-whatsapp [class*="bg-[#070D1B]"],
+.theme-whatsapp [class*="bg-[#070d1b]"],
 .theme-whatsapp .bg-\[\#070D18\],
 .theme-whatsapp .dark\:bg-\[\#070D18\],
 .theme-whatsapp .bg-\[\#0d1117\],
@@ -276,12 +284,40 @@ html:not(.dark) {
 .theme-whatsapp .bg-\[\#0b1224\],
 .theme-whatsapp .dark\:bg-\[\#0B1224\],
 .theme-whatsapp .dark\:bg-\[\#0b1224\],
+.theme-whatsapp [class*="bg-[#0B1224]"],
+.theme-whatsapp [class*="bg-[#0b1224]"],
+.theme-whatsapp .bg-\[\#0b101b\],
+.theme-whatsapp .dark\:bg-\[\#0b101b\],
+.theme-whatsapp [class*="bg-[#0b101b]"],
+.theme-whatsapp .bg-\[\#141C30\],
+.theme-whatsapp .dark\:bg-\[\#141C30\],
+.theme-whatsapp .bg-\[\#141c30\],
+.theme-whatsapp .dark\:bg-\[\#141c30\],
+.theme-whatsapp [class*="bg-[#141C30]"],
+.theme-whatsapp [class*="bg-[#141c30]"],
+.theme-whatsapp .bg-\[\#11192A\],
+.theme-whatsapp .dark\:bg-\[\#11192A\],
+.theme-whatsapp .bg-\[\#11192a\],
+.theme-whatsapp .dark\:bg-\[\#11192a\],
+.theme-whatsapp [class*="bg-[#11192A]"],
+.theme-whatsapp [class*="bg-[#11192a]"],
+.theme-whatsapp .bg-\[\#0E1528\],
+.theme-whatsapp .dark\:bg-\[\#0E1528\],
+.theme-whatsapp .bg-\[\#0e1528\],
+.theme-whatsapp .dark\:bg-\[\#0e1528\],
+.theme-whatsapp [class*="bg-[#0E1528]"],
+.theme-whatsapp [class*="bg-[#0e1528]"],
+.theme-whatsapp .bg-\[\#161b26\],
+.theme-whatsapp .dark\:bg-\[\#161b26\],
+.theme-whatsapp [class*="bg-[#161b26]"],
 .theme-whatsapp .bg-\[\#161b22\],
 .theme-whatsapp .dark\:bg-\[\#161b22\],
 .theme-whatsapp .bg-\[\#1c2128\],
 .theme-whatsapp .dark\:bg-\[\#1c2128\],
 .theme-whatsapp .bg-\[\#0F172A\],
 .theme-whatsapp .dark\:bg-\[\#0F172A\],
+.theme-whatsapp [class*="bg-[#0F172A]"],
+.theme-whatsapp [class*="bg-[#0f172a]"],
 .theme-whatsapp .bg-slate-900,
 .theme-whatsapp .dark\:bg-slate-900,
 .theme-whatsapp .bg-gray-900,
@@ -307,8 +343,6 @@ html:not(.dark) {
 .theme-whatsapp .dark\:bg-\[\#1E293B\],
 .theme-whatsapp .bg-\[\#161F30\],
 .theme-whatsapp .dark\:bg-\[\#161F30\],
-.theme-whatsapp .bg-\[\#11192A\],
-.theme-whatsapp .dark\:bg-\[\#11192A\],
 .theme-whatsapp .bg-slate-800,
 .theme-whatsapp .dark\:bg-slate-800,
 .theme-whatsapp .bg-gray-800,
@@ -331,7 +365,9 @@ html:not(.dark) {
 .theme-whatsapp .hover\:bg-slate-800\/50:hover,
 .theme-whatsapp .dark\:hover\:bg-slate-800\/50:hover,
 .theme-whatsapp .hover\:bg-slate-800\/80:hover,
-.theme-whatsapp .dark\:hover\:bg-slate-800\/80:hover {
+.theme-whatsapp .dark\:hover\:bg-slate-800\/80:hover,
+.theme-whatsapp .dark\:hover\:bg-\[\#111726\]:hover,
+.theme-whatsapp [class*="hover:bg-[#111726]"]:hover {
   background-color: #2A3942 !important;
 }
 
@@ -416,22 +452,42 @@ html:not(.dark) {
   color: #8696A0 !important;
 }
 
-/* 9. ACENTOS E BOTÕES: CONVERSÃO DE AZUL PARA VERDE WHATSAPP (#00A884) */
+/* 9. ACENTOS E BOTÕES: CONVERSÃO COMPLETA DE AZUL/CYAN PARA VERDE WHATSAPP (#00A884 / #02906F) */
 .theme-whatsapp .bg-blue-600,
 .theme-whatsapp .bg-blue-500,
+.theme-whatsapp .bg-blue-400,
+.theme-whatsapp .bg-blue-700,
+.theme-whatsapp .bg-blue-800,
+.theme-whatsapp .bg-blue-900,
+.theme-whatsapp .bg-cyan-500,
+.theme-whatsapp .bg-cyan-600,
 .theme-whatsapp .dark\:bg-blue-600,
-.theme-whatsapp .dark\:bg-blue-500 {
+.theme-whatsapp .dark\:bg-blue-500,
+.theme-whatsapp .dark\:bg-blue-400,
+.theme-whatsapp .dark\:bg-blue-700,
+.theme-whatsapp .dark\:bg-blue-800,
+.theme-whatsapp .dark\:bg-blue-900,
+.theme-whatsapp .dark\:bg-cyan-500,
+.theme-whatsapp .dark\:bg-cyan-600 {
   background-color: #00A884 !important;
   color: #FFFFFF !important;
 }
 
 .theme-whatsapp .hover\:bg-blue-600:hover,
 .theme-whatsapp .hover\:bg-blue-500:hover,
+.theme-whatsapp .hover\:bg-blue-700:hover,
+.theme-whatsapp .hover\:bg-cyan-600:hover,
+.theme-whatsapp .hover\:bg-cyan-500:hover,
 .theme-whatsapp .dark\:hover\:bg-blue-600:hover,
-.theme-whatsapp .dark\:hover\:bg-blue-500:hover {
+.theme-whatsapp .dark\:hover\:bg-blue-500:hover,
+.theme-whatsapp .dark\:hover\:bg-blue-700:hover,
+.theme-whatsapp .dark\:hover\:bg-cyan-600:hover,
+.theme-whatsapp .dark\:hover\:bg-cyan-500:hover {
   background-color: #02906F !important;
+  color: #FFFFFF !important;
 }
 
+.theme-whatsapp .text-blue-700,
 .theme-whatsapp .text-blue-600,
 .theme-whatsapp .text-blue-500,
 .theme-whatsapp .text-blue-400,
@@ -440,19 +496,51 @@ html:not(.dark) {
 .theme-whatsapp .text-blue-100,
 .theme-whatsapp .text-cyan-400,
 .theme-whatsapp .text-cyan-500,
+.theme-whatsapp .text-cyan-600,
+.theme-whatsapp .dark\:text-blue-700,
+.theme-whatsapp .dark\:text-blue-600,
+.theme-whatsapp .dark\:text-blue-500,
 .theme-whatsapp .dark\:text-blue-400,
 .theme-whatsapp .dark\:text-blue-300,
+.theme-whatsapp .dark\:text-blue-200,
+.theme-whatsapp .dark\:text-blue-100,
 .theme-whatsapp .dark\:text-cyan-400,
+.theme-whatsapp .dark\:text-cyan-500,
+.theme-whatsapp .dark\:text-cyan-600,
 .theme-whatsapp .group-focus-within\:text-blue-400,
 .theme-whatsapp .group:focus-within .group-focus-within\:text-blue-400,
 .theme-whatsapp .group-hover\:text-blue-400,
-.theme-whatsapp .group:hover .group-hover\:text-blue-400 {
+.theme-whatsapp .group:hover .group-hover\:text-blue-400,
+.theme-whatsapp .group-hover\:text-blue-600,
+.theme-whatsapp .group:hover .group-hover\:text-blue-600,
+.theme-whatsapp .dark\:group-hover\:text-blue-400,
+.theme-whatsapp .group:hover .dark\:group-hover\:text-blue-400,
+.theme-whatsapp .dark\:group-hover\:text-blue-600,
+.theme-whatsapp .group:hover .dark\:group-hover\:text-blue-600,
+.theme-whatsapp .hover\:text-blue-600:hover,
+.theme-whatsapp .hover\:text-blue-500:hover,
+.theme-whatsapp .hover\:text-blue-400:hover,
+.theme-whatsapp .dark\:hover\:text-blue-400:hover,
+.theme-whatsapp .dark\:hover\:text-blue-500:hover,
+.theme-whatsapp .dark\:hover\:text-blue-600:hover {
   color: #00A884 !important;
 }
 
+.theme-whatsapp .focus\:border-blue-400:focus,
 .theme-whatsapp .focus\:border-blue-500:focus,
 .theme-whatsapp .focus\:border-blue-600:focus,
-.theme-whatsapp .dark\:focus\:border-blue-500:focus {
+.theme-whatsapp .dark\:focus\:border-blue-400:focus,
+.theme-whatsapp .dark\:focus\:border-blue-500:focus,
+.theme-whatsapp .dark\:focus\:border-blue-600:focus {
+  border-color: #00A884 !important;
+}
+
+.theme-whatsapp .ring-blue-500,
+.theme-whatsapp .ring-blue-500\/20,
+.theme-whatsapp .ring-blue-600,
+.theme-whatsapp .focus\:ring-blue-500:focus,
+.theme-whatsapp .focus\:ring-blue-600:focus {
+  --tw-ring-color: rgba(0, 168, 132, 0.35) !important;
   border-color: #00A884 !important;
 }
 
@@ -461,34 +549,79 @@ html:not(.dark) {
 }
 
 .theme-whatsapp .bg-blue-50,
+.theme-whatsapp .bg-blue-100,
+.theme-whatsapp .bg-blue-200,
+.theme-whatsapp .bg-blue-50\/80,
+.theme-whatsapp .bg-blue-100\/80,
 .theme-whatsapp .dark\:bg-blue-950,
+.theme-whatsapp .dark\:bg-blue-950\/20,
+.theme-whatsapp .dark\:bg-blue-950\/30,
 .theme-whatsapp .dark\:bg-blue-950\/40,
 .theme-whatsapp .dark\:bg-blue-950\/70,
 .theme-whatsapp .bg-blue-600\/10,
 .theme-whatsapp .bg-blue-600\/15,
 .theme-whatsapp .bg-blue-600\/20,
+.theme-whatsapp .bg-blue-600\/25,
+.theme-whatsapp .bg-blue-600\/30,
+.theme-whatsapp .dark\:bg-blue-600\/10,
+.theme-whatsapp .dark\:bg-blue-600\/15,
 .theme-whatsapp .dark\:bg-blue-600\/20,
 .theme-whatsapp .dark\:bg-blue-600\/25,
+.theme-whatsapp .dark\:bg-blue-600\/30,
 .theme-whatsapp .bg-blue-500\/10,
 .theme-whatsapp .bg-blue-500\/15,
+.theme-whatsapp .bg-blue-500\/20,
+.theme-whatsapp .bg-blue-500\/25,
+.theme-whatsapp .bg-blue-500\/30,
+.theme-whatsapp .dark\:bg-blue-500\/10,
 .theme-whatsapp .dark\:bg-blue-500\/15,
-.theme-whatsapp .dark\:bg-blue-500\/20 {
+.theme-whatsapp .dark\:bg-blue-500\/20,
+.theme-whatsapp .dark\:bg-blue-500\/25,
+.theme-whatsapp .dark\:bg-blue-500\/30,
+.theme-whatsapp .hover\:bg-blue-50:hover,
+.theme-whatsapp .hover\:bg-blue-100:hover,
+.theme-whatsapp .hover\:bg-blue-500\/20:hover,
+.theme-whatsapp .dark\:hover\:bg-blue-500\/20:hover,
+.theme-whatsapp .dark\:hover\:bg-blue-600\/20:hover {
   background-color: rgba(0, 168, 132, 0.15) !important;
 }
 
+.theme-whatsapp .border-blue-200,
+.theme-whatsapp .border-blue-300,
+.theme-whatsapp .border-blue-400,
 .theme-whatsapp .border-blue-500,
 .theme-whatsapp .border-blue-600,
 .theme-whatsapp .border-blue-700,
 .theme-whatsapp .border-blue-800,
+.theme-whatsapp .dark\:border-blue-200,
+.theme-whatsapp .dark\:border-blue-300,
+.theme-whatsapp .dark\:border-blue-400,
 .theme-whatsapp .dark\:border-blue-500,
 .theme-whatsapp .dark\:border-blue-600,
 .theme-whatsapp .dark\:border-cyan-400,
+.theme-whatsapp .dark\:border-cyan-500,
+.theme-whatsapp .border-blue-500\/20,
 .theme-whatsapp .border-blue-500\/30,
 .theme-whatsapp .border-blue-500\/40,
+.theme-whatsapp .border-blue-500\/50,
+.theme-whatsapp .border-blue-500\/60,
+.theme-whatsapp .dark\:border-blue-500\/20,
 .theme-whatsapp .dark\:border-blue-500\/30,
 .theme-whatsapp .dark\:border-blue-500\/40,
-.theme-whatsapp .dark\:border-blue-500\/60 {
-  border-color: rgba(0, 168, 132, 0.35) !important;
+.theme-whatsapp .dark\:border-blue-500\/50,
+.theme-whatsapp .dark\:border-blue-500\/60,
+.theme-whatsapp .border-l-blue-600,
+.theme-whatsapp .border-l-blue-500,
+.theme-whatsapp .dark\:border-l-blue-600,
+.theme-whatsapp .dark\:border-l-blue-500,
+.theme-whatsapp .hover\:border-blue-300:hover,
+.theme-whatsapp .hover\:border-blue-400:hover,
+.theme-whatsapp .hover\:border-blue-500:hover,
+.theme-whatsapp .hover\:border-blue-500\/40:hover,
+.theme-whatsapp .dark\:hover\:border-blue-300:hover,
+.theme-whatsapp .dark\:hover\:border-blue-400:hover,
+.theme-whatsapp .dark\:hover\:border-blue-500:hover {
+  border-color: rgba(0, 168, 132, 0.4) !important;
 }
 
 /* 10. ITENS ATIVOS DA SIDEBAR NAVEGAÇÃO */
