@@ -606,11 +606,11 @@ export default function Sidebar() {
                 className="flex items-center gap-2 group transition-transform active:scale-95 select-none"
                 title="VALLOR - Ir para a Visão Geral"
               >
-                {/* Logo Oficial Horizontal da VALLOR */}
+                {/* Logo Oficial Horizontal da VALLOR (Sem by avall para máxima legibilidade) */}
                 <img 
-                  src="/vallor/Logo_valor_01.svg" 
+                  src="/vallor/Logo_valor_02.svg" 
                   alt="VALLOR" 
-                  className={`h-7 w-auto max-w-[145px] object-contain transition-all ${
+                  className={`h-8 w-auto max-w-[165px] object-contain transition-all ${
                     !isDark && !isWhatsApp ? "invert brightness-0 opacity-90" : "opacity-95"
                   }`}
                 />
@@ -620,7 +620,7 @@ export default function Sidebar() {
               <button
                 type="button"
                 onClick={toggleSidebar}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors cursor-pointer shrink-0 ml-1"
                 title="Recolher menu lateral"
                 aria-label="Recolher menu lateral"
               >
@@ -1104,9 +1104,9 @@ export default function Sidebar() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
-                  src="/vallor/Logo_valor_01.svg" 
+                  src="/vallor/Logo_valor_02.svg" 
                   alt="VALLOR" 
-                  className={`h-7 w-auto max-w-[145px] object-contain transition-all ${
+                  className={`h-8 w-auto max-w-[165px] object-contain transition-all ${
                     !isDark && !isWhatsApp ? "invert brightness-0 opacity-90" : "opacity-95"
                   }`}
                 />
