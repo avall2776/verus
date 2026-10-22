@@ -17,8 +17,18 @@ export class RagService {
     this.openai = new OpenAI({ apiKey });
   }
 
-  async processAndSavePdf(tenantId: string, filename: string, fileBuffer: Buffer) {
-    this.logger.log(`Processando PDF ${filename} para o tenant ${tenantId}...`);
+  private sanitizeFilename(filename: string): string {
+    try {
+      // Converte possíveis caracteres corrompidos por encoding ISO-8859-1/Latin1 do Multer
+      return Buffer.from(filename, 'latin1').toString('utf8');
+    } catch {
+      return filename;
+    }
+  }
+
+  async processAndSavePdf(tenantId: string, rawFilename: string, fileBuffer: Buffer) {
+    const filename = this.sanitizeFilename(rawFilename);
+    this.logger.log(`Processando PDF "${filename}" (${fileBuffer.length} bytes) para o tenant ${tenantId}...`);
     
     // 1. Extrair Texto
     let text = '';
@@ -33,7 +43,14 @@ export class RagService {
       throw new BadRequestException('Não foi possível extrair texto deste PDF. O arquivo pode ser uma imagem digitalizada sem camada de texto (OCR) ou estar vazio.');
     }
     
-    // 2. Criar o Documento Pai
+    // 2. Quebrar o texto em chunks (aprox 1000 caracteres, respeitando parágrafos/espaços)
+    const chunks = this.chunkText(text.trim(), 1000).filter(c => Boolean(c.trim()));
+    if (chunks.length === 0) {
+      throw new BadRequestException('Nenhum fragmento de texto legível pôde ser extraído deste PDF.');
+    }
+    this.logger.log(`Documento dividido em ${chunks.length} chunks.`);
+
+    // 3. Criar o Documento Pai
     const document = await this.prisma.knowledgeDocument.create({
       data: {
         tenantId,
@@ -42,36 +59,43 @@ export class RagService {
       }
     });
 
-    // 3. Quebrar o texto em chunks (aprox 1000 caracteres, respeitando parágrafos/espaços)
-    const chunks = this.chunkText(text, 1000);
-    this.logger.log(`Documento dividido em ${chunks.length} chunks.`);
+    // 4. Gerar embeddings em lotes e salvar no banco com rollback
+    try {
+      const BATCH_SIZE = 50;
+      for (let b = 0; b < chunks.length; b += BATCH_SIZE) {
+        const batchChunks = chunks.slice(b, b + BATCH_SIZE);
+        const embeddingResponse = await this.openai.embeddings.create({
+          model: 'text-embedding-3-small',
+          input: batchChunks,
+        });
 
-    // 4. Gerar embeddings e salvar no banco
-    for (let i = 0; i < chunks.length; i++) {
-      const chunkText = chunks[i];
-      if (!chunkText.trim()) continue;
+        for (let i = 0; i < batchChunks.length; i++) {
+          const chunkText = batchChunks[i];
+          const embedding = embeddingResponse.data[i].embedding;
 
-      const embeddingResponse = await this.openai.embeddings.create({
-        model: 'text-embedding-3-small',
-        input: chunkText,
-      });
-      const embedding = embeddingResponse.data[0].embedding;
+          await this.prisma.$executeRaw`
+            INSERT INTO "DocumentChunk" (id, "documentId", "tenantId", content, embedding)
+            VALUES (
+              gen_random_uuid(), 
+              ${document.id}, 
+              ${tenantId}, 
+              ${chunkText}, 
+              ${embedding}::vector
+            )
+          `;
+        }
+      }
 
-      // Salvando via raw query por causa do campo Unsupported vector
-      await this.prisma.$executeRaw`
-        INSERT INTO "DocumentChunk" (id, "documentId", "tenantId", content, embedding)
-        VALUES (
-          gen_random_uuid(), 
-          ${document.id}, 
-          ${tenantId}, 
-          ${chunkText}, 
-          ${embedding}::vector
-        )
-      `;
+      this.logger.log(`Documento "${filename}" indexado com sucesso (${chunks.length} chunks vetoriais).`);
+      return document;
+    } catch (err: any) {
+      this.logger.error(`Erro durante geração de embeddings do documento ${document.id}: ${err.message}`, err.stack);
+      // Remove documento órfão em caso de falha no meio do processo
+      await this.prisma.knowledgeDocument.deleteMany({
+        where: { id: document.id }
+      }).catch(() => {});
+      throw new InternalServerErrorException(`Erro ao indexar embeddings no banco vetorial: ${err.message}`);
     }
-
-    this.logger.log(`Documento ${filename} processado com sucesso.`);
-    return document;
   }
 
   async getDocuments(tenantId: string) {

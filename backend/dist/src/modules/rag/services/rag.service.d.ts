@@ -6,7 +6,8 @@ export declare class RagService {
     private readonly logger;
     private readonly openai;
     constructor(prisma: PrismaService, configService: ConfigService);
-    processAndSavePdf(tenantId: string, filename: string, fileBuffer: Buffer): Promise<{
+    private sanitizeFilename;
+    processAndSavePdf(tenantId: string, rawFilename: string, fileBuffer: Buffer): Promise<{
         id: string;
         tenantId: string;
         createdAt: Date;

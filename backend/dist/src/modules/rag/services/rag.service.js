@@ -24,8 +24,17 @@ let RagService = RagService_1 = class RagService {
         const apiKey = this.configService.get('OPENAI_API_KEY');
         this.openai = new openai_1.default({ apiKey });
     }
-    async processAndSavePdf(tenantId, filename, fileBuffer) {
-        this.logger.log(`Processando PDF ${filename} para o tenant ${tenantId}...`);
+    sanitizeFilename(filename) {
+        try {
+            return Buffer.from(filename, 'latin1').toString('utf8');
+        }
+        catch {
+            return filename;
+        }
+    }
+    async processAndSavePdf(tenantId, rawFilename, fileBuffer) {
+        const filename = this.sanitizeFilename(rawFilename);
+        this.logger.log(`Processando PDF "${filename}" (${fileBuffer.length} bytes) para o tenant ${tenantId}...`);
         let text = '';
         try {
             text = await pdf_loader_1.PdfLoader.extractText(fileBuffer);
@@ -37,6 +46,11 @@ let RagService = RagService_1 = class RagService {
         if (!text || !text.trim()) {
             throw new common_1.BadRequestException('Não foi possível extrair texto deste PDF. O arquivo pode ser uma imagem digitalizada sem camada de texto (OCR) ou estar vazio.');
         }
+        const chunks = this.chunkText(text.trim(), 1000).filter(c => Boolean(c.trim()));
+        if (chunks.length === 0) {
+            throw new common_1.BadRequestException('Nenhum fragmento de texto legível pôde ser extraído deste PDF.');
+        }
+        this.logger.log(`Documento dividido em ${chunks.length} chunks.`);
         const document = await this.prisma.knowledgeDocument.create({
             data: {
                 tenantId,
@@ -44,30 +58,39 @@ let RagService = RagService_1 = class RagService {
                 fileSize: fileBuffer.length,
             }
         });
-        const chunks = this.chunkText(text, 1000);
-        this.logger.log(`Documento dividido em ${chunks.length} chunks.`);
-        for (let i = 0; i < chunks.length; i++) {
-            const chunkText = chunks[i];
-            if (!chunkText.trim())
-                continue;
-            const embeddingResponse = await this.openai.embeddings.create({
-                model: 'text-embedding-3-small',
-                input: chunkText,
-            });
-            const embedding = embeddingResponse.data[0].embedding;
-            await this.prisma.$executeRaw `
-        INSERT INTO "DocumentChunk" (id, "documentId", "tenantId", content, embedding)
-        VALUES (
-          gen_random_uuid(), 
-          ${document.id}, 
-          ${tenantId}, 
-          ${chunkText}, 
-          ${embedding}::vector
-        )
-      `;
+        try {
+            const BATCH_SIZE = 50;
+            for (let b = 0; b < chunks.length; b += BATCH_SIZE) {
+                const batchChunks = chunks.slice(b, b + BATCH_SIZE);
+                const embeddingResponse = await this.openai.embeddings.create({
+                    model: 'text-embedding-3-small',
+                    input: batchChunks,
+                });
+                for (let i = 0; i < batchChunks.length; i++) {
+                    const chunkText = batchChunks[i];
+                    const embedding = embeddingResponse.data[i].embedding;
+                    await this.prisma.$executeRaw `
+            INSERT INTO "DocumentChunk" (id, "documentId", "tenantId", content, embedding)
+            VALUES (
+              gen_random_uuid(), 
+              ${document.id}, 
+              ${tenantId}, 
+              ${chunkText}, 
+              ${embedding}::vector
+            )
+          `;
+                }
+            }
+            this.logger.log(`Documento "${filename}" indexado com sucesso (${chunks.length} chunks vetoriais).`);
+            return document;
         }
-        this.logger.log(`Documento ${filename} processado com sucesso.`);
-        return document;
+        catch (err) {
+            this.logger.error(`Erro durante geração de embeddings do documento ${document.id}: ${err.message}`, err.stack);
+            await this.prisma.knowledgeDocument.deleteMany({
+                where: { id: document.id }
+            }).catch(() => { });
+            throw new common_1.InternalServerErrorException(`Erro ao indexar embeddings no banco vetorial: ${err.message}`);
+        }
     }
     async getDocuments(tenantId) {
         return this.prisma.knowledgeDocument.findMany({
