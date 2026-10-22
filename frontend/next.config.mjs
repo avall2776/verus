@@ -108,6 +108,12 @@ const nextConfig = {
         permanent: false,
       },
       {
+        source: '/images/:path*',
+        destination: '/vallor/images/:path*',
+        basePath: false,
+        permanent: false,
+      },
+      {
         source: '/sounds/:path*',
         destination: '/vallor/sounds/:path*',
         basePath: false,

@@ -416,8 +416,14 @@ html:not(.dark) {
 .theme-whatsapp .dark\:bg-slate-800\/50,
 .theme-whatsapp .bg-slate-800\/40,
 .theme-whatsapp .dark\:bg-slate-800\/40,
+.theme-whatsapp .bg-gray-900\/50,
+.theme-whatsapp .dark\:bg-gray-900\/50,
+.theme-whatsapp .bg-gray-900\/60,
+.theme-whatsapp .dark\:bg-gray-900\/60,
 .theme-whatsapp [class*="bg-slate-800/"],
-.theme-whatsapp [class*="dark:bg-slate-800/"] {
+.theme-whatsapp [class*="dark:bg-slate-800/"],
+.theme-whatsapp [class*="bg-gray-900/"],
+.theme-whatsapp [class*="dark:bg-gray-900/"] {
   background-color: #202C33 !important;
 }
 

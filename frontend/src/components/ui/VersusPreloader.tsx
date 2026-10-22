@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import * as THREE from "three";
+import React, { useState, useEffect } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface VersusPreloaderProps {
   onComplete?: (targetHref?: string) => void;
@@ -12,243 +12,248 @@ interface VersusPreloaderProps {
 
 export default function VersusPreloader({
   onComplete,
-  durationMs = 15000,
+  durationMs = 2800,
   forcePlay = false,
-  userName
 }: VersusPreloaderProps) {
-  const mountRef = useRef<HTMLDivElement>(null);
+  const { isDark, isWhatsApp } = useTheme();
 
   const [isExiting, setIsExiting] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
-  const [resolvedUserName, setResolvedUserName] = useState<string>(userName || "");
-  const [progress, setProgress] = useState<number>(0);
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return "Bom dia";
-    if (hour >= 12 && hour < 18) return "Boa tarde";
-    return "Boa noite";
-  };
+  // Fallback seguro de tema baseado em classes DOM caso o contexto ainda esteja montando
+  const [domTheme, setDomTheme] = useState<{ isDark: boolean; isWhatsApp: boolean }>({
+    isDark: true,
+    isWhatsApp: false,
+  });
 
-  // Tenta resolver o nome do usuário se não foi passado via props
   useEffect(() => {
-    if (userName) {
-      setResolvedUserName(userName);
-      return;
+    if (typeof document !== "undefined") {
+      const root = document.documentElement;
+      setDomTheme({
+        isDark: root.classList.contains("dark") || isDark,
+        isWhatsApp: root.classList.contains("theme-whatsapp") || isWhatsApp,
+      });
     }
-    try {
-      const stored = localStorage.getItem("versus_user");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.name) {
-          const firstName = parsed.name.split(" ")[0];
-          setResolvedUserName(firstName);
-        }
-      }
-    } catch (e) {}
-  }, [userName]);
+  }, [isDark, isWhatsApp]);
 
-  // ================= MOTOR 3D THREE.JS: BOLÍCULAS SUTIS COM TRANSPARÊNCIA =================
+  const effectiveIsWhatsApp = isWhatsApp || domTheme.isWhatsApp;
+  const effectiveIsDark = isDark || domTheme.isDark;
+  const isCleanTheme = !effectiveIsDark && !effectiveIsWhatsApp;
+
+  // Gerenciamento de ciclo de vida do Preloader (2.5 a 3.0 segundos)
   useEffect(() => {
-    if (!mountRef.current) return;
+    // Inicia a transição de saída (scale-up suave 1.04 + fade-out) 650ms antes do final
+    const exitLeadTime = 650;
+    const exitTimer = setTimeout(() => {
+      setIsExiting(true);
+    }, Math.max(800, durationMs - exitLeadTime));
 
-    const container = mountRef.current;
-    const width = container.clientWidth || window.innerWidth;
-    const height = container.clientHeight || window.innerHeight;
-
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x0b1224, 0.02);
-
-    const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
-    camera.position.set(0, 0, 32);
-
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
-    renderer.setClearColor(0x0b1224, 1);
-    container.appendChild(renderer.domElement);
-
-    const createCircleTexture = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 64;
-      canvas.height = 64;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.beginPath();
-        ctx.arc(32, 32, 30, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
+    // Finaliza o preloader
+    const finishTimer = setTimeout(() => {
+      setIsFinished(true);
+      try {
+        sessionStorage.setItem("versus_boot_completed", "true");
+      } catch (e) {}
+      if (onComplete) {
+        onComplete("/dashboard");
       }
-      return new THREE.CanvasTexture(canvas);
-    };
-
-    // Campo de bolículas sutis
-    const particleCount = 280;
-    const particleGeometry = new THREE.BufferGeometry();
-    const particlePositions = new Float32Array(particleCount * 3);
-
-    for (let i = 0; i < particleCount * 3; i += 3) {
-      particlePositions[i] = (Math.random() - 0.5) * 55;
-      particlePositions[i + 1] = (Math.random() - 0.5) * 45;
-      particlePositions[i + 2] = (Math.random() - 0.5) * 35;
-    }
-
-    particleGeometry.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
-
-    const pTexture = createCircleTexture();
-    const particleMaterial = new THREE.PointsMaterial({
-      color: 0x3b82f6,
-      size: 0.28,
-      map: pTexture,
-      transparent: true,
-      opacity: 0.55,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-
-    const particles = new THREE.Points(particleGeometry, particleMaterial);
-    scene.add(particles);
-
-    const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      mouse.targetX = (e.clientX / window.innerWidth) * 2 - 1;
-      mouse.targetY = -(e.clientY / window.innerHeight) * 2 + 1;
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-
-    let animId: number;
-    const clock = new THREE.Clock();
-
-    const animate = () => {
-      animId = requestAnimationFrame(animate);
-      const elapsedTime = clock.getElapsedTime();
-
-      mouse.x += (mouse.targetX - mouse.x) * 0.05;
-      mouse.y += (mouse.targetY - mouse.y) * 0.05;
-
-      camera.position.x += (mouse.x * 2 - camera.position.x) * 0.03;
-      camera.position.y += (-mouse.y * 2 - camera.position.y) * 0.03;
-      camera.lookAt(0, 0, 0);
-
-      particles.rotation.y = elapsedTime * 0.025;
-      particles.rotation.x = elapsedTime * 0.015;
-
-      renderer.render(scene, camera);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      if (!container) return;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
-
-    window.addEventListener("resize", handleResize);
+    }, durationMs);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("resize", handleResize);
-      cancelAnimationFrame(animId);
-      if (container && renderer.domElement) {
-        container.removeChild(renderer.domElement);
-      }
-      particleGeometry.dispose();
-      particleMaterial.dispose();
-      pTexture.dispose();
-      renderer.dispose();
+      clearTimeout(exitTimer);
+      clearTimeout(finishTimer);
     };
-  }, []);
-
-  // ================= PROGRESSO DE 15 SEGUNDOS COM TRANSIÇÃO AUTOMÁTICA =================
-  useEffect(() => {
-    const startTime = Date.now();
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const p = Math.min(100, Math.floor((elapsed / durationMs) * 100));
-      setProgress(p);
-
-      if (p >= 100) {
-        clearInterval(interval);
-        handleDismiss();
-      }
-    }, 40);
-
-    return () => clearInterval(interval);
-  }, [durationMs]);
-
-  const handleDismiss = () => {
-    if (isExiting) return;
-    try {
-      sessionStorage.setItem("versus_boot_completed", "true");
-    } catch (e) {}
-
-    setIsExiting(true);
-
-    // Fade-out suave automático de 1.000ms antes de transferir a rota
-    setTimeout(() => {
-      setIsFinished(true);
-      if (onComplete) onComplete("/dashboard");
-    }, 1000);
-  };
+  }, [durationMs, onComplete]);
 
   if (isFinished && !forcePlay) return null;
 
-  // Texto dinâmico alternando o carregamento das ferramentas do sistema
-  const getToolStatusText = (p: number) => {
-    if (p < 20) return "Carregando Operação de Atendimento...";
-    if (p < 40) return "Carregando Chat da Equipe...";
-    if (p < 60) return "Carregando Funil Comercial & CRM...";
-    if (p < 80) return "Sincronizando Módulos de Inteligência Artificial...";
-    if (p < 95) return "Carregando Painel Executivo & Métricas...";
-    return "Ambiente pronto para operação!";
-  };
-
   return (
-    <div
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-8 bg-white dark:bg-[#0B1224] overflow-hidden select-none transition-all duration-1000 ease-in-out pointer-events-none ${
+    <aside
+      role="status"
+      aria-live="polite"
+      aria-label="Carregando sistema"
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden select-none transition-all duration-700 ease-out ${
         isExiting
-          ? "opacity-0 scale-105 filter blur-xl"
-          : "opacity-100 scale-100 filter blur-0"
+          ? "opacity-0 scale-[1.04] blur-md pointer-events-none"
+          : "opacity-100 scale-100 blur-0 pointer-events-auto"
       }`}
-      style={{ willChange: "opacity, transform, filter" }}
+      style={{
+        backgroundColor: effectiveIsWhatsApp
+          ? "#0B141A"
+          : isCleanTheme
+            ? "#F8FAFC"
+            : "#050814",
+      }}
     >
-      {/* Canvas 3D de Fundo com bolículas sutis */}
-      <div ref={mountRef} className="absolute inset-0 z-0 pointer-events-none" />
+      {/* 1. CAMADA DE PROFUNDIDADE DE ESTÚDIO (GRADIENTE RADIAL DINÂMICO) */}
+      <div
+        className="absolute inset-0 pointer-events-none transition-opacity duration-500"
+        style={{
+          background: effectiveIsWhatsApp
+            ? "radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.16) 0%, rgba(11, 20, 26, 0.85) 55%, #0B141A 100%)"
+            : isCleanTheme
+              ? "radial-gradient(circle at 50% 50%, rgba(241, 245, 249, 1) 0%, rgba(226, 232, 240, 0.75) 60%, #F8FAFC 100%)"
+              : "radial-gradient(circle at 50% 50%, rgba(0, 85, 255, 0.16) 0%, rgba(5, 8, 20, 0.88) 55%, #050814 100%)",
+        }}
+      />
 
-      {/* Iluminação volumétrica suave */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-blue-950/20 rounded-full blur-[160px] pointer-events-none" />
+      {/* 2. MALHA / GRID DE ENGENHARIA HIGH-TECH (3% A 5% DE OPACIDADE COM PONTOS DE CONEXÃO) */}
+      <svg
+        className={`absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-500 ${
+          isCleanTheme ? "opacity-[0.05] text-slate-900" : "opacity-[0.04] text-white"
+        }`}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <pattern id="vallor-preloader-grid" width="44" height="44" patternUnits="userSpaceOnUse">
+            <path d="M 44 0 L 0 0 0 44" fill="none" stroke="currentColor" strokeWidth="0.75" />
+            <circle cx="44" cy="0" r="1.5" fill="currentColor" opacity="0.8" />
+            <circle cx="0" cy="44" r="1.5" fill="currentColor" opacity="0.8" />
+            <circle cx="22" cy="22" r="0.75" fill="currentColor" opacity="0.4" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#vallor-preloader-grid)" />
+      </svg>
 
-      {/* CONTEÚDO CENTRALIZADO: Apenas Boas-Vindas + Barra + Status das Ferramentas */}
-      <div className="flex flex-col items-center justify-center text-center space-y-6 max-w-xl mx-auto px-4 z-10">
+      {/* 3. AURA LUMINOSA RESPIRATÓRIA ATRÁS DO LOGO (BACKLIGHT GLOW COM BLUR-3XL) */}
+      <div
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-36 rounded-full blur-[90px] pointer-events-none animate-pulse ${
+          effectiveIsWhatsApp
+            ? "bg-gradient-to-r from-emerald-600/35 via-teal-400/30 to-emerald-500/35"
+            : isCleanTheme
+              ? "bg-gradient-to-r from-slate-300/50 via-blue-200/40 to-slate-300/50"
+              : "bg-gradient-to-r from-blue-600/40 via-cyan-400/35 to-blue-500/40"
+        }`}
+        style={{ animationDuration: "2.4s" }}
+      />
+
+      {/* 4. CONTEÚDO CENTRAL CINEMATOGRÁFICO: LOGO VALLOR + FEIXE SHIMMER + LINHA LASER */}
+      <div className="relative z-10 flex flex-col items-center justify-center text-center px-6">
         
-        {/* Texto de Boas-Vindas */}
-        <h2 className="text-3xl sm:text-5xl font-bold text-white tracking-wide flex items-center justify-center gap-3.5 drop-shadow-[0_8px_30px_rgba(0,0,0,0.9)]">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_12px_#3b82f6]" />
-          <span>{getGreeting()}, {resolvedUserName || "Operador"}</span>
-        </h2>
+        {/* CONTAINER DO LOGO CENTRAL VALLOR COM EFEITO DE FEIXE DE LUZ (SHIMMER SWEEP) */}
+        <div className="relative overflow-hidden group select-none py-2 px-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/vallor/images/logo-vallor.svg"
+            alt="VALLOR"
+            className={`w-[240px] sm:w-[270px] h-auto object-contain transition-all duration-300 ${
+              isCleanTheme
+                ? "brightness-0 opacity-85 drop-shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
+                : effectiveIsWhatsApp
+                  ? "brightness-0 invert opacity-100 drop-shadow-[0_0_30px_rgba(16,185,129,0.35)]"
+                  : "opacity-95 drop-shadow-[0_0_35px_rgba(0,210,255,0.35)]"
+            }`}
+            onError={(e) => {
+              // Fallback gracioso para a rota direta da marca
+              const target = e.currentTarget as HTMLImageElement;
+              if (target.src.indexOf("/vallor/Logo_valor_02.svg") === -1) {
+                target.src = "/vallor/Logo_valor_02.svg";
+              }
+            }}
+          />
 
-        {/* Barra de Status Centralizada */}
-        <div className="w-72 sm:w-96 h-[3px] bg-slate-800/80 rounded-full overflow-hidden relative shadow-inner">
+          {/* Feixe de Luz Shimmer Sweep (Varredura de 0% a 100%) */}
           <div
-            className="h-full bg-gradient-to-r from-blue-700 via-blue-500 to-blue-400 transition-all duration-150"
-            style={{ width: `${progress}%` }}
+            className="absolute inset-0 pointer-events-none shimmer-light-sweep"
+            style={{
+              background: isCleanTheme
+                ? "linear-gradient(105deg, transparent 25%, rgba(0, 0, 0, 0.12) 50%, transparent 75%)"
+                : effectiveIsWhatsApp
+                  ? "linear-gradient(105deg, transparent 20%, rgba(255, 255, 255, 0.75) 48%, rgba(16, 185, 129, 0.5) 55%, transparent 80%)"
+                  : "linear-gradient(105deg, transparent 20%, rgba(255, 255, 255, 0.8) 48%, rgba(0, 210, 255, 0.5) 55%, transparent 80%)",
+            }}
           />
         </div>
 
-        {/* Texto de Status das Ferramentas (Alternância Dinâmica) */}
-        <p className="text-sm sm:text-base font-mono tracking-wider text-slate-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] transition-all duration-300">
-          {getToolStatusText(progress)}
-        </p>
+        {/* 5. LINHA LASER DE BOOT TECNOLÓGICO (SUBSTITUINDO BARRAS DE LOADING GROSSEIRAS) */}
+        {/* Espaçamento preciso de 32px (mt-8) abaixo do logo */}
+        <div className="mt-8 relative w-[180px] h-[1.5px] rounded-full overflow-hidden">
+          {/* Trilho base sutil da linha laser */}
+          <div
+            className={`absolute inset-0 ${
+              isCleanTheme
+                ? "bg-slate-300/80"
+                : effectiveIsWhatsApp
+                  ? "bg-emerald-950/80"
+                  : "bg-slate-800/90"
+            }`}
+          />
+
+          {/* Pulso laser em alta velocidade com feixe e brilho luminoso */}
+          <div
+            className={`absolute top-0 bottom-0 laser-pulse-beam ${
+              effectiveIsWhatsApp
+                ? "bg-gradient-to-r from-transparent via-[#10B981] to-transparent shadow-[0_0_12px_#10B981]"
+                : isCleanTheme
+                  ? "bg-gradient-to-r from-transparent via-slate-700 to-transparent shadow-[0_0_8px_rgba(0,0,0,0.25)]"
+                  : "bg-gradient-to-r from-transparent via-[#00D2FF] to-transparent shadow-[0_0_14px_#00D2FF]"
+            }`}
+          />
+        </div>
+
+        {/* 6. TEXTO DE ALTA ELEGÂNCIA MONOESPAÇADO (TRACKING LARGO) */}
+        <div className="mt-4 flex items-center justify-center gap-2">
+          <p
+            className={`text-[10px] sm:text-[11px] font-mono tracking-[0.25em] uppercase font-semibold select-none ${
+              effectiveIsWhatsApp
+                ? "text-emerald-400/90 drop-shadow-[0_0_10px_rgba(16,185,129,0.35)]"
+                : isCleanTheme
+                  ? "text-slate-500"
+                  : "text-cyan-400/90 drop-shadow-[0_0_10px_rgba(0,210,255,0.35)]"
+            }`}
+          >
+            VALLOR ENTERPRISE CORE • SYSTEM ACTIVE
+          </p>
+        </div>
 
       </div>
-    </div>
+
+      {/* ESTILOS DE ANIMAÇÃO NATIVOS PURAMENTE CSS (SEM PESO, ALTÍSSIMA TAXA DE QUADROS) */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes shimmerSweepAnim {
+          0% {
+            transform: translateX(-160%) skewX(-20deg);
+            opacity: 0;
+          }
+          20% {
+            opacity: 1;
+          }
+          80% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateX(180%) skewX(-20deg);
+            opacity: 0;
+          }
+        }
+
+        .shimmer-light-sweep {
+          animation: shimmerSweepAnim 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          will-change: transform, opacity;
+        }
+
+        @keyframes laserPulseAnim {
+          0% {
+            left: -40%;
+            width: 35%;
+            opacity: 0.2;
+          }
+          50% {
+            width: 60%;
+            opacity: 1;
+          }
+          100% {
+            left: 100%;
+            width: 35%;
+            opacity: 0.2;
+          }
+        }
+
+        .laser-pulse-beam {
+          animation: laserPulseAnim 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          will-change: left, width, opacity;
+        }
+      `}} />
+    </aside>
   );
 }

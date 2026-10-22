@@ -766,9 +766,17 @@ export default function Sidebar() {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 dark:border-gray-800 p-3 shrink-0 flex flex-col gap-2">
+        <div className={`border-t p-3 shrink-0 flex flex-col gap-2 ${
+          isWhatsApp ? 'border-[#222D34]' : 'border-slate-200 dark:border-gray-800'
+        }`}>
           {/* WA Status */}
-          <div className={`flex items-center gap-3 px-2 py-1.5 rounded-lg bg-slate-50 dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 ${!isExpanded && 'justify-center'}`}>
+          <div className={`flex items-center gap-3 px-2 py-1.5 rounded-lg border transition-colors ${
+            !isExpanded && 'justify-center'
+          } ${
+            isWhatsApp
+              ? 'bg-[#202C33] border-[#222D34]'
+              : 'bg-slate-50 dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800'
+          }`}>
             <div className="relative flex items-center justify-center w-2 h-2 shrink-0">
               {waStatus.status === 'connected' ? (
                 <>
@@ -776,15 +784,19 @@ export default function Sidebar() {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </>
               ) : (
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
               )}
             </div>
             {isExpanded && (
               <div className="flex flex-col overflow-hidden">
-                <span className="text-xs font-semibold text-slate-800 dark:text-white truncate">
+                <span className={`text-xs font-semibold truncate ${
+                  isWhatsApp ? 'text-[#E9EDEF]' : 'text-slate-800 dark:text-white'
+                }`}>
                   {waStatus.status === 'connected' ? 'WhatsApp Conectado' : 'Desconectado'}
                 </span>
-                <span className="text-[10px] text-slate-500 dark:text-gray-500 truncate">
+                <span className={`text-[10px] truncate ${
+                  isWhatsApp ? 'text-[#8696A0]' : 'text-slate-500 dark:text-gray-500'
+                }`}>
                   {waStatus.metaPhoneNumberId ? `ID: ${String(waStatus.metaPhoneNumberId).replace(/^ID:\s*/i, '').trim()}` : 'Sem Instância'}
                 </span>
               </div>
@@ -1036,9 +1048,17 @@ export default function Sidebar() {
             <div 
               onClick={() => setIsProfileModalOpen(true)}
               title="Passe o mouse para abrir o menu do operador"
-              className={`flex items-center gap-2.5 px-2 py-2 mt-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/60 cursor-pointer transition-colors group relative ${!isExpanded && 'justify-center'}`}
+              className={`flex items-center gap-2.5 px-2 py-2 mt-1 rounded-lg cursor-pointer transition-colors group relative ${!isExpanded && 'justify-center'} ${
+                isWhatsApp
+                  ? 'hover:bg-[#202C33]'
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800/60'
+              }`}
             >
-              <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm overflow-hidden">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 shadow-sm overflow-hidden ${
+                isWhatsApp
+                  ? 'bg-[#00A884]/20 text-[#00A884] border border-[#00A884]/30'
+                  : 'bg-blue-600/20 text-blue-600 dark:text-blue-400 border border-blue-500/30'
+              }`}>
                 {isAvatarUrlValid(currentUser?.avatarUrl) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img 
@@ -1058,13 +1078,19 @@ export default function Sidebar() {
               {isExpanded && (
                 <div className="flex flex-col overflow-hidden flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-slate-800 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <span className={`text-xs font-bold truncate transition-colors ${
+                      isWhatsApp 
+                        ? 'text-[#E9EDEF] group-hover:text-[#00A884]' 
+                        : 'text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                    }`}>
                       {currentUser?.name || "Usuário Atual"}
                     </span>
                     <Edit2 size={11} className="text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                   </div>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                    {targetTenantName ? (activeWorkspace?.name || targetTenantName) : (activeWorkspace?.name || currentUser?.tenantName || "Verto Comercial")} • <span className="text-blue-600 dark:text-blue-400 font-medium">Menu</span>
+                  <span className={`text-[10px] truncate ${
+                    isWhatsApp ? 'text-[#8696A0]' : 'text-slate-500 dark:text-slate-400'
+                  }`}>
+                    {targetTenantName ? (activeWorkspace?.name || targetTenantName) : (activeWorkspace?.name || currentUser?.tenantName || "Verto Comercial")} • <span className={`font-medium ${isWhatsApp ? 'text-[#00A884]' : 'text-blue-600 dark:text-blue-400'}`}>Menu</span>
                   </span>
                 </div>
               )}
