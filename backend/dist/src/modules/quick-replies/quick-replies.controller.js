@@ -25,7 +25,7 @@ let QuickRepliesController = class QuickRepliesController {
         return this.quickRepliesService.findAll(tenantId);
     }
     async createQuickReply(tenantId, body) {
-        return this.quickRepliesService.create(tenantId, body.shortcut, body.content);
+        return this.quickRepliesService.create(tenantId, body);
     }
     async updateQuickReply(tenantId, id, body) {
         return this.quickRepliesService.update(tenantId, id, body);

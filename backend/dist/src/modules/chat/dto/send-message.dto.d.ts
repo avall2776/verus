@@ -3,6 +3,7 @@ export declare class SendMessageDto {
     isInternal?: boolean;
     type?: string;
     mediaUrl?: string;
+    filename?: string;
     scheduledAt?: string;
     timezone?: string;
     instanceId?: string;

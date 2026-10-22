@@ -1,4 +1,4 @@
-import { QuickRepliesService } from './quick-replies.service';
+import { QuickRepliesService, CreateQuickReplyDto, UpdateQuickReplyDto } from './quick-replies.service';
 export declare class QuickRepliesController {
     private readonly quickRepliesService;
     constructor(quickRepliesService: QuickRepliesService);
@@ -6,34 +6,52 @@ export declare class QuickRepliesController {
         id: string;
         tenantId: string;
         createdAt: Date;
+        updatedAt: Date;
         content: string;
+        type: string;
+        mediaUrl: string | null;
+        title: string | null;
         shortcut: string;
+        mediaDriveId: string | null;
+        fileName: string | null;
     }[]>;
-    createQuickReply(tenantId: string, body: {
-        shortcut: string;
-        content: string;
-    }): Promise<{
+    createQuickReply(tenantId: string, body: CreateQuickReplyDto): Promise<{
         id: string;
         tenantId: string;
         createdAt: Date;
+        updatedAt: Date;
         content: string;
+        type: string;
+        mediaUrl: string | null;
+        title: string | null;
         shortcut: string;
+        mediaDriveId: string | null;
+        fileName: string | null;
     }>;
-    updateQuickReply(tenantId: string, id: string, body: {
-        shortcut?: string;
-        content?: string;
-    }): Promise<{
+    updateQuickReply(tenantId: string, id: string, body: UpdateQuickReplyDto): Promise<{
         id: string;
         tenantId: string;
         createdAt: Date;
+        updatedAt: Date;
         content: string;
+        type: string;
+        mediaUrl: string | null;
+        title: string | null;
         shortcut: string;
+        mediaDriveId: string | null;
+        fileName: string | null;
     }>;
     deleteQuickReply(tenantId: string, id: string): Promise<{
         id: string;
         tenantId: string;
         createdAt: Date;
+        updatedAt: Date;
         content: string;
+        type: string;
+        mediaUrl: string | null;
+        title: string | null;
         shortcut: string;
+        mediaDriveId: string | null;
+        fileName: string | null;
     }>;
 }

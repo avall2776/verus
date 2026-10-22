@@ -73,6 +73,7 @@ const NAV_GROUPS = [
     items: [
       { name: "Monitor em Tempo Real", icon: Activity, href: "/monitor" },
       { name: "WhatsApp", icon: WhatsAppIcon, href: "/inbox" },
+      { name: "Inbox de E-mail", icon: Mail, href: "/email-inbox" },
       { name: "Métricas de Atendimento", icon: BarChart, href: "/dashboard/atendimento" },
     ]
   },
@@ -95,19 +96,12 @@ const NAV_GROUPS = [
     title: "FUNIL COMERCIAL (CRM)",
     items: [
       { name: "Oportunidades", icon: Kanban, href: "/crm" },
-      { name: "Métricas de Vendas", icon: PieChart, href: "/dashboard/crm" },
-    ]
-  },
-  {
-    title: "MAIS RECURSOS / EXPANSÃO",
-    items: [
       { name: "Propostas Comerciais", icon: FileText, href: "/proposals" },
       { name: "Contratos", icon: ScrollText, href: "/contracts" },
-      { name: "Automações de Vendas", icon: Zap, href: "/settings?tab=automations" },
-      { name: "Analytics Avançado", icon: TrendingUp, href: "/dashboard/analytics" },
       { name: "Metas Comerciais", icon: Target, href: "/dashboard/goals" },
-      { name: "Inbox de E-mail", icon: Mail, href: "/email-inbox" },
-      { name: "Central de Suporte", icon: LifeBuoy, href: "/support" },
+      { name: "Métricas de Vendas", icon: PieChart, href: "/dashboard/crm" },
+      { name: "Analytics Avançado", icon: TrendingUp, href: "/dashboard/analytics" },
+      { name: "Automações de Vendas", icon: Zap, href: "/settings?tab=automations" },
     ]
   },
   {
@@ -119,6 +113,7 @@ const NAV_GROUPS = [
       { name: "Automações & Regras", icon: Zap, href: "/settings?tab=automations" },
       { name: "Usuários & Acessos", icon: Users, href: "/settings?tab=users" },
       { name: "Conexões WhatsApp", icon: Smartphone, href: "/settings/whatsapp" },
+      { name: "Central de Suporte", icon: LifeBuoy, href: "/support" },
       { name: "Configurações Gerais", icon: Settings, href: "/settings" },
     ]
   }
@@ -373,21 +368,34 @@ export default function Sidebar() {
       setIsExpanded(stored === 'true');
     }
     
-    // Todas as categorias iniciam totalmente recolhidas/minimizadas por padrão
+    // Operação / Atendimento e o grupo da rota atual vêm abertos por padrão
     const initialGroups: Record<string, boolean> = {};
     NAV_GROUPS.forEach(g => {
-      initialGroups[g.title] = false;
+      const hasActiveChild = g.items.some(item => {
+        const itemBase = item.href.split('?')[0];
+        if (item.href === '/agency/marketing') {
+          return pathname === '/agency/marketing' || pathname === '/agency/marketing/kanban';
+        }
+        return pathname === item.href || (item.href !== '/dashboard' && item.href !== '/settings' && pathname.startsWith(itemBase));
+      });
+      initialGroups[g.title] = hasActiveChild || g.title === "OPERAÇÃO / ATENDIMENTO";
     });
-    if (pathname.startsWith('/agency/marketing')) {
-      initialGroups["MARKETING & AGÊNCIA"] = true;
-    }
     setExpandedGroups(initialGroups);
   }, []);
 
   useEffect(() => {
-    if (pathname.startsWith('/agency/marketing')) {
-      setExpandedGroups(prev => ({ ...prev, "MARKETING & AGÊNCIA": true }));
-    }
+    NAV_GROUPS.forEach(g => {
+      const hasActiveChild = g.items.some(item => {
+        const itemBase = item.href.split('?')[0];
+        if (item.href === '/agency/marketing') {
+          return pathname === '/agency/marketing' || pathname === '/agency/marketing/kanban';
+        }
+        return pathname === item.href || (item.href !== '/dashboard' && item.href !== '/settings' && pathname.startsWith(itemBase));
+      });
+      if (hasActiveChild) {
+        setExpandedGroups(prev => ({ ...prev, [g.title]: true }));
+      }
+    });
   }, [pathname]);
 
   const toggleSidebar = () => {
@@ -520,7 +528,8 @@ export default function Sidebar() {
       base === '/dashboard/crm' ||
       base === '/proposals' ||
       base === '/contracts' ||
-      base === '/dashboard/goals'
+      base === '/dashboard/goals' ||
+      base === '/dashboard/analytics'
     ) {
       if (subPerms?.crm_enabled !== undefined) return subPerms.crm_enabled;
       return perms.crm !== false;

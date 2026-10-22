@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   CreditCard,
   Sparkles,
-  KeyRound,
 } from "lucide-react";
 
 import CompanySettingsTab from "@/components/settings/CompanySettingsTab";
@@ -23,9 +22,8 @@ import UsersSettingsTab from "@/components/settings/UsersSettingsTab";
 import DepartmentsSettingsTab from "@/components/settings/DepartmentsSettingsTab";
 import QuickRepliesSettingsTab from "@/components/settings/QuickRepliesSettingsTab";
 import AutomationsSettingsTab from "@/components/settings/AutomationsSettingsTab";
-import ApiSettingsTab from "@/components/settings/ApiSettingsTab";
 
-type TabId = "company" | "plan" | "ai" | "users" | "departments" | "quick-replies" | "automations" | "api";
+type TabId = "company" | "plan" | "ai" | "users" | "departments" | "quick-replies" | "automations";
 
 interface TabConfig {
   id: TabId;
@@ -77,12 +75,6 @@ const SETTINGS_TABS: TabConfig[] = [
     description: "Gatilhos de fluxo, regras automáticas do CRM e webhooks",
     icon: Zap,
   },
-  {
-    id: "api",
-    label: "APIs e Webhooks",
-    description: "Tokens de acesso, documentação da API e webhook de tráfego pago (Meta Ads)",
-    icon: KeyRound,
-  },
 ];
 
 function SettingsContent() {
@@ -98,123 +90,84 @@ function SettingsContent() {
   };
 
   return (
-    <div className={`flex flex-col h-full w-full ${activeTab === 'users' ? 'max-w-[1700px] px-2 sm:px-4 md:px-6' : 'max-w-7xl'} mx-auto gap-5 pb-8 animate-in fade-in duration-150`}>
-      {/* Header Corporativo (exibido nas abas comuns ou com estilo expandido quando em usuários) */}
+    <div className="flex flex-col h-full w-full max-w-7xl mx-auto gap-6 pb-8 animate-in fade-in duration-150">
+      {/* Header Corporativo */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-3">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-wide flex items-center gap-2.5">
-              <Sliders className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-500" />
-              Configurações do Sistema
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Central de administração corporativa, controle de acessos da equipe e parametrizações operacionais.
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-wide flex items-center gap-2.5">
+            <Sliders className="w-6 h-6 text-blue-600 dark:text-blue-500" />
+            Configurações do Sistema
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Central de administração corporativa, controle de acessos da equipe e parametrizações operacionais.
+          </p>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 shadow-sm shrink-0">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 shadow-sm">
           <ShieldCheck className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
           <span>Ambiente Seguro Multi-Tenant</span>
         </div>
       </div>
 
-      {/* Barra de Módulos Rápida (quando em Usuários ou no topo) */}
-      {activeTab === "users" ? (
-        <div className="flex flex-col gap-4 flex-1">
-          {/* Seletor Horizontal de Abas com Design Elegante */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar border-b border-slate-200 dark:border-slate-800/80">
-            {SETTINGS_TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => handleSelectTab(tab.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                    isActive
-                      ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                  }`}
-                >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? "text-emerald-500" : "text-slate-400"}`} />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
+      {/* Layout de Abas: Navegação Lateral + Painel de Conteúdo */}
+      <div className="flex flex-col lg:flex-row gap-6 flex-1 items-start">
+        {/* Menu Lateral de Abas */}
+        <aside className="w-full lg:w-72 shrink-0 flex flex-col gap-1.5 bg-white dark:bg-[#0B1224]/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-3 shadow-sm dark:shadow-xl backdrop-blur-sm">
+          <div className="px-3 py-2 text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">
+            Módulos de Configuração
           </div>
 
-          {/* Renderização em Largura Total (Full-Width) da Gestão de Usuários */}
-          <div className="w-full min-w-0">
-            <UsersSettingsTab />
-          </div>
-        </div>
-      ) : (
-        /* Layout de Abas Tradicional de 2 Colunas para as Demais Configurações */
-        <div className="flex flex-col lg:flex-row gap-6 flex-1 items-start">
-          {/* Menu Lateral de Abas */}
-          <aside className="w-full lg:w-72 shrink-0 flex flex-col gap-1.5 bg-white dark:bg-[#0B1224]/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-3 shadow-sm dark:shadow-xl backdrop-blur-sm">
-            <div className="px-3 py-2 text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">
-              Módulos de Configuração
-            </div>
+          {SETTINGS_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
 
-            {SETTINGS_TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => handleSelectTab(tab.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-150 group cursor-pointer ${
-                    isActive
-                      ? "bg-blue-50 dark:bg-blue-600/15 border border-blue-200 dark:border-blue-500/30 shadow-sm"
-                      : "hover:bg-slate-100 dark:hover:bg-slate-800/50 border border-transparent"
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleSelectTab(tab.id)}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-150 group ${isActive
+                    ? "bg-blue-50 dark:bg-blue-600/15 border border-blue-200 dark:border-blue-500/30 shadow-sm"
+                    : "hover:bg-slate-100 dark:hover:bg-slate-800/50 border border-transparent"
                   }`}
-                >
-                  <div
-                    className={`p-2 rounded-lg transition-colors shrink-0 ${
-                      isActive
-                        ? "bg-blue-600 text-white"
-                        : "bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 group-hover:bg-slate-200 dark:group-hover:bg-slate-800"
+              >
+                <div
+                  className={`p-2 rounded-lg transition-colors shrink-0 ${isActive
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 group-hover:bg-slate-200 dark:group-hover:bg-slate-800"
                     }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </div>
+                >
+                  <Icon className="w-4 h-4" />
+                </div>
 
-                  <div className="flex-1 min-w-0">
-                    <span
-                      className={`text-xs font-bold block ${
-                        isActive ? "text-blue-950 dark:text-white" : "text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white"
+                <div className="flex-1 min-w-0">
+                  <span
+                    className={`text-xs font-bold block ${isActive ? "text-blue-950 dark:text-white" : "text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white"
                       }`}
-                    >
-                      {tab.label}
-                    </span>
-                    <p className={`text-[11px] line-clamp-1 mt-0.5 ${
-                      isActive ? "text-blue-700/80 dark:text-blue-200/70" : "text-slate-500 dark:text-slate-400"
+                  >
+                    {tab.label}
+                  </span>
+                  <p className={`text-[11px] line-clamp-1 mt-0.5 ${isActive ? "text-blue-700/80 dark:text-blue-200/70" : "text-slate-500 dark:text-slate-400"
                     }`}>
-                      {tab.description}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
-          </aside>
+                    {tab.description}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </aside>
 
-          {/* Painel Central de Conteúdo */}
-          <main className="flex-1 w-full min-w-0 bg-white dark:bg-[#0B1224]/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 md:p-8 shadow-sm dark:shadow-xl backdrop-blur-sm">
-            {activeTab === "company" && <CompanySettingsTab />}
-            {activeTab === "plan" && <PlanSettingsTab />}
-            {activeTab === "ai" && <AiSettingsTab />}
-            {activeTab === "departments" && <DepartmentsSettingsTab />}
-            {activeTab === "quick-replies" && <QuickRepliesSettingsTab />}
-            {activeTab === "automations" && <AutomationsSettingsTab />}
-            {activeTab === "api" && <ApiSettingsTab />}
-          </main>
-        </div>
-      )}
+        {/* Painel Central de Conteúdo */}
+        <main className="flex-1 w-full min-w-0 bg-white dark:bg-[#0B1224]/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 md:p-8 shadow-sm dark:shadow-xl backdrop-blur-sm">
+          {activeTab === "company" && <CompanySettingsTab />}
+          {activeTab === "plan" && <PlanSettingsTab />}
+          {activeTab === "ai" && <AiSettingsTab />}
+          {activeTab === "users" && <UsersSettingsTab />}
+          {activeTab === "departments" && <DepartmentsSettingsTab />}
+          {activeTab === "quick-replies" && <QuickRepliesSettingsTab />}
+          {activeTab === "automations" && <AutomationsSettingsTab />}
+        </main>
+      </div>
     </div>
   );
 }

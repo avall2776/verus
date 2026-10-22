@@ -734,14 +734,21 @@ let ChatService = ChatService_1 = class ChatService {
         if (!isInternal && conversation.contact?.phone) {
             try {
                 let sendRes = null;
-                if ((type === 'image' || type === 'document') && mediaUrl) {
+                if ((type === 'image' || type === 'document' || type === 'video') && mediaUrl) {
                     sendRes = await this.messagingService.sendMedia({
                         tenantId,
                         phone: conversation.contact.phone,
-                        type,
+                        type: type,
                         mediaUrl,
                         content: payload.content,
-                        filename: payload.content?.includes('.') ? payload.content : (type === 'document' ? 'documento.pdf' : 'imagem.jpg'),
+                        filename: payload.filename ||
+                            (payload.content?.includes('.')
+                                ? payload.content
+                                : type === 'document'
+                                    ? 'documento.pdf'
+                                    : type === 'video'
+                                        ? 'video.mp4'
+                                        : 'imagem.jpg'),
                         instanceId: payload.instanceId,
                     });
                 }

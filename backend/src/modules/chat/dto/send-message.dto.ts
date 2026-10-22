@@ -19,6 +19,10 @@ export class SendMessageDto {
 
   @IsString()
   @IsOptional()
+  filename?: string;
+
+  @IsString()
+  @IsOptional()
   scheduledAt?: string;
 
   @IsString()

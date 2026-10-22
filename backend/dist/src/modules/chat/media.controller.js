@@ -18,6 +18,7 @@ const platform_express_1 = require("@nestjs/platform-express");
 const path = require("path");
 const fs = require("fs");
 const storage_service_1 = require("../../shared/storage/storage.service");
+const google_drive_helper_1 = require("../../shared/helpers/google-drive.helper");
 let MediaController = class MediaController {
     constructor(storageService) {
         this.storageService = storageService;
@@ -108,6 +109,20 @@ let MediaController = class MediaController {
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         return res.sendFile(filePath);
     }
+    async streamDriveFile(driveId, customName, res) {
+        const fileData = await (0, google_drive_helper_1.downloadDriveFileBuffer)(driveId);
+        if (!fileData) {
+            throw new common_1.NotFoundException('Arquivo do Google Drive não encontrado ou não acessível publicamente.');
+        }
+        const fileName = customName || 'arquivo.pdf';
+        res.setHeader('Content-Type', fileData.mimeType);
+        res.setHeader('Content-Length', fileData.buffer.length);
+        res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(fileName)}"`);
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        return res.end(fileData.buffer);
+    }
 };
 exports.MediaController = MediaController;
 __decorate([
@@ -135,6 +150,15 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], MediaController.prototype, "getAudioFile", null);
+__decorate([
+    (0, common_1.Get)('drive-stream/:driveId'),
+    __param(0, (0, common_1.Param)('driveId')),
+    __param(1, (0, common_1.Query)('name')),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], MediaController.prototype, "streamDriveFile", null);
 exports.MediaController = MediaController = __decorate([
     (0, common_1.Controller)('media'),
     __metadata("design:paramtypes", [storage_service_1.StorageService])

@@ -871,31 +871,48 @@ function InboxContent() {
     loadQuickReplies();
   }, [loadQuickReplies, activeChat]);
 
-  // Lista unificada de Respostas Rápidas e Ações disparadas por "/"
+  // Lista unificada de Respostas Rápidas e Catálogo de Mídias via Google Drive disparados por "/"
   const slashItems = useMemo(() => {
     const items: Array<{
       id: string;
-      category: 'reply' | 'action';
+      category: 'reply' | 'catalog' | 'action';
       shortcut: string;
       title: string;
       description: string;
       iconType: 'zap' | 'image' | 'file' | 'audio' | 'catalog';
       content?: string;
+      type?: 'text' | 'document' | 'image' | 'video';
+      mediaUrl?: string | null;
+      fileName?: string | null;
+      isMedia?: boolean;
       action?: () => void;
     }> = [];
 
-    // 1. Respostas Rápidas vindas do banco de dados (por tenant)
+    // 1. Respostas Rápidas e Catálogo vindos do banco de dados (por tenant)
     if (Array.isArray(quickReplies) && quickReplies.length > 0) {
       quickReplies.forEach(qr => {
         const sc = qr.shortcut.startsWith('/') ? qr.shortcut : `/${qr.shortcut}`;
+        const isMedia = Boolean(qr.type && qr.type !== 'text' && qr.mediaUrl);
+        const type = (qr.type || 'text') as 'text' | 'document' | 'image' | 'video';
+
+        let iconType: 'zap' | 'image' | 'file' | 'audio' | 'catalog' = 'zap';
+        if (type === 'document') iconType = 'file';
+        else if (type === 'image') iconType = 'image';
+        else if (type === 'video') iconType = 'catalog';
+        else if (sc.toLowerCase().includes('cat')) iconType = 'catalog';
+
         items.push({
           id: `qr-${qr.id}`,
-          category: 'reply',
+          category: isMedia ? 'catalog' : 'reply',
           shortcut: sc,
-          title: sc,
-          description: qr.content,
-          iconType: sc.toLowerCase().includes('cat') ? 'catalog' : 'zap',
-          content: qr.content
+          title: qr.title || sc,
+          description: qr.content || qr.fileName || '',
+          iconType,
+          content: qr.content,
+          type,
+          mediaUrl: qr.mediaUrl,
+          fileName: qr.fileName,
+          isMedia,
         });
       });
     }
@@ -905,12 +922,13 @@ function InboxContent() {
     if (!hasCatalogo) {
       items.push({
         id: 'action-catalogo',
-        category: 'action',
+        category: 'reply',
         shortcut: '/catalogo',
         title: '/catalogo',
-        description: 'Enviar link e apresentação do catálogo comercial',
+        description: 'Enviar catálogo comercial da empresa',
         iconType: 'catalog',
-        content: 'Confira nosso catálogo de produtos e serviços em nosso link oficial: https://catalogo.com'
+        content: 'Confira nosso catálogo oficial com todas as soluções completas!',
+        type: 'text'
       });
     }
 
@@ -954,9 +972,51 @@ function InboxContent() {
     return slashItems.filter(item => 
       item.shortcut.toLowerCase().replace('/', '').includes(q) ||
       item.title.toLowerCase().includes(q) ||
-      item.description.toLowerCase().includes(q)
+      item.description.toLowerCase().includes(q) ||
+      (item.fileName && item.fileName.toLowerCase().includes(q))
     );
   }, [slashItems, quickReplyFilter]);
+
+  const handleSendMediaSlashItem = async (item: typeof slashItems[0]) => {
+    if (!activeChat) {
+      toast.error('Selecione uma conversa para enviar o catálogo.');
+      return;
+    }
+
+    setInputText('');
+    setShowQuickReplies(false);
+
+    const type = item.type || 'document';
+    const filename = item.fileName || (type === 'document' ? 'catalogo.pdf' : type === 'video' ? 'video.mp4' : 'imagem.jpg');
+
+    const toastId = toast.loading(`Enviando ${item.title || 'catálogo'} via WhatsApp...`);
+
+    try {
+      const payload: any = {
+        content: item.content || item.title || '',
+        isInternal: isInternalMode,
+        type,
+        mediaUrl: item.mediaUrl,
+        filename,
+        ...(activeInstance?.id ? { instanceId: activeInstance.id } : {})
+      };
+
+      const { data } = await api.post(`/conversations/${activeChat}/messages`, payload);
+      setMessages(prev => [...prev, data]);
+      toast.success(`${item.title || 'Catálogo'} enviado com sucesso via WhatsApp!`, { id: toastId });
+
+      if (!isInternalMode) {
+        setContacts(prev => prev.map(c => c.id === activeChat ? { ...c, lastMsg: `[${type.toUpperCase()}] ${item.title || item.shortcut}` } : c));
+      }
+
+      if (isResolved) {
+        api.patch(`/conversations/${activeChat}/reopen`).then(() => refetchConversations()).catch(() => {});
+      }
+    } catch (err: any) {
+      console.error('Erro ao enviar catálogo via atalho:', err);
+      toast.error(err.response?.data?.message || 'Falha ao enviar arquivo via WhatsApp.', { id: toastId });
+    }
+  };
 
   const handleSelectSlashItem = (item: typeof slashItems[0]) => {
     setShowQuickReplies(false);
@@ -965,6 +1025,8 @@ function InboxContent() {
     if (item.action) {
       setInputText('');
       item.action();
+    } else if (item.isMedia && item.mediaUrl) {
+      handleSendMediaSlashItem(item);
     } else if (item.content) {
       setInputText(item.content);
       setTimeout(() => {

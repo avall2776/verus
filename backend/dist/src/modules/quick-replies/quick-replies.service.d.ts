@@ -1,4 +1,22 @@
 import { PrismaService } from '../../shared/database/prisma.service';
+export interface CreateQuickReplyDto {
+    shortcut: string;
+    content?: string;
+    title?: string;
+    type?: 'text' | 'document' | 'image' | 'video';
+    mediaUrl?: string;
+    mediaDriveId?: string;
+    fileName?: string;
+}
+export interface UpdateQuickReplyDto {
+    shortcut?: string;
+    content?: string;
+    title?: string;
+    type?: 'text' | 'document' | 'image' | 'video';
+    mediaUrl?: string;
+    mediaDriveId?: string;
+    fileName?: string;
+}
 export declare class QuickRepliesService {
     private prisma;
     constructor(prisma: PrismaService);
@@ -6,31 +24,52 @@ export declare class QuickRepliesService {
         id: string;
         tenantId: string;
         createdAt: Date;
+        updatedAt: Date;
         content: string;
+        type: string;
+        mediaUrl: string | null;
+        title: string | null;
         shortcut: string;
+        mediaDriveId: string | null;
+        fileName: string | null;
     }[]>;
-    create(tenantId: string, shortcut: string, content: string): Promise<{
+    create(tenantId: string, data: CreateQuickReplyDto): Promise<{
         id: string;
         tenantId: string;
         createdAt: Date;
+        updatedAt: Date;
         content: string;
+        type: string;
+        mediaUrl: string | null;
+        title: string | null;
         shortcut: string;
+        mediaDriveId: string | null;
+        fileName: string | null;
     }>;
-    update(tenantId: string, id: string, data: {
-        shortcut?: string;
-        content?: string;
-    }): Promise<{
+    update(tenantId: string, id: string, data: UpdateQuickReplyDto): Promise<{
         id: string;
         tenantId: string;
         createdAt: Date;
+        updatedAt: Date;
         content: string;
+        type: string;
+        mediaUrl: string | null;
+        title: string | null;
         shortcut: string;
+        mediaDriveId: string | null;
+        fileName: string | null;
     }>;
     delete(tenantId: string, id: string): Promise<{
         id: string;
         tenantId: string;
         createdAt: Date;
+        updatedAt: Date;
         content: string;
+        type: string;
+        mediaUrl: string | null;
+        title: string | null;
         shortcut: string;
+        mediaDriveId: string | null;
+        fileName: string | null;
     }>;
 }

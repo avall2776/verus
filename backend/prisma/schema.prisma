@@ -281,12 +281,18 @@ model Deal {
 }
 
 model QuickReply {
-  id        String   @id @default(uuid())
-  tenantId  String
-  shortcut  String // ex: "/bomdia"
-  content   String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  createdAt DateTime @default(now())
+  id           String   @id @default(uuid())
+  tenantId     String
+  shortcut     String   // ex: "/bomdia", "/catalogo"
+  title        String?  // ex: "Catálogo Semeadora Verto"
+  type         String   @default("text") // text, document, image, video
+  content      String   // Corpo do texto ou legenda que acompanha o arquivo
+  mediaUrl     String?  // URL original do Google Drive ou link direto
+  mediaDriveId String?  // ID do Google Drive extraído
+  fileName     String?  // Nome do arquivo exibido no WhatsApp (ex: "Catalogo_Verto_2026.pdf")
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 
   @@unique([tenantId, shortcut])
   @@index([tenantId])

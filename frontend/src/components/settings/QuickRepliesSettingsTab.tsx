@@ -1,27 +1,66 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, Search, MessageSquare, Save, X, Loader2, Sparkles } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Search,
+  MessageSquare,
+  Save,
+  X,
+  Loader2,
+  FileText,
+  Image as ImageIcon,
+  Video,
+  ExternalLink,
+  Copy,
+  Check,
+  Cloud,
+  FileCheck2,
+  Sparkles,
+  Info,
+} from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import {
+  extractGoogleDriveId,
+  isGoogleDriveUrl,
+  getDriveThumbnailUrl,
+  detectMediaType,
+} from "@/lib/googleDriveHelper";
 
-interface QuickReply {
+export interface QuickReplyItem {
   id: string;
   shortcut: string;
+  title?: string | null;
+  type?: "text" | "document" | "image" | "video";
   content: string;
+  mediaUrl?: string | null;
+  mediaDriveId?: string | null;
+  fileName?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export default function QuickRepliesSettingsTab() {
-  const [replies, setReplies] = useState<QuickReply[]>([]);
+  const [replies, setReplies] = useState<QuickReplyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<"ALL" | "text" | "document" | "image" | "video">("ALL");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [editingReply, setEditingReply] = useState<QuickReply | null>(null);
+  const [editingReply, setEditingReply] = useState<QuickReplyItem | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const [form, setForm] = useState({ shortcut: "", content: "" });
+  const [form, setForm] = useState({
+    shortcut: "",
+    title: "",
+    type: "text" as "text" | "document" | "image" | "video",
+    content: "",
+    mediaUrl: "",
+    fileName: "",
+  });
 
   const fetchReplies = async () => {
     setLoading(true);
@@ -40,30 +79,85 @@ export default function QuickRepliesSettingsTab() {
     fetchReplies();
   }, []);
 
-  const handleOpenModal = (reply: QuickReply | null = null) => {
+  const handleOpenModal = (reply: QuickReplyItem | null = null, defaultType: "text" | "document" = "text") => {
     if (reply) {
       setEditingReply(reply);
       setForm({
         shortcut: reply.shortcut.startsWith("/") ? reply.shortcut.substring(1) : reply.shortcut,
-        content: reply.content,
+        title: reply.title || "",
+        type: reply.type || "text",
+        content: reply.content || "",
+        mediaUrl: reply.mediaUrl || "",
+        fileName: reply.fileName || "",
       });
     } else {
       setEditingReply(null);
-      setForm({ shortcut: "", content: "" });
+      setForm({
+        shortcut: "",
+        title: "",
+        type: defaultType,
+        content: "",
+        mediaUrl: "",
+        fileName: "",
+      });
     }
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setForm({ shortcut: "", content: "" });
+    setForm({
+      shortcut: "",
+      title: "",
+      type: "text",
+      content: "",
+      mediaUrl: "",
+      fileName: "",
+    });
     setEditingReply(null);
+  };
+
+  // Detecção automática de Google Drive e tipo de arquivo ao colar link
+  const handleMediaUrlChange = (url: string) => {
+    const trimmed = url.trim();
+    const driveId = extractGoogleDriveId(trimmed);
+
+    let nextType = form.type;
+    let nextFileName = form.fileName;
+
+    if (trimmed) {
+      const detected = detectMediaType(trimmed);
+      if (form.type === "text" || !form.mediaUrl) {
+        nextType = detected;
+      }
+      if (!nextFileName) {
+        const ext = nextType === "document" ? ".pdf" : nextType === "video" ? ".mp4" : ".jpg";
+        nextFileName = form.title ? `${form.title.replace(/\s+/g, "_")}${ext}` : `arquivo_${Date.now().toString().slice(-4)}${ext}`;
+      }
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      mediaUrl: trimmed,
+      type: nextType,
+      fileName: nextFileName,
+    }));
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.shortcut.trim() || !form.content.trim()) {
-      toast.error("Preencha o atalho e a mensagem.");
+    if (!form.shortcut.trim()) {
+      toast.error("Informe a palavra-chave do atalho.");
+      return;
+    }
+
+    if (form.type !== "text" && !form.mediaUrl.trim()) {
+      toast.error("Informe o link do Google Drive para o catálogo/mídia.");
+      return;
+    }
+
+    if (form.type === "text" && !form.content.trim()) {
+      toast.error("Preencha a mensagem de texto.");
       return;
     }
 
@@ -73,23 +167,31 @@ export default function QuickRepliesSettingsTab() {
 
     setSaving(true);
     try {
-      const payload = {
+      const payload: any = {
         shortcut: formattedShortcut,
+        title: form.title.trim() || undefined,
+        type: form.type,
         content: form.content.trim(),
+        mediaUrl: form.mediaUrl.trim() || undefined,
+        fileName: form.fileName.trim() || undefined,
       };
 
       if (editingReply) {
         await api.patch(`/quick-replies/${editingReply.id}`, payload);
-        toast.success("Atalho rápido atualizado!");
+        toast.success("Atalho atualizado com sucesso!");
       } else {
         await api.post("/quick-replies", payload);
-        toast.success("Atalho rápido criado com sucesso!");
+        toast.success(
+          form.type === "text"
+            ? "Atalho de texto criado com sucesso!"
+            : "Catálogo / Mídia via Drive cadastrado com sucesso!"
+        );
       }
       handleCloseModal();
       fetchReplies();
     } catch (error: any) {
       console.error("[QUICK_REPLY_SAVE_ERROR]", error);
-      toast.error(error.response?.data?.message || "Erro ao salvar atalho rápido.");
+      toast.error(error.response?.data?.message || "Erro ao salvar atalho.");
     } finally {
       setSaving(false);
     }
@@ -108,50 +210,145 @@ export default function QuickRepliesSettingsTab() {
     }
   };
 
-  const filteredReplies = replies.filter(
-    (r) =>
-      r.shortcut.toLowerCase().includes(search.toLowerCase()) ||
-      r.content.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    toast.success(`Atalho "${text}" copiado!`);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const filteredReplies = useMemo(() => {
+    return replies.filter((r) => {
+      const matchesSearch =
+        r.shortcut.toLowerCase().includes(search.toLowerCase()) ||
+        (r.title && r.title.toLowerCase().includes(search.toLowerCase())) ||
+        (r.fileName && r.fileName.toLowerCase().includes(search.toLowerCase())) ||
+        r.content.toLowerCase().includes(search.toLowerCase());
+
+      if (!matchesSearch) return false;
+
+      if (categoryFilter === "ALL") return true;
+      const rType = r.type || "text";
+      return rType === categoryFilter;
+    });
+  }, [replies, search, categoryFilter]);
+
+  const counts = useMemo(() => {
+    return {
+      all: replies.length,
+      text: replies.filter((r) => (r.type || "text") === "text").length,
+      document: replies.filter((r) => r.type === "document").length,
+      image: replies.filter((r) => r.type === "image").length,
+      video: replies.filter((r) => r.type === "video").length,
+    };
+  }, [replies]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Header da Aba */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      {/* Header da Aba com Destaque de Google Drive */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-blue-400" />
-            Respostas Rápidas (Macros)
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            Respostas Rápidas & Catálogo de Mídias via Drive
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Crie atalhos inteligentes (ex: <span className="text-blue-400 font-mono">/pix</span>, <span className="text-blue-400 font-mono">/saudacao</span>) para agilizar o atendimento no Inbox.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-2xl">
+            Cadastre atalhos acionados pelo teclado (<span className="text-blue-600 dark:text-blue-400 font-mono font-bold">/</span>) no Inbox.
+            Suporta mensagens de texto e envio de <strong>PDFs, catálogos e fotos</strong> hospedados no seu Google Drive, sem consumir espaço no servidor do VERSUS.
           </p>
         </div>
 
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => handleOpenModal(null, "document")}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600/10 dark:bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-600/20 transition-all shadow-sm"
+          >
+            <Cloud className="w-4 h-4" />
+            + Novo Catálogo (Drive)
+          </button>
+          <button
+            onClick={() => handleOpenModal(null, "text")}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-lg shadow-blue-600/20 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            + Atalho de Texto
+          </button>
+        </div>
+      </div>
+
+      {/* Segmented Filter de Categorias */}
+      <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs">
         <button
-          onClick={() => handleOpenModal()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-lg shadow-blue-600/20 transition-all"
+          onClick={() => setCategoryFilter("ALL")}
+          className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+            categoryFilter === "ALL"
+              ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm font-bold"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
         >
-          <Plus className="w-4 h-4" />
-          Novo Atalho
+          Todos ({counts.all})
+        </button>
+        <button
+          onClick={() => setCategoryFilter("document")}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+            categoryFilter === "document"
+              ? "bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 shadow-sm font-bold"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5" />
+          PDFs / Catálogos ({counts.document})
+        </button>
+        <button
+          onClick={() => setCategoryFilter("image")}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+            categoryFilter === "image"
+              ? "bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm font-bold"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <ImageIcon className="w-3.5 h-3.5" />
+          Fotos / Imagens ({counts.image})
+        </button>
+        <button
+          onClick={() => setCategoryFilter("video")}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+            categoryFilter === "video"
+              ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm font-bold"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <Video className="w-3.5 h-3.5" />
+          Vídeos ({counts.video})
+        </button>
+        <button
+          onClick={() => setCategoryFilter("text")}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+            categoryFilter === "text"
+              ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm font-bold"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          Textos Rápidos ({counts.text})
         </button>
       </div>
 
-      {/* Barra de Busca e Filtro */}
+      {/* Barra de Busca e Contador */}
       <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por atalho ou texto..."
-            className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+            placeholder="Buscar por /atalho, título ou arquivo..."
+            className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors shadow-sm"
           />
         </div>
 
-        <div className="text-xs text-slate-400">
-          Total de macros: <span className="text-white font-bold">{filteredReplies.length}</span>
+        <div className="text-xs text-slate-500 dark:text-slate-400">
+          Mostrando <span className="text-slate-900 dark:text-white font-bold">{filteredReplies.length}</span> itens
         </div>
       </div>
 
@@ -159,139 +356,349 @@ export default function QuickRepliesSettingsTab() {
       {loading ? (
         <div className="flex flex-col items-center justify-center p-12 text-slate-400 space-y-3">
           <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-          <p className="text-xs font-semibold">Carregando macros...</p>
+          <p className="text-xs font-semibold">Carregando catálogo e atalhos...</p>
         </div>
       ) : filteredReplies.length === 0 ? (
-        <div className="p-12 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-50/40 dark:bg-slate-50 dark:bg-[#070D1B]/40 space-y-3">
-          <MessageSquare className="w-10 h-10 text-slate-600 mx-auto" />
-          <p className="text-sm font-semibold text-slate-300">Nenhum atalho rápido encontrado</p>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+        <div className="p-12 text-center border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-[#070D1B]/40 space-y-3">
+          <MessageSquare className="w-10 h-10 text-slate-400 dark:text-slate-600 mx-auto" />
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Nenhum atalho ou material encontrado</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
             {search
-              ? "Tente buscar por outras palavras-chave ou crie um novo atalho."
-              : "Cadastre respostas frequentes para enviar mensagens completas com apenas um comando no chat."}
+              ? "Tente buscar por outras palavras-chave ou crie um novo item."
+              : "Cadastre catálogos em PDF do Google Drive ou mensagens prontas para agilizar suas vendas no WhatsApp."}
           </p>
           {!search && (
-            <button
-              onClick={() => handleOpenModal()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400 text-xs font-medium hover:bg-blue-600/30 transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" /> Criar primeiro atalho
-            </button>
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <button
+                onClick={() => handleOpenModal(null, "document")}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium hover:bg-emerald-600/20 transition-colors"
+              >
+                <Cloud className="w-3.5 h-3.5" /> Cadastrar Catálogo Drive
+              </button>
+            </div>
           )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-          {filteredReplies.map((reply) => (
-            <div
-              key={reply.id}
-              className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col justify-between group"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="px-2.5 py-1 rounded-lg bg-blue-600/10 border border-blue-500/20 text-blue-400 font-mono text-xs font-bold">
-                    {reply.shortcut}
-                  </span>
-                  <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => handleOpenModal(reply)}
-                      title="Editar atalho"
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(reply.id, reply.shortcut)}
-                      title="Excluir atalho"
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed line-clamp-3 whitespace-pre-wrap">
-                  {reply.content}
-                </p>
-              </div>
+          {filteredReplies.map((reply) => {
+            const isMedia = reply.type && reply.type !== "text";
+            const driveId = reply.mediaDriveId || extractGoogleDriveId(reply.mediaUrl);
+            const isDrive = Boolean(driveId || isGoogleDriveUrl(reply.mediaUrl));
 
-              <div className="mt-3 pt-2.5 border-t border-slate-800/50 flex items-center justify-between text-[10px] text-slate-500">
-                <span>Atalho de teclado rápido</span>
-                <span>Disponível no Inbox</span>
+            return (
+              <div
+                key={reply.id}
+                className="p-4 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 hover:border-blue-500/50 dark:hover:border-slate-700 transition-all flex flex-col justify-between group shadow-sm hover:shadow-md"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={() => handleCopy(reply.shortcut, reply.id)}
+                        title="Clique para copiar o comando"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 font-mono text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-600/20 transition-colors"
+                      >
+                        {reply.shortcut}
+                        {copiedId === reply.id ? (
+                          <Check className="w-3 h-3 text-emerald-500" />
+                        ) : (
+                          <Copy className="w-3 h-3 opacity-60 group-hover:opacity-100" />
+                        )}
+                      </button>
+
+                      {/* Badge de Tipo */}
+                      {reply.type === "document" && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-[10px] font-bold">
+                          <FileText className="w-3 h-3" /> PDF / Catálogo
+                        </span>
+                      )}
+                      {reply.type === "image" && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-purple-600 dark:text-purple-400 text-[10px] font-bold">
+                          <ImageIcon className="w-3 h-3" /> Foto / Produto
+                        </span>
+                      )}
+                      {reply.type === "video" && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
+                          <Video className="w-3 h-3" /> Vídeo
+                        </span>
+                      )}
+                      {(!reply.type || reply.type === "text") && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-medium">
+                          <MessageSquare className="w-3 h-3" /> Texto
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                      {reply.mediaUrl && (
+                        <a
+                          href={reply.mediaUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Abrir arquivo original no Google Drive"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      <button
+                        onClick={() => handleOpenModal(reply)}
+                        title="Editar atalho"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(reply.id, reply.shortcut)}
+                        title="Excluir atalho"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Título do Material */}
+                  {reply.title && (
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+                      {reply.title}
+                    </h4>
+                  )}
+
+                  {/* Nome do Arquivo no WhatsApp */}
+                  {reply.fileName && isMedia && (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-mono">
+                      <FileCheck2 className="w-3 h-3 text-emerald-500" />
+                      {reply.fileName}
+                    </div>
+                  )}
+
+                  {/* Mensagem / Legenda */}
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3 whitespace-pre-wrap">
+                    {reply.content}
+                  </p>
+                </div>
+
+                {/* Rodapé do Card */}
+                <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400">
+                  <span className="flex items-center gap-1">
+                    {isDrive ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                        <Cloud className="w-3 h-3" /> Google Drive (Nuvem)
+                      </span>
+                    ) : (
+                      <span>Atalho de Texto</span>
+                    )}
+                  </span>
+                  <span>Acionável via tecla &quot;/&quot; no chat</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Modal de Criação / Edição */}
+      {/* Modal de Criação / Edição Completo */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between p-5 border-b border-slate-800">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150">
+            {/* Header do Modal */}
+            <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                  <MessageSquare className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                  <Cloud className="w-4 h-4" />
                 </div>
-                <h3 className="text-sm font-bold text-white">
-                  {editingReply ? "Editar Atalho Rápido" : "Novo Atalho Rápido"}
-                </h3>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    {editingReply ? "Editar Atalho / Catálogo" : "Novo Atalho / Catálogo"}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Defina o comando rápido e o material que será enviado ao lead.
+                  </p>
+                </div>
               </div>
               <button
                 onClick={handleCloseModal}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="p-5 space-y-4">
+            <form onSubmit={handleSave} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+              {/* Seletor de Tipo de Material */}
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Atalho de comando <span className="text-blue-400">*</span>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Tipo de Atalho / Material <span className="text-blue-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, type: "document" })}
+                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                      form.type === "document"
+                        ? "bg-rose-50 dark:bg-rose-500/10 border-rose-500 text-rose-700 dark:text-rose-400 font-bold shadow-sm"
+                        : "bg-slate-50 dark:bg-[#070D1B] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400"
+                    }`}
+                  >
+                    <FileText className="w-4 h-4 mb-1" />
+                    <span className="text-[11px]">PDF / Catálogo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, type: "image" })}
+                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                      form.type === "image"
+                        ? "bg-purple-50 dark:bg-purple-500/10 border-purple-500 text-purple-700 dark:text-purple-400 font-bold shadow-sm"
+                        : "bg-slate-50 dark:bg-[#070D1B] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400"
+                    }`}
+                  >
+                    <ImageIcon className="w-4 h-4 mb-1" />
+                    <span className="text-[11px]">Foto / Imagem</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, type: "video" })}
+                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                      form.type === "video"
+                        ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-400 font-bold shadow-sm"
+                        : "bg-slate-50 dark:bg-[#070D1B] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400"
+                    }`}
+                  >
+                    <Video className="w-4 h-4 mb-1" />
+                    <span className="text-[11px]">Vídeo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, type: "text" })}
+                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                      form.type === "text"
+                        ? "bg-blue-50 dark:bg-blue-600/10 border-blue-500 text-blue-700 dark:text-blue-400 font-bold shadow-sm"
+                        : "bg-slate-50 dark:bg-[#070D1B] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400"
+                    }`}
+                  >
+                    <MessageSquare className="w-4 h-4 mb-1" />
+                    <span className="text-[11px]">Texto Rápido</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Comando de Atalho */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Comando de Atalho <span className="text-blue-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm font-bold">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-sm font-bold">
                     /
                   </span>
                   <input
                     type="text"
                     required
                     value={form.shortcut}
-                    onChange={(e) => setForm({ ...form, shortcut: e.target.value.replace(/[\s\/]/g, "") })}
-                    placeholder="ex: pix, boleto, suporte"
-                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl pl-7 pr-3.5 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 font-mono font-medium"
+                    onChange={(e) => setForm({ ...form, shortcut: e.target.value.replace(/[\s\/]/g, "").toLowerCase() })}
+                    placeholder="ex: catalogo, tabela-precos, foto-maquina"
+                    className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl pl-7 pr-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono font-bold shadow-sm"
                   />
                 </div>
                 <p className="text-[10px] text-slate-500 mt-1">
-                  Digite apenas a palavra-chave. A barra <span className="text-slate-400 font-mono">/</span> será inserida automaticamente.
+                  O atendente acionará digitando <span className="text-blue-600 dark:text-blue-400 font-mono font-bold">/{form.shortcut || "atalho"}</span> no chat.
                 </p>
               </div>
 
+              {/* Título do Material */}
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Texto da Resposta <span className="text-blue-400">*</span>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Título / Identificação do Material {form.type !== "text" && <span className="text-blue-500">*</span>}
                 </label>
-                <textarea
-                  required
-                  rows={5}
-                  value={form.content}
-                  onChange={(e) => setForm({ ...form, content: e.target.value })}
-                  placeholder="Digite a mensagem completa que será inserida no chat..."
-                  className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 leading-relaxed resize-none"
+                <input
+                  type="text"
+                  required={form.type !== "text"}
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="ex: Catálogo Oficial Linha Verto 2026"
+                  className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-sm"
                 />
               </div>
 
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2.5">
+              {/* Se for Mídia (Documento, Imagem ou Vídeo) */}
+              {form.type !== "text" && (
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 space-y-3.5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <Cloud className="w-4 h-4 text-emerald-500" />
+                    <span>Conexão com Google Drive (Zero Espaço no Servidor)</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Link do Arquivo no Google Drive <span className="text-blue-500">*</span>
+                    </label>
+                    <input
+                      type="url"
+                      required
+                      value={form.mediaUrl}
+                      onChange={(e) => handleMediaUrlChange(e.target.value)}
+                      placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                      className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono shadow-sm"
+                    />
+                    {form.mediaUrl && extractGoogleDriveId(form.mediaUrl) && (
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-1 flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Arquivo do Google Drive detectado com sucesso (ID: {extractGoogleDriveId(form.mediaUrl)})
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Nome do Arquivo no WhatsApp <span className="text-slate-400 text-[10px] font-normal">(exibido para o cliente)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={form.fileName}
+                      onChange={(e) => setForm({ ...form, fileName: e.target.value })}
+                      placeholder={form.type === "document" ? "Catalogo_Verto_2026.pdf" : form.type === "video" ? "video_demonstrativo.mp4" : "foto_produto.jpg"}
+                      className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono shadow-sm"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Mensagem / Legenda */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  {form.type === "text" ? "Texto da Mensagem Rápida" : "Legenda que acompanha o Arquivo no WhatsApp"}
+                  {form.type === "text" && <span className="text-blue-500">*</span>}
+                </label>
+                <textarea
+                  rows={form.type === "text" ? 5 : 3}
+                  required={form.type === "text"}
+                  value={form.content}
+                  onChange={(e) => setForm({ ...form, content: e.target.value })}
+                  placeholder={
+                    form.type === "text"
+                      ? "Digite a mensagem completa que será inserida no chat..."
+                      : "ex: Olá! Segue em anexo nosso catálogo oficial completo. Fico à disposição para tirar qualquer dúvida!"
+                  }
+                  className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 leading-relaxed resize-none shadow-sm"
+                />
+              </div>
+
+              {/* Rodapé do Modal */}
+              <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-lg shadow-blue-600/20 disabled:opacity-50 transition-all"
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-lg shadow-blue-600/20 disabled:opacity-50 transition-all"
                 >
                   {saving ? (
                     <>
@@ -301,7 +708,7 @@ export default function QuickRepliesSettingsTab() {
                   ) : (
                     <>
                       <Save className="w-3.5 h-3.5" />
-                      Salvar Atalho
+                      {editingReply ? "Salvar Alterações" : "Cadastrar Atalho"}
                     </>
                   )}
                 </button>

@@ -14,6 +14,7 @@ exports.MessagingService = void 0;
 const common_1 = require("@nestjs/common");
 const axios_1 = require("axios");
 const prisma_service_1 = require("../../shared/database/prisma.service");
+const google_drive_helper_1 = require("../../shared/helpers/google-drive.helper");
 let MessagingService = MessagingService_1 = class MessagingService {
     constructor(prisma) {
         this.prisma = prisma;
@@ -268,13 +269,29 @@ let MessagingService = MessagingService_1 = class MessagingService {
             return { success: false, error: 'Telefone inválido' };
         }
         const conn = await this.resolveConnection(payload.tenantId, payload.instanceId, cleanPhone);
+        const serverHost = process.env.PUBLIC_BACKEND_URL || 'http://187.127.10.166:3001';
         let fullMediaUrl = payload.mediaUrl;
-        if (fullMediaUrl.startsWith('/api-backend') || fullMediaUrl.startsWith('/')) {
-            const serverHost = process.env.PUBLIC_BACKEND_URL || 'http://187.127.10.166:3001';
+        let base64Media = null;
+        if ((0, google_drive_helper_1.isGoogleDriveUrl)(fullMediaUrl)) {
+            const driveId = (0, google_drive_helper_1.extractGoogleDriveId)(fullMediaUrl);
+            if (driveId) {
+                try {
+                    const driveData = await (0, google_drive_helper_1.downloadDriveFileBuffer)(driveId);
+                    if (driveData) {
+                        base64Media = `data:${driveData.mimeType};base64,${driveData.buffer.toString('base64')}`;
+                    }
+                }
+                catch (err) {
+                    this.logger.warn(`Falha ao converter Drive em Base64 (${err.message}). Usando stream.`);
+                }
+                fullMediaUrl = `${serverHost}/media/drive-stream/${driveId}?name=${encodeURIComponent(payload.filename || (payload.type === 'document' ? 'documento.pdf' : payload.type === 'video' ? 'video.mp4' : 'imagem.jpg'))}`;
+            }
+        }
+        else if (fullMediaUrl.startsWith('/api-backend') || fullMediaUrl.startsWith('/')) {
             fullMediaUrl = `${serverHost}${fullMediaUrl.replace('/api-backend', '')}`;
         }
         if (conn.preferredProvider === 'evolution') {
-            const evoRes = await this.sendEvolutionMedia(conn.evolution, cleanPhone, payload, fullMediaUrl);
+            const evoRes = await this.sendEvolutionMedia(conn.evolution, cleanPhone, payload, fullMediaUrl, base64Media);
             if (evoRes.success)
                 return evoRes;
             if (!conn.isLidTarget && conn.meta.token && conn.meta.phoneNumberId) {
@@ -286,14 +303,16 @@ let MessagingService = MessagingService_1 = class MessagingService {
             const metaRes = await this.sendMetaMedia(conn.meta, cleanPhone, payload, fullMediaUrl);
             if (metaRes.success)
                 return metaRes;
-            return this.sendEvolutionMedia(conn.evolution, cleanPhone, payload, fullMediaUrl);
+            return this.sendEvolutionMedia(conn.evolution, cleanPhone, payload, fullMediaUrl, base64Media);
         }
     }
-    async sendEvolutionMedia(evoConfig, cleanPhone, payload, fullMediaUrl) {
+    async sendEvolutionMedia(evoConfig, cleanPhone, payload, fullMediaUrl, base64Media) {
         try {
             const url = `${evoConfig.url}/message/sendMedia/${evoConfig.instanceName}`;
             const isDocument = payload.type === 'document';
-            const fileName = payload.filename || (isDocument ? 'documento.pdf' : 'imagem.jpg');
+            const isVideo = payload.type === 'video';
+            const mediatype = isDocument ? 'document' : isVideo ? 'video' : 'image';
+            const fileName = payload.filename || (isDocument ? 'documento.pdf' : isVideo ? 'video.mp4' : 'imagem.jpg');
             const response = await axios_1.default.post(url, {
                 number: cleanPhone,
                 options: {
@@ -301,8 +320,8 @@ let MessagingService = MessagingService_1 = class MessagingService {
                     presence: 'composing',
                 },
                 mediaMessage: {
-                    mediatype: isDocument ? 'document' : 'image',
-                    media: fullMediaUrl,
+                    mediatype,
+                    media: base64Media || fullMediaUrl,
                     caption: payload.content || '',
                     fileName,
                 },
@@ -311,7 +330,7 @@ let MessagingService = MessagingService_1 = class MessagingService {
                     apikey: evoConfig.apiKey,
                     'Content-Type': 'application/json',
                 },
-                timeout: 20000,
+                timeout: 25000,
             });
             const messageId = response.data?.key?.id || response.data?.id || `evo_media_${Date.now()}`;
             this.logger.log(`Mídia [${payload.type}] enviada via Evolution API para ${cleanPhone}. ID: ${messageId}`);
@@ -331,22 +350,19 @@ let MessagingService = MessagingService_1 = class MessagingService {
         try {
             const url = `https://graph.facebook.com/v19.0/${metaConfig.phoneNumberId}/messages`;
             const isDocument = payload.type === 'document';
-            const mediaPayload = isDocument
-                ? {
-                    link: fullMediaUrl,
-                    ...(payload.content ? { caption: payload.content } : {}),
-                    filename: payload.filename || 'documento.pdf',
-                }
-                : {
-                    link: fullMediaUrl,
-                    ...(payload.content ? { caption: payload.content } : {}),
-                };
+            const isVideo = payload.type === 'video';
+            const metaMediaType = isDocument ? 'document' : isVideo ? 'video' : 'image';
+            const mediaPayload = {
+                link: fullMediaUrl,
+                ...(payload.content ? { caption: payload.content } : {}),
+                ...(isDocument ? { filename: payload.filename || 'documento.pdf' } : {}),
+            };
             const response = await axios_1.default.post(url, {
                 messaging_product: 'whatsapp',
                 recipient_type: 'individual',
                 to: cleanPhone,
-                type: isDocument ? 'document' : 'image',
-                [isDocument ? 'document' : 'image']: mediaPayload,
+                type: metaMediaType,
+                [metaMediaType]: mediaPayload,
             }, {
                 headers: {
                     Authorization: `Bearer ${metaConfig.token}`,

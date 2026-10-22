@@ -9,12 +9,14 @@ import {
   UploadedFile,
   BadRequestException,
   Body,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
 import { StorageService } from '../../shared/storage/storage.service';
+import { downloadDriveFileBuffer } from '../../shared/helpers/google-drive.helper';
 
 @Controller('media')
 export class MediaController {
@@ -140,6 +142,32 @@ export class MediaController {
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     return res.sendFile(filePath);
+  }
+
+  /**
+   * Streaming de arquivos do Google Drive sob demanda
+   * Permite que APIs externas (Evolution API / Meta Cloud API) baixem o arquivo binário
+   * com cabeçalhos HTTP normais sem consumir disco no VPS.
+   */
+  @Get('drive-stream/:driveId')
+  async streamDriveFile(
+    @Param('driveId') driveId: string,
+    @Query('name') customName: string,
+    @Res() res: Response,
+  ) {
+    const fileData = await downloadDriveFileBuffer(driveId);
+    if (!fileData) {
+      throw new NotFoundException('Arquivo do Google Drive não encontrado ou não acessível publicamente.');
+    }
+
+    const fileName = customName || 'arquivo.pdf';
+    res.setHeader('Content-Type', fileData.mimeType);
+    res.setHeader('Content-Length', fileData.buffer.length);
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(fileName)}"`);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    return res.end(fileData.buffer);
   }
 }
 

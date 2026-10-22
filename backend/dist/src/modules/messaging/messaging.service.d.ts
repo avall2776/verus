@@ -16,7 +16,7 @@ export interface SendAudioPayload {
 export interface SendMediaPayload {
     tenantId: string;
     phone: string;
-    type: 'image' | 'document';
+    type: 'image' | 'document' | 'video';
     mediaUrl: string;
     content?: string;
     filename?: string;

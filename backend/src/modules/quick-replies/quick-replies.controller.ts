@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
-import { QuickRepliesService } from './quick-replies.service';
+import { QuickRepliesService, CreateQuickReplyDto, UpdateQuickReplyDto } from './quick-replies.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
 
@@ -14,12 +14,16 @@ export class QuickRepliesController {
   }
 
   @Post()
-  async createQuickReply(@CurrentTenant() tenantId: string, @Body() body: { shortcut: string; content: string }) {
-    return this.quickRepliesService.create(tenantId, body.shortcut, body.content);
+  async createQuickReply(@CurrentTenant() tenantId: string, @Body() body: CreateQuickReplyDto) {
+    return this.quickRepliesService.create(tenantId, body);
   }
 
   @Patch(':id')
-  async updateQuickReply(@CurrentTenant() tenantId: string, @Param('id') id: string, @Body() body: { shortcut?: string; content?: string }) {
+  async updateQuickReply(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body() body: UpdateQuickReplyDto,
+  ) {
     return this.quickRepliesService.update(tenantId, id, body);
   }
 

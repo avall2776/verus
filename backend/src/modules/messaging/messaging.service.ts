@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from '../../shared/database/prisma.service';
+import {
+  isGoogleDriveUrl,
+  extractGoogleDriveId,
+  downloadDriveFileBuffer,
+} from '../../shared/helpers/google-drive.helper';
 
 export interface SendMessagePayload {
   tenantId: string;
@@ -21,7 +26,7 @@ export interface SendAudioPayload {
 export interface SendMediaPayload {
   tenantId: string;
   phone: string;
-  type: 'image' | 'document';
+  type: 'image' | 'document' | 'video';
   mediaUrl: string;
   content?: string;
   filename?: string;
@@ -405,15 +410,32 @@ export class MessagingService {
 
     const conn = await this.resolveConnection(payload.tenantId, payload.instanceId, cleanPhone);
 
-    // Converte URL local/relativa em URL absoluta
+    const serverHost = process.env.PUBLIC_BACKEND_URL || 'http://187.127.10.166:3001';
     let fullMediaUrl = payload.mediaUrl;
-    if (fullMediaUrl.startsWith('/api-backend') || fullMediaUrl.startsWith('/')) {
-      const serverHost = process.env.PUBLIC_BACKEND_URL || 'http://187.127.10.166:3001';
+    let base64Media: string | null = null;
+
+    // Se for link do Google Drive, resolve streaming proxy e Base64 em memória
+    if (isGoogleDriveUrl(fullMediaUrl)) {
+      const driveId = extractGoogleDriveId(fullMediaUrl);
+      if (driveId) {
+        try {
+          const driveData = await downloadDriveFileBuffer(driveId);
+          if (driveData) {
+            base64Media = `data:${driveData.mimeType};base64,${driveData.buffer.toString('base64')}`;
+          }
+        } catch (err: any) {
+          this.logger.warn(`Falha ao converter Drive em Base64 (${err.message}). Usando stream.`);
+        }
+        fullMediaUrl = `${serverHost}/media/drive-stream/${driveId}?name=${encodeURIComponent(
+          payload.filename || (payload.type === 'document' ? 'documento.pdf' : payload.type === 'video' ? 'video.mp4' : 'imagem.jpg'),
+        )}`;
+      }
+    } else if (fullMediaUrl.startsWith('/api-backend') || fullMediaUrl.startsWith('/')) {
       fullMediaUrl = `${serverHost}${fullMediaUrl.replace('/api-backend', '')}`;
     }
 
     if (conn.preferredProvider === 'evolution') {
-      const evoRes = await this.sendEvolutionMedia(conn.evolution, cleanPhone, payload, fullMediaUrl);
+      const evoRes = await this.sendEvolutionMedia(conn.evolution, cleanPhone, payload, fullMediaUrl, base64Media);
       if (evoRes.success) return evoRes;
 
       if (!conn.isLidTarget && conn.meta.token && conn.meta.phoneNumberId) {
@@ -424,7 +446,7 @@ export class MessagingService {
       const metaRes = await this.sendMetaMedia(conn.meta, cleanPhone, payload, fullMediaUrl);
       if (metaRes.success) return metaRes;
 
-      return this.sendEvolutionMedia(conn.evolution, cleanPhone, payload, fullMediaUrl);
+      return this.sendEvolutionMedia(conn.evolution, cleanPhone, payload, fullMediaUrl, base64Media);
     }
   }
 
@@ -433,11 +455,14 @@ export class MessagingService {
     cleanPhone: string,
     payload: SendMediaPayload,
     fullMediaUrl: string,
+    base64Media?: string | null,
   ): Promise<SendResult> {
     try {
       const url = `${evoConfig.url}/message/sendMedia/${evoConfig.instanceName}`;
       const isDocument = payload.type === 'document';
-      const fileName = payload.filename || (isDocument ? 'documento.pdf' : 'imagem.jpg');
+      const isVideo = payload.type === 'video';
+      const mediatype = isDocument ? 'document' : isVideo ? 'video' : 'image';
+      const fileName = payload.filename || (isDocument ? 'documento.pdf' : isVideo ? 'video.mp4' : 'imagem.jpg');
 
       const response = await axios.post(
         url,
@@ -448,8 +473,8 @@ export class MessagingService {
             presence: 'composing',
           },
           mediaMessage: {
-            mediatype: isDocument ? 'document' : 'image',
-            media: fullMediaUrl,
+            mediatype,
+            media: base64Media || fullMediaUrl,
             caption: payload.content || '',
             fileName,
           },
@@ -459,7 +484,7 @@ export class MessagingService {
             apikey: evoConfig.apiKey,
             'Content-Type': 'application/json',
           },
-          timeout: 20000,
+          timeout: 25000,
         },
       );
 
@@ -487,17 +512,14 @@ export class MessagingService {
     try {
       const url = `https://graph.facebook.com/v19.0/${metaConfig.phoneNumberId}/messages`;
       const isDocument = payload.type === 'document';
+      const isVideo = payload.type === 'video';
+      const metaMediaType = isDocument ? 'document' : isVideo ? 'video' : 'image';
 
-      const mediaPayload: any = isDocument
-        ? {
-            link: fullMediaUrl,
-            ...(payload.content ? { caption: payload.content } : {}),
-            filename: payload.filename || 'documento.pdf',
-          }
-        : {
-            link: fullMediaUrl,
-            ...(payload.content ? { caption: payload.content } : {}),
-          };
+      const mediaPayload: any = {
+        link: fullMediaUrl,
+        ...(payload.content ? { caption: payload.content } : {}),
+        ...(isDocument ? { filename: payload.filename || 'documento.pdf' } : {}),
+      };
 
       const response = await axios.post(
         url,
@@ -505,8 +527,8 @@ export class MessagingService {
           messaging_product: 'whatsapp',
           recipient_type: 'individual',
           to: cleanPhone,
-          type: isDocument ? 'document' : 'image',
-          [isDocument ? 'document' : 'image']: mediaPayload,
+          type: metaMediaType,
+          [metaMediaType]: mediaPayload,
         },
         {
           headers: {
