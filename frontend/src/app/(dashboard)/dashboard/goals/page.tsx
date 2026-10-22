@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { 
   Target, TrendingUp, Award, Users, Plus, Calendar, 
   CheckCircle2, AlertTriangle, Flame, ArrowUpRight, Zap,
-  Trophy, Medal, ShieldAlert, Sparkles, DollarSign, RefreshCw,
+  Trophy, Medal, Crown, ShieldAlert, Sparkles, DollarSign, RefreshCw,
   MoreVertical, Edit3, Trash2, Eye, Sliders, ChevronRight,
   UserCheck, Briefcase, Activity, Filter
 } from "lucide-react";
@@ -12,6 +12,7 @@ import { CommercialGoal, SalesRepRanking, GoalRunRateSummary } from "@/types/com
 import { NewGoalModal } from "@/components/goals/NewGoalModal";
 import { EditGoalModal } from "@/components/goals/EditGoalModal";
 import { SellerDetailModal } from "@/components/goals/SellerDetailModal";
+import { GoalBadgeIcon } from "@/components/goals/GoalBadgeIcon";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 
@@ -671,8 +672,9 @@ export default function GoalsPage() {
                   className="order-2 md:order-1 p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm relative flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer transition-all group"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
-                      🥈 2º Lugar
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-200/50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 shadow-sm">
+                      <Medal className="w-3.5 h-3.5 text-slate-400" />
+                      2º Lugar
                     </span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                       {formatNumber(ranking[1].dealsWon ?? ranking[1].dealsCount)} vendas
@@ -695,14 +697,14 @@ export default function GoalsPage() {
 
                     {/* Badges de Conquistas */}
                     {ranking[1].badges && ranking[1].badges.length > 0 && (
-                      <div className="flex flex-wrap items-center justify-center gap-1 mt-2">
+                      <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2">
                         {ranking[1].badges.slice(0, 3).map((b) => (
                           <span
                             key={b.id}
                             title={`${b.title}: ${b.description}`}
-                            className="text-xs px-1.5 py-0.5 rounded bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-1 cursor-help"
+                            className="text-xs px-2 py-0.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-1.5 cursor-help shadow-xs"
                           >
-                            <span>{b.icon}</span>
+                            <GoalBadgeIcon icon={b.icon} className="w-3.5 h-3.5" />
                             <span className="text-[10px] font-semibold">{b.title}</span>
                           </span>
                         ))}
@@ -732,8 +734,9 @@ export default function GoalsPage() {
                   className="order-1 md:order-2 p-6 rounded-2xl bg-white dark:bg-[#0B1224] border-2 border-blue-500/40 relative flex flex-col justify-between shadow-lg shadow-blue-500/10 md:-translate-y-2 hover:border-blue-500/70 cursor-pointer transition-all group"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="px-3 py-1 rounded-lg text-xs font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 flex items-center gap-1.5 shadow-sm">
-                      🥇 1º Lugar • Líder Comercial
+                    <span className="px-3 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-500 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
+                      <Crown className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+                      1º Lugar • Líder Comercial
                     </span>
                     <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 font-mono">
                       {formatNumber(ranking[0].dealsWon ?? ranking[0].dealsCount)} vendas
@@ -756,14 +759,14 @@ export default function GoalsPage() {
 
                     {/* Badges de Conquistas */}
                     {ranking[0].badges && ranking[0].badges.length > 0 && (
-                      <div className="flex flex-wrap items-center justify-center gap-1 mt-2.5">
+                      <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2.5">
                         {ranking[0].badges.slice(0, 3).map((b) => (
                           <span
                             key={b.id}
                             title={`${b.title}: ${b.description}`}
-                            className="text-xs px-2 py-0.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-1 cursor-help"
+                            className="text-xs px-2 py-0.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-1.5 cursor-help shadow-xs"
                           >
-                            <span>{b.icon}</span>
+                            <GoalBadgeIcon icon={b.icon} className="w-3.5 h-3.5" />
                             <span className="text-[10px] font-bold">{b.title}</span>
                           </span>
                         ))}
@@ -793,8 +796,9 @@ export default function GoalsPage() {
                   className="order-3 p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-sm relative flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer transition-all group"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
-                      🥉 3º Lugar
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-orange-500/10 text-orange-600 dark:text-orange-300 border border-orange-500/30 flex items-center gap-1.5 shadow-sm">
+                      <Award className="w-3.5 h-3.5 text-orange-400" />
+                      3º Lugar
                     </span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                       {formatNumber(ranking[2].dealsWon ?? ranking[2].dealsCount)} vendas
@@ -817,14 +821,14 @@ export default function GoalsPage() {
 
                     {/* Badges de Conquistas */}
                     {ranking[2].badges && ranking[2].badges.length > 0 && (
-                      <div className="flex flex-wrap items-center justify-center gap-1 mt-2">
+                      <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2">
                         {ranking[2].badges.slice(0, 3).map((b) => (
                           <span
                             key={b.id}
                             title={`${b.title}: ${b.description}`}
-                            className="text-xs px-1.5 py-0.5 rounded bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-1 cursor-help"
+                            className="text-xs px-2 py-0.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-1.5 cursor-help shadow-xs"
                           >
-                            <span>{b.icon}</span>
+                            <GoalBadgeIcon icon={b.icon} className="w-3.5 h-3.5" />
                             <span className="text-[10px] font-semibold">{b.title}</span>
                           </span>
                         ))}
@@ -867,7 +871,21 @@ export default function GoalsPage() {
                   {ranking.map((rep) => (
                     <tr key={rep.userId || rep.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="p-3.5 font-bold font-mono text-slate-700 dark:text-slate-300">
-                        {rep.rank === 1 ? "🥇 1º" : rep.rank === 2 ? "🥈 2º" : rep.rank === 3 ? "🥉 3º" : `#${rep.rank}`}
+                        {rep.rank === 1 ? (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 dark:text-amber-300 border border-amber-500/30 text-xs font-bold">
+                            <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" /> 1º
+                          </span>
+                        ) : rep.rank === 2 ? (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-200/50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 text-xs font-bold">
+                            <Medal className="w-3.5 h-3.5 text-slate-400" /> 2º
+                          </span>
+                        ) : rep.rank === 3 ? (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-300 border border-orange-500/30 text-xs font-bold">
+                            <Award className="w-3.5 h-3.5 text-orange-400" /> 3º
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-mono text-xs font-semibold">#{rep.rank}</span>
+                        )}
                       </td>
                       <td className="p-3.5">
                         <div className="font-semibold text-slate-900 dark:text-white">{rep.name || "Consultor"}</div>
@@ -880,9 +898,9 @@ export default function GoalsPage() {
                               <span
                                 key={b.id}
                                 title={`${b.title}: ${b.description}`}
-                                className="text-xs px-1.5 py-0.5 rounded bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 cursor-help"
+                                className="p-1 rounded-md bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 cursor-help flex items-center justify-center shadow-xs"
                               >
-                                {b.icon}
+                                <GoalBadgeIcon icon={b.icon} className="w-3.5 h-3.5" />
                               </span>
                             ))
                           ) : (

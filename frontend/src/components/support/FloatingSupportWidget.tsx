@@ -903,6 +903,10 @@ export default function FloatingSupportWidget() {
       >
         {isOpen ? (
           <X size={20} className="transition-transform rotate-0 group-hover:rotate-90 duration-200 pointer-events-none" />
+        ) : isWhatsApp ? (
+          <svg viewBox="0 0 256 256" className="w-6 h-6 transition-transform group-hover:scale-110 duration-200 pointer-events-none">
+            <circle cx="128" cy="128" r="98" fill="none" stroke="#00A884" strokeWidth="48" strokeLinecap="round" />
+          </svg>
         ) : (
           <img src="/vallor/Favicon_vallor.svg?v=4" alt="Suporte Vallor" className="w-6 h-6 object-contain transition-transform group-hover:scale-110 duration-200 pointer-events-none" />
         )}

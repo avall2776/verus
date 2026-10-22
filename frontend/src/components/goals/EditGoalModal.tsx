@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X, Target, Calendar, DollarSign, Users, Save, Trash2, Loader2 } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { X, Target, Calendar, DollarSign, Users, Save, Trash2, Loader2, CheckCircle2 } from "lucide-react";
 import { CommercialGoal } from "@/types/commercial";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
@@ -20,6 +20,77 @@ interface UserOption {
   email: string;
 }
 
+function parseCurrencyInput(value: string): number {
+  if (!value) return 0;
+  const cleaned = value.replace(/[^\d.,]/g, "");
+  if (!cleaned) return 0;
+
+  if (cleaned.includes(".") && cleaned.includes(",")) {
+    return parseFloat(cleaned.replace(/\./g, "").replace(",", ".")) || 0;
+  }
+  if (cleaned.includes(",")) {
+    return parseFloat(cleaned.replace(",", ".")) || 0;
+  }
+  const parts = cleaned.split(".");
+  if (parts.length > 1) {
+    const last = parts[parts.length - 1];
+    if (last.length === 3) {
+      return parseFloat(parts.join("")) || 0;
+    }
+  }
+  return parseFloat(cleaned) || 0;
+}
+
+function numberToExtensoBRL(value: number): string {
+  if (value <= 0) return "zero reais";
+  const num = Math.floor(value);
+
+  const unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"];
+  const especiais = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
+  const dezenas = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+  const centenas = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
+
+  function converterGrupo(n: number): string {
+    if (n === 100) return "cem";
+    const c = Math.floor(n / 100);
+    const d = Math.floor((n % 100) / 10);
+    const u = n % 10;
+    const partes: string[] = [];
+    if (c > 0) partes.push(centenas[c]);
+    if (d === 1) {
+      partes.push(especiais[u]);
+    } else {
+      if (d > 1) partes.push(dezenas[d]);
+      if (u > 0) partes.push(unidades[u]);
+    }
+    return partes.join(" e ");
+  }
+
+  const milhoes = Math.floor(num / 1_000_000);
+  const milhares = Math.floor((num % 1_000_000) / 1000);
+  const resto = num % 1000;
+
+  const blocos: string[] = [];
+
+  if (milhoes > 0) {
+    if (milhoes === 1) blocos.push("um milhão");
+    else blocos.push(`${converterGrupo(milhoes)} milhões`);
+  }
+
+  if (milhares > 0) {
+    if (milhares === 1) blocos.push("mil");
+    else blocos.push(`${converterGrupo(milhares)} mil`);
+  }
+
+  if (resto > 0) {
+    blocos.push(converterGrupo(resto));
+  }
+
+  const resultado = blocos.join(" e ");
+  const moeda = (num === 1) ? "real" : (milhoes > 0 && milhares === 0 && resto === 0) ? "de reais" : "reais";
+  return `${resultado} ${moeda}`;
+}
+
 export function EditGoalModal({
   isOpen,
   onClose,
@@ -29,13 +100,35 @@ export function EditGoalModal({
 }: EditGoalModalProps) {
   const [title, setTitle] = useState("");
   const [targetType, setTargetType] = useState("REVENUE");
-  const [targetValue, setTargetValue] = useState<number>(100000);
+  const [rawValue, setRawValue] = useState<string>("100.000,00");
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [userId, setUserId] = useState<string>("");
   const [users, setUsers] = useState<UserOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const numericTargetValue = useMemo(() => parseCurrencyInput(rawValue), [rawValue]);
+
+  const handleTargetTypeChange = (newType: string) => {
+    setTargetType(newType);
+    if (newType === "REVENUE") {
+      setRawValue("100.000,00");
+    } else if (newType === "DEALS") {
+      setRawValue("10");
+    } else if (newType === "LEADS") {
+      setRawValue("50");
+    }
+  };
+
+  const handleBlurValue = () => {
+    if (targetType === "REVENUE") {
+      const val = parseCurrencyInput(rawValue);
+      if (val > 0) {
+        setRawValue(val.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      }
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -61,8 +154,14 @@ export function EditGoalModal({
   useEffect(() => {
     if (goal) {
       setTitle(goal.title || "");
-      setTargetType(goal.targetType || "REVENUE");
-      setTargetValue(Number(goal.targetValue || 0));
+      const type = goal.targetType || "REVENUE";
+      setTargetType(type);
+      const val = Number(goal.targetValue || 0);
+      if (type === "REVENUE") {
+        setRawValue(val.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      } else {
+        setRawValue(String(val));
+      }
       setPeriodStart(
         goal.periodStart
           ? goal.periodStart.slice(0, 10)
@@ -85,7 +184,8 @@ export function EditGoalModal({
       toast.error("Informe o nome ou título da meta.");
       return;
     }
-    if (targetValue <= 0) {
+    const finalTargetValue = parseCurrencyInput(rawValue);
+    if (finalTargetValue <= 0) {
       toast.error("O valor alvo deve ser maior que zero.");
       return;
     }
@@ -95,7 +195,7 @@ export function EditGoalModal({
       await api.put(`/goals/${goal.id}`, {
         title: title.trim(),
         targetType,
-        targetValue,
+        targetValue: finalTargetValue,
         periodStart,
         periodEnd,
         userId: userId ? userId : null,
@@ -178,7 +278,7 @@ export function EditGoalModal({
               </label>
               <select
                 value={targetType}
-                onChange={(e) => setTargetType(e.target.value)}
+                onChange={(e) => handleTargetTypeChange(e.target.value)}
                 className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               >
                 <option value="REVENUE">Receita (R$ Faturado)</option>
@@ -217,16 +317,39 @@ export function EditGoalModal({
                 </span>
               )}
               <input
-                type="number"
-                min={1}
-                step={targetType === "REVENUE" ? "100" : "1"}
-                value={targetValue}
-                onChange={(e) => setTargetValue(Number(e.target.value))}
+                type="text"
+                inputMode="decimal"
+                value={rawValue}
+                onChange={(e) => setRawValue(e.target.value)}
+                onBlur={handleBlurValue}
+                placeholder={targetType === "REVENUE" ? "100.000,00" : "10"}
                 className={`w-full ${
                   targetType === "REVENUE" ? "pl-10" : "pl-3.5"
                 } pr-3.5 py-2.5 text-sm font-mono font-semibold rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
                 required
               />
+            </div>
+            {/* Live helper com feedback de moeda e extenso */}
+            <div className="mt-2 px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700/70 flex flex-wrap items-center justify-between gap-1.5 text-xs">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="text-slate-400">Total interpretado:</span>
+                <span className="font-mono font-bold text-emerald-400">
+                  {targetType === "REVENUE"
+                    ? new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(numericTargetValue)
+                    : `${numericTargetValue.toLocaleString("pt-BR")} ${
+                        targetType === "DEALS" ? "contratos" : "leads"
+                      }`}
+                </span>
+              </div>
+              {targetType === "REVENUE" && numericTargetValue > 0 && (
+                <span className="text-[11px] font-medium text-slate-400">
+                  ({numberToExtensoBRL(numericTargetValue)})
+                </span>
+              )}
             </div>
           </div>
 

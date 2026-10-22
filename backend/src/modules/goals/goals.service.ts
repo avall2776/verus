@@ -424,7 +424,40 @@ export class GoalsService {
       throw new NotFoundException('Vendedor não encontrado no tenant.');
     }
 
-    const deals = await this.prisma.deal.findMany({
+    // 1. Busca todos os negócios para calcular KPIs consolidados e reais do consultor
+    const allUserDeals = await this.prisma.deal.findMany({
+      where: { tenantId, assignedTo: userId },
+      select: {
+        id: true,
+        status: true,
+        value: true,
+      },
+    });
+
+    const totalDeals = allUserDeals.length;
+    const wonDeals = allUserDeals.filter((d) => this.isWon(d.status));
+    const totalRevenueWon = wonDeals.reduce((acc, d) => acc + Number(d.value || 0), 0);
+    const conversionRate = totalDeals > 0 ? Math.round((wonDeals.length / totalDeals) * 100) : 0;
+    const avgTicket = wonDeals.length > 0 ? Math.round(totalRevenueWon / wonDeals.length) : 0;
+
+    // Meta pessoal do consultor se configurada
+    const personalGoal = await this.prisma.goal.findFirst({
+      where: { tenantId, userId, targetType: 'REVENUE' },
+      select: { targetValue: true },
+    });
+    const targetValue = personalGoal ? Number(personalGoal.targetValue || 0) : 0;
+
+    const badges = this.computeBadges({
+      dealsWon: wonDeals.length,
+      totalDeals,
+      totalRevenueWon,
+      conversionRate,
+      avgTicket,
+      targetValue,
+    });
+
+    // 2. Busca os 20 negócios mais recentes para histórico detalhado
+    const recentDeals = await this.prisma.deal.findMany({
       where: { tenantId, assignedTo: userId },
       include: {
         contact: {
@@ -440,30 +473,18 @@ export class GoalsService {
       take: 20,
     });
 
-    const wonDeals = deals.filter((d) => this.isWon(d.status));
-    const totalRevenueWon = wonDeals.reduce((acc, d) => acc + Number(d.value || 0), 0);
-    const conversionRate = deals.length > 0 ? Math.round((wonDeals.length / deals.length) * 100) : 0;
-    const avgTicket = wonDeals.length > 0 ? Math.round(totalRevenueWon / wonDeals.length) : 0;
-
-    const badges = this.computeBadges({
-      dealsWon: wonDeals.length,
-      totalDeals: deals.length,
-      totalRevenueWon,
-      conversionRate,
-      avgTicket,
-    });
-
     return {
       user,
       metrics: {
-        totalDeals: deals.length,
+        totalDeals,
         dealsWon: wonDeals.length,
         totalRevenueWon,
         conversionRate,
         avgTicket,
+        targetValue,
       },
       badges,
-      recentDeals: deals.map((d) => ({
+      recentDeals: recentDeals.map((d) => ({
         id: d.id,
         title: d.title,
         value: Number(d.value || 0),
@@ -494,9 +515,9 @@ export class GoalsService {
       badges.push({
         id: 'target_met',
         title: 'Meta Batida (100%+)',
-        icon: '🏆',
+        icon: 'trophy',
         description: 'Superou a meta estipulada para o ciclo.',
-        color: 'blue',
+        color: 'amber',
       });
     }
 
@@ -505,7 +526,7 @@ export class GoalsService {
       badges.push({
         id: 'high_ticket',
         title: 'Ticket Destaque',
-        icon: '💎',
+        icon: 'gem',
         description: 'Ticket médio superior a R$ 8.000 por contrato fechado.',
         color: 'cyan',
       });
@@ -516,7 +537,7 @@ export class GoalsService {
       badges.push({
         id: 'elite_closer',
         title: 'Closer de Elite',
-        icon: '⚡',
+        icon: 'zap',
         description: 'Taxa de conversão superior a 40% em oportunidades ativas.',
         color: 'amber',
       });
@@ -527,7 +548,7 @@ export class GoalsService {
       badges.push({
         id: 'top_volume',
         title: 'Volume Máximo',
-        icon: '🚀',
+        icon: 'rocket',
         description: 'Liderança destacada no volume de contratos fechados.',
         color: 'blue',
       });
@@ -538,7 +559,7 @@ export class GoalsService {
       badges.push({
         id: 'sniper',
         title: 'Atirador de Elite',
-        icon: '🎯',
+        icon: 'target',
         description: 'Conversão cirúrgica de propostas em vendas (>70%).',
         color: 'purple',
       });
@@ -549,9 +570,9 @@ export class GoalsService {
       badges.push({
         id: 'first_blood',
         title: 'Primeira Venda',
-        icon: '⭐',
+        icon: 'star',
         description: 'Primeiro contrato do ciclo fechado com sucesso.',
-        color: 'blue',
+        color: 'emerald',
       });
     }
 

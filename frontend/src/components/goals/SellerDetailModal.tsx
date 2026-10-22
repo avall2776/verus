@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { SellerDrilldownData } from "@/types/commercial";
 import api from "@/lib/api";
+import { GoalBadgeIcon } from "./GoalBadgeIcon";
 
 interface SellerDetailModalProps {
   isOpen: boolean;
@@ -167,11 +168,11 @@ export function SellerDetailModal({
                     {data.badges.map((badge) => (
                       <div
                         key={badge.id}
-                        className="p-2.5 rounded-lg bg-white dark:bg-[#0B1224] border border-slate-800 flex items-start gap-2.5"
+                        className="p-3 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 flex items-start gap-3 shadow-sm hover:border-slate-700 transition-colors"
                       >
-                        <span className="text-xl p-1.5 rounded-md bg-slate-800/80 shrink-0">
-                          {badge.icon}
-                        </span>
+                        <div className="w-9 h-9 rounded-lg bg-slate-800/90 border border-slate-700/60 flex items-center justify-center shrink-0 shadow-inner">
+                          <GoalBadgeIcon icon={badge.icon} className="w-5 h-5" />
+                        </div>
                         <div className="space-y-0.5 min-w-0">
                           <div className="text-xs font-bold text-white flex items-center gap-1.5">
                             {badge.title}

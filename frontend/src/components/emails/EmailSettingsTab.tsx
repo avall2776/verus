@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface EmailSettingsData {
   provider: "gmail" | "hostinger" | "resend" | "smtp";
@@ -32,6 +33,7 @@ interface EmailSettingsTabProps {
 }
 
 export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabProps) {
+  const { isWhatsApp } = useTheme();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -258,9 +260,13 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center p-16 space-y-4 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-800">
-        <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
-        <p className="text-sm text-slate-400 font-medium">Carregando configurações de e-mail do cliente...</p>
+      <div className={`flex flex-col items-center justify-center p-16 space-y-4 rounded-2xl border ${
+        isWhatsApp
+          ? "bg-[#111B21] border-[#222D34]"
+          : "bg-white dark:bg-[#0B1224] border-slate-800"
+      }`}>
+        <RefreshCw className={`w-8 h-8 animate-spin ${isWhatsApp ? "text-[#00A884]" : "text-blue-400"}`} />
+        <p className={`text-sm font-medium ${isWhatsApp ? "text-[#8696A0]" : "text-slate-400"}`}>Carregando configurações de e-mail do cliente...</p>
       </div>
     );
   }
@@ -269,7 +275,15 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300 pb-12">
       {/* Banner de Status Atual */}
       <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all shadow-sm ${
-        testResult.tested && testResult.success
+        isWhatsApp
+          ? testResult.tested && testResult.success
+            ? "bg-[#111B21] border-[#00A884]/40 text-[#E9EDEF]"
+            : testResult.tested && !testResult.success
+            ? "bg-[#111B21] border-rose-500/50 text-[#E9EDEF]"
+            : formData.configured
+            ? "bg-[#111B21] border-[#00A884]/30 text-[#E9EDEF]"
+            : "bg-[#111B21] border-[#222D34] text-[#E9EDEF]"
+          : testResult.tested && testResult.success
           ? "bg-white dark:bg-[#0B1224] border-emerald-300 dark:border-blue-500/40 text-slate-800 dark:text-slate-200"
           : testResult.tested && !testResult.success
           ? "bg-white dark:bg-[#0B1224] border-rose-300 dark:border-rose-500/50 text-slate-800 dark:text-slate-200"
@@ -280,26 +294,32 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
         <div className="flex items-start gap-3.5">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
             testResult.tested && testResult.success
-              ? "bg-emerald-50 dark:bg-blue-600/10 text-emerald-600 dark:text-blue-400 border border-emerald-200 dark:border-blue-500/30"
+              ? isWhatsApp
+                ? "bg-[#00A884]/15 text-[#00A884] border border-[#00A884]/30"
+                : "bg-emerald-50 dark:bg-blue-600/10 text-emerald-600 dark:text-blue-400 border border-emerald-200 dark:border-blue-500/30"
               : testResult.tested && !testResult.success
               ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30"
               : formData.configured
-              ? "bg-blue-50 dark:bg-blue-600/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30"
+              ? isWhatsApp
+                ? "bg-[#00A884]/15 text-[#00A884] border border-[#00A884]/30"
+                : "bg-blue-50 dark:bg-blue-600/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30"
+              : isWhatsApp
+              ? "bg-[#202C33] text-[#8696A0] border border-[#222D34]"
               : "bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
           }`}>
             {testResult.tested && testResult.success ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-blue-400" />
+              <CheckCircle2 className={`w-5 h-5 ${isWhatsApp ? "text-[#00A884]" : "text-emerald-600 dark:text-blue-400"}`} />
             ) : testResult.tested && !testResult.success ? (
               <XCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
             ) : formData.configured ? (
-              <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <Shield className={`w-5 h-5 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />
             ) : (
-              <AlertTriangle className="w-5 h-5 text-slate-400" />
+              <AlertTriangle className={`w-5 h-5 ${isWhatsApp ? "text-[#8696A0]" : "text-slate-400"}`} />
             )}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              <h3 className={`text-sm font-bold ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"}`}>
                 {testResult.tested && testResult.success
                   ? "Conexão Ativa & Validada"
                   : testResult.tested && !testResult.success
@@ -308,11 +328,15 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                   ? "Configuração Registrada"
                   : "Nenhum E-mail Conectado"}
               </h3>
-              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+              <span className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded-md border ${
+                isWhatsApp
+                  ? "bg-[#202C33] border-[#222D34] text-[#8696A0]"
+                  : "bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+              }`}>
                 Cliente Individual
               </span>
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+            <p className={`text-xs mt-1 leading-relaxed ${isWhatsApp ? "text-[#8696A0]" : "text-slate-600 dark:text-slate-300"}`}>
               {testResult.tested
                 ? testResult.message
                 : formData.configured
@@ -326,16 +350,20 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
           type="button"
           onClick={handleTestConnection}
           disabled={testing}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-xs font-semibold text-slate-800 dark:text-white transition-all shadow-sm flex-shrink-0 disabled:opacity-50 cursor-pointer"
+          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all shadow-sm flex-shrink-0 disabled:opacity-50 cursor-pointer ${
+            isWhatsApp
+              ? "bg-[#202C33] hover:bg-[#2A3942] border-[#222D34] text-[#E9EDEF]"
+              : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-800 dark:text-white"
+          }`}
         >
           {testing ? (
             <>
-              <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-500 dark:text-blue-400" />
+              <RefreshCw className={`w-3.5 h-3.5 animate-spin ${isWhatsApp ? "text-[#00A884]" : "text-blue-500 dark:text-blue-400"}`} />
               Testando Conexão...
             </>
           ) : (
             <>
-              <Send className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <Send className={`w-3.5 h-3.5 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />
               Testar Conexão Agora
             </>
           )}
@@ -345,7 +373,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
       <form onSubmit={handleSave} className="space-y-6">
         {/* Seletor de Provedores */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+          <label className={`block text-xs font-bold uppercase tracking-wider mb-3 ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>
             Selecione o Provedor de E-mail:
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -354,23 +382,37 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               onClick={() => handleSelectProvider("gmail")}
               className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 formData.provider === "gmail"
-                  ? "bg-blue-50/80 dark:bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
+                  ? isWhatsApp
+                    ? "bg-[#202C33] border-2 border-[#00A884] shadow-md ring-1 ring-[#00A884]/20"
+                    : "bg-blue-50/80 dark:bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
+                  : isWhatsApp
+                  ? "bg-[#111B21] border-[#222D34] hover:bg-[#202C33]/50"
                   : "bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${
-                    formData.provider === "gmail" ? "bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                    formData.provider === "gmail"
+                      ? isWhatsApp
+                        ? "bg-[#00A884]/15 text-[#00A884]"
+                        : "bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400"
+                      : isWhatsApp
+                      ? "bg-[#202C33] text-[#8696A0]"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                   }`}>
                     G
                   </span>
-                  {formData.provider === "gmail" && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+                  {formData.provider === "gmail" && <Check className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />}
                 </div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Gmail / Workspace</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">smtp.gmail.com:587</p>
+                <h4 className={`text-xs font-bold ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"}`}>Gmail / Workspace</h4>
+                <p className={`text-[11px] mt-1 font-mono ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>smtp.gmail.com:587</p>
               </div>
-              <span className={`text-[10px] font-medium mt-3 ${formData.provider === "gmail" ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"}`}>
+              <span className={`text-[10px] font-medium mt-3 ${
+                formData.provider === "gmail"
+                  ? isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"
+                  : isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"
+              }`}>
                 Requer Senha de App
               </span>
             </div>
@@ -380,23 +422,37 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               onClick={() => handleSelectProvider("hostinger")}
               className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 formData.provider === "hostinger"
-                  ? "bg-blue-50/80 dark:bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
+                  ? isWhatsApp
+                    ? "bg-[#202C33] border-2 border-[#00A884] shadow-md ring-1 ring-[#00A884]/20"
+                    : "bg-blue-50/80 dark:bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
+                  : isWhatsApp
+                  ? "bg-[#111B21] border-[#222D34] hover:bg-[#202C33]/50"
                   : "bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${
-                    formData.provider === "hostinger" ? "bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                    formData.provider === "hostinger"
+                      ? isWhatsApp
+                        ? "bg-[#00A884]/15 text-[#00A884]"
+                        : "bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400"
+                      : isWhatsApp
+                      ? "bg-[#202C33] text-[#8696A0]"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                   }`}>
                     H
                   </span>
-                  {formData.provider === "hostinger" && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+                  {formData.provider === "hostinger" && <Check className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />}
                 </div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Hostinger / Titan</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">smtp.hostinger.com:465</p>
+                <h4 className={`text-xs font-bold ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"}`}>Hostinger / Titan</h4>
+                <p className={`text-[11px] mt-1 font-mono ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>smtp.hostinger.com:465</p>
               </div>
-              <span className={`text-[10px] font-medium mt-3 ${formData.provider === "hostinger" ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"}`}>
+              <span className={`text-[10px] font-medium mt-3 ${
+                formData.provider === "hostinger"
+                  ? isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"
+                  : isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"
+              }`}>
                 Senha comum do Webmail
               </span>
             </div>
@@ -406,23 +462,37 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               onClick={() => handleSelectProvider("resend")}
               className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 formData.provider === "resend"
-                  ? "bg-blue-50/80 dark:bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
+                  ? isWhatsApp
+                    ? "bg-[#202C33] border-2 border-[#00A884] shadow-md ring-1 ring-[#00A884]/20"
+                    : "bg-blue-50/80 dark:bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
+                  : isWhatsApp
+                  ? "bg-[#111B21] border-[#222D34] hover:bg-[#202C33]/50"
                   : "bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${
-                    formData.provider === "resend" ? "bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                    formData.provider === "resend"
+                      ? isWhatsApp
+                        ? "bg-[#00A884]/15 text-[#00A884]"
+                        : "bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400"
+                      : isWhatsApp
+                      ? "bg-[#202C33] text-[#8696A0]"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                   }`}>
                     R
                   </span>
-                  {formData.provider === "resend" && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+                  {formData.provider === "resend" && <Check className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />}
                 </div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Resend API</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">Alta entregabilidade</p>
+                <h4 className={`text-xs font-bold ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"}`}>Resend API</h4>
+                <p className={`text-[11px] mt-1 font-mono ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>Alta entregabilidade</p>
               </div>
-              <span className={`text-[10px] font-medium mt-3 ${formData.provider === "resend" ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"}`}>
+              <span className={`text-[10px] font-medium mt-3 ${
+                formData.provider === "resend"
+                  ? isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"
+                  : isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"
+              }`}>
                 Chave de API (re_...)
               </span>
             </div>
@@ -432,23 +502,37 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               onClick={() => handleSelectProvider("smtp")}
               className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                 formData.provider === "smtp"
-                  ? "bg-blue-50/80 dark:bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
+                  ? isWhatsApp
+                    ? "bg-[#202C33] border-2 border-[#00A884] shadow-md ring-1 ring-[#00A884]/20"
+                    : "bg-blue-50/80 dark:bg-slate-800/90 border-2 border-blue-500 shadow-md ring-1 ring-blue-500/20"
+                  : isWhatsApp
+                  ? "bg-[#111B21] border-[#222D34] hover:bg-[#202C33]/50"
                   : "bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${
-                    formData.provider === "smtp" ? "bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                    formData.provider === "smtp"
+                      ? isWhatsApp
+                        ? "bg-[#00A884]/15 text-[#00A884]"
+                        : "bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400"
+                      : isWhatsApp
+                      ? "bg-[#202C33] text-[#8696A0]"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                   }`}>
                     <Server className="w-4 h-4" />
                   </span>
-                  {formData.provider === "smtp" && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+                  {formData.provider === "smtp" && <Check className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />}
                 </div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">SMTP Customizado</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">SendGrid, SES, etc.</p>
+                <h4 className={`text-xs font-bold ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"}`}>SMTP Customizado</h4>
+                <p className={`text-[11px] mt-1 font-mono ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>SendGrid, SES, etc.</p>
               </div>
-              <span className={`text-[10px] font-medium mt-3 ${formData.provider === "smtp" ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"}`}>
+              <span className={`text-[10px] font-medium mt-3 ${
+                formData.provider === "smtp"
+                  ? isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"
+                  : isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"
+              }`}>
                 Host e porta manuais
               </span>
             </div>
@@ -457,12 +541,16 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
 
         {/* Guia de Ajuda Específico do Provedor Selecionado */}
         {formData.provider === "gmail" && (
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-2 shadow-xs">
-            <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
-              <HelpCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <div className={`p-4 rounded-xl border text-xs space-y-2 shadow-xs ${
+            isWhatsApp
+              ? "bg-[#202C33] border-[#222D34] text-[#E9EDEF]"
+              : "bg-slate-50 dark:bg-[#0B1224] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+          }`}>
+            <div className={`flex items-center gap-2 font-bold ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"}`}>
+              <HelpCircle className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />
               Como configurar o Gmail / Google Workspace:
             </div>
-            <ol className="list-decimal list-inside space-y-1 text-[12px] text-slate-600 dark:text-slate-400 pl-1 leading-relaxed">
+            <ol className={`list-decimal list-inside space-y-1 text-[12px] pl-1 leading-relaxed ${isWhatsApp ? "text-[#8696A0]" : "text-slate-600 dark:text-slate-400"}`}>
               <li>
                 Sua conta Google precisa ter a <strong>Verificação em duas etapas (2FA)</strong> ativada.
               </li>
@@ -472,7 +560,9 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                   href="https://myaccount.google.com/apppasswords"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1"
+                  className={`hover:underline font-semibold inline-flex items-center gap-1 ${
+                    isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"
+                  }`}
                 >
                   myaccount.google.com/apppasswords
                   <ExternalLink className="w-3 h-3 inline" />
@@ -485,30 +575,40 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
         )}
 
         {formData.provider === "hostinger" && (
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1 shadow-xs">
-            <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
-              <HelpCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <div className={`p-4 rounded-xl border text-xs space-y-1 shadow-xs ${
+            isWhatsApp
+              ? "bg-[#202C33] border-[#222D34] text-[#E9EDEF]"
+              : "bg-slate-50 dark:bg-[#0B1224] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+          }`}>
+            <div className={`flex items-center gap-2 font-bold ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"}`}>
+              <HelpCircle className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />
               Como configurar o E-mail Hostinger / Titan:
             </div>
-            <p className="text-[12px] text-slate-600 dark:text-slate-400">
-              Insira o e-mail completo do seu domínio (ex: <code className="text-blue-600 dark:text-blue-300 font-mono">contato@seudominio.com.br</code>) e a mesma senha utilizada para entrar no Webmail da Hostinger. A porta 465 com SSL já está configurada.
+            <p className={`text-[12px] ${isWhatsApp ? "text-[#8696A0]" : "text-slate-600 dark:text-slate-400"}`}>
+              Insira o e-mail completo do seu domínio (ex: <code className={`font-mono ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-300"}`}>contato@seudominio.com.br</code>) e a mesma senha utilizada para entrar no Webmail da Hostinger. A porta 465 com SSL já está configurada.
             </p>
           </div>
         )}
 
         {formData.provider === "resend" && (
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1 shadow-xs">
-            <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
-              <HelpCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <div className={`p-4 rounded-xl border text-xs space-y-1 shadow-xs ${
+            isWhatsApp
+              ? "bg-[#202C33] border-[#222D34] text-[#E9EDEF]"
+              : "bg-slate-50 dark:bg-[#0B1224] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+          }`}>
+            <div className={`flex items-center gap-2 font-bold ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"}`}>
+              <HelpCircle className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />
               Como configurar o Resend:
             </div>
-            <p className="text-[12px] text-slate-600 dark:text-slate-400">
+            <p className={`text-[12px] ${isWhatsApp ? "text-[#8696A0]" : "text-slate-600 dark:text-slate-400"}`}>
               Crie uma conta gratuita em{" "}
               <a
                 href="https://resend.com"
                 target="_blank"
                 rel="noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1"
+                className={`hover:underline font-semibold inline-flex items-center gap-1 ${
+                  isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"
+                }`}
               >
                 resend.com
                 <ExternalLink className="w-3 h-3 inline" />
@@ -519,15 +619,23 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
         )}
 
         {/* Campos do Formulário */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 space-y-5 shadow-sm">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
-            <Key className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+        <div className={`p-6 rounded-2xl border space-y-5 shadow-sm ${
+          isWhatsApp
+            ? "bg-[#111B21] border-[#222D34]"
+            : "bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800"
+        }`}>
+          <h4 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b pb-3 ${
+            isWhatsApp
+              ? "text-[#E9EDEF] border-[#222D34]"
+              : "text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800"
+          }`}>
+            <Key className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />
             Credenciais de Autenticação do Cliente
           </h4>
 
           {formData.provider === "resend" ? (
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className={`block text-xs font-semibold mb-1.5 ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
                 Chave de API do Resend (RESEND_API_KEY) *
               </label>
               <input
@@ -535,7 +643,11 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                 value={formData.resendApiKey || ""}
                 onChange={(e) => setFormData({ ...formData, resendApiKey: e.target.value })}
                 placeholder={formData.hasPassword ? "•••••••••••••••• (Chave já salva)" : "re_123456789..."}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+                className={`w-full px-3.5 py-2.5 rounded-xl text-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none transition-colors ${
+                  isWhatsApp
+                    ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] focus:border-[#00A884]"
+                    : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-blue-500"
+                }`}
               />
             </div>
           ) : (
@@ -543,7 +655,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               {/* E-mail da Conta e Senha */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label className={`block text-xs font-semibold mb-1.5 ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
                     Endereço de E-mail da Conta *
                   </label>
                   <input
@@ -556,12 +668,16 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                         ? "seu-email@gmail.com"
                         : "comercial@suaempresa.com.br"
                     }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none transition-colors ${
+                      isWhatsApp
+                        ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] focus:border-[#00A884]"
+                        : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-blue-500"
+                    }`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label className={`block text-xs font-semibold mb-1.5 ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
                     {formData.provider === "gmail" ? "Senha de App de 16 Dígitos *" : "Senha do E-mail *"}
                   </label>
                   <div className="relative">
@@ -570,18 +686,24 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                       value={formData.smtpPass || ""}
                       onChange={(e) => setFormData({ ...formData, smtpPass: e.target.value })}
                       placeholder={formData.hasPassword ? "•••••••••••••••• (Senha já salva)" : "Digite a senha"}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors pr-10"
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none transition-colors pr-10 ${
+                        isWhatsApp
+                          ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] focus:border-[#00A884]"
+                          : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-blue-500"
+                      }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                      className={`absolute right-3 top-2.5 cursor-pointer ${
+                        isWhatsApp ? "text-[#8696A0] hover:text-[#E9EDEF]" : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                      }`}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                   {formData.hasPassword && !formData.smtpPass && (
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">
+                    <span className={`text-[10px] mt-1 block ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>
                       Deixe em branco para manter a senha cadastrada atualmente.
                     </span>
                   )}
@@ -592,7 +714,7 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
               {(formData.provider === "smtp" || formData.provider === "hostinger" || formData.provider === "gmail") && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label className={`block text-xs font-semibold mb-1.5 ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
                       Servidor SMTP (Host)
                     </label>
                     <input
@@ -600,12 +722,16 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                       value={formData.smtpHost || ""}
                       disabled={formData.provider !== "smtp"}
                       onChange={(e) => setFormData({ ...formData, smtpHost: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white disabled:opacity-60 transition-colors"
+                      className={`w-full px-3.5 py-2 rounded-xl text-xs disabled:opacity-60 transition-colors ${
+                        isWhatsApp
+                          ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF]"
+                          : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                      }`}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label className={`block text-xs font-semibold mb-1.5 ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
                       Porta SMTP
                     </label>
                     <input
@@ -613,7 +739,11 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                       value={formData.smtpPort || 587}
                       disabled={formData.provider !== "smtp"}
                       onChange={(e) => setFormData({ ...formData, smtpPort: Number(e.target.value) })}
-                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white disabled:opacity-60 transition-colors"
+                      className={`w-full px-3.5 py-2 rounded-xl text-xs disabled:opacity-60 transition-colors ${
+                        isWhatsApp
+                          ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF]"
+                          : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                      }`}
                     />
                   </div>
                 </div>
@@ -622,15 +752,17 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
           )}
 
           {/* Identidade de Exibição do Remetente */}
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <div className={`pt-4 border-t space-y-4 ${isWhatsApp ? "border-[#222D34]" : "border-slate-200 dark:border-slate-800"}`}>
+            <h4 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${
+              isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"
+            }`}>
+              <Building2 className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />
               Identidade do Remetente nos E-mails Enviados
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                <label className={`block text-xs font-semibold mb-1.5 ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
                   Nome de Exibição da Empresa / Atendente
                 </label>
                 <input
@@ -638,12 +770,16 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                   value={formData.fromName || ""}
                   onChange={(e) => setFormData({ ...formData, fromName: e.target.value })}
                   placeholder="Ex: Vallor Comercial ou Agência 26"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+                  className={`w-full px-3.5 py-2.5 rounded-xl text-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none transition-colors ${
+                    isWhatsApp
+                      ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] focus:border-[#00A884]"
+                      : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-blue-500"
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                <label className={`block text-xs font-semibold mb-1.5 ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}`}>
                   E-mail de Envio Exibido para o Destinatário
                 </label>
                 <input
@@ -651,7 +787,11 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
                   value={formData.fromEmail || ""}
                   onChange={(e) => setFormData({ ...formData, fromEmail: e.target.value })}
                   placeholder={formData.smtpUser || "comercial@empresa.com.br"}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+                  className={`w-full px-3.5 py-2.5 rounded-xl text-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none transition-colors ${
+                    isWhatsApp
+                      ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] focus:border-[#00A884]"
+                      : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-blue-500"
+                  }`}
                 />
               </div>
             </div>
@@ -663,7 +803,11 @@ export default function EmailSettingsTab({ onSettingsSaved }: EmailSettingsTabPr
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-xs shadow-sm transition-colors disabled:opacity-50 cursor-pointer text-white ${
+              isWhatsApp
+                ? "bg-[#00A884] hover:bg-[#02906F]"
+                : "bg-blue-600 hover:bg-blue-500"
+            }`}
           >
             {saving ? (
               <>

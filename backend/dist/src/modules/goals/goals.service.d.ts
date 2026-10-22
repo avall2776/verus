@@ -160,6 +160,7 @@ export declare class GoalsService {
             totalRevenueWon: number;
             conversionRate: number;
             avgTicket: number;
+            targetValue: number;
         };
         badges: {
             id: string;

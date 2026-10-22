@@ -13,8 +13,10 @@ import toast from "react-hot-toast";
 import { EmailItem, EmailFolderCounts } from "@/types/email";
 import EmailComposerModal from "@/components/emails/EmailComposerModal";
 import EmailSettingsTab from "@/components/emails/EmailSettingsTab";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function EmailInboxPage() {
+  const { isWhatsApp } = useTheme();
   const [emails, setEmails] = useState<EmailItem[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<EmailItem | null>(null);
   const [activeFolder, setActiveFolder] = useState<string>("INBOX");
@@ -283,7 +285,11 @@ export default function EmailInboxPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-sm">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
+            isWhatsApp
+              ? "bg-[#00A884]/15 border border-[#00A884]/30 text-[#00A884]"
+              : "bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400"
+          }`}>
             <Mail className="w-5 h-5" />
           </div>
           <div>
@@ -300,14 +306,18 @@ export default function EmailInboxPage() {
                 }
                 className={`text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border font-bold flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 ${
                   transportStatus?.connected
-                    ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/30 hover:bg-emerald-100 dark:hover:bg-emerald-500/20"
+                    ? isWhatsApp
+                      ? "bg-[#00A884]/15 text-[#00A884] border-[#00A884]/30 hover:bg-[#00A884]/25"
+                      : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/30 hover:bg-emerald-100 dark:hover:bg-emerald-500/20"
                     : transportStatus?.configured
                     ? "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-500/30 hover:bg-amber-100 dark:hover:bg-amber-500/20"
+                    : isWhatsApp
+                    ? "bg-[#202C33] text-[#8696A0] border-[#222D34] hover:bg-[#2A3942]"
                     : "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-500/30 hover:bg-blue-100 dark:hover:bg-blue-500/20"
                 }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${
-                  transportStatus?.connected ? "bg-emerald-500 dark:bg-emerald-400 animate-pulse" : transportStatus?.configured ? "bg-amber-500 dark:bg-amber-400" : "bg-blue-500 dark:bg-blue-400"
+                  transportStatus?.connected ? (isWhatsApp ? "bg-[#00A884] animate-pulse" : "bg-emerald-500 dark:bg-emerald-400 animate-pulse") : transportStatus?.configured ? "bg-amber-500 dark:bg-amber-400" : (isWhatsApp ? "bg-[#8696A0]" : "bg-blue-500 dark:bg-blue-400")
                 }`} />
                 {transportStatus?.connected
                   ? "E-MAIL CONECTADO"
@@ -326,10 +336,14 @@ export default function EmailInboxPage() {
           <button
             onClick={handleSyncInbox}
             disabled={isRefreshing}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-sm disabled:opacity-50 cursor-pointer ${
+              isWhatsApp
+                ? "bg-[#202C33] hover:bg-[#2A3942] border border-[#222D34] text-[#E9EDEF]"
+                : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700"
+            }`}
             title="Sincronizar e-mails recebidos do Gmail via IMAP"
           >
-            <RefreshCw className={`w-4 h-4 text-blue-600 dark:text-blue-400 ${isRefreshing ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"} ${isRefreshing ? "animate-spin" : ""}`} />
             <span className="hidden sm:inline">Sincronizar Gmail</span>
           </button>
 
@@ -340,7 +354,11 @@ export default function EmailInboxPage() {
               setComposerInitialBody("");
               setIsComposerOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs shadow-sm transition-colors cursor-pointer text-white ${
+              isWhatsApp
+                ? "bg-[#00A884] hover:bg-[#02906F]"
+                : "bg-blue-600 hover:bg-blue-500"
+            }`}
           >
             <Plus className="w-4 h-4" />
             Escrever Novo E-mail
@@ -349,20 +367,32 @@ export default function EmailInboxPage() {
       </div>
 
       {/* Navegação de Abas do Módulo de E-mails */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800/80 pb-3">
-        <div className="flex items-center gap-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md">
+      <div className={`flex flex-wrap items-center justify-between gap-3 border-b pb-3 ${
+        isWhatsApp ? "border-[#222D34]" : "border-slate-200 dark:border-slate-800/80"
+      }`}>
+        <div className={`flex items-center gap-2 p-1 rounded-xl border ${
+          isWhatsApp
+            ? "bg-[#111B21] border-[#222D34]"
+            : "bg-slate-100 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800/80 backdrop-blur-md"
+        }`}>
           <button
             onClick={() => setCurrentTab("messages")}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               currentTab === "messages"
-                ? "bg-blue-600 text-white shadow-sm"
+                ? isWhatsApp
+                  ? "bg-[#00A884] text-white shadow-sm"
+                  : "bg-blue-600 text-white shadow-sm"
+                : isWhatsApp
+                ? "text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#202C33]"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/50"
             }`}
           >
             <Mail className="w-3.5 h-3.5" />
             Caixa de Mensagens
             {counts.unread > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-500 text-white font-bold ml-1">
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ml-1 text-white ${
+                isWhatsApp ? "bg-white/20" : "bg-blue-500"
+              }`}>
                 {counts.unread}
               </span>
             )}
@@ -372,7 +402,11 @@ export default function EmailInboxPage() {
             onClick={() => setCurrentTab("settings")}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               currentTab === "settings"
-                ? "bg-blue-600 text-white shadow-sm"
+                ? isWhatsApp
+                  ? "bg-[#00A884] text-white shadow-sm"
+                  : "bg-blue-600 text-white shadow-sm"
+                : isWhatsApp
+                ? "text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#202C33]"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/50"
             }`}
           >
@@ -385,8 +419,8 @@ export default function EmailInboxPage() {
         </div>
 
         {currentTab === "messages" && (
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
-            Pasta ativa: <strong className="text-slate-900 dark:text-white">{activeFolder}</strong> • {counts.inbox} mensagens
+          <div className={`text-[11px] hidden sm:block ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>
+            Pasta ativa: <strong className={isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"}>{activeFolder}</strong> • {counts.inbox} mensagens
           </div>
         )}
       </div>
@@ -400,9 +434,15 @@ export default function EmailInboxPage() {
         /* Container 3-Pane Enterprise */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[760px]">
         {/* PANE 1: Pastas e Navegação Lateral (col-span-3) */}
-        <div className="lg:col-span-3 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md p-4 flex flex-col justify-between shadow-sm">
+        <div className={`lg:col-span-3 rounded-2xl p-4 flex flex-col justify-between shadow-sm border ${
+          isWhatsApp
+            ? "bg-[#111B21] border-[#222D34]"
+            : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80 backdrop-blur-md"
+        }`}>
           <div className="space-y-4">
-            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-2">
+            <div className={`text-xs font-bold uppercase tracking-wider px-2 ${
+              isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"
+            }`}>
               Pastas & Diretórios
             </div>
 
@@ -414,7 +454,11 @@ export default function EmailInboxPage() {
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   activeFolder === "INBOX" && !isStarredFilter
-                    ? "bg-blue-50 dark:bg-blue-600/15 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 shadow-xs"
+                    ? isWhatsApp
+                      ? "bg-[#00A884]/15 text-[#00A884] border border-[#00A884]/30 shadow-xs"
+                      : "bg-blue-50 dark:bg-blue-600/15 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 shadow-xs"
+                    : isWhatsApp
+                    ? "text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#202C33]"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
               >
@@ -423,7 +467,9 @@ export default function EmailInboxPage() {
                   <span>Caixa de Entrada</span>
                 </div>
                 {counts.unread > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold text-white ${
+                    isWhatsApp ? "bg-[#00A884]" : "bg-blue-600"
+                  }`}>
                     {counts.unread}
                   </span>
                 )}
@@ -435,7 +481,11 @@ export default function EmailInboxPage() {
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   isStarredFilter
-                    ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 shadow-xs"
+                    ? isWhatsApp
+                      ? "bg-[#202C33] text-[#E9EDEF] border border-[#222D34] shadow-xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 shadow-xs"
+                    : isWhatsApp
+                    ? "text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#202C33]"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
               >
@@ -444,7 +494,7 @@ export default function EmailInboxPage() {
                   <span>Com Estrela</span>
                 </div>
                 {counts.starred > 0 && (
-                  <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">{counts.starred}</span>
+                  <span className={`font-mono text-[11px] ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>{counts.starred}</span>
                 )}
               </button>
 
@@ -455,7 +505,11 @@ export default function EmailInboxPage() {
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   activeFolder === "SENT" && !isStarredFilter
-                    ? "bg-blue-50 dark:bg-blue-600/15 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 shadow-xs"
+                    ? isWhatsApp
+                      ? "bg-[#00A884]/15 text-[#00A884] border border-[#00A884]/30 shadow-xs"
+                      : "bg-blue-50 dark:bg-blue-600/15 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 shadow-xs"
+                    : isWhatsApp
+                    ? "text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#202C33]"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
               >
@@ -464,7 +518,7 @@ export default function EmailInboxPage() {
                   <span>Enviados</span>
                 </div>
                 {counts.sent > 0 && (
-                  <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">{counts.sent}</span>
+                  <span className={`font-mono text-[11px] ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>{counts.sent}</span>
                 )}
               </button>
 
@@ -475,7 +529,11 @@ export default function EmailInboxPage() {
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   activeFolder === "ARCHIVE" && !isStarredFilter
-                    ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 shadow-xs"
+                    ? isWhatsApp
+                      ? "bg-[#202C33] text-[#E9EDEF] border border-[#222D34] shadow-xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 shadow-xs"
+                    : isWhatsApp
+                    ? "text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#202C33]"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
               >
@@ -484,7 +542,7 @@ export default function EmailInboxPage() {
                   <span>Arquivados</span>
                 </div>
                 {counts.archive > 0 && (
-                  <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">{counts.archive}</span>
+                  <span className={`font-mono text-[11px] ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>{counts.archive}</span>
                 )}
               </button>
 
@@ -495,7 +553,11 @@ export default function EmailInboxPage() {
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   activeFolder === "TRASH" && !isStarredFilter
-                    ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 shadow-xs"
+                    ? isWhatsApp
+                      ? "bg-[#202C33] text-[#E9EDEF] border border-[#222D34] shadow-xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 shadow-xs"
+                    : isWhatsApp
+                    ? "text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#202C33]"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
               >
@@ -504,14 +566,16 @@ export default function EmailInboxPage() {
                   <span>Lixeira</span>
                 </div>
                 {counts.trash > 0 && (
-                  <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">{counts.trash}</span>
+                  <span className={`font-mono text-[11px] ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>{counts.trash}</span>
                 )}
               </button>
             </nav>
 
             {/* Filtros Rápidos */}
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
-              <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-2">
+            <div className={`pt-4 border-t space-y-2 ${isWhatsApp ? "border-[#222D34]" : "border-slate-200 dark:border-slate-800"}`}>
+              <div className={`text-[11px] font-bold uppercase tracking-wider px-2 ${
+                isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"
+              }`}>
                 Filtros Dinâmicos
               </div>
               <div className="space-y-1">
@@ -519,12 +583,16 @@ export default function EmailInboxPage() {
                   onClick={() => setIsUnreadFilter(!isUnreadFilter)}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                     isUnreadFilter
-                      ? "bg-blue-50 dark:bg-blue-600/15 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30"
+                      ? isWhatsApp
+                        ? "bg-[#00A884]/15 text-[#00A884] border border-[#00A884]/30"
+                        : "bg-blue-50 dark:bg-blue-600/15 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30"
+                      : isWhatsApp
+                      ? "text-[#8696A0] hover:text-[#E9EDEF]"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-500" />
+                    <span className={`w-2 h-2 rounded-full ${isWhatsApp ? "bg-[#00A884]" : "bg-blue-500"}`} />
                     Somente Não Lidos
                   </span>
                   <span className="text-[10px] font-mono">{counts.unread}</span>
@@ -534,31 +602,43 @@ export default function EmailInboxPage() {
           </div>
 
           {/* Rodapé de Status */}
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+          <div className={`p-3 rounded-xl border text-[11px] flex items-center justify-between ${
+            isWhatsApp
+              ? "bg-[#202C33] border-[#222D34] text-[#8696A0]"
+              : "bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800/80 text-slate-500 dark:text-slate-400"
+          }`}>
             <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
               Sincronizado
             </span>
-            <span className="font-mono text-slate-500 dark:text-slate-400">PostgreSQL</span>
+            <span className={`font-mono ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>PostgreSQL</span>
           </div>
         </div>
 
         {/* PANE 2: Lista de Mensagens (col-span-4) */}
-        <div className="lg:col-span-4 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md flex flex-col overflow-hidden shadow-sm">
+        <div className={`lg:col-span-4 rounded-2xl flex flex-col overflow-hidden shadow-sm border ${
+          isWhatsApp
+            ? "bg-[#111B21] border-[#222D34]"
+            : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80 backdrop-blur-md"
+        }`}>
           {/* Barra de Busca e Filtro */}
-          <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 space-y-2.5">
+          <div className={`p-3.5 border-b space-y-2.5 ${isWhatsApp ? "border-[#222D34]" : "border-slate-200 dark:border-slate-800"}`}>
             <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <Search className={`w-4 h-4 absolute left-3 top-2.5 ${isWhatsApp ? "text-[#8696A0]" : "text-slate-400"}`} />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por remetente, assunto..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+                className={`w-full pl-9 pr-3 py-1.5 text-xs rounded-xl focus:outline-none transition-colors ${
+                  isWhatsApp
+                    ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] placeholder:text-[#8696A0] focus:border-[#00A884]"
+                    : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500"
+                }`}
               />
             </div>
-            <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 px-1">
-              <span className="font-semibold text-slate-900 dark:text-white">
+            <div className={`flex items-center justify-between text-[11px] px-1 ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>
+              <span className={`font-semibold ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"}`}>
                 {isStarredFilter ? "Com Estrela" : activeFolder} ({emails.length})
               </span>
               <span>Ordenado por mais recente</span>
@@ -566,17 +646,17 @@ export default function EmailInboxPage() {
           </div>
 
           {/* Lista de E-mails */}
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
+          <div className={`flex-1 overflow-y-auto divide-y ${isWhatsApp ? "divide-[#222D34]" : "divide-slate-100 dark:divide-slate-800/60"}`}>
             {isLoading ? (
-              <div className="p-8 text-center text-xs text-slate-400 animate-pulse space-y-2">
-                <Mail className="w-6 h-6 mx-auto text-slate-400 animate-bounce" />
+              <div className={`p-8 text-center text-xs animate-pulse space-y-2 ${isWhatsApp ? "text-[#8696A0]" : "text-slate-400"}`}>
+                <Mail className={`w-6 h-6 mx-auto animate-bounce ${isWhatsApp ? "text-[#00A884]" : "text-slate-400"}`} />
                 <p>Carregando e-mails...</p>
               </div>
             ) : emails.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-400 space-y-2">
-                <Inbox className="w-8 h-8 mx-auto text-slate-400" />
-                <p className="font-semibold text-slate-700 dark:text-slate-400">Nenhum e-mail encontrado</p>
-                <p className="text-[11px] text-slate-500">Esta pasta está vazia no momento.</p>
+              <div className={`p-8 text-center text-xs space-y-2 ${isWhatsApp ? "text-[#8696A0]" : "text-slate-400"}`}>
+                <Inbox className="w-8 h-8 mx-auto" />
+                <p className={`font-semibold ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-400"}`}>Nenhum e-mail encontrado</p>
+                <p className={`text-[11px] ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500"}`}>Esta pasta está vazia no momento.</p>
               </div>
             ) : (
               emails.map((email) => {
@@ -587,23 +667,39 @@ export default function EmailInboxPage() {
                     onClick={() => handleSelectEmail(email)}
                     className={`p-3.5 cursor-pointer transition-all relative ${
                       isSelected
-                        ? "bg-blue-50/80 dark:bg-slate-800/80 border-l-4 border-blue-600 dark:border-blue-500 shadow-xs"
+                        ? isWhatsApp
+                          ? "bg-[#202C33] border-l-4 border-[#00A884] shadow-xs"
+                          : "bg-blue-50/80 dark:bg-slate-800/80 border-l-4 border-blue-600 dark:border-blue-500 shadow-xs"
+                        : isWhatsApp
+                        ? "hover:bg-[#202C33]/60"
                         : "hover:bg-slate-50 dark:hover:bg-slate-800/40"
                     }`}
                   >
                     {/* Não lido dot */}
                     {!email.isRead && (
-                      <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-500 absolute left-1 top-4" />
+                      <span className={`w-2 h-2 rounded-full absolute left-1 top-4 ${
+                        isWhatsApp ? "bg-[#00A884]" : "bg-blue-600 dark:bg-blue-500"
+                      }`} />
                     )}
 
                     <div className="flex justify-between items-start mb-1 gap-2">
-                      <span className={`text-xs truncate ${!email.isRead ? "font-bold text-slate-900 dark:text-white" : "font-semibold text-slate-700 dark:text-slate-200"}`}>
+                      <span className={`text-xs truncate ${
+                        !email.isRead
+                          ? isWhatsApp
+                            ? "font-bold text-[#E9EDEF]"
+                            : "font-bold text-slate-900 dark:text-white"
+                          : isWhatsApp
+                          ? "font-semibold text-[#8696A0]"
+                          : "font-semibold text-slate-700 dark:text-slate-200"
+                      }`}>
                         {email.senderName}
                       </span>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           onClick={(e) => handleToggleStar(email.id, e)}
-                          className="text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors cursor-pointer"
+                          className={`transition-colors cursor-pointer ${
+                            isWhatsApp ? "text-[#8696A0] hover:text-amber-400" : "text-slate-400 hover:text-amber-500 dark:hover:text-amber-400"
+                          }`}
                           title={email.isStarred ? "Remover estrela" : "Com estrela"}
                         >
                           <Star className={`w-3.5 h-3.5 ${email.isStarred ? "fill-amber-400 text-amber-500 dark:text-amber-400" : ""}`} />
@@ -625,29 +721,45 @@ export default function EmailInboxPage() {
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
-                        <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                        <span className={`text-[10px] font-mono ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>
                           {formatEmailDate(email.createdAt)}
                         </span>
                       </div>
                     </div>
 
-                    <div className={`text-xs truncate mb-1 ${!email.isRead ? "font-semibold text-blue-600 dark:text-blue-300" : "text-slate-600 dark:text-slate-300"}`}>
+                    <div className={`text-xs truncate mb-1 ${
+                      !email.isRead
+                        ? isWhatsApp
+                          ? "font-semibold text-[#00A884]"
+                          : "font-semibold text-blue-600 dark:text-blue-300"
+                        : isWhatsApp
+                        ? "text-[#E9EDEF]"
+                        : "text-slate-600 dark:text-slate-300"
+                    }`}>
                       {email.subject}
                     </div>
 
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                    <p className={`text-[11px] line-clamp-2 leading-relaxed ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"}`}>
                       {email.preview || email.bodyText}
                     </p>
 
                     <div className="mt-2 flex items-center gap-2">
                       {email.hasAttachments && (
-                        <span className="flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700/60">
-                          <Paperclip className="w-2.5 h-2.5 text-blue-500 dark:text-blue-400" />
+                        <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border ${
+                          isWhatsApp
+                            ? "bg-[#202C33] border-[#222D34] text-[#8696A0]"
+                            : "bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-400"
+                        }`}>
+                          <Paperclip className={`w-2.5 h-2.5 ${isWhatsApp ? "text-[#00A884]" : "text-blue-500 dark:text-blue-400"}`} />
                           Anexo
                         </span>
                       )}
                       {email.contact && (
-                        <span className="text-[10px] bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-500/20">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                          isWhatsApp
+                            ? "bg-[#00A884]/15 border-[#00A884]/30 text-[#00A884]"
+                            : "bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-300"
+                        }`}>
                           Lead: {email.contact.name}
                         </span>
                       )}
@@ -660,30 +772,46 @@ export default function EmailInboxPage() {
         </div>
 
         {/* PANE 3: Visualizador de Mensagem & Ações (col-span-5) */}
-        <div className="lg:col-span-5 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md flex flex-col overflow-hidden shadow-sm p-6">
+        <div className={`lg:col-span-5 rounded-2xl flex flex-col overflow-hidden shadow-sm p-6 border ${
+          isWhatsApp
+            ? "bg-[#111B21] border-[#222D34]"
+            : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80 backdrop-blur-md"
+        }`}>
           {selectedEmail ? (
             <div className="flex-1 flex flex-col justify-between overflow-y-auto">
               <div className="space-y-4">
                 {/* Header do E-mail Selecionado */}
-                <div className="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div className={`flex items-start justify-between border-b pb-4 ${
+                  isWhatsApp ? "border-[#222D34]" : "border-slate-200 dark:border-slate-800"
+                }`}>
                   <div className="space-y-1">
-                    <h3 className="text-base font-black text-slate-900 dark:text-white leading-tight">
+                    <h3 className={`text-base font-black leading-tight ${
+                      isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"
+                    }`}>
                       {selectedEmail.subject}
                     </h3>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <div className={`flex items-center gap-2 text-xs ${
+                      isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"
+                    }`}>
                       <span>De:</span>
-                      <strong className="text-slate-900 dark:text-white font-semibold">{selectedEmail.senderName}</strong>
-                      <span className="text-slate-500 font-mono">({selectedEmail.senderEmail})</span>
+                      <strong className={`font-semibold ${
+                        isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"
+                      }`}>{selectedEmail.senderName}</strong>
+                      <span className={`font-mono ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500"}`}>({selectedEmail.senderEmail})</span>
                     </div>
-                    <div className="text-[11px] text-slate-500">
-                      Para: <span className="text-slate-700 dark:text-slate-300">{selectedEmail.recipientEmail}</span>
+                    <div className={`text-[11px] ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500"}`}>
+                      Para: <span className={isWhatsApp ? "text-[#E9EDEF]" : "text-slate-700 dark:text-slate-300"}>{selectedEmail.recipientEmail}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       onClick={() => handleToggleStar(selectedEmail.id)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                        isWhatsApp
+                          ? "text-[#8696A0] hover:text-amber-400 hover:bg-[#202C33]"
+                          : "text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
                       title="Favoritar"
                     >
                       <Star className={`w-4 h-4 ${selectedEmail.isStarred ? "fill-amber-400 text-amber-500 dark:text-amber-400" : ""}`} />
@@ -692,7 +820,11 @@ export default function EmailInboxPage() {
                       <>
                         <button
                           onClick={(e) => handleMoveFolder(selectedEmail.id, "INBOX", e)}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-emerald-600 dark:text-emerald-400 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                            isWhatsApp
+                              ? "bg-[#202C33] hover:bg-[#2A3942] text-emerald-400 border-[#222D34]"
+                              : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-emerald-600 dark:text-emerald-400 border-slate-200 dark:border-slate-700"
+                          }`}
                           title="Restaurar para a Caixa de Entrada"
                         >
                           <Undo2 className="w-3.5 h-3.5" />
@@ -700,7 +832,11 @@ export default function EmailInboxPage() {
                         </button>
                         <button
                           onClick={(e) => handlePermanentDelete(selectedEmail.id, e)}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 text-xs font-semibold border border-red-200 dark:border-red-800/60 transition-colors cursor-pointer"
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                            isWhatsApp
+                              ? "bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/30"
+                              : "bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/60"
+                          }`}
                           title="Excluir definitivamente do Vallor e do servidor de e-mail"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -711,21 +847,33 @@ export default function EmailInboxPage() {
                       <>
                         <button
                           onClick={() => handleMoveFolder(selectedEmail.id, "ARCHIVE")}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                            isWhatsApp
+                              ? "text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#202C33]"
+                              : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          }`}
                           title="Arquivar"
                         >
                           <Archive className="w-4 h-4" />
                         </button>
                         <button
                           onClick={(e) => handleMoveFolder(selectedEmail.id, "TRASH", e)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                            isWhatsApp
+                              ? "text-[#8696A0] hover:text-red-400 hover:bg-[#202C33]"
+                              : "text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          }`}
                           title="Mover para lixeira"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={handleOpenReplyComposer}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                            isWhatsApp
+                              ? "bg-[#202C33] hover:bg-[#2A3942] text-[#00A884] border-[#222D34]"
+                              : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 border-slate-200 dark:border-slate-700"
+                          }`}
                           title="Responder com o editor completo"
                         >
                           <Reply className="w-3.5 h-3.5" />
@@ -738,15 +886,19 @@ export default function EmailInboxPage() {
 
                 {/* Vínculo Comercial no CRM se houver */}
                 {(selectedEmail.contact || selectedEmail.deal) && (
-                  <div className="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-500/20 flex items-center justify-between text-xs">
+                  <div className={`p-3 rounded-xl border flex items-center justify-between text-xs ${
+                    isWhatsApp
+                      ? "bg-[#202C33] border-[#00A884]/30"
+                      : "bg-blue-50/80 dark:bg-blue-950/30 border-blue-200 dark:border-blue-500/20"
+                  }`}>
                     <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-slate-700 dark:text-slate-300">
-                        Vínculo CRM: <strong className="text-slate-900 dark:text-white">{selectedEmail.contact?.name || selectedEmail.deal?.title}</strong>
+                      <Building2 className={`w-4 h-4 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />
+                      <span className={isWhatsApp ? "text-[#8696A0]" : "text-slate-700 dark:text-slate-300"}>
+                        Vínculo CRM: <strong className={isWhatsApp ? "text-[#E9EDEF]" : "text-slate-900 dark:text-white"}>{selectedEmail.contact?.name || selectedEmail.deal?.title}</strong>
                       </span>
                     </div>
                     {selectedEmail.deal?.value && (
-                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                      <span className="font-mono font-bold text-emerald-500 dark:text-emerald-400">
                         R$ {Number(selectedEmail.deal.value).toLocaleString("pt-BR")}
                       </span>
                     )}
@@ -754,14 +906,18 @@ export default function EmailInboxPage() {
                 )}
 
                 {/* Corpo do E-mail */}
-                <div className="text-xs text-slate-800 dark:text-slate-200 leading-relaxed space-y-3 font-sans whitespace-pre-line p-2">
+                <div className={`text-xs leading-relaxed space-y-3 font-sans whitespace-pre-line p-2 ${
+                  isWhatsApp ? "text-[#E9EDEF]" : "text-slate-800 dark:text-slate-200"
+                }`}>
                   {selectedEmail.bodyText}
                 </div>
 
                 {/* Lista de Anexos */}
                 {selectedEmail.attachments && selectedEmail.attachments.length > 0 && (
-                  <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
-                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                  <div className={`pt-4 border-t space-y-2 ${isWhatsApp ? "border-[#222D34]" : "border-slate-200 dark:border-slate-800"}`}>
+                    <span className={`text-[11px] font-bold uppercase tracking-wider block ${
+                      isWhatsApp ? "text-[#8696A0]" : "text-slate-500 dark:text-slate-400"
+                    }`}>
                       Anexos ({selectedEmail.attachments.length})
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -771,13 +927,21 @@ export default function EmailInboxPage() {
                           href={att.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 hover:border-blue-500 text-xs transition-colors group"
+                          className={`flex items-center justify-between p-2.5 rounded-xl border text-xs transition-colors group ${
+                            isWhatsApp
+                              ? "bg-[#202C33] border-[#222D34] hover:border-[#00A884]"
+                              : "bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 hover:border-blue-500"
+                          }`}
                         >
                           <div className="flex items-center gap-2 truncate">
-                            <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                            <span className="text-slate-800 dark:text-slate-200 font-medium truncate">{att.name}</span>
+                            <FileText className={`w-4 h-4 shrink-0 ${isWhatsApp ? "text-[#00A884]" : "text-blue-600 dark:text-blue-400"}`} />
+                            <span className={`font-medium truncate ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-800 dark:text-slate-200"}`}>{att.name}</span>
                           </div>
-                          <Download className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 shrink-0" />
+                          <Download className={`w-3.5 h-3.5 shrink-0 ${
+                            isWhatsApp
+                              ? "text-[#8696A0] group-hover:text-[#00A884]"
+                              : "text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+                          }`} />
                         </a>
                       ))}
                     </div>
@@ -786,8 +950,10 @@ export default function EmailInboxPage() {
               </div>
 
               {/* Caixa de Resposta Rápida Inline */}
-              <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
-                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider block">
+              <div className={`mt-6 pt-4 border-t space-y-2 ${isWhatsApp ? "border-[#222D34]" : "border-slate-200 dark:border-slate-800"}`}>
+                <span className={`text-[11px] font-bold uppercase tracking-wider block ${
+                  isWhatsApp ? "text-[#8696A0]" : "text-slate-700 dark:text-slate-400"
+                }`}>
                   Resposta Rápida
                 </span>
                 <textarea
@@ -795,12 +961,20 @@ export default function EmailInboxPage() {
                   value={quickReplyText}
                   onChange={(e) => setQuickReplyText(e.target.value)}
                   placeholder={`Responder para ${selectedEmail.senderName}...`}
-                  className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 resize-none"
+                  className={`w-full p-3 text-xs rounded-xl resize-none focus:outline-none transition-colors ${
+                    isWhatsApp
+                      ? "bg-[#202C33] border border-[#222D34] text-[#E9EDEF] placeholder:text-[#8696A0] focus:border-[#00A884]"
+                      : "bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500"
+                  }`}
                 />
                 <div className="flex items-center justify-between">
                   <button
                     onClick={handleOpenReplyComposer}
-                    className="text-xs text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 flex items-center gap-1 font-semibold cursor-pointer"
+                    className={`text-xs flex items-center gap-1 font-semibold cursor-pointer transition-colors ${
+                      isWhatsApp
+                        ? "text-[#8696A0] hover:text-[#00A884]"
+                        : "text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
+                    }`}
                   >
                     <FileText className="w-3.5 h-3.5" />
                     Abrir editor completo
@@ -808,7 +982,11 @@ export default function EmailInboxPage() {
                   <button
                     onClick={handleSendQuickReply}
                     disabled={sendingQuickReply || !quickReplyText.trim()}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-xs shadow-sm transition-colors disabled:opacity-50 cursor-pointer text-white ${
+                      isWhatsApp
+                        ? "bg-[#00A884] hover:bg-[#02906F]"
+                        : "bg-blue-600 hover:bg-blue-500"
+                    }`}
                   >
                     <Send className="w-3.5 h-3.5" />
                     {sendingQuickReply ? "Enviando..." : "Responder E-mail"}
@@ -817,10 +995,12 @@ export default function EmailInboxPage() {
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-xs text-slate-400 space-y-2">
-              <Mail className="w-10 h-10 text-slate-300 dark:text-slate-700" />
-              <p className="font-semibold text-slate-600 dark:text-slate-400">Nenhum e-mail selecionado</p>
-              <p className="text-[11px] text-slate-500">Escolha uma mensagem na lista para ler e responder.</p>
+            <div className={`flex-1 flex flex-col items-center justify-center text-xs space-y-2 ${
+              isWhatsApp ? "text-[#8696A0]" : "text-slate-400"
+            }`}>
+              <Mail className={`w-10 h-10 ${isWhatsApp ? "text-[#222D34]" : "text-slate-300 dark:text-slate-700"}`} />
+              <p className={`font-semibold ${isWhatsApp ? "text-[#E9EDEF]" : "text-slate-600 dark:text-slate-400"}`}>Nenhum e-mail selecionado</p>
+              <p className={`text-[11px] ${isWhatsApp ? "text-[#8696A0]" : "text-slate-500"}`}>Escolha uma mensagem na lista para ler e responder.</p>
             </div>
           )}
         </div>

@@ -371,6 +371,56 @@ html:not(.dark) {
   background-color: #2A3942 !important;
 }
 
+/* 5.1 OPACIDADES SLATE EM TEMA WHATSAPP (Mapeadas para #111B21 / #202C33) */
+.theme-whatsapp .bg-slate-900\/60,
+.theme-whatsapp .dark\:bg-slate-900\/60,
+.theme-whatsapp .bg-slate-900\/80,
+.theme-whatsapp .dark\:bg-slate-900\/80,
+.theme-whatsapp .bg-slate-900\/40,
+.theme-whatsapp .dark\:bg-slate-900\/40,
+.theme-whatsapp .bg-slate-900\/50,
+.theme-whatsapp .dark\:bg-slate-900\/50,
+.theme-whatsapp .bg-slate-900\/70,
+.theme-whatsapp .dark\:bg-slate-900\/70,
+.theme-whatsapp .bg-slate-900\/90,
+.theme-whatsapp .dark\:bg-slate-900\/90,
+.theme-whatsapp .bg-slate-950\/60,
+.theme-whatsapp .dark\:bg-slate-950\/60,
+.theme-whatsapp .bg-slate-950\/80,
+.theme-whatsapp .dark\:bg-slate-950\/80,
+.theme-whatsapp .bg-slate-950\/40,
+.theme-whatsapp .dark\:bg-slate-950\/40,
+.theme-whatsapp [class*="bg-slate-900/"],
+.theme-whatsapp [class*="dark:bg-slate-900/"] {
+  background-color: #111B21 !important;
+}
+
+.theme-whatsapp .bg-slate-800\/90,
+.theme-whatsapp .dark\:bg-slate-800\/90,
+.theme-whatsapp .bg-slate-800\/80,
+.theme-whatsapp .dark\:bg-slate-800\/80,
+.theme-whatsapp .bg-slate-800\/70,
+.theme-whatsapp .dark\:bg-slate-800\/70,
+.theme-whatsapp .bg-slate-800\/60,
+.theme-whatsapp .dark\:bg-slate-800\/60,
+.theme-whatsapp .bg-slate-800\/50,
+.theme-whatsapp .dark\:bg-slate-800\/50,
+.theme-whatsapp .bg-slate-800\/40,
+.theme-whatsapp .dark\:bg-slate-800\/40,
+.theme-whatsapp [class*="bg-slate-800/"],
+.theme-whatsapp [class*="dark:bg-slate-800/"] {
+  background-color: #202C33 !important;
+}
+
+.theme-whatsapp .hover\:bg-slate-800\/40:hover,
+.theme-whatsapp .dark\:hover\:bg-slate-800\/40:hover,
+.theme-whatsapp .hover\:bg-slate-800\/50:hover,
+.theme-whatsapp .dark\:hover\:bg-slate-800\/50:hover,
+.theme-whatsapp .hover\:bg-slate-800\/60:hover,
+.theme-whatsapp .dark\:hover\:bg-slate-800\/60:hover {
+  background-color: #2A3942 !important;
+}
+
 /* 6. BORDAS E DIVISORES OFICIAIS DO WHATSAPP (#222D34) */
 .theme-whatsapp .border-slate-800,
 .theme-whatsapp .dark\:border-slate-800,

@@ -158,6 +158,7 @@ export declare class GoalsController {
             totalRevenueWon: number;
             conversionRate: number;
             avgTicket: number;
+            targetValue: number;
         };
         badges: {
             id: string;
