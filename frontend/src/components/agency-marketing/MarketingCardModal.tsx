@@ -496,13 +496,13 @@ export default function MarketingCardModal({
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[#161b22] border border-gray-800 w-full max-w-5xl h-[90vh] max-h-[850px] rounded-2xl flex flex-col shadow-2xl overflow-hidden"
+        className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 w-full max-w-5xl h-[90vh] max-h-[850px] rounded-2xl flex flex-col shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ========================================================================= */}
         {/* 1. CABEÇALHO SUPERIOR DO MODAL (ESTILO CRM COMERCIAL / PADRÃO LERO)       */}
         {/* ========================================================================= */}
-        <div className="bg-slate-50 dark:bg-[#1c2128] border-b border-gray-800 px-6 py-4 flex items-center justify-between shrink-0">
+        <div className="bg-slate-50 dark:bg-[#1c2128] border-b border-slate-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3.5 min-w-0">
             {/* Avatar Circular com a cor da marca do cliente */}
             <div
@@ -526,13 +526,13 @@ export default function MarketingCardModal({
                     onChange={(e) => setTempTitle(e.target.value)}
                     onBlur={handleUpdateTitleInline}
                     onKeyDown={(e) => e.key === "Enter" && handleUpdateTitleInline()}
-                    className="bg-slate-100 dark:bg-[#0d1117] border border-blue-600 rounded-lg px-2.5 py-1 text-base font-bold text-white outline-none w-full max-w-md"
+                    className="bg-white dark:bg-[#0d1117] border border-blue-600 rounded-lg px-2.5 py-1 text-base font-bold text-slate-900 dark:text-white outline-none w-full max-w-md"
                   />
                 ) : (
                   <>
                     <h2
                       onClick={() => setIsEditingTitle(true)}
-                      className="text-base sm:text-lg font-bold text-white truncate cursor-pointer hover:text-cyan-300 transition-colors"
+                      className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate cursor-pointer hover:text-blue-600 dark:hover:text-cyan-300 transition-colors"
                       title="Clique para editar o título"
                     >
                       {tempTitle || "Demanda sem título"}
@@ -644,31 +644,31 @@ export default function MarketingCardModal({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
-                <div className="bg-slate-100 dark:bg-[#0d1117] border border-gray-800/60 p-2.5 rounded-xl">
-                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Empresa / Marca</span>
-                  <span className="font-bold text-white truncate block">
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-2.5 rounded-xl">
+                  <span className="text-[10px] font-medium text-slate-500 uppercase block mb-0.5">Empresa / Marca</span>
+                  <span className="font-bold text-slate-900 dark:text-white truncate block">
                     {selectedClient?.name || "Cliente não vinculado"}
                   </span>
                 </div>
 
-                <div className="bg-slate-100 dark:bg-[#0d1117] border border-gray-800/60 p-2.5 rounded-xl">
-                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">WhatsApp / Contato</span>
-                  <span className="font-semibold text-emerald-400 flex items-center gap-1.5 truncate">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 inline-block" />
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-2.5 rounded-xl">
+                  <span className="text-[10px] font-medium text-slate-500 uppercase block mb-0.5">WhatsApp / Contato</span>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 truncate">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shrink-0 inline-block" />
                     <span>{selectedClient?.contactPhone || selectedClient?.contactName || "Diretoria do Cliente"}</span>
                   </span>
                 </div>
 
-                <div className="bg-slate-100 dark:bg-[#0d1117] border border-gray-800/60 p-2.5 rounded-xl">
-                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Plano Contratado</span>
-                  <span className="font-semibold text-cyan-300 truncate block">
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-2.5 rounded-xl">
+                  <span className="text-[10px] font-medium text-slate-500 uppercase block mb-0.5">Plano Contratado</span>
+                  <span className="font-semibold text-blue-600 dark:text-cyan-300 truncate block">
                     {selectedClient?.planTier || "Escopo Mensal Padrão"}
                   </span>
                 </div>
 
-                <div className="bg-slate-100 dark:bg-[#0d1117] border border-gray-800/60 p-2.5 rounded-xl">
-                  <span className="text-[10px] font-medium text-gray-400 uppercase block mb-0.5">Verba Tráfego Mensal</span>
-                  <span className="font-mono font-bold text-white truncate block">
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 p-2.5 rounded-xl">
+                  <span className="text-[10px] font-medium text-slate-500 uppercase block mb-0.5">Verba Tráfego Mensal</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white truncate block">
                     {formatCurrency(Number(selectedClient?.adBudget || 0))}
                   </span>
                 </div>
@@ -676,16 +676,16 @@ export default function MarketingCardModal({
             </div>
 
             {/* SEÇÃO 1: BRIEFING, COPY & CONTEÚDO DA PEÇA */}
-            <div className="bg-white dark:bg-[#161b22] border border-gray-800/80 rounded-xl p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-3 border-b border-gray-800/60 pb-2.5">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-200 flex items-center gap-2">
-                  <FileText size={14} className="text-gray-400" /> Briefing, Copy & Roteiro da Demanda
+            <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3 border-b border-slate-200 dark:border-gray-800/60 pb-2.5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-gray-200 flex items-center gap-2">
+                  <FileText size={14} className="text-blue-600 dark:text-gray-400" /> Briefing, Copy & Roteiro da Demanda
                 </h3>
                 {!isEditingNotes && (
                   <button
                     type="button"
                     onClick={() => setIsEditingNotes(true)}
-                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-white font-medium transition-colors"
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white font-medium transition-colors"
                   >
                     <PencilLine className="w-3.5 h-3.5" />
                     <span>Editar Copy</span>
@@ -700,29 +700,29 @@ export default function MarketingCardModal({
                     onChange={(e) => setTempNotes(e.target.value)}
                     rows={4}
                     placeholder="Escreva aqui o briefing, roteiro do reels, copy da legenda, ganchos e CTAs..."
-                    className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-700 rounded-xl p-3 text-xs text-white resize-y outline-none focus:border-cyan-500/60 leading-relaxed font-sans"
+                    className="w-full bg-white dark:bg-[#0d1117] border border-slate-300 dark:border-gray-700 rounded-xl p-3 text-xs text-slate-900 dark:text-white resize-y outline-none focus:border-blue-600 dark:focus:border-cyan-500/60 leading-relaxed font-sans"
                   />
                   <div className="flex justify-end gap-2">
                     <button
                       type="button"
                       onClick={() => setIsEditingNotes(false)}
-                      className="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors"
+                      className="px-3 py-1.5 text-xs text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                     >
                       Cancelar
                     </button>
                     <button
                       type="button"
                       onClick={handleSaveNotes}
-                      className="px-3 py-1.5 text-xs bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg transition-colors shadow-sm"
+                      className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors shadow-sm"
                     >
                       Salvar Copy
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="bg-slate-100 dark:bg-[#0d1117] border border-gray-800/60 rounded-xl p-3 text-xs text-gray-300 whitespace-pre-wrap leading-relaxed min-h-[70px]">
+                <div className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/60 rounded-xl p-3 text-xs text-slate-800 dark:text-gray-300 whitespace-pre-wrap leading-relaxed min-h-[70px]">
                   {tempNotes || (
-                    <span className="text-gray-500 italic">
+                    <span className="text-slate-400 dark:text-gray-500 italic">
                       Nenhum briefing ou texto cadastrado. Clique em "Editar Copy" acima para adicionar o roteiro ou legenda.
                     </span>
                   )}
@@ -730,10 +730,10 @@ export default function MarketingCardModal({
               )}
 
               {/* Checklist de Subtarefas */}
-              <div className="mt-4 pt-3 border-t border-gray-800/60">
+              <div className="mt-4 pt-3 border-t border-slate-200 dark:border-gray-800/60">
                 <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
-                    <CheckSquare size={13} className="text-cyan-400" />
+                  <span className="text-xs font-bold text-slate-800 dark:text-gray-300 flex items-center gap-1.5">
+                    <CheckSquare size={13} className="text-blue-600 dark:text-cyan-400" />
                     <span>Checklist de Execução ({checklist.filter((i) => i.completed).length}/{checklist.length})</span>
                   </span>
                 </div>
@@ -746,12 +746,12 @@ export default function MarketingCardModal({
                     onChange={(e) => setNewChecklistText(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAddChecklistItem()}
                     placeholder="Adicionar etapa (ex: Gravar áudio, Aprovar criativo...)"
-                    className="flex-1 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder:text-gray-500 outline-none focus:border-cyan-500/60"
+                    className="flex-1 bg-white dark:bg-[#0d1117] border border-slate-300 dark:border-gray-800 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500/60"
                   />
                   <button
                     type="button"
                     onClick={handleAddChecklistItem}
-                    className="p-1.5 bg-slate-50 dark:bg-[#1c2128] hover:bg-gray-800 text-white border border-gray-700 rounded-xl transition-colors"
+                    className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors shadow-sm"
                     title="Adicionar etapa"
                   >
                     <Plus size={14} />
@@ -1032,16 +1032,16 @@ export default function MarketingCardModal({
           <div className="w-full lg:w-[340px] bg-slate-50 dark:bg-[#13171f]/90 p-5 lg:p-6 flex flex-col gap-4 overflow-y-auto custom-scrollbar shrink-0 border-t lg:border-t-0 border-slate-200 dark:border-gray-800/60">
             {/* ETAPA DO KANBAN */}
             <div>
-              <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">
+              <label className="text-[11px] font-semibold text-slate-700 dark:text-gray-400 uppercase tracking-wider mb-1.5 block">
                 Etapa de Produção
               </label>
               <select
-                className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-cyan-500/60 transition-colors cursor-pointer"
+                className="w-full bg-white dark:bg-[#0d1117] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-blue-600 dark:focus:border-cyan-500/60 transition-colors cursor-pointer"
                 value={status}
                 onChange={(e) => handleStageChange(e.target.value)}
               >
                 {PIPELINE_STAGES.map((s) => (
-                  <option key={s.id} value={s.id} className="bg-white dark:bg-[#161b22] text-white">
+                  <option key={s.id} value={s.id} className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">
                     {s.title}
                   </option>
                 ))}
@@ -1050,16 +1050,16 @@ export default function MarketingCardModal({
 
             {/* CLIENTE VINCULADO */}
             <div>
-              <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">
+              <label className="text-[11px] font-semibold text-slate-700 dark:text-gray-400 uppercase tracking-wider mb-1.5 block">
                 Cliente Vinculado
               </label>
               <select
-                className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3 py-2 text-xs font-medium outline-none focus:border-cyan-500/60 transition-colors cursor-pointer"
+                className="w-full bg-white dark:bg-[#0d1117] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs font-medium outline-none focus:border-blue-600 dark:focus:border-cyan-500/60 transition-colors cursor-pointer"
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
               >
                 {clients.map((c) => (
-                  <option key={c.id} value={c.id} className="bg-white dark:bg-[#161b22] text-white">
+                  <option key={c.id} value={c.id} className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">
                     {c.name}
                   </option>
                 ))}
@@ -1068,17 +1068,17 @@ export default function MarketingCardModal({
 
             {/* RESPONSÁVEL DA AGÊNCIA */}
             <div>
-              <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">
+              <label className="text-[11px] font-semibold text-slate-700 dark:text-gray-400 uppercase tracking-wider mb-1.5 block">
                 Responsável na Agência
               </label>
               <select
-                className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-white rounded-xl px-3 py-2 text-xs font-medium outline-none focus:border-cyan-500/60 transition-colors cursor-pointer"
+                className="w-full bg-white dark:bg-[#0d1117] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs font-medium outline-none focus:border-blue-600 dark:focus:border-cyan-500/60 transition-colors cursor-pointer"
                 value={assignedUserId}
                 onChange={(e) => setAssignedUserId(e.target.value)}
               >
-                <option value="" className="bg-white dark:bg-[#161b22]">Fila Geral da Agência</option>
+                <option value="" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Fila Geral da Agência</option>
                 {teamMembers.map((u) => (
-                  <option key={u.id} value={u.id} className="bg-white dark:bg-[#161b22]">
+                  <option key={u.id} value={u.id} className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">
                     {u.name} {u.role ? `(${u.role})` : ""}
                   </option>
                 ))}
@@ -1088,36 +1088,36 @@ export default function MarketingCardModal({
             {/* FORMATO DA PEÇA */}
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1 block">
+                <label className="text-[11px] font-semibold text-slate-700 dark:text-gray-400 uppercase tracking-wider mb-1 block">
                   Formato
                 </label>
                 <select
-                  className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-white rounded-xl px-2.5 py-1.5 text-xs font-medium outline-none focus:border-cyan-500/60 cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0d1117] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white rounded-xl px-2.5 py-1.5 text-xs font-medium outline-none focus:border-blue-600 dark:focus:border-cyan-500/60 cursor-pointer"
                   value={formatType}
                   onChange={(e) => setFormatType(e.target.value)}
                 >
-                  <option value="REELS" className="bg-white dark:bg-[#161b22]">Reels</option>
-                  <option value="POST" className="bg-white dark:bg-[#161b22]">Post Feed</option>
-                  <option value="CARROSSEL" className="bg-white dark:bg-[#161b22]">Carrossel</option>
-                  <option value="STORIES" className="bg-white dark:bg-[#161b22]">Stories</option>
-                  <option value="CAMPANHA" className="bg-white dark:bg-[#161b22]">Campanha</option>
-                  <option value="OUTRO" className="bg-white dark:bg-[#161b22]">Outro</option>
+                  <option value="REELS" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Reels</option>
+                  <option value="POST" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Post Feed</option>
+                  <option value="CARROSSEL" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Carrossel</option>
+                  <option value="STORIES" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Stories</option>
+                  <option value="CAMPANHA" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Campanha</option>
+                  <option value="OUTRO" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Outro</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1 block">
+                <label className="text-[11px] font-semibold text-slate-700 dark:text-gray-400 uppercase tracking-wider mb-1 block">
                   Prioridade
                 </label>
                 <select
-                  className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-white rounded-xl px-2.5 py-1.5 text-xs font-medium outline-none focus:border-cyan-500/60 cursor-pointer"
+                  className="w-full bg-white dark:bg-[#0d1117] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white rounded-xl px-2.5 py-1.5 text-xs font-medium outline-none focus:border-blue-600 dark:focus:border-cyan-500/60 cursor-pointer"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
                 >
-                  <option value="BAIXA" className="bg-white dark:bg-[#161b22]">Baixa</option>
-                  <option value="MEDIA" className="bg-white dark:bg-[#161b22]">Média</option>
-                  <option value="ALTA" className="bg-white dark:bg-[#161b22]">Alta</option>
-                  <option value="URGENTE" className="bg-white dark:bg-[#161b22]">Urgente</option>
+                  <option value="BAIXA" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Baixa</option>
+                  <option value="MEDIA" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Média</option>
+                  <option value="ALTA" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Alta</option>
+                  <option value="URGENTE" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Urgente</option>
                 </select>
               </div>
             </div>
@@ -1125,31 +1125,31 @@ export default function MarketingCardModal({
             {/* PRAZOS DE ENTREGA & PUBLICAÇÃO */}
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1 block">
+                <label className="text-[11px] font-semibold text-slate-700 dark:text-gray-400 uppercase tracking-wider mb-1 block">
                   Prazo Entrega
                 </label>
                 <input
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-white rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-cyan-500/60"
+                  className="w-full bg-white dark:bg-[#0d1117] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-blue-600 dark:focus:border-cyan-500/60"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1 block">
+                <label className="text-[11px] font-semibold text-slate-700 dark:text-gray-400 uppercase tracking-wider mb-1 block">
                   Publicação
                 </label>
                 <input
                   type="date"
                   value={publishDate}
                   onChange={(e) => setPublishDate(e.target.value)}
-                  className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-white rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-cyan-500/60"
+                  className="w-full bg-white dark:bg-[#0d1117] border border-slate-300 dark:border-gray-800 text-slate-900 dark:text-white rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-blue-600 dark:focus:border-cyan-500/60"
                 />
               </div>
             </div>
 
-            <div className="h-px bg-gray-800 w-full my-1" />
+            <div className="h-px bg-slate-200 dark:bg-gray-800 w-full my-1" />
 
             {/* AÇÕES CRÍTICAS (CONCLUÍDO / AJUSTES) */}
             <div className="grid grid-cols-2 gap-2">
@@ -1158,12 +1158,12 @@ export default function MarketingCardModal({
                 onClick={() => handleStageChange("AGENDADO_POSTADO")}
                 className={`flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold transition-all border ${
                   status === "AGENDADO_POSTADO"
-                    ? "bg-emerald-950/40 text-emerald-300 border-emerald-700/60 shadow-sm"
-                    : "bg-emerald-950/20 hover:bg-emerald-950/35 text-emerald-400 border-emerald-900/40"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-700/60 shadow-sm"
+                    : "bg-emerald-50/70 hover:bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/35 dark:text-emerald-400 dark:border-emerald-900/40"
                 }`}
                 title="Marcar como Concluído / Postado"
               >
-                <CheckCircle2 size={14} className="text-emerald-400" />
+                <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400" />
                 <span>{status === "AGENDADO_POSTADO" ? "Postado" : "Concluir"}</span>
               </button>
 
@@ -1172,22 +1172,22 @@ export default function MarketingCardModal({
                 onClick={() => handleStageChange("REVISAO_INTERNA")}
                 className={`flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-semibold transition-all border ${
                   status === "REVISAO_INTERNA"
-                    ? "bg-amber-950/40 text-amber-300 border-amber-700/60 shadow-sm"
-                    : "bg-amber-950/20 hover:bg-amber-950/35 text-amber-400 border-amber-900/40"
+                    ? "bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700/60 shadow-sm"
+                    : "bg-amber-50/70 hover:bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:hover:bg-amber-950/35 dark:text-amber-400 dark:border-amber-900/40"
                 }`}
                 title="Mandar para Revisão / Ajustes"
               >
-                <RotateCcw size={14} className="text-amber-400" />
+                <RotateCcw size={14} className="text-amber-600 dark:text-amber-400" />
                 <span>Revisão</span>
               </button>
             </div>
 
-            {/* BOTÃO PRINCIPAL DE SALVAR */}
+            {/* BOTÃO PRINCIPAL DE SALVAR (Azul Sólido Corporativo) */}
             <button
               type="button"
               onClick={handleSaveFull}
               disabled={saving}
-              className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors shadow-md flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-2"
             >
               <CheckSquare size={14} />
               <span>{saving ? "Salvando Demanda..." : isEditing ? "Salvar Alterações" : "Criar Demanda"}</span>
@@ -1199,7 +1199,7 @@ export default function MarketingCardModal({
                 type="button"
                 onClick={handleDeleteCard}
                 disabled={deleting}
-                className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-950/20 hover:bg-rose-950/35 border border-rose-900/30 transition-colors flex items-center justify-center gap-1.5 mt-auto"
+                className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/35 border border-rose-200 dark:border-rose-900/30 transition-colors flex items-center justify-center gap-1.5 mt-auto"
               >
                 <Trash2 size={13} />
                 <span>{deleting ? "Excluindo..." : "Excluir Demanda"}</span>
