@@ -212,7 +212,7 @@ export default function MarketingTimeClockWidget({
 
         {/* Bloco 3: Hash Criptográfico SHA-256 */}
         {timeStatus?.lastAction?.sessionHash && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-[11px] text-slate-400 max-w-full lg:max-w-xs">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-[11px] text-slate-400 max-w-full lg:max-w-xs">
             <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0" />
             <div className="min-w-0 flex-1">
               <span className="text-[9px] uppercase font-bold text-slate-500 block leading-tight">

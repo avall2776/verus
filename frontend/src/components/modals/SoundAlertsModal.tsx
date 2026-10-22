@@ -237,7 +237,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
           <div className={`p-3.5 rounded-xl border transition-all ${
             settings.whatsapp.enabled && !settings.masterMute
               ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80"
-              : "bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
+              : "bg-slate-50/50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5">
@@ -282,7 +282,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
           <div className={`p-3.5 rounded-xl border transition-all ${
             settings.instagram.enabled && !settings.masterMute
               ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80"
-              : "bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
+              : "bg-slate-50/50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5">
@@ -327,7 +327,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
           <div className={`p-3.5 rounded-xl border transition-all ${
             settings.support.enabled && !settings.masterMute
               ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80"
-              : "bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
+              : "bg-slate-50/50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5">
@@ -372,7 +372,7 @@ export default function SoundAlertsModal({ isOpen, onClose }: SoundAlertsModalPr
           <div className={`p-3.5 rounded-xl border transition-all ${
             settings.system.enabled && !settings.masterMute
               ? "bg-slate-50 dark:bg-[#070D1B] border-slate-700/80"
-              : "bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
+              : "bg-slate-50/50 dark:bg-[#070D1B]/50 border-slate-800/60 opacity-60"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5">

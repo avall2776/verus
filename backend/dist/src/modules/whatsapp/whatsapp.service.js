@@ -72,31 +72,79 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
         const cleanId = (instanceId || 'inst').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
         return `versus_${cleanTenant}_${cleanId}`;
     }
-    async ensureEvolutionInstance(instanceName, tenantId) {
+    async ensureEvolutionInstance(instanceName, tenantId, customToken) {
         const { serverUrl, apiKey, webhookBaseUrl } = this.getEvolutionConfig();
         try {
             const stateRes = await axios_1.default.get(`${serverUrl}/instance/connectionState/${instanceName}`, {
                 headers: { apikey: apiKey },
                 timeout: 4000,
             }).catch(() => null);
+            let createdQr = null;
             if (!stateRes?.data?.instance) {
                 this.logger.log(`Provisionando nova sessão Baileys na Evolution API: [${instanceName}]`);
-                await axios_1.default.post(`${serverUrl}/instance/create`, {
-                    instanceName,
-                    token: apiKey,
-                    qrcode: true,
-                    integration: 'WHATSAPP-BAILEYS',
-                    reject_call: false,
-                    msg_call: '',
-                    groups_ignore: true,
-                    always_online: false,
-                    read_messages: false,
-                    read_status: false,
-                    sync_full_history: false,
-                }, {
-                    headers: { apikey: apiKey, 'Content-Type': 'application/json' },
-                    timeout: 8000,
-                });
+                const tokenToUse = customToken || `tok_${instanceName}`;
+                try {
+                    const createRes = await axios_1.default.post(`${serverUrl}/instance/create`, {
+                        instanceName,
+                        token: tokenToUse,
+                        qrcode: true,
+                        integration: 'WHATSAPP-BAILEYS',
+                        reject_call: false,
+                        msg_call: '',
+                        groups_ignore: true,
+                        always_online: false,
+                        read_messages: false,
+                        read_status: false,
+                        sync_full_history: false,
+                    }, {
+                        headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+                        timeout: 8000,
+                    });
+                    if (createRes.data?.qrcode?.base64) {
+                        createdQr = createRes.data.qrcode.base64;
+                    }
+                    else if (createRes.data?.qrcode?.code) {
+                        createdQr = createRes.data.qrcode.code;
+                    }
+                    else if (createRes.data?.base64) {
+                        createdQr = createRes.data.base64;
+                    }
+                }
+                catch (createErr) {
+                    const errMsg = JSON.stringify(createErr.response?.data || createErr.message);
+                    if (errMsg.toLowerCase().includes('token already exists')) {
+                        const fallbackToken = `tok_${instanceName}_${Date.now().toString(36)}`;
+                        this.logger.warn(`Token duplicado na Evolution API para [${instanceName}], tentando com fallbackToken: ${fallbackToken}`);
+                        const retryRes = await axios_1.default.post(`${serverUrl}/instance/create`, {
+                            instanceName,
+                            token: fallbackToken,
+                            qrcode: true,
+                            integration: 'WHATSAPP-BAILEYS',
+                            reject_call: false,
+                            msg_call: '',
+                            groups_ignore: true,
+                            always_online: false,
+                            read_messages: false,
+                            read_status: false,
+                            sync_full_history: false,
+                        }, {
+                            headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+                            timeout: 8000,
+                        });
+                        if (retryRes.data?.qrcode?.base64) {
+                            createdQr = retryRes.data.qrcode.base64;
+                        }
+                        else if (retryRes.data?.qrcode?.code) {
+                            createdQr = retryRes.data.qrcode.code;
+                        }
+                        else if (retryRes.data?.base64) {
+                            createdQr = retryRes.data.base64;
+                        }
+                    }
+                    else {
+                        throw createErr;
+                    }
+                }
             }
             const webhookUrl = `${webhookBaseUrl}/webhooks/evolution/${tenantId}`;
             await axios_1.default.post(`${serverUrl}/webhook/set/${instanceName}`, {
@@ -118,6 +166,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                 timeout: 5000,
             });
             this.logger.log(`Webhook Evolution registrado com sucesso para [${instanceName}] -> ${webhookUrl}`);
+            return { qrCode: createdQr };
         }
         catch (err) {
             this.logger.error(`Erro ao provisionar sessão Evolution API [${instanceName}]: ${err.message}`);
@@ -418,6 +467,18 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
         if (instance.isDefault) {
             throw new common_1.BadRequestException('Não é permitido excluir a instância principal do workspace.');
         }
+        try {
+            const currentSettings = instance.settings || {};
+            const instanceName = currentSettings.instanceName || this.getSanitizedInstanceName(tenantId, id, instance.name);
+            const { serverUrl, apiKey } = this.getEvolutionConfig();
+            await axios_1.default.delete(`${serverUrl}/instance/delete/${instanceName}`, {
+                headers: { apikey: apiKey },
+                timeout: 4000,
+            }).catch(() => null);
+        }
+        catch (delEvoErr) {
+            this.logger.warn(`Erro ao excluir instância Baileys na Evolution API: ${delEvoErr.message}`);
+        }
         await this.prisma.whatsAppInstance.delete({ where: { id } });
         return { success: true };
     }
@@ -432,37 +493,86 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             const { serverUrl, apiKey } = this.getEvolutionConfig();
             const currentSettings = instance.settings || {};
             const instanceName = currentSettings.instanceName || this.getSanitizedInstanceName(tenantId, id, instance.name);
-            if (currentSettings.instanceName !== instanceName) {
-                await this.prisma.whatsAppInstance.update({
-                    where: { id },
-                    data: {
-                        settings: {
-                            ...currentSettings,
-                            provider: 'evolution',
-                            instanceName,
-                        }
+            const instanceToken = (instance.token && !instance.token.startsWith('EAA') && instance.token !== apiKey)
+                ? instance.token
+                : `tok_${instanceName}`;
+            await this.prisma.whatsAppInstance.update({
+                where: { id },
+                data: {
+                    token: instanceToken,
+                    settings: {
+                        ...currentSettings,
+                        provider: 'evolution',
+                        instanceName,
                     }
-                });
-            }
+                }
+            });
             let qrCodeToUse = null;
             try {
-                await this.ensureEvolutionInstance(instanceName, tenantId);
-                await new Promise((resolve) => setTimeout(resolve, 1200));
-                const evoRes = await axios_1.default.get(`${serverUrl}/instance/connect/${instanceName}`, {
-                    headers: { apikey: apiKey },
-                    timeout: 10000,
-                });
-                if (evoRes.data?.base64) {
-                    qrCodeToUse = evoRes.data.base64;
+                const ensureResult = await this.ensureEvolutionInstance(instanceName, tenantId, instanceToken);
+                if (ensureResult?.qrCode) {
+                    qrCodeToUse = ensureResult.qrCode;
                 }
-                else if (evoRes.data?.code) {
-                    qrCodeToUse = evoRes.data.code;
+                if (!qrCodeToUse) {
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+                    const evoRes = await axios_1.default.get(`${serverUrl}/instance/connect/${instanceName}`, {
+                        headers: { apikey: apiKey },
+                        timeout: 10000,
+                    });
+                    if (evoRes.data?.base64) {
+                        qrCodeToUse = evoRes.data.base64;
+                    }
+                    else if (evoRes.data?.code) {
+                        qrCodeToUse = evoRes.data.code;
+                    }
+                    else if (evoRes.data?.qrcode?.base64) {
+                        qrCodeToUse = evoRes.data.qrcode.base64;
+                    }
+                    else if (evoRes.data?.qrcode?.code) {
+                        qrCodeToUse = evoRes.data.qrcode.code;
+                    }
                 }
-                else if (evoRes.data?.qrcode?.base64) {
-                    qrCodeToUse = evoRes.data.qrcode.base64;
+                if (!qrCodeToUse) {
+                    try {
+                        await axios_1.default.put(`${serverUrl}/instance/restart/${instanceName}`, {}, {
+                            headers: { apikey: apiKey },
+                            timeout: 5000,
+                        });
+                        await new Promise((resolve) => setTimeout(resolve, 1500));
+                        const retryRes = await axios_1.default.get(`${serverUrl}/instance/connect/${instanceName}`, {
+                            headers: { apikey: apiKey },
+                            timeout: 10000,
+                        });
+                        qrCodeToUse = retryRes.data?.base64 || retryRes.data?.code || retryRes.data?.qrcode?.base64 || retryRes.data?.qrcode?.code;
+                    }
+                    catch (retryErr) {
+                        this.logger.warn(`Tentativa de restart para [${instanceName}] falhou: ${retryErr.message}`);
+                    }
                 }
-                else if (evoRes.data?.qrcode?.code) {
-                    qrCodeToUse = evoRes.data.qrcode.code;
+                if (!qrCodeToUse) {
+                    try {
+                        this.logger.warn(`Tentando recriar sessão Evolution API [${instanceName}] do zero...`);
+                        await axios_1.default.delete(`${serverUrl}/instance/delete/${instanceName}`, {
+                            headers: { apikey: apiKey },
+                            timeout: 5000,
+                        }).catch(() => null);
+                        await new Promise((resolve) => setTimeout(resolve, 1000));
+                        const freshEnsure = await this.ensureEvolutionInstance(instanceName, tenantId, instanceToken);
+                        if (freshEnsure?.qrCode) {
+                            qrCodeToUse = freshEnsure.qrCode;
+                        }
+                        else {
+                            await new Promise((resolve) => setTimeout(resolve, 1500));
+                            const freshRes = await axios_1.default.get(`${serverUrl}/instance/connect/${instanceName}`, {
+                                headers: { apikey: apiKey },
+                                timeout: 10000,
+                            });
+                            qrCodeToUse = freshRes.data?.base64 || freshRes.data?.code || freshRes.data?.qrcode?.base64 || freshRes.data?.qrcode?.code;
+                        }
+                    }
+                    catch (recreateErr) {
+                        this.logger.error(`Tentativa de recriação da sessão Evolution falhou: ${recreateErr.message}`);
+                    }
                 }
             }
             catch (evoErr) {

@@ -12,7 +12,9 @@ export declare class WhatsappService {
         webhookBaseUrl: string;
     };
     getSanitizedInstanceName(tenantId: string, instanceId: string, rawName?: string): string;
-    ensureEvolutionInstance(instanceName: string, tenantId: string): Promise<void>;
+    ensureEvolutionInstance(instanceName: string, tenantId: string, customToken?: string): Promise<{
+        qrCode?: string | null;
+    }>;
     private syncEvolutionInstances;
     getInstances(tenantId: string): Promise<{
         token: string;

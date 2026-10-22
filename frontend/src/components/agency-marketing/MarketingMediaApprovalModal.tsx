@@ -326,7 +326,7 @@ export default function MarketingMediaApprovalModal({
             <div className="space-y-4 text-xs">
               
               {/* Metadados da Peça */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-2">
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-400">Status Atual:</span>
                   <span className="font-bold px-2 py-0.5 rounded-full bg-slate-800 text-cyan-300 border border-slate-700 text-[10px]">
@@ -374,7 +374,7 @@ export default function MarketingMediaApprovalModal({
                       <span>Copiar</span>
                     </button>
                   </div>
-                  <p className="p-3 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-300 leading-relaxed max-h-36 overflow-y-auto whitespace-pre-wrap font-sans text-xs">
+                  <p className="p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-300 leading-relaxed max-h-36 overflow-y-auto whitespace-pre-wrap font-sans text-xs">
                     {card.description}
                   </p>
                 </div>
@@ -392,7 +392,7 @@ export default function MarketingMediaApprovalModal({
                     onChange={(e) => setRevisionNotes(e.target.value)}
                     placeholder="Ex: Trocar a trilha sonora aos 0:15, alterar a cor do texto do título para branco, corrigir a palavra..."
                     rows={3}
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-amber-400"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-amber-400"
                   />
                   <div className="flex justify-end gap-2">
                     <button

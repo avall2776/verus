@@ -90,7 +90,7 @@ export default function MarketingClientsTab({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar por marca, CNPJ, segmento, cidade ou contato..."
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors"
+            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors"
           />
         </div>
 
@@ -101,7 +101,7 @@ export default function MarketingClientsTab({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-200 outline-none focus:border-cyan-500"
+            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-200 outline-none focus:border-cyan-500"
           >
             <option value="ALL">Todos os Status</option>
             <option value="ACTIVE">Ativo</option>
@@ -114,7 +114,7 @@ export default function MarketingClientsTab({
           <select
             value={userFilter}
             onChange={(e) => setUserFilter(e.target.value)}
-            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-200 outline-none focus:border-cyan-500"
+            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-200 outline-none focus:border-cyan-500"
           >
             <option value="ALL">Toda a Equipe</option>
             {teamMembers.map((m) => (
@@ -278,7 +278,7 @@ export default function MarketingClientsTab({
                   )}
 
                   {/* Barras de Progresso de Entregas do Mês (Sem Degradê, Cores Sólidas) */}
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 space-y-2.5">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 space-y-2.5">
                     <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400">
                       <span>SLA / Entregas do Mês</span>
                       <span className="text-slate-500 font-mono lowercase">plano: {client.planTier || "Standard"}</span>
@@ -325,14 +325,14 @@ export default function MarketingClientsTab({
 
                   {/* Responsável e Verba */}
                   <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
                       <span className="text-[9px] uppercase font-bold text-slate-500 block">Responsável</span>
                       <span className="text-[11px] text-slate-200 truncate block font-medium">
                         {assigned?.name || "Não atribuído"}
                       </span>
                     </div>
 
-                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
                       <span className="text-[9px] uppercase font-bold text-slate-500 block">Verba Anúncios</span>
                       <span className="font-mono font-bold text-emerald-400 text-[11px]">
                         R$ {Number(client.adBudget || 0).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}

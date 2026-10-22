@@ -131,7 +131,7 @@ export default function MarketingTrafficTab({
           <select
             value={selectedClient}
             onChange={(e) => setSelectedClient(e.target.value)}
-            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
+            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
           >
             <option value="ALL">Todos os Clientes</option>
             {clients.map((c) => (
@@ -232,7 +232,7 @@ export default function MarketingTrafficTab({
                   </span>
 
                   {/* Orçamento e Gasto */}
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 space-y-2 mb-3">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 space-y-2 mb-3">
                     <div className="flex justify-between text-xs">
                       <span className="text-slate-400">Gasto Acumulado</span>
                       <span className="font-mono text-white font-bold">
@@ -249,17 +249,17 @@ export default function MarketingTrafficTab({
 
                   {/* Resultados: Leads, CPL e ROAS */}
                   <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
                       <span className="text-[9px] uppercase font-bold text-slate-500 block">Leads</span>
                       <span className="font-mono font-bold text-cyan-400 text-sm">{leads}</span>
                     </div>
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
                       <span className="text-[9px] uppercase font-bold text-slate-500 block">CPL</span>
                       <span className="font-mono font-bold text-emerald-400 text-sm">
                         R$ {Number(camp.cpl || 0).toFixed(2)}
                       </span>
                     </div>
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
                       <span className="text-[9px] uppercase font-bold text-slate-500 block">ROAS</span>
                       <span className="font-mono font-bold text-purple-400 text-sm">
                         {Number(camp.roas || 0).toFixed(1)}x

@@ -51,15 +51,15 @@ export default function MarketingAuditModal({ isOpen, onClose, timeStatus }: Pro
 
         {/* Resumo da Sessão */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
             <span className="text-[10px] uppercase font-bold text-slate-400 block">Jornada Acumulada</span>
             <span className="text-lg font-black text-white font-mono">{timeStatus?.activeHoursFormatted || "00h 00m"}</span>
           </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
             <span className="text-[10px] uppercase font-bold text-slate-400 block">Status da Sessão</span>
             <span className="text-sm font-bold text-cyan-400">{timeStatus?.currentState || "NOT_STARTED"}</span>
           </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 col-span-2 sm:col-span-1">
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 col-span-2 sm:col-span-1">
             <span className="text-[10px] uppercase font-bold text-slate-400 block">Total de Batidas</span>
             <span className="text-lg font-black text-white font-mono">{logs.length}</span>
           </div>

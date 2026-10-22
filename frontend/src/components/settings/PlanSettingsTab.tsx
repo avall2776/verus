@@ -218,7 +218,7 @@ export default function PlanSettingsTab() {
                 className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
                   active 
                     ? "bg-slate-50 dark:bg-[#070D1B] border-slate-800" 
-                    : "bg-slate-50/40 dark:bg-slate-50 dark:bg-[#070D1B]/40 border-slate-900/60 opacity-60"
+                    : "bg-slate-50/40 dark:bg-[#070D1B]/40 border-slate-900/60 opacity-60"
                 }`}
               >
                 <div className="space-y-2">

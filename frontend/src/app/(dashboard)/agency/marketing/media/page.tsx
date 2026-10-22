@@ -326,7 +326,7 @@ export default function MarketingMediaPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar por título, cliente, anexo ou texto..."
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors"
+            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors"
           />
         </div>
 
@@ -337,7 +337,7 @@ export default function MarketingMediaPage() {
           <select
             value={selectedClient}
             onChange={(e) => setSelectedClient(e.target.value)}
-            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-200 outline-none focus:border-cyan-500"
+            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-200 outline-none focus:border-cyan-500"
           >
             <option value="ALL">Todos os Clientes</option>
             {clients.map((c) => (
@@ -351,7 +351,7 @@ export default function MarketingMediaPage() {
           <select
             value={selectedFormat}
             onChange={(e) => setSelectedFormat(e.target.value)}
-            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-200 outline-none focus:border-cyan-500"
+            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-200 outline-none focus:border-cyan-500"
           >
             <option value="ALL">Todos os Formatos</option>
             <option value="REELS">Reels / Vídeo (9:16)</option>
@@ -365,7 +365,7 @@ export default function MarketingMediaPage() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-200 outline-none focus:border-cyan-500"
+            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-200 outline-none focus:border-cyan-500"
           >
             <option value="ALL">Todos os Status</option>
             <option value="APROVADO">Aprovado / Postado</option>

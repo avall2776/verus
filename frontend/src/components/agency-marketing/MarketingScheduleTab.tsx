@@ -146,7 +146,7 @@ export default function MarketingScheduleTab({
           <select
             value={selectedClient}
             onChange={(e) => setSelectedClient(e.target.value)}
-            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
+            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
           >
             <option value="ALL">Todos os Clientes</option>
             {clients.map((c) => (
@@ -160,7 +160,7 @@ export default function MarketingScheduleTab({
           <select
             value={selectedUser}
             onChange={(e) => setSelectedUser(e.target.value)}
-            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
+            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
           >
             <option value="ALL">Toda a Equipe</option>
             {teamMembers.map((m) => (
@@ -237,7 +237,7 @@ export default function MarketingScheduleTab({
                     <div
                       key={card.id}
                       onClick={() => onOpenCardModal(card)}
-                      className="p-1 px-1.5 rounded-lg bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 hover:border-cyan-500/40 text-[10px] text-slate-200 transition-all cursor-pointer flex items-center gap-1.5 truncate group"
+                      className="p-1 px-1.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 hover:border-cyan-500/40 text-[10px] text-slate-200 transition-all cursor-pointer flex items-center gap-1.5 truncate group"
                       title={`${card.marketingClient?.name || "Cliente"} - ${card.title}`}
                     >
                       <span

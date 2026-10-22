@@ -208,7 +208,7 @@ export default function MarketingCampaignModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: [META] - Captação de Leads Imobiliários - Q4"
-              className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+              className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
               required
             />
           </div>
@@ -220,7 +220,7 @@ export default function MarketingCampaignModal({
               <select
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
-                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white outline-none focus:border-cyan-500"
+                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white outline-none focus:border-cyan-500"
                 required
               >
                 {clients.map((c) => (
@@ -236,7 +236,7 @@ export default function MarketingCampaignModal({
               <select
                 value={platform}
                 onChange={(e) => setPlatform(e.target.value as any)}
-                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white outline-none focus:border-cyan-500 font-medium"
+                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white outline-none focus:border-cyan-500 font-medium"
               >
                 <option value="META_ADS">Meta Ads (Instagram / Facebook)</option>
                 <option value="GOOGLE_ADS">Google Ads (Search / Display)</option>
@@ -253,7 +253,7 @@ export default function MarketingCampaignModal({
               <select
                 value={objective}
                 onChange={(e) => setObjective(e.target.value as any)}
-                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white outline-none focus:border-cyan-500"
+                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white outline-none focus:border-cyan-500"
               >
                 <option value="LEADS">Geração de Leads (Cadastro / WhatsApp)</option>
                 <option value="VENDAS">Conversões e Vendas</option>
@@ -267,7 +267,7 @@ export default function MarketingCampaignModal({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as any)}
-                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white outline-none focus:border-cyan-500"
+                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white outline-none focus:border-cyan-500"
               >
                 <option value="ACTIVE">Ativa / Em Veiculação</option>
                 <option value="PAUSED">Pausada</option>
@@ -290,7 +290,7 @@ export default function MarketingCampaignModal({
                 value={budgetDaily}
                 onChange={(e) => setBudgetDaily(parseFloat(e.target.value) || 0)}
                 placeholder="Ex: 50.00"
-                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white outline-none focus:border-cyan-500 font-mono"
+                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white outline-none focus:border-cyan-500 font-mono"
               />
             </div>
 
@@ -305,13 +305,13 @@ export default function MarketingCampaignModal({
                 value={budgetTotal}
                 onChange={(e) => setBudgetTotal(parseFloat(e.target.value) || 0)}
                 placeholder="Ex: 1500.00"
-                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white outline-none focus:border-cyan-500 font-mono"
+                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white outline-none focus:border-cyan-500 font-mono"
               />
             </div>
           </div>
 
           {/* Métricas Reais: Gasto, Leads, CPL e ROAS */}
-          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-3">
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-3">
             <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
               <TrendingUp className="w-4 h-4 text-emerald-400" />
               <span>Resultados & Performance da Campanha</span>
@@ -374,7 +374,7 @@ export default function MarketingCampaignModal({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white font-mono"
+                className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white font-mono"
               />
             </div>
 
@@ -387,7 +387,7 @@ export default function MarketingCampaignModal({
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white font-mono"
+                className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white font-mono"
               />
             </div>
           </div>

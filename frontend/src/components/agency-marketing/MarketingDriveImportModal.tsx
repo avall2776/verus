@@ -148,14 +148,14 @@ export default function MarketingDriveImportModal({
               value={driveUrl}
               onChange={(e) => setDriveUrl(e.target.value)}
               placeholder="https://drive.google.com/file/d/1A2B3C.../view"
-              className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 font-mono"
+              className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 font-mono"
               required
             />
           </div>
 
           {/* Pré-visualização da Miniatura se o link for válido */}
           {previewThumbnail && (
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex items-center gap-3">
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex items-center gap-3">
               <div className="w-16 h-16 rounded-xl bg-black/60 border border-slate-700 overflow-hidden shrink-0 flex items-center justify-center">
                 <img
                   src={previewThumbnail}
@@ -188,7 +188,7 @@ export default function MarketingDriveImportModal({
               <select
                 value={selectedClientId}
                 onChange={(e) => setSelectedClientId(e.target.value)}
-                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
+                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
                 required
               >
                 <option value="">Selecione o Cliente</option>
@@ -205,7 +205,7 @@ export default function MarketingDriveImportModal({
               <select
                 value={format}
                 onChange={(e) => setFormat(e.target.value)}
-                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
+                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
               >
                 <option value="REELS">Reels / Vídeo (9:16)</option>
                 <option value="POST">Post Feed (1:1 / 4:5)</option>
@@ -223,7 +223,7 @@ export default function MarketingDriveImportModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Reels: Dica de Aplicação de Adubo"
-              className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+              className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
               required
             />
           </div>
@@ -234,7 +234,7 @@ export default function MarketingDriveImportModal({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
+                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
               >
                 <option value="APROVACAO_CLIENTE">Aprovação do Cliente</option>
                 <option value="REVISAO_INTERNA">Revisão Interna</option>
@@ -249,7 +249,7 @@ export default function MarketingDriveImportModal({
                 type="date"
                 value={publishDate}
                 onChange={(e) => setPublishDate(e.target.value)}
-                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
+                className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
               />
             </div>
           </div>
@@ -261,7 +261,7 @@ export default function MarketingDriveImportModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Digite ou cole aqui a legenda pronta da postagem..."
               rows={3}
-              className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 font-sans"
+              className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 font-sans"
             />
           </div>
 

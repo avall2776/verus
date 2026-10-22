@@ -367,7 +367,7 @@ export default function FloatingSupportWidget() {
           style={{ maxHeight: "calc(100vh - 120px)" }}
         >
           {/* Header Superior do Widget */}
-          <div className="p-4 border-b border-slate-800/80 bg-slate-50/80 dark:bg-slate-50 dark:bg-[#070D1B]/80 flex items-center justify-between">
+          <div className="p-4 border-b border-slate-800/80 bg-slate-50/80 dark:bg-[#070D1B]/80 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center p-1.5 overflow-hidden shadow-sm">
                 <img src="/vallor/Favicon_vallor.svg?v=4" alt="Vallor" className="w-full h-full object-contain" />
@@ -467,7 +467,7 @@ export default function FloatingSupportWidget() {
                         <div className="h-14 rounded-xl bg-slate-800/40 animate-pulse border border-slate-800" />
                       </div>
                     ) : tickets.length === 0 ? (
-                      <div className="p-6 rounded-xl border border-slate-800/60 bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 text-center space-y-2">
+                      <div className="p-6 rounded-xl border border-slate-800/60 bg-slate-50/50 dark:bg-[#070D1B]/50 text-center space-y-2">
                         <div className="w-10 h-10 rounded-full bg-slate-800/60 text-slate-400 mx-auto flex items-center justify-center">
                           <CheckCircle2 size={20} className="text-emerald-400" />
                         </div>
@@ -487,7 +487,7 @@ export default function FloatingSupportWidget() {
                                 setIsOpen(false);
                                 router.push(`/support?ticketId=${ticket.id}`);
                               }}
-                              className="group p-3 rounded-xl bg-slate-50/70 dark:bg-slate-50 dark:bg-[#070D1B]/70 hover:bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 hover:border-slate-700 transition-all cursor-pointer space-y-1.5"
+                              className="group p-3 rounded-xl bg-slate-50/70 dark:bg-[#070D1B]/70 hover:bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 hover:border-slate-700 transition-all cursor-pointer space-y-1.5"
                             >
                               <div className="flex items-center justify-between">
                                 <span className="text-[11px] font-mono font-bold text-blue-400">
@@ -642,7 +642,7 @@ export default function FloatingSupportWidget() {
                     {systemStatuses.map((item) => (
                       <div
                         key={item.id}
-                        className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-50 dark:bg-[#070D1B]/70 border border-slate-800/80 flex items-center justify-between text-xs"
+                        className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-[#070D1B]/70 border border-slate-800/80 flex items-center justify-between text-xs"
                       >
                         <div className="flex items-center gap-2.5">
                           {item.id === "ai-vitor" && <Bot size={15} className="text-blue-400" />}
@@ -681,7 +681,7 @@ export default function FloatingSupportWidget() {
                     {announcements.map((ann) => (
                       <div
                         key={ann.id}
-                        className="p-3 rounded-xl bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 border border-slate-800/80 space-y-1"
+                        className="p-3 rounded-xl bg-slate-50/50 dark:bg-[#070D1B]/50 border border-slate-800/80 space-y-1"
                       >
                         <div className="flex items-center justify-between">
                           <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-600/15 text-blue-400 border border-blue-500/30">
@@ -700,7 +700,7 @@ export default function FloatingSupportWidget() {
           </div>
 
           {/* Rodapé Fixo do Widget: Link para Central Completa */}
-          <div className="p-3 border-t border-slate-800/80 bg-slate-50/80 dark:bg-slate-50 dark:bg-[#070D1B]/80 flex items-center justify-between">
+          <div className="p-3 border-t border-slate-800/80 bg-slate-50/80 dark:bg-[#070D1B]/80 flex items-center justify-between">
             <button
               onClick={() => {
                 setIsOpen(false);

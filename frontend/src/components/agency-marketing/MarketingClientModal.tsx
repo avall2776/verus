@@ -312,7 +312,7 @@ export default function MarketingClientModal({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ex: Agrosul"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
                     required
                   />
                 </div>
@@ -324,7 +324,7 @@ export default function MarketingClientModal({
                     value={cnpj}
                     onChange={(e) => setCnpj(e.target.value)}
                     placeholder="00.000.000/0001-00"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 font-mono"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 font-mono"
                   />
                 </div>
               </div>
@@ -336,7 +336,7 @@ export default function MarketingClientModal({
                   value={corporateName}
                   onChange={(e) => setCorporateName(e.target.value)}
                   placeholder="Ex: Agrosul Comércio de Defensivos Agrícolas LTDA"
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
                 />
               </div>
 
@@ -347,7 +347,7 @@ export default function MarketingClientModal({
                   value={segment}
                   onChange={(e) => setSegment(e.target.value)}
                   placeholder="Ex: Loja de defensivos agrícolas, adubos e fertilizantes"
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
                 />
               </div>
 
@@ -359,7 +359,7 @@ export default function MarketingClientModal({
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     placeholder="Ex: Campo Belo do Sul"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
                   />
                 </div>
 
@@ -371,7 +371,7 @@ export default function MarketingClientModal({
                     onChange={(e) => setState(e.target.value.toUpperCase())}
                     placeholder="SC"
                     maxLength={2}
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 uppercase"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 uppercase"
                   />
                 </div>
               </div>
@@ -383,7 +383,7 @@ export default function MarketingClientModal({
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="Ex: Av. Principal, 123 - Centro"
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
                 />
               </div>
 
@@ -403,7 +403,7 @@ export default function MarketingClientModal({
                     type="text"
                     value={brandColor}
                     onChange={(e) => setBrandColor(e.target.value)}
-                    className="w-24 p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white font-mono uppercase"
+                    className="w-24 p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white font-mono uppercase"
                   />
                   <div className="flex items-center gap-1.5 ml-2">
                     {PRESET_COLORS.map((c) => (
@@ -436,7 +436,7 @@ export default function MarketingClientModal({
                     value={contactName}
                     onChange={(e) => setContactName(e.target.value)}
                     placeholder="Ex: Carlos Eduardo"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
                   />
                 </div>
 
@@ -447,7 +447,7 @@ export default function MarketingClientModal({
                     value={contactRole}
                     onChange={(e) => setContactRole(e.target.value)}
                     placeholder="Ex: Diretor Comercial / Sócio"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>
@@ -460,7 +460,7 @@ export default function MarketingClientModal({
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
                     placeholder="(49) 99999-9999"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 font-mono"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 font-mono"
                   />
                 </div>
 
@@ -471,7 +471,7 @@ export default function MarketingClientModal({
                     value={contactEmail}
                     onChange={(e) => setContactEmail(e.target.value)}
                     placeholder="contato@agrosul.com.br"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>
@@ -481,7 +481,7 @@ export default function MarketingClientModal({
                 <select
                   value={assignedUserId}
                   onChange={(e) => setAssignedUserId(e.target.value)}
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
                 >
                   <option value="">Nenhum operador atribuído</option>
                   {teamMembers.map((m) => (
@@ -505,7 +505,7 @@ export default function MarketingClientModal({
                     value={planTier}
                     onChange={(e) => setPlanTier(e.target.value)}
                     placeholder="Ex: Standard, Performance Pro, Enterprise"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
                   />
                 </div>
 
@@ -514,7 +514,7 @@ export default function MarketingClientModal({
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
                   >
                     <option value="FECHADO">Fechado</option>
                     <option value="ACTIVE">Ativo / Em Produção</option>
@@ -533,7 +533,7 @@ export default function MarketingClientModal({
                     step="0.01"
                     value={contractValue}
                     onChange={(e) => setContractValue(Number(e.target.value))}
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white font-mono outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white font-mono outline-none focus:border-cyan-500"
                   />
                 </div>
 
@@ -545,7 +545,7 @@ export default function MarketingClientModal({
                     step="0.01"
                     value={adBudget}
                     onChange={(e) => setAdBudget(Number(e.target.value))}
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white font-mono outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white font-mono outline-none focus:border-cyan-500"
                   />
                 </div>
 
@@ -556,13 +556,13 @@ export default function MarketingClientModal({
                     min="1"
                     value={contractDurationMonths}
                     onChange={(e) => setContractDurationMonths(Number(e.target.value))}
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white font-mono outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white font-mono outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>
 
               {/* Metas Mensais de Entrega */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-2.5">
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-2.5">
                 <span className="text-[11px] uppercase font-bold text-slate-400 block tracking-wider">
                   SLA / Entregas Acordadas no Mês
                 </span>
@@ -626,7 +626,7 @@ export default function MarketingClientModal({
                   onChange={(e) => setBriefing(e.target.value)}
                   placeholder="Descreva o modelo de negócio, persona, objetivos de vendas, principais produtos ou serviços..."
                   rows={4}
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 leading-relaxed font-sans"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 leading-relaxed font-sans"
                 />
               </div>
 
@@ -637,7 +637,7 @@ export default function MarketingClientModal({
                   onChange={(e) => setScope(e.target.value)}
                   placeholder="Ex: Gestão de Instagram e Facebook, criação de 12 posts mensais, edição de 4 reels com gravação externa por conta do cliente..."
                   rows={3}
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 leading-relaxed font-sans"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 leading-relaxed font-sans"
                 />
               </div>
 
@@ -648,7 +648,7 @@ export default function MarketingClientModal({
                   value={materialsUrl}
                   onChange={(e) => setMaterialsUrl(e.target.value)}
                   placeholder="https://drive.google.com/drive/folders/..."
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 font-mono"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 font-mono"
                 />
               </div>
 
@@ -659,7 +659,7 @@ export default function MarketingClientModal({
                   value={brandGuidelines}
                   onChange={(e) => setBrandGuidelines(e.target.value)}
                   placeholder="Ex: Tom formal e consultivo, cores sóbrias, linguagem focada em produtividade rural"
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
                 />
               </div>
             </div>

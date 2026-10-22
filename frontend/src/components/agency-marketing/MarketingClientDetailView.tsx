@@ -421,12 +421,12 @@ export default function MarketingClientDetailView({
               </div>
 
               <div className="grid grid-cols-2 gap-2 pt-2">
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
                   <span className="text-[10px] uppercase font-bold text-slate-500 block">Stories</span>
                   <span className="font-bold text-white font-mono text-sm">{del.stories ?? 20} /mês</span>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
                   <span className="text-[10px] uppercase font-bold text-slate-500 block">Campanhas Ads</span>
                   <span className="font-bold text-white font-mono text-sm">{del.campaigns ?? 2} ativas</span>
                 </div>
@@ -584,7 +584,7 @@ export default function MarketingClientDetailView({
           </div>
 
           {/* Link do Google Drive / Nuvem */}
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <span className="text-xs font-bold text-white block">Pasta na Nuvem / Google Drive</span>
               <span className="text-xs text-slate-400 truncate block max-w-lg font-mono mt-0.5">
@@ -614,7 +614,7 @@ export default function MarketingClientDetailView({
 
           {/* Diretrizes Visuais */}
           {del.brandGuidelines && (
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-1.5">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-1.5">
               <span className="text-xs font-bold text-white block">Diretrizes de Identidade Visual</span>
               <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
                 {del.brandGuidelines}
@@ -646,7 +646,7 @@ export default function MarketingClientDetailView({
               onChange={(e) => setAiGuidelines(e.target.value)}
               placeholder="Descreva aqui:&#10;- Persona da marca&#10;- Tom de voz (formal, descontraído, técnico)&#10;- Expressões recomendadas e termos proibidos&#10;- Chamadas para ação (CTA) padrão"
               rows={8}
-              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 leading-relaxed font-sans"
+              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 leading-relaxed font-sans"
             />
 
             <div className="flex justify-end">
@@ -699,7 +699,7 @@ export default function MarketingClientDetailView({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Registre aqui anotações de alinhamento com o cliente, decisões tomadas em reuniões ou observações da equipe..."
               rows={6}
-              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 leading-relaxed font-sans"
+              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 leading-relaxed font-sans"
             />
 
             <div className="flex justify-end">
@@ -730,19 +730,19 @@ export default function MarketingClientDetailView({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
               <span className="text-[10px] uppercase font-bold text-slate-500 block">Mensalidade (Fee)</span>
               <span className="font-mono text-base font-bold text-emerald-400">
                 R$ {Number(del.contractValue || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </span>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
               <span className="text-[10px] uppercase font-bold text-slate-500 block">Plano Contratado</span>
               <span className="text-base font-bold text-white">{client.planTier || "Standard"}</span>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800">
               <span className="text-[10px] uppercase font-bold text-slate-500 block">Vigência</span>
               <span className="text-base font-bold text-slate-300">
                 {del.contractDurationMonths ? `${del.contractDurationMonths} meses` : "12 meses"}
@@ -751,7 +751,7 @@ export default function MarketingClientDetailView({
           </div>
 
           {del.scope && (
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-2">
               <span className="text-xs font-bold text-white block">Termos e Condições do Escopo</span>
               <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
                 {del.scope}
@@ -783,7 +783,7 @@ export default function MarketingClientDetailView({
                 value={newHistoryAction}
                 onChange={(e) => setNewHistoryAction(e.target.value)}
                 placeholder="Registrar evento ou atualização..."
-                className="px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 w-56 sm:w-72"
+                className="px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 w-56 sm:w-72"
               />
               <button
                 type="submit"

@@ -291,7 +291,7 @@ export default function WorkspaceManagerModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header do Modal */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-50 dark:bg-[#070D1B]/60">
+        <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-[#070D1B]/60">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
               <Building2 className="w-5 h-5" />
@@ -573,7 +573,7 @@ export default function WorkspaceManagerModal({
                     className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
                       isActive
                         ? "bg-slate-50 dark:bg-[#070D1B] border-blue-500/50 shadow-lg shadow-blue-500/5"
-                        : "bg-slate-50/50 dark:bg-slate-50 dark:bg-[#070D1B]/50 border-slate-800/80 hover:bg-slate-50 dark:bg-[#070D1B] hover:border-slate-700"
+                        : "bg-slate-50/50 dark:bg-[#070D1B]/50 border-slate-800/80 hover:bg-slate-50 dark:bg-[#070D1B] hover:border-slate-700"
                     }`}
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
@@ -654,7 +654,7 @@ export default function WorkspaceManagerModal({
         </div>
 
         {/* Rodapé do Modal */}
-        <div className="p-4 bg-slate-50/80 dark:bg-slate-50 dark:bg-[#070D1B]/80 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+        <div className="p-4 bg-slate-50/80 dark:bg-[#070D1B]/80 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-blue-400" />
             <span>Dados isolados por Tenant & Workspace</span>

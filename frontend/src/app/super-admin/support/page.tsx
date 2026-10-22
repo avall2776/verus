@@ -681,7 +681,7 @@ function SuperAdminSupportContent() {
 
         {/* NAVEGADOR DE SUBCATEGORIAS: ATENDIMENTO AO CLIENTE vs CHAT INTERNO DA EQUIPE */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center bg-slate-50 dark:bg-[#070D1B] p-1 rounded-xl border border-slate-800">
             {/* Aba 1: Atendimento ao Cliente */}
             <button
               type="button"
@@ -771,7 +771,7 @@ function SuperAdminSupportContent() {
               <div className={`${selectedTicket ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-84 xl:w-90 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-xl flex-col overflow-hidden shrink-0 shadow-xl transition-all duration-200 animate-fadeIn`}>
                 
                 {/* Topo da Fila: Título com Contador & Botão Minimizar */}
-                <div className="p-3 border-b border-slate-800 bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] space-y-2">
+                <div className="p-3 border-b border-slate-800 bg-slate-50 dark:bg-[#070D1B] space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <MessageSquare size={15} className="text-blue-400" />
@@ -798,7 +798,7 @@ function SuperAdminSupportContent() {
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Pesquisar chamados..."
-                      className="w-full bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-slate-500 outline-none focus:border-blue-500 transition-colors"
+                      className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-slate-500 outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>
 
@@ -806,7 +806,7 @@ function SuperAdminSupportContent() {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 outline-none cursor-pointer focus:border-blue-500"
+                      className="bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 outline-none cursor-pointer focus:border-blue-500"
                     >
                       <option value="ALL">Status: Todos</option>
                       <option value="OPEN">Abertos</option>
@@ -819,7 +819,7 @@ function SuperAdminSupportContent() {
                     <select
                       value={selectedTenantId}
                       onChange={(e) => setSelectedTenantId(e.target.value)}
-                      className="bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 outline-none truncate cursor-pointer focus:border-blue-500"
+                      className="bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-300 outline-none truncate cursor-pointer focus:border-blue-500"
                     >
                       <option value="ALL">Empresa: Todas</option>
                       {tenantsList.map((t) => (
@@ -917,7 +917,7 @@ function SuperAdminSupportContent() {
               {selectedTicket ? (
                 <>
                   {/* HEADER DO ATENDIMENTO: LAYOUT FLEXÍVEL SEM SOBREPOSIÇÃO */}
-                  <div className="min-h-[58px] px-3 md:px-4 py-2 border-b border-slate-800 bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] flex flex-wrap items-center justify-between gap-2 z-10 shrink-0">
+                  <div className="min-h-[58px] px-3 md:px-4 py-2 border-b border-slate-800 bg-slate-50 dark:bg-[#070D1B] flex flex-wrap items-center justify-between gap-2 z-10 shrink-0">
                     
                     {/* Bloco Esquerdo: Informações do Cliente & Alternador da Fila */}
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -1213,7 +1213,7 @@ function SuperAdminSupportContent() {
                     {/* MENSAGEM FIXADA NO TOPO: SOLICITAÇÃO ORIGINAL DO CLIENTE */}
                     {selectedTicket.description && (
                       <div className="flex justify-center mb-4">
-                        <div className="w-full max-w-2xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl p-3.5 shadow-md">
+                        <div className="w-full max-w-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 rounded-xl p-3.5 shadow-md">
                           <div className="flex items-center justify-between text-xs font-bold text-blue-400 border-b border-slate-800 pb-1.5 mb-2">
                             <span className="flex items-center gap-1.5">
                               <FileText size={14} />
@@ -1264,7 +1264,7 @@ function SuperAdminSupportContent() {
                             {/* Pílula de Data */}
                             {showDateDivider && (
                               <div className="flex justify-center my-2">
-                                <div className="bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] text-slate-400 text-[10px] font-medium px-3 py-0.5 rounded-lg shadow-sm border border-slate-800 uppercase tracking-wide">
+                                <div className="bg-slate-50 dark:bg-[#070D1B] text-slate-400 text-[10px] font-medium px-3 py-0.5 rounded-lg shadow-sm border border-slate-800 uppercase tracking-wide">
                                   {currentDateLabel}
                                 </div>
                               </div>
@@ -1341,7 +1341,7 @@ function SuperAdminSupportContent() {
                   </div>
 
                   {/* 4. COMPOSER NO PADRÃO DO LAYOUT (SEM EMOJIS INFORMÁIS) */}
-                  <div className="p-3 border-t border-slate-800 bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] z-10 relative shrink-0">
+                  <div className="p-3 border-t border-slate-800 bg-slate-50 dark:bg-[#070D1B] z-10 relative shrink-0">
                     {/* Formulário de Envio */}
                     <form onSubmit={handleSendClientMessage} className="space-y-1.5">
                       <div className="flex items-center gap-2">
@@ -1427,7 +1427,7 @@ function SuperAdminSupportContent() {
             {/* COLUNA 3: PAINEL LATERAL RAIO-X DA EMPRESA (Minimizável) */}
             {showSidePanel && selectedTicket?.tenant && (
               <div className="hidden xl:flex w-72 lg:w-80 bg-white dark:bg-[#0B1224] border border-slate-800 rounded-xl flex-col overflow-hidden shrink-0 shadow-xl animate-fadeIn transition-all duration-200">
-                <div className="p-3 border-b border-slate-800 bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] flex items-center justify-between">
+                <div className="p-3 border-b border-slate-800 bg-slate-50 dark:bg-[#070D1B] flex items-center justify-between">
                   <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                     <Building2 size={13} className="text-blue-400" />
                     Raio-X da Empresa
@@ -1454,7 +1454,7 @@ function SuperAdminSupportContent() {
 
                 <div className="flex-1 overflow-y-auto p-3.5 space-y-3 custom-scrollbar text-xs bg-white dark:bg-[#0B1224]">
                   {/* Card Empresa */}
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-1.5">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-1.5">
                     <h4 className="font-bold text-white truncate text-sm">{selectedTicket.tenant.name}</h4>
                     <span className="text-[10px] text-slate-400 font-mono block">
                       {selectedTicket.tenant.cnpj || "Sem CNPJ cadastrado"}
@@ -1470,7 +1470,7 @@ function SuperAdminSupportContent() {
                   </div>
 
                   {/* Contatos */}
-                  <div className="space-y-1.5 text-[11px] p-2.5 rounded-lg bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
+                  <div className="space-y-1.5 text-[11px] p-2.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
                     <div className="flex items-center gap-2 text-slate-300">
                       <Mail size={12} className="text-slate-500 shrink-0" />
                       <span className="truncate">{selectedTicket.tenant.email || "E-mail não informado"}</span>
@@ -1482,7 +1482,7 @@ function SuperAdminSupportContent() {
                   </div>
 
                   {/* Solicitante */}
-                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-1">
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-800 space-y-1">
                     <span className="text-[10px] font-bold text-slate-400 uppercase block">Operador Solicitante</span>
                     <p className="font-semibold text-white truncate">{selectedTicket.user?.name}</p>
                     <p className="text-[10px] text-slate-400 font-mono truncate">{selectedTicket.user?.email}</p>
@@ -1519,7 +1519,7 @@ function SuperAdminSupportContent() {
               </div>
 
               {selectedTicket && (
-                <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-800 px-3 py-1.5 rounded-xl text-xs">
+                <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#070D1B] border border-slate-800 px-3 py-1.5 rounded-xl text-xs">
                   <span className="text-slate-400">Chamado Vinculado:</span>
                   <span className="font-mono text-cyan-400 font-bold">#{selectedTicket.ticketNumber}</span>
                   <span className="text-white font-semibold truncate max-w-xs">{selectedTicket.tenant?.name}</span>
@@ -1539,7 +1539,7 @@ function SuperAdminSupportContent() {
             </div>
 
             {/* Listagem de Mensagens do Chat Interno da Equipe */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50/50 dark:bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B]/50">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50/50 dark:bg-[#070D1B]/50">
               {teamMessages.length === 0 ? (
                 <div className="py-16 text-center text-slate-500 text-xs flex flex-col items-center max-w-md mx-auto">
                   <Lock size={32} className="opacity-30 mb-2 text-slate-400" />
@@ -1615,7 +1615,7 @@ function SuperAdminSupportContent() {
                           </div>
 
                           {quoteAttachment?.text && (
-                            <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-blue-500/20 text-[11px] text-slate-300 italic border-l-2 border-l-cyan-400">
+                            <div className="p-2 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-blue-500/20 text-[11px] text-slate-300 italic border-l-2 border-l-cyan-400">
                               <span className="text-[10px] text-cyan-400 font-bold block not-italic uppercase mb-0.5">Resposta do Chamado:</span>
                               &ldquo;{quoteAttachment.text}&rdquo;
                             </div>
@@ -1657,7 +1657,7 @@ function SuperAdminSupportContent() {
             </div>
 
             {/* Composer Privativo da Equipe & Mentoria */}
-            <div className="p-4 border-t border-slate-800 bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B]">
+            <div className="p-4 border-t border-slate-800 bg-slate-50 dark:bg-[#070D1B]">
               <form onSubmit={handleSendTeamAction} className="space-y-2.5 max-w-3xl mx-auto">
                 {/* Alternador de Modo: Nota Técnica vs Mentoria da IA */}
                 <div className="flex items-center justify-between gap-2">
@@ -1830,7 +1830,7 @@ function SuperAdminSupportContent() {
             </div>
 
             {/* Formulário de Configuração */}
-            <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-slate-50/60 dark:bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B]/60">
+            <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-slate-50/60 dark:bg-[#070D1B]/60">
               <form id="ai-config-form" onSubmit={handleSaveAiConfig} className="max-w-4xl mx-auto space-y-6">
                 
                 {/* 1. Toggles de Automação */}
@@ -1923,7 +1923,7 @@ function SuperAdminSupportContent() {
                         value={aiConfig.name}
                         onChange={(e) => setAiConfig(prev => ({ ...prev, name: e.target.value }))}
                         placeholder="Ex: Sofia - Suporte Vallor"
-                        className="w-full bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors"
+                        className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors"
                       />
                     </div>
 
@@ -1934,7 +1934,7 @@ function SuperAdminSupportContent() {
                       <select
                         value={aiConfig.model}
                         onChange={(e) => setAiConfig(prev => ({ ...prev, model: e.target.value }))}
-                        className="w-full bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-500 transition-colors cursor-pointer"
+                        className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-500 transition-colors cursor-pointer"
                       >
                         <option value="gpt-4o-mini">gpt-4o-mini (Recomendado • Alta Velocidade & Precisão)</option>
                         <option value="gpt-4o">gpt-4o (Máxima Capacidade Cognitiva & Diagnóstico)</option>
@@ -1974,7 +1974,7 @@ function SuperAdminSupportContent() {
                       </p>
                       <div className="space-y-1.5 pt-1">
                         {mentorRules.map((rule, idx) => (
-                          <div key={idx} className="flex items-start gap-2 p-2.5 rounded-lg bg-slate-50/90 dark:bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B]/90 border border-cyan-500/20 text-xs text-slate-200">
+                          <div key={idx} className="flex items-start gap-2 p-2.5 rounded-lg bg-slate-50/90 dark:bg-[#070D1B]/90 border border-cyan-500/20 text-xs text-slate-200">
                             <span className="w-2 h-2 rounded-full bg-cyan-400 mt-1 shrink-0 animate-pulse" />
                             <span className="font-mono text-xs leading-relaxed text-cyan-100">{rule}</span>
                           </div>
@@ -2001,7 +2001,7 @@ function SuperAdminSupportContent() {
                     value={aiConfig.prompt}
                     onChange={(e) => setAiConfig(prev => ({ ...prev, prompt: e.target.value }))}
                     placeholder="Instruções de personalidade e acolhimento..."
-                    className="w-full bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-700 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors font-mono leading-relaxed custom-scrollbar"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-700 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-cyan-500 transition-colors font-mono leading-relaxed custom-scrollbar"
                   />
                 </div>
 
@@ -2022,7 +2022,7 @@ function SuperAdminSupportContent() {
                     value={aiConfig.knowledgeBase}
                     onChange={(e) => setAiConfig(prev => ({ ...prev, knowledgeBase: e.target.value }))}
                     placeholder="Documentação de arquitetura funcional e módulos para resposta aos clientes..."
-                    className="w-full bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-700 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-blue-500 transition-colors font-mono leading-relaxed custom-scrollbar"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-700 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-blue-500 transition-colors font-mono leading-relaxed custom-scrollbar"
                   />
                 </div>
 
@@ -2045,7 +2045,7 @@ function SuperAdminSupportContent() {
                     value={aiConfig.guardrails}
                     onChange={(e) => setAiConfig(prev => ({ ...prev, guardrails: e.target.value }))}
                     placeholder="Regras estritas de segurança e bloqueio..."
-                    className="w-full bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-rose-900/40 rounded-xl p-3 text-xs text-rose-100 placeholder-slate-500 outline-none focus:border-rose-500 transition-colors font-mono leading-relaxed custom-scrollbar"
+                    className="w-full bg-slate-50 dark:bg-[#070D1B] border border-rose-900/40 rounded-xl p-3 text-xs text-rose-100 placeholder-slate-500 outline-none focus:border-rose-500 transition-colors font-mono leading-relaxed custom-scrollbar"
                   />
                 </div>
 
@@ -2110,7 +2110,7 @@ function SuperAdminSupportContent() {
             <div className="p-6 overflow-y-auto space-y-4 custom-scrollbar text-xs">
               
               {/* Metadados do Chamado */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800">
                 <div>
                   <span className="text-[10px] text-slate-500 block uppercase font-semibold">Empresa</span>
                   <span className="font-bold text-white truncate block">{selectedTicket.tenant?.name || "Empresa"}</span>
@@ -2149,7 +2149,7 @@ function SuperAdminSupportContent() {
                   </button>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-slate-100 text-xs leading-relaxed whitespace-pre-wrap font-normal">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800 text-slate-100 text-xs leading-relaxed whitespace-pre-wrap font-normal">
                   {selectedTicket.description || "Nenhuma descrição fornecida pelo solicitante."}
                 </div>
               </div>
