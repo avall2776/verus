@@ -147,39 +147,39 @@ export default function MarketingClientsPage() {
       ) : (
         <>
           {/* Header Executivo da Listagem de Clientes */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-wide flex items-center gap-2">
-                  <Briefcase className="w-6 h-6 text-cyan-400" strokeWidth={1.75} />
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-wide flex items-center gap-2">
+                  <Briefcase className="w-6 h-6 text-blue-600 dark:text-cyan-400" strokeWidth={1.75} />
                   <span>Clientes & Escopos</span>
                 </h1>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-500/30">
                   {clients.length} {clients.length === 1 ? "Marca" : "Marcas"}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                 Gestão corporativa de marcas, contratos, SLAs de entrega, briefing e histórico de atendimento.
               </p>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-4 px-4 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs">
+              <div className="hidden sm:flex items-center gap-4 px-4 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs shadow-sm">
                 <div>
                   <span className="text-[10px] text-slate-500 uppercase font-bold block">Contas Ativas</span>
-                  <span className="font-bold text-emerald-400 font-mono">{activeClientsCount}</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">{activeClientsCount}</span>
                 </div>
-                <div className="w-px h-6 bg-slate-800" />
+                <div className="w-px h-6 bg-slate-200 dark:bg-slate-800" />
                 <div>
                   <span className="text-[10px] text-slate-500 uppercase font-bold block">Total de Clientes</span>
-                  <span className="font-bold text-white font-mono">{clients.length}</span>
+                  <span className="font-bold text-slate-900 dark:text-white font-mono">{clients.length}</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsDriveSyncOpen(true)}
-                  className="px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-lg shadow-cyan-950/40"
+                  className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm"
                   title="Monitorar pastas e criar clientes automaticamente do Google Drive"
                 >
                   <FolderArchive className="w-4 h-4" strokeWidth={1.75} />
@@ -189,10 +189,10 @@ export default function MarketingClientsPage() {
                 <button
                   onClick={() => loadData(true)}
                   disabled={refreshing}
-                  className="p-2.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                  className="p-2.5 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors shadow-sm"
                   title="Atualizar lista"
                 >
-                  <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin text-cyan-400" : ""}`} strokeWidth={1.75} />
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin text-blue-600 dark:text-cyan-400" : ""}`} strokeWidth={1.75} />
                 </button>
               </div>
             </div>

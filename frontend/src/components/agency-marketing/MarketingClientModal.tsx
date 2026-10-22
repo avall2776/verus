@@ -246,20 +246,20 @@ export default function MarketingClientModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
       <div
-        className="w-full max-w-3xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl text-white flex flex-col max-h-[92vh] overflow-hidden"
+        className="w-full max-w-3xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl text-slate-900 dark:text-white flex flex-col max-h-[92vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Topo do Modal */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-800">
+        <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-cyan-400">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 flex items-center justify-center text-blue-600 dark:text-cyan-400">
               <Building className="w-5 h-5" strokeWidth={1.75} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white leading-tight">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
                 {isEditing ? `Editar: ${client?.name || ""}` : "Novo Cadastro de Cliente & Escopo"}
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Padrão corporativo completo de dados, CNPJ, briefing e entregas
               </p>
             </div>
@@ -267,14 +267,14 @@ export default function MarketingClientModal({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Abas do Formulário */}
-        <div className="flex items-center gap-2 px-5 pt-3 border-b border-slate-800 text-xs font-semibold overflow-x-auto custom-scrollbar">
+        <div className="flex items-center gap-2 px-5 pt-3 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold overflow-x-auto custom-scrollbar">
           {(
             [
               { id: "dados", label: "Dados Cadastrais" },
@@ -289,8 +289,8 @@ export default function MarketingClientModal({
               onClick={() => setActiveTab(tab.id)}
               className={`pb-2.5 px-3 transition-colors relative whitespace-nowrap ${
                 activeTab === tab.id
-                  ? "text-cyan-400 font-bold border-b-2 border-cyan-400"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "text-blue-600 dark:text-cyan-400 font-bold border-b-2 border-blue-600 dark:border-cyan-400"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
               }`}
             >
               {tab.label}
@@ -306,90 +306,90 @@ export default function MarketingClientModal({
             <div className="space-y-4 animate-in fade-in duration-150">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2 space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Nome Fantasia / Marca *</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Nome Fantasia / Marca *</label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ex: Agrosul"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                     required
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">CNPJ</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">CNPJ</label>
                   <input
                     type="text"
                     value={cnpj}
                     onChange={(e) => setCnpj(e.target.value)}
                     placeholder="00.000.000/0001-00"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 font-mono"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500 font-mono"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300">Razão Social</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Razão Social</label>
                 <input
                   type="text"
                   value={corporateName}
                   onChange={(e) => setCorporateName(e.target.value)}
                   placeholder="Ex: Agrosul Comércio de Defensivos Agrícolas LTDA"
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300">Nicho / Ramo de Atuação</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Nicho / Ramo de Atuação</label>
                 <input
                   type="text"
                   value={segment}
                   onChange={(e) => setSegment(e.target.value)}
                   placeholder="Ex: Loja de defensivos agrícolas, adubos e fertilizantes"
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2 space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Cidade</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Cidade</label>
                   <input
                     type="text"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     placeholder="Ex: Campo Belo do Sul"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Estado (UF)</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Estado (UF)</label>
                   <input
                     type="text"
                     value={state}
                     onChange={(e) => setState(e.target.value.toUpperCase())}
                     placeholder="SC"
                     maxLength={2}
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 uppercase"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500 uppercase"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300">Endereço Completo</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Endereço Completo</label>
                 <input
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="Ex: Av. Principal, 123 - Centro"
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                 />
               </div>
 
               <div className="space-y-1.5 pt-1">
-                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Palette className="w-3.5 h-3.5 text-cyan-400" strokeWidth={1.75} />
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <Palette className="w-3.5 h-3.5 text-blue-600 dark:text-cyan-400" strokeWidth={1.75} />
                   <span>Cor de Identificação da Marca</span>
                 </label>
                 <div className="flex items-center gap-2">
@@ -397,13 +397,13 @@ export default function MarketingClientModal({
                     type="color"
                     value={brandColor}
                     onChange={(e) => setBrandColor(e.target.value)}
-                    className="w-8 h-8 rounded-lg border border-slate-800 bg-transparent cursor-pointer p-0.5 shrink-0"
+                    className="w-8 h-8 rounded-lg border border-slate-300 dark:border-slate-800 bg-transparent cursor-pointer p-0.5 shrink-0"
                   />
                   <input
                     type="text"
                     value={brandColor}
                     onChange={(e) => setBrandColor(e.target.value)}
-                    className="w-24 p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white font-mono uppercase"
+                    className="w-24 p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white font-mono uppercase"
                   />
                   <div className="flex items-center gap-1.5 ml-2">
                     {PRESET_COLORS.map((c) => (
@@ -413,7 +413,7 @@ export default function MarketingClientModal({
                         onClick={() => setBrandColor(c)}
                         className={`w-5 h-5 rounded-md border transition-transform ${
                           brandColor.toUpperCase() === c.toUpperCase()
-                            ? "border-white scale-110 shadow-sm"
+                            ? "border-blue-600 dark:border-white scale-110 shadow-sm"
                             : "border-transparent opacity-70 hover:opacity-100"
                         }`}
                         style={{ backgroundColor: c }}
@@ -430,58 +430,58 @@ export default function MarketingClientModal({
             <div className="space-y-4 animate-in fade-in duration-150">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Nome do Contato Principal</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Nome do Contato Principal</label>
                   <input
                     type="text"
                     value={contactName}
                     onChange={(e) => setContactName(e.target.value)}
                     placeholder="Ex: Carlos Eduardo"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Cargo / Função</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Cargo / Função</label>
                   <input
                     type="text"
                     value={contactRole}
                     onChange={(e) => setContactRole(e.target.value)}
                     placeholder="Ex: Diretor Comercial / Sócio"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">WhatsApp / Telefone</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">WhatsApp / Telefone</label>
                   <input
                     type="text"
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
                     placeholder="(49) 99999-9999"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 font-mono"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500 font-mono"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">E-mail Principal</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">E-mail Principal</label>
                   <input
                     type="email"
                     value={contactEmail}
                     onChange={(e) => setContactEmail(e.target.value)}
                     placeholder="contato@agrosul.com.br"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                   />
                 </div>
               </div>
 
               <div className="space-y-1 pt-1">
-                <label className="text-xs font-semibold text-slate-300">Responsável Interno da Agência</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Responsável Interno da Agência</label>
                 <select
                   value={assignedUserId}
                   onChange={(e) => setAssignedUserId(e.target.value)}
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                 >
                   <option value="">Nenhum operador atribuído</option>
                   {teamMembers.map((m) => (
@@ -499,22 +499,22 @@ export default function MarketingClientModal({
             <div className="space-y-4 animate-in fade-in duration-150">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Pacote / Plano Contratado</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Pacote / Plano Contratado</label>
                   <input
                     type="text"
                     value={planTier}
                     onChange={(e) => setPlanTier(e.target.value)}
                     placeholder="Ex: Standard, Performance Pro, Enterprise"
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Status Operacional</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Status Operacional</label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                   >
                     <option value="FECHADO">Fechado</option>
                     <option value="ACTIVE">Ativo / Em Produção</option>
@@ -526,89 +526,89 @@ export default function MarketingClientModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Mensalidade (Fee Agência R$)</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Mensalidade (Fee Agência R$)</label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={contractValue}
                     onChange={(e) => setContractValue(Number(e.target.value))}
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white font-mono outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white font-mono outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Verba Mensal de Tráfego (R$)</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Verba Mensal de Tráfego (R$)</label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={adBudget}
                     onChange={(e) => setAdBudget(Number(e.target.value))}
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white font-mono outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white font-mono outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Vigência (Meses)</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Vigência (Meses)</label>
                   <input
                     type="number"
                     min="1"
                     value={contractDurationMonths}
                     onChange={(e) => setContractDurationMonths(Number(e.target.value))}
-                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white font-mono outline-none focus:border-cyan-500"
+                    className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white font-mono outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                   />
                 </div>
               </div>
 
               {/* Metas Mensais de Entrega */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-2.5">
-                <span className="text-[11px] uppercase font-bold text-slate-400 block tracking-wider">
+              <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 space-y-2.5">
+                <span className="text-[11px] uppercase font-bold text-slate-600 dark:text-slate-400 block tracking-wider">
                   SLA / Entregas Acordadas no Mês
                 </span>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   <div className="space-y-1">
-                    <label className="text-[11px] text-slate-400">Posts / Carrosséis</label>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-400">Posts / Carrosséis</label>
                     <input
                       type="number"
                       min="0"
                       value={postsTarget}
                       onChange={(e) => setPostsTarget(Number(e.target.value))}
-                      className="w-full p-2 text-xs rounded-lg bg-white dark:bg-[#0B1224] border border-slate-700 text-white font-mono outline-none focus:border-cyan-500"
+                      className="w-full p-2 text-xs rounded-lg bg-white dark:bg-[#0B1224] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] text-slate-400">Reels / Vídeos</label>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-400">Reels / Vídeos</label>
                     <input
                       type="number"
                       min="0"
                       value={reelsTarget}
                       onChange={(e) => setReelsTarget(Number(e.target.value))}
-                      className="w-full p-2 text-xs rounded-lg bg-white dark:bg-[#0B1224] border border-slate-700 text-white font-mono outline-none focus:border-cyan-500"
+                      className="w-full p-2 text-xs rounded-lg bg-white dark:bg-[#0B1224] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] text-slate-400">Stories Mensais</label>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-400">Stories Mensais</label>
                     <input
                       type="number"
                       min="0"
                       value={storiesTarget}
                       onChange={(e) => setStoriesTarget(Number(e.target.value))}
-                      className="w-full p-2 text-xs rounded-lg bg-white dark:bg-[#0B1224] border border-slate-700 text-white font-mono outline-none focus:border-cyan-500"
+                      className="w-full p-2 text-xs rounded-lg bg-white dark:bg-[#0B1224] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] text-slate-400">Campanhas Ads</label>
+                    <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-400">Campanhas Ads</label>
                     <input
                       type="number"
                       min="0"
                       value={campaignsTarget}
                       onChange={(e) => setCampaignsTarget(Number(e.target.value))}
-                      className="w-full p-2 text-xs rounded-lg bg-white dark:bg-[#0B1224] border border-slate-700 text-white font-mono outline-none focus:border-cyan-500"
+                      className="w-full p-2 text-xs rounded-lg bg-white dark:bg-[#0B1224] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                     />
                   </div>
                 </div>
@@ -620,59 +620,59 @@ export default function MarketingClientModal({
           {activeTab === "briefing" && (
             <div className="space-y-4 animate-in fade-in duration-150">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300">Briefing do Cliente (História, Público, Proposta de Valor)</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Briefing do Cliente (História, Público, Proposta de Valor)</label>
                 <textarea
                   value={briefing}
                   onChange={(e) => setBriefing(e.target.value)}
                   placeholder="Descreva o modelo de negócio, persona, objetivos de vendas, principais produtos ou serviços..."
                   rows={4}
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 leading-relaxed font-sans"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500 leading-relaxed font-sans"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300">Escopo Detalhado (O que está e não está incluso)</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Escopo Detalhado (O que está e não está incluso)</label>
                 <textarea
                   value={scope}
                   onChange={(e) => setScope(e.target.value)}
                   placeholder="Ex: Gestão de Instagram e Facebook, criação de 12 posts mensais, edição de 4 reels com gravação externa por conta do cliente..."
                   rows={3}
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 leading-relaxed font-sans"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500 leading-relaxed font-sans"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300">Link da Pasta de Materiais (Google Drive, Figma, Canva)</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Link da Pasta de Materiais (Google Drive, Figma, Canva)</label>
                 <input
                   type="url"
                   value={materialsUrl}
                   onChange={(e) => setMaterialsUrl(e.target.value)}
                   placeholder="https://drive.google.com/drive/folders/..."
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500 font-mono"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500 font-mono"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300">Tom de Voz & Diretrizes de Marca</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Tom de Voz & Diretrizes de Marca</label>
                 <input
                   type="text"
                   value={brandGuidelines}
                   onChange={(e) => setBrandGuidelines(e.target.value)}
                   placeholder="Ex: Tom formal e consultivo, cores sóbrias, linguagem focada em produtividade rural"
-                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-600 dark:focus:border-cyan-500"
                 />
               </div>
             </div>
           )}
 
           {/* Rodapé com Botões de Ação */}
-          <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
             {isEditing ? (
               <button
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting || submitting}
-                className="px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 text-xs font-bold flex items-center gap-1.5 transition-colors disabled:opacity-50"
               >
                 {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                 <span>Excluir Cliente</span>
@@ -685,7 +685,7 @@ export default function MarketingClientModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-transparent text-xs font-semibold transition-colors"
               >
                 Cancelar
               </button>
@@ -693,10 +693,10 @@ export default function MarketingClientModal({
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-white border border-slate-700 font-bold text-xs flex items-center gap-2 transition-colors disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-2 transition-colors disabled:opacity-50 shadow-sm"
               >
                 {submitting ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
                 ) : (
                   <Save className="w-4 h-4" strokeWidth={1.75} />
                 )}

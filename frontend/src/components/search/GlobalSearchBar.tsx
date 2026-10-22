@@ -159,7 +159,7 @@ export default function GlobalSearchBar() {
           }}
           onChange={(e) => handleQueryChange(e.target.value)}
           placeholder="Buscar leads, conversas..."
-          className="w-full bg-white dark:bg-[#0B1224] border border-slate-800 rounded-full pl-10 pr-16 py-2 text-xs text-white outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] placeholder:text-slate-500"
+          className="w-full bg-white dark:bg-[#0B1224] border border-slate-300 dark:border-slate-800 rounded-full pl-10 pr-16 py-2 text-xs text-slate-900 dark:text-white outline-none transition-all focus:border-blue-600 focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] placeholder:text-slate-400 dark:placeholder:text-slate-500"
         />
 
         {/* Loading ou Botão Limpar ou Atalho Ctrl K */}
@@ -174,12 +174,12 @@ export default function GlobalSearchBar() {
                 setIsOpen(false);
               }}
               title="Limpar busca"
-              className="text-slate-500 hover:text-white p-0.5 rounded-full transition-colors"
+              className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-0.5 rounded-full transition-colors"
             >
               <X size={13} />
             </button>
           ) : (
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-slate-500 bg-slate-800/60 rounded border border-slate-700/60">
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 rounded border border-slate-300 dark:border-slate-700 font-semibold shadow-xs">
               <span className="text-[9px]">⌘</span>K
             </kbd>
           )}
@@ -188,13 +188,13 @@ export default function GlobalSearchBar() {
 
       {/* Dropdown Flutuante de Resultados em Tempo Real */}
       {isOpen && query.trim().length >= 2 && (
-        <div className="absolute left-0 mt-2 w-full sm:w-[480px] bg-white dark:bg-[#0F172A] border border-slate-800 rounded-2xl shadow-2xl shadow-black/90 p-2 z-50 overflow-hidden flex flex-col text-slate-100 animate-fadeIn">
+        <div className="absolute left-0 mt-2 w-full sm:w-[480px] bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-50 overflow-hidden flex flex-col text-slate-900 dark:text-slate-100 animate-fadeIn">
           
           {/* Header dos Resultados */}
-          <div className="px-3 py-2 border-b border-slate-800/70 flex items-center justify-between text-[11px] text-slate-400">
-            <span>Resultados para <strong className="text-white font-semibold">"{query}"</strong></span>
+          <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-800/70 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400">
+            <span>Resultados para <strong className="text-slate-900 dark:text-white font-semibold">"{query}"</strong></span>
             {isLoading ? (
-              <span className="flex items-center gap-1 text-blue-400">
+              <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
                 <Loader2 size={11} className="animate-spin" />
                 <span>Buscando...</span>
               </span>
@@ -203,13 +203,13 @@ export default function GlobalSearchBar() {
             )}
           </div>
 
-          <div className="max-h-[380px] overflow-y-auto custom-scrollbar divide-y divide-slate-800/40 py-1">
+          <div className="max-h-[380px] overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800/40 py-1">
             
             {/* 1. SEÇÃO DE LEADS / OPORTUNIDADES DO CRM */}
             {results.leads.length > 0 && (
               <div className="py-2">
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Kanban size={12} className="text-blue-400" />
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Kanban size={12} className="text-blue-600 dark:text-blue-400" />
                   <span>Leads & Oportunidades CRM ({results.leads.length})</span>
                 </div>
                 <div className="space-y-1 mt-1">
@@ -217,30 +217,30 @@ export default function GlobalSearchBar() {
                     <div
                       key={lead.id}
                       onClick={() => navigateTo(lead.href)}
-                      className="px-3 py-2 rounded-xl hover:bg-slate-800/60 transition-all cursor-pointer flex items-center justify-between gap-2 group"
+                      className="px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all cursor-pointer flex items-center justify-between gap-2 group"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-xs font-bold text-white group-hover:text-blue-400 truncate">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">
                             {lead.title}
                           </h4>
                           {lead.status && (
-                            <span className="text-[9px] px-1.5 py-0.2 bg-slate-800 border border-slate-700 text-slate-400 rounded">
+                            <span className="text-[9px] px-1.5 py-0.2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-400 rounded">
                               {lead.status}
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate mt-0.5">
                           {lead.contactName} {lead.contactPhone ? `• ${lead.contactPhone}` : ""}
                         </p>
                       </div>
                       <div className="text-right shrink-0 flex items-center gap-2">
                         {lead.value > 0 && (
-                          <span className="text-xs font-mono font-bold text-emerald-400">
+                          <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
                             {formatBRL(lead.value)}
                           </span>
                         )}
-                        <ChevronRight size={13} className="text-slate-600 group-hover:text-blue-400 transition-colors" />
+                        <ChevronRight size={13} className="text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
                       </div>
                     </div>
                   ))}
@@ -251,8 +251,8 @@ export default function GlobalSearchBar() {
             {/* 2. SEÇÃO DE CONVERSAS & CONTATOS (WHATSAPP / INBOX) */}
             {results.contacts.length > 0 && (
               <div className="py-2">
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <MessageSquare size={12} className="text-emerald-400" />
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <MessageSquare size={12} className="text-emerald-600 dark:text-emerald-400" />
                   <span>Conversas & Contatos ({results.contacts.length})</span>
                 </div>
                 <div className="space-y-1 mt-1">
@@ -260,17 +260,17 @@ export default function GlobalSearchBar() {
                     <div
                       key={c.id}
                       onClick={() => navigateTo(c.href)}
-                      className="px-3 py-2 rounded-xl hover:bg-slate-800/60 transition-all cursor-pointer flex items-center justify-between gap-2 group"
+                      className="px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all cursor-pointer flex items-center justify-between gap-2 group"
                     >
                       <div className="min-w-0 flex-1">
-                        <h4 className="text-xs font-bold text-white group-hover:text-emerald-400 truncate">
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 truncate">
                           {c.name}
                         </h4>
-                        <p className="text-[11px] text-slate-400 font-mono truncate mt-0.5">
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 font-mono truncate mt-0.5">
                           {c.phone || c.email || "WhatsApp"}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 group-hover:text-emerald-400 transition-colors">
+                      <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                         <span>Abrir</span>
                         <ChevronRight size={13} />
                       </div>
@@ -283,8 +283,8 @@ export default function GlobalSearchBar() {
             {/* 3. SEÇÃO DE EQUIPE / COLABORADORES */}
             {results.team.length > 0 && (
               <div className="py-2">
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Users size={12} className="text-purple-400" />
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Users size={12} className="text-purple-600 dark:text-purple-400" />
                   <span>Equipe / Chat Interno ({results.team.length})</span>
                 </div>
                 <div className="space-y-1 mt-1">
@@ -292,27 +292,27 @@ export default function GlobalSearchBar() {
                     <div
                       key={member.id}
                       onClick={() => navigateTo(member.href)}
-                      className="px-3 py-2 rounded-xl hover:bg-slate-800/60 transition-all cursor-pointer flex items-center justify-between gap-2 group"
+                      className="px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all cursor-pointer flex items-center justify-between gap-2 group"
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div className="relative">
-                          <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-[10px]">
+                          <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-slate-800 dark:text-white text-[10px]">
                             {member.name.substring(0, 2).toUpperCase()}
                           </div>
-                          <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[#0F172A] ${
-                            member.isOnline ? "bg-emerald-400" : "bg-slate-500"
+                          <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white dark:border-[#0F172A] ${
+                            member.isOnline ? "bg-emerald-500" : "bg-slate-400 dark:bg-slate-500"
                           }`} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h4 className="text-xs font-bold text-white group-hover:text-purple-400 truncate">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 truncate">
                             {member.name}
                           </h4>
-                          <span className="text-[10px] text-slate-400 font-medium">
+                          <span className="text-[10px] text-slate-600 dark:text-slate-400 font-medium">
                             {member.role || "Colaborador"}
                           </span>
                         </div>
                       </div>
-                      <span className="text-[11px] font-semibold text-slate-500 group-hover:text-purple-400 flex items-center gap-1 transition-colors">
+                      <span className="text-[11px] font-semibold text-slate-500 group-hover:text-purple-600 dark:group-hover:text-purple-400 flex items-center gap-1 transition-colors">
                         <span>Conversar</span>
                         <ChevronRight size={13} />
                       </span>
@@ -325,8 +325,8 @@ export default function GlobalSearchBar() {
             {/* 4. ATALHOS RÁPIDOS DE NAVEGAÇÃO */}
             {matchedActions.length > 0 && (
               <div className="py-2">
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles size={12} className="text-amber-400" />
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles size={12} className="text-amber-500" />
                   <span>Acesso Rápido a Módulos</span>
                 </div>
                 <div className="space-y-1 mt-1">
@@ -334,12 +334,12 @@ export default function GlobalSearchBar() {
                     <div
                       key={act.href}
                       onClick={() => navigateTo(act.href)}
-                      className="px-3 py-2 rounded-xl hover:bg-slate-800/60 transition-all cursor-pointer flex items-center justify-between gap-2 group"
+                      className="px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all cursor-pointer flex items-center justify-between gap-2 group"
                     >
-                      <span className="text-xs font-semibold text-slate-200 group-hover:text-amber-400">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover:text-amber-600 dark:group-hover:text-amber-400">
                         {act.label}
                       </span>
-                      <ArrowRight size={13} className="text-slate-500 group-hover:text-amber-400 transition-colors" />
+                      <ArrowRight size={13} className="text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors" />
                     </div>
                   ))}
                 </div>
@@ -349,12 +349,12 @@ export default function GlobalSearchBar() {
             {/* EMPTY STATE */}
             {!isLoading && results.total === 0 && matchedActions.length === 0 && (
               <div className="py-8 px-4 text-center flex flex-col items-center">
-                <div className="w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-700/80 flex items-center justify-center text-slate-500 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center text-slate-500 mb-2">
                   <Search size={18} className="opacity-70" />
                 </div>
-                <h4 className="text-xs font-bold text-white mb-1">Nenhum resultado encontrado</h4>
-                <p className="text-[11px] text-slate-400 max-w-[240px] leading-relaxed">
-                  Não encontramos leads, contatos ou conversas para <span className="text-blue-300 font-semibold">"{query}"</span>.
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1">Nenhum resultado encontrado</h4>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 max-w-[240px] leading-relaxed">
+                  Não encontramos leads, contatos ou conversas para <span className="text-blue-600 dark:text-blue-300 font-semibold">"{query}"</span>.
                 </p>
               </div>
             )}
@@ -362,8 +362,8 @@ export default function GlobalSearchBar() {
           </div>
 
           {/* Rodapé do Dropdown */}
-          <div className="px-3 py-2 border-t border-slate-800/80 bg-white/80 dark:bg-[#0B1224]/80 flex items-center justify-between text-[10px] text-slate-400 rounded-b-xl">
-            <span>Pressione <kbd className="px-1 bg-slate-800 rounded text-slate-300 font-mono">Esc</kbd> para fechar</span>
+          <div className="px-3 py-2 border-t border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-[#0B1224]/80 flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-400 rounded-b-xl">
+            <span>Pressione <kbd className="px-1 bg-slate-200 dark:bg-slate-800 rounded text-slate-700 dark:text-slate-300 font-mono">Esc</kbd> para fechar</span>
             <span className="text-slate-500">Busca Global Vallor</span>
           </div>
         </div>

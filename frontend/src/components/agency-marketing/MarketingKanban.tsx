@@ -305,7 +305,10 @@ export default function MarketingKanban({
       {/* ========================================================================= */}
       {/* BARRA SUPERIOR IDÊNTICA AO CRM COMERCIAL                                  */}
       {/* ========================================================================= */}
-      <div className="bg-white dark:bg-[#161b22] border border-gray-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-md">
+      {/* ========================================================================= */}
+      {/* BARRA SUPERIOR IDÊNTICA AO CRM COMERCIAL                                  */}
+      {/* ========================================================================= */}
+      <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-xs dark:shadow-md">
         {/* Esquerda: Nome do Funil Editável + Seletores de Visualização */}
         <div className="flex items-center gap-3 shrink-0">
           {/* Nome do Funil Editável */}
@@ -320,26 +323,26 @@ export default function MarketingKanban({
                     if (e.key === "Enter") handleSaveFunnelName();
                     if (e.key === "Escape") setIsEditingFunnel(false);
                   }}
-                  className="bg-white dark:bg-[#0B1224] border border-primary text-white text-sm font-bold px-2 py-1 rounded-md outline-none"
+                  className="bg-white dark:bg-[#0B1224] border border-blue-600 text-slate-900 dark:text-white text-sm font-bold px-2 py-1 rounded-md outline-none"
                 />
                 <button
                   type="button"
                   onClick={handleSaveFunnelName}
-                  className="bg-primary text-white p-1 rounded hover:bg-primary/80 transition-colors"
+                  className="bg-blue-600 text-white p-1 rounded hover:bg-blue-700 transition-colors"
                 >
                   <Check size={14} />
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsEditingFunnel(false)}
-                  className="text-gray-400 hover:text-white p-1 rounded"
+                  className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded"
                 >
                   <X size={14} />
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-1.5">
-                <h2 className="text-sm sm:text-base font-bold text-white tracking-wide">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-wide">
                   {funnelName}
                 </h2>
                 <button
@@ -348,7 +351,7 @@ export default function MarketingKanban({
                     setTempFunnelName(funnelName);
                     setIsEditingFunnel(true);
                   }}
-                  className="text-gray-500 hover:text-primary transition-colors p-1 rounded opacity-70 group-hover:opacity-100"
+                  className="text-slate-400 hover:text-blue-600 transition-colors p-1 rounded opacity-70 group-hover:opacity-100"
                   title="Editar nome do funil"
                 >
                   <Edit2 size={13} />
@@ -357,17 +360,17 @@ export default function MarketingKanban({
             )}
           </div>
 
-          <div className="h-4 w-px bg-gray-800 shrink-0 hidden sm:block" />
+          <div className="h-4 w-px bg-slate-300 dark:bg-gray-800 shrink-0 hidden sm:block" />
 
           {/* Botões de Visualização: Quadro, Tabela e Linha do Tempo */}
-          <div className="flex bg-slate-100 dark:bg-[#0d1117] rounded-lg p-0.5 border border-gray-800">
+          <div className="flex bg-slate-100 dark:bg-[#0d1117] rounded-lg p-0.5 border border-slate-300 dark:border-gray-800">
             <button
               type="button"
               onClick={() => setViewMode("kanban")}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all ${
                 viewMode === "kanban"
-                  ? "bg-primary text-white shadow font-bold"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-blue-600 text-white shadow font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-gray-400 dark:hover:text-white dark:hover:bg-slate-800/60"
               }`}
             >
               <KanbanIcon size={13} />
@@ -379,8 +382,8 @@ export default function MarketingKanban({
               onClick={() => setViewMode("table")}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all ${
                 viewMode === "table"
-                  ? "bg-primary text-white shadow font-bold"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-blue-600 text-white shadow font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-gray-400 dark:hover:text-white dark:hover:bg-slate-800/60"
               }`}
             >
               <TableIcon size={13} />
@@ -392,8 +395,8 @@ export default function MarketingKanban({
               onClick={() => setViewMode("timeline")}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all ${
                 viewMode === "timeline"
-                  ? "bg-primary text-white shadow font-bold"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-blue-600 text-white shadow font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-gray-400 dark:hover:text-white dark:hover:bg-slate-800/60"
               }`}
             >
               <CalendarDays size={13} />
@@ -405,19 +408,19 @@ export default function MarketingKanban({
         {/* Centro: Campo de Busca com Ícone */}
         <div className="flex-1 max-w-xs min-w-[200px]">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" strokeWidth={1.75} />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" strokeWidth={1.75} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar demandas ou peças..."
-              className="w-full bg-slate-100 dark:bg-[#0d1117] border border-gray-800 rounded-lg pl-9 pr-8 py-1.5 text-xs text-white placeholder:text-gray-500 outline-none focus:border-cyan-500 transition-colors"
+              className="w-full bg-slate-50 dark:bg-[#0d1117] border border-slate-300 dark:border-gray-800 rounded-lg pl-9 pr-8 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-500 outline-none focus:border-blue-600 transition-colors"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X size={12} strokeWidth={1.75} />
               </button>
@@ -428,7 +431,7 @@ export default function MarketingKanban({
         {/* Direita: Filtros Rápidos & Ações da Barra */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Pílulas de Filtro Rápido */}
-          <div className="flex bg-slate-100 dark:bg-[#0d1117] rounded-lg p-0.5 border border-gray-800 shrink-0">
+          <div className="flex bg-slate-100 dark:bg-[#0d1117] rounded-lg p-0.5 border border-slate-300 dark:border-gray-800 shrink-0">
             {[
               { id: "all", label: "Tudo", icon: Activity },
               { id: "mine", label: "Minhas", icon: FileText },
@@ -447,8 +450,8 @@ export default function MarketingKanban({
                 }}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id
-                    ? "bg-gray-800 text-white shadow font-bold"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-blue-600 text-white shadow font-bold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-gray-400 dark:hover:text-white dark:hover:bg-slate-800/60"
                 }`}
               >
                 <tab.icon size={12} />
@@ -457,7 +460,7 @@ export default function MarketingKanban({
             ))}
           </div>
 
-          <div className="h-4 w-px bg-gray-800 shrink-0 hidden sm:block" />
+          <div className="h-4 w-px bg-slate-300 dark:bg-gray-800 shrink-0 hidden sm:block" />
 
           {/* Botão Neutro */}
           <button
@@ -465,8 +468,8 @@ export default function MarketingKanban({
             onClick={() => setNeutralMode(!neutralMode)}
             className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition-all whitespace-nowrap ${
               neutralMode
-                ? "bg-gray-100 text-black border-gray-100"
-                : "bg-slate-100 dark:bg-[#0d1117] text-gray-300 border-gray-800 hover:bg-gray-800 hover:text-white"
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 dark:bg-[#0d1117] dark:hover:bg-gray-800 dark:text-gray-300 dark:border-gray-800 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             Neutro
@@ -476,7 +479,7 @@ export default function MarketingKanban({
           <button
             type="button"
             onClick={() => setShowStageModal(true)}
-            className="bg-primary hover:bg-primary/90 text-white px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm whitespace-nowrap"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-xs whitespace-nowrap"
           >
             <Plus size={13} />
             <span>Nova Etapa</span>
@@ -486,7 +489,7 @@ export default function MarketingKanban({
           <button
             type="button"
             onClick={() => setShowManageStagesModal(true)}
-            className="bg-slate-100 dark:bg-[#0d1117] hover:bg-gray-800 text-gray-300 border border-gray-800 px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 whitespace-nowrap hover:text-white"
+            className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 dark:bg-[#0d1117] dark:hover:bg-gray-800 dark:text-gray-300 dark:border-gray-800 px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 whitespace-nowrap hover:text-slate-900 dark:hover:text-white"
           >
             <Settings size={13} />
             <span className="hidden sm:inline">Gerenciar Etapas</span>
@@ -499,8 +502,8 @@ export default function MarketingKanban({
             onClick={toggleFullscreen}
             className={`p-1.5 rounded-lg border transition-all flex items-center justify-center shrink-0 ${
               isFullscreen
-                ? "bg-primary/20 text-primary border-primary/40 hover:bg-primary/30"
-                : "bg-slate-100 dark:bg-[#0d1117] hover:bg-gray-800 text-gray-300 border-gray-800 hover:text-white"
+                ? "bg-blue-50 text-blue-600 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 dark:bg-[#0d1117] dark:hover:bg-gray-800 dark:text-gray-300 dark:border-gray-800 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
@@ -532,7 +535,7 @@ export default function MarketingKanban({
                       /* Coluna Colapsada (Faixa Vertical com Título a -90 Graus) */
                       <div
                         onClick={() => toggleColumn(col.id)}
-                        className={`w-full h-full flex-shrink-0 flex flex-col bg-white dark:bg-[#1c1d22] border border-gray-800 border-t-2 ${borderTopClass} rounded-xl items-center py-4 cursor-pointer hover:bg-gray-800/50 transition-colors group min-h-[500px]`}
+                        className={`w-full h-full flex-shrink-0 flex flex-col bg-white dark:bg-[#1c1d22] border border-slate-200 dark:border-gray-800 border-t-2 ${borderTopClass} rounded-xl items-center py-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-800/50 transition-colors group min-h-[500px]`}
                       >
                         <button className="text-gray-500 group-hover:text-white mb-6">
                           <Maximize2 size={16} />
@@ -548,13 +551,13 @@ export default function MarketingKanban({
                       <div className="w-full shrink-0 flex flex-col h-full gap-3">
                         {/* Header da Coluna (Limpo: apenas Título e Badge de contagem) */}
                         <div
-                          className={`p-3.5 rounded-xl border border-gray-800 bg-white dark:bg-[#1c1d22] border-t-2 ${borderTopClass} flex items-center justify-between shadow-sm shrink-0`}
+                          className={`p-3.5 rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-[#1c1d22] border-t-2 ${borderTopClass} flex items-center justify-between shadow-xs shrink-0`}
                         >
                           <div className="flex items-center gap-2 min-w-0">
-                            <h3 className={`text-xs font-bold uppercase tracking-wider truncate ${colColorClass}`}>
+                            <h3 className={`text-xs font-bold uppercase tracking-wider truncate ${col.id === "BACKLOG" ? "text-slate-800 dark:text-gray-400" : colColorClass}`}>
                               {col.title}
                             </h3>
-                            <span className="bg-slate-800/90 text-slate-300 px-2 py-0.5 rounded-full text-[11px] font-semibold shrink-0">
+                            <span className="bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800/90 dark:text-slate-300 dark:border-transparent px-2 py-0.5 rounded-full text-[11px] font-semibold shrink-0">
                               {columnCards.length} cards
                             </span>
                           </div>
@@ -563,7 +566,7 @@ export default function MarketingKanban({
                             <button
                               type="button"
                               onClick={() => toggleColumn(col.id)}
-                              className="text-gray-500 hover:text-white p-1 rounded hover:bg-gray-700 transition-colors"
+                              className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors"
                               title="Recolher coluna"
                             >
                               <Minimize2 size={13} strokeWidth={1.75} />
@@ -598,7 +601,7 @@ export default function MarketingKanban({
                               <button
                                 type="button"
                                 onClick={() => onOpenCardModal(undefined, col.id)}
-                                className="mt-auto shrink-0 w-full bg-white dark:bg-[#161b22] border border-gray-800 hover:border-gray-600 text-gray-400 hover:text-white rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm"
+                                className="mt-auto shrink-0 w-full bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 hover:border-slate-400 dark:hover:border-gray-600 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-xs"
                               >
                                 <Plus size={16} /> Adicionar novo cartão
                               </button>
@@ -626,12 +629,14 @@ export default function MarketingKanban({
       {/* ========================================================================= */}
       {/* 2. VISÃO EM TABELA (DENSA E ALINHADA AO CRM COMERCIAL)                     */}
       {/* ========================================================================= */}
+      {/* 2. VISÃO EM TABELA (DENSA E ALINHADA AO CRM COMERCIAL)                     */}
+      {/* ========================================================================= */}
       {viewMode === "table" && (
-        <div className="flex-1 flex flex-col bg-white dark:bg-[#161b22] border border-gray-800 rounded-xl overflow-hidden shadow-lg animate-in fade-in duration-200">
+        <div className="flex-1 flex flex-col bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-xs dark:shadow-lg animate-in fade-in duration-200">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-[#1c2128] border-b border-gray-800 text-gray-400 font-semibold uppercase text-[10px] tracking-wider">
+                <tr className="bg-slate-100 dark:bg-[#1c2128] border-b border-slate-200 dark:border-gray-800 text-slate-700 dark:text-gray-400 font-semibold uppercase text-[10px] tracking-wider">
                   <th className="py-3 px-4">Demanda / Título</th>
                   <th className="py-3 px-4">Cliente</th>
                   <th className="py-3 px-4">Formato</th>
@@ -641,10 +646,10 @@ export default function MarketingKanban({
                   <th className="py-3 px-4 text-right">Checklist</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800/60">
+              <tbody className="divide-y divide-slate-200 dark:divide-gray-800/60">
                 {filteredCards.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-12 text-gray-500">
+                    <td colSpan={7} className="text-center py-12 text-slate-500">
                       Nenhuma demanda encontrada com os filtros aplicados.
                     </td>
                   </tr>
@@ -657,19 +662,19 @@ export default function MarketingKanban({
                       <tr
                         key={card.id}
                         onClick={() => onOpenCardModal(card)}
-                        className="hover:bg-[#1f242d] cursor-pointer transition-colors text-slate-300"
+                        className="hover:bg-slate-50 dark:hover:bg-[#1f242d] cursor-pointer transition-colors text-slate-700 dark:text-slate-300"
                       >
-                        <td className="py-3 px-4 font-bold text-white flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${col?.color?.replace("text-", "bg-") || "bg-cyan-400"}`} />
+                        <td className="py-3 px-4 font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${col?.color?.replace("text-", "bg-") || "bg-blue-600"}`} />
                           <span className="truncate max-w-[280px]">{card.title}</span>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="font-semibold text-slate-200">
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
                             {card.marketingClient?.name || "Cliente"}
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="font-mono text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300 uppercase">
+                          <span className="font-mono text-[10px] bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-transparent px-2 py-0.5 rounded uppercase font-semibold">
                             {card.format}
                           </span>
                         </td>
@@ -678,19 +683,19 @@ export default function MarketingKanban({
                             {col?.title || card.status}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-slate-400">
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
                           {card.assignedUser?.name || "Fila da Agência"}
                         </td>
-                        <td className="py-3 px-4 font-mono text-[11px] text-slate-400">
+                        <td className="py-3 px-4 font-mono text-[11px] text-slate-600 dark:text-slate-400">
                           {card.dueDate ? new Date(card.dueDate).toLocaleDateString("pt-BR") : "-"}
                         </td>
                         <td className="py-3 px-4 text-right font-mono text-[11px]">
                           {total > 0 ? (
-                            <span className={completed === total ? "text-emerald-400 font-bold" : "text-slate-400"}>
+                            <span className={completed === total ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400"}>
                               {completed}/{total}
                             </span>
                           ) : (
-                            <span className="text-slate-600">-</span>
+                            <span className="text-slate-400">-</span>
                           )}
                         </td>
                       </tr>
@@ -707,10 +712,10 @@ export default function MarketingKanban({
       {/* 3. VISÃO EM LINHA DO TEMPO (CALENDÁRIO DA SEMANA)                          */}
       {/* ========================================================================= */}
       {viewMode === "timeline" && (
-        <div className="flex-1 flex flex-col bg-white dark:bg-[#161b22] border border-gray-800 rounded-xl p-4 shadow-lg animate-in fade-in duration-200">
-          <div className="flex items-center justify-between pb-3 border-b border-gray-800 mb-4">
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-primary" />
+        <div className="flex-1 flex flex-col bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl p-4 shadow-xs dark:shadow-lg animate-in fade-in duration-200">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-gray-800 mb-4">
+            <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <CalendarDays className="w-4 h-4 text-blue-600 dark:text-primary" />
               <span>Cronograma da Semana</span>
             </h3>
             <div className="flex items-center gap-2">
@@ -721,14 +726,14 @@ export default function MarketingKanban({
                   d.setDate(d.getDate() - 7);
                   setTimelineStartDate(d);
                 }}
-                className="px-2.5 py-1 rounded bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-xs text-gray-300 hover:text-white"
+                className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-[#0d1117] dark:hover:bg-gray-800 border border-slate-300 dark:border-gray-800 text-xs text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white"
               >
                 Semana Anterior
               </button>
               <button
                 type="button"
                 onClick={() => setTimelineStartDate(getSundayOfWeek(new Date()))}
-                className="px-2.5 py-1 rounded bg-primary text-white text-xs font-bold"
+                className="px-2.5 py-1 rounded bg-blue-600 text-white text-xs font-bold shadow-xs"
               >
                 Esta Semana
               </button>
@@ -739,7 +744,7 @@ export default function MarketingKanban({
                   d.setDate(d.getDate() + 7);
                   setTimelineStartDate(d);
                 }}
-                className="px-2.5 py-1 rounded bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-xs text-gray-300 hover:text-white"
+                className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-[#0d1117] dark:hover:bg-gray-800 border border-slate-300 dark:border-gray-800 text-xs text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white"
               >
                 Próxima Semana
               </button>
@@ -758,13 +763,13 @@ export default function MarketingKanban({
               return (
                 <div
                   key={i}
-                  className="bg-slate-100 dark:bg-[#0d1117] border border-gray-800/80 rounded-xl p-2.5 flex flex-col min-h-[300px]"
+                  className="bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800/80 rounded-xl p-2.5 flex flex-col min-h-[300px]"
                 >
-                  <div className="text-center pb-2 border-b border-gray-800 mb-2">
-                    <span className="text-[10px] uppercase font-bold text-gray-500 block">
+                  <div className="text-center pb-2 border-b border-slate-200 dark:border-gray-800 mb-2">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">
                       {dayDate.toLocaleDateString("pt-BR", { weekday: "short" })}
                     </span>
-                    <span className="text-xs font-bold text-white font-mono">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white font-mono">
                       {dayDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
                     </span>
                   </div>
@@ -774,16 +779,16 @@ export default function MarketingKanban({
                       <div
                         key={card.id}
                         onClick={() => onOpenCardModal(card)}
-                        className="p-2 rounded-lg bg-white dark:bg-[#161b22] border border-gray-800 hover:border-cyan-500/50 cursor-pointer transition-colors shadow-sm text-xs"
+                        className="p-2 rounded-lg bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 hover:border-blue-500/50 cursor-pointer transition-colors shadow-xs text-xs"
                       >
-                        <span className="font-bold text-white truncate block">{card.title}</span>
-                        <span className="text-[10px] text-cyan-400 block truncate">
+                        <span className="font-bold text-slate-900 dark:text-white truncate block">{card.title}</span>
+                        <span className="text-[10px] text-blue-600 dark:text-cyan-400 block truncate font-medium">
                           {card.marketingClient?.name || "Cliente"}
                         </span>
                       </div>
                     ))}
                     {dayCards.length === 0 && (
-                      <span className="text-[10px] text-gray-600 block text-center pt-8">
+                      <span className="text-[10px] text-slate-400 dark:text-gray-600 block text-center pt-8">
                         Livre
                       </span>
                     )}
@@ -944,7 +949,7 @@ function MarketingKanbanCard({
           {...provided.dragHandleProps}
           style={{ ...provided.draggableProps.style }}
           onClick={onOpenCard}
-          className={`group relative flex flex-col gap-2.5 rounded-xl border border-slate-800/80 bg-white dark:bg-[#161b22] p-4 text-slate-200 shadow-md transition-all hover:border-slate-700 cursor-pointer ${
+          className={`group relative flex flex-col gap-2.5 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#161b22] p-4 text-slate-900 dark:text-slate-200 shadow-xs hover:border-blue-500/50 dark:hover:border-slate-700 cursor-pointer ${
             snapshot.isDragging
               ? `rotate-2 scale-[1.02] shadow-2xl transition-transform duration-150 z-50 ring-1 ${col.borderLight} bg-gray-800`
               : ""
@@ -972,12 +977,12 @@ function MarketingKanbanCard({
               </div>
               <div className="flex flex-col min-w-0">
                 <h4
-                  className={`text-[15px] font-bold leading-snug truncate group-hover:text-primary transition-colors ${col.color.replace("500", "400").replace("600", "400")}`}
+                  className="text-[15px] font-bold leading-snug truncate group-hover:text-blue-600 dark:group-hover:text-primary transition-colors text-slate-900 dark:text-white"
                 >
                   {card.title || "Demanda sem título"}
                 </h4>
-                <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 inline-block" />
+                <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 inline-block" />
                   <span className="truncate">
                     {card.marketingClient?.contactPhone || card.marketingClient?.name || "Cliente Agência"}
                   </span>
@@ -995,7 +1000,7 @@ function MarketingKanbanCard({
             const isVideo = card.format === "REELS" || detectMediaType(mediaAtt?.name || card.title, card.format) === "video";
 
             return (
-              <div className="relative w-full h-32 rounded-lg overflow-hidden bg-black/50 border border-slate-800/80 my-1 group/thumb">
+              <div className="relative w-full h-32 rounded-lg overflow-hidden bg-black/50 border border-slate-200 dark:border-slate-800/80 my-1 group/thumb">
                 <img
                   src={thumbUrl}
                   alt={card.title}
@@ -1007,7 +1012,7 @@ function MarketingKanbanCard({
                 />
                 {isVideo && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[0.5px]">
-                    <div className="w-8 h-8 rounded-full bg-cyan-600/90 text-white flex items-center justify-center shadow-lg border border-cyan-400/30">
+                    <div className="w-8 h-8 rounded-full bg-blue-600/90 text-white flex items-center justify-center shadow-lg border border-blue-400/30">
                       <Play size={13} className="fill-white ml-0.5" />
                     </div>
                   </div>
@@ -1017,45 +1022,45 @@ function MarketingKanbanCard({
           })()}
 
           {/* BADGE DE TIPO / FORMATO */}
-          <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400 mt-1">
-            <span className="text-emerald-400">•</span>
+          <div className="flex items-center gap-1 text-[11px] font-medium text-slate-600 dark:text-slate-400 mt-1">
+            <span className="text-emerald-500">•</span>
             <span className="capitalize">{card.format?.toLowerCase() || "peça"}</span>
           </div>
 
           {/* CAIXA CINZA DE METADADOS & ACCORDION (IDÊNTICA AO CRM) */}
           <div
-            className="rounded-lg bg-slate-100 dark:bg-[#0d1117] p-3 text-xs text-slate-300 border border-slate-800/60"
+            className="rounded-lg bg-slate-50 dark:bg-[#0d1117] p-3 text-xs text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800/60"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="font-bold text-slate-200">
+            <p className="font-bold text-slate-800 dark:text-slate-200">
               ORIGEM: [{card.marketingClient?.name ? `CLIENTE: ${card.marketingClient.name}` : "BRIEFING"}]
             </p>
 
             {card.description ? (
-              <p className="mt-1 text-slate-400 line-clamp-2">
+              <p className="mt-1 text-slate-600 dark:text-slate-400 line-clamp-2">
                 {card.description}
               </p>
             ) : null}
 
             {/* CONTEÚDO EXPANSÍVEL */}
             {isExpanded && (
-              <div className="mt-2.5 space-y-1.5 border-t border-slate-800/80 pt-2 text-slate-300 text-[11px] animate-in slide-in-from-top-2">
-                <p className="font-bold text-slate-200">DETALHES DA DEMANDA & PRAZOS:</p>
+              <div className="mt-2.5 space-y-1.5 border-t border-slate-200 dark:border-slate-800/80 pt-2 text-slate-700 dark:text-slate-300 text-[11px] animate-in slide-in-from-top-2">
+                <p className="font-bold text-slate-800 dark:text-slate-200">DETALHES DA DEMANDA & PRAZOS:</p>
                 {card.dueDate && (
                   <p>
-                    • <span className="text-slate-400">Prazo de Entrega:</span>{" "}
+                    • <span className="text-slate-500 dark:text-slate-400">Prazo de Entrega:</span>{" "}
                     {new Date(card.dueDate).toLocaleDateString("pt-BR")}
                   </p>
                 )}
                 {card.publishDate && (
                   <p>
-                    • <span className="text-slate-400">Publicação:</span>{" "}
+                    • <span className="text-slate-500 dark:text-slate-400">Publicação:</span>{" "}
                     {new Date(card.publishDate).toLocaleDateString("pt-BR")}
                   </p>
                 )}
                 {totalChecklist > 0 && (
                   <p>
-                    • <span className="text-slate-400">Checklist:</span> {completedChecklist}/{totalChecklist} concluídas
+                    • <span className="text-slate-500 dark:text-slate-400">Checklist:</span> {completedChecklist}/{totalChecklist} concluídas
                   </p>
                 )}
                 {!card.description && !card.dueDate && !card.publishDate && (
@@ -1065,23 +1070,23 @@ function MarketingKanbanCard({
             )}
 
             {/* BOTÕES DO ACCORDION: MAIS / MENOS & COPIAR */}
-            <div className="mt-2.5 flex items-center justify-between pt-1 border-t border-slate-800/40">
+            <div className="mt-2.5 flex items-center justify-between pt-1 border-t border-slate-200 dark:border-slate-800/40">
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsExpanded(!isExpanded);
                 }}
-                className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+                className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors"
               >
                 {isExpanded ? (
                   <>
-                    <ChevronUp className="w-3.5 h-3.5 text-slate-400" strokeWidth={1.75} />
+                    <ChevronUp className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" strokeWidth={1.75} />
                     <span>Menos</span>
                   </>
                 ) : (
                   <>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" strokeWidth={1.75} />
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" strokeWidth={1.75} />
                     <span>Mais</span>
                   </>
                 )}
@@ -1095,20 +1100,20 @@ function MarketingKanbanCard({
                     navigator.clipboard?.writeText(card.description || card.title);
                     toast.success("Copiado!");
                   }}
-                  className="group/btn flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-200 transition-colors"
+                  className="group/btn flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
                 >
-                  <Copy size={13} className="text-slate-500 group-hover/btn:text-slate-300 transition-colors" /> Copiar descrição
+                  <Copy size={13} className="text-slate-400 group-hover/btn:text-slate-600 dark:text-slate-500 dark:group-hover/btn:text-slate-300 transition-colors" /> Copiar descrição
                 </button>
               )}
             </div>
           </div>
 
           {/* BARRA DE FERRAMENTAS E AUDITORIA (HOVER DRAWER IDÊNTICO AO CRM) */}
-          <div className="max-h-0 opacity-0 group-hover:max-h-[100px] group-hover:opacity-100 transition-all duration-300 ease-in-out overflow-hidden flex flex-col gap-2 pt-0 group-hover:pt-2 border-t border-transparent group-hover:border-slate-800/40">
+          <div className="max-h-0 opacity-0 group-hover:max-h-[100px] group-hover:opacity-100 transition-all duration-300 ease-in-out overflow-hidden flex flex-col gap-2 pt-0 group-hover:pt-2 border-t border-transparent group-hover:border-slate-200 dark:group-hover:border-slate-800/40">
             <p className="text-[10px] text-slate-500 font-medium">
               Criado por {card.assignedUser?.name || "Equipe da Agência"}.
             </p>
-            <div className="flex items-center gap-2 text-slate-400">
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
               <button
                 title="Ver Chat / Briefing"
                 type="button"
@@ -1116,7 +1121,7 @@ function MarketingKanbanCard({
                   e.stopPropagation();
                   onOpenCard();
                 }}
-                className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"
+                className="rounded p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <MessageSquare size={15} />
               </button>
@@ -1128,7 +1133,7 @@ function MarketingKanbanCard({
                   e.stopPropagation();
                   onOpenCard();
                 }}
-                className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"
+                className="rounded p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <Calendar size={15} />
               </button>
@@ -1140,7 +1145,7 @@ function MarketingKanbanCard({
                   e.stopPropagation();
                   onOpenCard();
                 }}
-                className="rounded p-1.5 hover:bg-slate-700 hover:text-white transition-colors"
+                className="rounded p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 <CheckSquare size={15} />
               </button>
@@ -1152,7 +1157,7 @@ function MarketingKanbanCard({
                   e.stopPropagation();
                   onOpenCard();
                 }}
-                className="ml-auto rounded p-1.5 hover:bg-slate-700 hover:text-cyan-400 transition-colors"
+                className="ml-auto rounded p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-cyan-400 transition-colors"
               >
                 <ArrowUpRight size={15} strokeWidth={1.75} />
               </button>
@@ -1161,35 +1166,35 @@ function MarketingKanbanCard({
 
           {/* TAGS DE FORMATO & ENTREGA DA PEÇA */}
           <div className="flex items-center justify-between mt-1 text-[11px]">
-            <span className="font-mono font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700/60 uppercase">
+            <span className="font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700/60 uppercase">
               {card.format || "Peça"}
             </span>
 
             {card.dueDate && (
-              <span className="text-slate-400 font-mono flex items-center gap-1">
-                <Calendar size={12} strokeWidth={1.5} className="text-cyan-400" />
+              <span className="text-slate-600 dark:text-slate-400 font-mono flex items-center gap-1">
+                <Calendar size={12} strokeWidth={1.5} className="text-blue-600 dark:text-cyan-400" />
                 {new Date(card.dueDate).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
               </span>
             )}
           </div>
 
           {/* RESPONSÁVEL / ASSIGNEE */}
-          <div className="mt-1 flex items-center gap-2 border-t border-slate-800/40 pt-3">
+          <div className="mt-1 flex items-center gap-2 border-t border-slate-200 dark:border-slate-800/40 pt-3">
             {card.assignedUser?.name ? (
               <>
                 <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[9px] font-bold text-white shadow-md">
                   {card.assignedUser.name[0]?.toUpperCase()}
                 </div>
-                <span className="text-[11px] text-slate-400 font-semibold truncate">
+                <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold truncate">
                   {card.assignedUser.name}
                 </span>
               </>
             ) : (
               <>
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-[9px] font-bold text-slate-300 shadow-md">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-[9px] font-bold text-slate-700 dark:text-slate-300 shadow-sm">
                   F
                 </div>
-                <span className="text-[11px] text-slate-400 font-semibold italic">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold italic">
                   Fila Geral
                 </span>
               </>

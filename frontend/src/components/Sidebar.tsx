@@ -41,6 +41,7 @@ import {
   Briefcase,
   Calendar,
   FolderArchive,
+  Network,
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -112,6 +113,7 @@ const NAV_GROUPS = [
       { name: "Inteligência Artificial (BYOK)", icon: Sparkles, href: "/settings?tab=ai" },
       { name: "Automações & Regras", icon: Zap, href: "/settings?tab=automations" },
       { name: "Usuários & Acessos", icon: Users, href: "/settings?tab=users" },
+      { name: "Departamentos e Filas", icon: Network, href: "/settings?tab=departments" },
       { name: "Conexões WhatsApp", icon: Smartphone, href: "/settings/whatsapp" },
       { name: "Central de Suporte", icon: LifeBuoy, href: "/support" },
       { name: "Configurações Gerais", icon: Settings, href: "/settings" },
@@ -569,6 +571,11 @@ export default function Sidebar() {
     // Configurações Gerais e Abas Específicas
     if (href.includes('tab=users')) {
       if (menus?.users !== undefined) return menus.users;
+      return perms.settings === true;
+    }
+
+    if (href.includes('tab=departments')) {
+      if (menus?.departments !== undefined) return menus.departments;
       return perms.settings === true;
     }
 

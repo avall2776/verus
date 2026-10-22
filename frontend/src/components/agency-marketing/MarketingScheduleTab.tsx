@@ -100,17 +100,17 @@ export default function MarketingScheduleTab({
   return (
     <div className="space-y-4">
       {/* Barra Superior do Calendário */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-2xl bg-white dark:bg-[#0B1224]/80 backdrop-blur-md border border-slate-800 shadow-md">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-2xl bg-white dark:bg-[#0B1224]/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-cyan-500/10 border border-blue-200 dark:border-cyan-500/30 flex items-center justify-center text-blue-600 dark:text-cyan-400 shrink-0">
             <CalendarIcon className="w-5 h-5" />
           </div>
 
           <div>
-            <h3 className="text-base font-bold text-white capitalize leading-tight">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white capitalize leading-tight">
               {monthName}
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Cronograma de publicações e entregas da agência
             </p>
           </div>
@@ -119,23 +119,23 @@ export default function MarketingScheduleTab({
         {/* Controles de Navegação e Filtros */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Navegador de Mês */}
-          <div className="flex items-center gap-1 bg-slate-50 dark:bg-[#070D1B] p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center gap-1 bg-slate-50 dark:bg-[#070D1B] p-1 rounded-xl border border-slate-300 dark:border-slate-800">
             <button
               onClick={prevMonth}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
               title="Mês anterior"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={setToday}
-              className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
             >
               Hoje
             </button>
             <button
               onClick={nextMonth}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
               title="Próximo mês"
             >
               <ChevronRight className="w-4 h-4" />
@@ -146,7 +146,7 @@ export default function MarketingScheduleTab({
           <select
             value={selectedClient}
             onChange={(e) => setSelectedClient(e.target.value)}
-            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
+            className="p-2 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-800 dark:text-white outline-none focus:border-blue-600 dark:focus:border-cyan-500"
           >
             <option value="ALL">Todos os Clientes</option>
             {clients.map((c) => (
@@ -160,7 +160,7 @@ export default function MarketingScheduleTab({
           <select
             value={selectedUser}
             onChange={(e) => setSelectedUser(e.target.value)}
-            className="p-2 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-white outline-none focus:border-cyan-500"
+            className="p-2 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-slate-800 dark:text-white outline-none focus:border-blue-600 dark:focus:border-cyan-500"
           >
             <option value="ALL">Toda a Equipe</option>
             {teamMembers.map((m) => (
@@ -170,10 +170,10 @@ export default function MarketingScheduleTab({
             ))}
           </select>
 
-          {/* Botão Nova Demanda */}
+          {/* Botão Nova Demanda (Sem Degradê, Azul Sólido Corporativo) */}
           <button
             onClick={() => onOpenCardModal()}
-            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-cyan-500/20 active:scale-95 transition-all"
+            className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Nova Peça</span>
@@ -182,19 +182,19 @@ export default function MarketingScheduleTab({
       </div>
 
       {/* Grade do Calendário Mensal */}
-      <div className="rounded-2xl bg-white dark:bg-[#0B1224]/90 backdrop-blur-md border border-slate-800 shadow-xl overflow-hidden">
+      <div className="rounded-2xl bg-white dark:bg-[#0B1224]/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         {/* Cabeçalho dos Dias da Semana */}
-        <div className="grid grid-cols-7 border-b border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider py-2.5">
+        <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-[#070D1B] text-center text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider py-2.5">
           {weekDays.map((d) => (
             <div key={d}>{d}</div>
           ))}
         </div>
 
         {/* Células dos Dias */}
-        <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-slate-800/80 bg-slate-50 dark:bg-[#070D1B]/50">
+        <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-slate-200 dark:divide-slate-800/80 bg-white dark:bg-[#070D1B]/50">
           {/* Células Vazias antes do primeiro dia */}
           {Array.from({ length: startingDayIndex }).map((_, i) => (
-            <div key={`empty-${i}`} className="min-h-[110px] p-2 bg-white dark:bg-[#0B1224]/30 opacity-40" />
+            <div key={`empty-${i}`} className="min-h-[110px] p-2 bg-slate-50 dark:bg-[#0B1224]/30 opacity-40" />
           ))}
 
           {/* Dias do Mês */}
@@ -208,8 +208,8 @@ export default function MarketingScheduleTab({
                 key={`day-${dayNum}`}
                 className={`min-h-[110px] p-2 flex flex-col justify-between transition-colors ${
                   isToday
-                    ? "bg-cyan-950/20 border-cyan-500/30"
-                    : "hover:bg-slate-800/30"
+                    ? "bg-blue-50/50 dark:bg-cyan-950/20 border-blue-500/30 dark:border-cyan-500/30"
+                    : "hover:bg-slate-50 dark:hover:bg-slate-800/30"
                 }`}
               >
                 {/* Número do Dia */}
@@ -217,8 +217,8 @@ export default function MarketingScheduleTab({
                   <span
                     className={`text-xs font-mono font-bold w-6 h-6 rounded-full flex items-center justify-center ${
                       isToday
-                        ? "bg-cyan-500 text-[#050814] shadow-md shadow-cyan-500/40"
-                        : "text-slate-300"
+                        ? "bg-blue-600 text-white dark:bg-cyan-500 dark:text-[#050814] shadow-sm"
+                        : "text-slate-700 dark:text-slate-300"
                     }`}
                   >
                     {dayNum}
@@ -237,7 +237,7 @@ export default function MarketingScheduleTab({
                     <div
                       key={card.id}
                       onClick={() => onOpenCardModal(card)}
-                      className="p-1 px-1.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 hover:border-cyan-500/40 text-[10px] text-slate-200 transition-all cursor-pointer flex items-center gap-1.5 truncate group"
+                      className="p-1 px-1.5 rounded-lg bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-cyan-500/40 text-[10px] text-slate-800 dark:text-slate-200 transition-all cursor-pointer flex items-center gap-1.5 truncate group"
                       title={`${card.marketingClient?.name || "Cliente"} - ${card.title}`}
                     >
                       <span
@@ -245,7 +245,7 @@ export default function MarketingScheduleTab({
                         style={{ backgroundColor: card.marketingClient?.brandColor || "#00D2FF" }}
                       />
                       <span className="shrink-0">{getFormatIcon(card.format)}</span>
-                      <span className="truncate group-hover:text-cyan-300 transition-colors">
+                      <span className="truncate group-hover:text-blue-600 dark:group-hover:text-cyan-300 transition-colors">
                         {card.title}
                       </span>
                     </div>

@@ -777,7 +777,11 @@ export default function UsersSettingsTab() {
                           />
 
                           {/* Avatar com badge de proprietário se aplicável */}
-                          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center font-bold text-slate-200 text-xs shrink-0 overflow-hidden relative shadow-inner">
+                          <div
+                            onClick={() => handleOpenEdit(u)}
+                            className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center font-bold text-slate-200 text-xs shrink-0 overflow-hidden relative shadow-inner cursor-pointer hover:border-emerald-500/80 hover:ring-2 hover:ring-emerald-500/20 transition-all"
+                            title="Clique para editar usuário"
+                          >
                             {u.avatarUrl ? (
                               <img src={u.avatarUrl} alt={u.name} className="w-full h-full object-cover" />
                             ) : (
@@ -786,7 +790,11 @@ export default function UsersSettingsTab() {
                           </div>
 
                           <div className="min-w-0">
-                            <div className="font-bold text-white truncate max-w-[180px] flex items-center gap-1.5">
+                            <div
+                              onClick={() => handleOpenEdit(u)}
+                              className="font-bold text-white truncate max-w-[180px] flex items-center gap-1.5 cursor-pointer hover:text-emerald-400 hover:underline transition-colors"
+                              title="Clique para editar usuário"
+                            >
                               <span>{u.name}</span>
                               {isOwner && (
                                 <span title="Proprietário da Conta">
@@ -877,27 +885,37 @@ export default function UsersSettingsTab() {
                         )}
                       </td>
 
-                      {/* Ações (Dropdown Três Pontos) */}
+                      {/* Ações (Editar Direto + Dropdown Três Pontos) */}
                       <td className="py-3 px-3 text-center relative">
-                        {isOwner ? (
-                          <span className="text-[11px] text-slate-400 font-semibold italic">
-                            Proprietário
-                          </span>
-                        ) : (
-                          <div className="relative inline-block text-left">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenActionMenuId(openActionMenuId === u.id ? null : u.id);
-                              }}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-                              title="Mais opções"
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </button>
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(u)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition-colors cursor-pointer"
+                            title="Editar Colaborador"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
 
-                            {openActionMenuId === u.id && (
+                          {isOwner ? (
+                            <span className="text-[10px] text-emerald-400 font-semibold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                              Dono
+                            </span>
+                          ) : (
+                            <div className="relative inline-block text-left">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenActionMenuId(openActionMenuId === u.id ? null : u.id);
+                                }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                                title="Mais opções"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
+
+                              {openActionMenuId === u.id && (
                               <div
                                 onClick={(e) => e.stopPropagation()}
                                 className="absolute right-0 top-8 z-30 w-48 rounded-xl bg-[#141b27] border border-slate-700/80 shadow-2xl p-1 text-left animate-in fade-in zoom-in-95 duration-150"
@@ -967,6 +985,7 @@ export default function UsersSettingsTab() {
                             )}
                           </div>
                         )}
+                        </div>
                       </td>
                     </tr>
                   );
