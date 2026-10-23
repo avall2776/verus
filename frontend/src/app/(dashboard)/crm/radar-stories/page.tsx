@@ -10,6 +10,7 @@ import {
   Building2,
   MapPin,
   Clock,
+  Calendar,
   RefreshCw,
   Search,
   Filter,
@@ -23,7 +24,10 @@ import {
   Send,
   Loader2,
   FileText,
-  BadgeAlert
+  BadgeAlert,
+  CheckCircle2,
+  ShieldCheck,
+  PlayCircle
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -37,6 +41,7 @@ import {
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useSocket } from "@/components/ui/SocketProvider";
 
 interface StoryViewer {
   id: string;
@@ -52,13 +57,16 @@ interface StoryViewer {
   lastPurchaseDate?: string;
   daysInactive: number;
   assignedSeller: string;
+  hasRealView: boolean;
   storyMedia: {
     id: string;
     title: string;
-    category: "Maquinários" | "Insumos" | "Cotações" | "Peças & Serviços";
+    category: string;
     viewedAt: string;
+    exactDate: string;
+    exactTime: string;
     viewsCountWeek: number;
-    interestLevel: "Alta Frequência" | "Frequência Moderada" | "Visualização Recente";
+    interestLevel: "Alta Frequência" | "Frequência Moderada" | "Visualização Recente" | "Aguardando Visualização";
     thumbnailUrl?: string;
   };
 }
@@ -89,6 +97,7 @@ interface RadarMetrics {
 
 export default function RadarStoriesPage() {
   const { theme } = useTheme();
+  const { socket } = useSocket();
 
   // Estados principais
   const [metrics, setMetrics] = useState<RadarMetrics | null>(null);
@@ -112,6 +121,14 @@ export default function RadarStoriesPage() {
     suggestedProduct: string;
   } | null>(null);
   const [copiedMessage, setCopiedMessage] = useState<boolean>(false);
+
+  // Modal de Teste de Reconhecimento Manual
+  const [isTestModalOpen, setIsTestModalOpen] = useState<boolean>(false);
+  const [testPhone, setTestPhone] = useState<string>("");
+  const [testName, setTestName] = useState<string>("");
+  const [testPostTitle, setTestPostTitle] = useState<string>("Demonstração Técnica da Semeadeira Verto Max em Operação");
+  const [testCategory, setTestCategory] = useState<string>("Maquinários");
+  const [isSubmittingTest, setIsSubmittingTest] = useState<boolean>(false);
 
   // Carregar dados de métricas
   const fetchMetrics = async () => {
@@ -146,11 +163,42 @@ export default function RadarStoriesPage() {
 
   useEffect(() => {
     fetchMetrics();
+    fetchViewers();
   }, []);
 
   useEffect(() => {
     fetchViewers();
   }, [selectedStatus, selectedCategory, searchQuery]);
+
+  // Escuta WebSocket em tempo real para novos stories e visualizações
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleStoryView = (data: any) => {
+      toast.info(
+        `Visualização Detectada: ${data.contactName || data.phone} viu "${data.storyTitle}"`,
+        { description: `Data & Horário gravados com precisão no sistema.` }
+      );
+      fetchMetrics();
+      fetchViewers();
+    };
+
+    const handleStoryPosted = (data: any) => {
+      toast.success(`Novo Story postado no WhatsApp: "${data.title}"`, {
+        description: `Categoria identificada: ${data.category}. Monitoramento de visualizações ativado.`,
+      });
+      fetchMetrics();
+      fetchViewers();
+    };
+
+    socket.on("radar:story-view", handleStoryView);
+    socket.on("radar:story-posted", handleStoryPosted);
+
+    return () => {
+      socket.off("radar:story-view", handleStoryView);
+      socket.off("radar:story-posted", handleStoryPosted);
+    };
+  }, [socket]);
 
   // Disparar geração de abordagem pela OpenAI
   const handleOpenAiModal = async (viewer: StoryViewer) => {
@@ -200,6 +248,37 @@ export default function RadarStoriesPage() {
     window.open(`https://wa.me/${cleanPhone}?text=${encoded}`, "_blank");
   };
 
+  // Registrar teste de reconhecimento
+  const handleTestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!testPhone.trim()) {
+      toast.error("Informe o telefone para o teste.");
+      return;
+    }
+
+    try {
+      setIsSubmittingTest(true);
+      await api.post("/crm/radar-stories/record-view", {
+        phone: testPhone,
+        contactName: testName.trim() || undefined,
+        storyTitle: testPostTitle,
+        category: testCategory,
+        viewedAt: new Date().toISOString(),
+      });
+
+      toast.success("Visualização registrada com sucesso!");
+      setIsTestModalOpen(false);
+      setTestPhone("");
+      setTestName("");
+      fetchMetrics();
+      fetchViewers();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Erro ao registrar visualização de teste.");
+    } finally {
+      setIsSubmittingTest(false);
+    }
+  };
+
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(val);
   };
@@ -216,11 +295,17 @@ export default function RadarStoriesPage() {
               <Radio className="w-5 h-5 animate-pulse" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-wide">
-                Radar de Stories & Status
-              </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Rastreamento e inteligência comercial sobre visualizadores silenciosos de WhatsApp e Instagram para o Agronegócio.
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-wide">
+                  Radar de Stories & Status
+                </h1>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3" />
+                  WhatsApp Conectado
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Rastreamento e inteligência comercial sobre visualizadores silenciosos de WhatsApp para o Agronegócio. Dados 100% auditáveis com rastreio de data, horário e post.
               </p>
             </div>
           </div>
@@ -228,10 +313,18 @@ export default function RadarStoriesPage() {
 
         <div className="flex items-center gap-2.5">
           <button
+            onClick={() => setIsTestModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors shadow-sm"
+          >
+            <PlayCircle className="w-3.5 h-3.5 text-blue-500" />
+            <span>Testar Reconhecimento</span>
+          </button>
+
+          <button
             onClick={() => {
               fetchMetrics();
               fetchViewers();
-              toast.success("Dados do Radar atualizados.");
+              toast.success("Dados do Radar sincronizados com a base em tempo real.");
             }}
             disabled={loadingMetrics || loadingViewers}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-700 transition-colors shadow-sm"
@@ -243,14 +336,14 @@ export default function RadarStoriesPage() {
       </div>
 
       {/* ======================================================================= */}
-      {/* 2. KPIS EXECUTIVOS                                                      */}
+      {/* 2. KPIS EXECUTIVOS BASEADOS NO BANCO REAL                              */}
       {/* ======================================================================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Visualizações Hoje */}
         <div className="p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Visualizações Silenciosas (Hoje)
+              Visualizações Confirmadas (Hoje)
             </span>
             <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
               <Eye className="w-4 h-4" />
@@ -261,16 +354,16 @@ export default function RadarStoriesPage() {
               {metrics?.kpis.totalViewsToday || 0}
             </div>
             <div className="text-xs text-blue-500 font-semibold mt-0.5">
-              {metrics?.kpis.totalViewsWeek || 0} visualizações na semana
+              {metrics?.kpis.totalViewsWeek || 0} visualizações nos últimos 7 dias
             </div>
           </div>
         </div>
 
-        {/* Card 2: Produtores Rastreados */}
+        {/* Card 2: Contatos Rastreados no Tenant */}
         <div className="p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Produtores Rastreados
+              Base de Contatos na Linha
             </span>
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
               <Users className="w-4 h-4" />
@@ -278,10 +371,10 @@ export default function RadarStoriesPage() {
           </div>
           <div>
             <div className="text-2xl font-black text-slate-900 dark:text-white">
-              {metrics?.kpis.producersTracked || 0}
+              {(metrics?.kpis.producersTracked || 0).toLocaleString("pt-BR")}
             </div>
             <div className="text-xs text-emerald-500 font-semibold mt-0.5">
-              Contatos com telefone e praça identificados
+              Contatos reais com WhatsApp no ecossistema
             </div>
           </div>
         </div>
@@ -290,7 +383,7 @@ export default function RadarStoriesPage() {
         <div className="p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Inativos Reaquecidos (+30d)
+              Interações de Status Recentes
             </span>
             <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
               <TrendingUp className="w-4 h-4" />
@@ -301,16 +394,16 @@ export default function RadarStoriesPage() {
               {metrics?.kpis.inactiveReheated || 0}
             </div>
             <div className="text-xs text-amber-500 font-semibold mt-0.5">
-              Antigos compradores de olho no catálogo
+              Clientes que visualizaram status nesta semana
             </div>
           </div>
         </div>
 
-        {/* Card 4: Oportunidades Quentes */}
+        {/* Card 4: Oportunidades em Aberto no Funil */}
         <div className="p-5 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Taxa de Conversão por Status
+              Oportunidades no CRM
             </span>
             <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-500">
               <Activity className="w-4 h-4" />
@@ -318,10 +411,10 @@ export default function RadarStoriesPage() {
           </div>
           <div>
             <div className="text-2xl font-black text-slate-900 dark:text-white">
-              {metrics?.kpis.conversionRatePercent || 0}%
+              {metrics?.kpis.hotOpportunities || 0}
             </div>
             <div className="text-xs text-purple-400 font-semibold mt-0.5">
-              {metrics?.kpis.hotOpportunities || 0} negócios em aquecimento
+              Negócios ativos em negociação na carteira
             </div>
           </div>
         </div>
@@ -338,7 +431,7 @@ export default function RadarStoriesPage() {
                 Fluxo de Visualizações de Status (Últimos 7 dias)
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Segmentação diária por categoria técnica de produto exibido.
+                Segmentação diária baseada em eventos reais do WhatsApp conectado.
               </p>
             </div>
             <div className="flex items-center gap-3 text-xs font-semibold">
@@ -369,7 +462,7 @@ export default function RadarStoriesPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={theme === "light" ? "#E2E8F0" : "#1E293B"} vertical={false} />
                 <XAxis dataKey="date" stroke="#64748B" fontSize={11} tickLine={false} />
-                <YAxis stroke="#64748B" fontSize={11} tickLine={false} />
+                <YAxis stroke="#64748B" fontSize={11} tickLine={false} allowDecimals={false} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: theme === "light" ? "#FFFFFF" : "#070D1B",
@@ -393,7 +486,7 @@ export default function RadarStoriesPage() {
               Interesse por Segmento
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Quais temas retêm maior tempo de tela dos compradores.
+              Distribuição percentual de visualizações por categoria técnica.
             </p>
 
             <div className="space-y-4 mt-6">
@@ -408,7 +501,7 @@ export default function RadarStoriesPage() {
                       className={`h-full rounded-full ${
                         idx === 0 ? "bg-emerald-500" : idx === 1 ? "bg-blue-600" : idx === 2 ? "bg-amber-500" : "bg-purple-500"
                       }`}
-                      style={{ width: `${cat.percentage}%` }}
+                      style={{ width: `${Math.max(cat.percentage, 0)}%` }}
                     />
                   </div>
                 </div>
@@ -417,24 +510,24 @@ export default function RadarStoriesPage() {
           </div>
 
           <div className="p-3.5 rounded-xl border border-blue-500/20 bg-blue-500/5 mt-6 text-xs text-slate-600 dark:text-slate-300">
-            <span className="font-bold text-blue-500 block mb-1">Diretriz da Inteligência Comercial:</span>
-            Produtores do Centro-Oeste e Sul apresentam 64% mais interesse em insumos técnicos durante a manhã.
+            <span className="font-bold text-blue-500 block mb-1">Certeza e Rastreabilidade Total:</span>
+            Cada visualizador é associado ao número do WhatsApp, data, hora exata e post no catálogo.
           </div>
         </div>
       </div>
 
       {/* ======================================================================= */}
-      {/* 4. FEED DE VISUALIZADORES SILENCIOSOS (CRM & PROSPECÇÃO)                */}
+      {/* 4. FEED DE PROSPECTOS E VISUALIZADORES SILENCIOSOS                      */}
       {/* ======================================================================= */}
       <div className="p-6 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Users className="w-4 h-4 text-blue-500" />
-              <span>Produtores Rastreados por Visualização de Status</span>
+              <span>Contatos & Visualizadores Identificados</span>
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Cruze dados de quem está acompanhando sua marca e acione abordagens casuais geradas por IA.
+              Contatos reais com cruzamento de post visualizado, data, horário exato e abordagem comercial com IA.
             </p>
           </div>
 
@@ -446,7 +539,7 @@ export default function RadarStoriesPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar produtor, fazenda ou cidade..."
+                placeholder="Buscar cliente, telefone, cidade..."
                 className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-blue-500 w-56 transition-colors"
               />
             </div>
@@ -458,9 +551,9 @@ export default function RadarStoriesPage() {
             >
               <option value="all">Todos os Status no CRM</option>
               <option value="active_client">Clientes Ativos</option>
-              <option value="inactive_client">Inativos (+30d)</option>
-              <option value="open_deal">Cotações em Aberto</option>
-              <option value="prospect">Novos Prospects</option>
+              <option value="inactive_client">Oportunidades em Espera</option>
+              <option value="open_deal">Cotações / Propostas em Aberto</option>
+              <option value="prospect">Novos Contatos / Prospects</option>
             </select>
 
             <select
@@ -473,21 +566,22 @@ export default function RadarStoriesPage() {
               <option value="Insumos">Insumos</option>
               <option value="Cotações">Cotações</option>
               <option value="Peças & Serviços">Peças & Serviços</option>
+              <option value="Geral">Geral</option>
             </select>
           </div>
         </div>
 
-        {/* Tabela Executiva */}
+        {/* Tabela Executiva com Rastreabilidade de Data, Horário e Post */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                <th className="py-3 px-3">Produtor / Propriedade</th>
-                <th className="py-3 px-3">Praça / Região</th>
-                <th className="py-3 px-3">Status Visualizado</th>
+                <th className="py-3 px-3">Contato / Carteira</th>
+                <th className="py-3 px-3">Post / Story Identificado</th>
+                <th className="py-3 px-3">Data da Visualização</th>
+                <th className="py-3 px-3">Horário Exato</th>
                 <th className="py-3 px-3">Posição no CRM</th>
-                <th className="py-3 px-3">Frequência</th>
-                <th className="py-3 px-3 text-right">Ação de Prospecção</th>
+                <th className="py-3 px-3 text-right">Ação Comercial</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -495,45 +589,37 @@ export default function RadarStoriesPage() {
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500" />
-                    <span>Carregando visualizadores de status da agenda...</span>
+                    <span>Carregando contatos reais e visualizações do sistema...</span>
                   </td>
                 </tr>
               ) : viewers.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400">
-                    Nenhum produtor encontrado com os filtros selecionados.
+                    Nenhum contato encontrado com os filtros selecionados.
                   </td>
                 </tr>
               ) : (
                 viewers.map((viewer) => (
                   <tr key={viewer.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                    {/* Produtor / Propriedade */}
+                    {/* Contato / Carteira */}
                     <td className="py-3 px-3">
-                      <div className="font-bold text-slate-900 dark:text-white leading-tight">
-                        {viewer.name}
+                      <div className="font-bold text-slate-900 dark:text-white leading-tight flex items-center gap-1.5">
+                        <span>{viewer.name}</span>
+                        {viewer.hasRealView && (
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" title="Visualização confirmada" />
+                        )}
                       </div>
                       <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
-                        <Building2 className="w-3 h-3 text-slate-400" />
+                        <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
                         <span>{viewer.companyOrFarm}</span>
                       </div>
                       <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                        {viewer.phone}
+                        +{viewer.phone}
                       </div>
                     </td>
 
-                    {/* Praça / Região */}
-                    <td className="py-3 px-3">
-                      <div className="flex items-center gap-1 text-slate-700 dark:text-slate-200 font-medium">
-                        <MapPin className="w-3 h-3 text-blue-400 shrink-0" />
-                        <span>{viewer.city} - {viewer.state}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">
-                        Resp: {viewer.assignedSeller}
-                      </div>
-                    </td>
-
-                    {/* Status Visualizado */}
-                    <td className="py-3 px-3 max-w-[260px]">
+                    {/* Post / Story Identificado */}
+                    <td className="py-3 px-3 max-w-[280px]">
                       <div className="font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">
                         {viewer.storyMedia.title}
                       </div>
@@ -541,10 +627,38 @@ export default function RadarStoriesPage() {
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                           {viewer.storyMedia.category}
                         </span>
-                        <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                          <Clock className="w-2.5 h-2.5" />
-                          {viewer.storyMedia.viewedAt}
-                        </span>
+                        {viewer.hasRealView ? (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center gap-1">
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                            Confirmada
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700">
+                            Monitoramento Ativo
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Data da Visualização */}
+                    <td className="py-3 px-3 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 font-mono text-slate-700 dark:text-slate-200 font-semibold text-xs">
+                        <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                        <span>{viewer.storyMedia.exactDate}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">
+                        {viewer.storyMedia.viewedAt}
+                      </div>
+                    </td>
+
+                    {/* Horário Exato */}
+                    <td className="py-3 px-3 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 font-mono text-slate-700 dark:text-slate-200 font-bold text-xs">
+                        <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <span>{viewer.storyMedia.exactTime}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 mt-0.5 font-mono">
+                        Horário de Brasília
                       </div>
                     </td>
 
@@ -563,32 +677,37 @@ export default function RadarStoriesPage() {
                       >
                         {viewer.crmStatusLabel}
                       </span>
+                      <div className="text-[10px] text-slate-400 mt-1">
+                        Resp: {viewer.assignedSeller}
+                      </div>
                       {viewer.totalPurchased > 0 && (
-                        <div className="text-[10px] text-slate-500 font-mono mt-1">
-                          Histórico: {formatCurrency(viewer.totalPurchased)}
+                        <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                          Faturado: {formatCurrency(viewer.totalPurchased)}
                         </div>
                       )}
                     </td>
 
-                    {/* Frequência */}
-                    <td className="py-3 px-3">
-                      <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">
-                        {viewer.storyMedia.viewsCountWeek}x na semana
-                      </div>
-                      <div className="text-[10px] font-medium text-blue-500 mt-0.5">
-                        {viewer.storyMedia.interestLevel}
-                      </div>
-                    </td>
-
-                    {/* Ação */}
+                    {/* Ação Comercial */}
                     <td className="py-3 px-3 text-right">
-                      <button
-                        onClick={() => handleOpenAiModal(viewer)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-colors shadow-sm"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Abordagem IA</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleOpenAiModal(viewer)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-colors shadow-sm"
+                        >
+                          <Sparkles className="w-3 h-3 text-amber-300" />
+                          <span>Abordagem IA</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            const cleanPhone = viewer.phone.replace(/\D/g, "");
+                            window.open(`https://wa.me/${cleanPhone}`, "_blank");
+                          }}
+                          className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+                          title="Abrir WhatsApp Direto"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -599,137 +718,238 @@ export default function RadarStoriesPage() {
       </div>
 
       {/* ======================================================================= */}
-      {/* 5. MODAL DE ABORDAGEM CASUAL COM IA (OPENAI REAL)                      */}
+      {/* 5. MODAL DE ABORDAGEM CASUAL GERADA POR OPENAI REAL                     */}
       {/* ======================================================================= */}
       {isAiModalOpen && selectedViewer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
-          <div
-            className={`w-full max-w-2xl rounded-2xl border shadow-2xl flex flex-col overflow-hidden max-h-[90vh] ${
-              theme === "light"
-                ? "bg-white border-slate-200 text-slate-900"
-                : theme === "whatsapp"
-                ? "bg-[#111B21] border-[#2A3942] text-[#E9EDEF]"
-                : "bg-[#0B1224] border-slate-800 text-white"
-            }`}
-          >
-            {/* Topo do Modal */}
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-blue-400" />
-                  <h3 className="text-base font-bold">
-                    Abordagem Comercial Estratégica via IA
-                  </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col">
+            {/* Header Modal */}
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/30 flex items-center justify-center text-blue-500">
+                  <Sparkles className="w-4 h-4 text-blue-500" />
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Gerada sob medida pela OpenAI em cima do perfil de {selectedViewer.name} ({selectedViewer.companyOrFarm}).
-                </p>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Abordagem Comercial Casual (OpenAI)
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Formulada sob medida para {selectedViewer.name} sem mencionar visualização de status.
+                  </p>
+                </div>
               </div>
-
               <button
                 onClick={() => setIsAiModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Corpo do Modal */}
-            <div className="p-6 overflow-y-auto space-y-5 custom-scrollbar">
-              {/* Contexto do Lead */}
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+            {/* Conteúdo Modal */}
+            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+              {/* Contexto do Visualizador */}
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs grid grid-cols-2 gap-3">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Status Visualizado</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">{selectedViewer.storyMedia.title}</span>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Produtor / Contato:</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{selectedViewer.name}</span>
+                  <span className="text-[11px] text-slate-400 block font-mono">+{selectedViewer.phone}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Praça / Região</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedViewer.city} - {selectedViewer.state}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Posição no CRM</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedViewer.crmStatusLabel}</span>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Post Visualizado:</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{selectedViewer.storyMedia.title}</span>
+                  <span className="text-[11px] text-blue-500 block">
+                    {selectedViewer.storyMedia.exactDate} às {selectedViewer.storyMedia.exactTime}
+                  </span>
                 </div>
               </div>
 
-              {/* Mensagem da IA */}
-              {isGeneratingAi ? (
-                <div className="py-12 text-center text-slate-400 space-y-3">
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500" />
-                  <div className="text-sm font-semibold text-slate-300">
-                    Consultando histórico no CRM e acionando motor OpenAI...
+              {/* Estado de Carregamento da IA */}
+              {isGeneratingAi && (
+                <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-500 dark:text-slate-400">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                  <div className="text-xs font-semibold">
+                    Invocando OpenAI com inteligência comercial B2B/Agro...
                   </div>
-                  <p className="text-xs text-slate-500">
-                    Formulando abordagem casual sem soar invasivo e alinhada ao agronegócio.
-                  </p>
+                  <div className="text-[11px] text-slate-400 max-w-sm text-center">
+                    Criando timing de coincidência natural e eliminando clichês de redes sociais.
+                  </div>
                 </div>
-              ) : generatedApproach ? (
-                <div className="space-y-4">
-                  {/* Bloco de Mensagem para WhatsApp */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      <span>Sugestão de Mensagem (Pronta para Envio)</span>
-                      <button
-                        onClick={handleCopyMessage}
-                        className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
-                      >
-                        {copiedMessage ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{copiedMessage ? "Copiada" : "Copiar Texto"}</span>
-                      </button>
-                    </div>
+              )}
 
-                    <div className="p-4 rounded-xl bg-slate-100 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 text-sm leading-relaxed text-slate-900 dark:text-slate-100 whitespace-pre-wrap font-sans">
+              {/* Mensagem e Raciocínio Estratégico */}
+              {!isGeneratingAi && generatedApproach && (
+                <div className="space-y-4">
+                  {/* Mensagem Pronta para Envio */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <span>Mensagem Sugerida para WhatsApp:</span>
+                      <span className="text-[11px] text-emerald-500 font-semibold flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Tom Consultivo & Sóbrio
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-xl bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200 font-medium whitespace-pre-wrap leading-relaxed select-all">
                       {generatedApproach.casualMessage}
                     </div>
                   </div>
 
-                  {/* Justificativa Estratégica da IA */}
-                  <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs space-y-2">
-                    <div className="font-bold text-blue-500 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Raciocínio Comercial da IA:</span>
+                  {/* Raciocínio Estratégico */}
+                  <div className="p-3.5 rounded-xl border border-blue-500/20 bg-blue-500/5 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                    <span className="font-bold text-blue-500 block">Justificativa Comercial:</span>
+                    <p className="text-[11px] leading-relaxed">{generatedApproach.strategicReasoning}</p>
+                  </div>
+
+                  {/* Sugestões de Momento e Produto */}
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40">
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Momento Ideal de Envio:</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 text-[11px]">
+                        {generatedApproach.suggestedTiming}
+                      </span>
                     </div>
-                    <p className="text-slate-600 dark:text-slate-300 leading-normal">
-                      {generatedApproach.strategicReasoning}
-                    </p>
-                    <div className="flex flex-wrap gap-4 pt-2 border-t border-blue-500/10 text-[11px] text-slate-500 dark:text-slate-400">
-                      <span><b>Timing Recomendado:</b> {generatedApproach.suggestedTiming}</span>
-                      <span><b>Foco do Produto:</b> {generatedApproach.suggestedProduct}</span>
+                    <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40">
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Produto em Pauta:</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 text-[11px] line-clamp-1">
+                        {generatedApproach.suggestedProduct}
+                      </span>
                     </div>
                   </div>
                 </div>
-              ) : null}
+              )}
             </div>
 
-            {/* Rodapé do Modal */}
-            <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-[#070D1B]/50">
+            {/* Footer Modal */}
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2 bg-slate-50 dark:bg-slate-900/30">
               <button
-                onClick={() => handleOpenAiModal(selectedViewer)}
-                disabled={isGeneratingAi}
-                className="px-3.5 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                onClick={() => setIsAiModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isGeneratingAi ? "animate-spin" : ""}`} />
-                <span>Regenerar com IA</span>
+                Fechar
               </button>
+              {generatedApproach && (
+                <>
+                  <button
+                    onClick={handleCopyMessage}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors"
+                  >
+                    {copiedMessage ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedMessage ? "Copiado!" : "Copiar Texto"}</span>
+                  </button>
+                  <button
+                    onClick={handleOpenWhatsApp}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors shadow-sm"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Enviar no WhatsApp</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
-              <div className="flex items-center gap-2.5">
-                <button
-                  onClick={() => setIsAiModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      {/* ======================================================================= */}
+      {/* 6. MODAL DE TESTE DE RECONHECIMENTO MANUAL                             */}
+      {/* ======================================================================= */}
+      {isTestModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <PlayCircle className="w-5 h-5 text-blue-500" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Testar Reconhecimento de Visualização
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsTestModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleTestSubmit} className="p-5 space-y-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Simule a abertura de um status do WhatsApp conectado para auditar o registro exato de data, horário e título do post.
+              </p>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Telefone do Contato (WhatsApp):
+                </label>
+                <input
+                  type="text"
+                  value={testPhone}
+                  onChange={(e) => setTestPhone(e.target.value)}
+                  placeholder="Ex: 5511983354725 ou selecione da base"
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Nome do Produtor / Cliente (Opcional):
+                </label>
+                <input
+                  type="text"
+                  value={testName}
+                  onChange={(e) => setTestName(e.target.value)}
+                  placeholder="Ex: Oliver Fontana"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Título / Legenda do Post Visualizado:
+                </label>
+                <input
+                  type="text"
+                  value={testPostTitle}
+                  onChange={(e) => setTestPostTitle(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Categoria Técnica:
+                </label>
+                <select
+                  value={testCategory}
+                  onChange={(e) => setTestCategory(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500"
                 >
-                  Fechar
+                  <option value="Maquinários">Maquinários & Implementos</option>
+                  <option value="Insumos">Insumos & Defensivos</option>
+                  <option value="Cotações">Cotações de Safra & Grãos</option>
+                  <option value="Peças & Serviços">Peças & Serviços</option>
+                  <option value="Geral">Geral</option>
+                </select>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsTestModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400"
+                >
+                  Cancelar
                 </button>
-
                 <button
-                  onClick={handleOpenWhatsApp}
-                  disabled={!generatedApproach?.casualMessage}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
+                  type="submit"
+                  disabled={isSubmittingTest}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm disabled:opacity-50"
                 >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Abrir Conversa no WhatsApp</span>
+                  {isSubmittingTest ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlayCircle className="w-3.5 h-3.5" />}
+                  <span>Registrar Visualização</span>
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}

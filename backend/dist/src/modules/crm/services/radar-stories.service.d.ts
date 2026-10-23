@@ -14,13 +14,16 @@ export interface StoryViewerItem {
     lastPurchaseDate?: string;
     daysInactive: number;
     assignedSeller: string;
+    hasRealView: boolean;
     storyMedia: {
         id: string;
         title: string;
-        category: 'Maquinários' | 'Insumos' | 'Cotações' | 'Peças & Serviços';
+        category: string;
         viewedAt: string;
+        exactDate: string;
+        exactTime: string;
         viewsCountWeek: number;
-        interestLevel: 'Alta Frequência' | 'Frequência Moderada' | 'Visualização Recente';
+        interestLevel: 'Alta Frequência' | 'Frequência Moderada' | 'Visualização Recente' | 'Aguardando Visualização';
         thumbnailUrl?: string;
     };
 }
@@ -29,6 +32,7 @@ export declare class RadarStoriesService {
     private readonly aiService;
     private readonly logger;
     constructor(prisma: PrismaService, aiService: AiService);
+    private formatDateTime;
     getMetrics(tenantId: string): Promise<{
         kpis: {
             totalViewsToday: number;
@@ -38,14 +42,7 @@ export declare class RadarStoriesService {
             hotOpportunities: number;
             conversionRatePercent: number;
         };
-        chartData: {
-            date: string;
-            Maquinarios: number;
-            Insumos: number;
-            Cotacoes: number;
-            Pecas: number;
-            total: number;
-        }[];
+        chartData: any[];
         categoryDistribution: {
             name: string;
             value: number;
@@ -57,6 +54,23 @@ export declare class RadarStoriesService {
         category?: string;
         search?: string;
     }): Promise<StoryViewerItem[]>;
+    recordStatusView(tenantId: string, data: {
+        phone: string;
+        contactName?: string;
+        contactId?: string;
+        statusMessageId?: string;
+        storyTitle?: string;
+        category?: string;
+        mediaUrl?: string;
+        viewedAt?: Date | string;
+    }): Promise<{
+        success: boolean;
+        viewId: string;
+        phone: string;
+        contactName: string;
+        storyTitle: string;
+        viewedAt: string;
+    }>;
     generateApproach(tenantId: string, payload: {
         contactId: string;
         producerName: string;

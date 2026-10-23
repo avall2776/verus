@@ -26,6 +26,24 @@ export class RadarStoriesController {
     return this.radarStoriesService.getViewers(tenantId, { status, category, search });
   }
 
+  @Post('record-view')
+  async recordStatusView(
+    @CurrentTenant() tenantId: string,
+    @Body()
+    body: {
+      phone: string;
+      contactName?: string;
+      contactId?: string;
+      statusMessageId?: string;
+      storyTitle?: string;
+      category?: string;
+      mediaUrl?: string;
+      viewedAt?: string;
+    }
+  ) {
+    return this.radarStoriesService.recordStatusView(tenantId, body);
+  }
+
   @Post('approach')
   async generateApproach(
     @CurrentTenant() tenantId: string,

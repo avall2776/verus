@@ -52,4 +52,5 @@ export declare class WebhooksController {
         status: string;
         state: any;
     }>;
+    private handleWhatsAppStatusEvent;
 }

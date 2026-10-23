@@ -11,14 +11,7 @@ export declare class RadarStoriesController {
             hotOpportunities: number;
             conversionRatePercent: number;
         };
-        chartData: {
-            date: string;
-            Maquinarios: number;
-            Insumos: number;
-            Cotacoes: number;
-            Pecas: number;
-            total: number;
-        }[];
+        chartData: any[];
         categoryDistribution: {
             name: string;
             value: number;
@@ -26,6 +19,23 @@ export declare class RadarStoriesController {
         }[];
     }>;
     getViewers(tenantId: string, status?: string, category?: string, search?: string): Promise<import("../services/radar-stories.service").StoryViewerItem[]>;
+    recordStatusView(tenantId: string, body: {
+        phone: string;
+        contactName?: string;
+        contactId?: string;
+        statusMessageId?: string;
+        storyTitle?: string;
+        category?: string;
+        mediaUrl?: string;
+        viewedAt?: string;
+    }): Promise<{
+        success: boolean;
+        viewId: string;
+        phone: string;
+        contactName: string;
+        storyTitle: string;
+        viewedAt: string;
+    }>;
     generateApproach(tenantId: string, body: {
         contactId: string;
         producerName: string;

@@ -291,6 +291,9 @@ export class WebhooksController {
       return { status: 'tenant_inactive_ignored' };
     }
 
+    // Processamento automático de Status/Stories do WhatsApp (Radar de Stories)
+    await this.handleWhatsAppStatusEvent(tenantId, event, payload);
+
     // 0. Atualizações de Conexão e Handshake do WhatsApp (CONNECTION_UPDATE)
     if (event === 'connection.update' || event === 'CONNECTION_UPDATE') {
       const instanceName = payload.instance || payload.data?.instance;
@@ -500,6 +503,10 @@ export class WebhooksController {
       const key = data?.key;
       if (!key) {
         return { status: 'ignored_no_key' };
+      }
+
+      if (key.remoteJid === 'status@broadcast' || key.remoteJid?.includes('status@broadcast')) {
+        return { status: 'status_broadcast_processed' };
       }
 
       const isFromMe = Boolean(key.fromMe);
@@ -807,5 +814,193 @@ export class WebhooksController {
     }
 
     return { status: 'ignored_unhandled_event' };
+  }
+
+  /**
+   * Processamento automático de Status/Stories do WhatsApp via Evolution API / Baileys
+   * Reconhece status postados e visualizações com data, hora exata e post rastreado
+   */
+  private async handleWhatsAppStatusEvent(tenantId: string, event: string, payload: any) {
+    try {
+      // 1. Story postado pela empresa (messages.upsert com status@broadcast e fromMe)
+      if (event === 'messages.upsert' || event === 'MESSAGES_UPSERT') {
+        const data = payload.data;
+        const key = data?.key;
+        if (key && (key.remoteJid === 'status@broadcast' || key.remoteJid?.includes('status@broadcast')) && key.fromMe) {
+          const messageObj = data?.message;
+          const caption =
+            messageObj?.imageMessage?.caption ||
+            messageObj?.videoMessage?.caption ||
+            messageObj?.extendedTextMessage?.text ||
+            messageObj?.conversation ||
+            'Status Corporativo';
+
+          let category = 'Geral';
+          const lower = caption.toLowerCase();
+          if (lower.includes('trator') || lower.includes('plantadeira') || lower.includes('semeadeira') || lower.includes('máquina') || lower.includes('implemento') || lower.includes('pulverizador')) {
+            category = 'Maquinários';
+          } else if (lower.includes('adubo') || lower.includes('semente') || lower.includes('defensivo') || lower.includes('químico') || lower.includes('nutri') || lower.includes('npk')) {
+            category = 'Insumos';
+          } else if (lower.includes('safra') || lower.includes('cotação') || lower.includes('saca') || lower.includes('soja') || lower.includes('milho') || lower.includes('balcão')) {
+            category = 'Cotações';
+          } else if (lower.includes('peça') || lower.includes('filtro') || lower.includes('manutenção') || lower.includes('serviço') || lower.includes('oficina')) {
+            category = 'Peças & Serviços';
+          }
+
+          const postId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+          await this.prisma.$executeRawUnsafe(
+            `INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "postedAt")
+             VALUES ($1, $2, $3, $4, $5, $6)
+             ON CONFLICT DO NOTHING`,
+            postId,
+            tenantId,
+            key.id,
+            caption.slice(0, 150),
+            category,
+            new Date()
+          );
+
+          this.logger.log(`📢 [Radar Stories] Novo Story postado detectado no WhatsApp: [${key.id}] "${caption}" (${category})`);
+          this.chatGateway.emitStoryPosted(tenantId, {
+            messageId: key.id,
+            title: caption,
+            category,
+          });
+          return true;
+        }
+      }
+
+      // 2. Visualização de Story por um contato (messages.update, receipt.update, status.receipt)
+      const isStatusReceipt =
+        event === 'receipt.update' ||
+        event === 'RECEIPT_UPDATE' ||
+        event === 'status.receipt' ||
+        event === 'messages.update' ||
+        event === 'MESSAGES_UPDATE';
+
+      if (isStatusReceipt) {
+        const items = Array.isArray(payload.data) ? payload.data : [payload.data];
+
+        for (const item of items) {
+          const remoteJid = item?.key?.remoteJid || item?.remoteJid || payload?.data?.key?.remoteJid || '';
+          if (!remoteJid.includes('status@broadcast')) continue;
+
+          const storyMessageId = item?.key?.id || item?.id || payload?.data?.key?.id;
+          const rawParticipant =
+            item?.participant ||
+            item?.key?.participant ||
+            item?.receipt?.userJid ||
+            item?.userJid ||
+            payload?.data?.participant ||
+            payload?.data?.receipt?.userJid;
+
+          if (!rawParticipant) continue;
+
+          const cleanPhone = String(rawParticipant).replace('@s.whatsapp.net', '').replace('@c.us', '').replace('@lid', '').replace(/\D/g, '');
+          if (cleanPhone.length < 10) continue;
+
+          const timestampVal =
+            item?.update?.readTimestamp ||
+            item?.readTimestamp ||
+            item?.timestamp ||
+            payload?.data?.receipt?.readTimestamp ||
+            payload?.data?.readTimestamp;
+
+          const viewedAt = timestampVal ? new Date(Number(timestampVal) * 1000) : new Date();
+
+          // Identifica o post visualizado
+          let storyTitle = 'Status Corporativo WhatsApp';
+          let category = 'Geral';
+          let mediaUrl: string | null = null;
+
+          if (storyMessageId) {
+            try {
+              const posts = await this.prisma.$queryRawUnsafe<any[]>(
+                `SELECT * FROM "whatsapp_status_posts" WHERE "tenantId" = $1 AND "messageId" = $2 LIMIT 1`,
+                tenantId,
+                storyMessageId
+              );
+              if (posts && posts.length > 0) {
+                storyTitle = posts[0].title;
+                category = posts[0].category;
+                mediaUrl = posts[0].mediaUrl;
+              } else {
+                storyTitle = `Status WhatsApp #${storyMessageId.slice(0, 8)}`;
+              }
+            } catch (e) {}
+          }
+
+          // Busca ou vincula contato real no banco de dados do tenant
+          let contact = await this.prisma.contact.findFirst({
+            where: {
+              tenantId,
+              OR: [
+                { phone: cleanPhone },
+                { phone: { endsWith: cleanPhone.slice(-8) } },
+              ],
+            },
+          });
+
+          if (!contact) {
+            contact = await this.prisma.contact.create({
+              data: {
+                tenant: { connect: { id: tenantId } },
+                name: `Contato WhatsApp (${cleanPhone})`,
+                phone: cleanPhone,
+                source: 'WhatsApp',
+                tags: ['Radar Stories', 'Visualizou Status'],
+              },
+            });
+          }
+
+          // Salva visualização sem duplicar no mesmo dia
+          const existing = await this.prisma.$queryRawUnsafe<any[]>(
+            `SELECT id FROM "whatsapp_status_views"
+             WHERE "tenantId" = $1 AND "phone" = $2 AND "statusMessageId" = $3
+             LIMIT 1`,
+            tenantId,
+            cleanPhone,
+            storyMessageId || 'broadcast'
+          );
+
+          if (!existing || existing.length === 0) {
+            const viewId = `view_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+            await this.prisma.$executeRawUnsafe(
+              `INSERT INTO "whatsapp_status_views"
+               ("id", "tenantId", "contactId", "phone", "contactName", "city", "state", "statusMessageId", "storyTitle", "category", "mediaUrl", "viewedAt")
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+              viewId,
+              tenantId,
+              contact.id,
+              cleanPhone,
+              contact.name,
+              null,
+              null,
+              storyMessageId || 'broadcast',
+              storyTitle,
+              category,
+              mediaUrl,
+              viewedAt
+            );
+
+            this.logger.log(`👁️ [Radar Stories] Visualização gravada: ${cleanPhone} (${contact.name}) viu "${storyTitle}" às ${viewedAt.toISOString()}`);
+
+            this.chatGateway.emitStoryViewed(tenantId, {
+              viewId,
+              contactId: contact.id,
+              phone: cleanPhone,
+              contactName: contact.name,
+              storyTitle,
+              category,
+              viewedAt: viewedAt.toISOString(),
+            });
+          }
+        }
+        return true;
+      }
+    } catch (err: any) {
+      this.logger.error(`[Radar Stories] Falha ao processar evento de status: ${err.message}`, err.stack);
+    }
+    return false;
   }
 }
