@@ -103,8 +103,10 @@ function CrmContent() {
     toast.success("Nome do funil atualizado com sucesso!");
   };
   
-  // Tabela: estágios colapsados e descrições expandidas
-  const [collapsedTableStages, setCollapsedTableStages] = useState<string[]>([]);
+  // Tabela: estágios colapsados e descrições expandidas (inicia com todos os estágios minimizados)
+  const [collapsedTableStages, setCollapsedTableStages] = useState<string[]>(() =>
+    DEFAULT_COLUMNS.map(c => c.id)
+  );
   const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
 
   // Linha do tempo: estágios colapsados
@@ -313,9 +315,17 @@ function CrmContent() {
   useEffect(() => {
     const savedCols = localStorage.getItem('crm_columns');
     if (savedCols) {
-      setColumns(JSON.parse(savedCols));
+      try {
+        const parsed = JSON.parse(savedCols);
+        setColumns(parsed);
+        setCollapsedTableStages(parsed.map((c: any) => c.id));
+      } catch (e) {
+        setColumns(DEFAULT_COLUMNS);
+        setCollapsedTableStages(DEFAULT_COLUMNS.map(c => c.id));
+      }
     } else {
       setColumns(DEFAULT_COLUMNS);
+      setCollapsedTableStages(DEFAULT_COLUMNS.map(c => c.id));
       localStorage.setItem('crm_columns', JSON.stringify(DEFAULT_COLUMNS));
     }
     const savedWidths = localStorage.getItem('crm_columns_widths');
@@ -1005,7 +1015,10 @@ function CrmContent() {
             <button
               id="view-mode-table-btn"
               type="button"
-              onClick={() => setViewMode('table')}
+              onClick={() => {
+                setViewMode('table');
+                setCollapsedTableStages((columns.length > 0 ? columns : DEFAULT_COLUMNS).map(c => c.id));
+              }}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
                 viewMode === 'table' 
                   ? 'bg-blue-600 text-white shadow-sm' 
@@ -1631,6 +1644,33 @@ function CrmContent() {
                   )}
                 </div>
 
+                {/* Botão de Alternar Expansão de Todos os Estágios */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allColIds = (columns.length > 0 ? columns : DEFAULT_COLUMNS).map(c => c.id);
+                    if (collapsedTableStages.length === allColIds.length) {
+                      setCollapsedTableStages([]);
+                    } else {
+                      setCollapsedTableStages(allColIds);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-gray-700 text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
+                  title={collapsedTableStages.length === (columns.length > 0 ? columns : DEFAULT_COLUMNS).length ? "Expandir todos os contatos" : "Minimizar todos os contatos"}
+                >
+                  {collapsedTableStages.length === (columns.length > 0 ? columns : DEFAULT_COLUMNS).length ? (
+                    <>
+                      <ChevronDown size={13} className="text-gray-400" />
+                      <span>Expandir Tudo</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronRight size={13} className="text-gray-400" />
+                      <span>Minimizar Tudo</span>
+                    </>
+                  )}
+                </button>
+
                 {/* Botão de Adição Rápida (+) */}
                 <button
                   type="button"
@@ -1651,9 +1691,9 @@ function CrmContent() {
                 </button>
               </div>
 
-              <div className="flex items-center gap-3 text-xs text-gray-400">
+              <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-gray-400">
                 <span>
-                  <strong className="text-white">{filteredDeals.length}</strong> {filteredDeals.length === 1 ? 'oportunidade' : 'oportunidades'} no total
+                  <strong className="text-slate-900 dark:text-white font-bold">{filteredDeals.length}</strong> {filteredDeals.length === 1 ? 'oportunidade' : 'oportunidades'} no total
                 </span>
               </div>
             </div>
