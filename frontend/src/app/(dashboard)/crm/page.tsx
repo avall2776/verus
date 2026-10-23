@@ -1661,20 +1661,20 @@ function CrmContent() {
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#0f141c] border-b border-gray-800 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  <tr className="bg-slate-100 dark:bg-[#0f141c] border-b border-slate-200 dark:border-gray-800 text-[11px] font-bold text-slate-700 dark:text-gray-400 uppercase tracking-wider">
                     {/* 1. Título */}
                     {visibleColumns.title && (
                       <th 
                         onClick={() => handleSort('title')}
-                        className="py-2.5 px-3.5 w-[240px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        className="py-2.5 px-3.5 w-[240px] cursor-pointer select-none hover:bg-slate-200/60 dark:hover:bg-[#1a202c] transition-colors group"
                         title="Clique para ordenar por Título"
                       >
                         <div className="flex items-center gap-1.5">
-                          <span className={sortField === 'title' ? 'text-white' : ''}>Título</span>
+                          <span className={sortField === 'title' ? 'text-primary dark:text-primary font-black' : 'text-slate-700 dark:text-gray-300'}>Título</span>
                           {sortField === 'title' ? (
                             sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
                           ) : (
-                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                            <ArrowUpDown size={12} className="text-slate-400 dark:text-gray-600 group-hover:text-slate-700 dark:group-hover:text-gray-300 opacity-60 shrink-0" />
                           )}
                         </div>
                       </th>
@@ -1684,15 +1684,15 @@ function CrmContent() {
                     {visibleColumns.contact && (
                       <th 
                         onClick={() => handleSort('contact')}
-                        className="py-2.5 px-3.5 w-[200px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        className="py-2.5 px-3.5 w-[200px] cursor-pointer select-none hover:bg-slate-200/60 dark:hover:bg-[#1a202c] transition-colors group"
                         title="Clique para ordenar por Contato"
                       >
                         <div className="flex items-center gap-1.5">
-                          <span className={sortField === 'contact' ? 'text-white' : ''}>Contato</span>
+                          <span className={sortField === 'contact' ? 'text-primary dark:text-primary font-black' : 'text-slate-700 dark:text-gray-300'}>Contato</span>
                           {sortField === 'contact' ? (
                             sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
                           ) : (
-                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                            <ArrowUpDown size={12} className="text-slate-400 dark:text-gray-600 group-hover:text-slate-700 dark:group-hover:text-gray-300 opacity-60 shrink-0" />
                           )}
                         </div>
                       </th>
@@ -1702,15 +1702,15 @@ function CrmContent() {
                     {visibleColumns.description && (
                       <th 
                         onClick={() => handleSort('description')}
-                        className="py-2.5 px-3.5 cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        className="py-2.5 px-3.5 cursor-pointer select-none hover:bg-slate-200/60 dark:hover:bg-[#1a202c] transition-colors group"
                         title="Clique para ordenar por Descrição"
                       >
                         <div className="flex items-center gap-1.5">
-                          <span className={sortField === 'description' ? 'text-white' : ''}>Descrição</span>
+                          <span className={sortField === 'description' ? 'text-primary dark:text-primary font-black' : 'text-slate-700 dark:text-gray-300'}>Descrição</span>
                           {sortField === 'description' ? (
                             sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
                           ) : (
-                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                            <ArrowUpDown size={12} className="text-slate-400 dark:text-gray-600 group-hover:text-slate-700 dark:group-hover:text-gray-300 opacity-60 shrink-0" />
                           )}
                         </div>
                       </th>
@@ -1720,15 +1720,15 @@ function CrmContent() {
                     {visibleColumns.assignee && (
                       <th 
                         onClick={() => handleSort('assignee')}
-                        className="py-2.5 px-3.5 w-[150px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        className="py-2.5 px-3.5 w-[150px] cursor-pointer select-none hover:bg-slate-200/60 dark:hover:bg-[#1a202c] transition-colors group"
                         title="Clique para ordenar por Responsável"
                       >
                         <div className="flex items-center gap-1.5">
-                          <span className={sortField === 'assignee' ? 'text-white' : ''}>Responsável</span>
+                          <span className={sortField === 'assignee' ? 'text-primary dark:text-primary font-black' : 'text-slate-700 dark:text-gray-300'}>Responsável</span>
                           {sortField === 'assignee' ? (
                             sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
                           ) : (
-                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                            <ArrowUpDown size={12} className="text-slate-400 dark:text-gray-600 group-hover:text-slate-700 dark:group-hover:text-gray-300 opacity-60 shrink-0" />
                           )}
                         </div>
                       </th>
@@ -1738,15 +1738,15 @@ function CrmContent() {
                     {visibleColumns.value && (
                       <th 
                         onClick={() => handleSort('value')}
-                        className="py-2.5 px-3.5 w-[130px] text-right cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        className="py-2.5 px-3.5 w-[130px] text-right cursor-pointer select-none hover:bg-slate-200/60 dark:hover:bg-[#1a202c] transition-colors group"
                         title="Clique para ordenar por Valor"
                       >
                         <div className="flex items-center justify-end gap-1.5">
-                          <span className={sortField === 'value' ? 'text-white' : ''}>Valor (R$)</span>
+                          <span className={sortField === 'value' ? 'text-primary dark:text-primary font-black' : 'text-slate-700 dark:text-gray-300'}>Valor (R$)</span>
                           {sortField === 'value' ? (
                             sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
                           ) : (
-                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                            <ArrowUpDown size={12} className="text-slate-400 dark:text-gray-600 group-hover:text-slate-700 dark:group-hover:text-gray-300 opacity-60 shrink-0" />
                           )}
                         </div>
                       </th>
@@ -1756,15 +1756,15 @@ function CrmContent() {
                     {visibleColumns.updatedAt && (
                       <th 
                         onClick={() => handleSort('updatedAt')}
-                        className="py-2.5 px-3.5 w-[160px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        className="py-2.5 px-3.5 w-[160px] cursor-pointer select-none hover:bg-slate-200/60 dark:hover:bg-[#1a202c] transition-colors group"
                         title="Clique para ordenar por Última Interação"
                       >
                         <div className="flex items-center gap-1.5">
-                          <span className={sortField === 'updatedAt' ? 'text-white' : ''}>Última Interação</span>
+                          <span className={sortField === 'updatedAt' ? 'text-primary dark:text-primary font-black' : 'text-slate-700 dark:text-gray-300'}>Última Interação</span>
                           {sortField === 'updatedAt' ? (
                             sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
                           ) : (
-                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                            <ArrowUpDown size={12} className="text-slate-400 dark:text-gray-600 group-hover:text-slate-700 dark:group-hover:text-gray-300 opacity-60 shrink-0" />
                           )}
                         </div>
                       </th>
@@ -1774,15 +1774,15 @@ function CrmContent() {
                     {visibleColumns.createdAt && (
                       <th 
                         onClick={() => handleSort('createdAt')}
-                        className="py-2.5 px-3.5 w-[130px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        className="py-2.5 px-3.5 w-[130px] cursor-pointer select-none hover:bg-slate-200/60 dark:hover:bg-[#1a202c] transition-colors group"
                         title="Clique para ordenar por Data de Início"
                       >
                         <div className="flex items-center gap-1.5">
-                          <span className={sortField === 'createdAt' ? 'text-white' : ''}>Data Início</span>
+                          <span className={sortField === 'createdAt' ? 'text-primary dark:text-primary font-black' : 'text-slate-700 dark:text-gray-300'}>Data Início</span>
                           {sortField === 'createdAt' ? (
                             sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
                           ) : (
-                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                            <ArrowUpDown size={12} className="text-slate-400 dark:text-gray-600 group-hover:text-slate-700 dark:group-hover:text-gray-300 opacity-60 shrink-0" />
                           )}
                         </div>
                       </th>
@@ -1792,15 +1792,15 @@ function CrmContent() {
                     {visibleColumns.closedAt && (
                       <th 
                         onClick={() => handleSort('closedAt')}
-                        className="py-2.5 px-3.5 w-[140px] cursor-pointer select-none hover:bg-[#1a202c] transition-colors group"
+                        className="py-2.5 px-3.5 w-[140px] cursor-pointer select-none hover:bg-slate-200/60 dark:hover:bg-[#1a202c] transition-colors group"
                         title="Clique para ordenar por Data de Fechamento"
                       >
                         <div className="flex items-center gap-1.5">
-                          <span className={sortField === 'closedAt' ? 'text-white' : ''}>Fechamento</span>
+                          <span className={sortField === 'closedAt' ? 'text-primary dark:text-primary font-black' : 'text-slate-700 dark:text-gray-300'}>Fechamento</span>
                           {sortField === 'closedAt' ? (
                             sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary shrink-0" /> : <ArrowDown size={12} className="text-primary shrink-0" />
                           ) : (
-                            <ArrowUpDown size={12} className="text-gray-600 group-hover:text-gray-400 opacity-60 shrink-0" />
+                            <ArrowUpDown size={12} className="text-slate-400 dark:text-gray-600 group-hover:text-slate-700 dark:group-hover:text-gray-300 opacity-60 shrink-0" />
                           )}
                         </div>
                       </th>
@@ -1869,24 +1869,24 @@ function CrmContent() {
                         {/* Linha Cabeçalho do Estágio com Montante Total Acumulado */}
                         <tr 
                           onClick={() => toggleTableStage(col.id)}
-                          className="bg-slate-100 dark:bg-[#1c2128] hover:bg-[#222832] cursor-pointer transition-colors border-t border-b border-gray-800"
+                          className="bg-slate-100 dark:bg-[#1c2128] hover:bg-slate-200/80 dark:hover:bg-[#222832] cursor-pointer transition-colors border-t border-b border-slate-200 dark:border-gray-800"
                         >
                           <td colSpan={visibleColCount} className="py-2.5 px-3.5">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2.5">
-                                <span className="text-gray-400">
+                                <span className="text-slate-400 dark:text-gray-400">
                                   {isCollapsed ? <ChevronRight size={15} /> : <ChevronDown size={15} />}
                                 </span>
                                 <div className={`w-2.5 h-2.5 rounded-full ${col.color.replace('text-', 'bg-')}`}></div>
-                                <span className="font-extrabold text-white uppercase tracking-wider text-xs">
+                                <span className="font-extrabold text-slate-800 dark:text-white uppercase tracking-wider text-xs">
                                   {col.title}
                                 </span>
-                                <span className="bg-gray-800/80 border border-gray-700 text-gray-300 font-bold px-2 py-0.5 rounded-full text-[10px]">
+                                <span className="bg-slate-200 dark:bg-gray-800/80 border border-slate-300 dark:border-gray-700 text-slate-700 dark:text-gray-300 font-bold px-2 py-0.5 rounded-full text-[10px]">
                                   {stageDeals.length} {stageDeals.length === 1 ? 'card' : 'cards'}
                                 </span>
                               </div>
                               <div className="flex items-center gap-4">
-                                <div className="text-xs font-mono font-bold text-emerald-400">
+                                <div className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
                                   Total: {formatCurrency(stageTotal)}
                                 </div>
                                 <button
@@ -1913,8 +1913,8 @@ function CrmContent() {
 
                         {/* Linhas das Oportunidades do Estágio */}
                         {!isCollapsed && sortedStageDeals.length === 0 && (
-                          <tr className="bg-[#12161f]/30">
-                            <td colSpan={visibleColCount} className="py-3 px-6 text-gray-500 italic text-center text-xs">
+                          <tr className="bg-slate-50/50 dark:bg-[#12161f]/30">
+                            <td colSpan={visibleColCount} className="py-3 px-6 text-slate-400 dark:text-gray-500 italic text-center text-xs">
                               Nenhuma oportunidade nesta etapa.
                             </td>
                           </tr>
@@ -1929,7 +1929,7 @@ function CrmContent() {
                             <tr 
                               key={deal.id}
                               onClick={() => handleOpenDeal(deal)}
-                              className="hover:bg-[#1f2530] transition-colors cursor-pointer group"
+                              className="hover:bg-slate-100/70 dark:hover:bg-[#1f2530] transition-colors cursor-pointer group border-b border-slate-100 dark:border-gray-800/40"
                             >
                               {/* 1. Título (com link interativo para abrir o DealModal) */}
                               {visibleColumns.title && (
@@ -1943,11 +1943,11 @@ function CrmContent() {
                                     className="flex flex-col text-left group/title focus:outline-none w-full"
                                     title="Clique para abrir detalhes da oportunidade"
                                   >
-                                    <span className="font-bold text-slate-100 group-hover/title:text-primary transition-colors text-xs hover:underline underline-offset-2 flex items-center gap-1">
+                                    <span className="font-bold text-slate-800 dark:text-slate-100 group-hover/title:text-primary transition-colors text-xs hover:underline underline-offset-2 flex items-center gap-1">
                                       {deal.title || "Sem título"}
-                                      <ArrowUpRight size={12} className="text-gray-500 group-hover/title:text-primary transition-colors opacity-0 group-hover/title:opacity-100 shrink-0" />
+                                      <ArrowUpRight size={12} className="text-slate-400 dark:text-gray-500 group-hover/title:text-primary transition-colors opacity-0 group-hover/title:opacity-100 shrink-0" />
                                     </span>
-                                    <span className="text-[10px] font-mono text-gray-500 group-hover/title:text-primary/70 transition-colors">
+                                    <span className="text-[10px] font-mono text-slate-400 dark:text-gray-500 group-hover/title:text-primary/70 transition-colors">
                                       #{deal?.id?.includes('-') ? deal.id.split('-')[0].toUpperCase() : (deal.id || 'DEAL')}
                                     </span>
                                   </button>
@@ -1958,16 +1958,16 @@ function CrmContent() {
                               {visibleColumns.contact && (
                                 <td className="py-2.5 px-3.5">
                                   <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center font-bold text-[10px] text-gray-200 shrink-0">
+                                    <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-gray-800 border border-slate-300 dark:border-gray-700 flex items-center justify-center font-bold text-[10px] text-slate-700 dark:text-gray-200 shrink-0">
                                       {deal.contact?.name?.[0]?.toUpperCase() || "?"}
                                     </div>
                                     <div className="flex flex-col min-w-0">
-                                      <span className="font-semibold text-slate-200 text-xs truncate max-w-[150px]">
+                                      <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs truncate max-w-[150px]">
                                         {deal.contact?.name || "Contato não informado"}
                                       </span>
                                       {deal.contact?.phone ? (
                                         deal.contact.phone.includes('@lid') ? (
-                                          <span className="text-[10px] text-emerald-400/80 flex items-center gap-1">
+                                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400/80 flex items-center gap-1">
                                             <Phone size={9} className="text-[#25D366]" />
                                             <span>WhatsApp (Privado)</span>
                                           </span>
@@ -1977,14 +1977,14 @@ function CrmContent() {
                                             target="_blank" 
                                             rel="noreferrer"
                                             onClick={(e) => e.stopPropagation()}
-                                            className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
+                                            className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 flex items-center gap-1 transition-colors"
                                           >
                                             <Phone size={9} className="text-[#25D366]" />
                                             <span>{deal.contact.phone}</span>
                                           </a>
                                         )
                                       ) : (
-                                        <span className="text-[10px] text-gray-500 italic">Sem telefone</span>
+                                        <span className="text-[10px] text-slate-400 dark:text-gray-500 italic">Sem telefone</span>
                                       )}
                                     </div>
                                   </div>
@@ -1996,11 +1996,11 @@ function CrmContent() {
                                 <td className="py-2.5 px-3.5 max-w-[320px]">
                                   <div className="flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className="text-[9px] font-bold text-slate-600 dark:text-gray-400 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-gray-800 px-1.5 py-0.2 rounded uppercase">
+                                      <span className="text-[9px] font-bold text-slate-600 dark:text-gray-400 bg-slate-100 dark:bg-[#0B1224] border border-slate-200 dark:border-gray-800 px-1.5 py-0.2 rounded uppercase">
                                         {originSource}
                                       </span>
                                     </div>
-                                    <p className={`text-xs text-gray-300 leading-relaxed ${isDescExpanded ? 'whitespace-pre-wrap' : 'line-clamp-1'}`}>
+                                    <p className={`text-xs text-slate-600 dark:text-gray-300 leading-relaxed ${isDescExpanded ? 'whitespace-pre-wrap' : 'line-clamp-1'}`}>
                                       {deal.notes || deal.metadata?.resumo || deal.description || ""}
                                     </p>
                                     <button
@@ -2022,16 +2022,16 @@ function CrmContent() {
                                       <div className="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[9px] flex items-center justify-center shrink-0">
                                         {assigneeName[0].toUpperCase()}
                                       </div>
-                                      <span className="text-slate-300 font-medium text-xs truncate max-w-[120px]">
+                                      <span className="text-slate-700 dark:text-slate-300 font-medium text-xs truncate max-w-[120px]">
                                         {assigneeName}
                                       </span>
                                     </div>
                                   ) : (
                                     <div className="flex items-center gap-1.5">
-                                      <div className="w-5 h-5 rounded-full bg-slate-700 text-slate-300 font-bold text-[9px] flex items-center justify-center shrink-0">
+                                      <div className="w-5 h-5 rounded-full bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[9px] flex items-center justify-center shrink-0">
                                         F
                                       </div>
-                                      <span className="text-gray-500 italic text-xs">Fila Geral</span>
+                                      <span className="text-slate-400 dark:text-gray-500 italic text-xs">Fila Geral</span>
                                     </div>
                                   )}
                                 </td>
@@ -2040,7 +2040,7 @@ function CrmContent() {
                               {/* 5. Valor (R$) (Valor formatado em BRL com destaque verde) */}
                               {visibleColumns.value && (
                                 <td className="py-2.5 px-3.5 text-right">
-                                  <span className="font-mono font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded text-xs inline-block">
+                                  <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded text-xs inline-block">
                                     {formatCurrency(Number(deal.value || 0))}
                                   </span>
                                 </td>
@@ -2048,9 +2048,9 @@ function CrmContent() {
 
                               {/* 6. Última Interação (Tempo relativo formatado, ex: "há cerca de 9 horas") */}
                               {visibleColumns.updatedAt && (
-                                <td className="py-2.5 px-3.5 text-gray-400">
+                                <td className="py-2.5 px-3.5 text-slate-500 dark:text-gray-400">
                                   <span className="flex items-center gap-1 text-[11px]">
-                                    <Clock size={12} className="text-gray-500 shrink-0" />
+                                    <Clock size={12} className="text-slate-400 dark:text-gray-500 shrink-0" />
                                     <span>{formatRelativeTime(deal.updatedAt || deal.createdAt)}</span>
                                   </span>
                                 </td>
@@ -2058,7 +2058,7 @@ function CrmContent() {
 
                               {/* 7. Data Início */}
                               {visibleColumns.createdAt && (
-                                <td className="py-2.5 px-3.5 text-gray-400 text-[11px] whitespace-nowrap">
+                                <td className="py-2.5 px-3.5 text-slate-500 dark:text-gray-400 text-[11px] whitespace-nowrap">
                                   {formatDate(deal.metadata?.startDate || deal.createdAt)}
                                 </td>
                               )}
@@ -2067,15 +2067,15 @@ function CrmContent() {
                               {visibleColumns.closedAt && (
                                 <td className="py-2.5 px-3.5 text-[11px] whitespace-nowrap">
                                   {deal.metadata?.closedAt ? (
-                                    <span className="text-emerald-400 font-semibold font-mono">
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold font-mono">
                                       {formatDate(deal.metadata.closedAt)}
                                     </span>
                                   ) : ['won', 'lost', 'disqualified'].includes(deal.status) ? (
-                                    <span className="text-emerald-400 font-semibold font-mono">
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold font-mono">
                                       {formatDate(deal.updatedAt)}
                                     </span>
                                   ) : (
-                                    <span className="text-gray-500 italic">Em andamento</span>
+                                    <span className="text-slate-400 dark:text-gray-500 italic">Em andamento</span>
                                   )}
                                 </td>
                               )}
@@ -2098,12 +2098,12 @@ function CrmContent() {
       {viewMode === 'timeline' && (
         <div className="flex-1 flex flex-col gap-4 animate-in fade-in-50 duration-200 overflow-hidden">
           {/* Barra de Navegação do Período Semanal Sincronizada */}
-          <div className="bg-white dark:bg-[#161b22] border border-gray-800 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm shrink-0">
+          <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm shrink-0">
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={handlePrevWeek}
-                className="p-1.5 px-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors border border-gray-700 flex items-center gap-1 text-xs font-semibold"
+                className="p-1.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 dark:hover:text-white dark:border-gray-700 transition-colors flex items-center gap-1 text-xs font-semibold"
                 title="Semana Anterior"
               >
                 <ChevronLeft size={15} />
@@ -2113,7 +2113,7 @@ function CrmContent() {
               <button
                 type="button"
                 onClick={handleTodayWeek}
-                className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold transition-colors border border-gray-700 flex items-center gap-1.5 shadow-sm"
+                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 hover:text-slate-900 border border-slate-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:border-gray-700 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm"
               >
                 <Calendar size={13} className="text-primary" />
                 <span>Semana Atual</span>
@@ -2122,16 +2122,16 @@ function CrmContent() {
               <button
                 type="button"
                 onClick={handleNextWeek}
-                className="p-1.5 px-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors border border-gray-700 flex items-center gap-1 text-xs font-semibold"
+                className="p-1.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 dark:hover:text-white dark:border-gray-700 transition-colors flex items-center gap-1 text-xs font-semibold"
                 title="Próxima Semana"
               >
                 <span className="hidden sm:inline">Próxima</span>
                 <ChevronRight size={15} />
               </button>
 
-              <div className="h-5 w-px bg-gray-800 mx-1"></div>
+              <div className="h-5 w-px bg-slate-200 dark:bg-gray-800 mx-1"></div>
 
-              <div className="flex items-center gap-2 text-white font-bold text-sm bg-slate-100 dark:bg-[#0d1117] px-3 py-1.5 rounded-lg border border-gray-800/80 shadow-inner">
+              <div className="flex items-center gap-2 text-slate-800 dark:text-white font-bold text-sm bg-slate-100 dark:bg-[#0d1117] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-gray-800/80 shadow-inner">
                 <CalendarDays size={15} className="text-primary shrink-0" />
                 <span className="capitalize">{timelineWeekLabel}</span>
               </div>
@@ -2139,13 +2139,13 @@ function CrmContent() {
 
             <div className="flex flex-wrap items-center gap-2.5 text-xs">
               {/* Badge Contador Semanal */}
-              <span className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-gray-800 px-3 py-1.5 rounded-lg font-semibold text-slate-700 dark:text-gray-300 flex items-center gap-1.5 shadow-sm">
+              <span className="bg-slate-50 dark:bg-[#0B1224] border border-slate-200 dark:border-gray-800 px-3 py-1.5 rounded-lg font-semibold text-slate-700 dark:text-gray-300 flex items-center gap-1.5 shadow-sm">
                 <span className="text-slate-900 dark:text-white font-bold">{weekTotalCards}</span> {weekTotalCards === 1 ? 'card nesta semana' : 'cards nesta semana'}
               </span>
 
               {/* Montante Financeiro Semanal */}
               {weekTotalAmount > 0 && (
-                <span className="bg-emerald-950/30 border border-emerald-800/40 px-3 py-1.5 rounded-lg font-mono font-bold text-emerald-400 shadow-sm">
+                <span className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-3 py-1.5 rounded-lg font-mono font-bold text-emerald-600 dark:text-emerald-400 shadow-sm">
                   Total: {formatCurrency(weekTotalAmount)}
                 </span>
               )}
@@ -2153,15 +2153,15 @@ function CrmContent() {
           </div>
 
           {/* Grade da Timeline: Estágios na Lateral Esquerda + 7 Colunas dos Dias da Semana */}
-          <div className="flex-1 bg-white dark:bg-[#161b22] border border-gray-800 rounded-xl overflow-hidden shadow-lg flex flex-col min-h-0">
+          <div className="flex-1 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-lg flex flex-col min-h-0">
             <div className="flex-1 overflow-auto custom-scrollbar">
               <table className="w-full text-left border-collapse min-w-[1100px]">
                 {/* Cabeçalho da Grade */}
-                <thead className="sticky top-0 z-30 bg-slate-100 dark:bg-[#1c2128] border-b border-gray-800 text-xs font-bold text-gray-300 shadow-sm">
+                <thead className="sticky top-0 z-30 bg-slate-100 dark:bg-[#1c2128] border-b border-slate-200 dark:border-gray-800 text-xs font-bold text-slate-700 dark:text-gray-300 shadow-sm">
                   <tr>
                     {/* Coluna Fixa à Esquerda: Estágios do Funil */}
-                    <th className="p-3 w-64 min-w-[240px] max-w-[260px] sticky left-0 z-40 bg-slate-100 dark:bg-[#1c2128] border-r border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
-                      <div className="flex items-center justify-between text-xs font-extrabold uppercase tracking-wider text-gray-300">
+                    <th className="p-3 w-64 min-w-[240px] max-w-[260px] sticky left-0 z-40 bg-slate-100 dark:bg-[#1c2128] border-r border-slate-200 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
+                      <div className="flex items-center justify-between text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-gray-300">
                         <div className="flex items-center gap-2">
                           <LayoutDashboard size={14} className="text-primary" />
                           <span>Estágios do Funil</span>
@@ -2175,7 +2175,7 @@ function CrmContent() {
                               setCollapsedTimelineStages(columns.map(c => c.id));
                             }
                           }}
-                          className="text-[10px] text-gray-400 hover:text-white transition-colors uppercase font-bold tracking-wider"
+                          className="text-[10px] text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors uppercase font-bold tracking-wider"
                           title="Alternar expansão de todos os estágios"
                         >
                           {collapsedTimelineStages.length === columns.length ? 'Expandir' : 'Colapsar'}
@@ -2196,14 +2196,14 @@ function CrmContent() {
                       return (
                         <th 
                           key={`timeline-th-${dayIndex}`}
-                          className={`p-3 min-w-[145px] border-r border-gray-800/80 last:border-r-0 ${
+                          className={`p-3 min-w-[145px] border-r border-slate-200 dark:border-gray-800/80 last:border-r-0 ${
                             day.isToday ? 'bg-primary/10' : ''
                           }`}
                         >
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center justify-between">
                               <span className={`text-xs font-extrabold uppercase tracking-wider ${
-                                day.isToday ? 'text-primary' : 'text-gray-400'
+                                day.isToday ? 'text-primary' : 'text-slate-500 dark:text-gray-400'
                               }`}>
                                 {day.dayName}
                               </span>
@@ -2216,22 +2216,22 @@ function CrmContent() {
                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border transition-all ${
                                   dayDeals.length > 0 
                                     ? 'bg-primary/20 text-primary border-primary/40 font-extrabold'
-                                    : 'bg-gray-800 text-gray-400 border-gray-700/60'
+                                    : 'bg-slate-200 text-slate-600 border-slate-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700/60'
                                 }`}>
                                   {dayDeals.length}
                                 </span>
                               </div>
                             </div>
                             <div className="flex items-baseline justify-between text-[11px]">
-                              <span className={`font-black ${day.isToday ? 'text-white' : 'text-slate-200'}`}>
+                              <span className={`font-black ${day.isToday ? 'text-primary dark:text-white' : 'text-slate-800 dark:text-slate-200'}`}>
                                 {day.formattedDate}
                               </span>
                               {dayAmount > 0 ? (
-                                <span className="text-[10px] font-mono font-bold text-emerald-400">
+                                <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
                                   {formatCurrency(dayAmount)}
                                 </span>
                               ) : (
-                                <span className="text-[9px] font-mono text-gray-600">R$ 0</span>
+                                <span className="text-[9px] font-mono text-slate-400 dark:text-gray-600">R$ 0</span>
                               )}
                             </div>
                           </div>
@@ -2242,7 +2242,7 @@ function CrmContent() {
                 </thead>
 
                 {/* Corpo da Grade: Agrupado por Estágios do Funil */}
-                <tbody className="divide-y divide-gray-800/80 text-xs">
+                <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80 text-xs">
                   {columns.map(col => {
                     const stageAccent = getTimelineStageAccent(col.id);
                     const isCollapsed = collapsedTimelineStages.includes(col.id);
@@ -2254,10 +2254,10 @@ function CrmContent() {
                     return (
                       <tr 
                         key={`timeline-stage-row-${col.id}`}
-                        className={`transition-colors ${isCollapsed ? 'bg-slate-50/80 dark:bg-[#12161f]/80' : 'hover:bg-gray-900/30'}`}
+                        className={`transition-colors ${isCollapsed ? 'bg-slate-50/80 dark:bg-[#12161f]/80' : 'hover:bg-slate-50/60 dark:hover:bg-gray-900/30'}`}
                       >
                         {/* Célula Lateral Esquerda: Cabeçalho Colapsável do Estágio */}
-                        <td className="p-3 align-top sticky left-0 z-20 bg-white dark:bg-[#161b22] border-r border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
+                        <td className="p-3 align-top sticky left-0 z-20 bg-white dark:bg-[#161b22] border-r border-slate-200 dark:border-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
                           <div className="flex flex-col gap-1.5">
                             <button
                               type="button"
@@ -2265,22 +2265,22 @@ function CrmContent() {
                               className="flex items-center justify-between text-left group/btn w-full select-none"
                             >
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-gray-400 group-hover/btn:text-white transition-colors">
+                                <span className="text-slate-400 group-hover/btn:text-slate-900 dark:text-gray-400 dark:group-hover/btn:text-white transition-colors">
                                   {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                                 </span>
-                                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${stageAccent.barBg} ring-2 ring-transparent group-hover/btn:ring-white/20 transition-all`} />
-                                <span className="font-bold text-xs text-white uppercase tracking-wider truncate group-hover/btn:text-primary transition-colors">
+                                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${stageAccent.barBg} ring-2 ring-transparent group-hover/btn:ring-primary/30 transition-all`} />
+                                <span className="font-bold text-xs text-slate-800 dark:text-white uppercase tracking-wider truncate group-hover/btn:text-primary transition-colors">
                                   {col.title}
                                 </span>
                               </div>
                             </button>
 
-                            <div className="flex items-center justify-between pl-5 text-[11px] text-gray-400">
+                            <div className="flex items-center justify-between pl-5 text-[11px] text-slate-500 dark:text-gray-400">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${stageAccent.badgeBg} ${stageAccent.badgeText} ${stageAccent.borderLight}`}>
                                 {stageDeals.length} {stageDeals.length === 1 ? 'card' : 'cards'}
                               </span>
                               {stageTotal > 0 && (
-                                <span className="font-mono font-bold text-emerald-400 text-[10px]">
+                                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-[10px]">
                                   {formatCurrency(stageTotal)}
                                 </span>
                               )}
@@ -2294,12 +2294,12 @@ function CrmContent() {
                             return (
                               <td 
                                 key={`stage-${col.id}-day-${dayIndex}`}
-                                className={`p-2 border-r border-gray-800/40 last:border-r-0 ${
+                                className={`p-2 border-r border-slate-200/60 dark:border-gray-800/40 last:border-r-0 ${
                                   day.isToday ? 'bg-primary/5' : ''
                                 }`}
                               >
                                 <div className="h-6 flex items-center justify-center">
-                                  <span className="text-gray-700 text-xs">-</span>
+                                  <span className="text-slate-300 dark:text-gray-700 text-xs">-</span>
                                 </div>
                               </td>
                             );
@@ -2316,13 +2316,13 @@ function CrmContent() {
                           return (
                             <td
                               key={`stage-${col.id}-day-${dayIndex}`}
-                              className={`p-2 align-top border-r border-gray-800/60 last:border-r-0 min-w-[145px] transition-colors ${
+                              className={`p-2 align-top border-r border-slate-200/80 dark:border-gray-800/60 last:border-r-0 min-w-[145px] transition-colors ${
                                 day.isToday ? 'bg-primary/5' : ''
                               }`}
                             >
                               <div className="flex flex-col gap-1.5 min-h-[50px]">
                                 {dealsForCell.length === 0 ? (
-                                  <div className="flex-1 flex items-center justify-center py-2 text-gray-700">
+                                  <div className="flex-1 flex items-center justify-center py-2 text-slate-300 dark:text-gray-700">
                                     <span className="text-[11px] opacity-40 select-none">-</span>
                                   </div>
                                 ) : (
@@ -2335,14 +2335,14 @@ function CrmContent() {
                                         key={`timeline-bar-${deal.id}`}
                                         onClick={() => handleOpenDeal(deal)}
                                         title={`${deal.title || 'Sem título'} | ${leadName} | ${col.title} | ${formatCurrency(Number(deal.value || 0))}`}
-                                        className="relative flex items-center justify-between gap-1.5 pl-2.5 pr-2 py-1.5 rounded-lg bg-slate-100 dark:bg-[#0d1117] hover:bg-[#1f2633] border border-gray-800 hover:border-gray-700 cursor-pointer transition-all duration-150 shadow-sm text-left group overflow-hidden"
+                                        className="relative flex items-center justify-between gap-1.5 pl-2.5 pr-2 py-1.5 rounded-lg bg-white dark:bg-[#0d1117] hover:bg-slate-100 dark:hover:bg-[#1f2633] border border-slate-200 dark:border-gray-800 hover:border-slate-300 dark:hover:border-gray-700 cursor-pointer transition-all duration-150 shadow-sm text-left group overflow-hidden"
                                       >
                                         {/* Barra lateral colorida do estágio */}
                                         <div className={`absolute left-0 top-0 bottom-0 w-1 ${stageAccent.barBg}`} />
 
                                         {/* Nome do Lead / Título em destaque */}
                                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                                          <span className="text-xs font-bold text-white group-hover:text-primary truncate transition-colors">
+                                          <span className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-primary truncate transition-colors">
                                             {leadName}
                                           </span>
                                         </div>
@@ -2359,7 +2359,7 @@ function CrmContent() {
                                           )}
 
                                           {deal.value && Number(deal.value) > 0 && (
-                                            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/20 px-1 py-0.5 rounded border border-emerald-800/30">
+                                            <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-1 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/30">
                                               {formatCurrency(Number(deal.value))}
                                             </span>
                                           )}
