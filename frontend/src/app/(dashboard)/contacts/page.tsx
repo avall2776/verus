@@ -1220,9 +1220,9 @@ export default function ContactsPage() {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Topo do Modal */}
-              <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between gap-4 bg-slate-50/50 dark:bg-slate-900/50">
-                <div className="flex items-center gap-3.5">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-base shrink-0 border ${
+              <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between gap-3 sm:gap-4 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-black text-base shrink-0 border mt-0.5 ${
                     selectedContact.isClient || selectedContact.tags.includes('Cliente')
                       ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700"
                       : "bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700"
@@ -1233,46 +1233,48 @@ export default function ContactsPage() {
                       <span>{selectedContact.name?.charAt(0).toUpperCase() || "C"}</span>
                     )}
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-black tracking-tight">{selectedContact.name}</h2>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <h2 className="text-sm sm:text-base font-black tracking-tight text-slate-900 dark:text-white leading-snug break-words">
+                        {selectedContact.name}
+                      </h2>
                       {selectedContact.isClient || selectedContact.tags.includes('Cliente') ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40">
-                          <ShieldCheck size={12} /> CLIENTE CONFIRMADO
+                        <span className="self-start inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 whitespace-nowrap shrink-0">
+                          <ShieldCheck size={11} /> CLIENTE CONFIRMADO
                         </span>
                       ) : selectedContact.statusCategory === 'hot' || selectedContact.tags.includes('Quente') ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40">
-                          <Zap size={12} /> EM NEGOCIAÇÃO
+                        <span className="self-start inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40 whitespace-nowrap shrink-0">
+                          <Zap size={11} /> EM NEGOCIAÇÃO
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-500/40">
-                          <RefreshCw size={12} /> LEAD FRIO
+                        <span className="self-start inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-500/40 whitespace-nowrap shrink-0">
+                          <RefreshCw size={11} /> LEAD FRIO
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                      <span>ID: #{selectedContact.id}</span>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+                      <span className="font-mono" title={selectedContact.id}>ID: #{selectedContact.id.slice(0, 8)}</span>
                       <span>•</span>
-                      <span>Origem: {cleanSourceBrand(selectedContact.source)}</span>
+                      <span className="truncate">Origem: {cleanSourceBrand(selectedContact.source)}</span>
                     </div>
                   </div>
                 </div>
 
                 <button 
                   onClick={() => setIsModalOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors shrink-0"
                 >
                   <X size={18} />
                 </button>
               </div>
 
               {/* Corpo com Scroll */}
-              <div className="p-5 overflow-y-auto space-y-5 flex-1">
+              <div className="p-4 sm:p-5 overflow-y-auto space-y-4 sm:space-y-5 flex-1">
                 {/* 1. Banner Inteligente de Status */}
                 {(selectedContact.isClient || selectedContact.tags.includes('Cliente')) ? (
-                  <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-between">
+                  <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                         <CheckCircle2 size={20} />
                       </div>
                       <div>
@@ -1280,19 +1282,19 @@ export default function ContactsPage() {
                         <p className="text-[11px] text-emerald-700 dark:text-emerald-400">Este contato possui compras e negócios ganhos confirmados.</p>
                       </div>
                     </div>
-                    {selectedContact.totalWonValue && selectedContact.totalWonValue > 0 && (
-                      <div className="text-right">
+                    {Number(selectedContact.totalWonValue) > 0 ? (
+                      <div className="text-right shrink-0">
                         <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block">Total Faturado</span>
-                        <span className="text-sm font-black text-emerald-900 dark:text-emerald-200">
+                        <span className="text-xs sm:text-sm font-black text-emerald-900 dark:text-emerald-200">
                           R$ {Number(selectedContact.totalWonValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </span>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 ) : (selectedContact.statusCategory === 'hot' || selectedContact.tags.includes('Quente')) ? (
-                  <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 flex items-center justify-between">
+                  <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                         <Zap size={20} />
                       </div>
                       <div>
@@ -1300,19 +1302,19 @@ export default function ContactsPage() {
                         <p className="text-[11px] text-amber-700 dark:text-amber-400">Oportunidade ativa no funil comercial do CRM.</p>
                       </div>
                     </div>
-                    {selectedContact.totalActivePipelineValue && selectedContact.totalActivePipelineValue > 0 && (
-                      <div className="text-right">
+                    {Number(selectedContact.totalActivePipelineValue) > 0 ? (
+                      <div className="text-right shrink-0">
                         <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 block">Em Pipeline</span>
-                        <span className="text-sm font-black text-amber-900 dark:text-amber-200">
+                        <span className="text-xs sm:text-sm font-black text-amber-900 dark:text-amber-200">
                           R$ {Number(selectedContact.totalActivePipelineValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </span>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 ) : (
-                  <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/60 flex items-center justify-between">
+                  <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/60 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                         <RefreshCw size={20} />
                       </div>
                       <div>
@@ -1487,7 +1489,7 @@ export default function ContactsPage() {
                   <button
                     onClick={() => {
                       setIsModalOpen(false);
-                      router.push(`/inbox?search=${encodeURIComponent(selectedContact.name)}`);
+                      router.push(`/inbox?contactId=${selectedContact.id}`);
                     }}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-sm cursor-pointer"
                   >

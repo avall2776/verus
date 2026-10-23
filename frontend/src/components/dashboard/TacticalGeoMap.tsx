@@ -1450,7 +1450,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
         {/* ======================================================================= */}
         {selectedPoint && (
           <aside
-            className={`absolute top-0 right-0 bottom-0 w-[420px] max-w-full z-40 flex flex-col shadow-[-16px_0_45px_rgba(0,0,0,0.65)] transition-all duration-300 animate-in fade-in slide-in-from-right-8 ${
+            className={`absolute top-0 right-0 bottom-0 w-[440px] max-w-full z-40 flex flex-col shadow-[-16px_0_45px_rgba(0,0,0,0.65)] transition-all duration-300 animate-in fade-in slide-in-from-right-8 ${
               theme === "light"
                 ? "bg-white/95 border-l border-slate-200/90 text-slate-800"
                 : theme === "whatsapp"
@@ -1462,371 +1462,615 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
               WebkitBackdropFilter: "blur(24px)",
             }}
           >
-            {/* Topo da Gaveta: Cidade, Estado e Botão Fechar (Efeito Vidro Fosco) */}
-            <div
-              className={`p-4 border-b flex items-start justify-between flex-shrink-0 backdrop-blur-md ${
-                theme === "light"
-                  ? "border-slate-200 bg-white/95"
-                  : theme === "whatsapp"
-                  ? "border-[#202C33] bg-[#111B21]/95"
-                  : "border-slate-800 bg-[#070D1B]/95"
-              }`}
-            >
-              <div>
-                <div className="flex items-center gap-2">
-                  <MapPin
-                    className={`w-4 h-4 ${
-                      theme === "whatsapp"
-                        ? "text-[#00A884]"
-                        : theme === "light"
-                        ? "text-blue-600"
-                        : "text-cyan-400"
-                    }`}
-                  />
-                  <h2
-                    className={`text-base font-bold tracking-wide ${
-                      theme === "light" ? "text-slate-900" : "text-white"
+            {spyingDeal ? (
+              /* ======================================================================= */
+              /* SUB-VIEW ESPIAR ATENDIMENTO DO VENDEDOR (100% REAL E SIGILOSO)         */
+              /* ======================================================================= */
+              <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4">
+                {/* Topo do Espião: Voltar e Fechar */}
+                <div
+                  className={`p-4 border-b flex items-center justify-between flex-shrink-0 backdrop-blur-md ${
+                    theme === "light"
+                      ? "border-slate-200 bg-white/95"
+                      : theme === "whatsapp"
+                      ? "border-[#202C33] bg-[#111B21]/95"
+                      : "border-slate-800 bg-[#070D1B]/95"
+                  }`}
+                >
+                  <button
+                    onClick={() => setSpyingDeal(null)}
+                    className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
+                      theme === "light"
+                        ? "text-slate-600 hover:text-slate-900"
+                        : "text-slate-300 hover:text-white"
                     }`}
                   >
-                    {selectedPoint.cityName} - {selectedPoint.state}
-                  </h2>
+                    <ArrowLeft className="w-4 h-4 text-emerald-500" />
+                    <span>Voltar aos Clientes de {selectedPoint.cityName}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedPoint(null);
+                      setSpyingDeal(null);
+                    }}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      theme === "light"
+                        ? "text-slate-400 hover:text-slate-800 hover:bg-slate-200"
+                        : theme === "whatsapp"
+                        ? "text-slate-400 hover:text-white hover:bg-[#202C33]"
+                        : "text-slate-400 hover:text-white hover:bg-slate-800"
+                    }`}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <span
-                    className={`text-xs font-semibold ${
-                      theme === "light" ? "text-slate-500" : "text-slate-400"
-                    }`}
-                  >
-                    Região {selectedPoint.region}
-                  </span>
-                  {selectedPoint.isLiveNow && (
-                    <span
-                      className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
-                        theme === "whatsapp" ? "text-[#25D366]" : "text-cyan-400"
+
+                {/* Header Executivo da Conversa Espionada */}
+                <div
+                  className={`p-4 border-b space-y-2.5 flex-shrink-0 ${
+                    theme === "light"
+                      ? "bg-slate-50 border-slate-200"
+                      : theme === "whatsapp"
+                      ? "bg-[#111B21] border-[#202C33]"
+                      : "bg-[#0b1325] border-slate-800"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                      Radar Espião de Atendimento
+                    </span>
+                    <span className="text-xs font-extrabold text-emerald-500">
+                      {formatCurrency(spyingDeal.value)}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3
+                      className={`text-sm font-bold leading-tight ${
+                        theme === "light" ? "text-slate-900" : "text-white"
                       }`}
                     >
-                      <span
-                        className={`w-2 h-2 rounded-full animate-ping ${
-                          theme === "whatsapp" ? "bg-[#25D366]" : "bg-cyan-400"
-                        }`}
-                      ></span>
-                      Ao Vivo Agora
-                    </span>
+                      <span className="text-emerald-500 font-extrabold">{spyingDeal.sellerName}</span> está atendendo{" "}
+                      <span className="underline decoration-emerald-500/40">{spyingDeal.clientName}</span>
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-400">
+                      <span className="flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-slate-500" />
+                        {spyingDeal.contactPhone || "WhatsApp Oficial"}
+                      </span>
+                      <span>•</span>
+                      <span className="text-slate-400 truncate max-w-[200px]">{spyingDeal.title}</span>
+                    </div>
+                  </div>
+
+                  {/* Alerta de Sigilo Operacional */}
+                  <div
+                    className={`flex items-start gap-2 p-2.5 rounded-xl border text-[11px] leading-relaxed ${
+                      theme === "light"
+                        ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                        : "bg-emerald-950/30 border-emerald-800/40 text-emerald-300"
+                    }`}
+                  >
+                    <Shield className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <div>
+                      <strong>Visualização Sigilosa:</strong> Você está acompanhando as mensagens em tempo real. O vendedor e o cliente não sabem que você está espiando.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fluxo de Mensagens em Formato WhatsApp */}
+                <div
+                  className={`flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 ${
+                    theme === "light"
+                      ? "bg-[#EFEAE2]"
+                      : theme === "whatsapp"
+                      ? "bg-[#0B141A]"
+                      : "bg-[#070D1B]"
+                  }`}
+                >
+                  {loadingSpyMessages ? (
+                    <div className="flex flex-col items-center justify-center h-48 space-y-3">
+                      <Loader2 className="w-7 h-7 text-emerald-500 animate-spin" />
+                      <span className="text-xs text-slate-400 font-medium">Sincronizando mensagens reais...</span>
+                    </div>
+                  ) : spyMessages.length > 0 ? (
+                    spyMessages.map((msg) => {
+                      const isOut = msg.fromMe || msg.direction === "OUTBOUND" || msg.senderType === "agent";
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex flex-col ${isOut ? "items-end" : "items-start"}`}
+                        >
+                          <div
+                            className={`text-[10px] font-semibold mb-0.5 px-1.5 ${
+                              theme === "light" ? "text-slate-600" : "text-slate-400"
+                            }`}
+                          >
+                            {isOut ? spyingDeal.sellerName : spyingDeal.clientName}
+                          </div>
+                          <div
+                            className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs shadow-md ${
+                              isOut
+                                ? theme === "light"
+                                  ? "bg-[#D9FDD3] text-slate-800 rounded-tr-none border border-emerald-200"
+                                  : "bg-[#005C4B] text-white rounded-tr-none"
+                                : theme === "light"
+                                ? "bg-white text-slate-800 rounded-tl-none border border-slate-200"
+                                : "bg-[#202C33] text-[#E9EDEF] rounded-tl-none border border-slate-700/50"
+                            }`}
+                          >
+                            {msg.type === "audio" || msg.mediaUrl?.includes(".mp3") || msg.mediaUrl?.includes(".ogg") ? (
+                              <div className="space-y-1.5">
+                                <audio controls className="w-full h-8" src={msg.mediaUrl} />
+                                {msg.audioTranscription && (
+                                  <p className="text-[11px] italic opacity-80 border-t border-current/10 pt-1 mt-1">
+                                    "{msg.audioTranscription}"
+                                  </p>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.content}</p>
+                            )}
+
+                            <div
+                              className={`text-[9px] mt-1 text-right flex items-center justify-end gap-1 ${
+                                isOut
+                                  ? theme === "light"
+                                    ? "text-emerald-700"
+                                    : "text-emerald-200/80"
+                                  : "text-slate-400"
+                              }`}
+                            >
+                              <span>
+                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                              {isOut && <CheckCheck className="w-3 h-3 text-cyan-400" />}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-12 text-xs text-slate-400">
+                      Nenhuma mensagem registrada no banco para esta conversa.
+                    </div>
                   )}
                 </div>
-              </div>
-              <button
-                onClick={() => setSelectedPoint(null)}
-                className={`p-1.5 rounded-lg transition-colors ${
-                  theme === "light"
-                    ? "text-slate-400 hover:text-slate-800 hover:bg-slate-200"
-                    : theme === "whatsapp"
-                    ? "text-slate-400 hover:text-white hover:bg-[#202C33]"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800"
-                }`}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Corpo Rolável Completo (Sem cortes de altura) */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4">
-              {/* Badge de Status Comercial */}
-              <div>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-bold border inline-block ${
-                    selectedPoint.status === "closed"
-                      ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30"
-                      : selectedPoint.status === "in_attendance"
-                      ? "bg-amber-500/15 text-amber-500 border-amber-500/30"
-                      : theme === "light"
-                      ? "bg-slate-100 text-slate-600 border-slate-300"
-                      : "bg-slate-800/80 text-slate-300 border-slate-700"
-                  }`}
-                >
-                  {selectedPoint.status === "closed"
-                    ? "Polo com Vendas Concluídas"
-                    : selectedPoint.status === "in_attendance"
-                    ? "Leads em Atendimento Ativo"
-                    : "Mercado em Aberto"}
-                </span>
-              </div>
-
-              {/* Cards de Métricas Operacionais da Praça */}
-              <div className="grid grid-cols-2 gap-2.5">
+                {/* Rodapé Fixo do Espião: Intervir no Chat ou Abrir no CRM */}
                 <div
-                  className={`p-3.5 rounded-xl border backdrop-blur-md ${
+                  className={`p-4 border-t flex flex-col gap-2 flex-shrink-0 backdrop-blur-md ${
                     theme === "light"
-                      ? "bg-slate-50 border-slate-200"
+                      ? "border-slate-200 bg-white/95"
                       : theme === "whatsapp"
-                      ? "bg-[#202C33]/95 border-[#2A3942]"
-                      : "bg-[#0e1628]/95 border-slate-700/70"
+                      ? "border-[#202C33] bg-[#111B21]/95"
+                      : "border-slate-800 bg-[#070D1B]/95"
                   }`}
                 >
-                  <div
-                    className={`text-[10px] uppercase font-bold ${
-                      theme === "light" ? "text-slate-500" : "text-slate-400"
-                    }`}
+                  <button
+                    onClick={() => router.push(spyingDeal.conversationId ? `/chat?conversationId=${spyingDeal.conversationId}` : `/chat`)}
+                    className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-[#00A884] hover:bg-[#02906F] text-white shadow-lg shadow-[#00A884]/20 flex items-center justify-center gap-2 transition-all"
                   >
-                    Vendas Fechadas
-                  </div>
-                  <div
-                    className={`text-xl font-bold mt-0.5 ${
-                      theme === "light" ? "text-slate-900" : "text-white"
-                    }`}
-                  >
-                    {selectedPoint.salesCount}
-                  </div>
-                  <div className="text-xs text-emerald-500 font-semibold mt-0.5">
-                    {formatCurrency(selectedPoint.salesVolume)}
-                  </div>
-                </div>
+                    <MessageSquare className="w-4 h-4" />
+                    <span>Intervir no Atendimento (Abrir no Inbox)</span>
+                  </button>
 
+                  <button
+                    onClick={() => router.push(`/crm`)}
+                    className={`w-full py-2 px-4 rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition-all border ${
+                      theme === "light"
+                        ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                        : "bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-700"
+                    }`}
+                  >
+                    <span>Ver Oportunidade no Funil CRM</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* ======================================================================= */
+              /* VISÃO GERAL DO POLO E LISTAGEM INDIVIDUALIZADA DOS CLIENTES             */
+              /* ======================================================================= */
+              <div className="flex flex-col h-full">
+                {/* Topo da Gaveta: Cidade, Estado e Botão Fechar (Efeito Vidro Fosco) */}
                 <div
-                  className={`p-3.5 rounded-xl border backdrop-blur-md ${
+                  className={`p-4 border-b flex items-start justify-between flex-shrink-0 backdrop-blur-md ${
                     theme === "light"
-                      ? "bg-slate-50 border-slate-200"
+                      ? "border-slate-200 bg-white/95"
                       : theme === "whatsapp"
-                      ? "bg-[#202C33]/95 border-[#2A3942]"
-                      : "bg-[#0e1628]/95 border-slate-700/70"
+                      ? "border-[#202C33] bg-[#111B21]/95"
+                      : "border-slate-800 bg-[#070D1B]/95"
                   }`}
                 >
-                  <div
-                    className={`text-[10px] uppercase font-bold ${
-                      theme === "light" ? "text-slate-500" : "text-slate-400"
-                    }`}
-                  >
-                    Em Negociação
-                  </div>
-                  <div className="text-xl font-bold text-amber-500 mt-0.5">
-                    {selectedPoint.inAttendanceCount}
-                  </div>
-                  <div
-                    className={`text-xs mt-0.5 ${
-                      theme === "light" ? "text-slate-500" : "text-slate-400"
-                    }`}
-                  >
-                    Leads em Follow-up
-                  </div>
-                </div>
-              </div>
-
-              {/* Origem dos Clientes: Tráfego Pago vs Orgânico */}
-              <div
-                className={`p-3.5 rounded-xl border backdrop-blur-md ${
-                  theme === "light"
-                    ? "bg-slate-50 border-slate-200"
-                    : theme === "whatsapp"
-                    ? "bg-[#202C33]/95 border-[#2A3942]"
-                    : "bg-[#0e1628]/95 border-slate-700/70"
-                }`}
-              >
-                <div className="text-[10px] uppercase font-bold mb-2 flex items-center justify-between">
-                  <span className={theme === "light" ? "text-slate-500" : "text-slate-400"}>
-                    Distribuição de Origem
-                  </span>
-                  <span
-                    className={`font-semibold ${
-                      theme === "light" ? "text-slate-700" : "text-slate-300"
-                    }`}
-                  >
-                    {selectedPoint.trafficSource.paid + selectedPoint.trafficSource.organic} leads
-                  </span>
-                </div>
-                <div className="w-full h-2.5 rounded-full bg-slate-700/30 overflow-hidden flex">
-                  <div
-                    className="bg-blue-500 h-full"
-                    style={{
-                      width: `${
-                        selectedPoint.trafficSource.paid + selectedPoint.trafficSource.organic > 0
-                          ? (selectedPoint.trafficSource.paid /
-                              (selectedPoint.trafficSource.paid +
-                                selectedPoint.trafficSource.organic)) *
-                            100
-                          : 50
-                      }%`
-                    }}
-                    title="Meta Ads / Tráfego Pago"
-                  ></div>
-                  <div
-                    className="bg-emerald-500 h-full flex-1"
-                    title="Orgânico / Indicação"
-                  ></div>
-                </div>
-                <div
-                  className={`flex items-center justify-between text-xs mt-2.5 ${
-                    theme === "light" ? "text-slate-600" : "text-slate-400"
-                  }`}
-                >
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                    Meta Ads ({selectedPoint.trafficSource.paid})
-                  </span>
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    Orgânico ({selectedPoint.trafficSource.organic})
-                  </span>
-                </div>
-              </div>
-
-              {/* Equipe Responsável */}
-              <div
-                className={`py-2 border-b ${
-                  theme === "light"
-                    ? "border-slate-200"
-                    : theme === "whatsapp"
-                    ? "border-[#202C33]"
-                    : "border-slate-800/80"
-                }`}
-              >
-                <div
-                  className={`text-[10px] uppercase font-bold mb-1.5 ${
-                    theme === "light" ? "text-slate-500" : "text-slate-400"
-                  }`}
-                >
-                  Equipe Responsável
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedPoint.assignedSellers.map((seller, idx) => (
-                    <span
-                      key={idx}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 border ${
-                        theme === "light"
-                          ? "bg-slate-100 text-slate-700 border-slate-300"
-                          : theme === "whatsapp"
-                          ? "bg-[#202C33] text-[#D1D7DB] border-[#2A3942]"
-                          : "bg-slate-800/80 text-slate-200 border-slate-700/60"
-                      }`}
-                    >
-                      <Users
-                        className={`w-3.5 h-3.5 ${
-                          theme === "whatsapp" ? "text-[#00A884]" : "text-blue-400"
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <MapPin
+                        className={`w-4 h-4 ${
+                          theme === "whatsapp"
+                            ? "text-[#00A884]"
+                            : theme === "light"
+                            ? "text-blue-600"
+                            : "text-cyan-400"
                         }`}
                       />
-                      {seller}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* NEGÓCIOS NA PRAÇA - TOTALMENTE EXPANDIDO E LEGÍVEL (SEM TEXTO CORTADO) */}
-              <div className="space-y-2.5 pt-1">
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`text-[10px] uppercase font-bold tracking-wider ${
-                      theme === "light" ? "text-slate-500" : "text-slate-400"
-                    }`}
-                  >
-                    Negócios na Praça ({selectedPoint.recentDeals.length})
-                  </span>
-                </div>
-
-                {selectedPoint.recentDeals.length > 0 ? (
-                  <div className="space-y-2.5">
-                    {selectedPoint.recentDeals.map((deal) => (
-                      <div
-                        key={deal.id}
-                        className={`p-3.5 rounded-xl border transition-all backdrop-blur-md ${
-                          theme === "light"
-                            ? "bg-white hover:bg-slate-50 border-slate-200 text-slate-800 shadow-sm"
-                            : theme === "whatsapp"
-                            ? "bg-[#202C33]/95 hover:bg-[#202C33] border-[#2A3942] text-[#E9EDEF]"
-                            : "bg-[#0e1628]/95 hover:bg-[#152038] border-slate-700/70 text-slate-200"
+                      <h2
+                        className={`text-base font-bold tracking-wide ${
+                          theme === "light" ? "text-slate-900" : "text-white"
                         }`}
                       >
-                        {/* Linha 1: Nome do Cliente e Valor */}
-                        <div className="flex items-start justify-between gap-2">
-                          <div
-                            className={`font-bold text-sm leading-snug break-words ${
-                              theme === "light" ? "text-slate-900" : "text-white"
-                            }`}
-                          >
-                            {deal.clientName}
-                          </div>
-                          <div className="text-sm font-extrabold text-emerald-500 shrink-0">
-                            {formatCurrency(deal.value)}
-                          </div>
-                        </div>
-
-                        {/* Linha 2: Proposta / Título */}
-                        <div
-                          className={`text-xs mt-1 break-words ${
-                            theme === "light" ? "text-slate-600" : "text-slate-300"
+                        {selectedPoint.cityName} - {selectedPoint.state}
+                      </h2>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span
+                        className={`text-xs font-semibold ${
+                          theme === "light" ? "text-slate-500" : "text-slate-400"
+                        }`}
+                      >
+                        Região {selectedPoint.region}
+                      </span>
+                      {selectedPoint.isLiveNow && (
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
+                            theme === "whatsapp" ? "text-[#25D366]" : "text-cyan-400"
                           }`}
                         >
-                          {deal.title}
-                        </div>
-
-                        {/* Linha 3: Badges de Estágio, Vendedor e Origem */}
-                        <div className="flex flex-wrap items-center gap-2 mt-2.5 pt-2 border-t border-slate-700/20">
                           <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              deal.status === "won"
-                                ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"
-                                : "bg-amber-500/15 text-amber-500 border border-amber-500/30"
+                            className={`w-2 h-2 rounded-full animate-ping ${
+                              theme === "whatsapp" ? "bg-[#25D366]" : "bg-cyan-400"
                             }`}
-                          >
-                            {deal.stageLabel}
-                          </span>
-
-                          <span
-                            className={`text-[10px] flex items-center gap-1 font-medium ${
-                              theme === "light" ? "text-slate-500" : "text-slate-400"
-                            }`}
-                          >
-                            <Users className="w-3 h-3 opacity-60" />
-                            {deal.sellerName}
-                          </span>
-
-                          <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded ml-auto font-medium ${
-                              deal.source === "paid"
-                                ? "bg-blue-500/15 text-blue-500"
-                                : "bg-emerald-500/15 text-emerald-500"
-                            }`}
-                          >
-                            {deal.source === "paid" ? "Meta Ads" : "Orgânico"}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                          ></span>
+                          Ao Vivo Agora
+                        </span>
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  <div
-                    className={`py-6 text-center text-xs rounded-xl border border-dashed ${
+                  <button
+                    onClick={() => {
+                      setSelectedPoint(null);
+                      setSpyingDeal(null);
+                    }}
+                    className={`p-1.5 rounded-lg transition-colors ${
                       theme === "light"
-                        ? "text-slate-400 border-slate-200 bg-slate-50"
-                        : "text-slate-500 border-slate-800 bg-slate-900/30"
+                        ? "text-slate-400 hover:text-slate-800 hover:bg-slate-200"
+                        : theme === "whatsapp"
+                        ? "text-slate-400 hover:text-white hover:bg-[#202C33]"
+                        : "text-slate-400 hover:text-white hover:bg-slate-800"
                     }`}
                   >
-                    Nenhum contrato ativo cadastrado para este polo.
-                  </div>
-                )}
-              </div>
-            </div>
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
 
-            {/* Rodapé Fixo com Botão CRM */}
-            <div
-              className={`p-4 border-t flex-shrink-0 backdrop-blur-md ${
-                theme === "light"
-                  ? "border-slate-200 bg-white/95"
-                  : theme === "whatsapp"
-                  ? "border-[#202C33] bg-[#111B21]/95"
-                  : "border-slate-800 bg-[#070D1B]/95"
-              }`}
-            >
-              <button
-                onClick={() => router.push(`/crm`)}
-                className={`w-full py-2.5 px-4 font-bold text-xs rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 ${
-                  theme === "whatsapp"
-                    ? "bg-[#00A884] hover:bg-[#02906F] text-white shadow-[#00A884]/25"
-                    : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/25"
-                }`}
-              >
-                <span>Abrir Negociações no Funil CRM</span>
-                <ArrowUpRight className="w-4 h-4" />
-              </button>
-            </div>
+                {/* Corpo Rolável Completo (Sem cortes de altura) */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4">
+                  {/* Badge de Status Comercial */}
+                  <div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold border inline-block ${
+                        selectedPoint.status === "closed"
+                          ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30"
+                          : selectedPoint.status === "in_attendance"
+                          ? "bg-amber-500/15 text-amber-500 border-amber-500/30"
+                          : theme === "light"
+                          ? "bg-slate-100 text-slate-600 border-slate-300"
+                          : "bg-slate-800/80 text-slate-300 border-slate-700"
+                      }`}
+                    >
+                      {selectedPoint.status === "closed"
+                        ? "Polo com Vendas Concluídas (Dominado)"
+                        : selectedPoint.status === "in_attendance"
+                        ? "Leads em Atendimento Ativo (Área Amarela)"
+                        : "Mercado em Aberto (Névoa de Guerra)"}
+                    </span>
+                  </div>
+
+                  {/* Cards de Métricas Operacionais da Praça */}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div
+                      className={`p-3.5 rounded-xl border backdrop-blur-md ${
+                        theme === "light"
+                          ? "bg-slate-50 border-slate-200"
+                          : theme === "whatsapp"
+                          ? "bg-[#202C33]/95 border-[#2A3942]"
+                          : "bg-[#0e1628]/95 border-slate-700/70"
+                      }`}
+                    >
+                      <div
+                        className={`text-[10px] uppercase font-bold ${
+                          theme === "light" ? "text-slate-500" : "text-slate-400"
+                        }`}
+                      >
+                        Vendas Fechadas
+                      </div>
+                      <div
+                        className={`text-xl font-bold mt-0.5 ${
+                          theme === "light" ? "text-slate-900" : "text-white"
+                        }`}
+                      >
+                        {selectedPoint.salesCount}
+                      </div>
+                      <div className="text-xs text-emerald-500 font-semibold mt-0.5">
+                        {formatCurrency(selectedPoint.salesVolume)}
+                      </div>
+                    </div>
+
+                    <div
+                      className={`p-3.5 rounded-xl border backdrop-blur-md ${
+                        theme === "light"
+                          ? "bg-slate-50 border-slate-200"
+                          : theme === "whatsapp"
+                          ? "bg-[#202C33]/95 border-[#2A3942]"
+                          : "bg-[#0e1628]/95 border-slate-700/70"
+                      }`}
+                    >
+                      <div
+                        className={`text-[10px] uppercase font-bold ${
+                          theme === "light" ? "text-slate-500" : "text-slate-400"
+                        }`}
+                      >
+                        Em Negociação
+                      </div>
+                      <div className="text-xl font-bold text-amber-500 mt-0.5">
+                        {selectedPoint.inAttendanceCount}
+                      </div>
+                      <div
+                        className={`text-xs mt-0.5 ${
+                          theme === "light" ? "text-slate-500" : "text-slate-400"
+                        }`}
+                      >
+                        Leads em Follow-up
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Origem dos Clientes: Tráfego Pago vs Orgânico */}
+                  <div
+                    className={`p-3.5 rounded-xl border backdrop-blur-md ${
+                      theme === "light"
+                        ? "bg-slate-50 border-slate-200"
+                        : theme === "whatsapp"
+                        ? "bg-[#202C33]/95 border-[#2A3942]"
+                        : "bg-[#0e1628]/95 border-slate-700/70"
+                    }`}
+                  >
+                    <div className="text-[10px] uppercase font-bold mb-2 flex items-center justify-between">
+                      <span className={theme === "light" ? "text-slate-500" : "text-slate-400"}>
+                        Distribuição de Origem
+                      </span>
+                      <span
+                        className={`font-semibold ${
+                          theme === "light" ? "text-slate-700" : "text-slate-300"
+                        }`}
+                      >
+                        {selectedPoint.trafficSource.paid + selectedPoint.trafficSource.organic} leads
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 rounded-full bg-slate-700/30 overflow-hidden flex">
+                      <div
+                        className="bg-blue-500 h-full"
+                        style={{
+                          width: `${
+                            selectedPoint.trafficSource.paid + selectedPoint.trafficSource.organic > 0
+                              ? (selectedPoint.trafficSource.paid /
+                                  (selectedPoint.trafficSource.paid +
+                                    selectedPoint.trafficSource.organic)) *
+                                100
+                              : 50
+                          }%`
+                        }}
+                        title="Meta Ads / Tráfego Pago"
+                      ></div>
+                      <div
+                        className="bg-emerald-500 h-full flex-1"
+                        title="Orgânico / Indicação"
+                      ></div>
+                    </div>
+                    <div
+                      className={`flex items-center justify-between text-xs mt-2.5 ${
+                        theme === "light" ? "text-slate-600" : "text-slate-400"
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                        Meta Ads ({selectedPoint.trafficSource.paid})
+                      </span>
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                        Orgânico ({selectedPoint.trafficSource.organic})
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Equipe Responsável */}
+                  <div
+                    className={`py-2 border-b ${
+                      theme === "light"
+                        ? "border-slate-200"
+                        : theme === "whatsapp"
+                        ? "border-[#202C33]"
+                        : "border-slate-800/80"
+                    }`}
+                  >
+                    <div
+                      className={`text-[10px] uppercase font-bold mb-1.5 ${
+                        theme === "light" ? "text-slate-500" : "text-slate-400"
+                      }`}
+                    >
+                      Equipe Responsável
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedPoint.assignedSellers.map((seller, idx) => (
+                        <span
+                          key={idx}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 border ${
+                            theme === "light"
+                              ? "bg-slate-100 text-slate-700 border-slate-300"
+                              : theme === "whatsapp"
+                              ? "bg-[#202C33] text-[#D1D7DB] border-[#2A3942]"
+                              : "bg-slate-800/80 text-slate-200 border-slate-700/60"
+                          }`}
+                        >
+                          <Users
+                            className={`w-3.5 h-3.5 ${
+                              theme === "whatsapp" ? "text-[#00A884]" : "text-blue-400"
+                            }`}
+                          />
+                          {seller}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* NEGÓCIOS NA PRAÇA - CARDS INDIVIDUALIZADOS COM RECURSO DE ESPIAR */}
+                  <div className="space-y-2.5 pt-1">
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-[10px] uppercase font-bold tracking-wider ${
+                          theme === "light" ? "text-slate-500" : "text-slate-400"
+                        }`}
+                      >
+                        Clientes & Negócios na Praça ({selectedPoint.recentDeals.length})
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                        <Eye className="w-3 h-3" />
+                        Clique para espiar conversa
+                      </span>
+                    </div>
+
+                    {selectedPoint.recentDeals.length > 0 ? (
+                      <div className="space-y-2.5">
+                        {selectedPoint.recentDeals.map((deal) => (
+                          <div
+                            key={deal.id}
+                            onClick={() => handleSpyDeal(deal)}
+                            className={`p-3.5 rounded-xl border transition-all backdrop-blur-md cursor-pointer group hover:scale-[1.01] ${
+                              theme === "light"
+                                ? "bg-white hover:bg-emerald-50/50 hover:border-emerald-300 border-slate-200 text-slate-800 shadow-sm"
+                                : theme === "whatsapp"
+                                ? "bg-[#202C33]/95 hover:bg-[#202C33] hover:border-[#00A884]/60 border-[#2A3942] text-[#E9EDEF]"
+                                : "bg-[#0e1628]/95 hover:bg-[#131f37] hover:border-emerald-500/50 border-slate-700/70 text-slate-200"
+                            }`}
+                          >
+                            {/* Linha 1: Nome do Cliente e Valor */}
+                            <div className="flex items-start justify-between gap-2">
+                              <div
+                                className={`font-bold text-sm leading-snug break-words group-hover:text-emerald-400 transition-colors ${
+                                  theme === "light" ? "text-slate-900" : "text-white"
+                                }`}
+                              >
+                                {deal.clientName}
+                              </div>
+                              <div className="text-sm font-extrabold text-emerald-500 shrink-0">
+                                {formatCurrency(deal.value)}
+                              </div>
+                            </div>
+
+                            {/* Linha 2: Vendedor Real atendendo este Cliente */}
+                            <div className="text-xs mt-1.5 flex items-center gap-1.5 font-medium">
+                              <Users className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                              <span className="text-slate-400">Atendente:</span>
+                              <span className="text-emerald-400 font-bold">{deal.sellerName}</span>
+                              <span className="text-slate-400">está atendendo</span>
+                            </div>
+
+                            {/* Linha 3: Proposta / Título */}
+                            <div
+                              className={`text-xs mt-1 break-words ${
+                                theme === "light" ? "text-slate-600" : "text-slate-400"
+                              }`}
+                            >
+                              {deal.title}
+                            </div>
+
+                            {/* Linha 4: Badges de Estágio, Vendedor e Origem */}
+                            <div className="flex flex-wrap items-center gap-2 mt-2.5 pt-2 border-t border-slate-700/20">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  deal.status === "won"
+                                    ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"
+                                    : "bg-amber-500/15 text-amber-500 border border-amber-500/30"
+                                }`}
+                              >
+                                {deal.stageLabel}
+                              </span>
+
+                              {deal.isLive && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                  Ao Vivo Agora
+                                </span>
+                              )}
+
+                              <span
+                                className={`text-[10px] px-1.5 py-0.5 rounded ml-auto font-medium ${
+                                  deal.source === "paid"
+                                    ? "bg-blue-500/15 text-blue-500"
+                                    : "bg-emerald-500/15 text-emerald-500"
+                                }`}
+                              >
+                                {deal.source === "paid" ? "Meta Ads" : "Orgânico"}
+                              </span>
+                            </div>
+
+                            {/* Linha 5: Botão de Chamada para Espiar o Atendimento */}
+                            <div
+                              className={`mt-2.5 pt-2 border-t flex items-center justify-between text-xs font-bold transition-colors ${
+                                theme === "light"
+                                  ? "border-slate-200 text-blue-600 group-hover:text-emerald-600"
+                                  : "border-slate-700/40 text-emerald-400 group-hover:text-emerald-300"
+                              }`}
+                            >
+                              <span className="flex items-center gap-1.5">
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Espiar Atendimento do Vendedor</span>
+                              </span>
+                              <ChevronRight className="w-4 h-4 opacity-70 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div
+                        className={`py-6 text-center text-xs rounded-xl border border-dashed ${
+                          theme === "light"
+                            ? "text-slate-400 border-slate-200 bg-slate-50"
+                            : "text-slate-500 border-slate-800 bg-slate-900/30"
+                        }`}
+                      >
+                        Nenhum contrato ativo cadastrado para este polo.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Rodapé Fixo com Botão CRM */}
+                <div
+                  className={`p-4 border-t flex-shrink-0 backdrop-blur-md ${
+                    theme === "light"
+                      ? "border-slate-200 bg-white/95"
+                      : theme === "whatsapp"
+                      ? "border-[#202C33] bg-[#111B21]/95"
+                      : "border-slate-800 bg-[#070D1B]/95"
+                  }`}
+                >
+                  <button
+                    onClick={() => router.push(`/crm`)}
+                    className={`w-full py-2.5 px-4 font-bold text-xs rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 ${
+                      theme === "whatsapp"
+                        ? "bg-[#00A884] hover:bg-[#02906F] text-white shadow-[#00A884]/25"
+                        : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/25"
+                    }`}
+                  >
+                    <span>Abrir Negociações no Funil CRM</span>
+                    <ArrowUpRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </aside>
         )}
       </div>

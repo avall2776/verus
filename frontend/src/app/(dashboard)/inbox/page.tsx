@@ -1251,10 +1251,10 @@ function InboxContent() {
         if (!prev) return null;
         if (conversationIdParam && prev === conversationIdParam) return prev;
         const exists = initialContacts.some((c: any) => c.id === prev);
-        return exists ? prev : (conversationIdParam ? prev : null);
+        return exists ? prev : (conversationIdParam || contactIdParam ? prev : null);
       });
     }
-  }, [initialContacts, conversationIdParam]);
+  }, [initialContacts, conversationIdParam, contactIdParam]);
 
 
   useEffect(() => {

@@ -248,7 +248,7 @@ let ChatService = ChatService_1 = class ChatService {
         }
     }
     async getConversationByContact(tenantId, contactId) {
-        const conversation = await this.prisma.conversation.findFirst({
+        let conversation = await this.prisma.conversation.findFirst({
             where: { tenantId, contactId },
             orderBy: { updatedAt: 'desc' },
             include: {
@@ -259,7 +259,42 @@ let ChatService = ChatService_1 = class ChatService {
             }
         });
         if (!conversation) {
-            throw new common_1.NotFoundException('Nenhuma conversa encontrada para este contato.');
+            const contact = await this.prisma.contact.findFirst({
+                where: { tenantId, id: contactId }
+            });
+            if (!contact) {
+                throw new common_1.NotFoundException('Contato não encontrado.');
+            }
+            if (contact.phone) {
+                conversation = await this.prisma.conversation.findFirst({
+                    where: {
+                        tenantId,
+                        contact: { phone: contact.phone }
+                    },
+                    orderBy: { updatedAt: 'desc' },
+                    include: {
+                        messages: {
+                            orderBy: { createdAt: 'asc' }
+                        },
+                        contact: true
+                    }
+                });
+            }
+            if (!conversation) {
+                conversation = await this.prisma.conversation.create({
+                    data: {
+                        tenantId,
+                        contactId: contact.id,
+                        status: 'waiting',
+                    },
+                    include: {
+                        messages: {
+                            orderBy: { createdAt: 'asc' }
+                        },
+                        contact: true
+                    }
+                });
+            }
         }
         if (conversation.contact) {
             const av = conversation.contact.avatarUrl;

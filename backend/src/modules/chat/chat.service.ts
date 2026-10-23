@@ -271,7 +271,7 @@ export class ChatService {
   }
 
   async getConversationByContact(tenantId: string, contactId: string) {
-    const conversation = await this.prisma.conversation.findFirst({
+    let conversation = await this.prisma.conversation.findFirst({
       where: { tenantId, contactId },
       orderBy: { updatedAt: 'desc' },
       include: {
@@ -283,7 +283,48 @@ export class ChatService {
     });
 
     if (!conversation) {
-      throw new NotFoundException('Nenhuma conversa encontrada para este contato.');
+      // Tentar encontrar o contato pelo ID fornecido
+      const contact = await this.prisma.contact.findFirst({
+        where: { tenantId, id: contactId }
+      });
+
+      if (!contact) {
+        throw new NotFoundException('Contato não encontrado.');
+      }
+
+      // Se o contato tiver telefone, tentar achar conversa pelo telefone do contato
+      if (contact.phone) {
+        conversation = await this.prisma.conversation.findFirst({
+          where: {
+            tenantId,
+            contact: { phone: contact.phone }
+          },
+          orderBy: { updatedAt: 'desc' },
+          include: {
+            messages: {
+              orderBy: { createdAt: 'asc' }
+            },
+            contact: true
+          }
+        });
+      }
+
+      // Se ainda não existir nenhuma conversa, auto-cria para permitir atendimento imediato
+      if (!conversation) {
+        conversation = await this.prisma.conversation.create({
+          data: {
+            tenantId,
+            contactId: contact.id,
+            status: 'waiting',
+          },
+          include: {
+            messages: {
+              orderBy: { createdAt: 'asc' }
+            },
+            contact: true
+          }
+        });
+      }
     }
 
     if (conversation.contact) {
