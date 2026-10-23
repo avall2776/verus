@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const CLIENT_PLAN_MODULES = [
   {
@@ -132,6 +133,13 @@ export default function PlanSettingsTab() {
   const usersCount = tenant?._count?.users ?? tenant?.users?.length ?? 1;
   const userUsagePercent = Math.min(100, Math.round((usersCount / (plan.maxUsers || 1)) * 100));
 
+  const { isWhatsApp } = useTheme();
+  const primaryBtnClass = isWhatsApp 
+    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20" 
+    : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20";
+  const progressBgClass = isWhatsApp ? "bg-emerald-600" : "bg-blue-600";
+  const accentTextClass = isWhatsApp ? "text-emerald-500 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400";
+
   const isModuleActive = (moduleKey: string) => {
     if (plan.modules && typeof plan.modules === "object" && plan.modules[moduleKey] !== undefined) {
       return Boolean(plan.modules[moduleKey]);
@@ -150,7 +158,7 @@ export default function PlanSettingsTab() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <CreditCard className={`w-5 h-5 ${accentTextClass}`} />
             <span>Meu Plano & Assinatura</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -170,7 +178,11 @@ export default function PlanSettingsTab() {
       <div className="p-6 rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-600/10 px-2.5 py-0.5 rounded border border-blue-200 dark:border-blue-500/30 uppercase tracking-wider">
+            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded border uppercase tracking-wider ${
+              isWhatsApp
+                ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-600/10 border-emerald-200 dark:border-emerald-500/30"
+                : "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-600/10 border-blue-200 dark:border-blue-500/30"
+            }`}>
               Plano Vigente
             </span>
             <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
@@ -224,7 +236,7 @@ export default function PlanSettingsTab() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                      <Icon size={16} className={active ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-600"} />
+                      <Icon size={16} className={active ? accentTextClass : "text-slate-400 dark:text-slate-600"} />
                     </div>
                     {active ? (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-500/20">
@@ -259,7 +271,7 @@ export default function PlanSettingsTab() {
         <div className="p-5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Users size={16} className="text-blue-600 dark:text-blue-400" />
+              <Users size={16} className={accentTextClass} />
               <span className="text-xs font-bold text-slate-900 dark:text-white">Operadores Cadastrados</span>
             </div>
             <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-200">
@@ -269,7 +281,7 @@ export default function PlanSettingsTab() {
 
           <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-blue-600 rounded-full transition-all duration-300"
+              className={`h-full ${progressBgClass} rounded-full transition-all duration-300`}
               style={{ width: `${userUsagePercent}%` }}
             />
           </div>
@@ -285,7 +297,7 @@ export default function PlanSettingsTab() {
         <div className="p-5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Bot size={16} className="text-blue-600 dark:text-blue-400" />
+              <Bot size={16} className={accentTextClass} />
               <span className="text-xs font-bold text-slate-900 dark:text-white">Cota Mensal do Agente IA</span>
             </div>
             <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-200">
@@ -294,7 +306,7 @@ export default function PlanSettingsTab() {
           </div>
 
           <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-600 rounded-full w-1/4" />
+            <div className={`h-full ${progressBgClass} rounded-full w-1/4`} />
           </div>
 
           <p className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -304,10 +316,12 @@ export default function PlanSettingsTab() {
       </div>
 
       {/* Banner de Upgrade / Suporte */}
-      <div className="p-5 rounded-2xl bg-white dark:bg-[#0B1224] border border-blue-200 dark:border-blue-500/30 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className={`p-5 rounded-2xl bg-white dark:bg-[#0B1224] border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+        isWhatsApp ? "border-emerald-500/30" : "border-blue-200 dark:border-blue-500/30"
+      }`}>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-blue-600 dark:text-blue-400" />
+            <Sparkles size={16} className={accentTextClass} />
             <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
               Precisa de mais vagas ou liberar módulos adicionais?
             </h4>
@@ -319,7 +333,7 @@ export default function PlanSettingsTab() {
 
         <button
           onClick={() => router.push("/support")}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors shadow-sm shrink-0"
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-sm shrink-0 cursor-pointer ${primaryBtnClass}`}
         >
           <span>Falar com o Suporte / Upgrade</span>
           <ArrowUpRight size={14} />

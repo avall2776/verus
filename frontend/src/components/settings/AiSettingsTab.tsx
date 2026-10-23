@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface AiStatusData {
   canUseAi: boolean;
@@ -39,6 +40,18 @@ interface AiStatusData {
 }
 
 export default function AiSettingsTab() {
+  const { isWhatsApp } = useTheme();
+  const primaryBtnClass = isWhatsApp 
+    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20" 
+    : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20";
+  const focusBorderClass = isWhatsApp 
+    ? "focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" 
+    : "focus:border-blue-500 focus:ring-1 focus:ring-blue-500";
+  const accentTextClass = isWhatsApp ? "text-emerald-500 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400";
+  const headerIconBgClass = isWhatsApp
+    ? "bg-emerald-50 dark:bg-emerald-600/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+    : "bg-blue-50 dark:bg-blue-600/10 border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400";
+
   const [status, setStatus] = useState<AiStatusData | null>(null);
   const [loading, setLoading] = useState(true);
   const [apiKeyInput, setApiKeyInput] = useState("");
@@ -137,7 +150,7 @@ export default function AiSettingsTab() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+        <Loader2 className={`w-8 h-8 ${accentTextClass} animate-spin`} />
         <p className="text-xs text-slate-400">Carregando status de Inteligência Artificial...</p>
       </div>
     );
@@ -149,7 +162,7 @@ export default function AiSettingsTab() {
       <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 p-6 space-y-5 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-5">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border ${headerIconBgClass}`}>
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
@@ -163,7 +176,11 @@ export default function AiSettingsTab() {
                     Chave do Sistema Liberada
                   </span>
                 ) : status?.hasCustomKey ? (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-400">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                    isWhatsApp 
+                      ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+                      : "bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-400"
+                  }`}>
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Chave Própria (BYOK)
                   </span>
@@ -248,7 +265,7 @@ export default function AiSettingsTab() {
       {/* 2. CHAVE ATIVA OU CONFIGURAÇÃO DE NOVA CHAVE */}
       <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 p-6 space-y-6 shadow-sm">
         <div className="flex items-center gap-2.5 border-b border-slate-200 dark:border-slate-800/80 pb-4">
-          <Key className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <Key className={`w-4 h-4 ${accentTextClass}`} />
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
             Credenciais da OpenAI (Bring Your Own Key)
           </h3>
@@ -259,7 +276,7 @@ export default function AiSettingsTab() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Chave Cadastrada:</span>
-                <span className="font-mono text-xs px-2.5 py-1 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-blue-700 dark:text-blue-400 font-semibold">
+                <span className={`font-mono text-xs px-2.5 py-1 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 font-semibold ${accentTextClass}`}>
                   {status.maskedCustomKey || "••••••••••••••••"}
                 </span>
               </div>
@@ -307,7 +324,7 @@ export default function AiSettingsTab() {
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
                 placeholder="sk-proj-abc123456789xyz..."
-                className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl pl-3.5 pr-10 py-2.5 text-xs font-mono text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 outline-none focus:border-blue-600 transition-colors"
+                className={`w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl pl-3.5 pr-10 py-2.5 text-xs font-mono text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 outline-none transition-colors ${focusBorderClass}`}
               />
               <button
                 type="button"
@@ -333,7 +350,7 @@ export default function AiSettingsTab() {
               type="button"
               onClick={handleSaveKey}
               disabled={savingKey || !apiKeyInput.trim()}
-              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 shrink-0"
+              className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 shrink-0 ${primaryBtnClass}`}
             >
               {savingKey ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
               <span>{savingKey ? "Validando e Salvando..." : "Salvar e Ativar"}</span>
@@ -351,7 +368,7 @@ export default function AiSettingsTab() {
       <div className="rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 p-6 space-y-5 shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-4">
           <div className="flex items-center gap-2.5">
-            <HelpCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <HelpCircle className={`w-4 h-4 ${accentTextClass}`} />
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
               Como gerar sua chave na OpenAI (Passo a Passo)
             </h3>
@@ -360,7 +377,7 @@ export default function AiSettingsTab() {
             href="https://platform.openai.com/api-keys"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold flex items-center gap-1 transition-colors"
+            className={`text-xs ${accentTextClass} font-semibold flex items-center gap-1 transition-colors`}
           >
             <span>Ir para OpenAI Platform</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -375,7 +392,7 @@ export default function AiSettingsTab() {
             </span>
             <h4 className="text-xs font-bold text-slate-900 dark:text-white">Crie sua Conta</h4>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              Acesse <span className="text-blue-600 dark:text-blue-400 font-medium">platform.openai.com</span> e faça login ou crie sua conta comercial.
+              Acesse <span className={`font-medium ${accentTextClass}`}>platform.openai.com</span> e faça login ou crie sua conta comercial.
             </p>
           </div>
 
@@ -397,7 +414,7 @@ export default function AiSettingsTab() {
             </span>
             <h4 className="text-xs font-bold text-slate-900 dark:text-white">Gere a Chave</h4>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              Vá em <span className="text-slate-800 dark:text-slate-200 font-medium">API Keys</span>, clique em <span className="text-blue-600 dark:text-blue-400 font-medium">+ Create new secret key</span> e copie o código gerado.
+              Vá em <span className="text-slate-800 dark:text-slate-200 font-medium">API Keys</span>, clique em <span className={`font-medium ${accentTextClass}`}>+ Create new secret key</span> e copie o código gerado.
             </p>
           </div>
 
@@ -414,7 +431,7 @@ export default function AiSettingsTab() {
         </div>
 
         <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-400">
-          <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <Info className={`w-4 h-4 ${accentTextClass} shrink-0 mt-0.5`} />
           <p>
             <strong className="text-slate-900 dark:text-slate-200">Dica de Custo:</strong> Em média, uma recarga de $5 dólares na OpenAI rende mais de 10.000 mensagens com o modelo ultra rápido <span className="font-mono text-slate-800 dark:text-slate-300 font-bold">gpt-4o-mini</span>, proporcionando excelente custo-benefício para suas vendas e atendimento.
           </p>

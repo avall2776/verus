@@ -24,6 +24,7 @@ import {
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import ModalPortal from "@/components/ui/ModalPortal";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   extractGoogleDriveId,
   isGoogleDriveUrl,
@@ -45,6 +46,15 @@ export interface QuickReplyItem {
 }
 
 export default function QuickRepliesSettingsTab() {
+  const { isWhatsApp, isClean } = useTheme();
+  const primaryBtnClass = isWhatsApp 
+    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20" 
+    : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20";
+  const focusBorderClass = isWhatsApp 
+    ? "focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" 
+    : "focus:border-blue-500 focus:ring-1 focus:ring-blue-500";
+  const accentTextClass = isWhatsApp ? "text-emerald-500 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400";
+
   const [replies, setReplies] = useState<QuickReplyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -250,11 +260,11 @@ export default function QuickRepliesSettingsTab() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <MessageSquare className={`w-5 h-5 ${accentTextClass}`} />
             Respostas Rápidas & Catálogo de Mídias via Drive
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-2xl">
-            Cadastre atalhos acionados pelo teclado (<span className="text-blue-600 dark:text-blue-400 font-mono font-bold">/</span>) no Inbox.
+            Cadastre atalhos acionados pelo teclado (<span className={`${accentTextClass} font-mono font-bold`}>/</span>) no Inbox.
             Suporta mensagens de texto e envio de <strong>PDFs, catálogos e fotos</strong> hospedados no seu Google Drive, sem consumir espaço no servidor do VERSUS.
           </p>
         </div>
@@ -262,14 +272,14 @@ export default function QuickRepliesSettingsTab() {
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => handleOpenModal(null, "document")}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600/10 dark:bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-600/20 transition-all shadow-sm"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600/10 dark:bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-600/20 transition-all shadow-sm cursor-pointer"
           >
             <Cloud className="w-4 h-4" />
             + Novo Catálogo (Drive)
           </button>
           <button
             onClick={() => handleOpenModal(null, "text")}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-lg shadow-blue-600/20 transition-all"
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold shadow-lg transition-all cursor-pointer ${primaryBtnClass}`}
           >
             <Plus className="w-4 h-4" />
             + Atalho de Texto
@@ -283,7 +293,7 @@ export default function QuickRepliesSettingsTab() {
           onClick={() => setCategoryFilter("ALL")}
           className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
             categoryFilter === "ALL"
-              ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm font-bold"
+              ? `bg-white dark:bg-slate-800 ${accentTextClass} shadow-sm font-bold`
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
@@ -326,7 +336,7 @@ export default function QuickRepliesSettingsTab() {
           onClick={() => setCategoryFilter("text")}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
             categoryFilter === "text"
-              ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm font-bold"
+              ? `bg-white dark:bg-slate-800 ${accentTextClass} shadow-sm font-bold`
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
@@ -344,7 +354,7 @@ export default function QuickRepliesSettingsTab() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por /atalho, título ou arquivo..."
-            className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors shadow-sm"
+            className={`w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none transition-colors shadow-sm ${focusBorderClass}`}
           />
         </div>
 
@@ -356,7 +366,7 @@ export default function QuickRepliesSettingsTab() {
       {/* Lista de Atalhos */}
       {loading ? (
         <div className="flex flex-col items-center justify-center p-12 text-slate-400 space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <Loader2 className={`w-8 h-8 animate-spin ${accentTextClass}`} />
           <p className="text-xs font-semibold">Carregando catálogo e atalhos...</p>
         </div>
       ) : filteredReplies.length === 0 ? (
@@ -389,7 +399,9 @@ export default function QuickRepliesSettingsTab() {
             return (
               <div
                 key={reply.id}
-                className="p-4 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 hover:border-blue-500/50 dark:hover:border-slate-700 transition-all flex flex-col justify-between group shadow-sm hover:shadow-md"
+                className={`p-4 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 transition-all flex flex-col justify-between group shadow-sm hover:shadow-md ${
+                  isWhatsApp ? "hover:border-emerald-500/50" : "hover:border-blue-500/50"
+                } dark:hover:border-slate-700`}
               >
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
@@ -397,7 +409,11 @@ export default function QuickRepliesSettingsTab() {
                       <button
                         onClick={() => handleCopy(reply.shortcut, reply.id)}
                         title="Clique para copiar o comando"
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 font-mono text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-600/20 transition-colors"
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-mono text-xs font-bold transition-colors ${
+                          isWhatsApp
+                            ? "bg-emerald-50 dark:bg-emerald-600/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-600/20"
+                            : "bg-blue-50 dark:bg-blue-600/10 border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-600/20"
+                        }`}
                       >
                         {reply.shortcut}
                         {copiedId === reply.id ? (
@@ -507,7 +523,11 @@ export default function QuickRepliesSettingsTab() {
             {/* Header do Modal */}
             <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
+                  isWhatsApp 
+                    ? "bg-emerald-50 dark:bg-emerald-600/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400" 
+                    : "bg-blue-50 dark:bg-blue-600/10 border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400"
+                }`}>
                   <Cloud className="w-4 h-4" />
                 </div>
                 <div>
@@ -531,13 +551,13 @@ export default function QuickRepliesSettingsTab() {
               {/* Seletor de Tipo de Material */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Tipo de Atalho / Material <span className="text-blue-500">*</span>
+                  Tipo de Atalho / Material <span className={accentTextClass}>*</span>
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
                     onClick={() => setForm({ ...form, type: "document" })}
-                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                       form.type === "document"
                         ? "bg-rose-50 dark:bg-rose-500/10 border-rose-500 text-rose-700 dark:text-rose-400 font-bold shadow-sm"
                         : "bg-slate-50 dark:bg-[#070D1B] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400"
@@ -550,7 +570,7 @@ export default function QuickRepliesSettingsTab() {
                   <button
                     type="button"
                     onClick={() => setForm({ ...form, type: "image" })}
-                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                       form.type === "image"
                         ? "bg-purple-50 dark:bg-purple-500/10 border-purple-500 text-purple-700 dark:text-purple-400 font-bold shadow-sm"
                         : "bg-slate-50 dark:bg-[#070D1B] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400"
@@ -563,7 +583,7 @@ export default function QuickRepliesSettingsTab() {
                   <button
                     type="button"
                     onClick={() => setForm({ ...form, type: "video" })}
-                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                       form.type === "video"
                         ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-400 font-bold shadow-sm"
                         : "bg-slate-50 dark:bg-[#070D1B] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400"
@@ -576,9 +596,11 @@ export default function QuickRepliesSettingsTab() {
                   <button
                     type="button"
                     onClick={() => setForm({ ...form, type: "text" })}
-                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                       form.type === "text"
-                        ? "bg-blue-50 dark:bg-blue-600/10 border-blue-500 text-blue-700 dark:text-blue-400 font-bold shadow-sm"
+                        ? (isWhatsApp
+                            ? "bg-emerald-50 dark:bg-emerald-600/10 border-emerald-500 text-emerald-700 dark:text-emerald-400 font-bold shadow-sm"
+                            : "bg-blue-50 dark:bg-blue-600/10 border-blue-500 text-blue-700 dark:text-blue-400 font-bold shadow-sm")
                         : "bg-slate-50 dark:bg-[#070D1B] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400"
                     }`}
                   >
@@ -591,7 +613,7 @@ export default function QuickRepliesSettingsTab() {
               {/* Comando de Atalho */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Comando de Atalho <span className="text-blue-500">*</span>
+                  Comando de Atalho <span className={accentTextClass}>*</span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-sm font-bold">
@@ -603,18 +625,18 @@ export default function QuickRepliesSettingsTab() {
                     value={form.shortcut}
                     onChange={(e) => setForm({ ...form, shortcut: e.target.value.replace(/[\s\/]/g, "").toLowerCase() })}
                     placeholder="ex: catalogo, tabela-precos, foto-maquina"
-                    className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl pl-7 pr-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono font-bold shadow-sm"
+                    className={`w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl pl-7 pr-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none font-mono font-bold shadow-sm transition-colors ${focusBorderClass}`}
                   />
                 </div>
                 <p className="text-[10px] text-slate-500 mt-1">
-                  O atendente acionará digitando <span className="text-blue-600 dark:text-blue-400 font-mono font-bold">/{form.shortcut || "atalho"}</span> no chat.
+                  O atendente acionará digitando <span className={`${accentTextClass} font-mono font-bold`}>/{form.shortcut || "atalho"}</span> no chat.
                 </p>
               </div>
 
               {/* Título do Material */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Título / Identificação do Material {form.type !== "text" && <span className="text-blue-500">*</span>}
+                  Título / Identificação do Material {form.type !== "text" && <span className={accentTextClass}>*</span>}
                 </label>
                 <input
                   type="text"
@@ -622,7 +644,7 @@ export default function QuickRepliesSettingsTab() {
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="ex: Catálogo Oficial Linha Verto 2026"
-                  className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-sm"
+                  className={`w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none shadow-sm transition-colors ${focusBorderClass}`}
                 />
               </div>
 
@@ -636,7 +658,7 @@ export default function QuickRepliesSettingsTab() {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Link do Arquivo no Google Drive <span className="text-blue-500">*</span>
+                      Link do Arquivo no Google Drive <span className={accentTextClass}>*</span>
                     </label>
                     <input
                       type="url"
@@ -644,7 +666,7 @@ export default function QuickRepliesSettingsTab() {
                       value={form.mediaUrl}
                       onChange={(e) => handleMediaUrlChange(e.target.value)}
                       placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
-                      className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono shadow-sm"
+                      className={`w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none font-mono shadow-sm transition-colors ${focusBorderClass}`}
                     />
                     {form.mediaUrl && extractGoogleDriveId(form.mediaUrl) && (
                       <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-1 flex items-center gap-1">
@@ -662,7 +684,7 @@ export default function QuickRepliesSettingsTab() {
                       value={form.fileName}
                       onChange={(e) => setForm({ ...form, fileName: e.target.value })}
                       placeholder={form.type === "document" ? "Catalogo_Verto_2026.pdf" : form.type === "video" ? "video_demonstrativo.mp4" : "foto_produto.jpg"}
-                      className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 font-mono shadow-sm"
+                      className={`w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none font-mono shadow-sm transition-colors ${focusBorderClass}`}
                     />
                   </div>
                 </div>
@@ -672,7 +694,7 @@ export default function QuickRepliesSettingsTab() {
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   {form.type === "text" ? "Texto da Mensagem Rápida" : "Legenda que acompanha o Arquivo no WhatsApp"}
-                  {form.type === "text" && <span className="text-blue-500">*</span>}
+                  {form.type === "text" && <span className={accentTextClass}>*</span>}
                 </label>
                 <textarea
                   rows={form.type === "text" ? 5 : 3}
@@ -684,7 +706,7 @@ export default function QuickRepliesSettingsTab() {
                       ? "Digite a mensagem completa que será inserida no chat..."
                       : "ex: Olá! Segue em anexo nosso catálogo oficial completo. Fico à disposição para tirar qualquer dúvida!"
                   }
-                  className="w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 leading-relaxed resize-none shadow-sm"
+                  className={`w-full bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none leading-relaxed resize-none shadow-sm transition-colors ${focusBorderClass}`}
                 />
               </div>
 
@@ -693,14 +715,14 @@ export default function QuickRepliesSettingsTab() {
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-lg shadow-blue-600/20 disabled:opacity-50 transition-all"
+                  className={`inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-semibold shadow-lg disabled:opacity-50 transition-all cursor-pointer ${primaryBtnClass}`}
                 >
                   {saving ? (
                     <>

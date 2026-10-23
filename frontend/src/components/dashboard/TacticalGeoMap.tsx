@@ -18,9 +18,7 @@ import {
   Users,
   Briefcase,
   ChevronLeft,
-  ChevronRight,
-  BarChart3,
-  LayoutDashboard
+  ChevronRight
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
@@ -608,39 +606,6 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
             >
               SALA DE GUERRA GEOTÁTICA
             </span>
-          </div>
-
-          {/* BOTÕES DE VISÃO INTEGRADOS NA TOOLBAR (COMO SOLICITADO PELO USUÁRIO) */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <button
-              type="button"
-              className={`btn-map-control ${currentView === "map" ? "active" : ""}`}
-              onClick={() => onViewChange?.("map")}
-              title="Exibir Sala de Guerra Geotática"
-            >
-              <Compass className="w-3.5 h-3.5" />
-              <span>Mapa Tático 3D</span>
-            </button>
-
-            <button
-              type="button"
-              className={`btn-map-control ${currentView === "metrics" ? "active" : ""}`}
-              onClick={() => onViewChange?.("metrics")}
-              title="Alternar para Métricas & Gráficos"
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-              <span>Métricas & Gráficos</span>
-            </button>
-
-            <button
-              type="button"
-              className={`btn-map-control ${currentView === "welcome" ? "active" : ""}`}
-              onClick={() => onViewChange?.("welcome")}
-              title="Alternar para Visão Inicial"
-            >
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              <span>Visão Inicial</span>
-            </button>
           </div>
 
           {/* Divisor */}

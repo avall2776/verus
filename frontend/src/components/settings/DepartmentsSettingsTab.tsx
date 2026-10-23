@@ -5,8 +5,10 @@ import { Plus, Edit2, Trash2, Users, Save, X, Network, Loader2 } from "lucide-re
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import ModalPortal from "@/components/ui/ModalPortal";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function DepartmentsSettingsTab() {
+  const { isWhatsApp } = useTheme();
   const [departments, setDepartments] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,6 +18,11 @@ export default function DepartmentsSettingsTab() {
   const [form, setForm] = useState({ name: "", color: "#2563eb" });
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const primaryBtnClass = isWhatsApp
+    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-500/20"
+    : "bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/20";
+  const focusBorderClass = isWhatsApp ? "focus:border-emerald-500" : "focus:border-blue-500";
 
   const fetchData = async () => {
     try {
@@ -132,7 +139,7 @@ export default function DepartmentsSettingsTab() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Network className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+            <Network className={`w-5 h-5 ${isWhatsApp ? "text-emerald-500" : "text-blue-600 dark:text-blue-400"}`} />
             Departamentos, Setores e Filas
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -142,7 +149,7 @@ export default function DepartmentsSettingsTab() {
 
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors shadow-sm cursor-pointer"
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-xs transition-colors shadow-sm cursor-pointer ${primaryBtnClass}`}
         >
           <Plus className="w-4 h-4" />
           <span>Novo Departamento</span>
@@ -189,7 +196,7 @@ export default function DepartmentsSettingsTab() {
                 </div>
 
                 <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                  <Users className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+                  <Users className={`w-3.5 h-3.5 ${isWhatsApp ? "text-emerald-500" : "text-blue-600 dark:text-blue-400"}`} />
                   <span>{dept.users?.length || 0} atendente(s) vinculado(s)</span>
                 </div>
               </div>
@@ -239,7 +246,7 @@ export default function DepartmentsSettingsTab() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="Ex: Comercial, Suporte N1, Financeiro"
-                  className="w-full p-2.5 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-500"
+                  className={`w-full p-2.5 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass}`}
                 />
               </div>
 
@@ -271,7 +278,11 @@ export default function DepartmentsSettingsTab() {
                           key={u.id}
                           onClick={() => toggleUser(u.id)}
                           className={`p-2 rounded-lg text-xs cursor-pointer flex items-center justify-between transition-colors ${
-                            isSelected ? "bg-blue-600/20 text-blue-600 dark:text-blue-300 border border-blue-500/30" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                            isSelected
+                              ? isWhatsApp
+                                ? "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30"
+                                : "bg-blue-50 dark:bg-blue-600/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30"
+                              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                           }`}
                         >
                           <span className="font-medium">{u.name}</span>
@@ -296,7 +307,7 @@ export default function DepartmentsSettingsTab() {
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-xs transition-colors disabled:opacity-50 cursor-pointer shadow-sm ${primaryBtnClass}`}
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 <span>Salvar Setor</span>

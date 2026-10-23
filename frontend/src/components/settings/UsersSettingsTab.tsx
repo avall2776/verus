@@ -47,6 +47,7 @@ import {
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import ModalPortal from "@/components/ui/ModalPortal";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export interface UserMenuPermissions {
   whatsapp: boolean;
@@ -220,6 +221,15 @@ const MENU_CONFIGS: {
   ];
 
 export default function UsersSettingsTab() {
+  const { isWhatsApp, isClean } = useTheme();
+
+  const primaryBtnClass = isWhatsApp
+    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-500/20"
+    : "bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/20";
+
+  const checkColorClass = isWhatsApp ? "text-emerald-500" : "text-blue-600 dark:text-blue-400";
+  const focusBorderClass = isWhatsApp ? "focus:border-emerald-500" : "focus:border-blue-500";
+
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableDepartments, setAvailableDepartments] = useState<DepartmentItem[]>([]);
@@ -605,27 +615,21 @@ export default function UsersSettingsTab() {
     return (
       <div className="flex flex-col items-center justify-center p-16 text-slate-400 space-y-3">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
-        <p className="text-xs font-semibold">Carregando gestão de colaboradores...</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-5 animate-in fade-in duration-200 text-slate-100">
+        <p className="text-xs font-semibold">Carregando gestão de colaboradore    <div className="space-y-5 animate-in fade-in duration-200 text-slate-900 dark:text-slate-100">
       {/* 1. CABEÇALHO SUPERIOR (PADRÃO LERO) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             Gestão de Usuários
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Gerencie os colaboradores da sua conta
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <div
-            className="flex items-center gap-1.5 text-xs text-slate-400 font-medium px-2 py-1 rounded-lg bg-slate-900/40 border border-slate-800"
+            className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800"
             title={`Limite da sua conta: ${maxUsers} usuários simultâneos`}
           >
             <span>{users.length} / {maxUsers} usuários</span>
@@ -634,7 +638,7 @@ export default function UsersSettingsTab() {
 
           <button
             onClick={handleOpenInvite}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all shadow-[0_0_15px_rgba(16,185,129,0.25)] cursor-pointer"
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer ${primaryBtnClass}`}
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Convidar Colaborador</span>
@@ -643,18 +647,18 @@ export default function UsersSettingsTab() {
       </div>
 
       {/* 2. CARD PRINCIPAL DA TABELA (PADRÃO LERO) */}
-      <div className="rounded-2xl bg-[#111722] dark:bg-[#0c1017] border border-slate-800/80 shadow-2xl overflow-hidden p-4 space-y-4">
+      <div className="rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-slate-800/80 shadow-sm dark:shadow-2xl overflow-hidden p-4 space-y-4">
         {/* Barra de Busca e Filtros */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
           {/* Campo de Busca */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar..."
-              className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#18202f] dark:bg-[#121824] border border-slate-700/60 text-xs text-white placeholder-slate-500 outline-none focus:border-emerald-500/60 transition-colors"
+              className={`w-full pl-9 pr-4 py-2 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/60 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass} transition-colors`}
             />
           </div>
 
@@ -663,7 +667,7 @@ export default function UsersSettingsTab() {
             <select
               value={filterEnvironment}
               onChange={(e) => setFilterEnvironment(e.target.value)}
-              className="appearance-none px-3.5 py-2 pr-8 rounded-xl bg-[#18202f] dark:bg-[#121824] border border-slate-700/60 text-xs text-slate-300 font-medium outline-none focus:border-emerald-500/60 cursor-pointer"
+              className={`appearance-none px-3.5 py-2 pr-8 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 font-medium outline-none ${focusBorderClass} cursor-pointer`}
             >
               <option value="all">Todos os ambientes</option>
               <option value="workspace-1">Workspace 1</option>
@@ -676,7 +680,7 @@ export default function UsersSettingsTab() {
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="appearance-none px-3.5 py-2 pr-8 rounded-xl bg-[#18202f] dark:bg-[#121824] border border-slate-700/60 text-xs text-slate-300 font-medium outline-none focus:border-emerald-500/60 cursor-pointer"
+              className={`appearance-none px-3.5 py-2 pr-8 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 font-medium outline-none ${focusBorderClass} cursor-pointer`}
             >
               <option value="all">Todos os tipos</option>
               <option value="administrador">Administrador</option>
@@ -691,7 +695,7 @@ export default function UsersSettingsTab() {
             <select
               value={filterDepartment}
               onChange={(e) => setFilterDepartment(e.target.value)}
-              className="appearance-none px-3.5 py-2 pr-8 rounded-xl bg-[#18202f] dark:bg-[#121824] border border-slate-700/60 text-xs text-slate-300 font-medium outline-none focus:border-emerald-500/60 cursor-pointer"
+              className={`appearance-none px-3.5 py-2 pr-8 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300 font-medium outline-none ${focusBorderClass} cursor-pointer`}
             >
               <option value="all">Todos os setores</option>
               {availableDepartments.map((dept) => (
@@ -705,20 +709,20 @@ export default function UsersSettingsTab() {
         </div>
 
         {/* Tabela Responsiva de Usuários */}
-        <div className="overflow-x-auto rounded-xl border border-slate-800/80 bg-[#141b27] dark:bg-[#0e131d]">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#0e131d]">
           <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+            <thead className="bg-slate-100 dark:bg-slate-900/90 text-slate-700 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 font-semibold">
+              <tr className="text-[10px] uppercase font-semibold tracking-wider">
                 <th className="py-3 px-3.5 w-10 text-center">
                   <button
                     type="button"
                     onClick={handleSelectAll}
-                    className="cursor-pointer text-slate-400 hover:text-white"
+                    className="cursor-pointer text-slate-400 hover:text-slate-700 dark:hover:text-white"
                   >
                     {selectedUserIds.length === filteredUsers.length && filteredUsers.length > 0 ? (
-                      <CheckSquare className="w-4 h-4 text-emerald-400" />
+                      <CheckSquare className={`w-4 h-4 ${checkColorClass}`} />
                     ) : (
-                      <Square className="w-4 h-4 text-slate-600" />
+                      <Square className="w-4 h-4 text-slate-400 dark:text-slate-600" />
                     )}
                   </button>
                 </th>
@@ -731,7 +735,7 @@ export default function UsersSettingsTab() {
                 <th className="py-3 px-3 w-16 text-center">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 text-xs">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
               {filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-8 text-center text-slate-500 italic">
@@ -747,20 +751,21 @@ export default function UsersSettingsTab() {
                   return (
                     <tr
                       key={u.id}
-                      className={`hover:bg-slate-800/30 transition-colors ${isSelected ? "bg-emerald-500/5" : ""
-                        }`}
+                      className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/30 text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800/60 transition-colors ${
+                        isSelected ? (isWhatsApp ? "bg-emerald-500/10" : "bg-blue-500/10") : ""
+                      }`}
                     >
                       {/* Checkbox de Seleção */}
                       <td className="py-3 px-3.5 text-center">
                         <button
                           type="button"
                           onClick={() => toggleSelectUser(u.id)}
-                          className="cursor-pointer text-slate-500 hover:text-white"
+                          className="cursor-pointer text-slate-400 hover:text-slate-700 dark:hover:text-white"
                         >
                           {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-emerald-400" />
+                            <CheckSquare className={`w-4 h-4 ${checkColorClass}`} />
                           ) : (
-                            <Square className="w-4 h-4 text-slate-600" />
+                            <Square className="w-4 h-4 text-slate-400 dark:text-slate-600" />
                           )}
                         </button>
                       </td>
@@ -770,17 +775,18 @@ export default function UsersSettingsTab() {
                         <div className="flex items-center gap-2.5">
                           {/* Dot Online/Offline */}
                           <span
-                            className={`w-2 h-2 rounded-full shrink-0 ${u.isOnline
-                                ? "bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]"
-                                : "bg-slate-600"
-                              }`}
+                            className={`w-2 h-2 rounded-full shrink-0 ${
+                              u.isOnline
+                                ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]"
+                                : "bg-slate-400 dark:bg-slate-600"
+                            }`}
                             title={u.isOnline ? "Online" : "Offline"}
                           />
 
                           {/* Avatar com badge de proprietário se aplicável */}
                           <div
                             onClick={() => handleOpenEdit(u)}
-                            className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center font-bold text-slate-200 text-xs shrink-0 overflow-hidden relative shadow-inner cursor-pointer hover:border-emerald-500/80 hover:ring-2 hover:ring-emerald-500/20 transition-all"
+                            className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center font-bold text-slate-700 dark:text-slate-200 text-xs shrink-0 overflow-hidden relative shadow-inner cursor-pointer hover:border-blue-500 dark:hover:border-emerald-500 transition-all"
                             title="Clique para editar usuário"
                           >
                             {u.avatarUrl ? (
@@ -793,17 +799,17 @@ export default function UsersSettingsTab() {
                           <div className="min-w-0">
                             <div
                               onClick={() => handleOpenEdit(u)}
-                              className="font-bold text-white truncate max-w-[180px] flex items-center gap-1.5 cursor-pointer hover:text-emerald-400 hover:underline transition-colors"
+                              className="font-bold text-slate-900 dark:text-white truncate max-w-[180px] flex items-center gap-1.5 cursor-pointer hover:underline transition-colors"
                               title="Clique para editar usuário"
                             >
                               <span>{u.name}</span>
                               {isOwner && (
                                 <span title="Proprietário da Conta">
-                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-slate-400 font-mono truncate max-w-[180px]">
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate max-w-[180px]">
                               {u.email}
                             </div>
                           </div>
@@ -813,24 +819,24 @@ export default function UsersSettingsTab() {
                       {/* Tipo / Cargo (Administrador, Supervisor, Colaborador) */}
                       <td className="py-3 px-3">
                         {roleLabel === "Administrador" ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/40">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/40">
                             Administrador
                           </span>
                         ) : roleLabel === "Supervisor" ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/40">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/40">
                             Supervisor
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-800/90 text-slate-300 border border-slate-700">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                             Colaborador
                           </span>
                         )}
                       </td>
 
-                      {/* Setores Vinculados (Badges Padrão Lero) */}
+                      {/* Setores Vinculados */}
                       <td className="py-3 px-3">
                         {roleLabel === "Administrador" ? (
-                          <span className="text-[11px] text-slate-400 font-medium italic">
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium italic">
                             Acesso total
                           </span>
                         ) : u.departments && u.departments.length > 0 ? (
@@ -838,14 +844,14 @@ export default function UsersSettingsTab() {
                             {u.departments.map((rel) => (
                               <span
                                 key={rel.departmentId}
-                                className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#1a2334] border border-slate-700/80 text-slate-300"
+                                className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-[#1a2334] border border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-300"
                               >
                                 {rel.department?.name || "Setor"}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-[11px] text-slate-500 italic">
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500 italic">
                             Nenhum setor
                           </span>
                         )}
@@ -854,9 +860,9 @@ export default function UsersSettingsTab() {
                       {/* Ambiente de Trabalho */}
                       <td className="py-3 px-3">
                         {roleLabel === "Administrador" ? (
-                          <span className="text-xs text-slate-400 font-medium">Todos</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Todos</span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#1a2334] border border-slate-700/80 text-slate-300">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-[#1a2334] border border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-300">
                             Workspace 1
                           </span>
                         )}
@@ -865,18 +871,18 @@ export default function UsersSettingsTab() {
                       {/* Status (Ativo / Inativo) */}
                       <td className="py-3 px-3">
                         {u.isActive !== false ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
                             Ativo
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20">
                             Inativo
                           </span>
                         )}
                       </td>
 
                       {/* Convite */}
-                      <td className="py-3 px-3 text-slate-400 text-[11px] font-mono">
+                      <td className="py-3 px-3 text-slate-500 dark:text-slate-400 text-[11px] font-mono">
                         {isOwner ? (
                           <span>—</span>
                         ) : u.createdAt ? (
@@ -892,14 +898,14 @@ export default function UsersSettingsTab() {
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(u)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             title="Editar Colaborador"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
 
                           {isOwner ? (
-                            <span className="text-[10px] text-emerald-400 font-semibold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold uppercase px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20">
                               Dono
                             </span>
                           ) : (
@@ -910,82 +916,82 @@ export default function UsersSettingsTab() {
                                   e.stopPropagation();
                                   setOpenActionMenuId(openActionMenuId === u.id ? null : u.id);
                                 }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                                 title="Mais opções"
                               >
                                 <MoreVertical className="w-4 h-4" />
                               </button>
 
                               {openActionMenuId === u.id && (
-                              <div
-                                onClick={(e) => e.stopPropagation()}
-                                className="absolute right-0 top-8 z-30 w-48 rounded-xl bg-[#141b27] border border-slate-700/80 shadow-2xl p-1 text-left animate-in fade-in zoom-in-95 duration-150"
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setOpenActionMenuId(null);
-                                    handleOpenEdit(u);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer"
+                                <div
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="absolute right-0 top-8 z-30 w-48 rounded-xl bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-700/80 shadow-2xl p-1 text-left animate-in fade-in zoom-in-95 duration-150"
                                 >
-                                  <Edit2 className="w-3.5 h-3.5 text-blue-400" />
-                                  <span>Editar Colaborador</span>
-                                </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenActionMenuId(null);
+                                      handleOpenEdit(u);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5 text-blue-500" />
+                                    <span>Editar Colaborador</span>
+                                  </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setOpenActionMenuId(null);
-                                    handleOpenPerms(u);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer"
-                                >
-                                  <Shield className="w-3.5 h-3.5 text-emerald-400" />
-                                  <span>Permissões de Acesso</span>
-                                </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenActionMenuId(null);
+                                      handleOpenPerms(u);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer"
+                                  >
+                                    <Shield className="w-3.5 h-3.5 text-emerald-500" />
+                                    <span>Permissões de Acesso</span>
+                                  </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setOpenActionMenuId(null);
-                                    handleOpenPasswordModal(u);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer"
-                                >
-                                  <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-                                  <span>Redefinir Senha</span>
-                                </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenActionMenuId(null);
+                                      handleOpenPasswordModal(u);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer"
+                                  >
+                                    <KeyRound className="w-3.5 h-3.5 text-amber-500" />
+                                    <span>Redefinir Senha</span>
+                                  </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setOpenActionMenuId(null);
-                                    handleToggleActive(u);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-200 hover:text-white hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer"
-                                >
-                                  <Power className="w-3.5 h-3.5 text-purple-400" />
-                                  <span>{u.isActive !== false ? "Inativar" : "Ativar"}</span>
-                                </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenActionMenuId(null);
+                                      handleToggleActive(u);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-lg transition-colors cursor-pointer"
+                                  >
+                                    <Power className="w-3.5 h-3.5 text-purple-500" />
+                                    <span>{u.isActive !== false ? "Inativar" : "Ativar"}</span>
+                                  </button>
 
-                                <div className="my-1 border-t border-slate-800" />
+                                  <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
 
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setOpenActionMenuId(null);
-                                    handleDeleteUser(u);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  <span>Remover Colaborador</span>
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenActionMenuId(null);
+                                      handleDeleteUser(u);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>Remover Colaborador</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1002,16 +1008,16 @@ export default function UsersSettingsTab() {
         <ModalPortal>
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full max-w-md bg-[#161c28] dark:bg-[#121722] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4 max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-md bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 text-slate-900 dark:text-white space-y-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Cabeçalho do Modal */}
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <h3 className="text-base font-bold text-white">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   {isInviteMode ? "Convidar Colaborador" : "Editar Colaborador"}
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {isInviteMode
                     ? "Envie um convite para um novo membro da equipe"
                     : "Atualize as informações do colaborador"}
@@ -1020,7 +1026,7 @@ export default function UsersSettingsTab() {
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1029,30 +1035,31 @@ export default function UsersSettingsTab() {
             <form onSubmit={handleSaveUserForm} className="space-y-4">
               {/* Campo: Nome */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-200">Nome</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-200">Nome</label>
                 <input
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="Ex: Felipe Costa"
-                  className="w-full p-2.5 text-xs rounded-xl bg-[#1c2434] dark:bg-[#161d2b] border border-emerald-500/70 text-white placeholder:text-slate-500 outline-none focus:ring-1 focus:ring-emerald-500"
+                  className={`w-full p-2.5 text-xs rounded-xl bg-white dark:bg-[#161d2b] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass}`}
                   required
                 />
               </div>
 
               {/* Campo: Email */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-200">Email</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-200">Email</label>
                 <input
                   type="email"
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
                   placeholder="comercial@suaempresa.com"
                   disabled={!isInviteMode}
-                  className={`w-full p-2.5 text-xs rounded-xl border text-white placeholder:text-slate-500 outline-none ${isInviteMode
-                      ? "bg-[#1c2434] dark:bg-[#161d2b] border-slate-700 focus:border-emerald-500"
-                      : "bg-[#141a26] border-slate-800 text-slate-400 cursor-not-allowed"
-                    }`}
+                  className={`w-full p-2.5 text-xs rounded-xl border text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${
+                    isInviteMode
+                      ? `bg-white dark:bg-[#161d2b] border-slate-300 dark:border-slate-700 ${focusBorderClass}`
+                      : "bg-slate-100 dark:bg-[#141a26] border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                  }`}
                   required
                 />
               </div>
@@ -1060,15 +1067,15 @@ export default function UsersSettingsTab() {
               {/* Campo: Senha Provisória (apenas no convite) */}
               {isInviteMode && (
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-200">Senha Provisória (Opcional)</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-200">Senha Provisória (Opcional)</label>
                   <input
                     type="password"
                     value={formPassword}
                     onChange={(e) => setFormPassword(e.target.value)}
                     placeholder="Padrão: Versus@123"
-                    className="w-full p-2.5 text-xs rounded-xl bg-[#1c2434] dark:bg-[#161d2b] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-emerald-500"
+                    className={`w-full p-2.5 text-xs rounded-xl bg-white dark:bg-[#161d2b] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass}`}
                   />
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
                     Deixe em branco para usar a senha padrão segura (Versus@123).
                   </span>
                 </div>
@@ -1076,14 +1083,14 @@ export default function UsersSettingsTab() {
 
               {/* Campo: Tipo (Dropdown) */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-200">Tipo</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-200">Tipo</label>
                 <div className="relative">
                   <select
                     value={formRole}
                     onChange={(e) =>
                       setFormRole(e.target.value as "Administrador" | "Supervisor" | "Colaborador")
                     }
-                    className="w-full appearance-none p-2.5 pr-8 text-xs rounded-xl bg-[#1c2434] dark:bg-[#161d2b] border border-slate-700 text-white outline-none focus:border-emerald-500 cursor-pointer"
+                    className={`w-full appearance-none p-2.5 pr-8 text-xs rounded-xl bg-white dark:bg-[#161d2b] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white outline-none ${focusBorderClass} cursor-pointer`}
                   >
                     <option value="Administrador">Administrador</option>
                     <option value="Supervisor">Supervisor</option>
@@ -1095,18 +1102,18 @@ export default function UsersSettingsTab() {
 
               {/* Campo: Ambiente(s) de trabalho * (Padrão Lero) */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-200">Ambiente(s) de trabalho *</label>
-                <div className="p-3 rounded-xl bg-[#1a2232] border border-slate-700/80 flex items-center gap-2.5 text-xs font-medium text-slate-200">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Workspace 1 <span className="text-slate-400">(Padrão)</span></span>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-200">Ambiente(s) de trabalho *</label>
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#1a2232] border border-slate-200 dark:border-slate-700/80 flex items-center gap-2.5 text-xs font-medium text-slate-800 dark:text-slate-200">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>Workspace 1 <span className="text-slate-500 dark:text-slate-400">(Padrão)</span></span>
                 </div>
               </div>
 
-              {/* Campo: Setores (Scrollable Checklist com Checkmarks Verde Padrão Lero) */}
+              {/* Campo: Setores (Scrollable Checklist) */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-200">Setores</label>
-                <div className="p-3 rounded-xl bg-[#1a2232] border border-slate-700/80 space-y-2">
-                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-200">Setores</label>
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#1a2232] border border-slate-200 dark:border-slate-700/80 space-y-2">
+                  <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Workspace 1
                   </div>
                   <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
@@ -1121,17 +1128,23 @@ export default function UsersSettingsTab() {
                           <div
                             key={dept.id}
                             onClick={() => toggleFormDepartment(dept.id)}
-                            className={`p-2 rounded-lg flex items-center justify-between cursor-pointer transition-colors ${isChecked
-                                ? "bg-emerald-500/10 text-white"
-                                : "text-slate-300 hover:bg-slate-800/50"
-                              }`}
+                            className={`p-2 rounded-lg flex items-center justify-between cursor-pointer transition-colors ${
+                              isChecked
+                                ? isWhatsApp
+                                  ? "bg-emerald-500/15 text-emerald-900 dark:text-white"
+                                  : "bg-blue-500/15 text-blue-900 dark:text-white"
+                                : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                            }`}
                           >
                             <div className="flex items-center gap-2 min-w-0">
                               <span
-                                className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${isChecked
-                                    ? "bg-emerald-500 text-slate-950"
-                                    : "border border-slate-600 bg-transparent"
-                                  }`}
+                                className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
+                                  isChecked
+                                    ? isWhatsApp
+                                      ? "bg-emerald-600 text-white"
+                                      : "bg-blue-600 text-white"
+                                    : "border border-slate-300 dark:border-slate-600 bg-transparent"
+                                }`}
                               >
                                 {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                               </span>
@@ -1146,18 +1159,18 @@ export default function UsersSettingsTab() {
               </div>
 
               {/* Rodapé do Modal */}
-              <div className="pt-3 flex justify-end gap-2 border-t border-slate-800">
+              <div className="pt-3 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={submittingUserForm}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all disabled:opacity-50 cursor-pointer shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-xs transition-all disabled:opacity-50 cursor-pointer shadow-sm ${primaryBtnClass}`}
                 >
                   {submittingUserForm ? (
                     <>
@@ -1175,37 +1188,37 @@ export default function UsersSettingsTab() {
         </ModalPortal>
       )}
 
-      {/* 4. MODAL: PERMISSÕES DE ACESSO (EXATA PARIDADE COM SCREENSHOT 3 DO LERO) */}
+      {/* 4. MODAL: PERMISSÕES DE ACESSO */}
       {isPermsModalOpen && permsUser && (
         <ModalPortal>
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full max-w-3xl bg-[#161c28] dark:bg-[#121722] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-5 max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-3xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 text-slate-900 dark:text-white space-y-5 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Topo do Modal */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   Permissões de Acesso
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  <strong className="text-slate-200">{permsUser.name}</strong> · {permsUser.email}
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <strong className="text-slate-800 dark:text-slate-200">{permsUser.name}</strong> · {permsUser.email}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsPermsModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-6">
-              {/* SEÇÃO 1: MENUS (GRID 3 COLUNAS - PADRÃO LERO) */}
+              {/* SEÇÃO 1: MENUS */}
               <div className="space-y-2.5">
-                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Menus
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
@@ -1222,27 +1235,32 @@ export default function UsersSettingsTab() {
                             [menu.key]: !prev[menu.key],
                           }))
                         }
-                        className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all select-none ${isChecked
-                            ? "bg-[#1c2434] border-emerald-500/50 text-white"
-                            : "bg-[#141a26] border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
-                          }`}
+                        className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all select-none ${
+                          isChecked
+                            ? isWhatsApp
+                              ? "bg-emerald-50 dark:bg-[#1c2434] border-emerald-500/50 text-slate-900 dark:text-white shadow-sm"
+                              : "bg-blue-50 dark:bg-[#1c2434] border-blue-500/50 text-slate-900 dark:text-white shadow-sm"
+                            : "bg-slate-50 dark:bg-[#141a26] border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700"
+                        }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          {/* Circular Checkbox Verde Padrão Lero */}
                           <span
-                            className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${isChecked
-                                ? "bg-emerald-500 text-slate-950"
-                                : "border border-slate-600 bg-transparent"
-                              }`}
+                            className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
+                              isChecked
+                                ? isWhatsApp
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-blue-600 text-white"
+                                : "border border-slate-300 dark:border-slate-600 bg-transparent"
+                            }`}
                           >
                             {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                           </span>
 
-                          <Icon className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                          <Icon className="w-3.5 h-3.5 shrink-0 text-slate-500 dark:text-slate-400" />
                           <span className="text-xs font-medium truncate">{menu.label}</span>
                         </div>
 
-                        <span title={menu.tooltip} className="text-slate-500 hover:text-slate-300">
+                        <span title={menu.tooltip} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                           <HelpCircle className="w-3.5 h-3.5" />
                         </span>
                       </div>
@@ -1251,14 +1269,14 @@ export default function UsersSettingsTab() {
                 </div>
               </div>
 
-              {/* SEÇÃO 2: MÓDULOS COM SUB-PERMISSÕES (PADRÃO LERO) */}
-              <div className="space-y-3 pt-3 border-t border-slate-800">
-                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              {/* SEÇÃO 2: MÓDULOS COM SUB-PERMISSÕES */}
+              <div className="space-y-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+                <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Módulos com sub-permissões
                 </h4>
 
                 {/* Sub-permissão: CRM */}
-                <div className="p-3.5 rounded-xl bg-[#141a26] border border-slate-800 space-y-3">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#141a26] border border-slate-200 dark:border-slate-800 space-y-3">
                   <div
                     onClick={() =>
                       setActiveSubPerms((prev) => ({
@@ -1269,19 +1287,22 @@ export default function UsersSettingsTab() {
                     className="flex items-center gap-2.5 cursor-pointer select-none"
                   >
                     <span
-                      className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${activeSubPerms.crm_enabled
-                          ? "bg-emerald-500 text-slate-950"
-                          : "border border-slate-600 bg-transparent"
-                        }`}
+                      className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
+                        activeSubPerms.crm_enabled
+                          ? isWhatsApp
+                            ? "bg-emerald-600 text-white"
+                            : "bg-blue-600 text-white"
+                          : "border border-slate-300 dark:border-slate-600 bg-transparent"
+                      }`}
                     >
                       {activeSubPerms.crm_enabled && <Check className="w-3 h-3 stroke-[3]" />}
                     </span>
-                    <Kanban className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-white">CRM</span>
+                    <Kanban className={`w-4 h-4 ${isWhatsApp ? "text-emerald-500" : "text-blue-600 dark:text-blue-400"}`} />
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">CRM</span>
                   </div>
 
                   {activeSubPerms.crm_enabled && (
-                    <div className="pl-6 space-y-2 border-l border-slate-800/80 ml-2 animate-in fade-in duration-150">
+                    <div className="pl-6 space-y-2 border-l border-slate-200 dark:border-slate-800/80 ml-2 animate-in fade-in duration-150">
                       <div
                         onClick={() =>
                           setActiveSubPerms((prev) => ({
@@ -1289,14 +1310,17 @@ export default function UsersSettingsTab() {
                             crm_create_funnels: !prev.crm_create_funnels,
                           }))
                         }
-                        className="flex items-center justify-between cursor-pointer select-none text-xs text-slate-300 hover:text-white"
+                        className="flex items-center justify-between cursor-pointer select-none text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                       >
                         <div className="flex items-center gap-2">
                           <span
-                            className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${activeSubPerms.crm_create_funnels
-                                ? "bg-emerald-500 text-slate-950"
-                                : "border border-slate-600 bg-transparent"
-                              }`}
+                            className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${
+                              activeSubPerms.crm_create_funnels
+                                ? isWhatsApp
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-blue-600 text-white"
+                                : "border border-slate-300 dark:border-slate-600 bg-transparent"
+                            }`}
                           >
                             {activeSubPerms.crm_create_funnels && (
                               <Check className="w-2.5 h-2.5 stroke-[3]" />
@@ -1305,7 +1329,7 @@ export default function UsersSettingsTab() {
                           <span>+ Criar Funis</span>
                         </div>
                         <span title="Permite criar novos funis e pipelines no CRM">
-                          <HelpCircle className="w-3 h-3 text-slate-500" />
+                          <HelpCircle className="w-3 h-3 text-slate-400" />
                         </span>
                       </div>
 
@@ -1316,14 +1340,17 @@ export default function UsersSettingsTab() {
                             crm_delete_deals: !prev.crm_delete_deals,
                           }))
                         }
-                        className="flex items-center justify-between cursor-pointer select-none text-xs text-slate-300 hover:text-white"
+                        className="flex items-center justify-between cursor-pointer select-none text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                       >
                         <div className="flex items-center gap-2">
                           <span
-                            className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${activeSubPerms.crm_delete_deals
-                                ? "bg-emerald-500 text-slate-950"
-                                : "border border-slate-600 bg-transparent"
-                              }`}
+                            className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${
+                              activeSubPerms.crm_delete_deals
+                                ? isWhatsApp
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-blue-600 text-white"
+                                : "border border-slate-300 dark:border-slate-600 bg-transparent"
+                            }`}
                           >
                             {activeSubPerms.crm_delete_deals && (
                               <Check className="w-2.5 h-2.5 stroke-[3]" />
@@ -1332,7 +1359,7 @@ export default function UsersSettingsTab() {
                           <span>Excluir Oportunidades</span>
                         </div>
                         <span title="Permite excluir permanentemente cards de negociação">
-                          <HelpCircle className="w-3 h-3 text-slate-500" />
+                          <HelpCircle className="w-3 h-3 text-slate-400" />
                         </span>
                       </div>
 
@@ -1343,14 +1370,17 @@ export default function UsersSettingsTab() {
                             crm_only_own_deals: !prev.crm_only_own_deals,
                           }))
                         }
-                        className="flex items-center justify-between cursor-pointer select-none text-xs text-slate-300 hover:text-white"
+                        className="flex items-center justify-between cursor-pointer select-none text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                       >
                         <div className="flex items-center gap-2">
                           <span
-                            className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${activeSubPerms.crm_only_own_deals
-                                ? "bg-emerald-500 text-slate-950"
-                                : "border border-slate-600 bg-transparent"
-                              }`}
+                            className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${
+                              activeSubPerms.crm_only_own_deals
+                                ? isWhatsApp
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-blue-600 text-white"
+                                : "border border-slate-300 dark:border-slate-600 bg-transparent"
+                            }`}
                           >
                             {activeSubPerms.crm_only_own_deals && (
                               <Check className="w-2.5 h-2.5 stroke-[3]" />
@@ -1359,7 +1389,7 @@ export default function UsersSettingsTab() {
                           <span>Ver Apenas Próprias Oportunidades</span>
                         </div>
                         <span title="Restringe a visão do operador aos leads em que ele é responsável">
-                          <HelpCircle className="w-3 h-3 text-slate-500" />
+                          <HelpCircle className="w-3 h-3 text-slate-400" />
                         </span>
                       </div>
                     </div>
@@ -1374,22 +1404,25 @@ export default function UsersSettingsTab() {
                       agenda_enabled: !prev.agenda_enabled,
                     }))
                   }
-                  className="p-3.5 rounded-xl bg-[#141a26] border border-slate-800 flex items-center justify-between cursor-pointer select-none"
+                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#141a26] border border-slate-200 dark:border-slate-800 flex items-center justify-between cursor-pointer select-none"
                 >
                   <div className="flex items-center gap-2.5">
                     <span
-                      className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${activeSubPerms.agenda_enabled
-                          ? "bg-emerald-500 text-slate-950"
-                          : "border border-slate-600 bg-transparent"
-                        }`}
+                      className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
+                        activeSubPerms.agenda_enabled
+                          ? isWhatsApp
+                            ? "bg-emerald-600 text-white"
+                            : "bg-blue-600 text-white"
+                          : "border border-slate-300 dark:border-slate-600 bg-transparent"
+                      }`}
                     >
                       {activeSubPerms.agenda_enabled && <Check className="w-3 h-3 stroke-[3]" />}
                     </span>
-                    <Calendar className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-white">Agenda</span>
+                    <Calendar className={`w-4 h-4 ${isWhatsApp ? "text-emerald-500" : "text-blue-600 dark:text-blue-400"}`} />
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Agenda</span>
                   </div>
                   <span title="Permite criar reuniões e gerenciar disponibilidade">
-                    <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
+                    <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
                   </span>
                 </div>
 
@@ -1401,33 +1434,36 @@ export default function UsersSettingsTab() {
                       analytics_enabled: !prev.analytics_enabled,
                     }))
                   }
-                  className="p-3.5 rounded-xl bg-[#141a26] border border-slate-800 flex items-center justify-between cursor-pointer select-none"
+                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#141a26] border border-slate-200 dark:border-slate-800 flex items-center justify-between cursor-pointer select-none"
                 >
                   <div className="flex items-center gap-2.5">
                     <span
-                      className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${activeSubPerms.analytics_enabled
-                          ? "bg-emerald-500 text-slate-950"
-                          : "border border-slate-600 bg-transparent"
-                        }`}
+                      className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
+                        activeSubPerms.analytics_enabled
+                          ? isWhatsApp
+                            ? "bg-emerald-600 text-white"
+                            : "bg-blue-600 text-white"
+                          : "border border-slate-300 dark:border-slate-600 bg-transparent"
+                      }`}
                     >
                       {activeSubPerms.analytics_enabled && <Check className="w-3 h-3 stroke-[3]" />}
                     </span>
-                    <LayoutDashboard className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-white">Análises</span>
+                    <LayoutDashboard className={`w-4 h-4 ${isWhatsApp ? "text-emerald-500" : "text-blue-600 dark:text-blue-400"}`} />
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">Análises</span>
                   </div>
                   <span title="Acesso a relatórios de conversão e tempos de atendimento">
-                    <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
+                    <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Rodapé do Modal de Permissões */}
-            <div className="pt-3 flex justify-end gap-2 border-t border-slate-800">
+            <div className="pt-3 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setIsPermsModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
@@ -1435,7 +1471,7 @@ export default function UsersSettingsTab() {
                 type="button"
                 onClick={handleSavePerms}
                 disabled={submittingPerms}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all disabled:opacity-50 cursor-pointer shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+                className={`flex items-center gap-1.5 px-5 py-2 rounded-xl font-bold text-xs transition-all disabled:opacity-50 cursor-pointer shadow-sm ${primaryBtnClass}`}
               >
                 {submittingPerms ? (
                   <>
@@ -1457,25 +1493,25 @@ export default function UsersSettingsTab() {
         <ModalPortal>
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full max-w-sm bg-[#161c28] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4"
+            className="w-full max-w-sm bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 text-slate-900 dark:text-white space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-amber-400" />
-                <h3 className="text-sm font-bold text-white">Redefinir Senha</h3>
+                <KeyRound className="w-4 h-4 text-amber-500" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Redefinir Senha</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsPasswordModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-400">
-              Defina a nova senha para <strong className="text-white">{passwordUserName}</strong>:
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Defina a nova senha para <strong className="text-slate-900 dark:text-white">{passwordUserName}</strong>:
             </p>
 
             <form onSubmit={handleSavePassword} className="space-y-3">
@@ -1484,7 +1520,7 @@ export default function UsersSettingsTab() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Nova senha (mínimo 6 caracteres)"
-                className="w-full p-2.5 text-xs rounded-xl bg-[#1c2434] border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-amber-400"
+                className={`w-full p-2.5 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass}`}
                 required
                 autoFocus
               />
@@ -1493,14 +1529,14 @@ export default function UsersSettingsTab() {
                 <button
                   type="button"
                   onClick={() => setIsPasswordModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"
+                  className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-xs font-semibold hover:bg-slate-700"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={submittingPassword}
-                  className="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs disabled:opacity-50"
+                  className={`px-4 py-1.5 rounded-lg font-bold text-xs disabled:opacity-50 cursor-pointer shadow-sm ${primaryBtnClass}`}
                 >
                   {submittingPassword ? "Salvando..." : "Redefinir"}
                 </button>

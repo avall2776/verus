@@ -5,12 +5,19 @@ import { useRouter } from "next/navigation";
 import { Building2, Save, ShieldCheck, CreditCard, Users, FileText, Phone, Mail, MapPin, Loader2, ChevronRight, BellRing } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function CompanySettingsTab() {
   const router = useRouter();
+  const { isWhatsApp } = useTheme();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [company, setCompany] = useState<any>(null);
+
+  const primaryBtnClass = isWhatsApp
+    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-500/20"
+    : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20";
+  const focusBorderClass = isWhatsApp ? "focus:border-emerald-500" : "focus:border-blue-600";
 
   const [form, setForm] = useState({
     name: "",
@@ -83,7 +90,7 @@ export default function CompanySettingsTab() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <Building2 className={`w-5 h-5 ${isWhatsApp ? "text-emerald-500" : "text-blue-600 dark:text-blue-400"}`} />
             Dados Cadastrais da Empresa
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -95,12 +102,16 @@ export default function CompanySettingsTab() {
           <button
             type="button"
             onClick={() => router.push("/settings?tab=plan")}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-600/10 hover:bg-blue-100 dark:hover:bg-blue-600/20 border border-blue-200 dark:border-blue-500/20 text-xs font-semibold text-blue-700 dark:text-blue-300 transition-all group"
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-semibold transition-all group ${
+              isWhatsApp
+                ? "bg-emerald-50 dark:bg-emerald-600/10 hover:bg-emerald-100 dark:hover:bg-emerald-600/20 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                : "bg-blue-50 dark:bg-blue-600/10 hover:bg-blue-100 dark:hover:bg-blue-600/20 border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-300"
+            }`}
             title="Clique para ver os detalhes da assinatura e limites"
           >
-            <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <ShieldCheck className={`w-4 h-4 ${isWhatsApp ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"}`} />
             <span>Plano {company.plan.name}</span>
-            <ChevronRight className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+            <ChevronRight className={`w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity ${isWhatsApp ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"}`} />
           </button>
         )}
       </div>
@@ -108,28 +119,28 @@ export default function CompanySettingsTab() {
       {/* Métricas Rápidas */}
       {company?._count && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+          <div className="p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 shadow-sm">
             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs mb-1">
-              <Users className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <Users className={`w-3.5 h-3.5 ${isWhatsApp ? "text-emerald-500" : "text-blue-600 dark:text-blue-400"}`} />
               <span>Membros</span>
             </div>
             <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.users || 0}</span>
           </div>
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+          <div className="p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 shadow-sm">
             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs mb-1">
               <FileText className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>Contratos</span>
             </div>
             <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.contracts || 0}</span>
           </div>
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+          <div className="p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 shadow-sm">
             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs mb-1">
-              <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              <Users className={`w-3.5 h-3.5 ${isWhatsApp ? "text-emerald-500" : "text-indigo-600 dark:text-indigo-400"}`} />
               <span>Contatos CRM</span>
             </div>
             <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">{company._count.contacts || 0}</span>
           </div>
-          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+          <div className="p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 shadow-sm">
             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs mb-1">
               <CreditCard className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>Chamados</span>
@@ -151,7 +162,7 @@ export default function CompanySettingsTab() {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Ex: Nexus Logística e Tecnologia LTDA"
-              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600"
+              className={`w-full p-3 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass}`}
               required
             />
           </div>
@@ -165,7 +176,7 @@ export default function CompanySettingsTab() {
               value={form.cnpj}
               onChange={(e) => setForm({ ...form, cnpj: e.target.value })}
               placeholder="00.000.000/0001-00"
-              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600"
+              className={`w-full p-3 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass}`}
             />
           </div>
 
@@ -178,7 +189,7 @@ export default function CompanySettingsTab() {
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               placeholder="contato@empresa.com.br"
-              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600"
+              className={`w-full p-3 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass}`}
             />
           </div>
 
@@ -191,16 +202,20 @@ export default function CompanySettingsTab() {
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               placeholder="+55 (11) 99999-9999"
-              className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600"
+              className={`w-full p-3 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass}`}
             />
           </div>
         </div>
 
         {/* Notificação de Leads Qualificados (Multi-Tenant) */}
-        <div className="p-4 rounded-xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-500/20 space-y-2">
-          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+        <div className={`p-4 rounded-xl border space-y-2 ${
+          isWhatsApp
+            ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-500/20"
+            : "bg-blue-50/70 dark:bg-blue-950/20 border-blue-200 dark:border-blue-500/20"
+        }`}>
+          <div className={`flex items-center gap-2 ${isWhatsApp ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"}`}>
             <BellRing className="w-4 h-4" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+            <h3 className={`text-xs font-bold uppercase tracking-wider ${isWhatsApp ? "text-emerald-700 dark:text-emerald-300" : "text-blue-700 dark:text-blue-300"}`}>
               WhatsApp da Central / Alerta de Novos Leads
             </h3>
           </div>
@@ -213,13 +228,17 @@ export default function CompanySettingsTab() {
               value={form.leadNotificationPhone}
               onChange={(e) => setForm({ ...form, leadNotificationPhone: e.target.value })}
               placeholder="Ex: +55 (54) 99999-9999 ou 12036304... (ID do Grupo)"
-              className="w-full p-3 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-blue-300 dark:border-blue-500/30 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600 font-mono"
+              className={`w-full p-3 text-xs rounded-xl bg-white dark:bg-[#070D1B] border text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none font-mono ${
+                isWhatsApp
+                  ? "border-emerald-300 dark:border-emerald-500/30 focus:border-emerald-500"
+                  : "border-blue-300 dark:border-blue-500/30 focus:border-blue-600"
+              }`}
             />
           </div>
         </div>
 
         {/* Interruptor Master do Auto-Atendimento por IA */}
-        <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
@@ -267,7 +286,7 @@ export default function CompanySettingsTab() {
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
             placeholder="Avenida Paulista, 1000, Sala 50 - São Paulo, SP"
-            className="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-blue-600"
+            className={`w-full p-3 text-xs rounded-xl bg-white dark:bg-[#070D1B] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass}`}
           />
         </div>
 
@@ -275,7 +294,7 @@ export default function CompanySettingsTab() {
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors shadow-sm disabled:opacity-50"
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition-colors shadow-sm disabled:opacity-50 cursor-pointer ${primaryBtnClass}`}
           >
             {saving ? (
               <>
@@ -294,3 +313,4 @@ export default function CompanySettingsTab() {
     </div>
   );
 }
+
