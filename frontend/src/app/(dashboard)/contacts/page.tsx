@@ -501,61 +501,67 @@ export default function ContactsPage() {
         </div>
         
         {/* Barra de Ações: Busca, Filtros, Meta Ads e Exportação */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="relative w-full sm:w-auto">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
-            <input 
-              type="text" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar por nome, telefone, e-mail..." 
-              className={`w-full sm:w-64 pl-9 pr-3.5 py-2 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/80 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass} transition-colors shadow-sm`}
-            />
-            {searchTerm && (
-              <button 
-                onClick={() => setSearchTerm("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
-              >
-                <X size={13} />
-              </button>
-            )}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full md:w-auto">
+          {/* Linha 1 no Mobile: Busca + Botão Filtros lado a lado */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-64">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+              <input 
+                type="text" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por nome, telefone, e-mail..." 
+                className={`w-full pl-9 pr-8 py-2 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/80 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass} transition-colors shadow-sm`}
+              />
+              {searchTerm && (
+                <button 
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            {/* Botão de Filtros */}
+            <button 
+              onClick={() => setShowFilterBar(!showFilterBar)}
+              className={`flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer shadow-sm shrink-0 ${
+                showFilterBar || statusFilter !== "all" || sourceFilter !== "all" || dealsFilter !== "all"
+                  ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300"
+                  : "bg-white dark:bg-[#121824] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Filter size={14} className={statusFilter !== "all" || sourceFilter !== "all" ? "text-blue-600 dark:text-blue-400" : ""} /> 
+              <span>Filtros</span>
+              {(statusFilter !== "all" || sourceFilter !== "all" || dealsFilter !== "all") && (
+                <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400" />
+              )}
+            </button>
           </div>
 
-          {/* Botão de Filtros */}
-          <button 
-            onClick={() => setShowFilterBar(!showFilterBar)}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer shadow-sm ${
-              showFilterBar || statusFilter !== "all" || sourceFilter !== "all" || dealsFilter !== "all"
-                ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300"
-                : "bg-white dark:bg-[#121824] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-            }`}
-          >
-            <Filter size={14} className={statusFilter !== "all" || sourceFilter !== "all" ? "text-blue-600 dark:text-blue-400" : ""} /> 
-            <span>Filtros</span>
-            {(statusFilter !== "all" || sourceFilter !== "all" || dealsFilter !== "all") && (
-              <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400" />
-            )}
-          </button>
+          {/* Linha 2 no Mobile: Públicos Meta Ads (IA) e Exportar CSV perfeitamente alinhados (50% / 50%) */}
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+            {/* BOTÃO ESTRATÉGICO: PÚBLICOS META ADS (IA) */}
+            <button
+              onClick={() => setIsMetaModalOpen(true)}
+              className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-all shadow-sm cursor-pointer bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 border-slate-700 dark:border-slate-300 text-center"
+              title="Gerar públicos criptografados em SHA-256 para Lookalike e Remarketing no Meta Ads"
+            >
+              <Target size={14} className="text-indigo-400 dark:text-indigo-600 shrink-0" />
+              <span className="truncate">Públicos Meta Ads (IA)</span>
+            </button>
 
-          {/* BOTÃO ESTRATÉGICO: PÚBLICOS META ADS (IA) */}
-          <button
-            onClick={() => setIsMetaModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all shadow-sm cursor-pointer bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 border-slate-700 dark:border-slate-300"
-            title="Gerar públicos criptografados em SHA-256 para Lookalike e Remarketing no Meta Ads"
-          >
-            <Target size={14} className="text-indigo-400 dark:text-indigo-600" />
-            <span>Públicos Meta Ads (IA)</span>
-          </button>
-
-          {/* Botão Exportar CSV Comum */}
-          <button 
-            onClick={handleExportCSV}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer ${primaryBtnClass}`}
-            title="Exportar contatos filtrados em formato CSV"
-          >
-            <Download size={14} /> 
-            <span>Exportar CSV</span>
-          </button>
+            {/* Botão Exportar CSV Comum */}
+            <button 
+              onClick={handleExportCSV}
+              className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer text-center ${primaryBtnClass}`}
+              title="Exportar contatos filtrados em formato CSV"
+            >
+              <Download size={14} className="shrink-0" /> 
+              <span className="truncate">Exportar CSV</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1010,20 +1016,23 @@ export default function ContactsPage() {
       </div>
 
       {/* 6. CENTRAL INTEGRADA NA MESMA TELA: INTELIGÊNCIA DE TRÁFEGO META ADS (Acessível ao rolar para baixo) */}
-      <div className="rounded-3xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-6">
+      <div className="rounded-3xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-slate-800 shadow-sm p-4 sm:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800/80">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
               <Target size={20} className="stroke-[2.2]" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-black tracking-tight">Inteligência de Tráfego Pago & Meta Ads</h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2.5">
+                <h3 className="text-sm sm:text-base font-black tracking-tight text-slate-900 dark:text-white">
+                  Inteligência de Tráfego Pago & Meta Ads
+                </h3>
+                <span className="self-start inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 whitespace-nowrap">
+                  <ShieldCheck size={11} className="text-indigo-500 shrink-0" />
                   Criptografia SHA-256 Oficial
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                 Exporte públicos qualificados com valor financeiro (LTV) prontos para o Gestor de Tráfego subir no Facebook & Instagram Ads.
               </p>
             </div>
@@ -1031,30 +1040,45 @@ export default function ContactsPage() {
 
           <button
             onClick={() => handleCopyMetaInstructions()}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#121824] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#121824] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
           >
-            {copiedInstructions ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+            {copiedInstructions ? <Check size={14} className="text-emerald-500 shrink-0" /> : <Copy size={14} className="shrink-0" />}
             <span>{copiedInstructions ? "Instruções Copiadas!" : "Copiar Instruções para o Gestor"}</span>
           </button>
         </div>
 
-        {/* 4 Cards de Exportação com 1 Clique */}
+        {/* 4 Cards de Exportação com 1 Clique (Padronizados com Ícones em Boxes e Métricas Dedicadas) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Lookalike VIP */}
           <div className="p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-950/15 flex flex-col justify-between space-y-3">
             <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <TrendingUp size={16} className="text-emerald-600 dark:text-emerald-400" />
-                <h4 className="text-xs font-black text-slate-900 dark:text-white">Lookalike VIP (Compradores)</h4>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <TrendingUp size={16} />
+                  </div>
+                  <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Lookalike VIP (Compradores)</h4>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40 shrink-0">
+                  Mais Recomendado
+                </span>
               </div>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                {metrics.clientsCount} clientes reais com R$ {(metrics.totalWonRevenue / 1000).toFixed(0)}k faturado. Gera 1M a 2M de produtores idênticos aos seus compradores.
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-2.5">
+                Público baseado em clientes que já compraram com histórico de LTV. O algoritmo do Meta criará 1M a 2M de produtores rurais e clientes com o mesmo perfil.
               </p>
+              <div className="flex items-center justify-between text-xs font-bold pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {metrics.clientsCount} {metrics.clientsCount === 1 ? 'comprador real' : 'compradores reais'}
+                </span>
+                <span className="text-slate-600 dark:text-slate-400">
+                  {metrics.totalWonRevenue > 0 ? `R$ ${(metrics.totalWonRevenue / 1000).toFixed(0)}k faturado` : 'Base de Valor'}
+                </span>
+              </div>
             </div>
             <button
               onClick={() => handleDownloadMetaAdsCsv('lookalike_vip')}
               disabled={isGeneratingMetaCsv}
-              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-sm cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-sm cursor-pointer mt-1"
             >
               <Download size={13} />
               <span>Baixar Lista Lookalike</span>
@@ -1064,18 +1088,33 @@ export default function ContactsPage() {
           {/* Card 2: Remarketing de Fechamento */}
           <div className="p-4 rounded-2xl border border-amber-200 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-950/15 flex flex-col justify-between space-y-3">
             <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <Zap size={16} className="text-amber-600 dark:text-amber-400" />
-                <h4 className="text-xs font-black text-slate-900 dark:text-white">Remarketing de Fechamento</h4>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <Zap size={16} />
+                  </div>
+                  <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Remarketing de Fechamento</h4>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40 shrink-0">
+                  Alta Conversão
+                </span>
               </div>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                {metrics.hotCount} leads quentes com propostas ativas. Anúncios de depoimentos e demonstrações em campo para fechar o negócio.
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-2.5">
+                Leads em negociação ativa com propostas em aberto. Ideal para veicular anúncios de depoimentos, demonstrações e garantias de fechamento.
               </p>
+              <div className="flex items-center justify-between text-xs font-bold pt-2 border-t border-amber-200/60 dark:border-amber-800/40">
+                <span className="text-amber-600 dark:text-amber-400">
+                  {metrics.hotCount} {metrics.hotCount === 1 ? 'lead quente' : 'leads quentes'}
+                </span>
+                <span className="text-slate-600 dark:text-slate-400">
+                  {metrics.totalPipelineValue > 0 ? `R$ ${(metrics.totalPipelineValue / 1000).toFixed(0)}k em pipeline` : 'Em Proposta'}
+                </span>
+              </div>
             </div>
             <button
               onClick={() => handleDownloadMetaAdsCsv('remarketing_hot')}
               disabled={isGeneratingMetaCsv}
-              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition-all shadow-sm cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition-all shadow-sm cursor-pointer mt-1"
             >
               <Download size={13} />
               <span>Baixar Lista Remarketing</span>
@@ -1085,18 +1124,33 @@ export default function ContactsPage() {
           {/* Card 3: Reativação de Base */}
           <div className="p-4 rounded-2xl border border-blue-200 dark:border-blue-800/60 bg-blue-50/40 dark:bg-blue-950/15 flex flex-col justify-between space-y-3">
             <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <RefreshCw size={16} className="text-blue-600 dark:text-blue-400" />
-                <h4 className="text-xs font-black text-slate-900 dark:text-white">Reativação da Base (Frios)</h4>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <RefreshCw size={16} />
+                  </div>
+                  <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Reativação da Base (Frios)</h4>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 shrink-0">
+                  Prospecção
+                </span>
               </div>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                {metrics.coldCount.toLocaleString('pt-BR')} contatos da base sem compras recentes. Ideal para rodar campanhas de novas safras e implementos.
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-2.5">
+                Contatos cadastrados na base sem compras recentes. Excelente para veicular anúncios de novas safras, condições facilitadas ou novos lançamentos.
               </p>
+              <div className="flex items-center justify-between text-xs font-bold pt-2 border-t border-blue-200/60 dark:border-blue-800/40">
+                <span className="text-blue-600 dark:text-blue-400">
+                  {metrics.coldCount.toLocaleString('pt-BR')} contatos
+                </span>
+                <span className="text-slate-600 dark:text-slate-400">
+                  Nutrição da Base
+                </span>
+              </div>
             </div>
             <button
               onClick={() => handleDownloadMetaAdsCsv('reactivation_cold')}
               disabled={isGeneratingMetaCsv}
-              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-all shadow-sm cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-all shadow-sm cursor-pointer mt-1"
             >
               <Download size={13} />
               <span>Baixar Lista Reativação</span>
@@ -1106,18 +1160,33 @@ export default function ContactsPage() {
           {/* Card 4: Exclusão de Clientes */}
           <div className="p-4 rounded-2xl border border-purple-200 dark:border-purple-800/60 bg-purple-50/40 dark:bg-purple-950/15 flex flex-col justify-between space-y-3">
             <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <ShieldCheck size={16} className="text-purple-600 dark:text-purple-400" />
-                <h4 className="text-xs font-black text-slate-900 dark:text-white">Exclusão de Clientes</h4>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                    <ShieldCheck size={16} />
+                  </div>
+                  <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Exclusão de Clientes</h4>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40 shrink-0">
+                  Economia
+                </span>
               </div>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                {metrics.clientsCount} compradores confirmados para negativar nas campanhas de captação, poupando até 30% da verba de anúncio.
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-2.5">
+                Negativa quem já é cliente nas campanhas de captação de novos clientes, evitando pagar anúncios repetidos para a mesma pessoa e poupando até 30% da verba.
               </p>
+              <div className="flex items-center justify-between text-xs font-bold pt-2 border-t border-purple-200/60 dark:border-purple-800/40">
+                <span className="text-purple-600 dark:text-purple-400">
+                  {metrics.clientsCount} {metrics.clientsCount === 1 ? 'cliente' : 'clientes'}
+                </span>
+                <span className="text-slate-600 dark:text-slate-400">
+                  Poupe até 30%
+                </span>
+              </div>
             </div>
             <button
               onClick={() => handleDownloadMetaAdsCsv('exclusion_clients')}
               disabled={isGeneratingMetaCsv}
-              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-all shadow-sm cursor-pointer"
+              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-all shadow-sm cursor-pointer mt-1"
             >
               <Download size={13} />
               <span>Baixar Lista Exclusão</span>
@@ -1494,11 +1563,13 @@ export default function ContactsPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <TrendingUp size={16} className="text-emerald-500" />
-                        <h4 className="text-xs font-black text-slate-900 dark:text-white">Lookalike VIP (Compradores)</h4>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                          <TrendingUp size={16} />
+                        </div>
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Lookalike VIP (Compradores)</h4>
                       </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40 shrink-0">
                         Mais Recomendado
                       </span>
                     </div>
@@ -1521,11 +1592,13 @@ export default function ContactsPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Zap size={16} className="text-amber-500" />
-                        <h4 className="text-xs font-black text-slate-900 dark:text-white">Remarketing de Fechamento</h4>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                          <Zap size={16} />
+                        </div>
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Remarketing de Fechamento</h4>
                       </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40 shrink-0">
                         Alta Conversão
                       </span>
                     </div>
@@ -1548,10 +1621,15 @@ export default function ContactsPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <RefreshCw size={16} className="text-blue-500" />
-                        <h4 className="text-xs font-black text-slate-900 dark:text-white">Reativação da Base (Frios)</h4>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                          <RefreshCw size={16} />
+                        </div>
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Reativação da Base (Frios)</h4>
                       </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 shrink-0">
+                        Prospecção
+                      </span>
                     </div>
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
                       Leads cadastrados sem compras recentes. Ótimo para veicular novas ofertas de entrada, condições de safra ou novos produtos.
@@ -1572,10 +1650,15 @@ export default function ContactsPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <ShieldCheck size={16} className="text-purple-500" />
-                        <h4 className="text-xs font-black text-slate-900 dark:text-white">Exclusão de Clientes</h4>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                          <ShieldCheck size={16} />
+                        </div>
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">Exclusão de Clientes</h4>
                       </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40 shrink-0">
+                        Economia
+                      </span>
                     </div>
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
                       Negativa quem já comprou de você nas campanhas de captação de novos clientes, evitando desperdício de orçamento de tráfego.

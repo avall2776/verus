@@ -1,0 +1,48 @@
+import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
+import { RadarStoriesService } from '../services/radar-stories.service';
+import { JwtAuthGuard } from '../../../shared/guards/jwt-auth.guard';
+import { PlanGuard } from '../../../shared/guards/plan.guard';
+import { RequireModule } from '../../../shared/decorators/require-module.decorator';
+import { CurrentTenant } from '../../../shared/decorators/tenant.decorator';
+
+@Controller('crm/radar-stories')
+@UseGuards(JwtAuthGuard, PlanGuard)
+@RequireModule('crm')
+export class RadarStoriesController {
+  constructor(private readonly radarStoriesService: RadarStoriesService) {}
+
+  @Get('metrics')
+  async getMetrics(@CurrentTenant() tenantId: string) {
+    return this.radarStoriesService.getMetrics(tenantId);
+  }
+
+  @Get('viewers')
+  async getViewers(
+    @CurrentTenant() tenantId: string,
+    @Query('status') status?: string,
+    @Query('category') category?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.radarStoriesService.getViewers(tenantId, { status, category, search });
+  }
+
+  @Post('approach')
+  async generateApproach(
+    @CurrentTenant() tenantId: string,
+    @Body()
+    body: {
+      contactId: string;
+      producerName: string;
+      companyOrFarm?: string;
+      city?: string;
+      state?: string;
+      crmStatus: string;
+      lastPurchaseInfo?: string;
+      statusTitle: string;
+      statusCategory: string;
+      viewsCountWeek?: number;
+    }
+  ) {
+    return this.radarStoriesService.generateApproach(tenantId, body);
+  }
+}
