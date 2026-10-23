@@ -472,6 +472,11 @@ function InboxContent() {
 
   const getMediaUrl = (url?: string | null, type?: string) => {
     if (!url) return '';
+    // Links criptografados temporários do CDN interno do WhatsApp (.enc ou mmg.whatsapp.net com token expirado)
+    // não podem ser acessados diretamente pelo navegador pois retornam 403 Forbidden e são binários criptografados
+    if (url.includes('mmg.whatsapp.net') && (url.includes('.enc') || url.includes('/v/t62.') || url.includes('oe='))) {
+      return '';
+    }
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
       return url;
     }
@@ -544,21 +549,25 @@ function InboxContent() {
     const cleanPhone = (phone || '').trim();
 
     // Se o contato tiver um nome salvo/real, SEMPRE exibir o nome do contato!
+    const isPureDigits = /^\d+$/.test(cleanName);
     const isGenericOrMasked = 
       !cleanName ||
+      cleanName === '.' ||
+      cleanName === '-' ||
       cleanName === 'Cliente WhatsApp' ||
       cleanName.includes('@lid') ||
       cleanName.includes('@s.whatsapp.net') ||
       cleanName.startsWith('WhatsApp') ||
       cleanName.toLowerCase() === 'sem nome' ||
-      cleanName.toLowerCase() === 'cliente';
+      cleanName.toLowerCase() === 'cliente' ||
+      (isPureDigits && cleanName.length >= 10);
 
     if (isGenericOrMasked) {
       if (cleanPhone && !cleanPhone.includes('@lid')) {
         const formatted = formatPhoneNumber(cleanPhone);
         if (formatted) return formatted;
       }
-      return 'Cliente WhatsApp';
+      return cleanName && !isPureDigits && cleanName !== '.' && cleanName !== '-' ? cleanName : 'Cliente WhatsApp';
     }
 
     return cleanName;
@@ -3400,23 +3409,33 @@ function InboxContent() {
                           {/* Renderização de Imagens */}
                           {msg.mediaUrl && msg.type === 'image' && (
                             <div className="mb-2">
-                              <div 
-                                onClick={() => setLightboxImage({ url: getMediaUrl(msg.mediaUrl, 'image'), title: msg.content || 'Imagem' })}
-                                className="relative group cursor-pointer overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 shadow-md inline-block max-w-full"
-                                title="Clique para expandir em tela cheia"
-                              >
-                                <img 
-                                  src={getMediaUrl(msg.mediaUrl, 'image')} 
-                                  alt={msg.content || "Anexo"} 
-                                  className="rounded-xl max-h-64 sm:max-h-72 object-cover transition-transform duration-300 group-hover:scale-[1.02]" 
-                                />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                                  <div className="p-2.5 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-xl flex items-center gap-1.5 text-xs font-semibold transform translate-y-1 group-hover:translate-y-0 transition-transform duration-200">
-                                    <ZoomIn size={16} className="text-cyan-400" />
-                                    <span>Expandir</span>
+                              {getMediaUrl(msg.mediaUrl, 'image') ? (
+                                <div 
+                                  onClick={() => setLightboxImage({ url: getMediaUrl(msg.mediaUrl, 'image'), title: msg.content || 'Imagem' })}
+                                  className="relative group cursor-pointer overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 shadow-md inline-block max-w-full"
+                                  title="Clique para expandir em tela cheia"
+                                >
+                                  <img 
+                                    src={getMediaUrl(msg.mediaUrl, 'image')} 
+                                    alt={msg.content || "Anexo"} 
+                                    className="rounded-xl max-h-64 sm:max-h-72 object-cover transition-transform duration-300 group-hover:scale-[1.02]" 
+                                  />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                    <div className="p-2.5 rounded-full bg-black/60 text-white backdrop-blur-sm shadow-xl flex items-center gap-1.5 text-xs font-semibold transform translate-y-1 group-hover:translate-y-0 transition-transform duration-200">
+                                      <ZoomIn size={16} className="text-cyan-400" />
+                                      <span>Expandir</span>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
+                              ) : (
+                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 text-xs">
+                                  <ImageIcon size={18} className="shrink-0 opacity-50 text-slate-400" />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="font-semibold text-slate-700 dark:text-slate-300">Imagem expirada do WhatsApp</span>
+                                    <span className="text-[10px] text-slate-400">Mídia expirada no servidor original do WhatsApp</span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
 
@@ -3431,7 +3450,7 @@ function InboxContent() {
                                     <span className="text-[10px] text-slate-500 dark:text-slate-400">Armazenamento do CRM anterior desativado</span>
                                   </div>
                                 </div>
-                              ) : (
+                              ) : getMediaUrl(msg.mediaUrl, 'video') ? (
                                 <div className="relative overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 shadow-md bg-black">
                                   <video
                                     src={getMediaUrl(msg.mediaUrl, 'video')}
@@ -3448,6 +3467,14 @@ function InboxContent() {
                                   >
                                     Seu navegador não suporta reprodução de vídeo.
                                   </video>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 text-xs">
+                                  <Video size={18} className="shrink-0 opacity-50" />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="font-semibold text-slate-700 dark:text-slate-300">Vídeo expirado do WhatsApp</span>
+                                    <span className="text-[10px] text-slate-400">Arquivo expirou no servidor da Meta</span>
+                                  </div>
                                 </div>
                               )}
                               {msg.content && !msg.content.startsWith('📹') && (
@@ -3488,11 +3515,19 @@ function InboxContent() {
                           {/* Player de Áudio Monocromático VERSUS com Play/Pause Fluido, Barra Interativa, Velocidade (1x, 1.5x, 2x) e Transcrição Whisper */}
                           {(msg.type === 'audio' || msg.type === 'voice' || msg.type === 'ptt' || (!!msg.mediaUrl && /\.(ogg|opus|mp3|m4a|wav|webm)($|\?)/i.test(msg.mediaUrl)) || msg.content?.includes('🎤')) && (
                             <div className="flex flex-col gap-1.5 my-1.5 w-full min-w-[260px] max-w-[340px] mb-2">
-                              {msg.mediaUrl ? (
+                              {getAudioSrc(msg.mediaUrl) ? (
                                 <VersusAudioPlayer
                                   src={getAudioSrc(msg.mediaUrl)}
                                   downloadName={`audio_${msg.id || Date.now()}.ogg`}
                                 />
+                              ) : msg.mediaUrl?.includes('mmg.whatsapp.net') ? (
+                                <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 text-xs shadow-sm">
+                                  <Volume2 size={16} className="shrink-0 opacity-50 text-slate-400" />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="font-semibold text-slate-700 dark:text-slate-300">Áudio expirado do WhatsApp</span>
+                                    <span className="text-[10px] text-slate-400">Arquivo criptografado expirou no servidor da Meta</span>
+                                  </div>
+                                </div>
                               ) : (
                                 <div className="flex items-center gap-2 p-3 rounded-2xl bg-amber-50 dark:bg-[#0B1224] border border-amber-300 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs shadow-md">
                                   <Volume2 size={16} className="shrink-0 animate-pulse text-amber-500 dark:text-amber-400" />
@@ -3569,7 +3604,7 @@ function InboxContent() {
                                   {msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? 'ARQUIVO HISTÓRICO (CRM ANTERIOR)' : (msg.mediaUrl ? (msg.mediaUrl.split('.').pop()?.split('?')[0] || 'ARQUIVO') : 'ARQUIVO')}
                                 </span>
                               </div>
-                              {msg.mediaUrl && !msg.mediaUrl.includes('lvdphjhftfjdifnzuazd.supabase.co') && (
+                              {getMediaUrl(msg.mediaUrl, 'document') && !msg.mediaUrl?.includes('lvdphjhftfjdifnzuazd.supabase.co') ? (
                                 <a 
                                   href={getMediaUrl(msg.mediaUrl, 'document')} 
                                   target="_blank" 
@@ -3579,7 +3614,9 @@ function InboxContent() {
                                 >
                                   <ExternalLink size={14} />
                                 </a>
-                              )}
+                              ) : msg.mediaUrl?.includes('mmg.whatsapp.net') ? (
+                                <span className="ml-auto text-slate-400 text-[10px] italic">Expirado</span>
+                              ) : null}
                             </div>
                           )}
 

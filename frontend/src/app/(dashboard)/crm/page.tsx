@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DealModal } from "@/components/crm/DealModal";
 import { useSocket } from "@/components/ui/SocketProvider";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const DEFAULT_COLUMNS = [
   { id: "seed", title: "LEADS SEED", color: "text-gray-400", bgLight: "bg-gray-500/10", borderLight: "border-gray-500/30", borderColor: "border-t-gray-500" },
@@ -71,6 +72,7 @@ function formatRelativeTime(dateStr?: string | Date): string {
 function CrmContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isWhatsApp, theme } = useTheme();
   const [deals, setDeals] = useState<any[]>([]);
   const [columns, setColumns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1326,8 +1328,8 @@ function CrmContent() {
               const columnDeals = filteredDeals.filter(d => d.status === col.id);
               const totalValue = columnDeals.reduce((sum, d) => sum + (d.value ? Number(d.value) : 0), 0);
               
-              const colColorClass = neutralMode ? 'text-gray-300' : col.color;
-              const borderTopClass = neutralMode ? 'border-t-gray-600' : col.borderColor;
+              const colColorClass = isWhatsApp ? 'text-[#00A884]' : neutralMode ? 'text-gray-300' : col.color;
+              const borderTopClass = isWhatsApp ? 'border-t-[#00A884]' : neutralMode ? 'border-t-gray-600' : col.borderColor;
 
               return (
                 <React.Fragment key={col.id}>
@@ -1336,12 +1338,21 @@ function CrmContent() {
                     style={{ width: isCollapsed ? '60px' : `${columnWidths[col.id] || 300}px` }}
                   >
                     {isCollapsed ? (
-                      <div className={`w-full h-full flex-shrink-0 flex flex-col bg-slate-50 dark:bg-[#1c1d22] border border-gray-800 border-t-2 ${borderTopClass} rounded-xl items-center py-4 cursor-pointer hover:bg-gray-800/50 transition-colors group`} onClick={() => toggleColumn(col.id)}>
-                         <button className="text-gray-500 group-hover:text-white mb-6">
+                      <div 
+                        className={`w-full h-full flex-shrink-0 flex flex-col border border-t-2 ${borderTopClass} rounded-xl items-center py-4 cursor-pointer transition-colors group ${
+                          isWhatsApp 
+                            ? 'bg-[#111B21] border-[#222D34] hover:bg-[#202C33]' 
+                            : 'bg-slate-50 dark:bg-[#1c1d22] border-gray-800 hover:bg-gray-800/50'
+                        }`} 
+                        onClick={() => toggleColumn(col.id)}
+                      >
+                         <button className={`${isWhatsApp ? 'text-[#8696A0] group-hover:text-[#00A884]' : 'text-gray-500 group-hover:text-white'} mb-6`}>
                            <Maximize2 size={16} />
                          </button>
                          <div className="flex-1 relative w-full">
-                           <div className="absolute top-0 left-1/2 -translate-x-1/2 origin-top-left -rotate-90 whitespace-nowrap font-bold text-sm text-gray-500 tracking-widest uppercase">
+                           <div className={`absolute top-0 left-1/2 -translate-x-1/2 origin-top-left -rotate-90 whitespace-nowrap font-bold text-sm tracking-widest uppercase ${
+                             isWhatsApp ? 'text-[#00A884]' : 'text-gray-500'
+                           }`}>
                              {col.title} ({columnDeals.length})
                            </div>
                          </div>
@@ -1349,20 +1360,45 @@ function CrmContent() {
                     ) : (
                       <div className="w-full shrink-0 flex flex-col h-full gap-3">
                         {/* Column Header */}
-                        <div className={`p-4 rounded-xl border border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#1c1d22] border-t-2 ${borderTopClass} flex flex-col shadow-sm shrink-0`}>
+                        <div className={`p-4 rounded-xl border border-t-2 ${borderTopClass} flex flex-col shadow-sm shrink-0 ${
+                          isWhatsApp 
+                            ? 'bg-[#111B21] border-[#222D34] shadow-md shadow-black/20' 
+                            : 'border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-[#1c1d22]'
+                        }`}>
                           <div className="flex justify-between items-center mb-2">
                             <h3 className={`text-sm font-black uppercase tracking-wider ${colColorClass}`}>
                               {col.title}
                             </h3>
                             <div className="flex gap-1">
-                              <button onClick={() => toggleColumn(col.id)} className="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1 rounded hover:bg-slate-200/60 dark:hover:bg-gray-700 transition-colors">
+                              <button 
+                                onClick={() => toggleColumn(col.id)} 
+                                className={`p-1 rounded transition-colors ${
+                                  isWhatsApp 
+                                    ? 'text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#202C33]' 
+                                    : 'text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-gray-700'
+                                }`}
+                              >
                                 <Minimize2 size={14} />
                               </button>
                             </div>
                           </div>
-                          <div className="flex items-center justify-between text-xs font-semibold bg-white dark:bg-[#0B1224] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-gray-800/50 shadow-xs">
-                            <span className="bg-slate-100 dark:bg-gray-800 px-2 py-0.5 rounded-full text-slate-700 dark:text-white font-bold border border-slate-200 dark:border-transparent">{columnDeals.length} cards</span>
-                            <span className="text-slate-700 dark:text-gray-300 font-mono font-bold">{formatCurrency(totalValue)}</span>
+                          <div className={`flex items-center justify-between text-xs font-semibold px-3 py-1.5 rounded-lg border shadow-xs ${
+                            isWhatsApp
+                              ? 'bg-[#202C33] border-[#222D34]'
+                              : 'bg-white dark:bg-[#0B1224] border-slate-200 dark:border-gray-800/50'
+                          }`}>
+                            <span className={`px-2 py-0.5 rounded-full font-bold border ${
+                              isWhatsApp
+                                ? 'bg-[#111B21] text-[#00A884] border-[#00A884]/30'
+                                : 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-white border-slate-200 dark:border-transparent'
+                            }`}>
+                              {columnDeals.length} cards
+                            </span>
+                            <span className={`font-mono font-bold ${
+                              isWhatsApp ? 'text-[#E9EDEF]' : 'text-slate-700 dark:text-gray-300'
+                            }`}>
+                              {formatCurrency(totalValue)}
+                            </span>
                           </div>
                         </div>
 
@@ -1372,7 +1408,13 @@ function CrmContent() {
                             <div 
                               ref={provided.innerRef}
                               {...provided.droppableProps}
-                              className={`flex-1 flex flex-col gap-3 overflow-y-auto rounded-xl p-1 transition-all duration-200 ease-out custom-scrollbar min-h-[150px] ${snapshot.isDraggingOver ? `border-2 border-dashed ${col.borderColor.replace('border-t-', 'border-')}/40 bg-${col.color.replace('text-', '').split('-')[0]}-500/5` : 'border-2 border-transparent'}`}
+                              className={`flex-1 flex flex-col gap-3 overflow-y-auto rounded-xl p-1 transition-all duration-200 ease-out custom-scrollbar min-h-[150px] ${
+                                snapshot.isDraggingOver 
+                                  ? isWhatsApp 
+                                    ? 'border-2 border-dashed border-[#00A884]/50 bg-[#00A884]/5'
+                                    : `border-2 border-dashed ${col.borderColor.replace('border-t-', 'border-')}/40 bg-${col.color.replace('text-', '').split('-')[0]}-500/5` 
+                                  : 'border-2 border-transparent'
+                              }`}
                             >
                               {columnDeals.map((deal, index) => (
                                 <DealCard 
@@ -1399,7 +1441,11 @@ function CrmContent() {
                                     isNew: true
                                   });
                                 }}
-                                className="mt-auto shrink-0 w-full bg-white hover:bg-slate-50 dark:bg-[#161b22] dark:hover:bg-[#1c2128] border border-slate-200 dark:border-gray-800 hover:border-slate-300 dark:hover:border-gray-600 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-xs"
+                                className={`mt-auto shrink-0 w-full rounded-xl py-3 text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-xs border ${
+                                  isWhatsApp
+                                    ? 'bg-[#111B21] hover:bg-[#202C33] border-[#222D34] hover:border-[#00A884]/40 text-[#8696A0] hover:text-[#00A884]'
+                                    : 'bg-white hover:bg-slate-50 dark:bg-[#161b22] dark:hover:bg-[#1c2128] border-slate-200 dark:border-gray-800 hover:border-slate-300 dark:hover:border-gray-600 text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white'
+                                }`}
                               >
                                 <Plus size={16} /> Adicionar novo cartão
                               </button>
@@ -2405,9 +2451,14 @@ function CrmContent() {
 
 // Componente Isolado do Card no Kanban
 function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any) {
+  const { isWhatsApp } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
   const contactTags = deal.contact?.tags || [];
   const primaryTag = contactTags.length > 0 ? contactTags[0] : null;
+
+  const effectiveColColor = isWhatsApp ? 'text-[#00A884]' : col.color;
+  const effectiveBgLight = isWhatsApp ? 'bg-[#005C4B]/20' : col.bgLight;
+  const effectiveBorderLight = isWhatsApp ? 'border-[#00A884]/30' : col.borderLight;
 
   return (
     <Draggable draggableId={deal.id} index={index}>
@@ -2424,21 +2475,25 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
               setSelectedDeal(deal);
             }
           }}
-          className={`group relative flex flex-col gap-2.5 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#161b22] p-4 text-slate-800 dark:text-slate-200 shadow-sm dark:shadow-md transition-all hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer ${
-            snapshot.isDragging ? `rotate-2 scale-[1.02] shadow-2xl transition-transform duration-150 z-50 ring-1 ${col.borderLight} bg-slate-50 dark:bg-gray-800` : ''
+          className={`group relative flex flex-col gap-2.5 rounded-xl border p-4 shadow-sm transition-all cursor-pointer ${
+            isWhatsApp
+              ? 'bg-[#111B21] hover:bg-[#162229] border-[#222D34] hover:border-[#00A884]/40 text-[#E9EDEF]'
+              : 'border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#161b22] text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
+          } ${
+            snapshot.isDragging ? `rotate-2 scale-[1.02] shadow-2xl transition-transform duration-150 z-50 ring-1 ${effectiveBorderLight} ${isWhatsApp ? 'bg-[#202C33]' : 'bg-slate-50 dark:bg-gray-800'}` : ''
           }`}
         >
           {/* CABEÇALHO: ID E BADGE */}
           <div className="flex items-center justify-between text-xs">
-            <span className={`font-mono font-bold ${col.color}`}>
+            <span className={`font-mono font-bold ${effectiveColColor}`}>
               #{deal.id?.split('-')[0]?.toUpperCase() || 'DEAL'}
             </span>
             {primaryTag ? (
-              <span className={`rounded ${col.bgLight} border ${col.borderLight} px-2 py-0.5 text-[11px] font-bold ${col.color} uppercase`}>
+              <span className={`rounded ${effectiveBgLight} border ${effectiveBorderLight} px-2 py-0.5 text-[11px] font-bold ${effectiveColColor} uppercase`}>
                 {primaryTag}
               </span>
             ) : (
-              <span className={`rounded ${col.bgLight} border ${col.borderLight} px-2 py-0.5 text-[11px] font-bold ${col.color} uppercase`}>
+              <span className={`rounded ${effectiveBgLight} border ${effectiveBorderLight} px-2 py-0.5 text-[11px] font-bold ${effectiveColColor} uppercase`}>
                 NOVO
               </span>
             )}
@@ -2447,14 +2502,22 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
           {/* AVATAR DO LEAD + NOME + TELEFONE */}
           <div className="flex flex-col mt-1">
             <div className="flex items-center gap-3">
-              <div className={`flex shrink-0 h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-[#0d1117] text-sm font-bold shadow-sm ring-2 ${col.color.replace('text-', 'ring-')}/40 ${col.color.replace('500', '400').replace('600', '400')}`}>
+              <div className={`flex shrink-0 h-9 w-9 items-center justify-center rounded-full text-sm font-bold shadow-sm ring-2 ${
+                isWhatsApp
+                  ? 'bg-[#202C33] text-[#00A884] ring-[#00A884]/40'
+                  : `bg-slate-100 dark:bg-[#0d1117] ring-${col.color.replace('text-', '')}/40 ${col.color.replace('500', '400').replace('600', '400')}`
+              }`}>
                 {deal.contact?.name?.[0]?.toUpperCase() || "?"}
               </div>
               <div className="flex flex-col min-w-0">
-                <h4 className={`text-[15px] font-bold leading-snug truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors ${col.color.replace('500', '400').replace('600', '400')}`}>
+                <h4 className={`text-[15px] font-bold leading-snug truncate transition-colors ${
+                  isWhatsApp
+                    ? 'text-[#00A884] group-hover:text-emerald-400'
+                    : `group-hover:text-blue-600 dark:group-hover:text-blue-400 ${col.color.replace('500', '400').replace('600', '400')}`
+                }`}>
                   {deal.contact?.name || deal.title || "Nome do Contato"}
                 </h4>
-                <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <div className={`mt-0.5 flex items-center gap-1.5 text-xs ${isWhatsApp ? 'text-[#8696A0]' : 'text-slate-500 dark:text-slate-400'}`}>
                   <MessageCircle size={12} className="text-[#25D366] shrink-0" />
                   <span className="truncate">{deal.contact?.phone?.includes('@lid') ? 'WhatsApp (Privado)' : (deal.contact?.phone || "+55 00 00000-0000")}</span>
                 </div>
@@ -2463,19 +2526,23 @@ function DealCard({ deal, index, col, onOpenDeal, setSelectedDeal, router }: any
           </div>
 
           {/* BADGE DE TIPO */}
-          <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-1">
-            <span className="text-emerald-500 dark:text-emerald-400">•</span>
+          <div className={`flex items-center gap-1 text-[11px] font-medium mt-1 ${isWhatsApp ? 'text-[#8696A0]' : 'text-slate-500 dark:text-slate-400'}`}>
+            <span className="text-[#00A884]">•</span>
             <span>Lead</span>
           </div>
 
           {/* CAIXA CINZA DE METADADOS & ACCORDION */}
-          <div className="rounded-lg bg-slate-50 dark:bg-[#0d1117] p-3 text-xs text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800/60" onClick={(e) => e.stopPropagation()}>
-            <p className="font-bold text-slate-800 dark:text-slate-200">ORIGEM: [{deal.contact?.source || deal.metadata?.source || 'WHATSAPP'}]</p>
+          <div className={`rounded-lg p-3 text-xs border ${
+            isWhatsApp
+              ? 'bg-[#0C1317] border-[#222D34] text-[#8696A0]'
+              : 'bg-slate-50 dark:bg-[#0d1117] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800/60'
+          }`} onClick={(e) => e.stopPropagation()}>
+            <p className={`font-bold ${isWhatsApp ? 'text-[#E9EDEF]' : 'text-slate-800 dark:text-slate-200'}`}>ORIGEM: [{deal.contact?.source || deal.metadata?.source || 'WHATSAPP'}]</p>
             {Boolean(deal.metadata?.formName || deal.metadata?.campaign) && (
-              <p className="font-semibold text-slate-500 dark:text-slate-400">FORMULÁRIO: {deal.metadata?.formName || deal.metadata?.campaign}</p>
+              <p className={`font-semibold ${isWhatsApp ? 'text-[#8696A0]' : 'text-slate-500 dark:text-slate-400'}`}>FORMULÁRIO: {deal.metadata?.formName || deal.metadata?.campaign}</p>
             )}
             {deal.notes ? (
-              <p className="mt-1 text-slate-600 dark:text-slate-400 line-clamp-2">
+              <p className={`mt-1 line-clamp-2 ${isWhatsApp ? 'text-[#8696A0]' : 'text-slate-600 dark:text-slate-400'}`}>
                 {deal.notes}
               </p>
             ) : null}
