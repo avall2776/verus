@@ -615,7 +615,13 @@ export default function UsersSettingsTab() {
     return (
       <div className="flex flex-col items-center justify-center p-16 text-slate-400 space-y-3">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
-        <p className="text-xs font-semibold">Carregando gestão de colaboradore    <div className="space-y-5 animate-in fade-in duration-200 text-slate-900 dark:text-slate-100">
+        <p className="text-xs font-semibold">Carregando gestão de colaboradores...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5 animate-in fade-in duration-200 text-slate-900 dark:text-slate-100">
       {/* 1. CABEÇALHO SUPERIOR (PADRÃO LERO) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
