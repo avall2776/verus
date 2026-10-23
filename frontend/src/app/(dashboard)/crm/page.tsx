@@ -18,6 +18,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { DealModal } from "@/components/crm/DealModal";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useTheme } from "@/contexts/ThemeContext";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 const DEFAULT_COLUMNS = [
   { id: "seed", title: "LEADS SEED", color: "text-gray-400", bgLight: "bg-gray-500/10", borderLight: "border-gray-500/30", borderColor: "border-t-gray-500" },
@@ -2383,7 +2384,8 @@ function CrmContent() {
 
       {/* MODAL NOVA ETAPA (Mock) */}
       {showStageModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-[#1c1d22] border border-slate-200 dark:border-gray-800 w-full max-w-sm rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95">
             <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Nova Etapa</h2>
             <div className="space-y-4">
@@ -2406,11 +2408,13 @@ function CrmContent() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* MODAL GERENCIAR ETAPAS (Mock) */}
       {showManageStagesModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-slate-50 dark:bg-[#1c1d22] border border-gray-800 w-full max-w-lg rounded-xl shadow-2xl flex flex-col p-6 animate-in zoom-in-95 max-h-[80vh] overflow-y-auto">
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Settings size={18} className="text-primary" /> Gerenciar Etapas do Funil
@@ -2443,6 +2447,7 @@ function CrmContent() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
     </div>

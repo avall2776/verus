@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { ChannelStat } from "@/types/analytics";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 interface ChannelDetailModalProps {
   channel: ChannelStat | null;
@@ -56,7 +57,8 @@ export default function ChannelDetailModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         className="w-full max-w-2xl bg-white dark:bg-[#0B1224] border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-white"
         onClick={(e) => e.stopPropagation()}
@@ -199,5 +201,6 @@ export default function ChannelDetailModal({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

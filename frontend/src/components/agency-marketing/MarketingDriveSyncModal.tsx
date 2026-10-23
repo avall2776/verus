@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 interface Props {
   isOpen: boolean;
@@ -118,7 +119,8 @@ export default function MarketingDriveSyncModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
       <div className="bg-[#0f141c] border border-gray-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95 duration-200">
         {/* CABEÇALHO */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-white dark:bg-[#161c28]">
@@ -367,5 +369,6 @@ export default function MarketingDriveSyncModal({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

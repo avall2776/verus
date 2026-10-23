@@ -42,6 +42,7 @@ import {
   Calendar,
   FolderArchive,
   Network,
+  Compass,
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -72,6 +73,7 @@ const NAV_GROUPS = [
   {
     title: "OPERAÇÃO / ATENDIMENTO",
     items: [
+      { name: "Mapa Tático Operacional", icon: Compass, href: "/dashboard" },
       { name: "Monitor em Tempo Real", icon: Activity, href: "/monitor" },
       { name: "WhatsApp", icon: WhatsAppIcon, href: "/inbox" },
       { name: "Inbox de E-mail", icon: Mail, href: "/email-inbox" },

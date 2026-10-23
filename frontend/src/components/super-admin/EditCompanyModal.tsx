@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, Building2, Save, Loader2, CreditCard, Mail, Phone, MapPin, FileText, CheckCircle2, XCircle, Sparkles } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 interface EditCompanyModalProps {
   isOpen: boolean;
@@ -197,7 +198,8 @@ export default function EditCompanyModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden text-slate-100 flex flex-col"
         onClick={(e) => e.stopPropagation()}
@@ -492,6 +494,7 @@ export default function EditCompanyModal({
         </form>
       </div>
     </div>
+    </ModalPortal>
   );
 }
 

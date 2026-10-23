@@ -6,6 +6,7 @@ import {
   Send, CheckCircle2, Sparkles, MessageSquare, ArrowRight 
 } from "lucide-react";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 export interface ScheduledMessage {
   id: string;
@@ -86,7 +87,8 @@ export default function ScheduledMessagesDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center sm:justify-end bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center sm:justify-end bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         className="bg-white dark:bg-[#0B1224] border-l border-slate-200 dark:border-slate-700/80 w-full sm:max-w-md h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200"
         role="dialog"
@@ -226,6 +228,7 @@ export default function ScheduledMessagesDrawer({
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   );
 }

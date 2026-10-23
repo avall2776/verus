@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Proposal, ProposalItem, CompanyIssuer, ProposalStatus } from "@/types/commercial";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 interface ProposalModalProps {
   isOpen: boolean;
@@ -372,7 +373,8 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
       <div 
         className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-700/80 shadow-2xl shadow-cyan-950/40 text-slate-200 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -871,5 +873,6 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

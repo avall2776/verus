@@ -22,4 +22,9 @@ export class DashboardController {
   async getCrmMetrics(@CurrentTenant() tenantId: string) {
     return this.dashboardService.getCrmMetrics(tenantId);
   }
+
+  @Get('geo-map')
+  async getGeoMapData(@CurrentTenant() tenantId: string) {
+    return this.dashboardService.getGeoMapData(tenantId);
+  }
 }

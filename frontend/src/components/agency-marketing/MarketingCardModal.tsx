@@ -38,6 +38,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 import {
   MarketingCardItem,
   MarketingClientItem,
@@ -491,10 +492,11 @@ export default function MarketingCardModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-200"
-      onClick={onClose}
-    >
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-200"
+        onClick={onClose}
+      >
       <div
         className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 w-full max-w-5xl h-[90vh] max-h-[850px] rounded-2xl flex flex-col shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -1219,6 +1221,7 @@ export default function MarketingCardModal({
           onSaved();
         }}
       />
-    </div>
+      </div>
+    </ModalPortal>
   );
 }

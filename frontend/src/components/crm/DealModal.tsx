@@ -13,6 +13,7 @@ import { ptBR } from "date-fns/locale/pt-BR";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 const PIPELINE_STAGES = [
   { id: "seed", title: "LEADS SEED", color: "text-gray-400", bg: "bg-gray-500/10", border: "border-gray-500/30", dot: "bg-gray-400" },
@@ -207,10 +208,11 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
   // Se o modal estiver aberto mas nenhum deal for fornecido ou estiver carregando, renderiza o Skeleton de segurança
   if (!deal) {
     return (
-      <div 
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
-        onClick={onClose}
-      >
+      <ModalPortal>
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
+          onClick={onClose}
+        >
         <div className="bg-white dark:bg-[#161b22] border border-gray-800 w-full max-w-5xl h-[650px] rounded-2xl flex flex-col shadow-2xl p-6 animate-pulse">
           {/* Header Skeleton */}
           <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-6">
@@ -242,8 +244,9 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
           </div>
         </div>
       </div>
-    );
-  }
+    </ModalPortal>
+  );
+}
 
   // Obter estágio atual de forma segura
   const currentStage = PIPELINE_STAGES.find(s => s.id === (deal.status || "new")) || PIPELINE_STAGES[0];
@@ -728,10 +731,11 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
     : [];
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
+    <ModalPortal>
+      <div 
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto"
+        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      >
       <div className="bg-white dark:bg-[#161b22] border border-gray-800 w-full max-w-5xl max-h-[92vh] rounded-2xl flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden relative">
         
         {/* ========================================================================= */}
@@ -2262,8 +2266,8 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
             )}
           </div>
         )}
-
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }

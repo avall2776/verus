@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 import { MarketingCampaignItem, MarketingClientItem } from "./types";
 
 interface Props {
@@ -174,7 +175,8 @@ export default function MarketingCampaignModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
       <div
         className="w-full max-w-xl bg-white dark:bg-[#0B1224] border border-slate-700 rounded-3xl shadow-2xl p-6 text-white space-y-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
@@ -429,5 +431,6 @@ export default function MarketingCampaignModal({
         </form>
       </div>
     </div>
+    </ModalPortal>
   );
 }

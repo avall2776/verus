@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Users, Save, X, Network, Loader2 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 export default function DepartmentsSettingsTab() {
   const [departments, setDepartments] = useState<any[]>([]);
@@ -212,7 +213,8 @@ export default function DepartmentsSettingsTab() {
 
       {/* Modal de Criação / Edição */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div
             className="w-full max-w-md bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-900 dark:text-white space-y-4"
             onClick={(e) => e.stopPropagation()}
@@ -302,6 +304,7 @@ export default function DepartmentsSettingsTab() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

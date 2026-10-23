@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Calendar, Layers, Video, Image as ImageIcon, Flame, Sparkles, Loader2 } from "lucide-react";
 import api from "@/lib/api";
+import ModalPortal from "@/components/ui/ModalPortal";
 import { MarketingClientItem, MarketingCardItem } from "./types";
 
 interface Props {
@@ -58,7 +59,8 @@ export default function MarketingClientHistoryModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
       <div
         className="w-full max-w-2xl bg-white dark:bg-[#0B1224] border border-slate-700 rounded-3xl shadow-2xl p-6 text-white space-y-4 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
@@ -151,5 +153,6 @@ export default function MarketingClientHistoryModal({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

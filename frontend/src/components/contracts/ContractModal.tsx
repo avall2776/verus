@@ -9,6 +9,7 @@ import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { Contract } from "@/types/commercial";
 import { useTheme } from "@/contexts/ThemeContext";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 interface ContractModalProps {
   isOpen: boolean;
@@ -155,7 +156,8 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div 
         className={`relative w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl border shadow-2xl p-6 sm:p-8 space-y-6 custom-scrollbar ${
           isWhatsApp
@@ -469,5 +471,6 @@ export function ContractModal({ isOpen, onClose, onContractCreated }: ContractMo
         </form>
       </div>
     </div>
+    </ModalPortal>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X, KeyRound, Copy, Check, Loader2, ShieldAlert, Eye, EyeOff, RefreshCw } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 interface ResetAdminPasswordModalProps {
   isOpen: boolean;
@@ -73,7 +74,8 @@ export default function ResetAdminPasswordModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         className="bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden text-slate-100"
         onClick={(e) => e.stopPropagation()}
@@ -232,5 +234,6 @@ export default function ResetAdminPasswordModal({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

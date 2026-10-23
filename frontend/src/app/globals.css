@@ -874,5 +874,702 @@ html.theme-whatsapp #versus-preloader .preloader-progress-bar,
   box-shadow: 0 0 14px rgba(56, 189, 248, 0.6) !important;
 }
 
+/* ==========================================================================
+   LEGENDA ESPACIAL FLUTUANTE VERSUS / API LEADS (PADRÃO OFICIAL)
+   ========================================================================== */
+.map-floating-legend {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 16px;
+  max-height: calc(100% - 28px);
+  background: rgba(11, 18, 36, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: auto;
+  min-width: 250px;
+  max-width: 295px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
 
+.map-floating-legend.minimized {
+  min-width: auto;
+  max-width: auto;
+  bottom: auto;
+  height: auto !important;
+  max-height: 38px !important;
+  padding: 0.45rem 0.75rem;
+}
 
+.map-floating-legend.minimized .legend-header {
+  border-bottom: none;
+  padding-bottom: 0;
+  gap: 0.85rem;
+}
+
+.map-floating-legend.minimized .legend-content {
+  display: none !important;
+}
+
+.legend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: #94A3B8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.35rem;
+  flex-shrink: 0;
+}
+
+.legend-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.legend-help-trigger {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #94A3B8;
+  font-size: 0.62rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.legend-help-trigger:hover,
+.legend-help-trigger.active {
+  background: rgba(0, 210, 255, 0.2);
+  border-color: #00D2FF;
+  color: #00D2FF;
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
+}
+
+.legend-help-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: -8px;
+  width: 280px;
+  background: #0B1224;
+  border: 1px solid rgba(0, 210, 255, 0.35);
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+  gap: 0.4rem;
+  pointer-events: auto;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.legend-help-trigger:hover .legend-help-tooltip,
+.legend-help-trigger.active .legend-help-tooltip {
+  display: flex;
+}
+
+.legend-help-tooltip .help-title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #00D2FF;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.15rem;
+}
+
+.legend-help-tooltip .help-item {
+  font-size: 0.66rem;
+  line-height: 1.35;
+  color: #CBD5E1;
+}
+
+.legend-help-tooltip .help-item b {
+  color: #FFFFFF;
+}
+
+.btn-legend-minimize {
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: #94A3B8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.btn-legend-minimize:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.legend-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-width: thin;
+}
+
+.legend-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.legend-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.legend-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.legend-accordion-group {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.35rem;
+  margin-bottom: 0.15rem;
+}
+
+.legend-accordion-group:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.legend-accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 0.25rem 0.2rem;
+  border-radius: 4px;
+  user-select: none;
+  transition: all 0.18s ease;
+}
+
+.legend-accordion-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.legend-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.38rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #CBD5E1;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.legend-header-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.legend-accordion-arrow {
+  font-size: 0.72rem;
+  color: #64748B;
+  transition: transform 0.2s ease, color 0.2s ease;
+  line-height: 1;
+}
+
+.legend-accordion-header:hover .legend-accordion-arrow {
+  color: #94A3B8;
+}
+
+.legend-accordion-header.active .legend-accordion-arrow {
+  color: #00D2FF;
+}
+
+.legend-accordion-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.35rem;
+}
+
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  color: #CBD5E1;
+}
+
+.leg-item-tooltip-wrap {
+  position: relative;
+  cursor: help;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background-color 0.18s ease;
+}
+
+.leg-item-tooltip-wrap:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* Tooltip Customizado Flutuante Padrão VERSUS / API Leads */
+.spatial-legend-tooltip {
+  position: absolute;
+  left: calc(100% + 14px);
+  bottom: 0;
+  width: 270px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7), 0 0 18px rgba(0, 85, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 99999 !important;
+  pointer-events: none;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-6px);
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s;
+}
+
+.leg-item-tooltip-wrap:hover .spatial-legend-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.spatial-legend-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 8px;
+  right: 100%;
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent rgba(15, 23, 42, 0.96) transparent transparent;
+}
+
+.spatial-legend-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 7px;
+  right: 100%;
+  border-width: 7px;
+  border-style: solid;
+  border-color: transparent rgba(255, 255, 255, 0.14) transparent transparent;
+  z-index: -1;
+}
+
+.spatial-tooltip-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.02em;
+}
+
+.spatial-tooltip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.spatial-tooltip-body {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #F1F5F9;
+  font-weight: 400;
+}
+
+/* ==========================================================================
+   WEBGIS STAGE TOOLBAR & CONTROLS (PADRÃO VERSUS / API LEADS)
+   ========================================================================== */
+.map-stage-container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #050814;
+  overflow: hidden;
+}
+
+.map-stage-header {
+  height: 42px;
+  background: rgba(7, 13, 30, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 0.85rem;
+  display: flex;
+  align-items: center;
+  z-index: 25;
+}
+
+.map-stage-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.map-stage-controls::-webkit-scrollbar {
+  display: none;
+}
+
+.map-stage-viewport {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: calc(100% - 42px);
+  overflow: hidden;
+}
+
+.btn-map-control {
+  height: 28px;
+  padding: 0 0.55rem;
+  background: #0B1224;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  color: #CBD5E1;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.btn-map-control:hover {
+  background: #131E38;
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+.btn-map-control.active {
+  background: rgba(0, 85, 255, 0.25);
+  border-color: #0055FF;
+  color: #00D2FF;
+  box-shadow: 0 0 8px rgba(0, 85, 255, 0.3);
+}
+
+.btn-map-control.btn-outline-cyan {
+  border-color: rgba(0, 210, 255, 0.45);
+  color: #00D2FF;
+  background: rgba(0, 210, 255, 0.05);
+}
+
+.btn-map-control.btn-outline-cyan:hover {
+  background: rgba(0, 210, 255, 0.18);
+  border-color: #00D2FF;
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.35);
+  color: #FFFFFF;
+}
+
+.map-count-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #00D2FF;
+  background: rgba(0, 210, 255, 0.08);
+  border: 1px solid rgba(0, 210, 255, 0.25);
+  padding: 0.18rem 0.5rem;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Setas de Navegação Lateral da Toolbar */
+.btn-map-nav-arrow {
+  width: 22px;
+  height: 28px;
+  background: rgba(11, 18, 36, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: #00D2FF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  z-index: 10;
+  transition: all 0.2s ease;
+  padding: 0;
+  user-select: none;
+}
+
+.btn-map-nav-arrow:hover {
+  background: rgba(0, 85, 255, 0.28);
+  border-color: #00D2FF;
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   MODO TELA CHEIA IMERSIVO (WEBGIS FULLSCREEN)
+   ========================================================================== */
+:fullscreen .map-stage-container,
+.map-stage-container:fullscreen,
+.map-stage-container.fullscreen-active {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 99999 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  margin: 0 !important;
+}
+
+:fullscreen .map-stage-viewport,
+.map-stage-container:fullscreen .map-stage-viewport,
+.map-stage-container.fullscreen-active .map-stage-viewport {
+  width: 100vw !important;
+  height: calc(100vh - 44px) !important;
+}
+
+:fullscreen .map-stage-header,
+.map-stage-container:fullscreen .map-stage-header,
+.map-stage-container.fullscreen-active .map-stage-header {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  right: 18px;
+  background: rgba(7, 13, 30, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  z-index: 30;
+  height: 44px;
+}
+
+/* ==========================================================================
+   TEMA WHATSAPP - SOBREPOSIÇÕES DO MAPA
+   ========================================================================== */
+.theme-whatsapp .map-stage-container {
+  background: #0B141A;
+}
+
+.theme-whatsapp .map-stage-header {
+  background: rgba(17, 27, 33, 0.96);
+  border-bottom-color: #202C33;
+}
+
+.theme-whatsapp .btn-map-control {
+  background: #202C33;
+  border-color: #2A3942;
+  color: #D1D7DB;
+}
+
+.theme-whatsapp .btn-map-control:hover {
+  background: #2A3942;
+  border-color: #00A884;
+  color: #FFFFFF;
+}
+
+.theme-whatsapp .btn-map-control.active {
+  background: rgba(0, 168, 132, 0.28);
+  border-color: #00A884;
+  color: #25D366;
+  box-shadow: 0 0 10px rgba(0, 168, 132, 0.35);
+}
+
+.theme-whatsapp .map-count-badge {
+  background: rgba(0, 168, 132, 0.12);
+  border-color: rgba(0, 168, 132, 0.35);
+  color: #25D366;
+}
+
+.theme-whatsapp .btn-map-nav-arrow {
+  background: #202C33;
+  border-color: #2A3942;
+  color: #25D366;
+}
+
+.theme-whatsapp .btn-map-nav-arrow:hover {
+  background: rgba(0, 168, 132, 0.25);
+  border-color: #00A884;
+  color: #FFFFFF;
+}
+
+.theme-whatsapp .map-floating-legend {
+  background: rgba(17, 27, 33, 0.96);
+  border-color: #202C33;
+}
+
+.theme-whatsapp .legend-header {
+  color: #8696A0;
+  border-bottom-color: #202C33;
+}
+
+.theme-whatsapp .legend-help-trigger {
+  background: #202C33;
+  border-color: #2A3942;
+  color: #8696A0;
+}
+
+.theme-whatsapp .legend-help-trigger:hover {
+  border-color: #00A884;
+  color: #25D366;
+  background: rgba(0, 168, 132, 0.2);
+}
+
+.theme-whatsapp .legend-help-tooltip {
+  background: #111B21;
+  border-color: rgba(0, 168, 132, 0.4);
+}
+
+.theme-whatsapp .spatial-legend-tooltip {
+  background: rgba(17, 27, 33, 0.98);
+  border-color: rgba(0, 168, 132, 0.35);
+}
+
+/* ==========================================================================
+   TEMA CLEAN (LIGHT) - SOBREPOSIÇÕES DO MAPA
+   ========================================================================== */
+html.light .map-stage-container,
+.light .map-stage-container {
+  background: #F8FAFC;
+}
+
+html.light .map-stage-header,
+.light .map-stage-header {
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom-color: #E2E8F0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+html.light .btn-map-control,
+.light .btn-map-control {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #334155;
+}
+
+html.light .btn-map-control:hover,
+.light .btn-map-control:hover {
+  background: #E2E8F0;
+  border-color: #94A3B8;
+  color: #0F172A;
+}
+
+html.light .btn-map-control.active,
+.light .btn-map-control.active {
+  background: #2563EB;
+  border-color: #2563EB;
+  color: #FFFFFF;
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
+}
+
+html.light .map-count-badge,
+.light .map-count-badge {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #1D4ED8;
+}
+
+html.light .btn-map-nav-arrow,
+.light .btn-map-nav-arrow {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #2563EB;
+}
+
+html.light .map-floating-legend,
+.light .map-floating-legend {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: #E2E8F0;
+  color: #1E293B;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+html.light .legend-header,
+.light .legend-header {
+  color: #64748B;
+  border-bottom-color: #E2E8F0;
+}
+
+html.light .legend-header-title,
+.light .legend-header-title {
+  color: #334155;
+}
+
+html.light .legend-accordion-header:hover,
+.light .legend-accordion-header:hover {
+  background: rgba(241, 245, 249, 0.8);
+}
+
+html.light .leg-item,
+.light .leg-item {
+  color: #475569;
+}
+
+html.light .leg-item-tooltip-wrap:hover,
+.light .leg-item-tooltip-wrap:hover {
+  background: rgba(241, 245, 249, 0.9);
+}
+
+html.light .spatial-legend-tooltip,
+.light .spatial-legend-tooltip {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: #CBD5E1;
+  color: #1E293B;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+}
+
+html.light .spatial-tooltip-body,
+.light .spatial-tooltip-body {
+  color: #475569;
+}

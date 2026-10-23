@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import ModalPortal from "@/components/ui/ModalPortal";
 import { TriggerType, ActionType, DynamicVariable } from "@/types/automation";
 
 interface AutomationModalProps {
@@ -256,7 +257,8 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         {/* MODAL HEADER */}
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/40">
@@ -777,5 +779,6 @@ export function AutomationModal({ isOpen, onClose, onSuccess }: AutomationModalP
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

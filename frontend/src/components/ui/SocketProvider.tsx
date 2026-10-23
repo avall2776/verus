@@ -314,7 +314,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     // Conexão resiliente: detecta se está rodando na Vercel (onde WebSocket upgrade via rewrite falha)
     const isVercelHost = typeof window !== 'undefined' && 
       (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('avallmarketing.com.br'));
-    const directSocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || undefined;
+    const isLocalhost = typeof window !== 'undefined' && 
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const directSocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (isLocalhost ? 'http://localhost:3001' : undefined);
 
     const socketInstance = io(directSocketUrl || undefined, {
       autoConnect: true,

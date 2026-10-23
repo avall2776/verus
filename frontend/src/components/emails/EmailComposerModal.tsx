@@ -9,6 +9,7 @@ import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { EmailItem, EmailAttachment } from "@/types/email";
 import { useTheme } from "@/contexts/ThemeContext";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 interface EmailComposerModalProps {
   isOpen: boolean;
@@ -148,7 +149,8 @@ export default function EmailComposerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         className={`w-full max-w-3xl border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] ${
           isWhatsApp
@@ -494,5 +496,6 @@ export default function EmailComposerModal({
         </form>
       </div>
     </div>
+    </ModalPortal>
   );
 }

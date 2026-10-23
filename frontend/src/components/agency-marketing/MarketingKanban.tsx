@@ -44,6 +44,7 @@ import {
   DropResult,
 } from "@hello-pangea/dnd";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 import { MarketingCardItem, MarketingClientItem, TeamMember } from "./types";
 import { getDriveThumbnailUrl, detectMediaType } from "@/lib/googleDriveHelper";
 
@@ -805,7 +806,8 @@ export default function MarketingKanban({
       {/* MODAL: NOVA ETAPA (PADRÃO CRM)                                            */}
       {/* ========================================================================= */}
       {showStageModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-[#161b22] border border-gray-800 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-gray-800 pb-3">
               <h3 className="text-sm font-bold text-white">Criar Nova Etapa no Funil</h3>
@@ -864,13 +866,15 @@ export default function MarketingKanban({
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* ========================================================================= */}
       {/* MODAL: GERENCIAR ETAPAS (PADRÃO CRM)                                       */}
       {/* ========================================================================= */}
       {showManageStagesModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-[#161b22] border border-gray-800 w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-gray-800 pb-3">
               <h3 className="text-sm font-bold text-white">Gerenciar Etapas do Funil</h3>
@@ -916,6 +920,7 @@ export default function MarketingKanban({
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

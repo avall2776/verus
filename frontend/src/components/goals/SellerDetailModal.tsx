@@ -8,6 +8,7 @@ import {
 import { SellerDrilldownData } from "@/types/commercial";
 import api from "@/lib/api";
 import { GoalBadgeIcon } from "./GoalBadgeIcon";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 interface SellerDetailModalProps {
   isOpen: boolean;
@@ -50,7 +51,8 @@ export function SellerDetailModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
         className="w-full max-w-2xl rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-700/80 shadow-2xl text-slate-200 overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
@@ -258,5 +260,6 @@ export function SellerDetailModal({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

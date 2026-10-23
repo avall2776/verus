@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 import { useTheme } from "@/contexts/ThemeContext";
 
 interface ApiTokenItem {
@@ -927,7 +928,8 @@ print("Resposta:", response.json())`;
           MODAL 1: CRIAR NOVO TOKEN DE API
           ========================================================================= */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-150 text-slate-900 dark:text-white">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2.5">
@@ -998,13 +1000,15 @@ print("Resposta:", response.json())`;
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* =========================================================================
           MODAL 2: EXIBIÇÃO ÚNICA DO TOKEN GERADO (PADRÃO STRIPE / GITHUB)
           ========================================================================= */}
       {createdTokenData && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl animate-in zoom-in-95 duration-150 text-slate-900 dark:text-white space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center shrink-0">
@@ -1052,6 +1056,7 @@ print("Resposta:", response.json())`;
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

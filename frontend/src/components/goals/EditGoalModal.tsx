@@ -5,6 +5,7 @@ import { X, Target, Calendar, DollarSign, Users, Save, Trash2, Loader2, CheckCir
 import { CommercialGoal } from "@/types/commercial";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 interface EditGoalModalProps {
   isOpen: boolean;
@@ -231,7 +232,8 @@ export function EditGoalModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
         className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-700/80 shadow-2xl text-slate-200 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -422,5 +424,6 @@ export function EditGoalModal({
         </form>
       </div>
     </div>
+    </ModalPortal>
   );
 }

@@ -18,12 +18,18 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import api, { getEffectiveTenantContext } from "@/lib/api";
 import WelcomeDashboard from "@/components/dashboard/WelcomeDashboard";
+import TacticalGeoMap from "@/components/dashboard/TacticalGeoMap";
+import { Compass, BarChart3, LayoutDashboard } from "lucide-react";
 
 function DashboardInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialView = searchParams.get("view") === "metrics" ? "metrics" : "welcome";
-  const [viewMode, setViewMode] = useState<"welcome" | "metrics">(initialView);
+  const initialView = searchParams.get("view") === "metrics"
+    ? "metrics"
+    : searchParams.get("view") === "welcome"
+    ? "welcome"
+    : "map";
+  const [viewMode, setViewMode] = useState<"map" | "welcome" | "metrics">(initialView);
   const { tenantId: effectiveTenantId } = getEffectiveTenantContext();
   const tenantKey = effectiveTenantId || "default_tenant";
 
@@ -37,6 +43,19 @@ function DashboardInner() {
     retry: false,
   });
 
+  // ================= 1. MODO SALA DE GUERRA (MAPA TÁTICO 3D - DEFAULT) =================
+  if (viewMode === "map") {
+    return (
+      <div className="w-full h-[calc(100vh-80px)] -m-2.5 sm:-m-4 md:-m-8 overflow-hidden">
+        <TacticalGeoMap
+          onViewChange={(mode) => setViewMode(mode)}
+          currentView={viewMode}
+        />
+      </div>
+    );
+  }
+
+  // ================= 2. MODO BOAS-VINDAS =================
   if (viewMode === "welcome") {
     return (
       <WelcomeDashboard
@@ -166,8 +185,16 @@ function DashboardInner() {
           </button>
 
           <button
+            onClick={() => setViewMode("map")}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors shadow-md shadow-blue-600/30"
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span>Ver Mapa Tático 3D</span>
+          </button>
+
+          <button
             onClick={() => setViewMode("welcome")}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 text-xs font-semibold transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold transition-colors shadow-sm"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Voltar ao Início</span>

@@ -21,6 +21,7 @@ import {
   ZoomOut,
   type LucideIcon
 } from "lucide-react";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 interface DeviceSandboxModalProps {
   isOpen: boolean;
@@ -129,7 +130,8 @@ export default function DeviceSandboxModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-100/95 dark:bg-slate-100 dark:bg-[#050814]/95 backdrop-blur-xl flex flex-col select-none text-slate-200 animate-in fade-in duration-200">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] bg-slate-100/95 dark:bg-slate-100 dark:bg-[#050814]/95 backdrop-blur-xl flex flex-col select-none text-slate-200 animate-in fade-in duration-200">
       {/* Barra de Ferramentas Superior Executiva (Monocromática e Escura) */}
       <header className="h-14 border-b border-slate-800 bg-white dark:bg-[#0B1224] px-4 flex items-center justify-between gap-3 shrink-0">
         {/* Identificação de Acesso Master */}
@@ -462,6 +464,7 @@ export default function DeviceSandboxModal({
           </div>
         )}
       </main>
-    </div>
+      </div>
+    </ModalPortal>
   );
 }

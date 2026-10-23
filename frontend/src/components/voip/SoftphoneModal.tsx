@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import ModalPortal from "@/components/ui/ModalPortal";
 import { 
   PhoneCall, 
   PhoneOff, 
@@ -366,7 +367,8 @@ export default function SoftphoneModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 md:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-full max-w-md bg-white dark:bg-[#0B1224] border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
         
         {/* HEADER DO SOFTPHONE */}
@@ -810,5 +812,6 @@ export default function SoftphoneModal({
 
       </div>
     </div>
+    </ModalPortal>
   );
 }

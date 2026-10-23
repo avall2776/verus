@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 export interface UserMenuPermissions {
   whatsapp: boolean;
@@ -998,7 +999,8 @@ export default function UsersSettingsTab() {
 
       {/* 3. MODAL: EDITAR / CONVIDAR COLABORADOR (EXATA PARIDADE COM SCREENSHOT 2 DO LERO) */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div
             className="w-full max-w-md bg-[#161c28] dark:bg-[#121722] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
@@ -1170,11 +1172,13 @@ export default function UsersSettingsTab() {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* 4. MODAL: PERMISSÕES DE ACESSO (EXATA PARIDADE COM SCREENSHOT 3 DO LERO) */}
       {isPermsModalOpen && permsUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div
             className="w-full max-w-3xl bg-[#161c28] dark:bg-[#121722] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-5 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
@@ -1445,11 +1449,13 @@ export default function UsersSettingsTab() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* 5. MODAL: REDEFINIR SENHA */}
       {isPasswordModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div
             className="w-full max-w-sm bg-[#161c28] border border-slate-700 rounded-2xl shadow-2xl p-6 text-white space-y-4"
             onClick={(e) => e.stopPropagation()}
@@ -1502,6 +1508,7 @@ export default function UsersSettingsTab() {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

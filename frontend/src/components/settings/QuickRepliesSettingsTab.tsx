@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 import {
   extractGoogleDriveId,
   isGoogleDriveUrl,
@@ -500,7 +501,8 @@ export default function QuickRepliesSettingsTab() {
 
       {/* Modal de Criação / Edição Completo */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150">
             {/* Header do Modal */}
             <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800">
@@ -716,6 +718,7 @@ export default function QuickRepliesSettingsTab() {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

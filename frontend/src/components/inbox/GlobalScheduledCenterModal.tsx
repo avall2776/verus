@@ -7,6 +7,7 @@ import {
   ChevronRight, MessageSquare, Sparkles, CheckCheck
 } from "lucide-react";
 import toast from "react-hot-toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 import { ScheduledMessage } from "./ScheduledMessagesDrawer";
 
 interface ContactInfo {
@@ -241,7 +242,8 @@ export default function GlobalScheduledCenterModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div 
         className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/90 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
         role="dialog"
@@ -548,5 +550,6 @@ export default function GlobalScheduledCenterModal({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
