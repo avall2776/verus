@@ -74,6 +74,7 @@ const NAV_GROUPS = [
     title: "OPERAÇÃO / ATENDIMENTO",
     items: [
       { name: "Mapa Tático Operacional", icon: Compass, href: "/dashboard/mapa" },
+      { name: "Base de Contatos", icon: Users, href: "/contacts" },
       { name: "Monitor em Tempo Real", icon: Activity, href: "/monitor" },
       { name: "WhatsApp", icon: WhatsAppIcon, href: "/inbox" },
       { name: "Inbox de E-mail", icon: Mail, href: "/email-inbox" },
@@ -111,7 +112,6 @@ const NAV_GROUPS = [
     title: "SISTEMA / ADMINISTRAÇÃO",
     items: [
       { name: "Visão Geral", icon: LayoutDashboard, href: "/dashboard" },
-      { name: "Base de Contatos", icon: Users, href: "/contacts" },
       { name: "Inteligência Artificial (BYOK)", icon: Sparkles, href: "/settings?tab=ai" },
       { name: "Automações & Regras", icon: Zap, href: "/settings?tab=automations" },
       { name: "Usuários & Acessos", icon: Users, href: "/settings?tab=users" },

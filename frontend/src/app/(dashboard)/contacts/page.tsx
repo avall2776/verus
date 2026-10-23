@@ -3,11 +3,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
-  Search, Filter, Download, MoreHorizontal, Mail, Phone, 
+  Search, Filter, Download, Mail, Phone, 
   ChevronLeft, ChevronRight, X, ExternalLink, MessageSquare, 
-  DollarSign, CheckCircle2, Clock, Flame, Snowflake, 
-  ShieldCheck, Eye, Plus, ArrowUpDown, Tag as TagIcon,
-  Users, RefreshCw, UserCheck, Briefcase, AlertCircle
+  CheckCircle2, ShieldCheck, Eye, ArrowUpDown, Tag as TagIcon,
+  Users, RefreshCw, Briefcase, AlertCircle,
+  Target, Layers, Lock, Copy, Check,
+  TrendingUp, Zap
 } from "lucide-react";
 import api from "@/lib/api";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -41,9 +42,29 @@ interface Contact {
   createdAt?: string;
 }
 
+type MetaAudienceType = 'lookalike_vip' | 'remarketing_hot' | 'reactivation_cold' | 'exclusion_clients';
+
+// Função nativa ultrarrápida para hashing SHA-256 (Padrão Oficial Meta Ads)
+async function sha256Browser(message: string): Promise<string> {
+  if (!message) return '';
+  const msgBuffer = new TextEncoder().encode(message.trim().toLowerCase());
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Sanitização de nomes de origem para garantir a marca VALLOR
+function cleanSourceBrand(rawSource?: string | null): string {
+  if (!rawSource) return 'Vallor CRM';
+  return rawSource
+    .replace(/versus\s*/gi, 'Vallor ')
+    .replace(/lero\s*/gi, 'Vallor ')
+    .trim() || 'Vallor CRM';
+}
+
 export default function ContactsPage() {
   const router = useRouter();
-  const { isWhatsApp, theme } = useTheme();
+  const { isWhatsApp } = useTheme();
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,9 +72,9 @@ export default function ContactsPage() {
 
   // Filtros e busca
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all"); // all, won, hot, cold, lost, collaborator, partner
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
-  const [dealsFilter, setDealsFilter] = useState<string>("all"); // all, with_deals, without_deals
+  const [dealsFilter, setDealsFilter] = useState<string>("all");
   const [showFilterBar, setShowFilterBar] = useState(false);
 
   // Paginação
@@ -65,6 +86,12 @@ export default function ContactsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTagInput, setNewTagInput] = useState("");
   const [savingTags, setSavingTags] = useState(false);
+
+  // Modal Meta Ads (Tráfego Pago & Lookalike)
+  const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
+  const [selectedAudienceType, setSelectedAudienceType] = useState<MetaAudienceType>('lookalike_vip');
+  const [isGeneratingMetaCsv, setIsGeneratingMetaCsv] = useState(false);
+  const [copiedInstructions, setCopiedInstructions] = useState(false);
 
   const fetchContacts = () => {
     setLoading(true);
@@ -88,11 +115,12 @@ export default function ContactsPage() {
     fetchContacts();
   }, [router]);
 
-  // Lista de origens únicas para o filtro
+  // Lista de origens únicas para o filtro com a marca VALLOR
   const availableSources = useMemo(() => {
     const set = new Set<string>();
     contacts.forEach(c => {
-      if (c.source) set.add(c.source);
+      const src = cleanSourceBrand(c.source);
+      if (src) set.add(src);
     });
     return Array.from(set).sort();
   }, [contacts]);
@@ -131,7 +159,7 @@ export default function ContactsPage() {
   // Filtragem dos contatos
   const filteredContacts = useMemo(() => {
     return contacts.filter(contact => {
-      // 1. Busca textual (nome, telefone, email, id)
+      // 1. Busca textual
       if (searchTerm.trim()) {
         const query = searchTerm.toLowerCase().trim();
         const matchesName = contact.name?.toLowerCase().includes(query);
@@ -165,7 +193,8 @@ export default function ContactsPage() {
 
       // 3. Filtro de Origem
       if (sourceFilter !== "all") {
-        if (contact.source !== sourceFilter) return false;
+        const cleaned = cleanSourceBrand(contact.source);
+        if (cleaned !== sourceFilter) return false;
       }
 
       // 4. Filtro de Oportunidades no CRM
@@ -191,7 +220,114 @@ export default function ContactsPage() {
     return filteredContacts.slice(start, start + itemsPerPage);
   }, [filteredContacts, currentPage, itemsPerPage]);
 
-  // Exportar CSV
+  // Obter contatos para o público selecionado
+  const getContactsForAudience = (type: MetaAudienceType) => {
+    if (type === 'lookalike_vip') {
+      return contacts.filter(c => c.isClient || c.statusCategory === 'won' || c.tags.includes('Cliente'));
+    }
+    if (type === 'remarketing_hot') {
+      return contacts.filter(c => !c.isClient && (c.statusCategory === 'hot' || c.tags.includes('Quente')));
+    }
+    if (type === 'reactivation_cold') {
+      return contacts.filter(c => !c.isClient && c.statusCategory === 'cold');
+    }
+    if (type === 'exclusion_clients') {
+      return contacts.filter(c => c.isClient || c.statusCategory === 'won' || c.tags.includes('Cliente'));
+    }
+    return contacts;
+  };
+
+  const metaAudienceTargetContacts = useMemo(() => {
+    return getContactsForAudience(selectedAudienceType);
+  }, [contacts, selectedAudienceType]);
+
+  // Geração da Planilha Criptografada Meta Ads (SHA-256 Oficial)
+  const handleDownloadMetaAdsCsv = async (audienceType: MetaAudienceType = selectedAudienceType) => {
+    const targetContacts = getContactsForAudience(audienceType);
+
+    if (targetContacts.length === 0) {
+      toast.error("Nenhum contato encontrado para o público selecionado.");
+      return;
+    }
+
+    setIsGeneratingMetaCsv(true);
+    try {
+      const csvRows = ["email,phone,fn,ln,country,value"];
+
+      for (const c of targetContacts) {
+        let rawPhone = (c.phone || '').replace(/\D/g, '');
+        if (rawPhone.length === 10 || rawPhone.length === 11) {
+          rawPhone = '55' + rawPhone;
+        }
+        const phoneHash = rawPhone.length >= 10 ? await sha256Browser(rawPhone) : '';
+
+        const rawEmail = (c.email || '').trim().toLowerCase();
+        const emailHash = rawEmail.includes('@') ? await sha256Browser(rawEmail) : '';
+
+        if (!phoneHash && !emailHash) continue;
+
+        const nameParts = (c.name || '').trim().toLowerCase().split(/\s+/);
+        const fn = nameParts[0] || '';
+        const ln = nameParts.slice(1).join(' ') || '';
+        const fnHash = fn ? await sha256Browser(fn) : '';
+        const lnHash = ln ? await sha256Browser(ln) : '';
+
+        const countryHash = await sha256Browser('br');
+
+        const val = Number(c.totalWonValue || c.totalActivePipelineValue || 0);
+        const valueStr = val > 0 ? val.toFixed(2) : '';
+
+        csvRows.push(`${emailHash},${phoneHash},${fnHash},${lnHash},${countryHash},${valueStr}`);
+      }
+
+      const fileContent = csvRows.join("\n");
+      const blob = new Blob([fileContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const fileName = `vallor-meta-ads-${audienceType}-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success(`Planilha criptografada (${csvRows.length - 1} contatos) gerada com sucesso!`);
+    } catch (e) {
+      console.error("Erro ao gerar CSV para Meta Ads", e);
+      toast.error("Falha ao gerar planilha criptografada.");
+    } finally {
+      setIsGeneratingMetaCsv(false);
+    }
+  };
+
+  // Copiar Instruções Técnicas para o Gestor de Tráfego Pago
+  const handleCopyMetaInstructions = (audienceType: MetaAudienceType = selectedAudienceType) => {
+    const targetContacts = getContactsForAudience(audienceType);
+    const audienceTitle = audienceType === 'lookalike_vip'
+      ? "Lookalike VIP (Clientes Compradores com LTV)"
+      : audienceType === 'remarketing_hot'
+        ? "Remarketing de Fechamento (Leads Quentes)"
+        : audienceType === 'exclusion_clients'
+          ? "Exclusão de Clientes Ativos"
+          : "Reativação de Base (Leads Frios)";
+
+    const text = `*Instruções para o Gestor de Tráfego Pago (Meta Ads):*
+1. Acesse o Gerenciador de Anúncios > *Públicos* (Audiences).
+2. Clique em *Criar Público* > *Público Personalizado* > *Lista de Clientes*.
+3. Na pergunta _"Sua lista inclui uma coluna para o valor do cliente?"_, selecione *SIM* (para Lookalike de Valor).
+4. Faça o upload do arquivo gerado pelo VALLOR (*.csv).
+5. Como os dados já foram criptografados em SHA-256 pelo VALLOR, o Meta mapeará as colunas automaticamente (email, phone, fn, ln, country, value).
+6. Tipo do público: *${audienceTitle}* (${targetContacts.length} contatos qualificados).
+7. Criar *Público Semelhante (Lookalike 1% a 2%)* no Brasil / regiões agro prioritárias.`;
+
+    navigator.clipboard.writeText(text);
+    setCopiedInstructions(true);
+    toast.success("Instruções copiadas para a área de transferência!");
+    setTimeout(() => setCopiedInstructions(false), 3000);
+  };
+
+  // Exportar CSV Geral da Tabela
   const handleExportCSV = () => {
     try {
       if (filteredContacts.length === 0) {
@@ -231,7 +367,7 @@ export default function ContactsPage() {
           `"${(c.name || '').replace(/"/g, '""')}"`,
           `"${(c.phone || '').replace(/"/g, '""')}"`,
           `"${(c.email || '').replace(/"/g, '""')}"`,
-          `"${(c.source || '').replace(/"/g, '""')}"`,
+          `"${cleanSourceBrand(c.source).replace(/"/g, '""')}"`,
           `"${statusLabel}"`,
           `"${(c.tags || []).join(', ')}"`,
           c.dealsCount || (c.deals ? c.deals.length : 0),
@@ -243,12 +379,11 @@ export default function ContactsPage() {
         csvRows.push(row.join(";"));
       });
 
-      // UTF-8 BOM para garantir acentos corretos no Excel no Windows
       const blob = new Blob(["\uFEFF" + csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `versus-base-de-leads-${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute("download", `vallor-base-de-leads-${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -349,7 +484,7 @@ export default function ContactsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-5 w-full h-full pb-10 text-slate-900 dark:text-slate-100 animate-in fade-in duration-200">
+    <div className="flex flex-col gap-6 w-full pb-20 text-slate-900 dark:text-slate-100 animate-in fade-in duration-200">
       
       {/* 1. CABEÇALHO SUPERIOR */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -361,11 +496,11 @@ export default function ContactsPage() {
             </span>
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Carteira inteligente de clientes, leads qualificados e contatos captados.
+            Carteira inteligente de clientes, leads qualificados e inteligência de tráfego.
           </p>
         </div>
         
-        {/* Barra de Ações: Busca, Filtros e Exportação */}
+        {/* Barra de Ações: Busca, Filtros, Meta Ads e Exportação */}
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="relative w-full sm:w-auto">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
@@ -374,7 +509,7 @@ export default function ContactsPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nome, telefone, e-mail..." 
-              className={`w-full sm:w-72 pl-9 pr-3.5 py-2 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/80 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass} transition-colors shadow-sm`}
+              className={`w-full sm:w-64 pl-9 pr-3.5 py-2 rounded-xl bg-white dark:bg-[#121824] border border-slate-200 dark:border-slate-700/80 text-xs text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none ${focusBorderClass} transition-colors shadow-sm`}
             />
             {searchTerm && (
               <button 
@@ -386,6 +521,7 @@ export default function ContactsPage() {
             )}
           </div>
 
+          {/* Botão de Filtros */}
           <button 
             onClick={() => setShowFilterBar(!showFilterBar)}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer shadow-sm ${
@@ -401,10 +537,21 @@ export default function ContactsPage() {
             )}
           </button>
 
+          {/* BOTÃO ESTRATÉGICO: PÚBLICOS META ADS (IA) */}
+          <button
+            onClick={() => setIsMetaModalOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all shadow-sm cursor-pointer bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 border-slate-700 dark:border-slate-300"
+            title="Gerar públicos criptografados em SHA-256 para Lookalike e Remarketing no Meta Ads"
+          >
+            <Target size={14} className="text-indigo-400 dark:text-indigo-600" />
+            <span>Públicos Meta Ads (IA)</span>
+          </button>
+
+          {/* Botão Exportar CSV Comum */}
           <button 
             onClick={handleExportCSV}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer ${primaryBtnClass}`}
-            title="Exportar contatos filtrados em formato CSV (compatível com Excel)"
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer ${primaryBtnClass}`}
+            title="Exportar contatos filtrados em formato CSV"
           >
             <Download size={14} /> 
             <span>Exportar CSV</span>
@@ -482,7 +629,7 @@ export default function ContactsPage() {
         >
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
             <span className="flex items-center gap-1.5">
-              <Flame size={14} className="text-amber-500" />
+              <Zap size={14} className="text-amber-500" />
               Leads Quentes
             </span>
             <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30">
@@ -515,7 +662,7 @@ export default function ContactsPage() {
         >
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
             <span className="flex items-center gap-1.5">
-              <Snowflake size={14} className="text-sky-500" />
+              <RefreshCw size={14} className="text-sky-500" />
               Leads Frios
             </span>
             <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30">
@@ -534,7 +681,6 @@ export default function ContactsPage() {
       {/* 3. BARRA EXPANSÍVEL DE FILTROS AVANÇADOS */}
       {showFilterBar && (
         <div className="p-4 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center gap-4 animate-in slide-in-from-top-2 duration-200">
-          {/* Filtro de Status da Carteira */}
           <div className="flex flex-col gap-1">
             <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Classificação na Carteira
@@ -554,7 +700,6 @@ export default function ContactsPage() {
             </select>
           </div>
 
-          {/* Filtro de Origem */}
           <div className="flex flex-col gap-1">
             <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Origem do Contato
@@ -571,7 +716,6 @@ export default function ContactsPage() {
             </select>
           </div>
 
-          {/* Filtro de Negócios */}
           <div className="flex flex-col gap-1">
             <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Oportunidades no CRM
@@ -587,7 +731,6 @@ export default function ContactsPage() {
             </select>
           </div>
 
-          {/* Itens por Página */}
           <div className="flex flex-col gap-1">
             <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Exibir por Página
@@ -603,7 +746,6 @@ export default function ContactsPage() {
             </select>
           </div>
 
-          {/* Botão Limpar Filtros */}
           {(statusFilter !== "all" || sourceFilter !== "all" || dealsFilter !== "all" || searchTerm) && (
             <div className="flex items-end">
               <button
@@ -623,25 +765,25 @@ export default function ContactsPage() {
         </div>
       )}
 
-      {/* 4. TABELA PRINCIPAL DE LEADS */}
-      <div className="rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col flex-1">
+      {/* 4. TABELA PRINCIPAL DE LEADS (Layout fluído e espaçoso para rolagem natural com scroll do mouse) */}
+      <div className="rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400 font-bold">
-                <th className="py-3 px-4 font-bold rounded-tl-2xl">Contato</th>
-                <th className="py-3 px-4 font-bold">Telefone / E-mail</th>
-                <th className="py-3 px-4 font-bold">Origem</th>
-                <th className="py-3 px-4 font-bold">Classificação / Tags</th>
-                <th className="py-3 px-4 font-bold">Negócios (CRM)</th>
-                <th className="py-3 px-4 font-bold">Última Atividade</th>
-                <th className="py-3 px-4 font-bold text-center rounded-tr-2xl">Ação</th>
+                <th className="py-3.5 px-4 font-bold rounded-tl-2xl">Contato</th>
+                <th className="py-3.5 px-4 font-bold">Telefone / E-mail</th>
+                <th className="py-3.5 px-4 font-bold">Origem</th>
+                <th className="py-3.5 px-4 font-bold">Classificação / Tags</th>
+                <th className="py-3.5 px-4 font-bold">Negócios (CRM)</th>
+                <th className="py-3.5 px-4 font-bold">Última Atividade</th>
+                <th className="py-3.5 px-4 font-bold text-center rounded-tr-2xl">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
               {paginatedContacts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500 italic">
+                  <td colSpan={7} className="py-16 text-center text-slate-500 italic">
                     Nenhum contato encontrado com os filtros aplicados.
                   </td>
                 </tr>
@@ -652,6 +794,7 @@ export default function ContactsPage() {
                   const isCollaborator = contact.tags.some(t => t.toLowerCase() === 'colaborador');
                   const isPartner = contact.tags.some(t => t.toLowerCase() === 'parceiro');
                   const isLost = contact.statusCategory === 'lost';
+                  const displaySource = cleanSourceBrand(contact.source);
 
                   return (
                     <tr 
@@ -660,7 +803,7 @@ export default function ContactsPage() {
                       className="group hover:bg-slate-50/90 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
                     >
                       {/* Nome e Avatar */}
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
                           <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border ${
                             isClient
@@ -692,7 +835,7 @@ export default function ContactsPage() {
                       </td>
 
                       {/* Contato Info: Telefone / Email */}
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <div className="flex flex-col gap-0.5 min-w-[150px]">
                           <div className="flex items-center gap-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium">
                             <Phone size={12} className="text-emerald-500 shrink-0" />
@@ -709,24 +852,23 @@ export default function ContactsPage() {
                         </div>
                       </td>
 
-                      {/* Origem */}
-                      <td className="py-3 px-4">
+                      {/* Origem (Marca VALLOR) */}
+                      <td className="py-3.5 px-4">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/70">
-                          {contact.source || 'Versus CRM'}
+                          {displaySource}
                         </span>
                       </td>
 
-                      {/* Classificação / Tags */}
-                      <td className="py-3 px-4">
+                      {/* Classificação / Tags com vetores executivos */}
+                      <td className="py-3.5 px-4">
                         <div className="flex flex-wrap items-center gap-1 max-w-[240px]">
-                          {/* Badge Principal Inteligente */}
                           {isClient ? (
                             <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40">
                               <ShieldCheck size={11} /> CLIENTE
                             </span>
                           ) : isHot ? (
                             <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40">
-                              <Flame size={11} /> QUENTE
+                              <Zap size={11} /> QUENTE
                             </span>
                           ) : isCollaborator ? (
                             <span className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-bold bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40">
@@ -742,11 +884,10 @@ export default function ContactsPage() {
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40">
-                              <Snowflake size={11} /> FRIO
+                              <RefreshCw size={11} /> FRIO
                             </span>
                           )}
 
-                          {/* Outras Tags */}
                           {contact.tags
                             ?.filter(t => !['Cliente', 'Quente', 'Frio', 'Não categorizado'].includes(t))
                             .slice(0, 2)
@@ -762,7 +903,7 @@ export default function ContactsPage() {
                       </td>
 
                       {/* Negócios (CRM) */}
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <div className="flex flex-col gap-0.5 min-w-[120px]">
                           {contact.deals && contact.deals.length > 0 ? (
                             <>
@@ -788,14 +929,14 @@ export default function ContactsPage() {
                       </td>
 
                       {/* Tempo / Última Atividade */}
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                           {contact.lastActive ? new Date(contact.lastActive).toLocaleDateString('pt-BR') : '-'}
                         </span>
                       </td>
 
                       {/* Ação */}
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center">
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
@@ -868,7 +1009,137 @@ export default function ContactsPage() {
         </div>
       </div>
 
-      {/* 6. MODAL EXECUTIVO: CADASTRO E DETALHES DO LEAD / CLIENTE */}
+      {/* 6. CENTRAL INTEGRADA NA MESMA TELA: INTELIGÊNCIA DE TRÁFEGO META ADS (Acessível ao rolar para baixo) */}
+      <div className="rounded-3xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800/80">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+              <Target size={20} className="stroke-[2.2]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-black tracking-tight">Inteligência de Tráfego Pago & Meta Ads</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                  Criptografia SHA-256 Oficial
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Exporte públicos qualificados com valor financeiro (LTV) prontos para o Gestor de Tráfego subir no Facebook & Instagram Ads.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => handleCopyMetaInstructions()}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#121824] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+          >
+            {copiedInstructions ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+            <span>{copiedInstructions ? "Instruções Copiadas!" : "Copiar Instruções para o Gestor"}</span>
+          </button>
+        </div>
+
+        {/* 4 Cards de Exportação com 1 Clique */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Lookalike VIP */}
+          <div className="p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-950/15 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <TrendingUp size={16} className="text-emerald-600 dark:text-emerald-400" />
+                <h4 className="text-xs font-black text-slate-900 dark:text-white">Lookalike VIP (Compradores)</h4>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                {metrics.clientsCount} clientes reais com R$ {(metrics.totalWonRevenue / 1000).toFixed(0)}k faturado. Gera 1M a 2M de produtores idênticos aos seus compradores.
+              </p>
+            </div>
+            <button
+              onClick={() => handleDownloadMetaAdsCsv('lookalike_vip')}
+              disabled={isGeneratingMetaCsv}
+              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-sm cursor-pointer"
+            >
+              <Download size={13} />
+              <span>Baixar Lista Lookalike</span>
+            </button>
+          </div>
+
+          {/* Card 2: Remarketing de Fechamento */}
+          <div className="p-4 rounded-2xl border border-amber-200 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-950/15 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <Zap size={16} className="text-amber-600 dark:text-amber-400" />
+                <h4 className="text-xs font-black text-slate-900 dark:text-white">Remarketing de Fechamento</h4>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                {metrics.hotCount} leads quentes com propostas ativas. Anúncios de depoimentos e demonstrações em campo para fechar o negócio.
+              </p>
+            </div>
+            <button
+              onClick={() => handleDownloadMetaAdsCsv('remarketing_hot')}
+              disabled={isGeneratingMetaCsv}
+              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition-all shadow-sm cursor-pointer"
+            >
+              <Download size={13} />
+              <span>Baixar Lista Remarketing</span>
+            </button>
+          </div>
+
+          {/* Card 3: Reativação de Base */}
+          <div className="p-4 rounded-2xl border border-blue-200 dark:border-blue-800/60 bg-blue-50/40 dark:bg-blue-950/15 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <RefreshCw size={16} className="text-blue-600 dark:text-blue-400" />
+                <h4 className="text-xs font-black text-slate-900 dark:text-white">Reativação da Base (Frios)</h4>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                {metrics.coldCount.toLocaleString('pt-BR')} contatos da base sem compras recentes. Ideal para rodar campanhas de novas safras e implementos.
+              </p>
+            </div>
+            <button
+              onClick={() => handleDownloadMetaAdsCsv('reactivation_cold')}
+              disabled={isGeneratingMetaCsv}
+              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-all shadow-sm cursor-pointer"
+            >
+              <Download size={13} />
+              <span>Baixar Lista Reativação</span>
+            </button>
+          </div>
+
+          {/* Card 4: Exclusão de Clientes */}
+          <div className="p-4 rounded-2xl border border-purple-200 dark:border-purple-800/60 bg-purple-50/40 dark:bg-purple-950/15 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <ShieldCheck size={16} className="text-purple-600 dark:text-purple-400" />
+                <h4 className="text-xs font-black text-slate-900 dark:text-white">Exclusão de Clientes</h4>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                {metrics.clientsCount} compradores confirmados para negativar nas campanhas de captação, poupando até 30% da verba de anúncio.
+              </p>
+            </div>
+            <button
+              onClick={() => handleDownloadMetaAdsCsv('exclusion_clients')}
+              disabled={isGeneratingMetaCsv}
+              className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-all shadow-sm cursor-pointer"
+            >
+              <Download size={13} />
+              <span>Baixar Lista Exclusão</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Box Informativo de Criptografia e Segurança */}
+        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex items-start gap-3">
+          <div className="w-8 h-8 rounded-xl bg-slate-200/80 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 shrink-0">
+            <Lock size={15} />
+          </div>
+          <div className="space-y-1 text-xs">
+            <h5 className="font-bold text-slate-900 dark:text-white">Conformidade com LGPD & Padrão Oficial Meta Ads Manager</h5>
+            <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
+              Todos os arquivos gerados pelo <strong>VALLOR</strong> passam por criptografia irreversível SHA-256 nas colunas <code className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[10px]">email,phone,fn,ln,country</code>. O campo <code className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[10px]">value</code> (valor em R$) é mantido em formato numérico conforme a documentação da Meta para cálculo automático de Públicos Semelhantes Baseados em Valor (Value-Based Lookalike).
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 7. MODAL EXECUTIVO: CADASTRO E DETALHES DO LEAD / CLIENTE */}
       {isModalOpen && selectedContact && (
         <ModalPortal>
           <div 
@@ -902,18 +1173,18 @@ export default function ContactsPage() {
                         </span>
                       ) : selectedContact.statusCategory === 'hot' || selectedContact.tags.includes('Quente') ? (
                         <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40">
-                          <Flame size={12} /> EM NEGOCIAÇÃO
+                          <Zap size={12} /> EM NEGOCIAÇÃO
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-500/40">
-                          <Snowflake size={12} /> LEAD FRIO
+                          <RefreshCw size={12} /> LEAD FRIO
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                       <span>ID: #{selectedContact.id}</span>
                       <span>•</span>
-                      <span>Origem: {selectedContact.source || 'Versus CRM'}</span>
+                      <span>Origem: {cleanSourceBrand(selectedContact.source)}</span>
                     </div>
                   </div>
                 </div>
@@ -953,7 +1224,7 @@ export default function ContactsPage() {
                   <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                        <Flame size={20} />
+                        <Zap size={20} />
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-amber-900 dark:text-amber-300">Lead Quente em Negociação</h4>
@@ -973,7 +1244,7 @@ export default function ContactsPage() {
                   <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/60 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                        <Snowflake size={20} />
+                        <RefreshCw size={20} />
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-blue-900 dark:text-blue-300">Lead da Base (Frio)</h4>
@@ -1018,7 +1289,7 @@ export default function ContactsPage() {
                   </div>
                 </div>
 
-                {/* 3. Negócios Vinculados no CRM */}
+                {/* 3. Negócios Vinculados no CRM (Com status preciso para Ganho, Perdido, Desqualificado ou Em Negociação) */}
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
@@ -1038,33 +1309,48 @@ export default function ContactsPage() {
 
                   {selectedContact.deals && selectedContact.deals.length > 0 ? (
                     <div className="space-y-2">
-                      {selectedContact.deals.map((deal) => (
-                        <div 
-                          key={deal.id}
-                          className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#121824] flex items-center justify-between gap-3 shadow-xs"
-                        >
-                          <div>
-                            <h4 className="text-xs font-bold text-slate-900 dark:text-white">{deal.title}</h4>
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                              Status: <strong className="uppercase text-slate-700 dark:text-slate-300">{deal.status}</strong>
-                            </span>
+                      {selectedContact.deals.map((deal) => {
+                        const statusNormalized = deal.status?.toLowerCase();
+                        const isWon = statusNormalized === 'won';
+                        const isLost = statusNormalized === 'lost';
+                        const isDisqualified = statusNormalized === 'disqualified';
+
+                        const label = isWon 
+                          ? 'Ganho / Fechado' 
+                          : isLost 
+                            ? 'Perdido' 
+                            : isDisqualified 
+                              ? 'Desqualificado' 
+                              : 'Em Negociação';
+
+                        const badgeColor = isWon
+                          ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30"
+                          : (isLost || isDisqualified)
+                            ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30"
+                            : "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30";
+
+                        return (
+                          <div 
+                            key={deal.id}
+                            className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#121824] flex items-center justify-between gap-3 shadow-xs"
+                          >
+                            <div>
+                              <h4 className="text-xs font-bold text-slate-900 dark:text-white">{deal.title}</h4>
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                                Status: <strong className="uppercase text-slate-700 dark:text-slate-300">{deal.status}</strong>
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-xs font-black text-slate-900 dark:text-white block">
+                                R$ {Number(deal.value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block ${badgeColor}`}>
+                                {label}
+                              </span>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <span className="text-xs font-black text-slate-900 dark:text-white block">
-                              R$ {Number(deal.value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </span>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block ${
-                              deal.status === 'won'
-                                ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30"
-                                : deal.status === 'lost'
-                                  ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30"
-                                  : "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30"
-                            }`}>
-                              {deal.status === 'won' ? 'Ganho / Fechado' : deal.status === 'lost' ? 'Perdido' : 'Em Negociação'}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500">
@@ -1098,7 +1384,6 @@ export default function ContactsPage() {
                     ))}
                   </div>
 
-                  {/* Input para adicionar nova tag */}
                   <div className="flex items-center gap-2 pt-1">
                     <input 
                       type="text"
@@ -1139,6 +1424,220 @@ export default function ContactsPage() {
                   >
                     <MessageSquare size={14} />
                     <span>Abrir no WhatsApp</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* 8. MODAL EXECUTIVO: INTELIGÊNCIA DE TRÁFEGO PAGO (META ADS & LOOKALIKE SHA-256) */}
+      {isMetaModalOpen && (
+        <ModalPortal>
+          <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => setIsMetaModalOpen(false)}
+          >
+            <div 
+              className="w-full max-w-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden text-slate-900 dark:text-white flex flex-col max-h-[92vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Topo do Modal com Identidade de Tráfego Executivo VALLOR */}
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-xs">
+                    <Target size={22} className="stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-black tracking-tight">Inteligência de Tráfego: Públicos Meta Ads</h2>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                        SHA-256 Oficial
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Gere planilhas criptografadas nos padrões exigidos pelo Gerenciador de Anúncios para Lookalike e Remarketing.
+                    </p>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setIsMetaModalOpen(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Corpo de Seleção de Públicos Pré-Processados pela IA */}
+              <div className="p-6 overflow-y-auto space-y-5 flex-1">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                    <Layers size={14} className="text-indigo-500" />
+                    Selecione o Segmento de Público Estratégico
+                  </label>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    A IA classifica automaticamente os contatos para máxima precisão de correspondência (Match Rate) no Facebook e Instagram Ads.
+                  </p>
+                </div>
+
+                {/* 4 Cards de Públicos Estratégicos */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* 1. Lookalike VIP */}
+                  <div
+                    onClick={() => setSelectedAudienceType('lookalike_vip')}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer relative ${
+                      selectedAudienceType === 'lookalike_vip'
+                        ? "bg-emerald-50/70 dark:bg-emerald-950/25 border-emerald-300 dark:border-emerald-700 ring-2 ring-emerald-500/20 shadow-sm"
+                        : "bg-slate-50/50 dark:bg-[#121824] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp size={16} className="text-emerald-500" />
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white">Lookalike VIP (Compradores)</h4>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40">
+                        Mais Recomendado
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+                      Inclui clientes que já compraram de verdade com LTV. O Meta criará um público de 1 a 2 milhões de produtores idênticos aos seus compradores.
+                    </p>
+                    <div className="flex items-center justify-between text-xs font-bold pt-2 border-t border-slate-200/80 dark:border-slate-800">
+                      <span className="text-emerald-600 dark:text-emerald-400">{metrics.clientsCount} compradores</span>
+                      <span className="text-slate-700 dark:text-slate-300">R$ {(metrics.totalWonRevenue / 1000).toFixed(0)}k faturado</span>
+                    </div>
+                  </div>
+
+                  {/* 2. Remarketing de Fechamento */}
+                  <div
+                    onClick={() => setSelectedAudienceType('remarketing_hot')}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer relative ${
+                      selectedAudienceType === 'remarketing_hot'
+                        ? "bg-amber-50/70 dark:bg-amber-950/25 border-amber-300 dark:border-amber-700 ring-2 ring-amber-500/20 shadow-sm"
+                        : "bg-slate-50/50 dark:bg-[#121824] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Zap size={16} className="text-amber-500" />
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white">Remarketing de Fechamento</h4>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40">
+                        Alta Conversão
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+                      Leads em negociação ativa. Ideal para exibir anúncios com provas sociais, depoimentos e garantias para fechar propostas pendentes.
+                    </p>
+                    <div className="flex items-center justify-between text-xs font-bold pt-2 border-t border-slate-200/80 dark:border-slate-800">
+                      <span className="text-amber-600 dark:text-amber-400">{metrics.hotCount} leads quentes</span>
+                      <span className="text-slate-700 dark:text-slate-300">R$ {(metrics.totalPipelineValue / 1000).toFixed(0)}k pipeline</span>
+                    </div>
+                  </div>
+
+                  {/* 3. Reativação da Base */}
+                  <div
+                    onClick={() => setSelectedAudienceType('reactivation_cold')}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer relative ${
+                      selectedAudienceType === 'reactivation_cold'
+                        ? "bg-blue-50/70 dark:bg-blue-950/25 border-blue-300 dark:border-blue-700 ring-2 ring-blue-500/20 shadow-sm"
+                        : "bg-slate-50/50 dark:bg-[#121824] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <RefreshCw size={16} className="text-blue-500" />
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white">Reativação da Base (Frios)</h4>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+                      Leads cadastrados sem compras recentes. Ótimo para veicular novas ofertas de entrada, condições de safra ou novos produtos.
+                    </p>
+                    <div className="flex items-center justify-between text-xs font-bold pt-2 border-t border-slate-200/80 dark:border-slate-800">
+                      <span className="text-blue-600 dark:text-blue-400">{metrics.coldCount.toLocaleString('pt-BR')} contatos</span>
+                      <span className="text-slate-500 dark:text-slate-400">Nutrição</span>
+                    </div>
+                  </div>
+
+                  {/* 4. Exclusão de Clientes */}
+                  <div
+                    onClick={() => setSelectedAudienceType('exclusion_clients')}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer relative ${
+                      selectedAudienceType === 'exclusion_clients'
+                        ? "bg-purple-50/70 dark:bg-purple-950/25 border-purple-300 dark:border-purple-700 ring-2 ring-purple-500/20 shadow-sm"
+                        : "bg-slate-50/50 dark:bg-[#121824] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck size={16} className="text-purple-500" />
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white">Exclusão de Clientes</h4>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
+                      Negativa quem já comprou de você nas campanhas de captação de novos clientes, evitando desperdício de orçamento de tráfego.
+                    </p>
+                    <div className="flex items-center justify-between text-xs font-bold pt-2 border-t border-slate-200/80 dark:border-slate-800">
+                      <span className="text-purple-600 dark:text-purple-400">{metrics.clientsCount} clientes</span>
+                      <span className="text-slate-500 dark:text-slate-400">Economia</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Box de Especificação e Segurança Técnica (SHA-256) */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-slate-200/80 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 shrink-0">
+                    <Lock size={15} />
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <h5 className="font-bold text-slate-900 dark:text-white">Criptografia Irreversível SHA-256 & LGPD</h5>
+                    <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
+                      Telefones, e-mails e nomes são codificados em hash de 64 caracteres antes de sair da sua tela. O arquivo gerado contém as colunas oficiais exigidas pelo Meta Ads: <code className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[10px]">email,phone,fn,ln,country,value</code>. Nenhum dado pessoal bruto é exposto.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rodapé com Ações de Download e Envio para o Gestor de Tráfego */}
+              <div className="p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleCopyMetaInstructions()}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121824] hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                >
+                  {copiedInstructions ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                  <span>{copiedInstructions ? "Instruções Copiadas!" : "Copiar Instruções para o Gestor"}</span>
+                </button>
+
+                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setIsMetaModalOpen(false)}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadMetaAdsCsv()}
+                    disabled={isGeneratingMetaCsv}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all shadow-md shadow-indigo-500/20 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isGeneratingMetaCsv ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        <span>Criptografando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download size={14} />
+                        <span>Baixar Planilha Meta Ads (SHA-256)</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

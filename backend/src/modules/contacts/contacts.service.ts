@@ -104,9 +104,10 @@ export class ContactsService {
         avatarUrl = null;
       }
 
-      // White-labeling: garantia de remoção de 'Lero'
-      const cleanSource = (c.source || 'Versus CRM')
-        .replace(/lero\s*/gi, 'Versus ')
+      // White-labeling: garantia de remoção de 'Lero' e 'Versus', padronizando para 'Vallor'
+      const cleanSource = (c.source || 'Vallor CRM')
+        .replace(/lero\s*/gi, 'Vallor ')
+        .replace(/versus\s*/gi, 'Vallor ')
         .trim();
 
       return {

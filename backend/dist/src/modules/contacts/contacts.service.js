@@ -98,8 +98,9 @@ let ContactsService = class ContactsService {
             if (!avatarUrl || avatarUrl === 'null' || avatarUrl === 'undefined' || avatarUrl.includes('unsplash.com')) {
                 avatarUrl = null;
             }
-            const cleanSource = (c.source || 'Versus CRM')
-                .replace(/lero\s*/gi, 'Versus ')
+            const cleanSource = (c.source || 'Vallor CRM')
+                .replace(/lero\s*/gi, 'Vallor ')
+                .replace(/versus\s*/gi, 'Vallor ')
                 .trim();
             return {
                 id: c.id,
