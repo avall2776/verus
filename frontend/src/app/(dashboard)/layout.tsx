@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
 import SupportModeBanner from "@/components/dashboard/SupportModeBanner";
@@ -15,7 +16,9 @@ export default function DashboardLayout({
   return (
     <div className="h-screen flex w-full overflow-hidden bg-background print:h-auto print:overflow-visible print:bg-white print:block print:w-full">
       {/* Sidebar Lateral (Navegação Principal: desktop fixo, mobile drawer) */}
-      <Sidebar />
+      <Suspense fallback={<aside className="w-16 md:w-64 h-full bg-[#050814] shrink-0" />}>
+        <Sidebar />
+      </Suspense>
 
       {/* Área Principal (Conteúdo e Topbar) */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative print:block print:h-auto print:overflow-visible print:w-full print:p-0 print:m-0 min-w-0">

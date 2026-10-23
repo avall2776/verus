@@ -3,11 +3,36 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { 
-  MessageSquare, UserCheck, ArrowRight, X, Phone, 
+  MessageSquare, UserCheck, ArrowRight, X, 
   Sparkles, Eye, Mic, Image as ImageIcon, FileText, 
-  CheckCircle2, Loader2, PhoneForwarded
+  Loader2, PhoneForwarded
 } from "lucide-react";
 import api, { getStoredToken } from "@/lib/api";
+import { useTheme } from "@/contexts/ThemeContext";
+
+// Hook seguro para obter contexto de tema sem quebrar caso renderizado isoladamente
+function useNotificationTheme() {
+  try {
+    const context = useTheme();
+    return {
+      isClean: context.isClean,
+      isDark: context.isDark,
+      isWhatsApp: context.isWhatsApp,
+    };
+  } catch {
+    if (typeof document !== "undefined") {
+      const root = document.documentElement;
+      const isWhatsApp = root.classList.contains("theme-whatsapp") || root.getAttribute("data-theme") === "whatsapp";
+      const isClean = root.classList.contains("light") || root.getAttribute("data-theme") === "light";
+      return {
+        isClean,
+        isDark: !isClean && !isWhatsApp,
+        isWhatsApp,
+      };
+    }
+    return { isClean: false, isDark: true, isWhatsApp: false };
+  }
+}
 
 export interface LeadMessageToastProps {
   toastId: string | number;
@@ -63,6 +88,8 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
     return null;
   }
 
+  const { isClean, isWhatsApp } = useNotificationTheme();
+
   const getInitials = (name: string) => {
     if (!name) return 'L';
     const parts = name.trim().split(' ');
@@ -71,46 +98,59 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
   };
 
   const renderMessagePreview = () => {
-    if (messageType === 'AUDIO' || messageContent?.startsWith('[Áudio') || messageContent?.includes('.ogg') || messageContent?.includes('.mp3')) {
+    const isVoice = messageType === 'AUDIO' || messageContent?.startsWith('[Áudio') || messageContent?.includes('.ogg') || messageContent?.includes('.mp3');
+    const isImage = messageType === 'IMAGE' || messageContent?.startsWith('[Imagem') || messageContent?.includes('.jpg') || messageContent?.includes('.png');
+    const isDoc = messageType === 'DOCUMENT' || messageContent?.startsWith('[Documento') || messageContent?.includes('.pdf');
+
+    const mediaTextClass = isClean
+      ? (isWhatsApp ? "text-emerald-700" : "text-blue-700")
+      : (isWhatsApp ? "text-emerald-400" : "text-blue-400");
+
+    if (isVoice) {
       return (
-        <span className="flex items-center gap-1 text-cyan-300 font-medium">
-          <Mic size={13} className="text-cyan-400" />
+        <span className={`flex items-center gap-1.5 font-semibold text-xs ${mediaTextClass}`}>
+          <Mic size={14} className="shrink-0" />
           <span>Mensagem de voz (Áudio PTT)</span>
         </span>
       );
     }
-    if (messageType === 'IMAGE' || messageContent?.startsWith('[Imagem') || messageContent?.includes('.jpg') || messageContent?.includes('.png')) {
+    if (isImage) {
       return (
-        <span className="flex items-center gap-1 text-cyan-300 font-medium">
-          <ImageIcon size={13} className="text-cyan-400" />
+        <span className={`flex items-center gap-1.5 font-semibold text-xs ${mediaTextClass}`}>
+          <ImageIcon size={14} className="shrink-0" />
           <span>Foto / Imagem</span>
         </span>
       );
     }
-    if (messageType === 'DOCUMENT' || messageContent?.startsWith('[Documento') || messageContent?.includes('.pdf')) {
+    if (isDoc) {
       return (
-        <span className="flex items-center gap-1 text-cyan-300 font-medium">
-          <FileText size={13} className="text-cyan-400" />
+        <span className={`flex items-center gap-1.5 font-semibold text-xs ${mediaTextClass}`}>
+          <FileText size={14} className="shrink-0" />
           <span>Documento em anexo</span>
         </span>
       );
     }
 
     return (
-      <span className="line-clamp-2 text-slate-300 text-xs leading-relaxed break-words">
+      <span className={`line-clamp-2 text-xs leading-relaxed break-words font-medium ${
+        isClean ? "text-slate-800" : "text-slate-100"
+      }`}>
         {messageContent || 'Nova mensagem recebida'}
       </span>
     );
   };
 
   return (
-    <div className="w-[360px] sm:w-[390px] rounded-2xl bg-white/95 dark:bg-[#0B1224]/95 backdrop-blur-xl border border-cyan-500/40 shadow-[0_12px_40px_rgba(0,0,0,0.7),0_0_20px_rgba(6,182,212,0.15)] p-4 text-white relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300">
-      {/* Luz ambiente no topo */}
-      <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-48 h-12 bg-cyan-500/20 blur-2xl rounded-full pointer-events-none" />
-
+    <div className={`w-[360px] sm:w-[390px] rounded-2xl p-4 relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300 border ${
+      isClean
+        ? "bg-white border-slate-200/90 shadow-[0_12px_36px_rgba(0,0,0,0.12)] text-slate-900"
+        : isWhatsApp
+        ? "bg-[#0B141B] border-emerald-900/60 shadow-[0_16px_45px_rgba(0,0,0,0.85)] text-white"
+        : "bg-[#0B1224] border-slate-800 shadow-[0_16px_45px_rgba(0,0,0,0.85)] text-white"
+    }`}>
       {/* Header do Toast */}
       <div className="flex items-start justify-between gap-2 mb-2.5">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {/* Avatar com badge online */}
           <div className="relative shrink-0">
             {contactAvatar ? (
@@ -118,7 +158,9 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
                 src={contactAvatar} 
                 alt={contactName} 
                 referrerPolicy="no-referrer"
-                className="w-10 h-10 rounded-full object-cover border border-cyan-500/30 shadow-sm" 
+                className={`w-10 h-10 rounded-full object-cover border shadow-sm ${
+                  isClean ? "border-slate-200" : "border-slate-700"
+                }`}
                 onError={(e) => {
                   (e.currentTarget as HTMLElement).style.display = 'none';
                   const fallback = e.currentTarget.parentElement?.querySelector('.toast-avatar-fallback') as HTMLElement;
@@ -126,30 +168,50 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
                 }}
               />
             ) : null}
-            <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center font-bold text-xs text-white border border-cyan-400/30 shadow-sm toast-avatar-fallback ${contactAvatar ? 'hidden' : ''}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs text-white shadow-sm toast-avatar-fallback ${
+              contactAvatar ? 'hidden' : ''
+            } ${
+              isWhatsApp ? "bg-emerald-600" : "bg-blue-600"
+            }`}>
               {getInitials(contactName)}
             </div>
 
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0B1224] rounded-full shadow-[0_0_8px_#10b981]" />
+            <span className={`absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 rounded-full shadow-sm ${
+              isClean ? "border-white" : isWhatsApp ? "border-[#0B141B]" : "border-[#0B1224]"
+            }`} />
           </div>
 
           {/* Nome e Badge WhatsApp */}
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h4 className="font-bold text-sm text-white truncate max-w-[170px]" title={contactName}>
+              <h4 className={`font-bold text-sm truncate max-w-[170px] ${
+                isClean ? "text-slate-900" : "text-white"
+              }`} title={contactName}>
                 {contactName}
               </h4>
-              <span className="text-[10px] font-semibold bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 px-1.5 py-0.5 rounded-full shrink-0">
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 border ${
+                isClean
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                  : "bg-emerald-950/70 border-emerald-500/40 text-emerald-300"
+              }`}>
                 WhatsApp
               </span>
               {messageCount > 1 && (
-                <span className="text-[10px] font-bold bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 border ${
+                  isClean
+                    ? "bg-blue-50 border-blue-200 text-blue-700"
+                    : isWhatsApp
+                    ? "bg-emerald-950/70 border-emerald-500/40 text-emerald-300"
+                    : "bg-blue-950/70 border-blue-500/40 text-blue-300"
+                }`}>
                   +{messageCount} novas
                 </span>
               )}
             </div>
             {contactPhone && (
-              <p className="text-[11px] text-slate-400 font-mono truncate">{contactPhone}</p>
+              <p className={`text-[11px] font-mono font-medium truncate mt-0.5 ${
+                isClean ? "text-slate-500" : "text-slate-400"
+              }`}>{contactPhone}</p>
             )}
           </div>
         </div>
@@ -157,28 +219,48 @@ export const LeadMessageToast: React.FC<LeadMessageToastProps> = ({
         {/* Botão Fechar */}
         <button
           onClick={onClose}
-          className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800/60 transition-colors cursor-pointer shrink-0"
+          className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
+            isClean
+              ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              : "text-slate-400 hover:text-white hover:bg-slate-800/80"
+          }`}
           title="Fechar notificação"
         >
-          <X size={16} />
+          <X size={15} />
         </button>
       </div>
 
-      {/* Conteúdo da Mensagem */}
-      <div className="bg-slate-900/60 rounded-xl p-2.5 border border-slate-800/80 mb-3">
+      {/* Conteúdo da Mensagem - Caixa nítida de alta legibilidade */}
+      <div className={`rounded-xl p-3 mb-3 border ${
+        isClean
+          ? "bg-slate-100/90 border-slate-200/90"
+          : isWhatsApp
+          ? "bg-[#111B21] border-emerald-900/40"
+          : "bg-slate-900/90 border-slate-800"
+      }`}>
         {renderMessagePreview()}
       </div>
 
-      {/* Ações */}
-      <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/60">
-        <span className="text-[10px] text-slate-400 flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+      {/* Rodapé e Ação */}
+      <div className={`flex items-center justify-between gap-2 pt-2 border-t ${
+        isClean ? "border-slate-200" : "border-slate-800/80"
+      }`}>
+        <span className={`text-[11px] font-medium flex items-center gap-1.5 ${
+          isClean ? "text-slate-600" : "text-slate-400"
+        }`}>
+          <span className={`w-2 h-2 rounded-full ${
+            isWhatsApp ? "bg-emerald-500" : "bg-blue-600"
+          }`} />
           {messageCount > 1 ? `${messageCount} mensagens recebidas` : 'Recebida agora'}
         </span>
 
         <button
           onClick={() => onOpen(conversationId)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold shadow-[0_0_12px_rgba(6,182,212,0.3)] transition-all cursor-pointer"
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-white text-xs font-bold transition-all cursor-pointer shadow-sm ${
+            isWhatsApp
+              ? "bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 shadow-emerald-900/20"
+              : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-blue-900/20"
+          }`}
         >
           <span>Abrir Conversa</span>
           <ArrowRight size={13} />
@@ -216,6 +298,7 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
     return null;
   }
 
+  const { isClean, isWhatsApp } = useNotificationTheme();
   const [isTakingOver, setIsTakingOver] = useState(false);
 
   const handleTakeover = async () => {
@@ -241,27 +324,41 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
   };
 
   return (
-    <div className="w-[370px] sm:w-[410px] rounded-2xl bg-white/98 dark:bg-[#0B1224]/98 backdrop-blur-xl border-2 border-amber-500/70 shadow-[0_16px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(245,158,11,0.25)] p-4 text-white relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300">
-      {/* Barra de brilho animada no topo */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-orange-400 to-amber-300 animate-pulse" />
+    <div className={`w-[370px] sm:w-[410px] rounded-2xl p-4 relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300 border-2 ${
+      isClean
+        ? "bg-white border-amber-400 shadow-[0_12px_36px_rgba(0,0,0,0.12)] text-slate-900"
+        : isWhatsApp
+        ? "bg-[#0B141B] border-amber-500/70 shadow-[0_16px_45px_rgba(0,0,0,0.85)] text-white"
+        : "bg-[#0B1224] border-amber-500/70 shadow-[0_16px_45px_rgba(0,0,0,0.85)] text-white"
+    }`}>
+      {/* Barra de destaque sólida no topo - sem degrade */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500" />
 
       {/* Header do Toast de Transferência */}
       <div className="flex items-start justify-between gap-2 mb-2.5">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {/* Badge de Alerta de Transferência */}
-          <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_12px_rgba(245,158,11,0.3)]">
-            <PhoneForwarded size={18} className="animate-bounce" />
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+            isClean
+              ? "bg-amber-100 text-amber-700 border-amber-300"
+              : "bg-amber-500/20 text-amber-400 border-amber-500/50"
+          }`}>
+            <PhoneForwarded size={17} />
           </div>
 
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-amber-400 bg-amber-950/80 border border-amber-500/40 px-2 py-0.5 rounded-md flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+              <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1.5 border ${
+                isClean
+                  ? "text-amber-800 bg-amber-100 border-amber-300"
+                  : "text-amber-300 bg-amber-950/80 border-amber-500/40"
+              }`}>
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
                 Transferência de Lead
               </span>
             </div>
-            <p className="text-[11px] text-slate-300 mt-0.5">
-              Por <span className="font-semibold text-white">{transferredBy}</span> para <span className="font-bold text-amber-300">{departmentName}</span>
+            <p className={`text-[11px] mt-1 font-medium ${isClean ? "text-slate-600" : "text-slate-300"}`}>
+              Por <span className={`font-bold ${isClean ? "text-slate-900" : "text-white"}`}>{transferredBy}</span> para <span className={`font-bold ${isClean ? "text-amber-800" : "text-amber-300"}`}>{departmentName}</span>
             </p>
           </div>
         </div>
@@ -269,31 +366,51 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
         {/* Botão Fechar */}
         <button
           onClick={onClose}
-          className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800/60 transition-colors cursor-pointer shrink-0"
+          className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
+            isClean
+              ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              : "text-slate-400 hover:text-white hover:bg-slate-800/80"
+          }`}
           title="Fechar alerta"
         >
-          <X size={16} />
+          <X size={15} />
         </button>
       </div>
 
       {/* Detalhes do Lead */}
-      <div className="bg-slate-900/80 rounded-xl p-3 border border-slate-800 flex items-center justify-between mb-3.5">
+      <div className={`rounded-xl p-3 border flex items-center justify-between mb-3.5 ${
+        isClean
+          ? "bg-slate-100/90 border-slate-200"
+          : isWhatsApp
+          ? "bg-[#111B21] border-emerald-900/40"
+          : "bg-slate-900/90 border-slate-800"
+      }`}>
         <div className="min-w-0">
-          <h4 className="font-bold text-sm text-white truncate">{contactName}</h4>
+          <h4 className={`font-bold text-sm truncate ${isClean ? "text-slate-900" : "text-white"}`}>{contactName}</h4>
           {contactPhone && (
-            <p className="text-[11px] text-slate-400 font-mono mt-0.5">{contactPhone}</p>
+            <p className={`text-[11px] font-mono font-medium mt-0.5 ${isClean ? "text-slate-500" : "text-slate-400"}`}>{contactPhone}</p>
           )}
         </div>
-        <span className="text-[11px] text-amber-400 font-semibold bg-amber-950/50 border border-amber-800/50 px-2 py-1 rounded-lg shrink-0">
+        <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg shrink-0 border ${
+          isClean
+            ? "text-amber-800 bg-amber-100 border-amber-300"
+            : "text-amber-300 bg-amber-950/60 border-amber-700/50"
+        }`}>
           Aguardando Atendente
         </span>
       </div>
 
       {/* Ações Rápidas */}
-      <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/60">
+      <div className={`flex items-center justify-end gap-2 pt-2 border-t ${
+        isClean ? "border-slate-200" : "border-slate-800/80"
+      }`}>
         <button
           onClick={() => onOpen(conversationId)}
-          className="px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all cursor-pointer flex items-center gap-1"
+          className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
+            isClean
+              ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300"
+              : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700"
+          }`}
         >
           <Eye size={13} />
           <span>Ver Chat</span>
@@ -302,7 +419,7 @@ export const TransferAlertToast: React.FC<TransferAlertToastProps> = ({
         <button
           onClick={handleTakeover}
           disabled={isTakingOver}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-black shadow-[0_0_15px_rgba(16,185,129,0.35)] transition-all cursor-pointer disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50 shadow-sm"
         >
           {isTakingOver ? (
             <>
@@ -448,31 +565,41 @@ export const LeadQualifiedToast: React.FC<LeadQualifiedToastProps> = ({
   product,
   reason,
   conversationId,
+  dealId,
   onOpenChat,
   onOpenCrm,
   onClose,
 }) => {
   if (isBlockedNotificationContext()) return null;
 
-  return (
-    <div className="w-[380px] sm:w-[410px] rounded-2xl bg-white/95 dark:bg-[#0B1426]/95 backdrop-blur-2xl border border-amber-500/50 shadow-[0_12px_45px_rgba(0,0,0,0.8),0_0_25px_rgba(245,158,11,0.2)] p-4 text-white relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300">
-      {/* Luz ambiente dourada no topo */}
-      <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-56 h-14 bg-gradient-to-r from-amber-500/30 to-orange-500/20 blur-2xl rounded-full pointer-events-none" />
+  const { isClean, isWhatsApp } = useNotificationTheme();
 
+  return (
+    <div className={`w-[380px] sm:w-[410px] rounded-2xl p-4 relative group overflow-hidden transition-all animate-in fade-in slide-in-from-top-4 duration-300 border ${
+      isClean
+        ? "bg-white border-amber-400 shadow-[0_12px_36px_rgba(0,0,0,0.12)] text-slate-900"
+        : isWhatsApp
+        ? "bg-[#0B141B] border-amber-500/60 shadow-[0_16px_45px_rgba(0,0,0,0.85)] text-white"
+        : "bg-[#0B1426] border-amber-500/60 shadow-[0_16px_45px_rgba(0,0,0,0.85)] text-white"
+    }`}>
       {/* Header do Toast */}
       <div className="flex items-center justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-md shadow-amber-500/30 shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-white shadow-sm shrink-0">
             <Sparkles size={16} />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+              <span className={`text-xs font-black uppercase tracking-wider ${
+                isClean ? "text-amber-800" : "text-amber-300"
+              }`}>
                 Lead Qualificado pela IA
               </span>
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping shrink-0" />
+              <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
             </div>
-            <p className="text-[10px] text-slate-400 font-medium">
+            <p className={`text-[10px] font-medium ${
+              isClean ? "text-slate-600" : "text-slate-400"
+            }`}>
               Transbordo para Atendimento Humano
             </p>
           </div>
@@ -480,7 +607,11 @@ export const LeadQualifiedToast: React.FC<LeadQualifiedToastProps> = ({
 
         <button
           onClick={onClose}
-          className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800/60 transition-colors cursor-pointer shrink-0"
+          className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
+            isClean
+              ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              : "text-slate-400 hover:text-white hover:bg-slate-800/80"
+          }`}
           title="Fechar"
         >
           <X size={15} />
@@ -488,34 +619,52 @@ export const LeadQualifiedToast: React.FC<LeadQualifiedToastProps> = ({
       </div>
 
       {/* Card do Lead */}
-      <div className="bg-slate-900/90 rounded-xl p-3 border border-amber-500/20 mb-3 space-y-1.5">
+      <div className={`rounded-xl p-3 border mb-3 space-y-2 ${
+        isClean
+          ? "bg-slate-100/90 border-slate-200"
+          : isWhatsApp
+          ? "bg-[#111B21] border-emerald-900/40"
+          : "bg-slate-900/90 border-slate-800"
+      }`}>
         <div className="flex items-center justify-between gap-2">
-          <h4 className="font-bold text-sm text-white truncate">{contactName || 'Lead Interessado'}</h4>
+          <h4 className={`font-bold text-sm truncate ${isClean ? "text-slate-900" : "text-white"}`}>
+            {contactName || 'Lead Interessado'}
+          </h4>
           {contactPhone && (
-            <span className="text-[11px] text-amber-400 font-mono font-bold shrink-0">
+            <span className={`text-[11px] font-mono font-bold shrink-0 ${
+              isClean ? "text-amber-800" : "text-amber-400"
+            }`}>
               {contactPhone}
             </span>
           )}
         </div>
 
         {product && product !== 'Não informado' && product !== 'Atendimento Comercial' && (
-          <div className="text-[11px] text-cyan-300 flex items-center gap-1">
-            <span className="text-slate-400">Interesse:</span>
-            <span className="font-semibold text-white truncate max-w-[220px]">{product}</span>
+          <div className={`text-[11px] font-medium flex items-center gap-1.5 ${isClean ? "text-slate-700" : "text-slate-300"}`}>
+            <span className={isClean ? "text-slate-500" : "text-slate-400"}>Interesse:</span>
+            <span className={`font-bold truncate max-w-[220px] ${isClean ? "text-slate-900" : "text-white"}`}>{product}</span>
           </div>
         )}
 
-        <p className="text-[11px] text-slate-300 leading-relaxed italic border-l-2 border-amber-400 pl-2">
+        <p className={`text-[11px] leading-relaxed italic border-l-2 border-amber-500 pl-2 font-medium ${
+          isClean ? "text-slate-700" : "text-slate-300"
+        }`}>
           &ldquo;{reason || 'Lead solicitou especialista ou expressou necessidade de atendimento humano.'}&rdquo;
         </p>
       </div>
 
       {/* Botões de Ação */}
-      <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/80">
+      <div className={`flex items-center justify-end gap-2 pt-2 border-t ${
+        isClean ? "border-slate-200" : "border-slate-800/80"
+      }`}>
         <button
           type="button"
           onClick={onOpenCrm}
-          className="px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all cursor-pointer flex items-center gap-1"
+          className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
+            isClean
+              ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300"
+              : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700"
+          }`}
         >
           <span>Ver no CRM</span>
         </button>
@@ -523,7 +672,11 @@ export const LeadQualifiedToast: React.FC<LeadQualifiedToastProps> = ({
         <button
           type="button"
           onClick={() => onOpenChat(conversationId)}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-500 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-black shadow-[0_0_15px_rgba(245,158,11,0.35)] transition-all cursor-pointer"
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-white text-xs font-bold transition-all cursor-pointer shadow-sm ${
+            isWhatsApp
+              ? "bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800"
+              : "bg-amber-600 hover:bg-amber-700 active:bg-amber-800"
+          }`}
         >
           <MessageSquare size={13} />
           <span>Atender no Chat</span>
@@ -582,4 +735,3 @@ export function showLeadQualifiedToast(
     }
   );
 }
-
