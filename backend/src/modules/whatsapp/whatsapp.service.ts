@@ -1767,6 +1767,118 @@ export class WhatsappService {
       return 0;
     }
   }
+
+  /**
+   * Sincroniza em lote a agenda completa de contatos da Evolution API (Baileys) para o banco de dados.
+   * Cria contatos faltantes e enriquece nomes e avatares de contatos existentes.
+   */
+  async syncContactsFromEvolution(tenantId: string, instanceName?: string): Promise<{ created: number; updated: number }> {
+    try {
+      const targetInstanceName = await this.getEvolutionInstanceName(tenantId, instanceName);
+      if (!targetInstanceName) return { created: 0, updated: 0 };
+
+      const { serverUrl, apiKey } = this.getEvolutionConfig();
+      const res = await axios.post(
+        `${serverUrl}/chat/findContacts/${targetInstanceName}`,
+        {},
+        {
+          headers: { apikey: apiKey, 'Content-Type': 'application/json' },
+          timeout: 20000,
+        }
+      );
+
+      const evoContacts: any[] = Array.isArray(res.data) ? res.data : [];
+      if (!evoContacts.length) return { created: 0, updated: 0 };
+
+      this.logger.log(`[Auto-Sync Evolution] Sincronizando ${evoContacts.length} contatos da agenda para tenant ${tenantId}...`);
+
+      const dbContacts = await this.prisma.contact.findMany({
+        where: { tenantId },
+        select: { id: true, name: true, phone: true, avatarUrl: true, whatsappLid: true }
+      });
+
+      const phoneToContact = new Map<string, typeof dbContacts[0]>();
+      const lidToContact = new Map<string, typeof dbContacts[0]>();
+
+      for (const c of dbContacts) {
+        if (c.phone) phoneToContact.set(c.phone.replace(/\D/g, ''), c);
+        if (c.whatsappLid) lidToContact.set(c.whatsappLid.replace('@lid', '').trim(), c);
+      }
+
+      const toCreate: any[] = [];
+      let updatedCount = 0;
+
+      for (const ec of evoContacts) {
+        const id = ec.id || '';
+        const isLid = id.includes('@lid');
+        const cleanDigits = id.replace('@s.whatsapp.net', '').replace('@c.us', '').replace('@lid', '').replace(/\D/g, '');
+        const pushName = (ec.pushName || ec.name || ec.verifiedName || '').trim();
+        const avatarUrl = ec.profilePictureUrl || null;
+
+        if (isLid) {
+          const existing = lidToContact.get(cleanDigits);
+          if (existing && pushName && (!existing.name || existing.name === existing.phone || existing.name.includes('@lid') || /^\d+$/.test(existing.name))) {
+            await this.prisma.contact.update({
+              where: { id: existing.id },
+              data: {
+                name: pushName,
+                ...(avatarUrl && !existing.avatarUrl ? { avatarUrl } : {})
+              }
+            }).catch(() => {});
+            updatedCount++;
+          }
+          continue;
+        }
+
+        if (cleanDigits.length < 10 || cleanDigits.length > 13) continue;
+
+        const existing = phoneToContact.get(cleanDigits);
+        if (existing) {
+          const isGenericName = !existing.name ||
+            existing.name === '.' ||
+            existing.name === '-' ||
+            existing.name === existing.phone ||
+            existing.name === `WhatsApp (${existing.phone})` ||
+            existing.name === 'Cliente WhatsApp' ||
+            existing.name === 'Cliente Verto' ||
+            existing.name.toLowerCase() === 'cliente' ||
+            (existing.name.length >= 8 && /^\d+$/.test(existing.name.replace(/\D/g, '')));
+
+          if (pushName && isGenericName) {
+            await this.prisma.contact.update({
+              where: { id: existing.id },
+              data: {
+                name: pushName,
+                ...(avatarUrl && !existing.avatarUrl ? { avatarUrl } : {})
+              }
+            }).catch(() => {});
+            updatedCount++;
+          }
+        } else {
+          toCreate.push({
+            tenantId,
+            name: pushName || `WhatsApp (${cleanDigits})`,
+            phone: cleanDigits,
+            avatarUrl: avatarUrl || null,
+          });
+          phoneToContact.set(cleanDigits, { id: 'temp', name: pushName, phone: cleanDigits, avatarUrl, whatsappLid: null });
+        }
+      }
+
+      if (toCreate.length > 0) {
+        await this.prisma.contact.createMany({
+          data: toCreate,
+          skipDuplicates: true,
+        });
+      }
+
+      this.logger.log(`[Auto-Sync Evolution] Concluído: ${toCreate.length} criados, ${updatedCount} atualizados.`);
+      return { created: toCreate.length, updated: updatedCount };
+    } catch (err: any) {
+      this.logger.error(`[Auto-Sync Evolution] Falha para tenant [${tenantId}]: ${err.message}`);
+      return { created: 0, updated: 0 };
+    }
+  }
 }
 
 

@@ -294,7 +294,17 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             if (realPhone && (existingContact.phone?.includes('@lid') || existingContact.phone?.replace(/\D/g, '').length > 13)) {
                 dataToUpdate.phone = realPhone;
             }
-            if (!isGenericPushName && (existingContact.name === 'Cliente WhatsApp' || existingContact.name?.includes('@lid') || existingContact.name?.startsWith('WhatsApp'))) {
+            const isCurrentNameGeneric = !existingContact.name ||
+                existingContact.name === '.' ||
+                existingContact.name === '-' ||
+                existingContact.name === 'Cliente WhatsApp' ||
+                existingContact.name === 'Cliente Verto' ||
+                existingContact.name.toLowerCase() === 'cliente' ||
+                existingContact.name.toLowerCase() === 'sem nome' ||
+                existingContact.name.includes('@lid') ||
+                existingContact.name.startsWith('WhatsApp') ||
+                (/^\d+$/.test(existingContact.name.trim()) && existingContact.name.trim().length >= 8);
+            if (!isGenericPushName && isCurrentNameGeneric) {
                 dataToUpdate.name = effectiveCustomerPushName;
             }
             if (evolutionMetadata?.profilePictureUrl && !existingContact.avatarUrl) {

@@ -332,6 +332,11 @@ export class WebhooksController {
 
           this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
           this.logger.log(`✅ [WhatsApp Conectado] Instância [${matchedInstance.id}] confirmada e ativa para tenant ${tenantId}!`);
+
+          // Sincroniza em segundo plano todo o catálogo de contatos e agenda da Evolution API
+          this.whatsappService.syncContactsFromEvolution(tenantId, instanceName).catch(err => {
+            this.logger.warn(`[Auto-Sync] Erro ao sincronizar contatos da Evolution: ${err.message}`);
+          });
         } else if (state === 'close') {
           const updated = await this.prisma.whatsAppInstance.update({
             where: { id: matchedInstance.id },
@@ -745,14 +750,25 @@ export class WebhooksController {
 
         if (phone && phone.length >= 10 && phone.length <= 13 && pushName && !pushName.includes('@lid')) {
           try {
-            // 1. Atualiza por telefone direto
-            await this.prisma.contact.updateMany({
+            // 1. Atualiza por telefone direto ou insere se não existir
+            const updateRes = await this.prisma.contact.updateMany({
               where: { tenantId, phone },
               data: {
                 name: pushName,
                 ...(profilePictureUrl ? { avatarUrl: profilePictureUrl } : {}),
               },
             });
+
+            if (updateRes.count === 0) {
+              await this.prisma.contact.create({
+                data: {
+                  tenantId,
+                  phone: String(phone),
+                  name: String(pushName),
+                  avatarUrl: profilePictureUrl ? String(profilePictureUrl) : null,
+                } as any
+              }).catch(() => {});
+            }
 
             // 2. Reconcilia contatos que ficaram salvos com identificador @lid
             const normPush = this.whatsappService.normalizeContactName(pushName);

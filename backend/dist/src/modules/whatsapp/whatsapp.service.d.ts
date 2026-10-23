@@ -229,4 +229,8 @@ export declare class WhatsappService {
         avatarUrl: string | null;
     }>;
     syncAndResolveLidContacts(tenantId: string): Promise<number>;
+    syncContactsFromEvolution(tenantId: string, instanceName?: string): Promise<{
+        created: number;
+        updated: number;
+    }>;
 }

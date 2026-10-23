@@ -114,7 +114,24 @@ let PublicApiService = PublicApiService_1 = class PublicApiService {
         };
         const dealTitle = dto.title?.trim() || `${dto.name.trim()} - ${source}`;
         const dealValue = dto.value ? Number(dto.value) : 0;
-        const stageId = dto.stage || 'new';
+        let stageId = 'seed';
+        if (dto.stage) {
+            const s = dto.stage.trim().toLowerCase();
+            if (s === 'seed' || s.includes('seed'))
+                stageId = 'seed';
+            else if (s === 'new' || s.includes('novo'))
+                stageId = 'new';
+            else if (s === 'qualified' || s.includes('qualifica'))
+                stageId = 'qualified';
+            else if (s === 'follow-up' || s.includes('follow'))
+                stageId = 'follow-up';
+            else if (s === 'proposal' || s.includes('proposta'))
+                stageId = 'proposal';
+            else if (s === 'negotiation' || s.includes('negocia'))
+                stageId = 'negotiation';
+            else
+                stageId = dto.stage;
+        }
         const deal = await this.prisma.deal.create({
             data: {
                 tenantId,

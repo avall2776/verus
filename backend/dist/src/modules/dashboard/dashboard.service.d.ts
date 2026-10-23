@@ -36,4 +36,50 @@ export declare class DashboardService {
         }[];
     }>;
     getCrmMetrics(tenantId: string): Promise<any>;
+    getGeoMapData(tenantId: string): Promise<{
+        summary: {
+            totalSalesCount: number;
+            totalRevenue: number;
+            totalInAttendance: number;
+            totalCitiesMapped: number;
+            activeLiveAttendances: number;
+            conversionRate: number;
+            topRegion: string;
+        };
+        regions: {
+            name: string;
+            salesCount: number;
+            salesVolume: number;
+            inAttendanceCount: number;
+            percentage: number;
+            assignedSellers: string[];
+        }[];
+        sellers: {
+            id: string;
+            name: string;
+            region: string;
+            salesCount: number;
+            salesVolume: number;
+            activeDeals: number;
+        }[];
+        points: {
+            id: string;
+            cityName: string;
+            state: string;
+            region: string;
+            lat: number;
+            lng: number;
+            status: "closed" | "in_attendance" | "unexplored";
+            salesCount: number;
+            salesVolume: number;
+            inAttendanceCount: number;
+            isLiveNow: boolean;
+            assignedSellers: string[];
+            trafficSource: {
+                paid: number;
+                organic: number;
+            };
+            recentDeals: any[];
+        }[];
+    }>;
 }

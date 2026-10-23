@@ -258,6 +258,9 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     });
                     this.chatGateway.emitWhatsAppStatusUpdated(tenantId, updated);
                     this.logger.log(`✅ [WhatsApp Conectado] Instância [${matchedInstance.id}] confirmada e ativa para tenant ${tenantId}!`);
+                    this.whatsappService.syncContactsFromEvolution(tenantId, instanceName).catch(err => {
+                        this.logger.warn(`[Auto-Sync] Erro ao sincronizar contatos da Evolution: ${err.message}`);
+                    });
                 }
                 else if (state === 'close') {
                     const updated = await this.prisma.whatsAppInstance.update({
@@ -603,13 +606,23 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                 const profilePictureUrl = c?.profilePictureUrl || null;
                 if (phone && phone.length >= 10 && phone.length <= 13 && pushName && !pushName.includes('@lid')) {
                     try {
-                        await this.prisma.contact.updateMany({
+                        const updateRes = await this.prisma.contact.updateMany({
                             where: { tenantId, phone },
                             data: {
                                 name: pushName,
                                 ...(profilePictureUrl ? { avatarUrl: profilePictureUrl } : {}),
                             },
                         });
+                        if (updateRes.count === 0) {
+                            await this.prisma.contact.create({
+                                data: {
+                                    tenantId,
+                                    phone: String(phone),
+                                    name: String(pushName),
+                                    avatarUrl: profilePictureUrl ? String(profilePictureUrl) : null,
+                                }
+                            }).catch(() => { });
+                        }
                         const normPush = this.whatsappService.normalizeContactName(pushName);
                         if (normPush && normPush.length >= 3) {
                             const lidCandidates = await this.prisma.contact.findMany({

@@ -30,6 +30,9 @@ let DashboardController = class DashboardController {
     async getCrmMetrics(tenantId) {
         return this.dashboardService.getCrmMetrics(tenantId);
     }
+    async getGeoMapData(tenantId) {
+        return this.dashboardService.getGeoMapData(tenantId);
+    }
 };
 exports.DashboardController = DashboardController;
 __decorate([
@@ -53,6 +56,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], DashboardController.prototype, "getCrmMetrics", null);
+__decorate([
+    (0, common_1.Get)('geo-map'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "getGeoMapData", null);
 exports.DashboardController = DashboardController = __decorate([
     (0, common_1.Controller)('metrics'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
