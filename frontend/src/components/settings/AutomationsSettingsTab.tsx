@@ -28,8 +28,21 @@ import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { AutomationRule, AutomationLog } from "@/types/automation";
 import { AutomationModal } from "@/components/automations/AutomationModal";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function AutomationsSettingsTab() {
+  const { isWhatsApp, isClean } = useTheme();
+  const primaryBtnClass = isWhatsApp 
+    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20" 
+    : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20";
+  const focusBorderClass = isWhatsApp 
+    ? "focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" 
+    : "focus:border-blue-500 focus:ring-1 focus:ring-blue-500";
+  const accentTextClass = isWhatsApp ? "text-emerald-500 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400";
+  const activeSubTabClass = isWhatsApp 
+    ? "text-emerald-500 dark:text-emerald-400 border-b-2 border-emerald-500" 
+    : "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-500";
+
   const [automations, setAutomations] = useState<AutomationRule[]>([]);
   const [logs, setLogs] = useState<AutomationLog[]>([]);
   const [activeSubTab, setActiveSubTab] = useState<"rules" | "logs">("rules");
@@ -110,20 +123,26 @@ export default function AutomationsSettingsTab() {
         return {
           label: "Contrato Assinado",
           icon: <Award className="w-3.5 h-3.5" />,
-          color: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20",
+          color: isWhatsApp
+            ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20"
+            : "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20",
         };
       case "DEAL_CREATED":
         return {
           label: "Nova Oportunidade",
           icon: <DollarSign className="w-3.5 h-3.5" />,
-          color: "text-cyan-700 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20",
+          color: isWhatsApp
+            ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20"
+            : "text-cyan-700 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20",
         };
       case "DEAL_STAGE_CHANGED":
       case "STAGE_CHANGED":
         return {
           label: "Etapa de Funil",
           icon: <Kanban className="w-3.5 h-3.5" />,
-          color: "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20",
+          color: isWhatsApp
+            ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20"
+            : "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20",
         };
       case "MESSAGE_RECEIVED":
         return {
@@ -165,7 +184,7 @@ export default function AutomationsSettingsTab() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <Zap className={`w-5 h-5 ${accentTextClass}`} />
             Automações e Gatilhos de Atendimento
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -180,11 +199,11 @@ export default function AutomationsSettingsTab() {
             className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer"
             title="Atualizar dados"
           >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-blue-500" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? `animate-spin ${accentTextClass}` : ""}`} />
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer ${primaryBtnClass}`}
           >
             <Plus className="w-4 h-4" />
             Nova Automação
@@ -199,7 +218,7 @@ export default function AutomationsSettingsTab() {
             onClick={() => setActiveSubTab("rules")}
             className={`pb-3 text-xs font-bold transition-colors relative cursor-pointer ${
               activeSubTab === "rules"
-                ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-500"
+                ? activeSubTabClass
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
@@ -209,7 +228,7 @@ export default function AutomationsSettingsTab() {
             onClick={() => setActiveSubTab("logs")}
             className={`pb-3 text-xs font-bold transition-colors relative cursor-pointer ${
               activeSubTab === "logs"
-                ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-500"
+                ? activeSubTabClass
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
@@ -225,7 +244,7 @@ export default function AutomationsSettingsTab() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Filtrar automações..."
-              className="w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+              className={`w-full bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-colors ${focusBorderClass}`}
             />
           </div>
         )}
@@ -234,7 +253,7 @@ export default function AutomationsSettingsTab() {
       {/* Conteúdo da Sub-Aba */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center p-12 text-slate-500 dark:text-slate-400 space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <Loader2 className={`w-8 h-8 animate-spin ${accentTextClass}`} />
           <p className="text-xs font-semibold">Carregando automações...</p>
         </div>
       ) : activeSubTab === "rules" ? (
@@ -247,7 +266,11 @@ export default function AutomationsSettingsTab() {
             </p>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-400 text-xs font-medium hover:bg-blue-100 dark:hover:bg-blue-600/30 transition-colors cursor-pointer"
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                isWhatsApp
+                  ? "bg-emerald-50 dark:bg-emerald-600/20 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-600/30"
+                  : "bg-blue-50 dark:bg-blue-600/20 border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-600/30"
+              }`}
             >
               <Plus className="w-3.5 h-3.5" /> Criar primeira regra
             </button>
@@ -290,7 +313,11 @@ export default function AutomationsSettingsTab() {
                       onClick={() => handleTestNow(auto.id, auto.name)}
                       disabled={testingId === auto.id}
                       title="Disparar teste agora"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-600/20 transition-colors disabled:opacity-50 cursor-pointer"
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer ${
+                        isWhatsApp
+                          ? "bg-emerald-50 dark:bg-emerald-600/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-600/20"
+                          : "bg-blue-50 dark:bg-blue-600/10 border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-600/20"
+                      }`}
                     >
                       {testingId === auto.id ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
