@@ -73,7 +73,7 @@ const NAV_GROUPS = [
   {
     title: "OPERAÇÃO / ATENDIMENTO",
     items: [
-      { name: "Mapa Tático Operacional", icon: Compass, href: "/dashboard?view=map" },
+      { name: "Mapa Tático Operacional", icon: Compass, href: "/dashboard/mapa" },
       { name: "Monitor em Tempo Real", icon: Activity, href: "/monitor" },
       { name: "WhatsApp", icon: WhatsAppIcon, href: "/inbox" },
       { name: "Inbox de E-mail", icon: Mail, href: "/email-inbox" },
@@ -521,8 +521,8 @@ export default function Sidebar() {
     const menus = perms.menus;
     const subPerms = perms.subPermissions;
 
-    // Visão Geral / Dashboard
-    if (base === '/dashboard') {
+    // Visão Geral / Dashboard & Mapa Tático
+    if (base === '/dashboard' || base === '/dashboard/mapa') {
       if (menus?.dashboard !== undefined) return menus.dashboard;
       return true;
     }
@@ -737,8 +737,8 @@ export default function Sidebar() {
                   const isMarketingMain = item.href === '/agency/marketing';
                   const isMarketingGroup = group.title === "MARKETING & AGÊNCIA";
                   let isActive = false;
-                  if (item.href === '/dashboard?view=map') {
-                    isActive = pathname === '/dashboard' && searchParams?.get('view') === 'map';
+                  if (item.href === '/dashboard/mapa' || item.href === '/dashboard?view=map') {
+                    isActive = pathname === '/dashboard/mapa' || (pathname === '/dashboard' && searchParams?.get('view') === 'map');
                   } else if (item.href === '/dashboard') {
                     isActive = pathname === '/dashboard' && searchParams?.get('view') !== 'map';
                   } else if (item.href.includes('?')) {

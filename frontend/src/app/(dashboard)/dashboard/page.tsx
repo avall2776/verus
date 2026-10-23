@@ -32,17 +32,17 @@ function DashboardInner() {
     : "welcome";
   const [viewMode, setViewMode] = useState<"map" | "welcome" | "metrics">(initialView);
 
-  // Sincroniza viewMode quando o usuário clica entre Mapa Tático Operacional e Visão Geral na Sidebar
+  // Redireciona ?view=map para rota dedicada /dashboard/mapa se acessado
   React.useEffect(() => {
     const v = searchParams ? searchParams.get("view") : null;
     if (v === "map") {
-      setViewMode("map");
+      router.replace("/dashboard/mapa");
     } else if (v === "metrics") {
       setViewMode("metrics");
     } else {
       setViewMode("welcome");
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
   const { tenantId: effectiveTenantId } = getEffectiveTenantContext();
   const tenantKey = effectiveTenantId || "default_tenant";
 
@@ -56,7 +56,7 @@ function DashboardInner() {
     retry: false,
   });
 
-  // ================= 1. MODO SALA DE GUERRA (MAPA TÁTICO 3D - DEFAULT) =================
+  // ================= 1. MODO SALA DE GUERRA (MAPA TÁTICO) =================
   if (viewMode === "map") {
     return (
       <div className="w-full h-[calc(100vh-80px)] -m-2.5 sm:-m-4 md:-m-8 overflow-hidden">
@@ -198,11 +198,11 @@ function DashboardInner() {
           </button>
 
           <button
-            onClick={() => setViewMode("map")}
+            onClick={() => router.push("/dashboard/mapa")}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors shadow-md shadow-blue-600/30"
           >
             <Compass className="w-3.5 h-3.5" />
-            <span>Ver Mapa Tático 3D</span>
+            <span>Ver Mapa Tático</span>
           </button>
 
           <button
