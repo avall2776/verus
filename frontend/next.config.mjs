@@ -53,12 +53,21 @@ const nextConfig = {
         destination: `${backendTarget}/:path*`,
       },
       {
+        source: '/api/v1/public/:path*',
+        destination: `${backendTarget}/api/v1/public/:path*`,
+      },
+      {
         source: '/socket.io/:path*',
         destination: `${backendTarget}/socket.io/:path*`,
       },
       {
         source: '/api-backend/:path*',
         destination: `${backendTarget}/:path*`,
+        basePath: false,
+      },
+      {
+        source: '/api/v1/public/:path*',
+        destination: `${backendTarget}/api/v1/public/:path*`,
         basePath: false,
       },
       {
