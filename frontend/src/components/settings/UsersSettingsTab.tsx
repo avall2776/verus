@@ -205,7 +205,7 @@ const MENU_CONFIGS: {
 }[] = [
     { key: "whatsapp", label: "WhatsApp", tooltip: "Acesso ao Inbox ao vivo, conversas e filas", icon: MessageSquare },
     { key: "chat", label: "Chat Interno", tooltip: "Comunicação interna em tempo real entre a equipe", icon: MessagesSquare },
-    { key: "agenda", label: "Lero Cal / Agenda", tooltip: "Agendamentos, calendário e compromissos", icon: Calendar },
+    { key: "agenda", label: "Versus Agenda / Calendário", tooltip: "Agendamentos, calendário e compromissos", icon: Calendar },
     { key: "contacts", label: "Carteira de Atendimento", tooltip: "Gestão completa de leads e contatos", icon: BookUser },
     { key: "dashboard", label: "Dashboard", tooltip: "Painéis analíticos, metas e produtividade", icon: LayoutDashboard },
     { key: "chatbots", label: "Chatbots", tooltip: "Fluxos interativos e triagem automática", icon: Bot },

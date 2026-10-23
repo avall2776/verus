@@ -10,7 +10,21 @@ export declare class ContactsController {
         source: string;
         avatarUrl: string;
         tags: string[];
+        statusCategory: "won" | "lost" | "hot" | "cold" | "collaborator" | "partner";
+        isClient: boolean;
+        dealsCount: number;
+        totalWonValue: number;
+        totalActivePipelineValue: number;
+        deals: {
+            id: string;
+            title: string;
+            status: string;
+            value: number;
+            createdAt: Date;
+            updatedAt: Date;
+        }[];
         lastActive: string;
+        createdAt: string;
     }[]>;
     createContact(tenantId: string, data: {
         name: string;

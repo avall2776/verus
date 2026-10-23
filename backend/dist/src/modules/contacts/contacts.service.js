@@ -37,30 +37,93 @@ let ContactsService = class ContactsService {
             where: { tenantId },
             orderBy: { updatedAt: 'desc' },
             include: {
-                deals: true
+                deals: {
+                    select: {
+                        id: true,
+                        title: true,
+                        status: true,
+                        value: true,
+                        createdAt: true,
+                        updatedAt: true,
+                    }
+                }
             }
         });
         return contacts.map(c => {
-            let tags = c.tags || [];
-            if (c.deals.length > 0 && !tags.includes('Quente')) {
-                tags.push('Quente');
+            let tags = Array.isArray(c.tags) ? [...c.tags] : [];
+            const deals = c.deals || [];
+            const wonDeals = deals.filter(d => d.status === 'won');
+            const hasWonDeal = wonDeals.length > 0;
+            const isClient = tags.includes('Cliente') || hasWonDeal;
+            const activeDeals = deals.filter(d => ['new', 'qualified', 'follow-up', 'proposal', 'negotiation', 'seed', 'ligacao-ativa'].includes(d.status));
+            const hasActiveDeals = activeDeals.length > 0;
+            const lostDeals = deals.filter(d => ['lost', 'disqualified'].includes(d.status));
+            const hasOnlyLostDeals = deals.length > 0 && lostDeals.length === deals.length;
+            let statusCategory = 'cold';
+            if (tags.some(t => t.toLowerCase() === 'colaborador')) {
+                statusCategory = 'collaborator';
             }
-            else if (c.deals.length === 0 && !tags.includes('Frio')) {
-                tags.push('Frio');
+            else if (tags.some(t => t.toLowerCase() === 'parceiro')) {
+                statusCategory = 'partner';
             }
+            else if (isClient) {
+                statusCategory = 'won';
+                if (!tags.includes('Cliente')) {
+                    tags.unshift('Cliente');
+                }
+                tags = tags.filter(t => t !== 'Frio' && t !== 'Não categorizado');
+            }
+            else if (hasActiveDeals || tags.some(t => ['quente', 'lead qualificado'].includes(t.toLowerCase()))) {
+                statusCategory = 'hot';
+                if (!tags.includes('Quente')) {
+                    tags.unshift('Quente');
+                }
+                tags = tags.filter(t => t !== 'Frio' && t !== 'Não categorizado');
+            }
+            else if (hasOnlyLostDeals || tags.some(t => t.toLowerCase().includes('desqualificado'))) {
+                statusCategory = 'lost';
+            }
+            else {
+                statusCategory = 'cold';
+                if (!tags.includes('Frio') && !tags.some(t => ['Cliente', 'Quente', 'Lead'].includes(t))) {
+                    tags.push('Frio');
+                }
+            }
+            if (tags.length > 1 && tags.includes('Não categorizado')) {
+                tags = tags.filter(t => t !== 'Não categorizado');
+            }
+            const totalWonValue = wonDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
+            const totalActivePipelineValue = activeDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
             let avatarUrl = c.avatarUrl;
             if (!avatarUrl || avatarUrl === 'null' || avatarUrl === 'undefined' || avatarUrl.includes('unsplash.com')) {
                 avatarUrl = null;
             }
+            const cleanSource = (c.source || 'Versus CRM')
+                .replace(/lero\s*/gi, 'Versus ')
+                .trim();
             return {
                 id: c.id,
                 name: c.name,
                 phone: c.phone,
                 email: c.email,
-                source: c.source,
+                source: cleanSource,
                 avatarUrl,
                 tags,
-                lastActive: c.updatedAt.toISOString()
+                statusCategory,
+                isClient,
+                dealsCount: deals.length,
+                totalWonValue,
+                totalActivePipelineValue,
+                deals: deals.map(d => ({
+                    id: d.id,
+                    title: d.title,
+                    status: d.status,
+                    value: Number(d.value) || 0,
+                    createdAt: d.createdAt,
+                    updatedAt: d.updatedAt
+                })),
+                lastActive: c.updatedAt.toISOString(),
+                createdAt: c.createdAt.toISOString()
             };
         });
     }

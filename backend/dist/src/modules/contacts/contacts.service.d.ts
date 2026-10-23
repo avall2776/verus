@@ -33,7 +33,21 @@ export declare class ContactsService {
         source: string;
         avatarUrl: string;
         tags: string[];
+        statusCategory: "won" | "lost" | "hot" | "cold" | "collaborator" | "partner";
+        isClient: boolean;
+        dealsCount: number;
+        totalWonValue: number;
+        totalActivePipelineValue: number;
+        deals: {
+            id: string;
+            title: string;
+            status: string;
+            value: number;
+            createdAt: Date;
+            updatedAt: Date;
+        }[];
         lastActive: string;
+        createdAt: string;
     }[]>;
     updateTags(tenantId: string, contactId: string, tags: string[]): Promise<{
         id: string;

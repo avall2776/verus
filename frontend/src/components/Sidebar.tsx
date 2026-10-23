@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, 
@@ -73,7 +73,7 @@ const NAV_GROUPS = [
   {
     title: "OPERAÇÃO / ATENDIMENTO",
     items: [
-      { name: "Mapa Tático Operacional", icon: Compass, href: "/dashboard" },
+      { name: "Mapa Tático Operacional", icon: Compass, href: "/dashboard?view=map" },
       { name: "Monitor em Tempo Real", icon: Activity, href: "/monitor" },
       { name: "WhatsApp", icon: WhatsAppIcon, href: "/inbox" },
       { name: "Inbox de E-mail", icon: Mail, href: "/email-inbox" },
@@ -125,6 +125,7 @@ const NAV_GROUPS = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { hasGlobalUnread } = useSocket();
   const { status: waStatus, refreshStatus: refreshWaStatus } = useWhatsApp();
@@ -735,11 +736,23 @@ export default function Sidebar() {
                   const itemBase = item.href.split('?')[0];
                   const isMarketingMain = item.href === '/agency/marketing';
                   const isMarketingGroup = group.title === "MARKETING & AGÊNCIA";
-                  const isActive = item.href.includes('?')
-                    ? pathname === itemBase
-                    : isMarketingMain
-                      ? pathname === '/agency/marketing' || pathname === '/agency/marketing/kanban'
-                      : pathname === item.href || (item.href !== '/dashboard' && item.href !== '/settings' && !isMarketingMain && pathname.startsWith(item.href));
+                  let isActive = false;
+                  if (item.href === '/dashboard?view=map') {
+                    isActive = pathname === '/dashboard' && searchParams?.get('view') === 'map';
+                  } else if (item.href === '/dashboard') {
+                    isActive = pathname === '/dashboard' && searchParams?.get('view') !== 'map';
+                  } else if (item.href.includes('?')) {
+                    const tabParam = new URLSearchParams(item.href.split('?')[1]).get('tab');
+                    if (tabParam) {
+                      isActive = pathname === itemBase && searchParams?.get('tab') === tabParam;
+                    } else {
+                      isActive = pathname === itemBase;
+                    }
+                  } else if (isMarketingMain) {
+                    isActive = pathname === '/agency/marketing' || pathname === '/agency/marketing/kanban';
+                  } else {
+                    isActive = pathname === item.href || (item.href !== '/dashboard' && item.href !== '/settings' && !isMarketingMain && pathname.startsWith(item.href));
+                  }
                   const isInbox = item.href === '/inbox';
                   const shouldBlink = isInbox && hasGlobalUnread && !isActive;
 

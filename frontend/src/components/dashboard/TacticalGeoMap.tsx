@@ -18,7 +18,8 @@ import {
   Users,
   Briefcase,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  GripVertical
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
@@ -216,9 +217,59 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
   const [geoData, setGeoData] = useState<GeoMapResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Estados de Visualização WebGIS
+  // Modo de Camada: Vetor Tático vs Satélite HD
   const [mapMode, setMapMode] = useState<"vector" | "satellite">("vector");
-  const [is3D, setIs3D] = useState<boolean>(true);
+
+  // Posição Móvel / Arrastável da Legenda Espacial (Como solicitado pelo usuário)
+  const [legendPosition, setLegendPosition] = useState<{ x: number; y: number }>({ x: 14, y: 14 });
+  const [isDraggingLegend, setIsDraggingLegend] = useState(false);
+  const dragStartRef = useRef<{ startX: number; startY: number; initX: number; initY: number }>({
+    startX: 0,
+    startY: 0,
+    initX: 14,
+    initY: 14
+  });
+
+  const handleLegendDragStart = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    setIsDraggingLegend(true);
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initX: legendPosition.x,
+      initY: legendPosition.y
+    };
+  };
+
+  useEffect(() => {
+    if (!isDraggingLegend) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const dx = e.clientX - dragStartRef.current.startX;
+      const dy = e.clientY - dragStartRef.current.startY;
+      
+      const stageRect = mapStageRef.current?.getBoundingClientRect();
+      const maxX = stageRect ? stageRect.width - 270 : window.innerWidth - 300;
+      const maxY = stageRect ? stageRect.height - 80 : window.innerHeight - 100;
+      
+      const newX = Math.max(8, Math.min(maxX, dragStartRef.current.initX + dx));
+      const newY = Math.max(8, Math.min(maxY, dragStartRef.current.initY + dy));
+      
+      setLegendPosition({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingLegend(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingLegend]);
+
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
   // Estados da Legenda Flutuante Oficial (Status aberto por padrão, demais retráteis)
@@ -288,8 +339,8 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
       center: BRAZIL_CENTER,
       zoom: BRAZIL_DEFAULT_ZOOM,
       minZoom: 3,
-      pitch: is3D ? 48 : 0,
-      bearing: is3D ? -12 : 0,
+      pitch: 0,
+      bearing: 0,
       attributionControl: false
     });
 
@@ -335,26 +386,14 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
     setMapMode((prev) => (prev === "vector" ? "satellite" : "vector"));
   };
 
-  // 4. Alternância 3D Tilt
-  const toggle3DTilt = () => {
-    if (!mapRef.current) return;
-    const nextIs3D = !is3D;
-    setIs3D(nextIs3D);
-    mapRef.current.easeTo({
-      pitch: nextIs3D ? 48 : 0,
-      bearing: nextIs3D ? -12 : 0,
-      duration: 1000
-    });
-  };
-
-  // 5. Centralizar Visão Geral do Brasil
+  // 4. Centralizar Visão Geral do Brasil (Visão Plana 100% Perpendicular)
   const handleResetCenter = () => {
     if (!mapRef.current) return;
     mapRef.current.flyTo({
       center: BRAZIL_CENTER,
       zoom: BRAZIL_DEFAULT_ZOOM,
-      pitch: is3D ? 48 : 0,
-      bearing: is3D ? -12 : 0,
+      pitch: 0,
+      bearing: 0,
       duration: 1200
     });
   };
@@ -536,7 +575,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
           mapRef.current.flyTo({
             center: [point.lng, point.lat],
             zoom: 7.5,
-            pitch: 50,
+            pitch: 0,
             duration: 1200
           });
         }
@@ -630,16 +669,6 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
             </span>
           </button>
 
-          {/* 3D Ativo */}
-          <button
-            type="button"
-            className={`btn-map-control ${is3D ? "active" : ""}`}
-            onClick={toggle3DTilt}
-            title="Alternar perspectiva 3D tática com inclinação angular"
-          >
-            <Compass className="w-3.5 h-3.5" />
-            <span>{is3D ? "3D Ativo" : "Visão Plana"}</span>
-          </button>
 
           {/* Centralizar Brasil */}
           <button
@@ -764,11 +793,28 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
         {/* ======================================================================= */}
         {/* 3. LEGENDA FLUTUANTE OFICIAL (ESTRUTURA COMPACTA COM SCROLL INTERNO)    */}
         {/* ======================================================================= */}
-        <div className={`map-floating-legend ${isLegendMinimized ? "minimized" : ""}`}>
-          <div className="legend-header">
-            <div className="legend-header-left">
+        <div
+          className={`map-floating-legend ${isLegendMinimized ? "minimized" : ""} ${
+            isDraggingLegend ? "is-dragging" : ""
+          }`}
+          style={{
+            left: `${legendPosition.x}px`,
+            top: `${legendPosition.y}px`
+          }}
+        >
+          <div
+            className="legend-header cursor-grab active:cursor-grabbing select-none group"
+            onMouseDown={handleLegendDragStart}
+            title="Arraste para posicionar a Legenda Espacial onde preferir na tela"
+          >
+            <div className="legend-header-left flex items-center gap-1.5">
+              <GripVertical className="w-3.5 h-3.5 text-slate-400 shrink-0 opacity-70 group-hover:opacity-100" />
               <span>LEGENDA ESPACIAL</span>
-              <span className="legend-help-trigger" title="Explicação dos status">
+              <span
+                className="legend-help-trigger"
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Explicação dos status"
+              >
                 ?
                 <div className="legend-help-tooltip">
                   <div className="help-title">Guia da Legenda Espacial:</div>
@@ -802,6 +848,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
             <button
               type="button"
               className="btn-legend-minimize"
+              onMouseDown={(e) => e.stopPropagation()}
               onClick={() => setIsLegendMinimized(!isLegendMinimized)}
               title={isLegendMinimized ? "Expandir Legenda" : "Minimizar Legenda"}
             >
@@ -1206,22 +1253,26 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
         {/* ======================================================================= */}
         {selectedPoint && (
           <aside
-            className={`absolute top-0 right-0 bottom-0 w-[420px] max-w-full z-40 flex flex-col shadow-2xl transition-all duration-300 animate-in fade-in slide-in-from-right-8 ${
+            className={`absolute top-0 right-0 bottom-0 w-[420px] max-w-full z-40 flex flex-col shadow-[-16px_0_45px_rgba(0,0,0,0.65)] transition-all duration-300 animate-in fade-in slide-in-from-right-8 ${
               theme === "light"
-                ? "bg-white/98 border-l border-slate-200 text-slate-800"
+                ? "bg-white/95 border-l border-slate-200/90 text-slate-800"
                 : theme === "whatsapp"
-                ? "bg-[#111B21]/98 border-l border-[#202C33] text-[#E9EDEF]"
-                : "bg-[#0B1224]/98 border-l border-slate-800 text-slate-200"
+                ? "bg-[#111B21]/95 border-l border-[#202C33]/90 text-[#E9EDEF]"
+                : "bg-[#0B1224]/95 border-l border-slate-800/90 text-slate-200"
             }`}
+            style={{
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+            }}
           >
-            {/* Topo da Gaveta: Cidade, Estado e Botão Fechar */}
+            {/* Topo da Gaveta: Cidade, Estado e Botão Fechar (Efeito Vidro Fosco) */}
             <div
-              className={`p-4 border-b flex items-start justify-between flex-shrink-0 ${
+              className={`p-4 border-b flex items-start justify-between flex-shrink-0 backdrop-blur-md ${
                 theme === "light"
-                  ? "border-slate-200 bg-slate-50/90"
+                  ? "border-slate-200 bg-white/95"
                   : theme === "whatsapp"
-                  ? "border-[#202C33] bg-[#111B21]"
-                  : "border-slate-800 bg-[#070D1B]"
+                  ? "border-[#202C33] bg-[#111B21]/95"
+                  : "border-slate-800 bg-[#070D1B]/95"
               }`}
             >
               <div>
@@ -1307,12 +1358,12 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
               {/* Cards de Métricas Operacionais da Praça */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div
-                  className={`p-3.5 rounded-xl border ${
+                  className={`p-3.5 rounded-xl border backdrop-blur-md ${
                     theme === "light"
                       ? "bg-slate-50 border-slate-200"
                       : theme === "whatsapp"
-                      ? "bg-[#202C33]/80 border-[#2A3942]"
-                      : "bg-slate-900/80 border-slate-800"
+                      ? "bg-[#202C33]/95 border-[#2A3942]"
+                      : "bg-[#0e1628]/95 border-slate-700/70"
                   }`}
                 >
                   <div
@@ -1335,12 +1386,12 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                 </div>
 
                 <div
-                  className={`p-3.5 rounded-xl border ${
+                  className={`p-3.5 rounded-xl border backdrop-blur-md ${
                     theme === "light"
                       ? "bg-slate-50 border-slate-200"
                       : theme === "whatsapp"
-                      ? "bg-[#202C33]/80 border-[#2A3942]"
-                      : "bg-slate-900/80 border-slate-800"
+                      ? "bg-[#202C33]/95 border-[#2A3942]"
+                      : "bg-[#0e1628]/95 border-slate-700/70"
                   }`}
                 >
                   <div
@@ -1365,12 +1416,12 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
 
               {/* Origem dos Clientes: Tráfego Pago vs Orgânico */}
               <div
-                className={`p-3.5 rounded-xl border ${
+                className={`p-3.5 rounded-xl border backdrop-blur-md ${
                   theme === "light"
                     ? "bg-slate-50 border-slate-200"
                     : theme === "whatsapp"
-                    ? "bg-[#202C33]/80 border-[#2A3942]"
-                    : "bg-slate-900/60 border-slate-800/80"
+                    ? "bg-[#202C33]/95 border-[#2A3942]"
+                    : "bg-[#0e1628]/95 border-slate-700/70"
                 }`}
               >
                 <div className="text-[10px] uppercase font-bold mb-2 flex items-center justify-between">
@@ -1478,12 +1529,12 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                     {selectedPoint.recentDeals.map((deal) => (
                       <div
                         key={deal.id}
-                        className={`p-3.5 rounded-xl border transition-all ${
+                        className={`p-3.5 rounded-xl border transition-all backdrop-blur-md ${
                           theme === "light"
-                            ? "bg-slate-50 hover:bg-slate-100/90 border-slate-200 text-slate-800 shadow-sm"
+                            ? "bg-white hover:bg-slate-50 border-slate-200 text-slate-800 shadow-sm"
                             : theme === "whatsapp"
-                            ? "bg-[#202C33]/90 hover:bg-[#202C33] border-[#2A3942] text-[#E9EDEF]"
-                            : "bg-slate-900/90 hover:bg-slate-850 border-slate-800 text-slate-200"
+                            ? "bg-[#202C33]/95 hover:bg-[#202C33] border-[#2A3942] text-[#E9EDEF]"
+                            : "bg-[#0e1628]/95 hover:bg-[#152038] border-slate-700/70 text-slate-200"
                         }`}
                       >
                         {/* Linha 1: Nome do Cliente e Valor */}
@@ -1559,12 +1610,12 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
 
             {/* Rodapé Fixo com Botão CRM */}
             <div
-              className={`p-4 border-t flex-shrink-0 ${
+              className={`p-4 border-t flex-shrink-0 backdrop-blur-md ${
                 theme === "light"
-                  ? "border-slate-200 bg-white"
+                  ? "border-slate-200 bg-white/95"
                   : theme === "whatsapp"
-                  ? "border-[#202C33] bg-[#111B21]"
-                  : "border-slate-800 bg-[#070D1B]"
+                  ? "border-[#202C33] bg-[#111B21]/95"
+                  : "border-slate-800 bg-[#070D1B]/95"
               }`}
             >
               <button
