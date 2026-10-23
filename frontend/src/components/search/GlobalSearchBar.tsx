@@ -145,14 +145,23 @@ export default function GlobalSearchBar() {
   return (
     <div ref={containerRef} className="relative w-full md:w-80 lg:w-96 group">
       {/* Campo de Input da Topbar */}
-      <div className="relative">
+      <form onSubmit={(e) => e.preventDefault()} role="search" autoComplete="off" className="relative">
         <Search 
           size={16} 
           className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors pointer-events-none" 
         />
         <input 
           ref={inputRef}
-          type="text"
+          type="search"
+          name="global_system_search_query"
+          id="global_system_search_query"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-form-type="other"
           value={query}
           onFocus={() => {
             if (query.trim().length >= 2) setIsOpen(true);
@@ -168,6 +177,7 @@ export default function GlobalSearchBar() {
             <Loader2 size={13} className="text-blue-400 animate-spin" />
           ) : query ? (
             <button
+              type="button"
               onClick={() => {
                 setQuery("");
                 setResults({ leads: [], contacts: [], team: [], total: 0 });
@@ -184,7 +194,7 @@ export default function GlobalSearchBar() {
             </kbd>
           )}
         </div>
-      </div>
+      </form>
 
       {/* Dropdown Flutuante de Resultados em Tempo Real */}
       {isOpen && query.trim().length >= 2 && (

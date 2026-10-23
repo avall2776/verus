@@ -23,13 +23,25 @@ import { Compass, BarChart3, LayoutDashboard } from "lucide-react";
 
 function DashboardInner() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialView = searchParams.get("view") === "metrics"
+  const viewParam = searchParams.get("view");
+  const initialView = viewParam === "map"
+    ? "map"
+    : viewParam === "metrics"
     ? "metrics"
-    : searchParams.get("view") === "welcome"
-    ? "welcome"
-    : "map";
+    : "welcome";
   const [viewMode, setViewMode] = useState<"map" | "welcome" | "metrics">(initialView);
+
+  // Sincroniza viewMode quando o usuário clica entre Mapa Tático Operacional e Visão Geral na Sidebar
+  React.useEffect(() => {
+    const v = searchParams.get("view");
+    if (v === "map") {
+      setViewMode("map");
+    } else if (v === "metrics") {
+      setViewMode("metrics");
+    } else {
+      setViewMode("welcome");
+    }
+  }, [searchParams]);
   const { tenantId: effectiveTenantId } = getEffectiveTenantContext();
   const tenantKey = effectiveTenantId || "default_tenant";
 

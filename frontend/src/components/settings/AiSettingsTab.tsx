@@ -320,7 +320,17 @@ export default function AiSettingsTab() {
           <div className="flex flex-col sm:flex-row items-stretch gap-3">
             <div className="relative flex-1">
               <input
-                type={showKey ? "text" : "password"}
+                type="text"
+                name="openai_custom_api_key_field"
+                id="openai_custom_api_key_field"
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-form-type="other"
+                style={{ WebkitTextSecurity: showKey ? "none" : "disc" } as React.CSSProperties}
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
                 placeholder="sk-proj-abc123456789xyz..."
