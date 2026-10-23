@@ -115,13 +115,13 @@ export function ProposalPreviewModal({
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto print:p-0 print:m-0 print:bg-white print:static print:overflow-visible print:block print:w-full print:h-auto">
       <div 
         id="proposal-print-area"
-        className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-700/80 shadow-2xl text-slate-200 overflow-hidden print:w-full print:max-w-none print:max-h-none print:h-auto print:border-0 print:bg-white print:text-black print:shadow-none print:rounded-none print:static print:overflow-visible print:p-0 print:block"
+        className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/80 shadow-2xl text-slate-800 dark:text-slate-200 overflow-hidden print:w-full print:max-w-none print:max-h-none print:h-auto print:border-0 print:bg-white print:text-black print:shadow-none print:rounded-none print:static print:overflow-visible print:p-0 print:block"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Barra Superior de Ações */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-slate-800/80 bg-slate-900/80 print:hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-900/80 print:hidden">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-white tracking-wide font-mono">
+            <span className="text-sm font-bold text-slate-900 dark:text-white tracking-wide font-mono">
               {proposal.code}
             </span>
             {getStatusBadge(proposal.status)}
@@ -132,7 +132,7 @@ export function ProposalPreviewModal({
             {onEdit && (
               <button
                 onClick={() => onEdit(proposal)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-950/40 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-colors cursor-pointer"
                 title="Editar itens, dados da empresa ou condições desta proposta"
               >
                 <Edit3 className="w-3.5 h-3.5" />
@@ -142,16 +142,16 @@ export function ProposalPreviewModal({
 
             <button
               onClick={copyLink}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shadow-sm"
               title="Copiar link público de aceite"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? "Copiado!" : "Copiar Link"}
             </button>
 
             <button
               onClick={shareViaWhatsApp}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-600/20 dark:hover:bg-emerald-600/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 transition-colors cursor-pointer shadow-sm"
               title="Enviar mensagem no WhatsApp"
             >
               <Send className="w-3.5 h-3.5" />
@@ -160,7 +160,7 @@ export function ProposalPreviewModal({
 
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shadow-sm"
               title="Imprimir ou Salvar como PDF"
             >
               <Printer className="w-3.5 h-3.5" />
@@ -169,7 +169,7 @@ export function ProposalPreviewModal({
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ml-1 cursor-pointer"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ml-1 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -179,7 +179,7 @@ export function ProposalPreviewModal({
         {/* Espelho do Documento de Proposta */}
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-5 print:p-0 print:space-y-3 print:overflow-visible print:block">
           {/* Header da Proposta Comercial com Logotipo e Dados do Emitente (Sua Marca) */}
-          <div className="flex flex-row justify-between items-start gap-4 border-b border-slate-800 pb-4 print:border-slate-300 print:pb-3 print-avoid-break">
+          <div className="flex flex-row justify-between items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-4 print:border-slate-300 print:pb-3 print-avoid-break">
             {/* Bloco do Emitente (Logotipo + Informações da Empresa Vendedora) */}
             <div className="space-y-1.5 max-w-md">
               {issuer.logoUrl ? (
@@ -193,24 +193,24 @@ export function ProposalPreviewModal({
                 </div>
               ) : (
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-sm print:border-slate-400 print:text-black">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-sm print:border-slate-400 print:text-black">
                     {issuer.name.slice(0, 2).toUpperCase()}
                   </div>
-                  <h3 className="text-lg font-bold tracking-tight text-white print:text-black">
+                  <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white print:text-black">
                     {issuer.name}
                   </h3>
                 </div>
               )}
 
               {issuer.logoUrl && (
-                <h3 className="text-sm font-bold text-white print:text-black">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white print:text-black">
                   {issuer.name}
                 </h3>
               )}
 
-              <div className="text-[11px] text-slate-400 print:text-slate-600 space-y-0.5">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 print:text-slate-600 space-y-0.5">
                 {issuer.document && (
-                  <p>CNPJ/CPF: <strong className="text-slate-300 print:text-black">{issuer.document}</strong></p>
+                  <p>CNPJ/CPF: <strong className="text-slate-700 dark:text-slate-300 print:text-black">{issuer.document}</strong></p>
                 )}
                 {(issuer.phone || issuer.email) && (
                   <p>
@@ -229,90 +229,90 @@ export function ProposalPreviewModal({
 
             {/* Identificação e Validade da Proposta */}
             <div className="text-right">
-              <span className="text-[10px] text-slate-400 uppercase tracking-wider print:text-slate-600">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold print:text-slate-600">
                 Proposta Comercial Oficial
               </span>
-              <p className="text-lg font-mono font-extrabold text-white print:text-black">
+              <p className="text-lg font-mono font-extrabold text-slate-900 dark:text-white print:text-black">
                 {proposal.code}
               </p>
-              <p className="text-[11px] text-slate-400 print:text-slate-600 mt-0.5">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 print:text-slate-600 mt-0.5">
                 Data: {new Date(proposal.createdAt).toLocaleDateString("pt-BR")}
               </p>
-              <p className="text-[11px] text-amber-400 font-semibold print:text-slate-800">
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 font-bold print:text-slate-800">
                 Válida até: {new Date(proposal.validUntil).toLocaleDateString("pt-BR")}
               </p>
             </div>
           </div>
 
           {/* Dados do Cliente / Contratante */}
-          <div className="grid grid-cols-2 gap-4 p-3 rounded-xl bg-slate-900/50 border border-slate-800 print:bg-transparent print:border-slate-300 print:p-2.5 print-avoid-break">
+          <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 print:bg-transparent print:border-slate-300 print:p-2.5 print-avoid-break">
             <div>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 print:text-slate-600">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 print:text-slate-600">
                 Destinatário / Contratante
               </span>
-              <h4 className="text-sm font-bold text-white print:text-black">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white print:text-black mt-0.5">
                 {proposal.clientName}
               </h4>
               {proposal.clientCompany && (
-                <p className="text-xs text-blue-400 font-medium print:text-slate-700">
+                <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold print:text-slate-700">
                   {proposal.clientCompany}
                 </p>
               )}
-              <p className="text-[11px] text-slate-400 print:text-slate-600 mt-0.5">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 print:text-slate-600 mt-1">
                 {proposal.clientEmail} {proposal.clientPhone && `• ${proposal.clientPhone}`}
               </p>
             </div>
 
             <div className="text-right">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 print:text-slate-600">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 print:text-slate-600">
                 Consultor Responsável
               </span>
-              <h4 className="text-sm font-bold text-white print:text-black">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white print:text-black mt-0.5">
                 {proposal.sellerName}
               </h4>
-              <p className="text-[11px] text-slate-400 print:text-slate-600">
-                Condição: <span className="text-slate-200 font-semibold print:text-black">{proposal.paymentMethod}</span>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 print:text-slate-600 mt-1">
+                Condição: <span className="text-slate-800 dark:text-slate-200 font-semibold print:text-black">{proposal.paymentMethod}</span>
               </p>
             </div>
           </div>
 
           {/* Tabela de Itens e Serviços */}
           <div className="print-avoid-break">
-            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2 print:text-slate-700">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2 print:text-slate-700">
               Detalhamento de Itens & Escopo Fornecido
             </h4>
-            <div className="rounded-xl border border-slate-800 overflow-hidden print:border-slate-300">
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden print:border-slate-300">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800 print:bg-slate-100 print:text-slate-900 print:border-slate-300">
+                <thead className="bg-slate-50/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800 print:bg-slate-100 print:text-slate-900 print:border-slate-300">
                   <tr>
-                    <th className="p-2.5">Descrição do Serviço / Produto</th>
-                    <th className="p-2.5 text-center">Qtd</th>
-                    <th className="p-2.5 text-right">Valor Unit.</th>
-                    <th className="p-2.5 text-right">Desc.</th>
-                    <th className="p-2.5 text-right">Total</th>
+                    <th className="p-3">Descrição do Serviço / Produto</th>
+                    <th className="p-3 text-center">Qtd</th>
+                    <th className="p-3 text-right">Valor Unit.</th>
+                    <th className="p-3 text-right">Desc.</th>
+                    <th className="p-3 text-right">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 print:divide-slate-200">
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 print:divide-slate-200">
                   {proposal.items.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-900/30 print:text-slate-900">
-                      <td className="p-2.5">
-                        <div className="font-semibold text-slate-100 print:text-black">{item.name}</div>
+                    <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 print:text-slate-900">
+                      <td className="p-3">
+                        <div className="font-semibold text-slate-900 dark:text-slate-100 print:text-black">{item.name}</div>
                         {item.description && item.description !== item.name && (
-                          <div className="text-[10px] text-slate-400 print:text-slate-600 mt-0.5">
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 print:text-slate-600 mt-0.5">
                             {item.description}
                           </div>
                         )}
                       </td>
-                      <td className="p-2.5 text-center text-slate-300 print:text-slate-900 font-mono">
+                      <td className="p-3 text-center text-slate-700 dark:text-slate-300 print:text-slate-900 font-mono">
                         {item.quantity}
                       </td>
-                      <td className="p-2.5 text-right text-slate-300 print:text-slate-900 font-mono">
+                      <td className="p-3 text-right text-slate-700 dark:text-slate-300 print:text-slate-900 font-mono">
                         R$ {item.unitPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="p-2.5 text-right text-slate-400 print:text-slate-600 font-mono">
+                      <td className="p-3 text-right text-slate-500 dark:text-slate-400 print:text-slate-600 font-mono">
                         {item.discountPercent ? `${item.discountPercent}%` : "-"}
                       </td>
-                      <td className="p-2.5 text-right font-bold text-blue-400 print:text-black font-mono">
+                      <td className="p-3 text-right font-bold text-blue-600 dark:text-blue-400 print:text-black font-mono">
                         R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
@@ -324,27 +324,27 @@ export function ProposalPreviewModal({
 
           {/* Resumo Financeiro */}
           <div className="flex flex-row justify-between items-start gap-4 pt-1 print-avoid-break">
-            <div className="flex-1 text-[11px] text-slate-400 space-y-1 print:text-slate-600">
-              <span className="font-semibold uppercase tracking-wider text-slate-300 block mb-0.5 print:text-black">
+            <div className="flex-1 text-[11px] text-slate-500 dark:text-slate-400 space-y-1 print:text-slate-600">
+              <span className="font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-0.5 print:text-black">
                 Observações, Termos & Garantia
               </span>
               <p className="leading-relaxed">{proposal.notes || "Proposta válida sob condições gerais acordadas entre as partes."}</p>
             </div>
 
-            <div className="w-56 p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5 text-right print:border-slate-300 print:bg-transparent print:p-2.5">
-              <div className="flex justify-between text-xs text-slate-400 print:text-slate-700">
+            <div className="w-60 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 text-right print:border-slate-300 print:bg-transparent print:p-2.5">
+              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 print:text-slate-700">
                 <span>Subtotal:</span>
-                <span className="font-mono">R$ {proposal.subtotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">R$ {proposal.subtotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
               </div>
               {proposal.discountTotal > 0 && (
-                <div className="flex justify-between text-xs text-rose-400 print:text-slate-800">
+                <div className="flex justify-between text-xs text-rose-600 dark:text-rose-400 print:text-slate-800">
                   <span>Desconto:</span>
-                  <span className="font-mono">- R$ {proposal.discountTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                  <span className="font-mono font-semibold">- R$ {proposal.discountTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
                 </div>
               )}
-              <div className="border-t border-slate-800 print:border-slate-300 pt-1.5 flex justify-between items-center text-sm font-bold text-white print:text-black">
+              <div className="border-t border-slate-200 dark:border-slate-800 print:border-slate-300 pt-2 flex justify-between items-center text-sm font-bold text-slate-900 dark:text-white print:text-black">
                 <span>Total Final:</span>
-                <span className="text-blue-400 text-base font-extrabold print:text-black font-mono">
+                <span className="text-blue-600 dark:text-blue-400 text-base font-black print:text-black font-mono">
                   R$ {proposal.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </span>
               </div>
@@ -352,11 +352,11 @@ export function ProposalPreviewModal({
           </div>
 
           {/* Rodapé de Aceite e Autenticação Eletrônica */}
-          <div className="p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 flex items-center justify-between gap-4 print:border-slate-300 print:p-2.5 print-avoid-break">
+          <div className="p-3.5 rounded-2xl border border-blue-200 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/5 flex items-center justify-between gap-4 print:border-slate-300 print:p-2.5 print-avoid-break">
             <div className="flex items-center gap-2.5">
-              <ShieldCheck className="w-5 h-5 text-blue-400 print:text-black shrink-0" />
+              <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 print:text-black shrink-0" />
               <div>
-                <span className="text-[11px] font-semibold text-slate-200 block print:text-black">
+                <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 block print:text-black">
                   Assinatura Eletrônica & Aceite Digital
                 </span>
                 <span className="text-[10px] text-slate-400 print:text-slate-600">

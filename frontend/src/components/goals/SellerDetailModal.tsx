@@ -54,13 +54,13 @@ export function SellerDetailModal({
     <ModalPortal>
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="w-full max-w-2xl rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-700/80 shadow-2xl text-slate-200 overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-2xl rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/80 shadow-2xl text-slate-900 dark:text-slate-200 overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 bg-slate-900/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-900/60">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-base">
+            <div className="w-11 h-11 rounded-full bg-blue-600/10 dark:bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-base">
               {userName
                 ? userName
                     .split(" ")
@@ -72,21 +72,21 @@ export function SellerDetailModal({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   {data?.user?.name || userName || "Detalhes do Consultor"}
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30">
                   Performance Comercial
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {data?.user?.email || "Histórico consolidado de propostas e vendas"}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -100,18 +100,18 @@ export function SellerDetailModal({
               <p className="text-xs font-medium">Carregando métricas do consultor...</p>
             </div>
           ) : error ? (
-            <div className="py-12 text-center text-rose-400 text-sm">
+            <div className="py-12 text-center text-rose-500 dark:text-rose-400 text-sm">
               {error}
             </div>
           ) : data ? (
             <>
               {/* KPIs Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
-                  <span className="text-[11px] font-medium text-slate-400 block mb-1">
+                <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1">
                     Receita Faturada
                   </span>
-                  <div className="text-lg font-bold font-mono text-white">
+                  <div className="text-lg font-bold font-mono text-slate-900 dark:text-white">
                     R${" "}
                     {data.metrics.totalRevenueWon.toLocaleString("pt-BR", {
                       minimumFractionDigits: 2,
@@ -119,11 +119,11 @@ export function SellerDetailModal({
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
-                  <span className="text-[11px] font-medium text-slate-400 block mb-1">
+                <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1">
                     Contratos Ganhos
                   </span>
-                  <div className="text-lg font-bold font-mono text-white flex items-baseline gap-1.5">
+                  <div className="text-lg font-bold font-mono text-slate-900 dark:text-white flex items-baseline gap-1.5">
                     {data.metrics.dealsWon}
                     <span className="text-xs font-normal text-slate-500">
                       de {data.metrics.totalDeals}
@@ -131,20 +131,20 @@ export function SellerDetailModal({
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
-                  <span className="text-[11px] font-medium text-slate-400 block mb-1">
+                <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1">
                     Taxa de Conversão
                   </span>
-                  <div className="text-lg font-bold font-mono text-blue-400">
+                  <div className="text-lg font-bold font-mono text-blue-600 dark:text-blue-400">
                     {data.metrics.conversionRate}%
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80">
-                  <span className="text-[11px] font-medium text-slate-400 block mb-1">
+                <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1">
                     Ticket Médio
                   </span>
-                  <div className="text-lg font-bold font-mono text-white">
+                  <div className="text-lg font-bold font-mono text-slate-900 dark:text-white">
                     R${" "}
                     {data.metrics.avgTicket.toLocaleString("pt-BR", {
                       minimumFractionDigits: 0,
@@ -155,13 +155,13 @@ export function SellerDetailModal({
 
               {/* Badges de Conquistas do Consultor */}
               {data.badges && data.badges.length > 0 && (
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 space-y-3">
+                <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <Award className="w-4 h-4 text-blue-400" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <Award className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                       Conquistas & Selos Desbloqueados ({data.badges.length})
                     </h4>
-                    <span className="text-[10px] text-blue-400/80 font-medium">
+                    <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
                       Reconhecimento Gamificado
                     </span>
                   </div>
@@ -170,16 +170,16 @@ export function SellerDetailModal({
                     {data.badges.map((badge) => (
                       <div
                         key={badge.id}
-                        className="p-3 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-800 flex items-start gap-3 shadow-sm hover:border-slate-700 transition-colors"
+                        className="p-3 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 flex items-start gap-3 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
                       >
-                        <div className="w-9 h-9 rounded-lg bg-slate-800/90 border border-slate-700/60 flex items-center justify-center shrink-0 shadow-inner">
+                        <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center shrink-0 shadow-inner">
                           <GoalBadgeIcon icon={badge.icon} className="w-5 h-5" />
                         </div>
                         <div className="space-y-0.5 min-w-0">
-                          <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                          <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                             {badge.title}
                           </div>
-                          <p className="text-[11px] text-slate-400 leading-tight">
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
                             {badge.description}
                           </p>
                         </div>
@@ -192,8 +192,8 @@ export function SellerDetailModal({
               {/* Tabela de Negócios Recentes */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Briefcase className="w-4 h-4 text-blue-400" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-400 flex items-center gap-1.5">
+                    <Briefcase className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                     Histórico de Negócios Recentes ({data.recentDeals.length})
                   </h4>
                   <span className="text-[11px] text-slate-500">
@@ -202,40 +202,40 @@ export function SellerDetailModal({
                 </div>
 
                 {data.recentDeals.length === 0 ? (
-                  <div className="py-8 text-center rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-800/80 text-xs text-slate-500">
+                  <div className="py-8 text-center rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 text-xs text-slate-500">
                     Nenhum negócio associado a este consultor no período.
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-slate-800/80 overflow-hidden bg-slate-50 dark:bg-[#070D1B]">
-                    <div className="max-h-64 overflow-y-auto divide-y divide-slate-800/60">
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800/80 overflow-hidden bg-white dark:bg-[#070D1B]">
+                    <div className="max-h-64 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
                       {data.recentDeals.map((deal) => (
                         <div
                           key={deal.id}
-                          className="p-3 flex items-center justify-between hover:bg-slate-800/30 transition-colors text-xs"
+                          className="p-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors text-xs"
                         >
                           <div className="space-y-0.5">
-                            <div className="font-semibold text-white flex items-center gap-2">
+                            <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                               {deal.title}
                               {deal.isWon && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30">
                                   Ganho
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-slate-400">
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400">
                               Cliente: {deal.clientName}
                               {deal.clientPhone ? ` • ${deal.clientPhone}` : ""}
                             </div>
                           </div>
 
                           <div className="text-right space-y-0.5">
-                            <div className="font-mono font-bold text-white">
+                            <div className="font-mono font-bold text-slate-900 dark:text-white">
                               R${" "}
                               {deal.value.toLocaleString("pt-BR", {
                                 minimumFractionDigits: 2,
                               })}
                             </div>
-                            <div className="text-[10px] text-slate-500 font-mono">
+                            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
                               {new Date(deal.createdAt).toLocaleDateString("pt-BR")}
                             </div>
                           </div>
@@ -250,7 +250,7 @@ export function SellerDetailModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-800/80 bg-slate-900/60 flex justify-end">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-900/60 flex justify-end">
           <button
             onClick={onClose}
             className="px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all"

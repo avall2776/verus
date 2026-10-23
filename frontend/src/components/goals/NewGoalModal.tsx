@@ -214,23 +214,23 @@ export function NewGoalModal({ isOpen, onClose, onSave, onSuccess }: NewGoalModa
     <ModalPortal>
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div 
-        className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-700/80 shadow-2xl text-slate-200 overflow-hidden"
+        className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/80 shadow-2xl text-slate-900 dark:text-slate-200 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 bg-slate-900/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-900/60">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-sm">
               <Target className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Configurar Nova Meta</h3>
-              <p className="text-xs text-slate-400">Defina objetivos comerciais e acompanhe o ritmo da equipe</p>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Configurar Nova Meta</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Defina objetivos comerciais e acompanhe o ritmo da equipe</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -239,7 +239,7 @@ export function NewGoalModal({ isOpen, onClose, onSave, onSuccess }: NewGoalModa
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               Título da Meta
             </label>
             <input
@@ -247,20 +247,20 @@ export function NewGoalModal({ isOpen, onClose, onSave, onSuccess }: NewGoalModa
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Faturamento Mensal Q3 ou Vendas Enterprise"
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-sm transition-all"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Tipo de Métrica
               </label>
               <select
                 value={targetType}
                 onChange={(e) => handleTargetTypeChange(e.target.value as any)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-sm transition-all cursor-pointer"
               >
                 <option value="REVENUE">Receita (R$ Faturado)</option>
                 <option value="DEALS">Contratos / Vendas Ganhas</option>
@@ -269,13 +269,13 @@ export function NewGoalModal({ isOpen, onClose, onSave, onSuccess }: NewGoalModa
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Responsável
               </label>
               <select
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-sm transition-all cursor-pointer"
               >
                 <option value="">Equipe Toda (Meta Global)</option>
                 {users.map((u) => (
@@ -288,7 +288,7 @@ export function NewGoalModal({ isOpen, onClose, onSave, onSuccess }: NewGoalModa
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               Valor Alvo {targetType === "REVENUE" ? "(R$)" : "(Quantidade)"}
             </label>
             <div className="relative">
@@ -306,16 +306,16 @@ export function NewGoalModal({ isOpen, onClose, onSave, onSuccess }: NewGoalModa
                 placeholder={targetType === "REVENUE" ? "100.000,00" : "10"}
                 className={`w-full ${
                   targetType === "REVENUE" ? "pl-10" : "pl-3.5"
-                } pr-3.5 py-2.5 text-sm font-mono font-semibold rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
+                } pr-3.5 py-2.5 text-sm font-mono font-semibold rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-sm transition-all`}
                 required
               />
             </div>
             {/* Live helper com feedback de moeda e extenso */}
-            <div className="mt-2 px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700/70 flex flex-wrap items-center justify-between gap-1.5 text-xs">
+            <div className="mt-2 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700/70 flex flex-wrap items-center justify-between gap-1.5 text-xs shadow-sm">
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="text-slate-400">Total interpretado:</span>
-                <span className="font-mono font-bold text-emerald-400">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="text-slate-500 dark:text-slate-400">Total interpretado:</span>
+                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
                   {targetType === "REVENUE"
                     ? new Intl.NumberFormat("pt-BR", {
                         style: "currency",
@@ -327,7 +327,7 @@ export function NewGoalModal({ isOpen, onClose, onSave, onSuccess }: NewGoalModa
                 </span>
               </div>
               {targetType === "REVENUE" && numericTargetValue > 0 && (
-                <span className="text-[11px] font-medium text-slate-400">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                   ({numberToExtensoBRL(numericTargetValue)})
                 </span>
               )}
@@ -336,17 +336,17 @@ export function NewGoalModal({ isOpen, onClose, onSave, onSuccess }: NewGoalModa
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-semibold text-slate-300">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Período de Vigência
               </label>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setPeriodPreset("current_month")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                     periodPreset === "current_month"
-                      ? "bg-blue-600 text-white"
-                      : "text-slate-400 hover:text-white bg-slate-800"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
                   }`}
                 >
                   Este Mês
@@ -354,10 +354,10 @@ export function NewGoalModal({ isOpen, onClose, onSave, onSuccess }: NewGoalModa
                 <button
                   type="button"
                   onClick={() => setPeriodPreset("next_month")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                     periodPreset === "next_month"
-                      ? "bg-blue-600 text-white"
-                      : "text-slate-400 hover:text-white bg-slate-800"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
                   }`}
                 >
                   Próximo Mês
@@ -365,10 +365,10 @@ export function NewGoalModal({ isOpen, onClose, onSave, onSuccess }: NewGoalModa
                 <button
                   type="button"
                   onClick={() => setPeriodPreset("quarter")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                     periodPreset === "quarter"
-                      ? "bg-blue-600 text-white"
-                      : "text-slate-400 hover:text-white bg-slate-800"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
                   }`}
                 >
                   Trimestre
@@ -385,7 +385,7 @@ export function NewGoalModal({ isOpen, onClose, onSave, onSuccess }: NewGoalModa
                     setPeriodPreset("custom");
                     setPeriodStart(e.target.value);
                   }}
-                  className="w-full px-3.5 py-2 text-sm rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark] focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-sm transition-all"
                   required
                 />
               </div>
@@ -398,18 +398,18 @@ export function NewGoalModal({ isOpen, onClose, onSave, onSuccess }: NewGoalModa
                     setPeriodPreset("custom");
                     setPeriodEnd(e.target.value);
                   }}
-                  className="w-full px-3.5 py-2 text-sm rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-700 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark] focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-sm transition-all"
                   required
                 />
               </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-800 flex justify-end gap-3">
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-medium rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="px-4 py-2 text-xs font-semibold rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               Cancelar
             </button>
@@ -417,7 +417,7 @@ export function NewGoalModal({ isOpen, onClose, onSave, onSuccess }: NewGoalModa
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 px-5 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/20 transition-all disabled:opacity-50 cursor-pointer"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
