@@ -10,17 +10,20 @@ exports.CrmModule = void 0;
 const common_1 = require("@nestjs/common");
 const crm_controller_1 = require("./crm.controller");
 const crm_service_1 = require("./crm.service");
+const radar_stories_controller_1 = require("./controllers/radar-stories.controller");
+const radar_stories_service_1 = require("./services/radar-stories.service");
 const prisma_service_1 = require("../../shared/database/prisma.service");
 const automations_module_1 = require("../automations/automations.module");
+const ai_module_1 = require("../ai/ai.module");
 let CrmModule = class CrmModule {
 };
 exports.CrmModule = CrmModule;
 exports.CrmModule = CrmModule = __decorate([
     (0, common_1.Module)({
-        imports: [automations_module_1.AutomationsModule],
-        controllers: [crm_controller_1.CrmController],
-        providers: [crm_service_1.CrmService, prisma_service_1.PrismaService],
-        exports: [crm_service_1.CrmService],
+        imports: [automations_module_1.AutomationsModule, ai_module_1.AiModule],
+        controllers: [crm_controller_1.CrmController, radar_stories_controller_1.RadarStoriesController],
+        providers: [crm_service_1.CrmService, radar_stories_service_1.RadarStoriesService, prisma_service_1.PrismaService],
+        exports: [crm_service_1.CrmService, radar_stories_service_1.RadarStoriesService],
     })
 ], CrmModule);
 //# sourceMappingURL=crm.module.js.map

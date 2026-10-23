@@ -187,107 +187,187 @@ let DashboardService = class DashboardService {
     }
     async getGeoMapData(tenantId) {
         const GEO_CITY_COORDS = {
-            'passo fundo': { state: 'RS', region: 'Sul', lat: -28.2622, lng: -52.4083 },
-            'porto alegre': { state: 'RS', region: 'Sul', lat: -30.0346, lng: -51.2177 },
-            'caxias do sul': { state: 'RS', region: 'Sul', lat: -29.1678, lng: -51.1794 },
-            'santa maria': { state: 'RS', region: 'Sul', lat: -29.6842, lng: -53.8069 },
-            'pelotas': { state: 'RS', region: 'Sul', lat: -31.7654, lng: -52.3376 },
-            'chapeco': { state: 'SC', region: 'Sul', lat: -27.1004, lng: -52.6152 },
-            'chapecó': { state: 'SC', region: 'Sul', lat: -27.1004, lng: -52.6152 },
-            'joinville': { state: 'SC', region: 'Sul', lat: -26.3045, lng: -48.8487 },
-            'florianopolis': { state: 'SC', region: 'Sul', lat: -27.5954, lng: -48.5480 },
-            'florianópolis': { state: 'SC', region: 'Sul', lat: -27.5954, lng: -48.5480 },
-            'cascavel': { state: 'PR', region: 'Sul', lat: -24.9578, lng: -53.4595 },
-            'curitiba': { state: 'PR', region: 'Sul', lat: -25.4290, lng: -49.2671 },
-            'londrina': { state: 'PR', region: 'Sul', lat: -23.3045, lng: -51.1696 },
-            'maringa': { state: 'PR', region: 'Sul', lat: -23.4205, lng: -51.9331 },
-            'maringá': { state: 'PR', region: 'Sul', lat: -23.4205, lng: -51.9331 },
-            'ponta grossa': { state: 'PR', region: 'Sul', lat: -25.0994, lng: -50.1583 },
-            'toledo': { state: 'PR', region: 'Sul', lat: -24.7256, lng: -53.7431 },
-            'goiania': { state: 'GO', region: 'Centro-Oeste', lat: -16.6869, lng: -49.2648 },
-            'goiânia': { state: 'GO', region: 'Centro-Oeste', lat: -16.6869, lng: -49.2648 },
-            'rio verde': { state: 'GO', region: 'Centro-Oeste', lat: -17.7925, lng: -50.9192 },
-            'jatai': { state: 'GO', region: 'Centro-Oeste', lat: -17.8814, lng: -51.7144 },
-            'jataí': { state: 'GO', region: 'Centro-Oeste', lat: -17.8814, lng: -51.7144 },
-            'anapolis': { state: 'GO', region: 'Centro-Oeste', lat: -16.3267, lng: -48.9534 },
-            'anápolis': { state: 'GO', region: 'Centro-Oeste', lat: -16.3267, lng: -48.9534 },
-            'cuiaba': { state: 'MT', region: 'Centro-Oeste', lat: -15.6014, lng: -56.0979 },
-            'cuiabá': { state: 'MT', region: 'Centro-Oeste', lat: -15.6014, lng: -56.0979 },
-            'rondonopolis': { state: 'MT', region: 'Centro-Oeste', lat: -16.4674, lng: -54.6368 },
-            'rondonópolis': { state: 'MT', region: 'Centro-Oeste', lat: -16.4674, lng: -54.6368 },
-            'sinop': { state: 'MT', region: 'Centro-Oeste', lat: -11.8608, lng: -55.5097 },
-            'sorriso': { state: 'MT', region: 'Centro-Oeste', lat: -12.5425, lng: -55.7214 },
-            'lucas do rio verde': { state: 'MT', region: 'Centro-Oeste', lat: -13.0583, lng: -55.9108 },
-            'primavera do leste': { state: 'MT', region: 'Centro-Oeste', lat: -15.5583, lng: -54.2961 },
-            'campo grande': { state: 'MS', region: 'Centro-Oeste', lat: -20.4697, lng: -54.6201 },
-            'dourados': { state: 'MS', region: 'Centro-Oeste', lat: -22.2211, lng: -54.8056 },
-            'brasilia': { state: 'DF', region: 'Centro-Oeste', lat: -15.7975, lng: -47.8919 },
-            'brasília': { state: 'DF', region: 'Centro-Oeste', lat: -15.7975, lng: -47.8919 },
-            'sao paulo': { state: 'SP', region: 'Sudeste', lat: -23.5505, lng: -46.6333 },
-            'são paulo': { state: 'SP', region: 'Sudeste', lat: -23.5505, lng: -46.6333 },
-            'campinas': { state: 'SP', region: 'Sudeste', lat: -22.9099, lng: -47.0626 },
-            'ribeirao preto': { state: 'SP', region: 'Sudeste', lat: -21.1767, lng: -47.8108 },
-            'ribeirão preto': { state: 'SP', region: 'Sudeste', lat: -21.1767, lng: -47.8108 },
-            'sao jose do rio preto': { state: 'SP', region: 'Sudeste', lat: -20.8113, lng: -49.3758 },
-            'são josé do rio preto': { state: 'SP', region: 'Sudeste', lat: -20.8113, lng: -49.3758 },
-            'piracicaba': { state: 'SP', region: 'Sudeste', lat: -22.7253, lng: -47.6492 },
-            'belo horizonte': { state: 'MG', region: 'Sudeste', lat: -19.9167, lng: -43.9345 },
-            'uberlandia': { state: 'MG', region: 'Sudeste', lat: -18.9186, lng: -48.2772 },
-            'uberlândia': { state: 'MG', region: 'Sudeste', lat: -18.9186, lng: -48.2772 },
-            'uberaba': { state: 'MG', region: 'Sudeste', lat: -19.7483, lng: -47.9319 },
-            'patos de minas': { state: 'MG', region: 'Sudeste', lat: -18.5789, lng: -46.5181 },
-            'rio de janeiro': { state: 'RJ', region: 'Sudeste', lat: -22.9068, lng: -43.1729 },
-            'vitoria': { state: 'ES', region: 'Sudeste', lat: -20.3155, lng: -40.3128 },
-            'vitória': { state: 'ES', region: 'Sudeste', lat: -20.3155, lng: -40.3128 },
-            'luis eduardo magalhaes': { state: 'BA', region: 'Nordeste', lat: -12.0969, lng: -45.7954 },
-            'luís eduardo magalhães': { state: 'BA', region: 'Nordeste', lat: -12.0969, lng: -45.7954 },
-            'barreiras': { state: 'BA', region: 'Nordeste', lat: -12.1447, lng: -44.9969 },
-            'salvador': { state: 'BA', region: 'Nordeste', lat: -12.9777, lng: -38.5016 },
-            'recife': { state: 'PE', region: 'Nordeste', lat: -8.0476, lng: -34.8770 },
-            'petrolina': { state: 'PE', region: 'Nordeste', lat: -9.3891, lng: -40.5027 },
-            'fortaleza': { state: 'CE', region: 'Nordeste', lat: -3.7319, lng: -38.5267 },
-            'palmas': { state: 'TO', region: 'Norte', lat: -10.1844, lng: -48.3336 },
-            'gurupi': { state: 'TO', region: 'Norte', lat: -11.7297, lng: -49.0678 },
-            'porto velho': { state: 'RO', region: 'Norte', lat: -8.7619, lng: -63.9039 },
-            'vilhena': { state: 'RO', region: 'Norte', lat: -12.7414, lng: -60.1458 },
-            'belem': { state: 'PA', region: 'Norte', lat: -1.4558, lng: -48.4902 },
-            'belém': { state: 'PA', region: 'Norte', lat: -1.4558, lng: -48.4902 },
-            'paragominas': { state: 'PA', region: 'Norte', lat: -2.9972, lng: -47.3533 },
-            'manaus': { state: 'AM', region: 'Norte', lat: -3.1190, lng: -60.0217 },
+            'passo fundo': { city: 'Passo Fundo', state: 'RS', region: 'Sul', lat: -28.2622, lng: -52.4083 },
+            'marau': { city: 'Marau', state: 'RS', region: 'Sul', lat: -28.4497, lng: -52.2003 },
+            'mato castelhano': { city: 'Mato Castelhano', state: 'RS', region: 'Sul', lat: -28.2717, lng: -52.1878 },
+            'carazinho': { city: 'Carazinho', state: 'RS', region: 'Sul', lat: -28.2839, lng: -52.7864 },
+            'erechim': { city: 'Erechim', state: 'RS', region: 'Sul', lat: -27.6341, lng: -52.2739 },
+            'nao-me-toque': { city: 'Não-Me-Toque', state: 'RS', region: 'Sul', lat: -28.4592, lng: -52.8211 },
+            'nao me toque': { city: 'Não-Me-Toque', state: 'RS', region: 'Sul', lat: -28.4592, lng: -52.8211 },
+            'ibiruba': { city: 'Ibirubá', state: 'RS', region: 'Sul', lat: -28.6275, lng: -53.0906 },
+            'cruz alta': { city: 'Cruz Alta', state: 'RS', region: 'Sul', lat: -28.6394, lng: -53.6064 },
+            'porto alegre': { city: 'Porto Alegre', state: 'RS', region: 'Sul', lat: -30.0346, lng: -51.2177 },
+            'caxias do sul': { city: 'Caxias do Sul', state: 'RS', region: 'Sul', lat: -29.1678, lng: -51.1794 },
+            'santa maria': { city: 'Santa Maria', state: 'RS', region: 'Sul', lat: -29.6842, lng: -53.8069 },
+            'pelotas': { city: 'Pelotas', state: 'RS', region: 'Sul', lat: -31.7654, lng: -52.3376 },
+            'vacaria': { city: 'Vacaria', state: 'RS', region: 'Sul', lat: -28.5117, lng: -50.9339 },
+            'chapeco': { city: 'Chapecó', state: 'SC', region: 'Sul', lat: -27.1004, lng: -52.6152 },
+            'chapecó': { city: 'Chapecó', state: 'SC', region: 'Sul', lat: -27.1004, lng: -52.6152 },
+            'xanxere': { city: 'Xanxerê', state: 'SC', region: 'Sul', lat: -26.8747, lng: -52.4036 },
+            'concordia': { city: 'Concórdia', state: 'SC', region: 'Sul', lat: -27.2339, lng: -52.0256 },
+            'sao miguel do oeste': { city: 'São Miguel do Oeste', state: 'SC', region: 'Sul', lat: -26.7264, lng: -53.5186 },
+            'joinville': { city: 'Joinville', state: 'SC', region: 'Sul', lat: -26.3045, lng: -48.8487 },
+            'florianopolis': { city: 'Florianópolis', state: 'SC', region: 'Sul', lat: -27.5954, lng: -48.5480 },
+            'criciuma': { city: 'Criciúma', state: 'SC', region: 'Sul', lat: -28.6775, lng: -49.3703 },
+            'lages': { city: 'Lages', state: 'SC', region: 'Sul', lat: -27.8161, lng: -50.3261 },
+            'cascavel': { city: 'Cascavel', state: 'PR', region: 'Sul', lat: -24.9578, lng: -53.4595 },
+            'toledo': { city: 'Toledo', state: 'PR', region: 'Sul', lat: -24.7256, lng: -53.7431 },
+            'curitiba': { city: 'Curitiba', state: 'PR', region: 'Sul', lat: -25.4290, lng: -49.2671 },
+            'londrina': { city: 'Londrina', state: 'PR', region: 'Sul', lat: -23.3045, lng: -51.1696 },
+            'maringa': { city: 'Maringá', state: 'PR', region: 'Sul', lat: -23.4205, lng: -51.9331 },
+            'ponta grossa': { city: 'Ponta Grossa', state: 'PR', region: 'Sul', lat: -25.0994, lng: -50.1583 },
+            'francisco beltrao': { city: 'Francisco Beltrão', state: 'PR', region: 'Sul', lat: -26.0811, lng: -53.0550 },
+            'pato branco': { city: 'Pato Branco', state: 'PR', region: 'Sul', lat: -26.2289, lng: -52.6706 },
+            'campo mourao': { city: 'Campo Mourão', state: 'PR', region: 'Sul', lat: -24.0458, lng: -52.3814 },
+            'guarapuava': { city: 'Guarapuava', state: 'PR', region: 'Sul', lat: -25.3953, lng: -51.4625 },
+            'goiania': { city: 'Goiânia', state: 'GO', region: 'Centro-Oeste', lat: -16.6869, lng: -49.2648 },
+            'rio verde': { city: 'Rio Verde', state: 'GO', region: 'Centro-Oeste', lat: -17.7925, lng: -50.9192 },
+            'jatai': { city: 'Jataí', state: 'GO', region: 'Centro-Oeste', lat: -17.8814, lng: -51.7144 },
+            'anapolis': { city: 'Anápolis', state: 'GO', region: 'Centro-Oeste', lat: -16.3267, lng: -48.9534 },
+            'cristalina': { city: 'Cristalina', state: 'GO', region: 'Centro-Oeste', lat: -16.7686, lng: -47.6139 },
+            'itumbiara': { city: 'Itumbiara', state: 'GO', region: 'Centro-Oeste', lat: -18.4189, lng: -49.2158 },
+            'catalao': { city: 'Catalão', state: 'GO', region: 'Centro-Oeste', lat: -18.1658, lng: -47.9464 },
+            'brasilia': { city: 'Brasília', state: 'DF', region: 'Centro-Oeste', lat: -15.7975, lng: -47.8919 },
+            'cuiaba': { city: 'Cuiabá', state: 'MT', region: 'Centro-Oeste', lat: -15.6014, lng: -56.0979 },
+            'rondonopolis': { city: 'Rondonópolis', state: 'MT', region: 'Centro-Oeste', lat: -16.4674, lng: -54.6368 },
+            'sinop': { city: 'Sinop', state: 'MT', region: 'Centro-Oeste', lat: -11.8608, lng: -55.5097 },
+            'sorriso': { city: 'Sorriso', state: 'MT', region: 'Centro-Oeste', lat: -12.5425, lng: -55.7214 },
+            'lucas do rio verde': { city: 'Lucas do Rio Verde', state: 'MT', region: 'Centro-Oeste', lat: -13.0583, lng: -55.9108 },
+            'nova mutum': { city: 'Nova Mutum', state: 'MT', region: 'Centro-Oeste', lat: -13.8294, lng: -56.0825 },
+            'primavera do leste': { city: 'Primavera do Leste', state: 'MT', region: 'Centro-Oeste', lat: -15.5583, lng: -54.2961 },
+            'campo novo do parecis': { city: 'Campo Novo do Parecis', state: 'MT', region: 'Centro-Oeste', lat: -13.6750, lng: -57.8917 },
+            'sapezal': { city: 'Sapezal', state: 'MT', region: 'Centro-Oeste', lat: -13.5439, lng: -58.8144 },
+            'querencia': { city: 'Querência', state: 'MT', region: 'Centro-Oeste', lat: -12.6078, lng: -52.1931 },
+            'campo grande': { city: 'Campo Grande', state: 'MS', region: 'Centro-Oeste', lat: -20.4697, lng: -54.6201 },
+            'dourados': { city: 'Dourados', state: 'MS', region: 'Centro-Oeste', lat: -22.2211, lng: -54.8056 },
+            'maracaju': { city: 'Maracaju', state: 'MS', region: 'Centro-Oeste', lat: -21.6144, lng: -55.1683 },
+            'chapadao do sul': { city: 'Chapadão do Sul', state: 'MS', region: 'Centro-Oeste', lat: -18.7933, lng: -52.6183 },
+            'sao gabriel do oeste': { city: 'São Gabriel do Oeste', state: 'MS', region: 'Centro-Oeste', lat: -19.3928, lng: -54.5819 },
+            'sao paulo': { city: 'São Paulo', state: 'SP', region: 'Sudeste', lat: -23.5505, lng: -46.6333 },
+            'campinas': { city: 'Campinas', state: 'SP', region: 'Sudeste', lat: -22.9099, lng: -47.0626 },
+            'ribeirao preto': { city: 'Ribeirão Preto', state: 'SP', region: 'Sudeste', lat: -21.1767, lng: -47.8108 },
+            'sao jose do rio preto': { city: 'São José do Rio Preto', state: 'SP', region: 'Sudeste', lat: -20.8113, lng: -49.3758 },
+            'piracicaba': { city: 'Piracicaba', state: 'SP', region: 'Sudeste', lat: -22.7253, lng: -47.6492 },
+            'presidente prudente': { city: 'Presidente Prudente', state: 'SP', region: 'Sudeste', lat: -22.1256, lng: -51.3889 },
+            'belo horizonte': { city: 'Belo Horizonte', state: 'MG', region: 'Sudeste', lat: -19.9167, lng: -43.9345 },
+            'uberlandia': { city: 'Uberlândia', state: 'MG', region: 'Sudeste', lat: -18.9186, lng: -48.2772 },
+            'uberaba': { city: 'Uberaba', state: 'MG', region: 'Sudeste', lat: -19.7483, lng: -47.9319 },
+            'patos de minas': { city: 'Patos de Minas', state: 'MG', region: 'Sudeste', lat: -18.5789, lng: -46.5181 },
+            'unai': { city: 'Unaí', state: 'MG', region: 'Sudeste', lat: -16.3575, lng: -46.9056 },
+            'sao geraldo': { city: 'São Geraldo', state: 'MG', region: 'Sudeste', lat: -20.9239, lng: -42.8286 },
+            'juiz de fora': { city: 'Juiz de Fora', state: 'MG', region: 'Sudeste', lat: -21.7642, lng: -43.3503 },
+            'rio de janeiro': { city: 'Rio de Janeiro', state: 'RJ', region: 'Sudeste', lat: -22.9068, lng: -43.1729 },
+            'vitoria': { city: 'Vitória', state: 'ES', region: 'Sudeste', lat: -20.3155, lng: -40.3128 },
+            'luis eduardo magalhaes': { city: 'Luís Eduardo Magalhães', state: 'BA', region: 'Nordeste', lat: -12.0969, lng: -45.7954 },
+            'barreiras': { city: 'Barreiras', state: 'BA', region: 'Nordeste', lat: -12.1447, lng: -44.9969 },
+            'salvador': { city: 'Salvador', state: 'BA', region: 'Nordeste', lat: -12.9777, lng: -38.5016 },
+            'recife': { city: 'Recife', state: 'PE', region: 'Nordeste', lat: -8.0476, lng: -34.8770 },
+            'petrolina': { city: 'Petrolina', state: 'PE', region: 'Nordeste', lat: -9.3891, lng: -40.5027 },
+            'fortaleza': { city: 'Fortaleza', state: 'CE', region: 'Nordeste', lat: -3.7319, lng: -38.5267 },
+            'balsas': { city: 'Balsas', state: 'MA', region: 'Nordeste', lat: -7.5322, lng: -46.0356 },
+            'urucui': { city: 'Uruçuí', state: 'PI', region: 'Nordeste', lat: -7.2289, lng: -44.5561 },
+            'bom jesus': { city: 'Bom Jesus', state: 'PI', region: 'Nordeste', lat: -9.0744, lng: -44.3586 },
+            'palmas': { city: 'Palmas', state: 'TO', region: 'Norte', lat: -10.1844, lng: -48.3336 },
+            'gurupi': { city: 'Gurupi', state: 'TO', region: 'Norte', lat: -11.7297, lng: -49.0678 },
+            'porto velho': { city: 'Porto Velho', state: 'RO', region: 'Norte', lat: -8.7619, lng: -63.9039 },
+            'vilhena': { city: 'Vilhena', state: 'RO', region: 'Norte', lat: -12.7414, lng: -60.1458 },
+            'belem': { city: 'Belém', state: 'PA', region: 'Norte', lat: -1.4558, lng: -48.4902 },
+            'manaus': { city: 'Manaus', state: 'AM', region: 'Norte', lat: -3.1190, lng: -60.0217 },
+            'santa rita': { city: 'Santa Rita', state: 'PY', region: 'Paraguai', lat: -25.7833, lng: -55.0833 },
+            'ciudad del este': { city: 'Ciudad del Este', state: 'PY', region: 'Paraguai', lat: -25.5097, lng: -54.6111 },
+            'katuete': { city: 'Katueté', state: 'PY', region: 'Paraguai', lat: -24.2333, lng: -54.6500 },
+            'asuncion': { city: 'Asunción', state: 'PY', region: 'Paraguai', lat: -25.2637, lng: -57.5759 },
+            'paraguai': { city: 'Santa Rita', state: 'PY', region: 'Paraguai', lat: -25.7833, lng: -55.0833 },
+            'paraguay': { city: 'Santa Rita', state: 'PY', region: 'Paraguai', lat: -25.7833, lng: -55.0833 },
         };
         const DDD_FALLBACK = {
-            '54': { city: 'Passo Fundo', state: 'RS', region: 'Sul', lat: -28.2622, lng: -52.4083 },
             '51': { city: 'Porto Alegre', state: 'RS', region: 'Sul', lat: -30.0346, lng: -51.2177 },
-            '49': { city: 'Chapecó', state: 'SC', region: 'Sul', lat: -27.1004, lng: -52.6152 },
+            '53': { city: 'Pelotas', state: 'RS', region: 'Sul', lat: -31.7654, lng: -52.3376 },
+            '54': { city: 'Passo Fundo', state: 'RS', region: 'Sul', lat: -28.2622, lng: -52.4083 },
+            '55': { city: 'Santa Maria', state: 'RS', region: 'Sul', lat: -29.6842, lng: -53.8069 },
+            '47': { city: 'Joinville', state: 'SC', region: 'Sul', lat: -26.3045, lng: -48.8487 },
             '48': { city: 'Florianópolis', state: 'SC', region: 'Sul', lat: -27.5954, lng: -48.5480 },
-            '45': { city: 'Cascavel', state: 'PR', region: 'Sul', lat: -24.9578, lng: -53.4595 },
-            '44': { city: 'Maringá', state: 'PR', region: 'Sul', lat: -23.4205, lng: -51.9331 },
+            '49': { city: 'Chapecó', state: 'SC', region: 'Sul', lat: -27.1004, lng: -52.6152 },
             '41': { city: 'Curitiba', state: 'PR', region: 'Sul', lat: -25.4290, lng: -49.2671 },
+            '42': { city: 'Ponta Grossa', state: 'PR', region: 'Sul', lat: -25.0994, lng: -50.1583 },
+            '43': { city: 'Londrina', state: 'PR', region: 'Sul', lat: -23.3045, lng: -51.1696 },
+            '44': { city: 'Maringá', state: 'PR', region: 'Sul', lat: -23.4205, lng: -51.9331 },
+            '45': { city: 'Cascavel', state: 'PR', region: 'Sul', lat: -24.9578, lng: -53.4595 },
+            '46': { city: 'Francisco Beltrão', state: 'PR', region: 'Sul', lat: -26.0811, lng: -53.0550 },
+            '11': { city: 'São Paulo', state: 'SP', region: 'Sudeste', lat: -23.5505, lng: -46.6333 },
+            '12': { city: 'São José dos Campos', state: 'SP', region: 'Sudeste', lat: -23.2237, lng: -45.9009 },
+            '13': { city: 'Santos', state: 'SP', region: 'Sudeste', lat: -23.9608, lng: -46.3336 },
+            '14': { city: 'Bauru', state: 'SP', region: 'Sudeste', lat: -22.3145, lng: -49.0587 },
+            '15': { city: 'Sorocaba', state: 'SP', region: 'Sudeste', lat: -23.5015, lng: -47.4526 },
+            '16': { city: 'Ribeirão Preto', state: 'SP', region: 'Sudeste', lat: -21.1767, lng: -47.8108 },
+            '17': { city: 'São José do Rio Preto', state: 'SP', region: 'Sudeste', lat: -20.8113, lng: -49.3758 },
+            '18': { city: 'Presidente Prudente', state: 'SP', region: 'Sudeste', lat: -22.1256, lng: -51.3889 },
+            '19': { city: 'Campinas', state: 'SP', region: 'Sudeste', lat: -22.9099, lng: -47.0626 },
+            '21': { city: 'Rio de Janeiro', state: 'RJ', region: 'Sudeste', lat: -22.9068, lng: -43.1729 },
+            '22': { city: 'Campos dos Goytacazes', state: 'RJ', region: 'Sudeste', lat: -21.7622, lng: -41.3304 },
+            '24': { city: 'Volta Redonda', state: 'RJ', region: 'Sudeste', lat: -22.5232, lng: -44.1042 },
+            '27': { city: 'Vitória', state: 'ES', region: 'Sudeste', lat: -20.3155, lng: -40.3128 },
+            '28': { city: 'Cachoeiro de Itapemirim', state: 'ES', region: 'Sudeste', lat: -20.8489, lng: -41.1128 },
+            '31': { city: 'Belo Horizonte', state: 'MG', region: 'Sudeste', lat: -19.9167, lng: -43.9345 },
+            '32': { city: 'Juiz de Fora', state: 'MG', region: 'Sudeste', lat: -21.7642, lng: -43.3503 },
+            '33': { city: 'Governador Valadares', state: 'MG', region: 'Sudeste', lat: -18.8511, lng: -41.9494 },
+            '34': { city: 'Uberlândia', state: 'MG', region: 'Sudeste', lat: -18.9186, lng: -48.2772 },
+            '35': { city: 'Poços de Caldas', state: 'MG', region: 'Sudeste', lat: -21.7878, lng: -46.5614 },
+            '37': { city: 'Divinópolis', state: 'MG', region: 'Sudeste', lat: -20.1439, lng: -44.8914 },
+            '38': { city: 'Montes Claros', state: 'MG', region: 'Sudeste', lat: -16.7282, lng: -43.8616 },
+            '61': { city: 'Brasília', state: 'DF', region: 'Centro-Oeste', lat: -15.7975, lng: -47.8919 },
             '62': { city: 'Goiânia', state: 'GO', region: 'Centro-Oeste', lat: -16.6869, lng: -49.2648 },
             '64': { city: 'Rio Verde', state: 'GO', region: 'Centro-Oeste', lat: -17.7925, lng: -50.9192 },
             '65': { city: 'Cuiabá', state: 'MT', region: 'Centro-Oeste', lat: -15.6014, lng: -56.0979 },
             '66': { city: 'Rondonópolis', state: 'MT', region: 'Centro-Oeste', lat: -16.4674, lng: -54.6368 },
             '67': { city: 'Campo Grande', state: 'MS', region: 'Centro-Oeste', lat: -20.4697, lng: -54.6201 },
-            '61': { city: 'Brasília', state: 'DF', region: 'Centro-Oeste', lat: -15.7975, lng: -47.8919 },
-            '11': { city: 'São Paulo', state: 'SP', region: 'Sudeste', lat: -23.5505, lng: -46.6333 },
-            '19': { city: 'Campinas', state: 'SP', region: 'Sudeste', lat: -22.9099, lng: -47.0626 },
-            '16': { city: 'Ribeirão Preto', state: 'SP', region: 'Sudeste', lat: -21.1767, lng: -47.8108 },
-            '31': { city: 'Belo Horizonte', state: 'MG', region: 'Sudeste', lat: -19.9167, lng: -43.9345 },
-            '34': { city: 'Uberlândia', state: 'MG', region: 'Sudeste', lat: -18.9186, lng: -48.2772 },
-            '21': { city: 'Rio de Janeiro', state: 'RJ', region: 'Sudeste', lat: -22.9068, lng: -43.1729 },
             '71': { city: 'Salvador', state: 'BA', region: 'Nordeste', lat: -12.9777, lng: -38.5016 },
+            '73': { city: 'Ilhéus', state: 'BA', region: 'Nordeste', lat: -14.7936, lng: -39.0494 },
+            '74': { city: 'Juazeiro', state: 'BA', region: 'Nordeste', lat: -9.4167, lng: -40.5033 },
+            '75': { city: 'Feira de Santana', state: 'BA', region: 'Nordeste', lat: -12.2664, lng: -38.9663 },
             '77': { city: 'Luís Eduardo Magalhães', state: 'BA', region: 'Nordeste', lat: -12.0969, lng: -45.7954 },
+            '79': { city: 'Aracaju', state: 'SE', region: 'Nordeste', lat: -10.9472, lng: -37.0731 },
             '81': { city: 'Recife', state: 'PE', region: 'Nordeste', lat: -8.0476, lng: -34.8770 },
+            '82': { city: 'Maceió', state: 'AL', region: 'Nordeste', lat: -9.6658, lng: -35.7353 },
+            '83': { city: 'João Pessoa', state: 'PB', region: 'Nordeste', lat: -7.1195, lng: -34.8450 },
+            '84': { city: 'Natal', state: 'RN', region: 'Nordeste', lat: -5.7945, lng: -35.2110 },
+            '85': { city: 'Fortaleza', state: 'CE', region: 'Nordeste', lat: -3.7319, lng: -38.5267 },
+            '86': { city: 'Teresina', state: 'PI', region: 'Nordeste', lat: -5.0920, lng: -42.8038 },
+            '87': { city: 'Petrolina', state: 'PE', region: 'Nordeste', lat: -9.3891, lng: -40.5027 },
+            '88': { city: 'Juazeiro do Norte', state: 'CE', region: 'Nordeste', lat: -7.2131, lng: -39.3153 },
+            '89': { city: 'Picos', state: 'PI', region: 'Nordeste', lat: -7.0772, lng: -41.4669 },
+            '98': { city: 'São Luís', state: 'MA', region: 'Nordeste', lat: -2.5307, lng: -44.3068 },
+            '99': { city: 'Imperatriz', state: 'MA', region: 'Nordeste', lat: -5.5267, lng: -47.4917 },
             '63': { city: 'Palmas', state: 'TO', region: 'Norte', lat: -10.1844, lng: -48.3336 },
+            '68': { city: 'Rio Branco', state: 'AC', region: 'Norte', lat: -9.9753, lng: -67.8249 },
             '69': { city: 'Porto Velho', state: 'RO', region: 'Norte', lat: -8.7619, lng: -63.9039 },
             '91': { city: 'Belém', state: 'PA', region: 'Norte', lat: -1.4558, lng: -48.4902 },
+            '92': { city: 'Manaus', state: 'AM', region: 'Norte', lat: -3.1190, lng: -60.0217 },
+            '93': { city: 'Santarém', state: 'PA', region: 'Norte', lat: -2.4431, lng: -54.7083 },
+            '94': { city: 'Marabá', state: 'PA', region: 'Norte', lat: -5.3686, lng: -49.1178 },
+            '95': { city: 'Boa Vista', state: 'RR', region: 'Norte', lat: 2.8235, lng: -60.6758 },
+            '96': { city: 'Macapá', state: 'AP', region: 'Norte', lat: 0.0356, lng: -51.0705 },
+            '97': { city: 'Coari', state: 'AM', region: 'Norte', lat: -4.0847, lng: -63.1414 },
+            '595': { city: 'Santa Rita', state: 'PY', region: 'Paraguai', lat: -25.7833, lng: -55.0833 },
         };
         const [deals, users, activeConversations] = await Promise.all([
             this.prisma.deal.findMany({
                 where: { tenantId },
                 include: {
                     contact: {
-                        select: { id: true, name: true, phone: true, email: true, source: true, tags: true }
+                        select: {
+                            id: true,
+                            name: true,
+                            phone: true,
+                            email: true,
+                            source: true,
+                            tags: true,
+                            conversations: {
+                                select: { id: true, status: true, updatedAt: true },
+                                orderBy: { updatedAt: 'desc' },
+                                take: 1
+                            }
+                        }
                     },
                     assignee: {
                         select: { id: true, name: true, email: true }
@@ -296,7 +376,7 @@ let DashboardService = class DashboardService {
                 orderBy: { updatedAt: 'desc' }
             }),
             this.prisma.user.findMany({
-                where: { tenantId },
+                where: { tenantId, isActive: true },
                 select: { id: true, name: true, email: true, role: true }
             }),
             this.prisma.conversation.findMany({
@@ -305,20 +385,27 @@ let DashboardService = class DashboardService {
                     status: { in: ['waiting', 'bot_active', 'human_takeover', 'open'] }
                 },
                 include: {
-                    contact: { select: { phone: true } }
+                    contact: { select: { id: true, phone: true } }
                 },
-                take: 50
+                take: 100
             })
         ]);
-        const activeDdds = new Set();
+        const liveDdds = new Set();
+        const liveContactIds = new Set();
+        let isParaguayLive = false;
         activeConversations.forEach(conv => {
-            const p = (conv.contact?.phone || '').replace(/\D/g, '');
-            const dddMatch = p.match(/(?:55)?(\d{2})/);
+            if (conv.contact?.id) {
+                liveContactIds.add(conv.contact.id);
+            }
+            const rawPhone = (conv.contact?.phone || '').replace(/\D/g, '');
+            if (rawPhone.startsWith('595') || rawPhone.startsWith('0595')) {
+                isParaguayLive = true;
+            }
+            const dddMatch = rawPhone.match(/(?:55)?(\d{2})/);
             if (dddMatch && dddMatch[1]) {
-                activeDdds.add(dddMatch[1]);
+                liveDdds.add(dddMatch[1]);
             }
         });
-        const cityMap = new Map();
         const normalizeName = (str) => {
             return (str || '')
                 .toLowerCase()
@@ -326,26 +413,55 @@ let DashboardService = class DashboardService {
                 .replace(/[\u0300-\u036f]/g, '')
                 .trim();
         };
+        const cityMap = new Map();
+        const userStats = new Map();
+        users.forEach(u => {
+            userStats.set(u.id, {
+                id: u.id,
+                name: u.name,
+                salesCount: 0,
+                salesVolume: 0,
+                activeDeals: 0,
+                regions: new Map()
+            });
+        });
         for (const deal of deals) {
             const meta = deal.metadata || {};
-            const rawCity = meta.city || meta.cidade || '';
-            const cleanCityKey = normalizeName(rawCity.split('-')[0].split('/')[0]);
-            let geoInfo = GEO_CITY_COORDS[cleanCityKey];
-            if (!geoInfo && deal.contact?.phone) {
-                const cleanPhone = deal.contact.phone.replace(/\D/g, '');
-                const dddMatch = cleanPhone.match(/(?:55)?(\d{2})/);
-                if (dddMatch && DDD_FALLBACK[dddMatch[1]]) {
+            const notes = deal.notes || '';
+            const rawPhone = (deal.contact?.phone || meta.phone || '').replace(/\D/g, '');
+            let geoInfo = null;
+            const cityMatch = notes.match(/cidade:\s*([^\n\r,\/]+)/i);
+            if (cityMatch && cityMatch[1]) {
+                const cleanCity = normalizeName(cityMatch[1]);
+                if (GEO_CITY_COORDS[cleanCity]) {
+                    geoInfo = GEO_CITY_COORDS[cleanCity];
+                }
+            }
+            if (!geoInfo && (meta.city || meta.cidade)) {
+                const cleanMetaCity = normalizeName((meta.city || meta.cidade).split('-')[0].split('/')[0]);
+                if (GEO_CITY_COORDS[cleanMetaCity]) {
+                    geoInfo = GEO_CITY_COORDS[cleanMetaCity];
+                }
+            }
+            if (!geoInfo && (rawPhone.startsWith('595') || rawPhone.startsWith('0595'))) {
+                geoInfo = DDD_FALLBACK['595'];
+            }
+            if (!geoInfo && rawPhone) {
+                const dddMatch = rawPhone.match(/(?:55)?(\d{2})/);
+                if (dddMatch && dddMatch[1] && DDD_FALLBACK[dddMatch[1]]) {
                     geoInfo = DDD_FALLBACK[dddMatch[1]];
                 }
             }
             if (!geoInfo) {
-                geoInfo = { state: 'RS', region: 'Sul', lat: -28.2622, lng: -52.4083 };
+                geoInfo = DDD_FALLBACK['54'];
             }
-            const cityName = geoInfo.city || (rawCity ? rawCity.split('-')[0].trim() : 'Passo Fundo');
-            const groupKey = `${cityName}_${geoInfo.state}`.toLowerCase();
+            const groupKey = `${geoInfo.city}_${geoInfo.state}`.toLowerCase();
             if (!cityMap.has(groupKey)) {
+                const isCityLive = geoInfo.state === 'PY'
+                    ? isParaguayLive
+                    : Array.from(liveDdds).some(ddd => DDD_FALLBACK[ddd]?.city === geoInfo.city);
                 cityMap.set(groupKey, {
-                    cityName,
+                    cityName: geoInfo.city,
                     state: geoInfo.state,
                     region: geoInfo.region,
                     lat: geoInfo.lat,
@@ -353,7 +469,7 @@ let DashboardService = class DashboardService {
                     salesCount: 0,
                     salesVolume: 0,
                     inAttendanceCount: 0,
-                    isLiveNow: false,
+                    isLiveNow: isCityLive,
                     assignedSellers: new Set(),
                     paidTrafficCount: 0,
                     organicTrafficCount: 0,
@@ -364,124 +480,76 @@ let DashboardService = class DashboardService {
             const dealVal = Number(deal.value) || 0;
             const statusLower = (deal.status || '').toLowerCase();
             const isWon = statusLower === 'won' || statusLower === 'fechado' || statusLower === 'ganho';
+            const isLost = statusLower === 'lost' || statusLower === 'perdido' || statusLower === 'disqualified';
             if (isWon) {
                 entry.salesCount += 1;
                 entry.salesVolume += dealVal;
             }
-            else if (statusLower !== 'lost' && statusLower !== 'disqualified') {
+            else if (!isLost) {
                 entry.inAttendanceCount += 1;
             }
-            if (deal.assignee?.name) {
-                entry.assignedSellers.add(deal.assignee.name);
+            const sellerName = deal.assignee?.name || 'Não Atribuído';
+            entry.assignedSellers.add(sellerName);
+            if (deal.assignedTo && userStats.has(deal.assignedTo)) {
+                const u = userStats.get(deal.assignedTo);
+                if (isWon) {
+                    u.salesCount += 1;
+                    u.salesVolume += dealVal;
+                }
+                else if (!isLost) {
+                    u.activeDeals += 1;
+                }
+                u.regions.set(geoInfo.region, (u.regions.get(geoInfo.region) || 0) + 1);
             }
             const sourceLower = (deal.contact?.source || meta.source || '').toLowerCase();
-            if (sourceLower.includes('meta') || sourceLower.includes('facebook') || sourceLower.includes('instagram') || sourceLower.includes('google') || sourceLower.includes('ads') || meta.utm_source) {
+            if (sourceLower.includes('meta') || sourceLower.includes('facebook') || sourceLower.includes('instagram') || sourceLower.includes('ads') || meta.utm_source) {
                 entry.paidTrafficCount += 1;
             }
             else {
                 entry.organicTrafficCount += 1;
             }
+            const conversationId = deal.contact?.conversations?.[0]?.id || null;
+            const isLiveDeal = deal.contact?.id ? liveContactIds.has(deal.contact.id) : false;
+            if (isLiveDeal) {
+                entry.isLiveNow = true;
+            }
             entry.dealsList.push({
                 id: deal.id,
-                title: deal.title,
+                title: deal.title || `Oportunidade #${deal.id.slice(0, 8)}`,
                 clientName: deal.contact?.name || 'Cliente Sem Nome',
+                contactId: deal.contact?.id || null,
+                conversationId,
+                contactPhone: deal.contact?.phone || null,
                 value: dealVal,
                 status: deal.status,
-                stageLabel: isWon ? 'Fechado/Vendido' : 'Em Atendimento',
-                source: deal.contact?.source || meta.source || 'WhatsApp',
-                sellerName: deal.assignee?.name || 'Não Atribuído',
-                updatedAt: deal.updatedAt.toISOString()
+                stageLabel: isWon ? 'Fechado/Vendido' : isLost ? 'Perdido' : 'Em Atendimento',
+                source: deal.contact?.source || (meta.utm_source ? 'Meta Ads' : 'WhatsApp'),
+                sellerName,
+                sellerId: deal.assignee?.id || null,
+                updatedAt: deal.updatedAt.toISOString(),
+                isLive: isLiveDeal
             });
         }
-        const ensureStrategicCity = (name, state, region, lat, lng, salesCount, salesVolume, inAttendanceCount, isLive, seller, paidRatio) => {
-            const key = `${name}_${state}`.toLowerCase();
-            const existing = cityMap.get(key);
-            if (!existing || (existing.salesCount === 0 && existing.inAttendanceCount === 0)) {
-                cityMap.set(key, {
-                    cityName: name,
-                    state,
-                    region,
-                    lat,
-                    lng,
-                    salesCount,
-                    salesVolume,
-                    inAttendanceCount,
-                    isLiveNow: isLive,
-                    assignedSellers: new Set([seller]),
-                    paidTrafficCount: Math.round((salesCount + inAttendanceCount) * paidRatio),
-                    organicTrafficCount: Math.max(0, (salesCount + inAttendanceCount) - Math.round((salesCount + inAttendanceCount) * paidRatio)),
-                    dealsList: [
-                        {
-                            id: `demo-${name}-1`,
-                            title: `Contrato Agrícola - Fazenda Esperança`,
-                            clientName: `Agropecuária ${name}`,
-                            value: salesVolume > 0 ? Math.round(salesVolume / Math.max(1, salesCount)) : 65000,
-                            status: salesCount > 0 ? 'won' : 'negotiation',
-                            stageLabel: salesCount > 0 ? 'Fechado/Vendido' : 'Em Negociação',
-                            source: 'Meta Ads (Tráfego Pago)',
-                            sellerName: seller,
-                            updatedAt: new Date().toISOString()
-                        }
-                    ]
-                });
-            }
-            else if (name === 'Passo Fundo' && existing.salesCount < 10) {
-                existing.salesCount = Math.max(10, existing.salesCount);
-                existing.salesVolume = Math.max(850000, existing.salesVolume);
-                existing.assignedSellers.add(seller);
-            }
-            else if ((name === 'Goiânia' || name === 'Rio Verde') && existing.salesCount < 2) {
-                existing.salesCount = Math.max(2, existing.salesCount);
-                existing.salesVolume = Math.max(180000, existing.salesVolume);
-                existing.assignedSellers.add(seller);
-            }
-        };
-        ensureStrategicCity('Passo Fundo', 'RS', 'Sul', -28.2622, -52.4083, 10, 890000, 4, true, 'Carlos Silva (Sul)', 0.7);
-        ensureStrategicCity('Rio Verde', 'GO', 'Centro-Oeste', -17.7925, -50.9192, 2, 210000, 3, false, 'Ana Beatriz (Centro-Oeste)', 0.6);
-        ensureStrategicCity('Goiânia', 'GO', 'Centro-Oeste', -16.6869, -49.2648, 1, 95000, 2, false, 'Ana Beatriz (Centro-Oeste)', 0.5);
-        ensureStrategicCity('Cuiabá', 'MT', 'Centro-Oeste', -15.6014, -56.0979, 0, 0, 5, true, 'Marcos Vinícius (MT/RO)', 0.8);
-        ensureStrategicCity('Sinop', 'MT', 'Centro-Oeste', -11.8608, -55.5097, 1, 140000, 3, true, 'Marcos Vinícius (MT/RO)', 0.7);
-        ensureStrategicCity('Chapecó', 'SC', 'Sul', -27.1004, -52.6152, 3, 260000, 2, false, 'Carlos Silva (Sul)', 0.5);
-        ensureStrategicCity('Cascavel', 'PR', 'Sul', -24.9578, -53.4595, 4, 380000, 2, false, 'Carlos Silva (Sul)', 0.6);
-        ensureStrategicCity('Ribeirão Preto', 'SP', 'Sudeste', -21.1767, -47.8108, 3, 310000, 4, false, 'Renata Ramos (Sudeste)', 0.75);
-        ensureStrategicCity('Uberlândia', 'MG', 'Sudeste', -18.9186, -48.2772, 2, 190000, 1, false, 'Renata Ramos (Sudeste)', 0.5);
-        ensureStrategicCity('Luís Eduardo Magalhães', 'BA', 'Nordeste', -12.0969, -45.7954, 1, 125000, 3, false, 'Lucas Mendes (Norte/Nordeste)', 0.8);
-        const UNEXPLORED_REFERENCE_CITIES = [
-            { name: 'Palmas', state: 'TO', region: 'Norte', lat: -10.1844, lng: -48.3336 },
-            { name: 'Porto Velho', state: 'RO', region: 'Norte', lat: -8.7619, lng: -63.9039 },
-            { name: 'Belém', state: 'PA', region: 'Norte', lat: -1.4558, lng: -48.4902 },
-            { name: 'Manaus', state: 'AM', region: 'Norte', lat: -3.1190, lng: -60.0217 },
-            { name: 'Dourados', state: 'MS', region: 'Centro-Oeste', lat: -22.2211, lng: -54.8056 },
-            { name: 'Jataí', state: 'GO', region: 'Centro-Oeste', lat: -17.8814, lng: -51.7144 },
-            { name: 'Maringá', state: 'PR', region: 'Sul', lat: -23.4205, lng: -51.9331 },
-            { name: 'Ponta Grossa', state: 'PR', region: 'Sul', lat: -25.0994, lng: -50.1583 },
-            { name: 'Pelotas', state: 'RS', region: 'Sul', lat: -31.7654, lng: -52.3376 },
-            { name: 'Piracicaba', state: 'SP', region: 'Sudeste', lat: -22.7253, lng: -47.6492 },
-            { name: 'Montes Claros', state: 'MG', region: 'Sudeste', lat: -16.7282, lng: -43.8616 },
-            { name: 'Vitória', state: 'ES', region: 'Sudeste', lat: -20.3155, lng: -40.3128 },
-            { name: 'Petrolina', state: 'PE', region: 'Nordeste', lat: -9.3891, lng: -40.5027 },
-            { name: 'Feira de Santana', state: 'BA', region: 'Nordeste', lat: -12.2664, lng: -38.9663 },
-        ];
-        UNEXPLORED_REFERENCE_CITIES.forEach(c => {
-            const k = `${c.name}_${c.state}`.toLowerCase();
-            if (!cityMap.has(k)) {
-                cityMap.set(k, {
-                    cityName: c.name,
-                    state: c.state,
-                    region: c.region,
-                    lat: c.lat,
-                    lng: c.lng,
+        for (const [key, geo] of Object.entries(GEO_CITY_COORDS)) {
+            const groupKey = `${geo.city}_${geo.state}`.toLowerCase();
+            if (!cityMap.has(groupKey)) {
+                cityMap.set(groupKey, {
+                    cityName: geo.city,
+                    state: geo.state,
+                    region: geo.region,
+                    lat: geo.lat,
+                    lng: geo.lng,
                     salesCount: 0,
                     salesVolume: 0,
                     inAttendanceCount: 0,
                     isLiveNow: false,
-                    assignedSellers: new Set(['Mercado Disponível']),
+                    assignedSellers: new Set(),
                     paidTrafficCount: 0,
                     organicTrafficCount: 0,
                     dealsList: []
                 });
             }
-        });
+        }
         const points = Array.from(cityMap.values()).map(p => {
             let status = 'unexplored';
             if (p.salesCount > 0) {
@@ -510,7 +578,7 @@ let DashboardService = class DashboardService {
                     paid: p.paidTrafficCount,
                     organic: p.organicTrafficCount
                 },
-                recentDeals: p.dealsList.slice(0, 5)
+                recentDeals: p.dealsList
             };
         });
         const regionalTotals = {
@@ -518,44 +586,58 @@ let DashboardService = class DashboardService {
             'Centro-Oeste': { salesCount: 0, salesVolume: 0, inAttendanceCount: 0, sellers: new Set() },
             'Sudeste': { salesCount: 0, salesVolume: 0, inAttendanceCount: 0, sellers: new Set() },
             'Nordeste': { salesCount: 0, salesVolume: 0, inAttendanceCount: 0, sellers: new Set() },
-            'Norte': { salesCount: 0, salesVolume: 0, inAttendanceCount: 0, sellers: new Set() }
+            'Norte': { salesCount: 0, salesVolume: 0, inAttendanceCount: 0, sellers: new Set() },
+            'Paraguai': { salesCount: 0, salesVolume: 0, inAttendanceCount: 0, sellers: new Set() }
         };
         let totalSalesCount = 0;
         let totalRevenue = 0;
         let totalInAttendance = 0;
         let activeLiveAttendances = 0;
         points.forEach(pt => {
-            if (regionalTotals[pt.region]) {
-                regionalTotals[pt.region].salesCount += pt.salesCount;
-                regionalTotals[pt.region].salesVolume += pt.salesVolume;
-                regionalTotals[pt.region].inAttendanceCount += pt.inAttendanceCount;
-                pt.assignedSellers.forEach(s => {
-                    if (s !== 'Mercado Disponível')
-                        regionalTotals[pt.region].sellers.add(s);
-                });
-            }
+            const reg = regionalTotals[pt.region] ? pt.region : 'Sul';
+            regionalTotals[reg].salesCount += pt.salesCount;
+            regionalTotals[reg].salesVolume += pt.salesVolume;
+            regionalTotals[reg].inAttendanceCount += pt.inAttendanceCount;
+            pt.assignedSellers.forEach(s => {
+                if (s !== 'Não Atribuído')
+                    regionalTotals[reg].sellers.add(s);
+            });
             totalSalesCount += pt.salesCount;
             totalRevenue += pt.salesVolume;
             totalInAttendance += pt.inAttendanceCount;
             if (pt.isLiveNow)
                 activeLiveAttendances += 1;
         });
-        const regions = Object.entries(regionalTotals).map(([name, data]) => ({
+        const regions = Object.entries(regionalTotals)
+            .filter(([_, data]) => data.salesCount > 0 || data.inAttendanceCount > 0)
+            .map(([name, data]) => ({
             name,
             salesCount: data.salesCount,
             salesVolume: data.salesVolume,
             inAttendanceCount: data.inAttendanceCount,
             percentage: totalRevenue > 0 ? Math.round((data.salesVolume / totalRevenue) * 100) : 0,
             assignedSellers: Array.from(data.sellers)
-        })).sort((a, b) => b.salesVolume - a.salesVolume);
+        }))
+            .sort((a, b) => b.salesVolume - a.salesVolume);
         const topRegion = regions[0]?.name || 'Sul';
-        const sellersSummary = [
-            { id: 'sel-1', name: 'Carlos Silva', region: 'Sul', salesCount: 17, salesVolume: 1530000, activeDeals: 8 },
-            { id: 'sel-2', name: 'Ana Beatriz', region: 'Centro-Oeste (GO)', salesCount: 3, salesVolume: 305000, activeDeals: 5 },
-            { id: 'sel-3', name: 'Marcos Vinícius', region: 'Centro-Oeste (MT/MS)', salesCount: 1, salesVolume: 140000, activeDeals: 8 },
-            { id: 'sel-4', name: 'Renata Ramos', region: 'Sudeste', salesCount: 5, salesVolume: 500000, activeDeals: 5 },
-            { id: 'sel-5', name: 'Lucas Mendes', region: 'Norte/Nordeste', salesCount: 1, salesVolume: 125000, activeDeals: 3 },
-        ];
+        const sellersSummary = Array.from(userStats.values()).map(u => {
+            let topSellerRegion = 'Geral';
+            let maxRegionCount = 0;
+            u.regions.forEach((cnt, r) => {
+                if (cnt > maxRegionCount) {
+                    maxRegionCount = cnt;
+                    topSellerRegion = r;
+                }
+            });
+            return {
+                id: u.id,
+                name: u.name,
+                region: topSellerRegion,
+                salesCount: u.salesCount,
+                salesVolume: u.salesVolume,
+                activeDeals: u.activeDeals
+            };
+        }).sort((a, b) => b.salesVolume - a.salesVolume);
         return {
             summary: {
                 totalSalesCount,
@@ -565,7 +647,7 @@ let DashboardService = class DashboardService {
                 activeLiveAttendances,
                 conversionRate: totalInAttendance + totalSalesCount > 0
                     ? Math.round((totalSalesCount / (totalInAttendance + totalSalesCount)) * 100)
-                    : 68,
+                    : 0,
                 topRegion
             },
             regions,

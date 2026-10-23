@@ -43,6 +43,7 @@ import {
   FolderArchive,
   Network,
   Compass,
+  Radio,
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -100,6 +101,7 @@ const NAV_GROUPS = [
     title: "FUNIL COMERCIAL (CRM)",
     items: [
       { name: "Oportunidades", icon: Kanban, href: "/crm" },
+      { name: "Radar de Stories", icon: Radio, href: "/crm/radar-stories" },
       { name: "Propostas Comerciais", icon: FileText, href: "/proposals" },
       { name: "Contratos", icon: ScrollText, href: "/contracts" },
       { name: "Metas Comerciais", icon: Target, href: "/dashboard/goals" },
@@ -536,6 +538,7 @@ export default function Sidebar() {
     // CRM / Comercial
     if (
       base === '/crm' ||
+      base === '/crm/radar-stories' ||
       base === '/dashboard/crm' ||
       base === '/proposals' ||
       base === '/contracts' ||

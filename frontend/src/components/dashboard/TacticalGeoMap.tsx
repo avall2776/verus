@@ -19,17 +19,41 @@ import {
   Briefcase,
   ChevronLeft,
   ChevronRight,
-  GripVertical
+  GripVertical,
+  Eye,
+  ArrowLeft,
+  Phone,
+  Shield,
+  MessageSquare,
+  Loader2,
+  CheckCheck
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { useTheme } from "@/contexts/ThemeContext";
 
+export interface GeoCityDeal {
+  id: string;
+  title: string;
+  clientName: string;
+  contactId?: string | null;
+  conversationId?: string | null;
+  contactPhone?: string | null;
+  value: number;
+  status: string;
+  stageLabel: string;
+  source: string;
+  sellerName: string;
+  sellerId?: string | null;
+  updatedAt: string;
+  isLive?: boolean;
+}
+
 export interface GeoCityPoint {
   id: string;
   cityName: string;
   state: string;
-  region: "Sul" | "Sudeste" | "Centro-Oeste" | "Nordeste" | "Norte";
+  region: "Sul" | "Sudeste" | "Centro-Oeste" | "Nordeste" | "Norte" | "Paraguai";
   lat: number;
   lng: number;
   status: "closed" | "in_attendance" | "unexplored";
@@ -42,17 +66,7 @@ export interface GeoCityPoint {
     paid: number;
     organic: number;
   };
-  recentDeals: Array<{
-    id: string;
-    title: string;
-    clientName: string;
-    value: number;
-    status: string;
-    stageLabel: string;
-    source: string;
-    sellerName: string;
-    updatedAt: string;
-  }>;
+  recentDeals: GeoCityDeal[];
 }
 
 export interface GeoMapResponse {
@@ -289,6 +303,32 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
 
   // Polo / Cidade Selecionado para a Gaveta Lateral
   const [selectedPoint, setSelectedPoint] = useState<GeoCityPoint | null>(null);
+
+  // Espiar Atendimento do Vendedor Ao Vivo (Sala de Guerra Geotática)
+  const [spyingDeal, setSpyingDeal] = useState<GeoCityDeal | null>(null);
+  const [spyMessages, setSpyMessages] = useState<any[]>([]);
+  const [loadingSpyMessages, setLoadingSpyMessages] = useState<boolean>(false);
+
+  const handleSpyDeal = async (deal: GeoCityDeal) => {
+    setSpyingDeal(deal);
+    setLoadingSpyMessages(true);
+    try {
+      let messages: any[] = [];
+      if (deal.conversationId) {
+        const res = await api.get(`/conversations/${deal.conversationId}/messages`);
+        messages = Array.isArray(res.data) ? res.data : [];
+      } else if (deal.contactId) {
+        const res = await api.get(`/conversations/contact/${deal.contactId}`);
+        messages = Array.isArray(res.data?.messages) ? res.data.messages : [];
+      }
+      setSpyMessages(messages);
+    } catch (err) {
+      console.warn("Nenhuma mensagem encontrada para o atendimento selecionado:", err);
+      setSpyMessages([]);
+    } finally {
+      setLoadingSpyMessages(false);
+    }
+  };
 
   const toggleAccordion = (key: "status" | "traffic" | "sectors") => {
     setExpandedAccordions((prev) => ({
@@ -570,6 +610,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
       el.addEventListener("click", (e) => {
         e.stopPropagation();
         setSelectedPoint(point);
+        setSpyingDeal(null);
 
         if (mapRef.current) {
           mapRef.current.flyTo({
@@ -588,6 +629,165 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
       markersRef.current.push(marker);
     });
   }, [filteredPoints, theme]);
+
+  // Função Auxiliar para Criação de Polígonos Georreferenciados de Território (Geometria Circular Suave)
+  const createTerritoryCircle = (
+    centerLng: number,
+    centerLat: number,
+    radiusKm: number,
+    points: number = 32
+  ): [number, number][] => {
+    const coords: [number, number][] = [];
+    const kmPerLatDegree = 110.574;
+    const kmPerLngDegree = 111.320 * Math.cos((centerLat * Math.PI) / 180);
+
+    for (let i = 0; i < points; i++) {
+      const angle = (i * 360) / points;
+      const rad = (angle * Math.PI) / 180;
+      const dx = radiusKm * Math.sin(rad);
+      const dy = radiusKm * Math.cos(rad);
+
+      const pointLng = centerLng + dx / kmPerLngDegree;
+      const pointLat = centerLat + dy / kmPerLatDegree;
+      coords.push([pointLng, pointLat]);
+    }
+    coords.push(coords[0]);
+    return coords;
+  };
+
+  // 9. Cálculo Dinâmico do Georreferenciamento de Área (Dominância de Território)
+  // Verde: Vendas Concluídas (Passo Fundo e entorno dominado)
+  // Amarelo: Em Atendimento Ativo (Chapecó e praças em negociação)
+  // Cinza: Mercado em Aberto (Névoa de Guerra / Território a ser Descoberto)
+  const territoryGeoJson = useMemo(() => {
+    const features = filteredPoints.map((pt) => {
+      let radiusKm = 24;
+      let color = "#64748B";
+      let borderColor = "#475569";
+      let opacity = 0.16;
+
+      if (pt.status === "closed") {
+        // Território Dominado (Vendas Concluídas)
+        // Passo Fundo e praças com vendas dominam raio de até 55km (abrangendo Mato Castelhano, Marau, etc.)
+        radiusKm = Math.min(55, 38 + pt.salesCount * 1.5);
+        color = "#10B981";
+        borderColor = "#059669";
+        opacity = 0.28;
+      } else if (pt.status === "in_attendance") {
+        // Território em Atendimento Ativo
+        // Chapecó e polos em atendimento ficam com toda a área ao redor amarela
+        radiusKm = Math.min(46, 32 + pt.inAttendanceCount * 0.4);
+        color = "#F59E0B";
+        borderColor = "#D97706";
+        opacity = 0.24;
+      } else {
+        // Mercado em Aberto / Névoa de Guerra a ser Descoberto pela Equipe
+        radiusKm = 24;
+        color = "#64748B";
+        borderColor = "#475569";
+        opacity = 0.15;
+      }
+
+      return {
+        type: "Feature" as const,
+        properties: {
+          id: pt.id,
+          cityName: pt.cityName,
+          state: pt.state,
+          status: pt.status,
+          color,
+          borderColor,
+          opacity,
+          salesCount: pt.salesCount,
+          inAttendanceCount: pt.inAttendanceCount
+        },
+        geometry: {
+          type: "Polygon" as const,
+          coordinates: [createTerritoryCircle(pt.lng, pt.lat, radiusKm)]
+        }
+      };
+    });
+
+    return {
+      type: "FeatureCollection" as const,
+      features
+    };
+  }, [filteredPoints]);
+
+  // 10. Atualização das Camadas de Área Territorial no MapLibre GL
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const setupTerritoryLayers = () => {
+      const existingSource = map.getSource("tactical-territory-zones") as maplibregl.GeoJSONSource | undefined;
+      if (existingSource) {
+        existingSource.setData(territoryGeoJson);
+        return;
+      }
+
+      if (!map.isStyleLoaded()) return;
+
+      map.addSource("tactical-territory-zones", {
+        type: "geojson",
+        data: territoryGeoJson
+      });
+
+      // Camada de Preenchimento da Área Territorial
+      map.addLayer({
+        id: "tactical-territory-fill",
+        type: "fill",
+        source: "tactical-territory-zones",
+        paint: {
+          "fill-color": ["get", "color"],
+          "fill-opacity": ["get", "opacity"]
+        }
+      });
+
+      // Linha de Limite do Georreferenciamento
+      map.addLayer({
+        id: "tactical-territory-line",
+        type: "line",
+        source: "tactical-territory-zones",
+        paint: {
+          "line-color": ["get", "borderColor"],
+          "line-width": ["case", ["==", ["get", "status"], "unexplored"], 1.2, 2],
+          "line-opacity": 0.85
+        }
+      });
+
+      // Interatividade ao Clicar na Área Territorial
+      map.on("click", "tactical-territory-fill", (e) => {
+        if (e.features && e.features[0]) {
+          const featId = e.features[0].properties?.id;
+          const target = filteredPoints.find((p) => p.id === featId);
+          if (target) {
+            setSelectedPoint(target);
+            setSpyingDeal(null);
+            map.flyTo({
+              center: [target.lng, target.lat],
+              zoom: 7.5,
+              pitch: 0,
+              duration: 1200
+            });
+          }
+        }
+      });
+
+      map.on("mouseenter", "tactical-territory-fill", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", "tactical-territory-fill", () => {
+        map.getCanvas().style.cursor = "";
+      });
+    };
+
+    if (map.isStyleLoaded()) {
+      setupTerritoryLayers();
+    } else {
+      map.once("load", setupTerritoryLayers);
+    }
+  }, [territoryGeoJson, filteredPoints]);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -875,7 +1075,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                       }`}
                     />
                   </span>
-                  <span>Status Comercial (Pins)</span>
+                  <span>Dominância & Status de Área</span>
                 </div>
                 <span className="legend-accordion-arrow">
                   {expandedAccordions.status ? "▾" : "▸"}
@@ -894,17 +1094,16 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   >
                     <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] flex-shrink-0"></span>
                     <span className="text-[11px] leading-tight flex-1">
-                      <strong className="text-emerald-500">Negócio Fechado</strong>
+                      <strong className="text-emerald-500">Território Dominado (Vendas)</strong>
                     </span>
                     <span className="text-[10px] font-bold text-emerald-500">{closedCount}</span>
                     <div className="spatial-legend-tooltip">
                       <div className="spatial-tooltip-title text-emerald-500">
                         <span className="spatial-tooltip-dot bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]"></span>
-                        <span>Negócio Fechado / Venda Concluída</span>
+                        <span>Área Dominada & Vendas Concluídas</span>
                       </div>
                       <div className="spatial-tooltip-body">
-                        Polos com clientes ativos, propostas ganhas e faturamento confirmado no CRM
-                        Vallor.
+                        Polos com vendas confirmadas. A área ao redor fica verde no mapa (ex: Passo Fundo cobrindo municípios vizinhos como Mato Castelhano e Marau).
                       </div>
                     </div>
                   </div>
@@ -922,7 +1121,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   >
                     <span className="w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(250,204,21,0.8)] flex-shrink-0"></span>
                     <span className="text-[11px] leading-tight flex-1">
-                      <strong className="text-amber-500">Em Atendimento</strong>
+                      <strong className="text-amber-500">Em Atendimento Ativo</strong>
                     </span>
                     <span className="text-[10px] font-bold text-amber-500">
                       {inAttendanceCount}
@@ -930,11 +1129,10 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                     <div className="spatial-legend-tooltip">
                       <div className="spatial-tooltip-title text-amber-500">
                         <span className="spatial-tooltip-dot bg-amber-400 shadow-[0_0_6px_rgba(250,204,21,0.8)]"></span>
-                        <span>Atendimento & Negociação Ativa</span>
+                        <span>Área em Atendimento / Negociação</span>
                       </div>
                       <div className="spatial-tooltip-body">
-                        Propostas comerciais abertas, follow-ups de vendas em andamento ou visitas
-                        agendadas.
+                        Cidades com propostas em aberto ou leads em atendimento. Toda a área ao redor fica amarela no mapa (ex: Chapecó).
                       </div>
                     </div>
                   </div>
@@ -951,7 +1149,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                     <span className="w-3 h-3 rounded-full bg-slate-500 flex-shrink-0"></span>
                     <span className="text-[11px] leading-tight flex-1">
                       <strong className={theme === "light" ? "text-slate-600" : "text-slate-400"}>
-                        Mercado em Aberto
+                        Mercado em Aberto (Névoa)
                       </strong>
                     </span>
                     <span
@@ -968,11 +1166,10 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                         }`}
                       >
                         <span className="spatial-tooltip-dot bg-slate-500"></span>
-                        <span>Mercado em Aberto / Sem Clientes</span>
+                        <span>Mercado em Aberto / Névoa de Guerra</span>
                       </div>
                       <div className="spatial-tooltip-body">
-                        Cidades polo com alto potencial econômico onde a equipe comercial ainda não
-                        converteu clientes ativos.
+                        Polos estratégicos em cinza ainda não loteados, aguardando prospecção e descoberta pela equipe comercial.
                       </div>
                     </div>
                   </div>

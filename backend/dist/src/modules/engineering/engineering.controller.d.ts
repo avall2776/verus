@@ -21,8 +21,8 @@ export declare class EngineeringController {
             title: string;
             description: string;
             priority: string;
-            stage: string;
             category: string;
+            stage: string;
             sourceType: string;
             sourceTicketId: string | null;
             tenantName: string | null;
@@ -50,8 +50,8 @@ export declare class EngineeringController {
         title: string;
         description: string;
         priority: string;
-        stage: string;
         category: string;
+        stage: string;
         sourceType: string;
         sourceTicketId: string | null;
         tenantName: string | null;
@@ -71,8 +71,8 @@ export declare class EngineeringController {
         title: string;
         description: string;
         priority: string;
-        stage: string;
         category: string;
+        stage: string;
         sourceType: string;
         sourceTicketId: string | null;
         tenantName: string | null;
@@ -92,8 +92,8 @@ export declare class EngineeringController {
         title: string;
         description: string;
         priority: string;
-        stage: string;
         category: string;
+        stage: string;
         sourceType: string;
         sourceTicketId: string | null;
         tenantName: string | null;
@@ -113,8 +113,8 @@ export declare class EngineeringController {
         title: string;
         description: string;
         priority: string;
-        stage: string;
         category: string;
+        stage: string;
         sourceType: string;
         sourceTicketId: string | null;
         tenantName: string | null;
@@ -134,8 +134,8 @@ export declare class EngineeringController {
         title: string;
         description: string;
         priority: string;
-        stage: string;
         category: string;
+        stage: string;
         sourceType: string;
         sourceTicketId: string | null;
         tenantName: string | null;
@@ -155,8 +155,8 @@ export declare class EngineeringController {
         title: string;
         description: string;
         priority: string;
-        stage: string;
         category: string;
+        stage: string;
         sourceType: string;
         sourceTicketId: string | null;
         tenantName: string | null;
@@ -177,8 +177,8 @@ export declare class EngineeringController {
         title: string;
         description: string;
         priority: string;
-        stage: string;
         category: string;
+        stage: string;
         sourceType: string;
         sourceTicketId: string | null;
         tenantName: string | null;
@@ -198,8 +198,8 @@ export declare class EngineeringController {
         title: string;
         description: string;
         priority: string;
-        stage: string;
         category: string;
+        stage: string;
         sourceType: string;
         sourceTicketId: string | null;
         tenantName: string | null;
@@ -230,8 +230,8 @@ export declare class EngineeringController {
         title: string;
         description: string;
         priority: string;
-        stage: string;
         category: string;
+        stage: string;
         sourceType: string;
         sourceTicketId: string | null;
         tenantName: string | null;
