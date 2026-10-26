@@ -33,6 +33,14 @@ export class UpdateProposalDto {
 
   @IsString()
   @IsOptional()
+  clientCep?: string;
+
+  @IsString()
+  @IsOptional()
+  clientAddress?: string;
+
+  @IsString()
+  @IsOptional()
   sellerName?: string;
 
   @IsString()

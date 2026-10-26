@@ -5,11 +5,12 @@ import {
   X, Plus, Trash2, FileText, DollarSign, Calendar, User, 
   Building2, Mail, Phone, ShieldCheck, Sparkles, CheckCircle2, 
   Edit3, Upload, Image as ImageIcon, MapPin, Package, Cloud,
-  ExternalLink, Search, Folder, Check
+  ExternalLink, Search, Folder, Check, Loader2
 } from "lucide-react";
 import { Proposal, ProposalItem, CompanyIssuer, ProposalStatus, ProposalProduct } from "@/types/commercial";
 import api from "@/lib/api";
 import { extractGoogleDriveId, getDriveThumbnailUrl } from "@/lib/googleDriveHelper";
+import { getPublicProposalUrl, fetchAddressByCep } from "@/lib/proposalUrlHelper";
 import toast from "react-hot-toast";
 import ModalPortal from "@/components/ui/ModalPortal";
 
@@ -18,10 +19,23 @@ interface ProposalModalProps {
   onClose: () => void;
   onSave: (proposal: Proposal) => any | Promise<any>;
   proposalToEdit?: Proposal | null;
+  initialClient?: {
+    name?: string;
+    company?: string;
+    email?: string;
+    phone?: string;
+    cep?: string;
+    address?: string;
+    dealId?: string;
+    leadId?: string;
+    value?: number;
+    title?: string;
+  } | null;
 }
 
-export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: ProposalModalProps) {
+export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit, initialClient }: ProposalModalProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const clientDropdownRef = useRef<HTMLDivElement | null>(null);
 
   // Catálogo de Produtos e Fotos do Google Drive
   const [catalogProducts, setCatalogProducts] = useState<ProposalProduct[]>([]);
@@ -31,6 +45,18 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
   const [catalogPickerFolder, setCatalogPickerFolder] = useState("ALL");
   const [photoModalItemId, setPhotoModalItemId] = useState<string | null>(null);
   const [photoModalUrl, setPhotoModalUrl] = useState("");
+
+  // Integração com Contatos & CRM
+  const [contactsList, setContactsList] = useState<any[]>([]);
+  const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
+  const [clientSearchFilter, setClientSearchFilter] = useState("");
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const [dealId, setDealId] = useState<string | null>(null);
+
+  // CEP e Endereço do Cliente
+  const [clientCep, setClientCep] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
+  const [isSearchingCep, setIsSearchingCep] = useState(false);
 
   // Código da proposta
   const [code, setCode] = useState(() => `PROP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
@@ -74,7 +100,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Carregar produtos cadastrados do catálogo ao abrir
+  // Carregar produtos cadastrados do catálogo e contatos do CRM ao abrir
   useEffect(() => {
     if (isOpen) {
       api.get("/proposals/products")
@@ -86,8 +112,31 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
         .catch((err) => {
           console.error("[PROPOSAL_PRODUCTS_LOAD_ERROR]", err);
         });
+
+      api.get("/contacts")
+        .then((res) => {
+          if (Array.isArray(res.data)) {
+            setContactsList(res.data);
+          }
+        })
+        .catch((err) => {
+          console.error("[CRM_CONTACTS_LOAD_ERROR]", err);
+        });
     }
   }, [isOpen]);
+
+  // Click outside para fechar o dropdown de busca de clientes do CRM
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (clientDropdownRef.current && !clientDropdownRef.current.contains(e.target as Node)) {
+        setIsClientSearchOpen(false);
+      }
+    }
+    if (isClientSearchOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isClientSearchOpen]);
 
   // Sincronizar estado caso haja proposta em edição ou resetar 100% limpo para nova proposta
   useEffect(() => {
@@ -98,6 +147,8 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
       setClientCompany(proposalToEdit.clientCompany || "");
       setClientEmail(proposalToEdit.clientEmail || "");
       setClientPhone(proposalToEdit.clientPhone || "");
+      setClientCep(proposalToEdit.clientCep || "");
+      setClientAddress(proposalToEdit.clientAddress || "");
       setSellerName(proposalToEdit.sellerName || "");
       setValidUntil(proposalToEdit.validUntil || "");
       setPaymentMethod(proposalToEdit.paymentMethod || "50% Entrada + 50% na Entrega");
@@ -127,7 +178,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
         setIssuerLogoUrl(loadedLogo);
       }
     } else if (!proposalToEdit && isOpen) {
-      // NOVA PROPOSTA: Nasce 100% limpa e zerada, mas pode reaproveitar dados do emitente da empresa
+      // NOVA PROPOSTA: Nasce 100% limpa e zerada, ou com dados passados pelo CRM (initialClient)
       let cachedIssuer: Partial<CompanyIssuer> | null = null;
       try {
         const raw = localStorage.getItem("versus_proposal_issuer_cache");
@@ -135,11 +186,15 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
       } catch (e) {}
 
       setCode(`PROP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
-      setTitle("");
-      setClientName("");
-      setClientCompany("");
-      setClientEmail("");
-      setClientPhone("");
+      setTitle(initialClient?.title || (initialClient?.name ? `Proposta Comercial - ${initialClient.name}` : ""));
+      setClientName(initialClient?.name || "");
+      setClientCompany(initialClient?.company || "");
+      setClientEmail(initialClient?.email || "");
+      setClientPhone(initialClient?.phone || "");
+      setClientCep(initialClient?.cep || "");
+      setClientAddress(initialClient?.address || "");
+      setLeadId(initialClient?.leadId || null);
+      setDealId(initialClient?.dealId || null);
       setSellerName("");
       const d = new Date();
       d.setDate(d.getDate() + 15);
@@ -152,20 +207,97 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
       setIssuerEmail(cachedIssuer?.email || "");
       setIssuerAddress(cachedIssuer?.address || "");
       setIssuerLogoUrl(cachedIssuer?.logoUrl || "");
+
+      const initialVal = Number(initialClient?.value || 0);
       setItems([
         {
           id: `item-${Date.now()}`,
-          name: "",
+          name: initialClient?.title || "",
           description: "",
           quantity: 1,
-          unitPrice: 0,
+          unitPrice: initialVal,
           discountPercent: 0,
-          total: 0
+          total: initialVal
         }
       ]);
       setGlobalDiscount(0);
+
+      // Se CEP fornecido e sem endereço, buscar automaticamente
+      if (initialClient?.cep && !initialClient?.address) {
+        fetchAddressByCep(initialClient.cep).then((addr) => {
+          if (addr) setClientAddress(addr.fullAddress);
+        }).catch(() => {});
+      }
     }
-  }, [proposalToEdit, isOpen]);
+  }, [proposalToEdit, isOpen, initialClient]);
+
+  // Handler de seleção de contato direto do CRM
+  const handleSelectCrmContact = async (contact: any) => {
+    setClientName(contact.name || "");
+    const comp = contact.company || contact.clientCompany || "";
+    if (comp) setClientCompany(comp);
+    if (contact.email) setClientEmail(contact.email);
+    if (contact.phone) setClientPhone(contact.phone);
+    if (contact.cep) setClientCep(contact.cep);
+    if (contact.address) setClientAddress(contact.address);
+    setLeadId(contact.id);
+    setIsClientSearchOpen(false);
+    toast.success(`Cliente "${contact.name}" selecionado do CRM!`);
+
+    if (contact.cep && !contact.address) {
+      setIsSearchingCep(true);
+      try {
+        const addr = await fetchAddressByCep(contact.cep);
+        if (addr) setClientAddress(addr.fullAddress);
+      } catch (e) {}
+      finally { setIsSearchingCep(false); }
+    }
+  };
+
+  // Handler para busca de CEP com auto-completar
+  const handleCepChange = async (val: string) => {
+    const clean = val.replace(/\D/g, "").slice(0, 8);
+    const masked = clean.length > 5 ? `${clean.slice(0, 5)}-${clean.slice(5)}` : clean;
+    setClientCep(masked);
+
+    if (clean.length === 8) {
+      setIsSearchingCep(true);
+      try {
+        const addr = await fetchAddressByCep(clean);
+        if (addr) {
+          setClientAddress(addr.fullAddress);
+          toast.success(`Endereço localizado: ${addr.city}/${addr.state}`);
+        } else {
+          toast.error("CEP não localizado nos Correios. Preencha o endereço manualmente.");
+        }
+      } catch (e) {
+        toast.error("Erro ao consultar CEP.");
+      } finally {
+        setIsSearchingCep(false);
+      }
+    }
+  };
+
+  const handleManualSearchCep = async () => {
+    if (!clientCep) {
+      toast.error("Informe o CEP.");
+      return;
+    }
+    setIsSearchingCep(true);
+    try {
+      const addr = await fetchAddressByCep(clientCep);
+      if (addr) {
+        setClientAddress(addr.fullAddress);
+        toast.success(`Endereço localizado: ${addr.city}/${addr.state}`);
+      } else {
+        toast.error("CEP não localizado.");
+      }
+    } catch (e) {
+      toast.error("Erro ao consultar CEP.");
+    } finally {
+      setIsSearchingCep(false);
+    }
+  };
 
   // Função para comprimir e otimizar logotipos corporativos em Canvas mantendo nitidez e peso levíssimo (< 80KB)
   const optimizeLogoImage = (dataUrl: string, maxWidth = 550, maxHeight = 240): Promise<string> => {
@@ -426,6 +558,8 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
       clientCompany: clientCompany.trim() || undefined,
       clientEmail: clientEmail.trim(),
       clientPhone: clientPhone.trim(),
+      clientCep: clientCep.trim() || undefined,
+      clientAddress: clientAddress.trim() || undefined,
       sellerName: sellerName.trim() || "Equipe Comercial",
       status: proposalToEdit ? proposalToEdit.status : status,
       items,
@@ -437,7 +571,7 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
       createdAt: proposalToEdit ? proposalToEdit.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       notes: notes.trim(),
-      publicLink: proposalToEdit?.publicLink || `${typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app")}/p/${(proposalToEdit?.code || code).toLowerCase()}`,
+      publicLink: getPublicProposalUrl(proposalToEdit?.code || code),
       logoUrl: processedLogo || undefined,
       issuer: issuerData
     };
@@ -653,8 +787,59 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
           {/* Seção 1: Dados do Cliente & Proposta */}
           <div className="p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 space-y-4">
             <h3 className="text-xs font-bold text-slate-800 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
-              <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              Dados do Cliente & Proposta
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Dados do Cliente & Proposta
+              </div>
+              {contactsList.length > 0 && (
+                <div className="relative" ref={clientDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsClientSearchOpen(!isClientSearchOpen)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors cursor-pointer shadow-sm"
+                    title="Puxar dados de um contato já cadastrado no CRM"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    Puxar do CRM ({contactsList.length})
+                  </button>
+                  {isClientSearchOpen && (
+                    <div className="absolute right-0 mt-1 w-72 max-h-60 overflow-y-auto bg-white dark:bg-[#0d1527] border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 p-2 space-y-1">
+                      <input
+                        type="text"
+                        value={clientSearchFilter}
+                        onChange={(e) => setClientSearchFilter(e.target.value)}
+                        placeholder="Buscar contato ou empresa..."
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none mb-1"
+                        autoFocus
+                      />
+                      <div className="max-h-48 overflow-y-auto space-y-0.5">
+                        {contactsList
+                          .filter((c) => {
+                            if (!clientSearchFilter) return true;
+                            const q = clientSearchFilter.toLowerCase();
+                            return (
+                              (c.name && c.name.toLowerCase().includes(q)) ||
+                              (c.company && c.company.toLowerCase().includes(q)) ||
+                              (c.email && c.email.toLowerCase().includes(q)) ||
+                              (c.phone && c.phone.includes(q))
+                            );
+                          })
+                          .map((contact) => (
+                            <button
+                              key={contact.id}
+                              type="button"
+                              onClick={() => handleSelectCrmContact(contact)}
+                              className="w-full text-left p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex flex-col cursor-pointer"
+                            >
+                              <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">{contact.name}</span>
+                              <span className="text-[10px] text-slate-500 truncate">{contact.company || contact.email || contact.phone || "Sem detalhes"}</span>
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -744,6 +929,52 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                     value={validUntil}
                     onChange={(e) => setValidUntil(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* CEP com Busca Automática e Integração para Tráfego Pago */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    CEP do Cliente (Tráfego / Localização)
+                  </label>
+                  <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">Auto ViaCEP</span>
+                </div>
+                <div className="relative">
+                  <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    value={clientCep}
+                    onChange={(e) => handleCepChange(e.target.value)}
+                    placeholder="00000-000"
+                    maxLength={9}
+                    className="w-full pl-9 pr-16 py-2 text-sm rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleManualSearchCep}
+                    disabled={isSearchingCep}
+                    className="absolute right-1.5 top-1.5 px-2 py-1 text-xs rounded-lg bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition-colors font-medium cursor-pointer"
+                  >
+                    {isSearchingCep ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Buscar"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Endereço Completo do Cliente */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Endereço Completo (Rua, Bairro, Cidade - UF)
+                </label>
+                <div className="relative">
+                  <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    value={clientAddress}
+                    onChange={(e) => setClientAddress(e.target.value)}
+                    placeholder="Ex: Av. Paulista, 1000, Bela Vista, São Paulo - SP"
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
                 </div>
               </div>
@@ -1023,20 +1254,41 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
           {/* Seção 3: Condição de Pagamento e Observações */}
           <div className="p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Condição de Pagamento
-              </label>
-              <select
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Condição de Pagamento (Texto Livre ou Predefinido)
+                </label>
+                <span className="text-[10px] text-slate-400">Totalmente editável</span>
+              </div>
+              <input
+                type="text"
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 shadow-sm"
-              >
-                <option value="50% Entrada + 50% na Entrega">50% Entrada + 50% na Entrega</option>
-                <option value="À Vista com 5% de Desconto">À Vista com 5% de Desconto</option>
-                <option value="3x no Boleto Faturado (30/60/90 dias)">3x no Boleto Faturado (30/60/90 dias)</option>
-                <option value="Recorrência Mensal (SaaS/Serviço)">Recorrência Mensal (SaaS/Serviço)</option>
-                <option value="Cartão de Crédito em até 12x">Cartão de Crédito em até 12x</option>
-              </select>
+                placeholder="Ex: 50% Entrada + 50% na Entrega, À Vista com 5% Desconto..."
+                className="w-full px-3 py-2 text-sm rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 shadow-sm"
+              />
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {[
+                  "50% Entrada + 50% na Entrega",
+                  "À Vista com 5% de Desconto",
+                  "3x no Boleto Faturado (30/60/90 dias)",
+                  "Recorrência Mensal (SaaS/Serviço)",
+                  "Cartão de Crédito em até 12x"
+                ].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setPaymentMethod(preset)}
+                    className={`text-[11px] px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${
+                      paymentMethod === preset
+                        ? "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700 font-semibold"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-300 border-slate-200 dark:border-slate-700"
+                    }`}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>

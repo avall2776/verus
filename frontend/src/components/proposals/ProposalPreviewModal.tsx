@@ -4,10 +4,11 @@ import React from "react";
 import { 
   X, Copy, Check, Printer, Send, ExternalLink, Calendar, 
   User, CheckCircle2, XCircle, Clock, ShieldCheck, FileText, ArrowUpRight,
-  Edit3, Building2, MapPin, Phone, Mail, Image as ImageIcon, ZoomIn
+  Edit3, Building2, MapPin, Phone, Mail, Image as ImageIcon, ZoomIn, Download
 } from "lucide-react";
 import { Proposal } from "@/types/commercial";
 import { getDriveThumbnailUrl } from "@/lib/googleDriveHelper";
+import { getPublicProposalUrl } from "@/lib/proposalUrlHelper";
 import toast from "react-hot-toast";
 import ModalPortal from "@/components/ui/ModalPortal";
 
@@ -31,25 +32,19 @@ export function ProposalPreviewModal({
 
   if (!isOpen || !proposal) return null;
 
-  const getOrigin = () => {
-    return typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
-  };
+  const publicProposalUrl = getPublicProposalUrl(proposal.code, proposal.publicLink);
 
   const copyLink = () => {
-    const origin = getOrigin();
-    const link = proposal.publicLink || `${origin}/p/${proposal.code.toLowerCase()}`;
-    navigator.clipboard.writeText(link);
+    navigator.clipboard.writeText(publicProposalUrl);
     setCopied(true);
-    toast.success("Link público de aceite copiado para a área de transferência!");
+    toast.success("Link público copiado!");
     setTimeout(() => setCopied(false), 2500);
   };
 
   const shareViaWhatsApp = () => {
-    const origin = getOrigin();
-    const link = proposal.publicLink || `${origin}/p/${proposal.code.toLowerCase()}`;
     const cleanPhone = (proposal.clientPhone || "").replace(/\D/g, "");
     const message = encodeURIComponent(
-      `Olá ${proposal.clientName}! Segue a proposta comercial oficial (${proposal.code}) elaborada para você no valor de R$ ${proposal.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}.\n\nVocê pode analisar todos os detalhes e assinar digitalmente pelo link seguro: ${link}\n\nFicamos à disposição para quaisquer dúvidas!`
+      `Olá ${proposal.clientName}! Segue a proposta comercial oficial (${proposal.code}) elaborada para você no valor de R$ ${proposal.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}.\n\nVocê pode analisar todos os detalhes e assinar digitalmente pelo link seguro: ${publicProposalUrl}\n\nFicamos à disposição para quaisquer dúvidas!`
     );
     const targetUrl = cleanPhone 
       ? `https://wa.me/55${cleanPhone}?text=${message}`
@@ -59,6 +54,10 @@ export function ProposalPreviewModal({
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadOfficialPdf = () => {
+    window.open(`/api-backend/proposals/${proposal.id}/pdf`, "_blank");
   };
 
   const getStatusBadge = (status: Proposal["status"]) => {
@@ -114,6 +113,43 @@ export function ProposalPreviewModal({
 
   return (
     <ModalPortal>
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 12mm 15mm;
+          }
+          body, html {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          #proposal-print-area {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          #proposal-print-area * {
+            color: #0f172a !important;
+            border-color: #cbd5e1 !important;
+          }
+          #proposal-print-area .text-slate-500,
+          #proposal-print-area .text-slate-400,
+          #proposal-print-area .text-slate-600 {
+            color: #475569 !important;
+          }
+          #proposal-print-area .text-blue-600,
+          #proposal-print-area .text-blue-400 {
+            color: #1e40af !important;
+          }
+          #proposal-print-area th {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+          }
+        }
+      `}</style>
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto print:p-0 print:m-0 print:bg-white print:static print:overflow-visible print:block print:w-full print:h-auto">
       <div 
         id="proposal-print-area"
@@ -161,12 +197,21 @@ export function ProposalPreviewModal({
             </button>
 
             <button
+              onClick={handleDownloadOfficialPdf}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-600/20 dark:hover:bg-blue-600/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 transition-colors cursor-pointer shadow-sm"
+              title="Baixar arquivo PDF profissional formatado"
+            >
+              <Download className="w-3.5 h-3.5" />
+              PDF Oficial
+            </button>
+
+            <button
               onClick={handlePrint}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shadow-sm"
-              title="Imprimir ou Salvar como PDF"
+              title="Imprimir direto do navegador"
             >
               <Printer className="w-3.5 h-3.5" />
-              PDF / Imprimir
+              Imprimir
             </button>
 
             <button
@@ -263,6 +308,15 @@ export function ProposalPreviewModal({
               <p className="text-[11px] text-slate-500 dark:text-slate-400 print:text-slate-600 mt-1">
                 {proposal.clientEmail} {proposal.clientPhone && `• ${proposal.clientPhone}`}
               </p>
+              {(proposal.clientCep || proposal.clientAddress) && (
+                <div className="text-[11px] text-slate-600 dark:text-slate-400 print:text-slate-800 mt-1 flex items-start gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5 print:hidden" />
+                  <span>
+                    {proposal.clientCep && <strong className="text-slate-800 dark:text-slate-200 print:text-black">CEP {proposal.clientCep} </strong>}
+                    {proposal.clientAddress && <span>• {proposal.clientAddress}</span>}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="text-right">

@@ -30,6 +30,8 @@ export declare class ChatService {
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cep: string | null;
+            address: string | null;
             source: string;
             tags: string[];
             tenantId: string;
@@ -98,6 +100,8 @@ export declare class ChatService {
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cep: string | null;
+            address: string | null;
             source: string;
             tags: string[];
             tenantId: string;
@@ -140,6 +144,8 @@ export declare class ChatService {
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cep: string | null;
+            address: string | null;
             source: string;
             tags: string[];
             tenantId: string;
@@ -210,6 +216,8 @@ export declare class ChatService {
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cep: string | null;
+            address: string | null;
             source: string;
             tags: string[];
             tenantId: string;
@@ -259,6 +267,8 @@ export declare class ChatService {
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cep: string | null;
+            address: string | null;
             source: string;
             tags: string[];
             tenantId: string;
@@ -309,6 +319,8 @@ export declare class ChatService {
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cep: string | null;
+            address: string | null;
             source: string;
             tags: string[];
             tenantId: string;
@@ -389,6 +401,8 @@ export declare class ChatService {
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cep: string | null;
+            address: string | null;
             source: string;
             tags: string[];
             tenantId: string;
@@ -439,6 +453,8 @@ export declare class ChatService {
             phone: string | null;
             email: string | null;
             avatarUrl: string | null;
+            cep: string | null;
+            address: string | null;
             source: string;
             tags: string[];
             tenantId: string;

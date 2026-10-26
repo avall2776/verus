@@ -189,6 +189,8 @@ model Contact {
   phone             String?
   email             String?
   avatarUrl         String?
+  cep               String?
+  address           String?
   source            String // WhatsApp, Instagram, Web
   tags              String[] // Quente, Frio
   tenantId          String
@@ -538,6 +540,8 @@ model Proposal {
   clientEmail   String?
   clientPhone   String?
   clientCompany String?
+  clientCep     String?
+  clientAddress String?
   sellerName    String?
   status        String         @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED, etc.
   totalValue    Decimal        @default(0)

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { 
   FileText, Plus, Search, Filter, ArrowUpDown, Download, 
   Send, Eye, CheckCircle2, XCircle, Clock, Copy, MoreHorizontal, 
@@ -10,11 +11,13 @@ import {
 import { Proposal, ProposalStatus } from "@/types/commercial";
 import { ProposalModal } from "@/components/proposals/ProposalModal";
 import { ProposalPreviewModal } from "@/components/proposals/ProposalPreviewModal";
+import { getPublicProposalUrl } from "@/lib/proposalUrlHelper";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 
-export default function ProposalsPage() {
+function ProposalsContent() {
   // A tela nasce 100% limpa, sem nenhum dado fictício
+  const searchParams = useSearchParams();
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,6 +26,40 @@ export default function ProposalsPage() {
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [editingProposal, setEditingProposal] = useState<Proposal | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [initialClient, setInitialClient] = useState<any>(null);
+
+  // Escutar parâmetros da URL (ex: abertura direta a partir do CRM)
+  useEffect(() => {
+    if (searchParams) {
+      const isNew = searchParams.get("new") === "true";
+      const clientName = searchParams.get("clientName") || searchParams.get("name") || "";
+      const clientPhone = searchParams.get("clientPhone") || searchParams.get("phone") || "";
+      const clientEmail = searchParams.get("clientEmail") || searchParams.get("email") || "";
+      const clientCompany = searchParams.get("clientCompany") || searchParams.get("company") || "";
+      const clientCep = searchParams.get("clientCep") || searchParams.get("cep") || "";
+      const clientAddress = searchParams.get("clientAddress") || searchParams.get("address") || "";
+      const dealId = searchParams.get("dealId") || "";
+      const leadId = searchParams.get("contactId") || searchParams.get("leadId") || "";
+      const title = searchParams.get("title") || (clientName ? `Proposta Comercial - ${clientName}` : "");
+      const value = Number(searchParams.get("value") || 0);
+
+      if (isNew || clientName || dealId) {
+        setInitialClient({
+          name: clientName,
+          phone: clientPhone,
+          email: clientEmail,
+          company: clientCompany,
+          cep: clientCep,
+          address: clientAddress,
+          dealId,
+          leadId,
+          title,
+          value,
+        });
+        setIsCreateModalOpen(true);
+      }
+    }
+  }, [searchParams]);
 
   // Carregar propostas reais da API do backend
   useEffect(() => {
@@ -33,7 +70,6 @@ export default function ProposalsPage() {
       try {
         const response = await api.get("/proposals");
         if (isMounted && Array.isArray(response.data)) {
-          const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
           const mapped: Proposal[] = response.data.map((p: any) => {
             return {
               id: p.id,
@@ -43,6 +79,8 @@ export default function ProposalsPage() {
               clientCompany: p.lead?.company || p.clientCompany || undefined,
               clientEmail: p.lead?.email || p.clientEmail || "",
               clientPhone: p.lead?.phone || p.clientPhone || "",
+              clientCep: p.clientCep || (p.lead as any)?.cep || "",
+              clientAddress: p.clientAddress || (p.lead as any)?.address || "",
               sellerName: p.sellerName || "Equipe Comercial",
               status: p.status || "draft",
               items: p.items || [],
@@ -53,7 +91,7 @@ export default function ProposalsPage() {
               validUntil: p.validUntil ? p.validUntil.split("T")[0] : new Date().toISOString().split("T")[0],
               createdAt: p.createdAt || new Date().toISOString(),
               notes: p.notes,
-              publicLink: `${origin}/p/${(p.code || p.id).toLowerCase()}`,
+              publicLink: getPublicProposalUrl(p.code, p.publicLink),
               issuer: p.tenant ? {
                 name: p.tenant.name || "",
                 document: p.tenant.cnpj || "",
@@ -161,6 +199,8 @@ export default function ProposalsPage() {
       clientCompany: proposalData.clientCompany?.trim() || undefined,
       clientEmail: proposalData.clientEmail?.trim() || undefined,
       clientPhone: proposalData.clientPhone?.trim() || undefined,
+      clientCep: proposalData.clientCep?.trim() || undefined,
+      clientAddress: proposalData.clientAddress?.trim() || undefined,
       sellerName: proposalData.sellerName?.trim() || "Equipe Comercial",
       status: (proposalData.status || "DRAFT").toUpperCase(),
       validUntil: proposalData.validUntil ? new Date(proposalData.validUntil).toISOString() : undefined,
@@ -212,6 +252,8 @@ export default function ProposalsPage() {
         clientCompany: savedData.clientCompany || proposalData.clientCompany,
         clientEmail: savedData.clientEmail || proposalData.clientEmail || "",
         clientPhone: savedData.clientPhone || proposalData.clientPhone || "",
+        clientCep: savedData.clientCep || proposalData.clientCep || "",
+        clientAddress: savedData.clientAddress || proposalData.clientAddress || "",
         sellerName: savedData.sellerName || proposalData.sellerName || "Equipe Comercial",
         status: (savedData.status || proposalData.status || "draft").toLowerCase() as ProposalStatus,
         items: savedData.items && savedData.items.length > 0 ? savedData.items : proposalData.items,
@@ -222,7 +264,7 @@ export default function ProposalsPage() {
         validUntil: savedData.validUntil ? savedData.validUntil.split("T")[0] : proposalData.validUntil,
         createdAt: savedData.createdAt || new Date().toISOString(),
         notes: savedData.notes || proposalData.notes,
-        publicLink: savedData.publicLink || proposalData.publicLink,
+        publicLink: savedData.publicLink ? getPublicProposalUrl(savedData.code, savedData.publicLink) : proposalData.publicLink,
         logoUrl: savedLogo,
         issuer: savedData.issuer ? {
           ...savedData.issuer,
@@ -300,8 +342,7 @@ export default function ProposalsPage() {
   };
 
   const copyQuickLink = (proposal: Proposal) => {
-    const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "https://verus-alpha.vercel.app");
-    const link = proposal.publicLink || `${origin}/p/${proposal.code.toLowerCase()}`;
+    const link = getPublicProposalUrl(proposal.code, proposal.publicLink);
     navigator.clipboard.writeText(link);
     toast.success(`Link de aceite da proposta ${proposal.code} copiado!`);
   };
@@ -801,9 +842,11 @@ export default function ProposalsPage() {
         onClose={() => {
           setIsCreateModalOpen(false);
           setEditingProposal(null);
+          setInitialClient(null);
         }}
         onSave={handleSaveProposal}
         proposalToEdit={editingProposal}
+        initialClient={initialClient}
       />
 
       {/* Modal de Prévia e Compartilhamento */}
@@ -815,5 +858,13 @@ export default function ProposalsPage() {
         onEdit={handleEditProposal}
       />
     </div>
+  );
+}
+
+export default function ProposalsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-400">Carregando painel de propostas...</div>}>
+      <ProposalsContent />
+    </Suspense>
   );
 }

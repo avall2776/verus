@@ -45,6 +45,7 @@ export declare class SupportController {
             name: string;
             phone: string;
             email: string;
+            address: string;
             createdAt: Date;
             _count: {
                 supportTickets: number;
@@ -59,7 +60,6 @@ export declare class SupportController {
             };
             cnpj: string;
             logoUrl: string;
-            address: string;
             isActive: boolean;
             metaPhoneNumberId: string;
             whatsappSettings: import("@prisma/client/runtime/library").JsonValue;
@@ -276,12 +276,12 @@ export declare class SupportController {
             name: string;
             phone: string | null;
             email: string | null;
+            address: string | null;
             createdAt: Date;
             updatedAt: Date;
             cnpj: string | null;
             logoUrl: string | null;
             leadNotificationPhone: string | null;
-            address: string | null;
             isActive: boolean;
             proposalDriveFolder: string | null;
             aiEnabled: boolean;
@@ -394,12 +394,12 @@ export declare class SupportController {
                 name: string;
                 phone: string | null;
                 email: string | null;
+                address: string | null;
                 createdAt: Date;
                 updatedAt: Date;
                 cnpj: string | null;
                 logoUrl: string | null;
                 leadNotificationPhone: string | null;
-                address: string | null;
                 isActive: boolean;
                 proposalDriveFolder: string | null;
                 aiEnabled: boolean;

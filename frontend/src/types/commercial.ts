@@ -49,6 +49,8 @@ export interface Proposal {
   clientCompany?: string;
   clientEmail: string;
   clientPhone: string;
+  clientCep?: string;
+  clientAddress?: string;
   sellerName: string;
   sellerId?: string;
   status: ProposalStatus;

@@ -1316,7 +1316,41 @@ export function DealModal({ deal, isOpen, onClose, onUpdate, initialAction }: De
                 <span>Criar Evento</span>
               </button>
 
-              {/* 5. Editar Contato */}
+              {/* 5. Gerar Proposta Comercial */}
+              <button 
+                type="button"
+                onClick={() => {
+                  onClose();
+                  const params = new URLSearchParams();
+                  params.set("new", "true");
+                  if (deal.id) params.set("dealId", deal.id);
+                  if (deal.contactId) params.set("leadId", deal.contactId);
+                  const name = deal.contact?.name || deal.title || "";
+                  if (name) params.set("clientName", name);
+                  const phone = deal.contact?.phone || "";
+                  if (phone) params.set("clientPhone", phone);
+                  const email = deal.contact?.email || deal.metadata?.contact?.email || "";
+                  if (email) params.set("clientEmail", email);
+                  const comp = deal.contact?.company || deal.metadata?.company || "";
+                  if (comp) params.set("clientCompany", comp);
+                  const cep = deal.contact?.cep || deal.metadata?.cep || "";
+                  if (cep) params.set("clientCep", cep);
+                  const addr = deal.contact?.address || deal.metadata?.address || deal.metadata?.city || "";
+                  if (addr) params.set("clientAddress", addr);
+                  if (deal.value) params.set("value", String(deal.value));
+                  if (deal.title && !['Atendimento Comercial', 'Novo Lead', 'Nova Oportunidade'].includes(deal.title)) {
+                    params.set("title", `Proposta Comercial - ${deal.title}`);
+                  }
+                  router.push(`/proposals?${params.toString()}`);
+                }} 
+                className="group flex items-center gap-2.5 w-full p-2.5 rounded-xl text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/35 transition-colors shadow-xs"
+                title="Abrir o gerador de propostas com todos os dados deste lead/negócio"
+              >
+                <FileText size={14} className="text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
+                <span>Gerar Proposta Comercial</span>
+              </button>
+
+              {/* 6. Editar Contato */}
               <button 
                 type="button"
                 onClick={() => setShowEditContactModal(true)} 

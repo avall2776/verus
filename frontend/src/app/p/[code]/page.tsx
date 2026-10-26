@@ -174,9 +174,14 @@ export default function PublicProposalViewPage() {
               <User className="w-3.5 h-3.5 text-blue-400 print:text-black" /> Destinatário (Cliente)
             </span>
             <div className="font-bold text-sm text-white print:text-black">{proposal.clientName}</div>
+            {proposal.clientCompany && (
+              <div className="text-xs text-blue-400 font-semibold print:text-slate-700">{proposal.clientCompany}</div>
+            )}
             <div className="text-xs text-slate-400 print:text-slate-600 space-y-0.5">
               {proposal.clientEmail && <div>E-mail: {proposal.clientEmail}</div>}
               {proposal.clientPhone && <div>Tel: {proposal.clientPhone}</div>}
+              {proposal.clientCep && <div>CEP: <strong className="text-slate-200 print:text-black">{proposal.clientCep}</strong></div>}
+              {proposal.clientAddress && <div>Endereço: {proposal.clientAddress}</div>}
             </div>
           </div>
 

@@ -31,7 +31,7 @@ export class ProposalsService {
       totalPrice: Number(item.totalPrice || 0),
     }));
 
-    const rawBaseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://verus-alpha.vercel.app';
+    const rawBaseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://avalmarketing.com.br/vallor';
     const baseUrl = rawBaseUrl.replace(/\/+$/, '');
     const logo = p.logoUrl || p.tenant?.logoUrl || '';
 
@@ -44,6 +44,8 @@ export class ProposalsService {
       clientCompany: p.clientCompany || undefined,
       clientEmail: p.clientEmail || p.lead?.email || '',
       clientPhone: p.clientPhone || p.lead?.phone || '',
+      clientCep: p.clientCep || (p.lead as any)?.cep || '',
+      clientAddress: p.clientAddress || (p.lead as any)?.address || '',
       sellerName: p.sellerName || 'Equipe Comercial',
       status: (p.status || 'DRAFT').toLowerCase(),
       totalValue: totalVal,
@@ -211,6 +213,8 @@ export class ProposalsService {
         clientCompany: dto.clientCompany || null,
         clientEmail: dto.clientEmail || null,
         clientPhone: dto.clientPhone || null,
+        clientCep: dto.clientCep || null,
+        clientAddress: dto.clientAddress || null,
         sellerName: dto.sellerName || 'Equipe Comercial',
         leadId,
         dealId: dto.dealId || null,
@@ -309,6 +313,8 @@ export class ProposalsService {
       if (dto.clientCompany !== undefined) updateData.clientCompany = dto.clientCompany;
       if (dto.clientEmail !== undefined) updateData.clientEmail = dto.clientEmail;
       if (dto.clientPhone !== undefined) updateData.clientPhone = dto.clientPhone;
+      if (dto.clientCep !== undefined) updateData.clientCep = dto.clientCep;
+      if (dto.clientAddress !== undefined) updateData.clientAddress = dto.clientAddress;
       if (dto.sellerName !== undefined) updateData.sellerName = dto.sellerName;
       if (dto.leadId !== undefined) {
         updateData.lead = dto.leadId ? { connect: { id: dto.leadId } } : { disconnect: true };
@@ -466,11 +472,11 @@ export class ProposalsService {
     }
     const total = Number(proposal.totalValue).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-    const rawBaseUrl = origin || process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://verus-alpha.vercel.app';
+    const rawBaseUrl = origin || process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://avalmarketing.com.br/vallor';
     const baseUrl = rawBaseUrl.replace(/\/+$/, '');
     const proposalLink = `${baseUrl}/p/${(proposal.code || proposal.id).toLowerCase()}`;
 
-    const message = `Olá, *${clientName}*! Tudo bem?\n\nSegue a sua *Proposta Comercial*: *${proposal.title}* (${proposal.code})\n💰 Valor Total: *${total}*\n📅 Validade: *${proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : 'A combinar'}*\n\nVocê pode revisar e aprovar todos os itens pelo link: ${proposalLink}`;
+    const message = `Olá, *${clientName}*! Tudo bem?\n\nSegue a sua *Proposta Comercial*: *${proposal.title}* (${proposal.code})\n💰 Valor Total: *${total}*\n📅 Validade: *${proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : 'A combinar'}*\n\nVocê pode revisar e aprovar todos os itens pelo link seguro: ${proposalLink}`;
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = clientPhone ? `https://wa.me/${clientPhone}?text=${encodedMessage}` : `https://wa.me/?text=${encodedMessage}`;
@@ -543,28 +549,35 @@ export class ProposalsService {
             ? `https://drive.google.com/thumbnail?id=${driveId}&sz=w400`
             : item.imageUrl;
           const imgTag = thumbUrl
-            ? `<img src="${thumbUrl}" alt="${item.name || ''}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; margin-right: 12px; vertical-align: middle;" />`
+            ? `<img src="${thumbUrl}" alt="${item.name || ''}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; margin-right: 12px; vertical-align: middle;" />`
             : '';
+
+          const disc = Number(item.discountPercent || 0);
 
           return `
           <tr>
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+            <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0;">
               <div style="display: flex; align-items: center;">
                 ${imgTag}
                 <div>
-                  <div style="font-weight: 600; color: #1a202c;">${item.name || item.description}</div>
-                  ${item.description && item.description !== item.name ? `<div style="font-size: 11px; color: #718096; margin-top: 2px;">${item.description}</div>` : ''}
+                  <div style="font-weight: 700; color: #0f172a; font-size: 13px;">${item.name || item.description}</div>
+                  ${item.description && item.description !== item.name ? `<div style="font-size: 11px; color: #64748b; margin-top: 2px;">${item.description}</div>` : ''}
                 </div>
               </div>
             </td>
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${item.quantity}</td>
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">R$ ${Number(item.unitPrice).toFixed(2)}</td>
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: bold;">R$ ${Number(item.total || item.totalPrice).toFixed(2)}</td>
+            <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #334155; font-size: 13px;">${item.quantity}</td>
+            <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #334155; font-size: 13px; font-family: monospace;">R$ ${Number(item.unitPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+            <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #64748b; font-size: 12px;">${disc > 0 ? `${disc}%` : '-'}</td>
+            <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #0f172a; font-size: 13px; font-family: monospace;">R$ ${Number(item.total || item.totalPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
           </tr>
           `;
         },
       )
       .join('');
+
+    const rawBaseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://avalmarketing.com.br/vallor';
+    const baseUrl = rawBaseUrl.replace(/\/+$/, '');
+    const publicUrl = `${baseUrl}/p/${(proposal.code || proposal.id).toLowerCase()}`;
 
     return `
       <!DOCTYPE html>
@@ -573,64 +586,231 @@ export class ProposalsService {
         <meta charset="UTF-8">
         <title>Proposta Comercial #${proposal.code || proposal.id.substring(0, 8)}</title>
         <style>
-          body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a202c; margin: 0; padding: 40px; background: #fff; }
-          .header { display: flex; justify-content: space-between; border-bottom: 2px solid #3182ce; padding-bottom: 20px; margin-bottom: 30px; }
-          .title { font-size: 24px; font-weight: bold; color: #2b6cb0; }
-          .info-block { margin-bottom: 24px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background: #edf2f7; padding: 12px; text-align: left; font-size: 13px; color: #4a5568; }
-          .total-box { margin-top: 30px; text-align: right; font-size: 20px; font-weight: bold; color: #2d3748; }
-          .footer { margin-top: 50px; font-size: 12px; color: #a0aec0; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+          @page {
+            size: A4;
+            margin: 14mm 16mm;
+          }
+          * { box-sizing: border-box; }
+          body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            color: #0f172a; 
+            margin: 0; 
+            padding: 24px; 
+            background: #ffffff; 
+            line-height: 1.45;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start;
+            border-bottom: 2px solid #0f172a; 
+            padding-bottom: 18px; 
+            margin-bottom: 22px; 
+          }
+          .company-name { font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+          .doc-badge {
+            display: inline-block;
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          .client-box { 
+            background: #f8fafc; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 10px; 
+            padding: 14px 18px; 
+            margin-bottom: 22px;
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 16px;
+          }
+          .section-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #475569;
+            margin-bottom: 8px;
+          }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th { 
+            background: #f1f5f9; 
+            padding: 10px 12px; 
+            text-align: left; 
+            font-size: 11px; 
+            font-weight: 800; 
+            color: #334155; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-top: 1px solid #cbd5e1;
+            border-bottom: 2px solid #cbd5e1;
+          }
+          .totals-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-top: 22px;
+            gap: 20px;
+          }
+          .notes-box {
+            flex: 1;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 11px;
+            color: #334155;
+          }
+          .totals-table {
+            width: 260px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            overflow: hidden;
+          }
+          .totals-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            font-size: 12px;
+            border-bottom: 1px solid #e2e8f0;
+          }
+          .totals-final {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 12px;
+            font-size: 14px;
+            font-weight: 800;
+            background: #0f172a;
+            color: #ffffff;
+          }
+          .seal-box { 
+            margin-top: 26px; 
+            padding: 12px 16px; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 8px; 
+            background: #fafafa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+          }
+          .footer { 
+            margin-top: 24px; 
+            font-size: 10px; 
+            color: #64748b; 
+            text-align: center; 
+            border-top: 1px solid #e2e8f0; 
+            padding-top: 12px; 
+          }
         </style>
       </head>
       <body>
         <div class="header">
           <div style="display: flex; align-items: center; gap: 16px;">
-            ${tenant?.logoUrl ? `<img src="${tenant.logoUrl}" alt="${tenant.name}" style="max-height: 55px; max-width: 160px; object-fit: contain;" />` : ''}
+            ${(proposal.logoUrl || tenant?.logoUrl) ? `<img src="${proposal.logoUrl || tenant?.logoUrl}" alt="Logotipo" style="max-height: 55px; max-width: 170px; object-fit: contain;" />` : ''}
             <div>
-              <div class="title">${tenant?.name || 'Vallor Commercial'}</div>
-              <div style="color: #718096; font-size: 13px;">
-                ${tenant?.cnpj ? `<span>CNPJ: ${tenant.cnpj}</span> • ` : ''}
-                ${tenant?.email || tenant?.phone ? `<span>${tenant.email || tenant.phone}</span>` : ''}
+              <div class="company-name">${tenant?.name || proposal.issuer?.name || 'Vallor Comercial'}</div>
+              <div style="color: #475569; font-size: 12px; margin-top: 3px;">
+                ${(proposal.issuer?.document || tenant?.cnpj) ? `<span>CNPJ: ${proposal.issuer?.document || tenant?.cnpj}</span>` : ''}
+                ${(proposal.issuer?.phone || tenant?.phone) ? ` • <span>${proposal.issuer?.phone || tenant?.phone}</span>` : ''}
+                ${(proposal.issuer?.email || tenant?.email) ? ` • <span>${proposal.issuer?.email || tenant?.email}</span>` : ''}
               </div>
-              ${tenant?.address ? `<div style="color: #a0aec0; font-size: 11px;">${tenant.address}</div>` : ''}
+              ${(proposal.issuer?.address || tenant?.address) ? `<div style="color: #64748b; font-size: 11px; margin-top: 2px;">${proposal.issuer?.address || tenant?.address}</div>` : ''}
             </div>
           </div>
-          <div style="text-align: right; font-size: 14px; color: #718096;">
-            <div><strong>Código:</strong> ${proposal.code}</div>
-            <div><strong>Data:</strong> ${new Date(proposal.createdAt).toLocaleDateString('pt-BR')}</div>
-            <div><strong>Validade:</strong> ${proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : 'Não especificada'}</div>
-            <div><strong>Status:</strong> <span style="font-weight: bold; color: #2b6cb0;">${proposal.status.toUpperCase()}</span></div>
+          <div style="text-align: right;">
+            <div class="doc-badge">Proposta Comercial Oficial</div>
+            <div style="font-size: 15px; font-weight: 800; color: #0f172a; margin-top: 6px; font-family: monospace;">${proposal.code}</div>
+            <div style="font-size: 11px; color: #475569; margin-top: 4px;"><strong>Data de Emissão:</strong> ${new Date(proposal.createdAt).toLocaleDateString('pt-BR')}</div>
+            <div style="font-size: 11px; color: #475569;"><strong>Validade:</strong> ${proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : '15 dias'}</div>
           </div>
         </div>
 
-        <div class="info-block">
-          <h3>Proposta: ${proposal.title}</h3>
-          <p><strong>Cliente / Lead:</strong> ${proposal.clientName} ${proposal.clientCompany ? `(${proposal.clientCompany})` : ''} ${proposal.clientEmail ? `• ${proposal.clientEmail}` : ''} ${proposal.clientPhone ? `• ${proposal.clientPhone}` : ''}</p>
-          ${proposal.paymentMethod || proposal.paymentTerms ? `<p><strong>Condições de Pagamento:</strong> ${proposal.paymentMethod || proposal.paymentTerms}</p>` : ''}
-          ${proposal.notes ? `<p><strong>Observações:</strong> ${proposal.notes}</p>` : ''}
+        <div class="client-box">
+          <div>
+            <div class="section-title">Destinatário / Contratante</div>
+            <div style="font-size: 14px; font-weight: 800; color: #0f172a;">${proposal.clientName}</div>
+            ${proposal.clientCompany ? `<div style="font-size: 12px; font-weight: 600; color: #2563eb; margin-top: 2px;">${proposal.clientCompany}</div>` : ''}
+            <div style="font-size: 12px; color: #475569; margin-top: 4px;">
+              ${proposal.clientPhone ? `<span>Tel/WhatsApp: ${proposal.clientPhone}</span>` : ''}
+              ${proposal.clientEmail ? ` • <span>${proposal.clientEmail}</span>` : ''}
+            </div>
+            ${(proposal.clientCep || proposal.clientAddress) ? `
+            <div style="font-size: 11px; color: #334155; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1;">
+              ${proposal.clientCep ? `<strong>CEP:</strong> ${proposal.clientCep} ` : ''}
+              ${proposal.clientAddress ? `• <strong>Endereço:</strong> ${proposal.clientAddress}` : ''}
+            </div>` : ''}
+          </div>
+
+          <div style="border-left: 1px solid #e2e8f0; padding-left: 16px;">
+            <div class="section-title">Consultor & Condições</div>
+            <div style="font-size: 13px; font-weight: 700; color: #0f172a;">${proposal.sellerName || 'Equipe Comercial'}</div>
+            <div style="font-size: 12px; color: #475569; margin-top: 6px;">
+              <strong>Condição de Pagamento:</strong><br/>
+              <span style="color: #0f172a; font-weight: 600;">${proposal.paymentMethod || 'A combinar'}</span>
+            </div>
+          </div>
         </div>
 
+        <div class="section-title" style="margin-top: 14px;">Detalhamento de Itens & Escopo Fornecido</div>
         <table>
           <thead>
             <tr>
-              <th>Descrição do Item</th>
-              <th style="text-align: center;">Qtd</th>
-              <th style="text-align: right;">Preço Unitário</th>
-              <th style="text-align: right;">Total</th>
+              <th>Descrição do Serviço / Produto</th>
+              <th style="text-align: center; width: 60px;">Qtd</th>
+              <th style="text-align: right; width: 110px;">Valor Unit.</th>
+              <th style="text-align: right; width: 70px;">Desc.</th>
+              <th style="text-align: right; width: 120px;">Total</th>
             </tr>
           </thead>
           <tbody>
-            ${itemsRows.length > 0 ? itemsRows : '<tr><td colspan="4" style="padding:15px; text-align:center;">Nenhum item adicionado</td></tr>'}
+            ${itemsRows.length > 0 ? itemsRows : '<tr><td colspan="5" style="padding:16px; text-align:center; color:#64748b;">Nenhum item adicionado</td></tr>'}
           </tbody>
         </table>
 
-        <div class="total-box">
-          Valor Total: R$ ${Number(proposal.total).toFixed(2)}
+        <div class="totals-container">
+          <div class="notes-box">
+            <div style="font-weight: 700; text-transform: uppercase; margin-bottom: 4px; color: #0f172a; font-size: 10px;">Termos Comerciais & Garantia</div>
+            <div>${proposal.notes || 'Proposta comercial válida sob condições gerais acordadas entre as partes. Garantia e prazos de entrega conforme especificações técnicas do fabricante.'}</div>
+          </div>
+
+          <div class="totals-table">
+            <div class="totals-row">
+              <span style="color: #64748b;">Subtotal Bruto:</span>
+              <span style="font-weight: 600; font-family: monospace;">R$ ${Number(proposal.subtotal || proposal.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>
+            ${Number(proposal.discountTotal || 0) > 0 ? `
+            <div class="totals-row" style="color: #16a34a;">
+              <span>Desconto Global:</span>
+              <span style="font-weight: 600; font-family: monospace;">- R$ ${Number(proposal.discountTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>` : ''}
+            <div class="totals-final">
+              <span>VALOR TOTAL:</span>
+              <span style="font-family: monospace;">R$ ${Number(proposal.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="seal-box">
+          <div>
+            <strong style="color: #0f172a;">Assinatura Eletrônica & Aceite Digital</strong><br/>
+            <span style="color: #64748b;">Documento emitido com autenticação digital e conformidade MP 2.200-2/2001.</span>
+          </div>
+          <div style="text-align: right;">
+            <span style="color: #64748b;">Link de Validação do Cliente:</span><br/>
+            <a href="${publicUrl}" style="color: #2563eb; text-decoration: none; font-weight: 600; font-size: 11px;">${publicUrl}</a>
+          </div>
         </div>
 
         <div class="footer">
-          Documento gerado automaticamente pela plataforma Vallor • Todos os direitos reservados.
+          Documento gerado automaticamente pelo Sistema Vallor • Todos os direitos reservados.
         </div>
       </body>
       </html>

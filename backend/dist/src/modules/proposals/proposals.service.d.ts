@@ -34,9 +34,9 @@ export declare class ProposalsService {
         name: string;
         phone: string;
         email: string;
+        address: string;
         cnpj: string;
         logoUrl: string;
-        address: string;
     }>;
     updateCompanyProfile(tenantId: string, data: {
         name?: string;
@@ -50,9 +50,9 @@ export declare class ProposalsService {
         name: string;
         phone: string;
         email: string;
+        address: string;
         cnpj: string;
         logoUrl: string;
-        address: string;
     }>;
     generatePdfHtml(id: string, tenantId?: string): Promise<string>;
     findAllProducts(tenantId: string, folderName?: string): Promise<{

@@ -7,6 +7,8 @@ export declare class UpdateProposalDto {
     clientCompany?: string;
     clientEmail?: string;
     clientPhone?: string;
+    clientCep?: string;
+    clientAddress?: string;
     sellerName?: string;
     status?: string;
     leadId?: string;

@@ -14,9 +14,9 @@ export declare class ProposalsController {
         name: string;
         phone: string;
         email: string;
+        address: string;
         cnpj: string;
         logoUrl: string;
-        address: string;
     }>;
     updateCompanyProfile(tenantId: string, body: {
         name?: string;
@@ -30,9 +30,9 @@ export declare class ProposalsController {
         name: string;
         phone: string;
         email: string;
+        address: string;
         cnpj: string;
         logoUrl: string;
-        address: string;
     }>;
     getProducts(tenantId: string, folder?: string): Promise<{
         price: number;

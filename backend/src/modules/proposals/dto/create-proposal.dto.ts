@@ -74,6 +74,14 @@ export class CreateProposalDto {
 
   @IsString()
   @IsOptional()
+  clientCep?: string;
+
+  @IsString()
+  @IsOptional()
+  clientAddress?: string;
+
+  @IsString()
+  @IsOptional()
   sellerName?: string;
 
   @IsString()
