@@ -16,7 +16,7 @@ const prisma_service_1 = require("../../../shared/database/prisma.service");
 const ai_service_1 = require("../../ai/ai.service");
 const openai_1 = require("openai");
 const axios_1 = require("axios");
-const uuid_1 = require("uuid");
+const crypto_1 = require("crypto");
 let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
     constructor(prisma, aiService) {
         this.prisma = prisma;
@@ -149,7 +149,7 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
         if (!data.title || !data.imageBase64) {
             throw new common_1.BadRequestException('Título/Legenda e imagem são obrigatórios para publicar o Story.');
         }
-        const postId = `story_${Date.now()}_${(0, uuid_1.v4)().substring(0, 6)}`;
+        const postId = `story_${Date.now()}_${(0, crypto_1.randomUUID)().substring(0, 6)}`;
         const category = data.category || 'Geral';
         const instance = await this.prisma.whatsAppInstance.findFirst({
             where: { tenantId, status: 'connected' },

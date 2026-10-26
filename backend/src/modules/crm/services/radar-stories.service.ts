@@ -3,7 +3,7 @@ import { PrismaService } from '../../../shared/database/prisma.service';
 import { AiService } from '../../ai/ai.service';
 import OpenAI from 'openai';
 import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export interface StoryViewerItem {
   id: string;
@@ -213,7 +213,7 @@ export class RadarStoriesService implements OnModuleInit {
       throw new BadRequestException('Título/Legenda e imagem são obrigatórios para publicar o Story.');
     }
 
-    const postId = `story_${Date.now()}_${uuidv4().substring(0, 6)}`;
+    const postId = `story_${Date.now()}_${randomUUID().substring(0, 6)}`;
     const category = data.category || 'Geral';
 
     // 1. Localiza a instância conectada do WhatsApp para o tenant
