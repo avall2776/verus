@@ -8,20 +8,26 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var RadarStoriesService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RadarStoriesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../../shared/database/prisma.service");
 const ai_service_1 = require("../../ai/ai.service");
+const chat_gateway_1 = require("../../chat/chat.gateway");
 const openai_1 = require("openai");
 const axios_1 = require("axios");
 const crypto_1 = require("crypto");
 let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
-    constructor(prisma, aiService) {
+    constructor(prisma, aiService, chatGateway) {
         this.prisma = prisma;
         this.aiService = aiService;
+        this.chatGateway = chatGateway;
         this.logger = new common_1.Logger(RadarStoriesService_1.name);
+        this.syncInterval = null;
     }
     async onModuleInit() {
         try {
@@ -62,6 +68,49 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
         }
         catch (err) {
             this.logger.warn(`Verificacao tabelas status posts/views: ${err.message}`);
+        }
+        this.startBackgroundSync();
+    }
+    onModuleDestroy() {
+        if (this.syncInterval) {
+            clearInterval(this.syncInterval);
+            this.syncInterval = null;
+        }
+    }
+    startBackgroundSync() {
+        setTimeout(() => {
+            this.syncAllActiveTenants().catch((err) => this.logger.warn(`[Radar Stories] Falha no primeiro ciclo de auto-sync: ${err.message}`));
+        }, 10000);
+        this.syncInterval = setInterval(() => {
+            this.syncAllActiveTenants().catch((err) => this.logger.warn(`[Radar Stories] Falha no ciclo de auto-sync: ${err.message}`));
+        }, 2 * 60 * 1000);
+        this.logger.log(`[Radar Stories] Monitoramento automático em background ativado (polling a cada 2 minutos).`);
+    }
+    async syncAllActiveTenants() {
+        try {
+            const instances = await this.prisma.whatsAppInstance.findMany({
+                where: { status: { in: ['open', 'connected'] } },
+                select: { tenantId: true },
+                distinct: ['tenantId'],
+            });
+            if (!instances || instances.length === 0)
+                return;
+            for (const inst of instances) {
+                if (!inst.tenantId)
+                    continue;
+                try {
+                    const res = await this.syncActiveStories(inst.tenantId);
+                    if (res.syncedViewsCount && res.syncedViewsCount > 0) {
+                        this.logger.log(`[Radar Stories Auto-Sync] Sincronizadas ${res.syncedViewsCount} novas visualizações para o tenant ${inst.tenantId}`);
+                    }
+                }
+                catch (err) {
+                    this.logger.warn(`[Radar Stories Auto-Sync] Erro no tenant ${inst.tenantId}: ${err.message}`);
+                }
+            }
+        }
+        catch (err) {
+            this.logger.warn(`[Radar Stories Auto-Sync] Erro ao listar instâncias: ${err.message}`);
         }
     }
     async getActivePosts(tenantId) {
@@ -255,6 +304,7 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                     'MESSAGES_SET',
                     'MESSAGES_UPSERT',
                     'MESSAGES_UPDATE',
+                    'RECEIPT_UPDATE',
                     'SEND_MESSAGE',
                     'CONTACTS_UPSERT',
                     'CHATS_UPSERT',
@@ -297,17 +347,38 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                 return (now - dt) < 24 * 3600 * 1000 && (item.status === 'READ' || item.status === 'PLAYED');
             });
             if (recentReceipts.length > 0) {
-                const contacts = await this.prisma.contact.findMany({
+                const evoContactsMap = new Map();
+                try {
+                    const evoContactsRes = await axios_1.default.post(`${serverUrl}/chat/findContacts/${instanceName}`, {}, { headers, timeout: 10000 });
+                    if (Array.isArray(evoContactsRes.data)) {
+                        for (const c of evoContactsRes.data) {
+                            if (c.id) {
+                                evoContactsMap.set(c.id, {
+                                    pushName: c.pushName || c.name,
+                                    profilePictureUrl: c.profilePictureUrl,
+                                });
+                            }
+                        }
+                    }
+                }
+                catch (evoErr) {
+                    this.logger.warn(`[Sync Stories] Aviso ao carregar contatos da Evolution API: ${evoErr.message}`);
+                }
+                const crmContacts = await this.prisma.contact.findMany({
                     where: { tenantId },
-                    select: { id: true, name: true, phone: true },
+                    select: { id: true, name: true, phone: true, address: true, whatsappLid: true },
                 });
                 const contactByPhone = new Map();
-                for (const c of contacts) {
+                const contactByName = new Map();
+                for (const c of crmContacts) {
                     if (c.phone) {
                         const clean = c.phone.replace(/\D/g, '');
                         contactByPhone.set(clean, c);
                         if (clean.length >= 8)
                             contactByPhone.set(clean.slice(-8), c);
+                    }
+                    if (c.name) {
+                        contactByName.set(c.name.trim().toLowerCase(), c);
                     }
                 }
                 for (const receipt of recentReceipts) {
@@ -315,22 +386,57 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                     const digits = rawJid.replace(/[^0-9]/g, '');
                     if (digits.length < 8)
                         continue;
-                    const matchedContact = contactByPhone.get(digits) || contactByPhone.get(digits.slice(-8));
-                    const phoneToSave = matchedContact?.phone || digits;
-                    const nameToSave = matchedContact?.name || `Produtor Rural (${digits.slice(-4)})`;
-                    const cityToSave = matchedContact?.city || 'Região Sul';
+                    const evoInfo = evoContactsMap.get(rawJid) || evoContactsMap.get(`${digits}@lid`);
+                    const pushName = evoInfo?.pushName?.trim() || '';
+                    let matchedContact = contactByPhone.get(digits) || contactByPhone.get(digits.slice(-8));
+                    if (!matchedContact && pushName && pushName !== 'SEM NOME' && pushName !== 'Comercial Verto') {
+                        const cleanPush = pushName.toLowerCase();
+                        matchedContact = contactByName.get(cleanPush) ||
+                            crmContacts.find((c) => {
+                                const cName = c.name?.toLowerCase().trim();
+                                return cName && (cName === cleanPush || cName.includes(cleanPush) || cleanPush.includes(cName));
+                            });
+                    }
+                    const isVertoTeam = pushName.toLowerCase().includes('verto') ||
+                        (matchedContact?.name && matchedContact.name.toLowerCase().includes('verto')) ||
+                        pushName === 'Comercial Verto';
+                    const phoneToSave = matchedContact?.phone || (digits.length >= 10 && digits.length <= 13 ? digits : digits);
+                    let nameToSave = matchedContact?.name;
+                    if (!nameToSave) {
+                        if (pushName && pushName !== 'SEM NOME') {
+                            nameToSave = isVertoTeam && !pushName.toLowerCase().includes('verto') ? `${pushName} (Verto)` : pushName;
+                        }
+                        else if (isVertoTeam) {
+                            nameToSave = 'Comercial Verto (Equipe Interna)';
+                        }
+                        else {
+                            nameToSave = `Produtor Rural (${digits.slice(-4)})`;
+                        }
+                    }
+                    const cityToSave = matchedContact?.city || matchedContact?.address || 'Região Sul';
                     const stateToSave = matchedContact?.state || 'RS';
                     const dtVal = receipt.datetime > 10000000000 ? receipt.datetime : receipt.datetime * 1000;
                     const viewedAt = new Date(dtVal);
                     const existingView = await this.prisma.$queryRawUnsafe(`SELECT id FROM "whatsapp_status_views" 
-             WHERE "tenantId" = $1 AND "phone" = $2 AND "viewedAt" >= $3 LIMIT 1`, tenantId, phoneToSave, twentyFourHoursAgo);
+             WHERE "tenantId" = $1 AND ("phone" = $2 OR ("statusMessageId" = $3 AND "contactName" = $4)) AND "viewedAt" >= $5 LIMIT 1`, tenantId, phoneToSave, activeStoryId, nameToSave, twentyFourHoursAgo);
                     if (!existingView || existingView.length === 0) {
                         const viewId = `view_sync_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
                         await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_views"
-               ("id", "tenantId", "contactId", "phone", "contactName", "city", "state", "statusMessageId", "storyTitle", "category", "viewedAt", "createdAt")
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
-               ON CONFLICT ("id") DO NOTHING`, viewId, tenantId, matchedContact?.id || null, phoneToSave, nameToSave, cityToSave, stateToSave, activeStoryId, activeStoryTitle, activeStoryCategory, viewedAt);
+               ("id", "tenantId", "contactId", "phone", "contactName", "city", "state", "statusMessageId", "storyTitle", "category", "mediaUrl", "viewedAt", "createdAt")
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
+               ON CONFLICT ("id") DO NOTHING`, viewId, tenantId, matchedContact?.id || null, phoneToSave, nameToSave, cityToSave, stateToSave, activeStoryId, activeStoryTitle, activeStoryCategory, evoInfo?.profilePictureUrl || null, viewedAt);
                         newViewsSynced++;
+                        if (this.chatGateway) {
+                            this.chatGateway.emitStoryViewed(tenantId, {
+                                viewId,
+                                contactId: matchedContact?.id || null,
+                                phone: phoneToSave,
+                                contactName: nameToSave,
+                                storyTitle: activeStoryTitle,
+                                category: activeStoryCategory,
+                                viewedAt: viewedAt.toISOString(),
+                            });
+                        }
                     }
                 }
             }
@@ -946,7 +1052,9 @@ Elabore a abordagem executiva.`;
 exports.RadarStoriesService = RadarStoriesService;
 exports.RadarStoriesService = RadarStoriesService = RadarStoriesService_1 = __decorate([
     (0, common_1.Injectable)(),
+    __param(2, (0, common_1.Optional)()),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        ai_service_1.AiService])
+        ai_service_1.AiService,
+        chat_gateway_1.ChatGateway])
 ], RadarStoriesService);
 //# sourceMappingURL=radar-stories.service.js.map

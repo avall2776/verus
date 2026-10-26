@@ -1,6 +1,7 @@
-import { OnModuleInit } from '@nestjs/common';
+import { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { AiService } from '../../ai/ai.service';
+import { ChatGateway } from '../../chat/chat.gateway';
 export interface StoryViewerItem {
     id: string;
     contactId: string;
@@ -33,12 +34,17 @@ export interface StoryViewerItem {
         thumbnailUrl?: string;
     };
 }
-export declare class RadarStoriesService implements OnModuleInit {
+export declare class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
     private readonly prisma;
     private readonly aiService;
+    private readonly chatGateway?;
     private readonly logger;
-    constructor(prisma: PrismaService, aiService: AiService);
+    private syncInterval;
+    constructor(prisma: PrismaService, aiService: AiService, chatGateway?: ChatGateway);
     onModuleInit(): Promise<void>;
+    onModuleDestroy(): void;
+    private startBackgroundSync;
+    syncAllActiveTenants(): Promise<void>;
     getActivePosts(tenantId: string): Promise<{
         id: any;
         messageId: any;

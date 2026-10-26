@@ -1,6 +1,7 @@
-import { Injectable, Logger, BadRequestException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, OnModuleInit, OnModuleDestroy, Optional } from '@nestjs/common';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { AiService } from '../../ai/ai.service';
+import { ChatGateway } from '../../chat/chat.gateway';
 import OpenAI from 'openai';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
@@ -39,12 +40,14 @@ export interface StoryViewerItem {
 }
 
 @Injectable()
-export class RadarStoriesService implements OnModuleInit {
+export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RadarStoriesService.name);
+  private syncInterval: NodeJS.Timeout | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly aiService: AiService
+    private readonly aiService: AiService,
+    @Optional() private readonly chatGateway?: ChatGateway
   ) {}
 
   async onModuleInit() {
@@ -85,6 +88,69 @@ export class RadarStoriesService implements OnModuleInit {
       `);
     } catch (err: any) {
       this.logger.warn(`Verificacao tabelas status posts/views: ${err.message}`);
+    }
+
+    // Inicia o motor de monitoramento contínuo em background para todos os tenants
+    this.startBackgroundSync();
+  }
+
+  onModuleDestroy() {
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval);
+      this.syncInterval = null;
+    }
+  }
+
+  /**
+   * Monitoramento contínuo em background (executa a cada 2 minutos)
+   * Garante que visualizações de Stories sejam detectadas e atualizadas sem necessidade de clique manual
+   */
+  private startBackgroundSync() {
+    // 1º disparo com pequeno delay de 10s após inicialização do NestJS
+    setTimeout(() => {
+      this.syncAllActiveTenants().catch((err) =>
+        this.logger.warn(`[Radar Stories] Falha no primeiro ciclo de auto-sync: ${err.message}`)
+      );
+    }, 10000);
+
+    // Ciclo contínuo de polling a cada 2 minutos (120s)
+    this.syncInterval = setInterval(() => {
+      this.syncAllActiveTenants().catch((err) =>
+        this.logger.warn(`[Radar Stories] Falha no ciclo de auto-sync: ${err.message}`)
+      );
+    }, 2 * 60 * 1000);
+
+    this.logger.log(`[Radar Stories] Monitoramento automático em background ativado (polling a cada 2 minutos).`);
+  }
+
+  /**
+   * Executa a sincronização para todas as instâncias de WhatsApp conectadas no sistema
+   */
+  async syncAllActiveTenants() {
+    try {
+      const instances = await this.prisma.whatsAppInstance.findMany({
+        where: { status: { in: ['open', 'connected'] } },
+        select: { tenantId: true },
+        distinct: ['tenantId'],
+      });
+
+      if (!instances || instances.length === 0) return;
+
+      for (const inst of instances) {
+        if (!inst.tenantId) continue;
+        try {
+          const res = await this.syncActiveStories(inst.tenantId);
+          if (res.syncedViewsCount && res.syncedViewsCount > 0) {
+            this.logger.log(
+              `[Radar Stories Auto-Sync] Sincronizadas ${res.syncedViewsCount} novas visualizações para o tenant ${inst.tenantId}`
+            );
+          }
+        } catch (err: any) {
+          this.logger.warn(`[Radar Stories Auto-Sync] Erro no tenant ${inst.tenantId}: ${err.message}`);
+        }
+      }
+    } catch (err: any) {
+      this.logger.warn(`[Radar Stories Auto-Sync] Erro ao listar instâncias: ${err.message}`);
     }
   }
 
@@ -364,7 +430,7 @@ export class RadarStoriesService implements OnModuleInit {
       this.logger.warn(`[Sync Stories] Aviso ao configurar read_status: ${e.message}`);
     }
 
-    // 3. Garante webhook events
+    // 3. Garante webhook events com RECEIPT_UPDATE
     try {
       const webhookUrl = `http://172.16.0.1:3001/webhooks/evolution/${tenantId}`;
       await axios.post(
@@ -379,6 +445,7 @@ export class RadarStoriesService implements OnModuleInit {
             'MESSAGES_SET',
             'MESSAGES_UPSERT',
             'MESSAGES_UPDATE',
+            'RECEIPT_UPDATE',
             'SEND_MESSAGE',
             'CONTACTS_UPSERT',
             'CHATS_UPSERT',
@@ -436,6 +503,7 @@ export class RadarStoriesService implements OnModuleInit {
     // 5. Reconcilia as visualizações da Evolution API
     let newViewsSynced = 0;
     try {
+      // Busca recibos de status da Evolution API
       const statusRes = await axios.post(
         `${serverUrl}/chat/findStatusMessage/${instanceName}`,
         {},
@@ -450,18 +518,44 @@ export class RadarStoriesService implements OnModuleInit {
       });
 
       if (recentReceipts.length > 0) {
-        // Carrega contatos do tenant para cruzamento rápido
-        const contacts = await this.prisma.contact.findMany({
+        // Carrega contatos da Evolution API para mapear nomes de perfil (pushName) e fotos de LIDs
+        const evoContactsMap = new Map<string, { pushName?: string; profilePictureUrl?: string }>();
+        try {
+          const evoContactsRes = await axios.post(
+            `${serverUrl}/chat/findContacts/${instanceName}`,
+            {},
+            { headers, timeout: 10000 }
+          );
+          if (Array.isArray(evoContactsRes.data)) {
+            for (const c of evoContactsRes.data) {
+              if (c.id) {
+                evoContactsMap.set(c.id, {
+                  pushName: c.pushName || c.name,
+                  profilePictureUrl: c.profilePictureUrl,
+                });
+              }
+            }
+          }
+        } catch (evoErr: any) {
+          this.logger.warn(`[Sync Stories] Aviso ao carregar contatos da Evolution API: ${evoErr.message}`);
+        }
+
+        // Carrega contatos do CRM do tenant para cruzamento rápido
+        const crmContacts = await this.prisma.contact.findMany({
           where: { tenantId },
-          select: { id: true, name: true, phone: true },
+          select: { id: true, name: true, phone: true, address: true, whatsappLid: true },
         });
 
         const contactByPhone = new Map<string, any>();
-        for (const c of contacts) {
+        const contactByName = new Map<string, any>();
+        for (const c of crmContacts) {
           if (c.phone) {
             const clean = c.phone.replace(/\D/g, '');
             contactByPhone.set(clean, c);
             if (clean.length >= 8) contactByPhone.set(clean.slice(-8), c);
+          }
+          if (c.name) {
+            contactByName.set(c.name.trim().toLowerCase(), c);
           }
         }
 
@@ -470,23 +564,55 @@ export class RadarStoriesService implements OnModuleInit {
           const digits = rawJid.replace(/[^0-9]/g, '');
           if (digits.length < 8) continue;
 
-          // Encontra o contato no CRM
-          const matchedContact = contactByPhone.get(digits) || contactByPhone.get(digits.slice(-8));
+          // Busca dados de perfil da Evolution API
+          const evoInfo = evoContactsMap.get(rawJid) || evoContactsMap.get(`${digits}@lid`);
+          const pushName = evoInfo?.pushName?.trim() || '';
 
-          const phoneToSave = matchedContact?.phone || digits;
-          const nameToSave = matchedContact?.name || `Produtor Rural (${digits.slice(-4)})`;
-          const cityToSave = matchedContact?.city || 'Região Sul';
-          const stateToSave = matchedContact?.state || 'RS';
+          // 1. Tenta correspondência direta por telefone no CRM
+          let matchedContact = contactByPhone.get(digits) || contactByPhone.get(digits.slice(-8));
+
+          // 2. Se não encontrou por telefone e temos pushName, busca no CRM por nome
+          if (!matchedContact && pushName && pushName !== 'SEM NOME' && pushName !== 'Comercial Verto') {
+            const cleanPush = pushName.toLowerCase();
+            matchedContact = contactByName.get(cleanPush) ||
+              crmContacts.find((c) => {
+                const cName = c.name?.toLowerCase().trim();
+                return cName && (cName === cleanPush || cName.includes(cleanPush) || cleanPush.includes(cName));
+              });
+          }
+
+          // Identifica se é equipe interna Verto
+          const isVertoTeam =
+            pushName.toLowerCase().includes('verto') ||
+            (matchedContact?.name && matchedContact.name.toLowerCase().includes('verto')) ||
+            pushName === 'Comercial Verto';
+
+          const phoneToSave = matchedContact?.phone || (digits.length >= 10 && digits.length <= 13 ? digits : digits);
+          let nameToSave = matchedContact?.name;
+          if (!nameToSave) {
+            if (pushName && pushName !== 'SEM NOME') {
+              nameToSave = isVertoTeam && !pushName.toLowerCase().includes('verto') ? `${pushName} (Verto)` : pushName;
+            } else if (isVertoTeam) {
+              nameToSave = 'Comercial Verto (Equipe Interna)';
+            } else {
+              nameToSave = `Produtor Rural (${digits.slice(-4)})`;
+            }
+          }
+
+          const cityToSave = (matchedContact as any)?.city || matchedContact?.address || 'Região Sul';
+          const stateToSave = (matchedContact as any)?.state || 'RS';
 
           const dtVal = receipt.datetime > 10000000000 ? receipt.datetime : receipt.datetime * 1000;
           const viewedAt = new Date(dtVal);
 
-          // Verifica se já existe visualização deste contato para este status
+          // Verifica se já existe visualização deste contato/telefone para este status nas últimas 24h
           const existingView = await this.prisma.$queryRawUnsafe<any[]>(
             `SELECT id FROM "whatsapp_status_views" 
-             WHERE "tenantId" = $1 AND "phone" = $2 AND "viewedAt" >= $3 LIMIT 1`,
+             WHERE "tenantId" = $1 AND ("phone" = $2 OR ("statusMessageId" = $3 AND "contactName" = $4)) AND "viewedAt" >= $5 LIMIT 1`,
             tenantId,
             phoneToSave,
+            activeStoryId,
+            nameToSave,
             twentyFourHoursAgo
           );
 
@@ -494,8 +620,8 @@ export class RadarStoriesService implements OnModuleInit {
             const viewId = `view_sync_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
             await this.prisma.$executeRawUnsafe(
               `INSERT INTO "whatsapp_status_views"
-               ("id", "tenantId", "contactId", "phone", "contactName", "city", "state", "statusMessageId", "storyTitle", "category", "viewedAt", "createdAt")
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+               ("id", "tenantId", "contactId", "phone", "contactName", "city", "state", "statusMessageId", "storyTitle", "category", "mediaUrl", "viewedAt", "createdAt")
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
                ON CONFLICT ("id") DO NOTHING`,
               viewId,
               tenantId,
@@ -507,9 +633,23 @@ export class RadarStoriesService implements OnModuleInit {
               activeStoryId,
               activeStoryTitle,
               activeStoryCategory,
+              evoInfo?.profilePictureUrl || null,
               viewedAt
             );
             newViewsSynced++;
+
+            // Emite notificação via WebSocket em tempo real para o frontend atualizar o feed automaticamente
+            if (this.chatGateway) {
+              this.chatGateway.emitStoryViewed(tenantId, {
+                viewId,
+                contactId: matchedContact?.id || null,
+                phone: phoneToSave,
+                contactName: nameToSave,
+                storyTitle: activeStoryTitle,
+                category: activeStoryCategory,
+                viewedAt: viewedAt.toISOString(),
+              });
+            }
           }
         }
       }
