@@ -151,6 +151,14 @@ export declare class WhatsappController {
             lastConnectedAt: Date | null;
         };
     }>;
+    reconcileContacts(tenantId: string): Promise<{
+        success: boolean;
+        synced: {
+            created: number;
+            updated: number;
+        };
+        resolvedLids: number;
+    }>;
     getConfig(tenantId: string): Promise<{
         metaToken: string;
         hasToken: boolean;

@@ -109,13 +109,13 @@ export declare class SupportController {
         userId: string | null;
         description: string;
         priority: string;
-        category: string;
         ticketNumber: number;
-        assignedToId: string | null;
+        category: string;
         isAiPaused: boolean;
         satisfactionRating: number | null;
         satisfactionFeedback: string | null;
         aiHandoffDemandId: string | null;
+        assignedToId: string | null;
     }>;
     create(req: any, dto: CreateTicketDto): Promise<{
         tenant: {
@@ -151,13 +151,13 @@ export declare class SupportController {
         userId: string | null;
         description: string;
         priority: string;
-        category: string;
         ticketNumber: number;
-        assignedToId: string | null;
+        category: string;
         isAiPaused: boolean;
         satisfactionRating: number | null;
         satisfactionFeedback: string | null;
         aiHandoffDemandId: string | null;
+        assignedToId: string | null;
     }>;
     addMessage(req: any, id: string, dto: CreateTicketMessageDto): Promise<{
         sender: {
@@ -206,13 +206,13 @@ export declare class SupportController {
         userId: string | null;
         description: string;
         priority: string;
-        category: string;
         ticketNumber: number;
-        assignedToId: string | null;
+        category: string;
         isAiPaused: boolean;
         satisfactionRating: number | null;
         satisfactionFeedback: string | null;
         aiHandoffDemandId: string | null;
+        assignedToId: string | null;
     }>;
     assign(req: any, id: string, body: {
         assignedToId: string | null;
@@ -235,13 +235,13 @@ export declare class SupportController {
         userId: string | null;
         description: string;
         priority: string;
-        category: string;
         ticketNumber: number;
-        assignedToId: string | null;
+        category: string;
         isAiPaused: boolean;
         satisfactionRating: number | null;
         satisfactionFeedback: string | null;
         aiHandoffDemandId: string | null;
+        assignedToId: string | null;
     }>;
     getAiCopilotSuggestion(req: any, id: string): Promise<any>;
     getAiConfig(): Promise<{
@@ -378,13 +378,13 @@ export declare class SupportController {
         userId: string | null;
         description: string;
         priority: string;
-        category: string;
         ticketNumber: number;
-        assignedToId: string | null;
+        category: string;
         isAiPaused: boolean;
         satisfactionRating: number | null;
         satisfactionFeedback: string | null;
         aiHandoffDemandId: string | null;
+        assignedToId: string | null;
     }>;
     submitCsat(req: any, id: string, dto: SubmitCsatDto): Promise<{
         message: string;
@@ -496,13 +496,13 @@ export declare class SupportController {
             userId: string | null;
             description: string;
             priority: string;
-            category: string;
             ticketNumber: number;
-            assignedToId: string | null;
+            category: string;
             isAiPaused: boolean;
             satisfactionRating: number | null;
             satisfactionFeedback: string | null;
             aiHandoffDemandId: string | null;
+            assignedToId: string | null;
         };
     }>;
     coachSupportAi(req: any, id: string, dto: CoachSupportAiDto): Promise<{

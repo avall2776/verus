@@ -41,13 +41,13 @@ export declare class OperatorsController {
                 userId: string | null;
                 description: string;
                 priority: string;
-                category: string;
                 ticketNumber: number;
-                assignedToId: string | null;
+                category: string;
                 isAiPaused: boolean;
                 satisfactionRating: number | null;
                 satisfactionFeedback: string | null;
                 aiHandoffDemandId: string | null;
+                assignedToId: string | null;
             })[];
             id: string;
             name: string;
@@ -125,13 +125,13 @@ export declare class OperatorsController {
             userId: string | null;
             description: string;
             priority: string;
-            category: string;
             ticketNumber: number;
-            assignedToId: string | null;
+            category: string;
             isAiPaused: boolean;
             satisfactionRating: number | null;
             satisfactionFeedback: string | null;
             aiHandoffDemandId: string | null;
+            assignedToId: string | null;
         })[];
     }>;
     create(req: any, dto: CreateOperatorDto): Promise<{

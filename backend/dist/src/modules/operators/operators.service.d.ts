@@ -44,13 +44,13 @@ export declare class OperatorsService {
                 userId: string | null;
                 description: string;
                 priority: string;
-                category: string;
                 ticketNumber: number;
-                assignedToId: string | null;
+                category: string;
                 isAiPaused: boolean;
                 satisfactionRating: number | null;
                 satisfactionFeedback: string | null;
                 aiHandoffDemandId: string | null;
+                assignedToId: string | null;
             })[];
             id: string;
             name: string;
@@ -128,13 +128,13 @@ export declare class OperatorsService {
             userId: string | null;
             description: string;
             priority: string;
-            category: string;
             ticketNumber: number;
-            assignedToId: string | null;
+            category: string;
             isAiPaused: boolean;
             satisfactionRating: number | null;
             satisfactionFeedback: string | null;
             aiHandoffDemandId: string | null;
+            assignedToId: string | null;
         })[];
     }>;
     createOperator(dto: CreateOperatorDto, inviterName: string): Promise<{

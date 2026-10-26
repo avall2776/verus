@@ -571,9 +571,9 @@ export class WebhooksController {
           );
           if (resolved.realPhone) {
             realPhone = resolved.realPhone;
-            if (resolved.realName) candidateName = resolved.realName;
-            if (resolved.avatarUrl && !profilePicUrl) profilePicUrl = resolved.avatarUrl;
           }
+          if (resolved.realName) candidateName = resolved.realName;
+          if (resolved.avatarUrl && !profilePicUrl) profilePicUrl = resolved.avatarUrl;
         }
       } else {
         const cleanDigits = remoteJid.replace(/\D/g, '');

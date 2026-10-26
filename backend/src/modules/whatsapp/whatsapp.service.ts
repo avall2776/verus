@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -6,13 +6,57 @@ import { PrismaService } from '../../shared/database/prisma.service';
 import { ChatGateway } from '../chat/chat.gateway';
 
 @Injectable()
-export class WhatsappService {
+export class WhatsappService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(WhatsappService.name);
+  private reconcilerTimer: NodeJS.Timeout | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly chatGateway: ChatGateway,
   ) {}
+
+  onModuleInit() {
+    this.startBackgroundReconciler();
+  }
+
+  onModuleDestroy() {
+    if (this.reconcilerTimer) {
+      clearInterval(this.reconcilerTimer);
+      this.reconcilerTimer = null;
+    }
+  }
+
+  private startBackgroundReconciler() {
+    // Executa uma sincronização inicial após 30s da inicialização
+    setTimeout(() => {
+      this.reconcileAllTenantsBackground().catch(() => {});
+    }, 30 * 1000);
+
+    // Repete a verificação e resolução a cada 5 minutos
+    this.reconcilerTimer = setInterval(() => {
+      this.reconcileAllTenantsBackground().catch(() => {});
+    }, 5 * 60 * 1000);
+  }
+
+  /**
+   * Varre todos os tenants com instâncias WhatsApp ativas e executa sincronização e resolução de contatos
+   */
+  async reconcileAllTenantsBackground() {
+    try {
+      const activeInstances = await this.prisma.whatsAppInstance.findMany({
+        where: { status: { in: ['connected', 'open'] } },
+        select: { tenantId: true }
+      });
+
+      const uniqueTenantIds = Array.from(new Set(activeInstances.map(i => i.tenantId)));
+      for (const tenantId of uniqueTenantIds) {
+        await this.syncContactsFromEvolution(tenantId).catch(() => {});
+        await this.syncAndResolveLidContacts(tenantId).catch(() => {});
+      }
+    } catch (err: any) {
+      this.logger.warn(`[Background Reconciler] Erro na sincronização autônoma: ${err.message}`);
+    }
+  }
 
   /**
    * Garante que o tenant tenha ao menos uma instância padrão
@@ -1635,6 +1679,21 @@ export class WhatsappService {
         return { realPhone: null, realName: pushName || null, avatarUrl: profilePictureUrl || null };
       }
 
+      // 4.1 Se o contato direto na lista da Evolution API tem o mesmo LID, extrai nome e avatar imediatamente
+      if (remoteJid && isLid) {
+        const cleanRemoteDigits = remoteJid.replace(/\D/g, '');
+        const directLidMatch = contacts.find(ec => ec.id && ec.id.replace(/\D/g, '') === cleanRemoteDigits);
+        if (directLidMatch) {
+          const directName = (directLidMatch.pushName || directLidMatch.name || (directLidMatch as any).verifiedName || '').trim();
+          if (directName && (!pushName || pushName === 'Cliente WhatsApp' || pushName.includes('@lid') || /^\d+$/.test(pushName))) {
+            pushName = directName;
+          }
+          if (directLidMatch.profilePictureUrl && !profilePictureUrl) {
+            profilePictureUrl = directLidMatch.profilePictureUrl;
+          }
+        }
+      }
+
       // 5. Monta mapas rápidos de busca por foto de perfil e por nome normalizado
       const picToContactMap = new Map<string, { realPhone: string; name?: string; avatarUrl?: string | null }>();
       const nameToContactMap = new Map<string, { realPhone: string; name?: string; avatarUrl?: string | null }>();
@@ -1677,7 +1736,7 @@ export class WhatsappService {
       }
 
       // Estratégia B: Cruzamento por Nome Exato da Agenda / PushName
-      if (pushName && !pushName.includes('@lid') && pushName !== 'Cliente WhatsApp') {
+      if (pushName && !pushName.includes('@lid') && pushName !== 'Cliente WhatsApp' && !/^\d+$/.test(pushName)) {
         const inNormName = this.normalizeContactName(pushName);
         const match = nameToContactMap.get(inNormName);
 
@@ -1701,6 +1760,7 @@ export class WhatsappService {
   /**
    * Resolve contatos armazenados com identificador @lid para seus números de telefone reais
    * cruzando o catálogo de contatos sincronizados na Evolution API (mesma foto ou pushName).
+   * Caso o telefone real já exista no banco, realiza o MERGE seguro do contato e conversas.
    */
   async syncAndResolveLidContacts(tenantId: string): Promise<number> {
     try {
@@ -1711,7 +1771,9 @@ export class WhatsappService {
             { phone: { contains: 'lid' } },
             { name: { contains: 'lid' } },
             { whatsappLid: { not: null } },
-            { phone: { startsWith: '173' } },
+            { phone: { startsWith: '17' } },
+            { phone: null },
+            { name: 'Cliente WhatsApp' },
           ],
         },
       });
@@ -1722,27 +1784,130 @@ export class WhatsappService {
       let resolvedCount = 0;
 
       for (const contact of lidContacts) {
-        // Se já tem um número limpo entre 10 e 13 dígitos que não é LID, pula
         const digits = (contact.phone || '').replace(/\D/g, '');
-        if (digits.length >= 10 && digits.length <= 13 && !contact.phone.includes('@lid')) {
+        const hasValidPhone = digits.length >= 10 && digits.length <= 13 && !contact.phone?.includes('@lid');
+        const isGenericName = !contact.name ||
+          contact.name === '.' ||
+          contact.name === '-' ||
+          contact.name === contact.phone ||
+          contact.name === `WhatsApp (${contact.phone})` ||
+          contact.name === 'Cliente WhatsApp' ||
+          contact.name === 'Cliente Verto' ||
+          contact.name.includes('@lid') ||
+          (contact.name.length >= 8 && /^\d+$/.test(contact.name.replace(/\D/g, '')));
+
+        if (hasValidPhone && !isGenericName) {
           continue;
         }
 
         const resolution = await this.resolveContactFromEvolution(
           tenantId,
           targetInstanceName,
-          contact.whatsappLid || contact.phone,
+          contact.whatsappLid || contact.phone || undefined,
           contact.name,
           contact.avatarUrl
         );
 
         if (resolution.realPhone || (resolution.realName && resolution.realName !== contact.name)) {
+          if (resolution.realPhone && resolution.realPhone !== contact.phone) {
+            // Verifica se já existe outro contato com este número real no mesmo tenant
+            const existingRealContact = await this.prisma.contact.findFirst({
+              where: {
+                tenantId,
+                phone: resolution.realPhone,
+                id: { not: contact.id },
+              },
+            });
+
+            if (existingRealContact) {
+              this.logger.log(`[LID Resolution Merge] Mesclando contato LID duplicado [${contact.id}] -> Real [${existingRealContact.id}] (${resolution.realPhone})`);
+
+              // 1. Reatribui conversas e mescla mensagens se necessário
+              const lidConversations = await this.prisma.conversation.findMany({
+                where: { contactId: contact.id },
+              });
+
+              for (const lidConv of lidConversations) {
+                const realConv = await this.prisma.conversation.findFirst({
+                  where: { contactId: existingRealContact.id },
+                  orderBy: { updatedAt: 'desc' },
+                });
+
+                if (realConv) {
+                  await this.prisma.message.updateMany({
+                    where: { conversationId: lidConv.id },
+                    data: { conversationId: realConv.id, contactId: existingRealContact.id },
+                  });
+                  await this.prisma.csatSurvey.updateMany({
+                    where: { conversationId: lidConv.id },
+                    data: { conversationId: realConv.id, contactId: existingRealContact.id },
+                  }).catch(() => {});
+                  await this.prisma.aiLearningIncident.updateMany({
+                    where: { conversationId: lidConv.id },
+                    data: { conversationId: realConv.id },
+                  }).catch(() => {});
+                  await this.prisma.conversation.delete({ where: { id: lidConv.id } }).catch(() => {});
+                } else {
+                  await this.prisma.conversation.update({
+                    where: { id: lidConv.id },
+                    data: { contactId: existingRealContact.id },
+                  });
+                }
+              }
+
+              // 2. Reatribui mensagens avulsas
+              await this.prisma.message.updateMany({
+                where: { contactId: contact.id },
+                data: { contactId: existingRealContact.id },
+              });
+
+              // 3. Reatribui CRM / Negócios / Tickets
+              await this.prisma.deal.updateMany({
+                where: { contactId: contact.id },
+                data: { contactId: existingRealContact.id },
+              }).catch(() => {});
+              await this.prisma.supportTicket.updateMany({
+                where: { contactId: contact.id },
+                data: { contactId: existingRealContact.id },
+              }).catch(() => {});
+
+              // 4. Enriquece o contato real
+              const realUpdate: any = {};
+              if (!existingRealContact.whatsappLid) {
+                realUpdate.whatsappLid = contact.whatsappLid || contact.phone;
+              }
+              if (!existingRealContact.avatarUrl && (resolution.avatarUrl || contact.avatarUrl)) {
+                realUpdate.avatarUrl = resolution.avatarUrl || contact.avatarUrl;
+              }
+              const isRealNameGeneric = !existingRealContact.name ||
+                existingRealContact.name === 'Cliente WhatsApp' ||
+                existingRealContact.name === existingRealContact.phone ||
+                existingRealContact.name.startsWith('WhatsApp');
+              if (isRealNameGeneric && resolution.realName) {
+                realUpdate.name = resolution.realName;
+              }
+
+              if (Object.keys(realUpdate).length > 0) {
+                await this.prisma.contact.update({
+                  where: { id: existingRealContact.id },
+                  data: realUpdate,
+                });
+              }
+
+              // 5. Exclui com segurança o contato LID duplicado
+              await this.prisma.contact.delete({ where: { id: contact.id } });
+              resolvedCount++;
+              continue;
+            }
+          }
+
+          // Atualização padrão quando não há contato conflitante
           const updateData: any = {};
           if (resolution.realPhone) {
             updateData.phone = resolution.realPhone;
             updateData.whatsappLid = contact.whatsappLid || contact.phone;
           }
-          if (resolution.realName && (contact.name === 'Cliente WhatsApp' || contact.name?.includes('@lid') || contact.name?.startsWith('WhatsApp'))) {
+          if (resolution.realName && isGenericName) {
             updateData.name = resolution.realName;
           }
           if (resolution.avatarUrl && !contact.avatarUrl) {
@@ -1801,8 +1966,16 @@ export class WhatsappService {
       const lidToContact = new Map<string, typeof dbContacts[0]>();
 
       for (const c of dbContacts) {
-        if (c.phone) phoneToContact.set(c.phone.replace(/\D/g, ''), c);
-        if (c.whatsappLid) lidToContact.set(c.whatsappLid.replace('@lid', '').trim(), c);
+        if (c.phone) {
+          const cleanP = c.phone.replace(/\D/g, '');
+          phoneToContact.set(cleanP, c);
+          if (c.phone.includes('lid') || cleanP.length > 13) {
+            lidToContact.set(cleanP, c);
+          }
+        }
+        if (c.whatsappLid) {
+          lidToContact.set(c.whatsappLid.replace(/\D/g, '').trim(), c);
+        }
       }
 
       const toCreate: any[] = [];
@@ -1822,6 +1995,7 @@ export class WhatsappService {
               where: { id: existing.id },
               data: {
                 name: pushName,
+                whatsappLid: id,
                 ...(avatarUrl && !existing.avatarUrl ? { avatarUrl } : {})
               }
             }).catch(() => {});
@@ -1860,6 +2034,8 @@ export class WhatsappService {
             name: pushName || `WhatsApp (${cleanDigits})`,
             phone: cleanDigits,
             avatarUrl: avatarUrl || null,
+            source: 'WhatsApp',
+            tags: [],
           });
           phoneToContact.set(cleanDigits, { id: 'temp', name: pushName, phone: cleanDigits, avatarUrl, whatsappLid: null });
         }

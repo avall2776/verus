@@ -1,10 +1,16 @@
+import { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { ChatGateway } from '../chat/chat.gateway';
-export declare class WhatsappService {
+export declare class WhatsappService implements OnModuleInit, OnModuleDestroy {
     private readonly prisma;
     private readonly chatGateway;
     private readonly logger;
+    private reconcilerTimer;
     constructor(prisma: PrismaService, chatGateway: ChatGateway);
+    onModuleInit(): void;
+    onModuleDestroy(): void;
+    private startBackgroundReconciler;
+    reconcileAllTenantsBackground(): Promise<void>;
     private ensureDefaultInstance;
     getEvolutionConfig(): {
         serverUrl: string;

@@ -453,11 +453,11 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                     const resolved = await this.whatsappService.resolveContactFromEvolution(tenantId, instName, key.remoteJid || remoteJid, candidateName, profilePicUrl);
                     if (resolved.realPhone) {
                         realPhone = resolved.realPhone;
-                        if (resolved.realName)
-                            candidateName = resolved.realName;
-                        if (resolved.avatarUrl && !profilePicUrl)
-                            profilePicUrl = resolved.avatarUrl;
                     }
+                    if (resolved.realName)
+                        candidateName = resolved.realName;
+                    if (resolved.avatarUrl && !profilePicUrl)
+                        profilePicUrl = resolved.avatarUrl;
                 }
             }
             else {

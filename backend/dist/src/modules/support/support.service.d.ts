@@ -102,13 +102,13 @@ export declare class SupportService {
         userId: string | null;
         description: string;
         priority: string;
-        category: string;
         ticketNumber: number;
-        assignedToId: string | null;
+        category: string;
         isAiPaused: boolean;
         satisfactionRating: number | null;
         satisfactionFeedback: string | null;
         aiHandoffDemandId: string | null;
+        assignedToId: string | null;
     }>;
     create(tenantId: string, userId: string, dto: CreateTicketDto): Promise<{
         tenant: {
@@ -144,13 +144,13 @@ export declare class SupportService {
         userId: string | null;
         description: string;
         priority: string;
-        category: string;
         ticketNumber: number;
-        assignedToId: string | null;
+        category: string;
         isAiPaused: boolean;
         satisfactionRating: number | null;
         satisfactionFeedback: string | null;
         aiHandoffDemandId: string | null;
+        assignedToId: string | null;
     }>;
     addMessage(ticketId: string, tenantId: string, userId: string, dto: CreateTicketMessageDto, isSuperAdmin?: boolean): Promise<{
         sender: {
@@ -197,13 +197,13 @@ export declare class SupportService {
         userId: string | null;
         description: string;
         priority: string;
-        category: string;
         ticketNumber: number;
-        assignedToId: string | null;
+        category: string;
         isAiPaused: boolean;
         satisfactionRating: number | null;
         satisfactionFeedback: string | null;
         aiHandoffDemandId: string | null;
+        assignedToId: string | null;
     }>;
     assign(ticketId: string, tenantId: string, assignedToId: string | null, isSuperAdmin?: boolean): Promise<{
         assignedTo: {
@@ -224,13 +224,13 @@ export declare class SupportService {
         userId: string | null;
         description: string;
         priority: string;
-        category: string;
         ticketNumber: number;
-        assignedToId: string | null;
+        category: string;
         isAiPaused: boolean;
         satisfactionRating: number | null;
         satisfactionFeedback: string | null;
         aiHandoffDemandId: string | null;
+        assignedToId: string | null;
     }>;
     getNotices(tenantId: string): Promise<{
         systemStatus: {
@@ -430,13 +430,13 @@ export declare class SupportService {
         userId: string | null;
         description: string;
         priority: string;
-        category: string;
         ticketNumber: number;
-        assignedToId: string | null;
+        category: string;
         isAiPaused: boolean;
         satisfactionRating: number | null;
         satisfactionFeedback: string | null;
         aiHandoffDemandId: string | null;
+        assignedToId: string | null;
     }>;
     submitCsat(ticketId: string, tenantId: string, dto: SubmitCsatDto): Promise<{
         message: string;
@@ -548,13 +548,13 @@ export declare class SupportService {
             userId: string | null;
             description: string;
             priority: string;
-            category: string;
             ticketNumber: number;
-            assignedToId: string | null;
+            category: string;
             isAiPaused: boolean;
             satisfactionRating: number | null;
             satisfactionFeedback: string | null;
             aiHandoffDemandId: string | null;
+            assignedToId: string | null;
         };
     }>;
 }

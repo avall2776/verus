@@ -48,6 +48,11 @@ let WhatsappController = class WhatsappController {
     async pairInstance(tenantId, id, body) {
         return this.whatsappService.pairInstance(tenantId, id, body?.phoneNumber);
     }
+    async reconcileContacts(tenantId) {
+        const syncRes = await this.whatsappService.syncContactsFromEvolution(tenantId);
+        const resolvedLids = await this.whatsappService.syncAndResolveLidContacts(tenantId);
+        return { success: true, synced: syncRes, resolvedLids };
+    }
     async getConfig(tenantId) {
         return this.whatsappService.getConfig(tenantId);
     }
@@ -130,6 +135,13 @@ __decorate([
     __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], WhatsappController.prototype, "pairInstance", null);
+__decorate([
+    (0, common_1.Post)('reconcile-contacts'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], WhatsappController.prototype, "reconcileContacts", null);
 __decorate([
     (0, common_1.Get)('config'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

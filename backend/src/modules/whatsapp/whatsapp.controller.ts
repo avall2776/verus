@@ -84,6 +84,13 @@ export class WhatsappController {
     return this.whatsappService.pairInstance(tenantId, id, body?.phoneNumber);
   }
 
+  @Post('reconcile-contacts')
+  async reconcileContacts(@CurrentTenant() tenantId: string) {
+    const syncRes = await this.whatsappService.syncContactsFromEvolution(tenantId);
+    const resolvedLids = await this.whatsappService.syncAndResolveLidContacts(tenantId);
+    return { success: true, synced: syncRes, resolvedLids };
+  }
+
   // -------------------------------------------------------------
   // ROTAS LEGADAS (RETROCOMPATIBILIDADE)
   // -------------------------------------------------------------
