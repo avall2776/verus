@@ -36,11 +36,15 @@ import {
   RefreshCw,
   FileText,
   Copy,
-  Check
+  Check,
+  MessageSquarePlus,
+  ExternalLink
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { useTheme } from "@/contexts/ThemeContext";
+import ibgeMunicipalitiesData from "@/data/geo/ibge-municipalities.json";
+import brStatesData from "@/data/geo/br-states.json";
 
 export interface GeoCityDeal {
   id: string;
@@ -48,6 +52,8 @@ export interface GeoCityDeal {
   clientName: string;
   contactId?: string | null;
   conversationId?: string | null;
+  messageCount?: number;
+  hasActiveChat?: boolean;
   contactPhone?: string | null;
   value: number;
   status: string;
@@ -331,8 +337,8 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
   const [selectedPoint, setSelectedPoint] = useState<GeoCityPoint | null>(null);
 
   // Malhas Geográficas Reais dos Municípios (IBGE) e Contorno dos Estados Brasileiros
-  const [municipalitiesGeoJson, setMunicipalitiesGeoJson] = useState<any>(null);
-  const [brStatesGeoJson, setBrStatesGeoJson] = useState<any>(null);
+  const [municipalitiesGeoJson, setMunicipalitiesGeoJson] = useState<any>(ibgeMunicipalitiesData);
+  const [brStatesGeoJson, setBrStatesGeoJson] = useState<any>(brStatesData);
 
   // Opção de Marcar / Desmarcar Polígonos de Delimitação Territorial
   const [showTerritoryZones, setShowTerritoryZones] = useState<boolean>(true);
@@ -425,22 +431,6 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
 
   useEffect(() => {
     fetchGeoData();
-
-    // Carrega a malha oficial dos municípios (IBGE) para demarcação territorial real
-    fetch("/geo/ibge-municipalities.json")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) setMunicipalitiesGeoJson(data);
-      })
-      .catch((err) => console.warn("Aviso ao carregar malha municipal:", err));
-
-    // Carrega o contorno dos estados do Brasil para contexto geográfico
-    fetch("/geo/br-states.json")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) setBrStatesGeoJson(data);
-      })
-      .catch((err) => console.warn("Aviso ao carregar malha de estados:", err));
   }, []);
 
   // 1. Inicialização do Mapa MapLibre GL JS
@@ -480,23 +470,40 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
   useEffect(() => {
     if (!mapRef.current) return;
     const map = mapRef.current;
-    const isSat = mapMode === "satellite";
-    const isLight = theme === "light";
 
-    try {
-      // Satélite Real HD
-      map.setLayoutProperty("esri-satellite-base-layer", "visibility", isSat ? "visible" : "none");
-      map.setLayoutProperty("esri-satellite-labels-layer", "visibility", isSat ? "visible" : "none");
+    const applyVisibility = () => {
+      if (!map.isStyleLoaded()) return;
+      const isSat = mapMode === "satellite";
+      const isLight = theme === "light";
 
-      // Vetorial Claro (Tema Clean)
-      map.setLayoutProperty("esri-light-base-layer", "visibility", !isSat && isLight ? "visible" : "none");
-      map.setLayoutProperty("esri-light-labels-layer", "visibility", !isSat && isLight ? "visible" : "none");
+      try {
+        if (map.getLayer("esri-satellite-base-layer")) {
+          map.setLayoutProperty("esri-satellite-base-layer", "visibility", isSat ? "visible" : "none");
+        }
+        if (map.getLayer("esri-satellite-labels-layer")) {
+          map.setLayoutProperty("esri-satellite-labels-layer", "visibility", isSat ? "visible" : "none");
+        }
+        if (map.getLayer("esri-light-base-layer")) {
+          map.setLayoutProperty("esri-light-base-layer", "visibility", !isSat && isLight ? "visible" : "none");
+        }
+        if (map.getLayer("esri-light-labels-layer")) {
+          map.setLayoutProperty("esri-light-labels-layer", "visibility", !isSat && isLight ? "visible" : "none");
+        }
+        if (map.getLayer("esri-dark-base-layer")) {
+          map.setLayoutProperty("esri-dark-base-layer", "visibility", !isSat && !isLight ? "visible" : "none");
+        }
+        if (map.getLayer("esri-dark-labels-layer")) {
+          map.setLayoutProperty("esri-dark-labels-layer", "visibility", !isSat && !isLight ? "visible" : "none");
+        }
+      } catch (err) {
+        // Ignora silenciosamente se o mapa estiver em transição WebGL
+      }
+    };
 
-      // Vetorial Escuro (Temas Dark e WhatsApp)
-      map.setLayoutProperty("esri-dark-base-layer", "visibility", !isSat && !isLight ? "visible" : "none");
-      map.setLayoutProperty("esri-dark-labels-layer", "visibility", !isSat && !isLight ? "visible" : "none");
-    } catch (err) {
-      console.warn("Camadas ESRI em transição:", err);
+    if (map.isStyleLoaded()) {
+      applyVisibility();
+    } else {
+      map.once("load", applyVisibility);
     }
   }, [mapMode, theme]);
 
@@ -2078,8 +2085,77 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                       );
                     })
                   ) : (
-                    <div className="text-center py-12 text-xs text-slate-400">
-                      Nenhuma mensagem registrada no banco para esta conversa.
+                    <div className="py-8 px-4 flex flex-col items-center justify-center text-center space-y-4">
+                      <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-lg">
+                        <MessageSquarePlus className="w-7 h-7" />
+                      </div>
+                      <div className="max-w-xs space-y-1.5">
+                        <h4 className={`text-sm font-bold ${theme === "light" ? "text-slate-800" : "text-white"}`}>
+                          Atendimento WhatsApp Não Iniciado
+                        </h4>
+                        <p className={`text-xs leading-relaxed ${theme === "light" ? "text-slate-600" : "text-slate-400"}`}>
+                          O lead <strong>{spyingDeal.clientName}</strong> está cadastrado no funil sob gestão de <strong>{spyingDeal.sellerName}</strong>, mas ainda não possui mensagens no WhatsApp (origem: {spyingDeal.source === "paid" ? "Meta Ads" : "Orgânico/CRM"}).
+                        </p>
+                      </div>
+
+                      {/* Card de Resumo do Contato */}
+                      <div
+                        className={`w-full max-w-sm p-3.5 rounded-xl border text-left text-xs space-y-2 ${
+                          theme === "light"
+                            ? "bg-white border-slate-200 text-slate-700 shadow-sm"
+                            : theme === "whatsapp"
+                            ? "bg-[#202C33] border-[#2A3942] text-[#E9EDEF]"
+                            : "bg-[#0e1628] border-slate-800 text-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400">Telefone:</span>
+                          <span className="font-semibold text-emerald-400">{spyingDeal.contactPhone || "Não informado"}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400">Origem:</span>
+                          <span className="font-semibold">{spyingDeal.source === "paid" ? "Meta Ads (Tráfego Pago)" : "Orgânico / CRM"}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400">Proposta:</span>
+                          <span className="font-semibold text-amber-400">{formatCurrency(spyingDeal.value)}</span>
+                        </div>
+                      </div>
+
+                      {/* Ações Diretas */}
+                      <div className="w-full max-w-sm pt-2 space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const targetUrl = spyingDeal.conversationId
+                              ? `/inbox?conversationId=${spyingDeal.conversationId}`
+                              : spyingDeal.contactId
+                              ? `/inbox?contactId=${spyingDeal.contactId}`
+                              : `/inbox`;
+                            router.push(targetUrl);
+                          }}
+                          className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-[#00A884] hover:bg-[#02906F] text-white shadow-lg shadow-[#00A884]/20 flex items-center justify-center gap-2 transition-all"
+                        >
+                          <MessageSquarePlus className="w-4 h-4" />
+                          <span>Iniciar 1º Atendimento no WhatsApp</span>
+                        </button>
+
+                        {spyingDeal.contactPhone && (
+                          <a
+                            href={`https://wa.me/${spyingDeal.contactPhone.replace(/\D/g, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`w-full py-2 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition-all border ${
+                              theme === "light"
+                                ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                                : "bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-700"
+                            }`}
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>Abrir no WhatsApp Web Externo</span>
+                          </a>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -2095,11 +2171,22 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   }`}
                 >
                   <button
-                    onClick={() => router.push(spyingDeal.conversationId ? `/chat?conversationId=${spyingDeal.conversationId}` : `/chat`)}
+                    onClick={() => {
+                      const targetUrl = spyingDeal.conversationId
+                        ? `/inbox?conversationId=${spyingDeal.conversationId}`
+                        : spyingDeal.contactId
+                        ? `/inbox?contactId=${spyingDeal.contactId}`
+                        : `/inbox`;
+                      router.push(targetUrl);
+                    }}
                     className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-[#00A884] hover:bg-[#02906F] text-white shadow-lg shadow-[#00A884]/20 flex items-center justify-center gap-2 transition-all"
                   >
                     <MessageSquare className="w-4 h-4" />
-                    <span>Intervir no Atendimento (Abrir no Inbox)</span>
+                    <span>
+                      {spyMessages.length > 0
+                        ? "Intervir no Atendimento (Abrir no Inbox)"
+                        : "Abrir Conversa no Inbox Oficial"}
+                    </span>
                   </button>
 
                   <button
@@ -2544,7 +2631,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                                 </div>
 
                                 {/* Linha 4: Badges de Estágio, Vendedor e Origem */}
-                                <div className="flex flex-wrap items-center gap-2 mt-2.5 pt-2 border-t border-slate-700/20">
+                                <div className="flex flex-wrap items-center gap-1.5 mt-2.5 pt-2 border-t border-slate-700/20">
                                   <span
                                     className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                                       isWon
@@ -2561,6 +2648,28 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
                                       Ao Vivo Agora
+                                    </span>
+                                  )}
+
+                                  {/* Status de Mensagens WhatsApp */}
+                                  {(deal.hasActiveChat || (deal.messageCount && deal.messageCount > 0)) ? (
+                                    <span
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                      title={`${deal.messageCount || 0} mensagens trocadas`}
+                                    >
+                                      <MessageSquare className="w-3 h-3 text-emerald-400" />
+                                      WhatsApp ({deal.messageCount})
+                                    </span>
+                                  ) : (
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border ${
+                                        theme === "light"
+                                          ? "bg-slate-100 text-slate-500 border-slate-200"
+                                          : "bg-slate-800/60 text-slate-400 border-slate-700/50"
+                                      }`}
+                                      title="Lead sem mensagens trocadas no WhatsApp até o momento"
+                                    >
+                                      📭 Sem Conversa
                                     </span>
                                   )}
 
@@ -2590,7 +2699,9 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                                     <span>
                                       {isLost
                                         ? "Espiar Objeções / Repescagem"
-                                        : "Espiar Atendimento do Vendedor"}
+                                        : (deal.hasActiveChat || (deal.messageCount && deal.messageCount > 0))
+                                        ? "Espiar Atendimento do Vendedor"
+                                        : "Ver Detalhes / Iniciar Contato"}
                                     </span>
                                   </span>
                                   <ChevronRight className="w-4 h-4 opacity-70 group-hover:translate-x-1 transition-transform" />

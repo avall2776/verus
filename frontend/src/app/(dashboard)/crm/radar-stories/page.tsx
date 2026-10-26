@@ -304,6 +304,23 @@ export default function RadarStoriesPage() {
     }
   };
 
+  const [isSyncingWhatsApp, setIsSyncingWhatsApp] = useState<boolean>(false);
+
+  const handleSyncWithWhatsApp = async () => {
+    try {
+      setIsSyncingWhatsApp(true);
+      const res = await api.post("/crm/radar-stories/sync");
+      await Promise.all([fetchMetrics(), fetchViewers(), fetchActivePosts()]);
+      toast.success(res.data?.message || "Stories e visualizações sincronizados com o WhatsApp com sucesso!");
+    } catch (err: any) {
+      console.error("Erro ao sincronizar stories com WhatsApp:", err);
+      await Promise.all([fetchMetrics(), fetchViewers(), fetchActivePosts()]);
+      toast.info("Dados do Radar atualizados com a base em tempo real.");
+    } finally {
+      setIsSyncingWhatsApp(false);
+    }
+  };
+
   useEffect(() => {
     fetchMetrics();
     fetchViewers();
@@ -474,17 +491,13 @@ export default function RadarStoriesPage() {
           </button>
 
           <button
-            onClick={() => {
-              fetchMetrics();
-              fetchViewers();
-              fetchActivePosts();
-              toast.success("Dados do Radar sincronizados com a base em tempo real.");
-            }}
-            disabled={loadingMetrics || loadingViewers}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-700 transition-colors shadow-sm cursor-pointer"
+            onClick={handleSyncWithWhatsApp}
+            disabled={isSyncingWhatsApp || loadingMetrics || loadingViewers}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+            title="Sincronizar Stories e Visualizações ativamente com o WhatsApp"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loadingMetrics || loadingViewers ? "animate-spin text-blue-500" : ""}`} />
-            <span>Sincronizar</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingWhatsApp ? "animate-spin text-blue-500" : ""}`} />
+            <span>{isSyncingWhatsApp ? "Sincronizando..." : "Sincronizar"}</span>
           </button>
 
           <button

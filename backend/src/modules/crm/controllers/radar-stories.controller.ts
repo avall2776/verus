@@ -21,6 +21,11 @@ export class RadarStoriesController {
     return this.radarStoriesService.getActivePosts(tenantId);
   }
 
+  @Post('sync')
+  async syncStories(@CurrentTenant() tenantId: string) {
+    return this.radarStoriesService.syncActiveStories(tenantId);
+  }
+
   @Get('recent-viewers-phones')
   async getRecentViewersPhones(@CurrentTenant() tenantId: string) {
     return this.radarStoriesService.getRecentViewersPhones(tenantId);

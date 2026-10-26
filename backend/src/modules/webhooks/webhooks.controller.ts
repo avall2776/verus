@@ -822,13 +822,22 @@ export class WebhooksController {
    */
   private async handleWhatsAppStatusEvent(tenantId: string, event: string, payload: any) {
     try {
-      // 1. Story postado pela empresa (messages.upsert com status@broadcast e fromMe)
-      if (event === 'messages.upsert' || event === 'MESSAGES_UPSERT') {
-        const data = payload.data;
-        const key = data?.key;
-        if (key && (key.remoteJid === 'status@broadcast' || key.remoteJid?.includes('status@broadcast')) && key.fromMe) {
-          const messageObj = data?.message;
-          const caption =
+      // 1. Story postado pela empresa (messages.upsert, SEND_MESSAGE, MESSAGES_SET com status@broadcast e fromMe)
+      const isPostEvent =
+        event === 'messages.upsert' ||
+        event === 'MESSAGES_UPSERT' ||
+        event === 'send.message' ||
+        event === 'SEND_MESSAGE' ||
+        event === 'messages.set' ||
+        event === 'MESSAGES_SET';
+
+      if (isPostEvent) {
+        const items = Array.isArray(payload.data) ? payload.data : [payload.data];
+        for (const data of items) {
+          const key = data?.key;
+          if (key && (key.remoteJid === 'status@broadcast' || key.remoteJid?.includes('status@broadcast')) && key.fromMe) {
+            const messageObj = data?.message;
+            const caption =
             messageObj?.imageMessage?.caption ||
             messageObj?.videoMessage?.caption ||
             messageObj?.extendedTextMessage?.text ||
@@ -885,7 +894,7 @@ export class WebhooksController {
             category,
             mediaUrl,
           });
-          return true;
+          }
         }
       }
 
