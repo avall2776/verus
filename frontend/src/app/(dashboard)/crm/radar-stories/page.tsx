@@ -74,7 +74,7 @@ interface StoryViewer {
   isLidOnly?: boolean;
   city: string;
   state: string;
-  crmStatus: "active_client" | "inactive_client" | "open_deal" | "prospect";
+  crmStatus: "active_client" | "inactive_client" | "open_deal" | "prospect" | "internal_team";
   crmStatusLabel: string;
   totalPurchased: number;
   dealTitle?: string;
@@ -192,6 +192,10 @@ export default function RadarStoriesPage() {
 
   // Modal Lightbox da Foto/Mídia do Story
   const [lightboxMedia, setLightboxMedia] = useState<LightboxMedia | null>(null);
+
+  // Modal de Detalhes da Análise IA & CRM
+  const [selectedViewerForDetails, setSelectedViewerForDetails] = useState<StoryViewer | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState<boolean>(false);
 
   // Modal de Abordagem IA
   const [selectedViewer, setSelectedViewer] = useState<StoryViewer | null>(null);
@@ -1126,6 +1130,7 @@ export default function RadarStoriesPage() {
               <option value="open_deal">Em Negociação</option>
               <option value="prospect">Potenciais Compradores</option>
               <option value="inactive_client">Reativação de Carteira</option>
+              <option value="internal_team">Equipe Interna (Verto)</option>
             </select>
 
             <select
@@ -1154,6 +1159,7 @@ export default function RadarStoriesPage() {
             { id: "open_deal", label: "Em Negociação", count: viewers.filter((v) => v.crmStatus === "open_deal").length, color: "text-amber-500" },
             { id: "prospect", label: "Potenciais Compradores", count: viewers.filter((v) => v.crmStatus === "prospect").length, color: "text-blue-500" },
             { id: "inactive_client", label: "Reativação", count: viewers.filter((v) => v.crmStatus === "inactive_client").length, color: "text-purple-400" },
+            { id: "internal_team", label: "Equipe Interna (Verto)", count: viewers.filter((v) => v.crmStatus === "internal_team").length, color: "text-slate-400" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1304,15 +1310,15 @@ export default function RadarStoriesPage() {
                       </td>
 
                       {/* Telefone / WhatsApp Formatado com Botão de Edição */}
-                      <td className="py-3 px-3">
-                        <div className="flex items-center gap-1.5">
+                      <td className="py-3 px-3 whitespace-nowrap min-w-[170px]">
+                        <div className="flex items-center gap-1.5 whitespace-nowrap">
                           {viewer.isLidOnly ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
                               <ShieldCheck className="w-3 h-3 text-emerald-400" />
                               <span>WhatsApp Verificado</span>
                             </span>
                           ) : (
-                            <span className="font-mono text-xs font-semibold text-slate-800 dark:text-slate-200">
+                            <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
                               {viewer.phoneFormatted || `+${viewer.phone}`}
                             </span>
                           )}
@@ -1337,7 +1343,7 @@ export default function RadarStoriesPage() {
                             <Copy className="w-3 h-3" />
                           </button>
                         </div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">
+                        <div className="text-[10px] text-slate-400 mt-0.5 whitespace-nowrap">
                           Resp: {viewer.assignedSeller}
                         </div>
                       </td>
@@ -1423,52 +1429,62 @@ export default function RadarStoriesPage() {
                       </td>
 
                       {/* Classificação Comercial IA & CRM */}
-                      <td className="py-3 px-3 max-w-[280px]">
-                        <div>
+                      <td className="py-3 px-3 min-w-[200px] max-w-[260px]">
+                        <div className="flex flex-col gap-1.5 items-start">
                           <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border whitespace-nowrap ${
                               viewer.crmStatus === "active_client"
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
                                 : viewer.crmStatus === "open_deal"
-                                ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                                ? "bg-amber-500/10 text-amber-400 border-amber-500/25"
+                                : viewer.crmStatus === "internal_team"
+                                ? "bg-slate-500/15 text-slate-300 border-slate-500/30"
                                 : viewer.crmStatus === "inactive_client"
-                                ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
-                                : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                                ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
+                                : "bg-blue-500/10 text-blue-400 border-blue-500/25"
                             }`}
                           >
                             {viewer.crmStatus === "active_client" ? (
-                              <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                             ) : viewer.crmStatus === "open_deal" ? (
-                              <TrendingUp className="w-3 h-3 text-amber-400 shrink-0" />
+                              <TrendingUp className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                            ) : viewer.crmStatus === "internal_team" ? (
+                              <ShieldCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                             ) : viewer.crmStatus === "inactive_client" ? (
-                              <Clock className="w-3 h-3 text-purple-400 shrink-0" />
+                              <Clock className="w-3.5 h-3.5 text-purple-400 shrink-0" />
                             ) : (
-                              <Sparkles className="w-3 h-3 text-blue-400 shrink-0" />
+                              <Sparkles className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                             )}
                             <span>{viewer.crmStatusLabel}</span>
                           </span>
 
                           {/* Detalhe de Compra ou Negociação */}
                           {viewer.totalPurchased > 0 ? (
-                            <div className="text-[10px] text-emerald-400 font-mono font-semibold mt-1 flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3" />
+                            <div className="text-[11px] text-emerald-400 font-mono font-bold flex items-center gap-1 whitespace-nowrap">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
                               <span>Faturado: {formatCurrency(viewer.totalPurchased)}</span>
                             </div>
                           ) : viewer.dealTitle ? (
-                            <div className="text-[10px] text-amber-400 font-semibold mt-1 flex items-center gap-1">
-                              <TrendingUp className="w-3 h-3 shrink-0" />
-                              <span className="line-clamp-1">
-                                {viewer.dealTitle} {viewer.dealValue ? `(${formatCurrency(viewer.dealValue)})` : ""}
+                            <div className="text-[11px] text-amber-400 font-semibold truncate max-w-[240px] flex items-center gap-1" title={viewer.dealTitle}>
+                              <TrendingUp className="w-3 h-3 text-amber-400 shrink-0" />
+                              <span className="truncate">
+                                {viewer.dealValue ? `${formatCurrency(viewer.dealValue)} • ` : ""}{viewer.dealTitle}
                               </span>
                             </div>
                           ) : null}
 
-                          {/* Insight Comercial da IA */}
-                          {viewer.aiInsight && (
-                            <div className="mt-1 text-[10.5px] text-slate-400 line-clamp-2 leading-relaxed bg-slate-50 dark:bg-slate-900/40 p-1.5 rounded-md border border-slate-200/40 dark:border-slate-800/40">
-                              <span className="font-semibold text-blue-400">IA Insight:</span> {viewer.aiInsight}
-                            </div>
-                          )}
+                          {/* Botão Executivo para Abrir Modal com todas as informações completas */}
+                          <button
+                            onClick={() => {
+                              setSelectedViewerForDetails(viewer);
+                              setIsDetailsModalOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-400 hover:text-blue-300 transition-colors pt-0.5 cursor-pointer group"
+                          >
+                            <Sparkles className="w-3 h-3 text-blue-400 group-hover:scale-110 transition-transform" />
+                            <span>Ver Análise IA & Negócio</span>
+                            <ChevronRight className="w-3 h-3 text-blue-400 group-hover:translate-x-0.5 transition-transform" />
+                          </button>
                         </div>
                       </td>
 
@@ -2566,6 +2582,205 @@ export default function RadarStoriesPage() {
                 {isSavingPhone ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                 <span>Salvar Telefone</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================= */}
+      {/* 14. MODAL DE DETALHES COMPLETOS DA ANÁLISE IA & NEGÓCIO                */}
+      {/* ======================================================================= */}
+      {isDetailsModalOpen && selectedViewerForDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/30 flex items-center justify-center text-blue-500">
+                  <Sparkles className="w-4 h-4 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Análise Comercial & Inteligência de Engajamento
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {selectedViewerForDetails.name} • {selectedViewerForDetails.companyOrFarm}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsDetailsModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Corpo do Modal */}
+            <div className="p-6 space-y-4 overflow-y-auto">
+              {/* Card Resumo do Contato */}
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Contato / Produtor:</span>
+                  <span className="font-bold text-slate-900 dark:text-white text-sm">{selectedViewerForDetails.name}</span>
+                  <span className="text-slate-500 dark:text-slate-400 block mt-0.5">{selectedViewerForDetails.companyOrFarm}</span>
+                  <span className="text-slate-400 text-[11px] block mt-0.5">
+                    {selectedViewerForDetails.city} - {selectedViewerForDetails.state}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">WhatsApp:</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white text-xs">
+                    {selectedViewerForDetails.phoneFormatted || `+${selectedViewerForDetails.phone}`}
+                  </span>
+                  <span className="text-slate-500 dark:text-slate-400 block mt-1">
+                    Vendedor Responsável: <strong>{selectedViewerForDetails.assignedSeller}</strong>
+                  </span>
+                </div>
+              </div>
+
+              {/* Status no CRM & Dados Comerciais */}
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#070D1B] space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Classificação Comercial no CRM:</span>
+                  <span
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                      selectedViewerForDetails.crmStatus === "active_client"
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                        : selectedViewerForDetails.crmStatus === "open_deal"
+                        ? "bg-amber-500/10 text-amber-400 border-amber-500/25"
+                        : selectedViewerForDetails.crmStatus === "internal_team"
+                        ? "bg-slate-500/15 text-slate-300 border-slate-500/30"
+                        : selectedViewerForDetails.crmStatus === "inactive_client"
+                        ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
+                        : "bg-blue-500/10 text-blue-400 border-blue-500/25"
+                    }`}
+                  >
+                    {selectedViewerForDetails.crmStatus === "active_client" ? (
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                    ) : selectedViewerForDetails.crmStatus === "open_deal" ? (
+                      <TrendingUp className="w-3 h-3 text-amber-400 shrink-0" />
+                    ) : selectedViewerForDetails.crmStatus === "internal_team" ? (
+                      <ShieldCheck className="w-3 h-3 text-slate-400 shrink-0" />
+                    ) : selectedViewerForDetails.crmStatus === "inactive_client" ? (
+                      <Clock className="w-3 h-3 text-purple-400 shrink-0" />
+                    ) : (
+                      <Sparkles className="w-3 h-3 text-blue-400 shrink-0" />
+                    )}
+                    <span>{selectedViewerForDetails.crmStatusLabel}</span>
+                  </span>
+                </div>
+
+                {/* Negociação em Aberto */}
+                {selectedViewerForDetails.dealTitle && (
+                  <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs">
+                    <span className="text-[10px] font-bold text-amber-500 uppercase block">Oportunidade / Cotação no CRM:</span>
+                    <div className="font-bold text-slate-900 dark:text-white mt-0.5">{selectedViewerForDetails.dealTitle}</div>
+                    {selectedViewerForDetails.dealValue ? (
+                      <div className="font-mono font-bold text-amber-500 mt-0.5">
+                        Valor Proposto: {formatCurrency(selectedViewerForDetails.dealValue)}
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+
+                {/* Faturamento Confirmado */}
+                {selectedViewerForDetails.totalPurchased > 0 && (
+                  <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-xs flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-emerald-500 uppercase block">Histórico de Compras:</span>
+                      <span className="text-slate-600 dark:text-slate-300">Cliente fidelizado na base</span>
+                    </div>
+                    <span className="font-mono font-bold text-emerald-400 text-sm">
+                      {formatCurrency(selectedViewerForDetails.totalPurchased)}
+                    </span>
+                  </div>
+                )}
+
+                {/* Aviso para Equipe Interna */}
+                {selectedViewerForDetails.crmStatus === "internal_team" && (
+                  <div className="p-3 rounded-lg bg-slate-500/10 border border-slate-500/20 text-xs text-slate-400 space-y-1">
+                    <div className="font-bold text-slate-300 flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Perfil Interno / Verto Agrícola</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed">
+                      Este contato pertence ao ecossistema interno da Verto (colaborador, filial ou sócio). Ações comerciais de vendas ou remarketing são desnecessárias para este perfil.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Story Visualizado */}
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 space-y-2 text-xs">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Post Visualizado:</span>
+                <div className="font-bold text-slate-900 dark:text-white">{selectedViewerForDetails.storyMedia.title}</div>
+                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-[11px] pt-1">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-blue-500" />
+                    <span>{selectedViewerForDetails.storyMedia.exactDate}</span>
+                  </span>
+                  <span className="flex items-center gap-1 font-mono">
+                    <Clock className="w-3 h-3 text-emerald-500" />
+                    <span>{selectedViewerForDetails.storyMedia.exactTime} (Brasília)</span>
+                  </span>
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    {selectedViewerForDetails.storyMedia.category}
+                  </span>
+                </div>
+              </div>
+
+              {/* Análise Completa da IA */}
+              <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 space-y-2">
+                <div className="flex items-center gap-1.5 text-blue-500 font-bold text-xs">
+                  <Sparkles className="w-4 h-4 text-blue-500" />
+                  <span>Análise Estratégica da IA:</span>
+                </div>
+                <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+                  {selectedViewerForDetails.aiInsight || "Contato monitorado pelo Radar de Stories com registro ativo de visualização."}
+                </p>
+              </div>
+            </div>
+
+            {/* Rodapé / Ações */}
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 bg-slate-50 dark:bg-slate-900/30">
+              <button
+                type="button"
+                onClick={() => setIsDetailsModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                Fechar
+              </button>
+
+              <div className="flex items-center gap-2">
+                {selectedViewerForDetails.crmStatus !== "internal_team" && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cleanPhone = (selectedViewerForDetails.phone || "").replace(/\D/g, "");
+                        window.open(`https://wa.me/${cleanPhone}`, "_blank");
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-400 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>WhatsApp Direto</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDetailsModalOpen(false);
+                        handleOpenAiModal(selectedViewerForDetails);
+                      }}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Gerar Abordagem com OpenAI</span>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
