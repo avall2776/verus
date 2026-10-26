@@ -445,7 +445,6 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
             'MESSAGES_SET',
             'MESSAGES_UPSERT',
             'MESSAGES_UPDATE',
-            'RECEIPT_UPDATE',
             'SEND_MESSAGE',
             'CONTACTS_UPSERT',
             'CHATS_UPSERT',
@@ -904,6 +903,7 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
   async getViewers(tenantId: string, filter?: { status?: string; category?: string; search?: string }) {
     const list: StoryViewerItem[] = [];
     const registeredPhones = new Set<string>();
+    const seenIdentities = new Set<string>();
 
     // 1. Busca visualizações reais da tabela whatsapp_status_views
     try {
@@ -985,6 +985,18 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
           nameLower.includes('colaborador') ||
           nameLower.includes('funcionario') ||
           nameLower.includes('institucional');
+
+        // Deduplica para que cada pessoa apareça uma única vez com a sua visualização mais recente
+        const dedupeKey = contact?.id
+          ? `cid:${contact.id}`
+          : nameLower && nameLower !== 'sem nome' && !nameLower.startsWith('produtor rural')
+          ? `name:${nameLower}`
+          : `phone:${effectivePhone}`;
+
+        if (seenIdentities.has(dedupeKey)) {
+          continue;
+        }
+        seenIdentities.add(dedupeKey);
 
         // Classificação real no CRM baseada em negócios
         let crmStatus: StoryViewerItem['crmStatus'] = 'prospect';

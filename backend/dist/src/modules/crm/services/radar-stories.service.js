@@ -304,7 +304,6 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                     'MESSAGES_SET',
                     'MESSAGES_UPSERT',
                     'MESSAGES_UPDATE',
-                    'RECEIPT_UPDATE',
                     'SEND_MESSAGE',
                     'CONTACTS_UPSERT',
                     'CHATS_UPSERT',
@@ -631,6 +630,7 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
     async getViewers(tenantId, filter) {
         const list = [];
         const registeredPhones = new Set();
+        const seenIdentities = new Set();
         try {
             const rawViews = await this.prisma.$queryRawUnsafe(`SELECT 
           v.id,
@@ -698,6 +698,15 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                     nameLower.includes('colaborador') ||
                     nameLower.includes('funcionario') ||
                     nameLower.includes('institucional');
+                const dedupeKey = contact?.id
+                    ? `cid:${contact.id}`
+                    : nameLower && nameLower !== 'sem nome' && !nameLower.startsWith('produtor rural')
+                        ? `name:${nameLower}`
+                        : `phone:${effectivePhone}`;
+                if (seenIdentities.has(dedupeKey)) {
+                    continue;
+                }
+                seenIdentities.add(dedupeKey);
                 let crmStatus = 'prospect';
                 let crmStatusLabel = 'Potencial Comprador';
                 let totalPurchased = 0;
