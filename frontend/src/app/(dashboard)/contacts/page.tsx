@@ -1369,10 +1369,20 @@ export default function ContactsPage() {
                     </h3>
                     <button
                       onClick={() => {
+                        if (!selectedContact.deals || selectedContact.deals.length === 0) {
+                          toast.error("Este contato ainda não possui oportunidades comerciais vinculadas no Funil do CRM.");
+                          return;
+                        }
+                        // Prioriza oportunidade ativa (em andamento) ou a mais recente
+                        const activeDeal = selectedContact.deals.find(d => 
+                          !['won', 'lost', 'disqualified'].includes(d.status?.toLowerCase())
+                        ) || selectedContact.deals[0];
+
                         setIsModalOpen(false);
-                        router.push(`/crm?search=${encodeURIComponent(selectedContact.name)}`);
+                        router.push(`/crm?dealId=${activeDeal.id}`);
                       }}
-                      className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                      className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                      title="Abrir oportunidade deste contato no Funil CRM"
                     >
                       <ExternalLink size={12} /> Abrir no Funil CRM
                     </button>
@@ -1403,15 +1413,25 @@ export default function ContactsPage() {
                         return (
                           <div 
                             key={deal.id}
-                            className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#121824] flex items-center justify-between gap-3 shadow-xs"
+                            onClick={() => {
+                              setIsModalOpen(false);
+                              router.push(`/crm?dealId=${deal.id}`);
+                            }}
+                            className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#121824] hover:border-blue-500/60 hover:bg-slate-50 dark:hover:bg-[#161f30] hover:shadow-md flex items-center justify-between gap-3 shadow-xs cursor-pointer transition-all group"
+                            title="Clique para abrir esta oportunidade no Funil CRM"
                           >
-                            <div>
-                              <h4 className="text-xs font-bold text-slate-900 dark:text-white">{deal.title}</h4>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                  {deal.title}
+                                </h4>
+                                <ExternalLink size={11} className="text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
+                              </div>
                               <span className="text-[10px] text-slate-500 dark:text-slate-400">
                                 Status: <strong className="uppercase text-slate-700 dark:text-slate-300">{deal.status}</strong>
                               </span>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right shrink-0">
                               <span className="text-xs font-black text-slate-900 dark:text-white block">
                                 R$ {Number(deal.value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                               </span>
@@ -1424,8 +1444,13 @@ export default function ContactsPage() {
                       })}
                     </div>
                   ) : (
-                    <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500">
-                      Nenhuma oportunidade comercial vinculada a este contato ainda.
+                    <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-1">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Nenhuma oportunidade comercial vinculada a este contato ainda.
+                      </p>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
+                        Ao criar ou puxar uma oportunidade no CRM para este contato, ela aparecerá aqui automaticamente.
+                      </span>
                     </div>
                   )}
                 </div>

@@ -433,6 +433,8 @@ function CrmContent() {
         url.searchParams.set('dealId', target.id);
         window.history.replaceState(null, '', url.toString());
       }
+    } else if (dealId && !loading && deals.length > 0) {
+      toast.error("Oportunidade não encontrada no CRM.");
     }
   };
 
@@ -443,17 +445,39 @@ function CrmContent() {
       const url = new URL(window.location.href);
       url.searchParams.delete('dealId');
       url.searchParams.delete('id');
+      url.searchParams.delete('contactId');
       window.history.replaceState(null, '', url.toString());
     }
   };
 
-  // Sincronização automática com dealId vindo da URL (deep-link / notificações)
+  // Sincronização automática com dealId ou contactId vindo da URL (deep-link / notificações / base de contatos)
   const dealIdFromUrl = searchParams.get('dealId') || searchParams.get('id');
+  const contactIdFromUrl = searchParams.get('contactId');
+  const searchQueryFromUrl = searchParams.get('search') || searchParams.get('q');
+
+  useEffect(() => {
+    if (searchQueryFromUrl && searchQuery !== searchQueryFromUrl) {
+      setSearchQuery(searchQueryFromUrl);
+    }
+  }, [searchQueryFromUrl]);
+
   useEffect(() => {
     if (dealIdFromUrl && (!selectedDeal || selectedDeal.id !== dealIdFromUrl)) {
       handleOpenDeal(dealIdFromUrl);
+    } else if (!dealIdFromUrl && contactIdFromUrl && (!selectedDeal || selectedDeal.contactId !== contactIdFromUrl) && deals.length > 0) {
+      // Procura primeiro oportunidade em andamento deste contato
+      const match = deals.find(d => 
+        (d.contactId === contactIdFromUrl || d.contact?.id === contactIdFromUrl) &&
+        !['won', 'lost', 'disqualified'].includes(d.status?.toLowerCase())
+      ) || deals.find(d => d.contactId === contactIdFromUrl || d.contact?.id === contactIdFromUrl);
+
+      if (match) {
+        handleOpenDeal(match);
+      } else if (!loading) {
+        toast.error("Nenhuma oportunidade encontrada para este contato no CRM.");
+      }
     }
-  }, [dealIdFromUrl, deals]);
+  }, [dealIdFromUrl, contactIdFromUrl, deals, loading]);
 
   const handleUpdateDeal = async (dealId: string, data: any) => {
     try {
