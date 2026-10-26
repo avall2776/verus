@@ -5,7 +5,7 @@ import {
   FileText, Plus, Search, Filter, ArrowUpDown, Download, 
   Send, Eye, CheckCircle2, XCircle, Clock, Copy, MoreHorizontal, 
   TrendingUp, DollarSign, Award, Percent, ChevronRight, ExternalLink,
-  Trash2, RefreshCw, Info, Edit3, Sparkles, FolderOpen
+  Trash2, RefreshCw, Info, Edit3, Sparkles, FolderOpen, Package
 } from "lucide-react";
 import { Proposal, ProposalStatus } from "@/types/commercial";
 import { ProposalModal } from "@/components/proposals/ProposalModal";
@@ -137,6 +137,8 @@ export default function ProposalsPage() {
         id: item.id && !item.id.startsWith("item-") ? item.id : undefined,
         name: (item.name || item.description || "Item").trim(),
         description: (item.description || item.name || "Item de Proposta").trim(),
+        imageUrl: item.imageUrl || undefined,
+        imageDriveId: item.imageDriveId || undefined,
         quantity: qty,
         unitPrice: unitPrice,
         discountPercent: disc,
@@ -370,17 +372,27 @@ export default function ProposalsPage() {
           </div>
         </div>
 
-        {/* Botão Padronizado com Azul Sólido Oficial do Vallor */}
-        <button
-          onClick={() => {
-            setEditingProposal(null);
-            setIsCreateModalOpen(true);
-          }}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-md shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          Nova Proposta Comercial
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href="/settings?tab=products"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shadow-xs"
+            title="Gerenciar catálogo de produtos e pastas do Google Drive"
+          >
+            <Package className="w-4 h-4 text-blue-500" />
+            <span>Catálogo & Fotos Drive</span>
+          </a>
+
+          <button
+            onClick={() => {
+              setEditingProposal(null);
+              setIsCreateModalOpen(true);
+            }}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-md shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Proposta Comercial
+          </button>
+        </div>
       </div>
 
       {/* Cards de Métricas e KPIs Comerciais com Tooltips Robustos & Zero Corte */}

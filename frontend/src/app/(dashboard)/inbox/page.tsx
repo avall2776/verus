@@ -221,6 +221,51 @@ function InboxContent() {
   const [editingNameValue, setEditingNameValue] = useState('');
   const [isSavingName, setIsSavingName] = useState(false);
 
+  // Estados para Integração com Radar de Stories (Visualizadores Recentes)
+  const [recentStoryViewers, setRecentStoryViewers] = useState<Set<string>>(new Set());
+  const [contactLatestStory, setContactLatestStory] = useState<{
+    id: string;
+    statusMessageId: string;
+    title: string;
+    category: string;
+    mediaUrl?: string;
+    viewedAt: string;
+    exactDate: string;
+    exactTime: string;
+    relative: string;
+  } | null>(null);
+
+  const fetchRecentStoryViewers = useCallback(async () => {
+    try {
+      const res = await api.get('/crm/radar-stories/recent-viewers-phones');
+      if (res.data?.phones && Array.isArray(res.data.phones)) {
+        setRecentStoryViewers(new Set(res.data.phones.map((p: string) => p.replace(/\D/g, ''))));
+      }
+    } catch (err) {
+      // silencioso
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRecentStoryViewers();
+    const interval = setInterval(fetchRecentStoryViewers, 30000);
+    return () => clearInterval(interval);
+  }, [fetchRecentStoryViewers]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleView = (data: any) => {
+      if (data.phone) {
+        const clean = data.phone.replace(/\D/g, '');
+        setRecentStoryViewers((prev) => new Set([...Array.from(prev), clean]));
+      }
+    };
+    socket.on('story_view_detected', handleView);
+    return () => {
+      socket.off('story_view_detected', handleView);
+    };
+  }, [socket]);
+
   // Carrega contatos silenciados e mensagens agendadas salvos no localStorage
   useEffect(() => {
     try {
@@ -1692,6 +1737,22 @@ function InboxContent() {
       });
   }, [activeContactData?.contactId]);
 
+  // Busca o status/story mais recente visualizado pelo contato selecionado (últimas 24h)
+  useEffect(() => {
+    const phone = activeContactData?.phone?.replace(/\D/g, '');
+    if (!phone) {
+      setContactLatestStory(null);
+      return;
+    }
+    api.get(`/crm/radar-stories/contact-latest-view?phone=${phone}&contactId=${activeContactData?.contactId || activeContactData?.id || ''}`)
+      .then((res) => {
+        setContactLatestStory(res.data || null);
+      })
+      .catch(() => {
+        setContactLatestStory(null);
+      });
+  }, [activeContactData?.phone, activeContactData?.contactId, activeContactData?.id, showContactInfo]);
+
   const handleMoveContactToStage = async (stageId: string, stageTitle: string) => {
     if (!activeContactData?.contactId) {
       toast.error('Nenhum contato selecionado.');
@@ -2454,7 +2515,18 @@ function InboxContent() {
               <span>Nenhuma conversa encontrada</span>
             </div>
           ) : (
-            filteredContacts.map((contact) => (
+            filteredContacts.map((contact) => {
+              const cleanContactPhone = (contact.phone || '').replace(/\D/g, '');
+              const hasRecentStory = Boolean(
+                cleanContactPhone && (
+                  recentStoryViewers.has(cleanContactPhone) ||
+                  Array.from(recentStoryViewers).some(
+                    (p) => p.endsWith(cleanContactPhone.slice(-8)) || cleanContactPhone.endsWith(p.slice(-8))
+                  )
+                )
+              );
+
+              return (
               <div
                 key={contact.id}
                 onClick={() => {
@@ -2476,29 +2548,46 @@ function InboxContent() {
                     : (isWhatsApp ? 'hover:bg-[#202C33]' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50')
                 }`}
               >
-                {/* Avatar Circular 48x48 */}
+                {/* Avatar Circular 48x48 com Story Ring Pulsante */}
                 <div className="relative shrink-0">
-                  <div className={`w-12 h-12 rounded-full overflow-hidden ${isWhatsApp ? 'bg-[#202C33] border-[#222D34]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/60'} border flex items-center justify-center text-slate-700 dark:text-white font-bold text-sm shadow-inner`}>
-                    {isAvatarUrlValid(contact.avatarUrl) ? (
-                      <img 
-                        src={contact.avatarUrl!} 
-                        alt={contact.name} 
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover rounded-full"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLElement).style.display = 'none';
-                          const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
-                          if (fallback) fallback.classList.remove('hidden');
-                        }}
-                      />
-                    ) : null}
+                  <div className={`p-[2.5px] rounded-full transition-all ${
+                    hasRecentStory 
+                      ? 'bg-gradient-to-tr from-emerald-500 via-teal-400 to-blue-500 shadow-[0_0_12px_rgba(16,185,129,0.35)] animate-pulse' 
+                      : ''
+                  }`}>
+                    <div className={`w-12 h-12 rounded-full overflow-hidden ${isWhatsApp ? 'bg-[#202C33] border-[#222D34]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700/60'} border flex items-center justify-center text-slate-700 dark:text-white font-bold text-sm shadow-inner`}>
+                      {isAvatarUrlValid(contact.avatarUrl) ? (
+                        <img 
+                          src={contact.avatarUrl!} 
+                          alt={contact.name} 
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover rounded-full"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = 'none';
+                            const fallback = e.currentTarget.parentElement?.querySelector('.avatar-initials') as HTMLElement;
+                            if (fallback) fallback.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
 
-                    <span className={`avatar-initials ${contact.avatarUrl ? "hidden" : ""}`}>
-                      {getContactInitials(contact.name, contact.phone)}
-                    </span>
+                      <span className={`avatar-initials ${contact.avatarUrl ? "hidden" : ""}`}>
+                        {getContactInitials(contact.name, contact.phone)}
+                      </span>
+                    </div>
                   </div>
+
                   {/* Status Indicator */}
                   <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 ${isWhatsApp ? 'border-[#111B21]' : 'border-white dark:border-[#0B1224]'} shadow-sm`} />
+
+                  {/* Badge de Story Recente (Zero Emojis - Ícone Vetorial Eye) */}
+                  {hasRecentStory && (
+                    <div 
+                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 border-2 border-white dark:border-[#0B1224] flex items-center justify-center text-white shadow-sm"
+                      title="Visualizou Status nas últimas 24h"
+                    >
+                      <Eye size={9} className="text-white" />
+                    </div>
+                  )}
                 </div>
 
                 {/* Conteúdo do Card de Conversa (3 Linhas - Padrão Lero / WhatsApp Corporativo VERSUS) */}
@@ -2626,7 +2715,9 @@ function InboxContent() {
                   </div>
                 </div>
               </div>
-            )))}
+            );
+          })
+        )}
         </div>
       </div>
 
@@ -4328,6 +4419,84 @@ function InboxContent() {
           </div>
 
           <div className="p-5 flex flex-col gap-5">
+            {/* BLOCO DE DESTAQUE: RADAR DE STORIES & STATUS (ÚLTIMAS 24H) */}
+            {contactLatestStory && (
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-slate-50 dark:from-blue-950/30 dark:via-[#070D1B] dark:to-[#0B1224] border border-blue-200/80 dark:border-blue-900/40 shadow-sm flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                    <Eye size={12} className="text-blue-500" />
+                    <span>Visualizou Status Recente</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {contactLatestStory.exactTime}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {/* Miniatura da Foto com Zoom */}
+                  <div
+                    onClick={() => {
+                      if (contactLatestStory.mediaUrl) {
+                        setLightboxImage({
+                          url: contactLatestStory.mediaUrl,
+                          title: `${contactLatestStory.title} • ${contactLatestStory.category} (${contactLatestStory.relative})`,
+                        });
+                      }
+                    }}
+                    className="relative w-14 h-14 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 shrink-0 group/inboxThumb cursor-pointer shadow-sm hover:ring-2 hover:ring-blue-500 transition-all"
+                    title="Clique para abrir foto ampliada do Story"
+                  >
+                    {contactLatestStory.mediaUrl ? (
+                      <img
+                        src={contactLatestStory.mediaUrl}
+                        alt={contactLatestStory.title}
+                        className="w-full h-full object-cover group-hover/inboxThumb:scale-110 transition-transform duration-200"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-400">
+                        <ImageIcon size={20} />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/inboxThumb:opacity-100 transition-opacity flex items-center justify-center">
+                      <Maximize2 size={14} className="text-white" />
+                    </div>
+                  </div>
+
+                  {/* Título e Categoria */}
+                  <div className="min-w-0 flex-1 flex flex-col gap-1">
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">
+                      {contactLatestStory.title}
+                    </h4>
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span className="px-1.5 py-0.5 rounded font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                        {contactLatestStory.category}
+                      </span>
+                      <span className="text-slate-400">
+                        {contactLatestStory.relative}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botão de Ação: Ver Foto sem Sair do Chat */}
+                {contactLatestStory.mediaUrl && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setLightboxImage({
+                        url: contactLatestStory.mediaUrl!,
+                        title: `${contactLatestStory.title} • ${contactLatestStory.category} (${contactLatestStory.relative})`,
+                      })
+                    }
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+                  >
+                    <Maximize2 size={13} />
+                    <span>Visualizar Foto do Story</span>
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Informações de Contato */}
             <div className="flex flex-col gap-2.5">
               <h3 className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400 flex items-center justify-between">

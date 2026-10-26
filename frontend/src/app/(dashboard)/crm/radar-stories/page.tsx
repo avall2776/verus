@@ -27,7 +27,21 @@ import {
   BadgeAlert,
   CheckCircle2,
   ShieldCheck,
-  PlayCircle
+  PlayCircle,
+  Tractor,
+  Sprout,
+  Wrench,
+  Maximize2,
+  ChevronRight,
+  Image as ImageIcon,
+  GraduationCap,
+  Plus,
+  Upload,
+  HelpCircle,
+  Flame,
+  Target,
+  Share2,
+  Info
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -71,6 +85,29 @@ interface StoryViewer {
   };
 }
 
+interface ActiveStoryPost {
+  id: string;
+  messageId: string;
+  title: string;
+  category: string;
+  mediaUrl?: string;
+  postedAt: string;
+  postedAtRelative: string;
+  postedAtDate: string;
+  postedAtTime: string;
+  viewsCount: number;
+}
+
+interface LightboxMedia {
+  title: string;
+  category: string;
+  mediaUrl?: string;
+  exactDate?: string;
+  exactTime?: string;
+  viewsCount?: number;
+  contactName?: string;
+}
+
 interface RadarMetrics {
   kpis: {
     totalViewsToday: number;
@@ -102,13 +139,18 @@ export default function RadarStoriesPage() {
   // Estados principais
   const [metrics, setMetrics] = useState<RadarMetrics | null>(null);
   const [viewers, setViewers] = useState<StoryViewer[]>([]);
+  const [activePosts, setActivePosts] = useState<ActiveStoryPost[]>([]);
   const [loadingMetrics, setLoadingMetrics] = useState<boolean>(true);
   const [loadingViewers, setLoadingViewers] = useState<boolean>(true);
+  const [loadingActivePosts, setLoadingActivePosts] = useState<boolean>(true);
 
   // Filtros
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Modal Lightbox da Foto/Mídia do Story
+  const [lightboxMedia, setLightboxMedia] = useState<LightboxMedia | null>(null);
 
   // Modal de Abordagem IA
   const [selectedViewer, setSelectedViewer] = useState<StoryViewer | null>(null);
@@ -130,6 +172,94 @@ export default function RadarStoriesPage() {
   const [testCategory, setTestCategory] = useState<string>("Maquinários");
   const [isSubmittingTest, setIsSubmittingTest] = useState<boolean>(false);
 
+  // Modal de Tutorial Interativo para Gestores
+  const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(false);
+  const [tutorialStep, setTutorialStep] = useState<number>(1);
+
+  // Modal de Publicação e Agendamento de Stories (Sem Blobs no Banco)
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState<boolean>(false);
+  const [publishTitle, setPublishTitle] = useState<string>("");
+  const [publishCategory, setPublishCategory] = useState<string>("Maquinários");
+  const [publishImageBase64, setPublishImageBase64] = useState<string>("");
+  const [publishImagePreview, setPublishImagePreview] = useState<string>("");
+  const [publishMode, setPublishMode] = useState<"now" | "schedule">("now");
+  const [publishScheduleDate, setPublishScheduleDate] = useState<string>("");
+  const [isPublishing, setIsPublishing] = useState<boolean>(false);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione um arquivo de imagem (JPEG, PNG ou WebP).");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 8MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setPublishImageBase64(base64);
+      setPublishImagePreview(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handlePublishStory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!publishTitle.trim()) {
+      toast.error("Informe um título ou legenda para o Story.");
+      return;
+    }
+    if (!publishImageBase64) {
+      toast.error("Selecione uma imagem para o Story.");
+      return;
+    }
+    try {
+      setIsPublishing(true);
+      await api.post("/crm/radar-stories/publish", {
+        title: publishTitle.trim(),
+        category: publishCategory,
+        imageBase64: publishImageBase64,
+        scheduledAt: publishMode === "schedule" && publishScheduleDate ? publishScheduleDate : undefined,
+      });
+      toast.success(
+        publishMode === "schedule"
+          ? "Story agendado com sucesso para o WhatsApp!"
+          : "Story publicado com sucesso no WhatsApp!"
+      );
+      setIsPublishModalOpen(false);
+      setPublishTitle("");
+      setPublishImageBase64("");
+      setPublishImagePreview("");
+      fetchActivePosts();
+      fetchMetrics();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao publicar Story no WhatsApp.");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Helper de ícone vetorial de categoria (Zero Emojis - Vetores de Alto Padrão)
+  const getCategoryIcon = (category: string) => {
+    const cat = (category || "").toLowerCase();
+    if (cat.includes("maq") || cat.includes("trator") || cat.includes("semead") || cat.includes("máquina")) {
+      return <Tractor className="w-4 h-4 text-blue-500" />;
+    }
+    if (cat.includes("ins") || cat.includes("adubo") || cat.includes("semente") || cat.includes("defensivo")) {
+      return <Sprout className="w-4 h-4 text-emerald-500" />;
+    }
+    if (cat.includes("cot") || cat.includes("safra") || cat.includes("grão") || cat.includes("soja") || cat.includes("milho")) {
+      return <TrendingUp className="w-4 h-4 text-amber-500" />;
+    }
+    if (cat.includes("peça") || cat.includes("servi") || cat.includes("manuten") || cat.includes("oficina")) {
+      return <Wrench className="w-4 h-4 text-purple-500" />;
+    }
+    return <Radio className="w-4 h-4 text-slate-400" />;
+  };
+
   // Carregar dados de métricas
   const fetchMetrics = async () => {
     try {
@@ -140,6 +270,19 @@ export default function RadarStoriesPage() {
       console.error("Erro ao carregar métricas do Radar de Stories:", err);
     } finally {
       setLoadingMetrics(false);
+    }
+  };
+
+  // Carregar stories ativos das últimas 24h
+  const fetchActivePosts = async () => {
+    try {
+      setLoadingActivePosts(true);
+      const res = await api.get("/crm/radar-stories/active-posts");
+      setActivePosts(res.data || []);
+    } catch (err: any) {
+      console.error("Erro ao carregar active posts:", err);
+    } finally {
+      setLoadingActivePosts(false);
     }
   };
 
@@ -164,6 +307,7 @@ export default function RadarStoriesPage() {
   useEffect(() => {
     fetchMetrics();
     fetchViewers();
+    fetchActivePosts();
   }, []);
 
   useEffect(() => {
@@ -311,10 +455,19 @@ export default function RadarStoriesPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setIsTutorialOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-xs font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 transition-colors shadow-sm cursor-pointer"
+            title="Como Funciona o Radar de Stories"
+          >
+            <GraduationCap className="w-3.5 h-3.5 text-blue-500" />
+            <span>Como Funciona / Tutorial</span>
+          </button>
+
           <button
             onClick={() => setIsTestModalOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors shadow-sm cursor-pointer"
           >
             <PlayCircle className="w-3.5 h-3.5 text-blue-500" />
             <span>Testar Reconhecimento</span>
@@ -324,13 +477,22 @@ export default function RadarStoriesPage() {
             onClick={() => {
               fetchMetrics();
               fetchViewers();
+              fetchActivePosts();
               toast.success("Dados do Radar sincronizados com a base em tempo real.");
             }}
             disabled={loadingMetrics || loadingViewers}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-700 transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-700 transition-colors shadow-sm cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loadingMetrics || loadingViewers ? "animate-spin text-blue-500" : ""}`} />
-            <span>Sincronizar Visualizações</span>
+            <span>Sincronizar</span>
+          </button>
+
+          <button
+            onClick={() => setIsPublishModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Novo Story / Postar</span>
           </button>
         </div>
       </div>
@@ -418,6 +580,133 @@ export default function RadarStoriesPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ======================================================================= */}
+      {/* 2.5 VITRINE DE STORIES ATIVOS (ÚLTIMAS 24H)                            */}
+      {/* ======================================================================= */}
+      <div className="p-6 rounded-2xl border bg-white dark:bg-[#0B1224] border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+              <Radio className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Vitrine de Stories Ativos (Últimas 24h)
+                </h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                  {activePosts.length} no ar
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Status publicados no WhatsApp corporativo com contagem auditável de visualizadores silenciosos.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsPublishModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm self-start sm:self-auto cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Publicar Story</span>
+          </button>
+        </div>
+
+        {loadingActivePosts ? (
+          <div className="py-8 flex items-center justify-center gap-2 text-slate-400 text-xs">
+            <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+            <span>Carregando stories ativos do WhatsApp...</span>
+          </div>
+        ) : activePosts.length === 0 ? (
+          <div className="p-5 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 shrink-0">
+                <ImageIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Nenhum Story ativo nas últimas 24h
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Poste agora diretamente pelo sistema ou pelo aplicativo do WhatsApp para rastrear visualizações.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsPublishModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm cursor-pointer"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Publicar Primeiro Story</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+            {activePosts.map((post) => (
+              <div
+                key={post.id}
+                onClick={() =>
+                  setLightboxMedia({
+                    title: post.title,
+                    category: post.category,
+                    mediaUrl: post.mediaUrl,
+                    exactDate: post.postedAtDate,
+                    exactTime: post.postedAtTime,
+                    viewsCount: post.viewsCount,
+                  })
+                }
+                className="group relative rounded-xl border border-slate-200 dark:border-slate-800/80 bg-slate-50/60 dark:bg-[#070D1B] p-3 flex flex-col gap-2.5 hover:border-blue-500/50 hover:shadow-md transition-all cursor-pointer"
+              >
+                {/* Topo do Card: Miniatura / Imagem */}
+                <div className="relative w-full h-32 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                  {post.mediaUrl ? (
+                    <img
+                      src={post.mediaUrl}
+                      alt={post.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                      {getCategoryIcon(post.category)}
+                      <span className="text-[10px] font-semibold">{post.category}</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-md text-white text-[11px] font-semibold flex items-center gap-1.5">
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      <span>Ver Mídia</span>
+                    </span>
+                  </div>
+                  {/* Badge de Categoria */}
+                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-bold bg-black/60 backdrop-blur-md text-white border border-white/20 flex items-center gap-1">
+                    {getCategoryIcon(post.category)}
+                    <span>{post.category}</span>
+                  </div>
+                </div>
+
+                {/* Dados do Story */}
+                <div className="flex-1 flex flex-col justify-between gap-1">
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-500 transition-colors">
+                    {post.title}
+                  </h4>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-slate-400" />
+                      <span>{post.postedAtRelative}</span>
+                    </span>
+                    <span className="flex items-center gap-1 font-bold text-blue-500">
+                      <Eye className="w-3 h-3" />
+                      <span>{post.viewsCount} visualizações</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ======================================================================= */}
@@ -618,25 +907,74 @@ export default function RadarStoriesPage() {
                       </div>
                     </td>
 
-                    {/* Post / Story Identificado */}
-                    <td className="py-3 px-3 max-w-[280px]">
-                      <div className="font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">
-                        {viewer.storyMedia.title}
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                          {viewer.storyMedia.category}
-                        </span>
-                        {viewer.hasRealView ? (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center gap-1">
-                            <CheckCircle2 className="w-2.5 h-2.5" />
-                            Confirmada
-                          </span>
-                        ) : (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700">
-                            Monitoramento Ativo
-                          </span>
-                        )}
+                    {/* Post / Story Identificado com Miniatura e Lightbox */}
+                    <td className="py-3 px-3 max-w-[320px]">
+                      <div className="flex items-center gap-3">
+                        <div
+                          onClick={() =>
+                            setLightboxMedia({
+                              title: viewer.storyMedia.title,
+                              category: viewer.storyMedia.category,
+                              mediaUrl: viewer.storyMedia.thumbnailUrl,
+                              exactDate: viewer.storyMedia.exactDate,
+                              exactTime: viewer.storyMedia.exactTime,
+                              viewsCount: viewer.storyMedia.viewsCountWeek,
+                              contactName: viewer.name,
+                            })
+                          }
+                          className="relative w-11 h-11 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 group/thumb cursor-pointer shadow-sm hover:ring-2 hover:ring-blue-500/50 transition-all"
+                          title="Clique para visualizar a foto do Story"
+                        >
+                          {viewer.storyMedia.thumbnailUrl ? (
+                            <img
+                              src={viewer.storyMedia.thumbnailUrl}
+                              alt={viewer.storyMedia.title}
+                              className="w-full h-full object-cover group-hover/thumb:scale-110 transition-transform duration-200"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800/80">
+                              {getCategoryIcon(viewer.storyMedia.category)}
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+                            <Maximize2 className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div
+                            onClick={() =>
+                              setLightboxMedia({
+                                title: viewer.storyMedia.title,
+                                category: viewer.storyMedia.category,
+                                mediaUrl: viewer.storyMedia.thumbnailUrl,
+                                exactDate: viewer.storyMedia.exactDate,
+                                exactTime: viewer.storyMedia.exactTime,
+                                viewsCount: viewer.storyMedia.viewsCountWeek,
+                                contactName: viewer.name,
+                              })
+                            }
+                            className="font-semibold text-slate-800 dark:text-slate-200 line-clamp-1 hover:text-blue-500 cursor-pointer transition-colors"
+                          >
+                            {viewer.storyMedia.title}
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                              {getCategoryIcon(viewer.storyMedia.category)}
+                              <span>{viewer.storyMedia.category}</span>
+                            </span>
+                            {viewer.hasRealView ? (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center gap-1">
+                                <CheckCircle2 className="w-2.5 h-2.5" />
+                                Confirmada
+                              </span>
+                            ) : (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700">
+                                Monitoramento
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </td>
 
@@ -947,6 +1285,486 @@ export default function RadarStoriesPage() {
                 >
                   {isSubmittingTest ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlayCircle className="w-3.5 h-3.5" />}
                   <span>Registrar Visualização</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================= */}
+      {/* 7. MODAL LIGHTBOX DE FOTO DO STORY (SEM EMOJIS - VETORES DE ALTO PADRÃO)*/}
+      {/* ======================================================================= */}
+      {lightboxMedia && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl flex flex-col">
+            {/* Header do Lightbox */}
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+                  <Eye className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">
+                    Visualização de Mídia do Story
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {lightboxMedia.contactName ? `Visualizado por ${lightboxMedia.contactName}` : "Story publicado no WhatsApp"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setLightboxMedia(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Conteúdo / Foto */}
+            <div className="p-4 flex flex-col gap-3">
+              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center border border-slate-200 dark:border-slate-800">
+                {lightboxMedia.mediaUrl ? (
+                  <img
+                    src={lightboxMedia.mediaUrl}
+                    alt={lightboxMedia.title}
+                    className="max-h-[380px] w-auto max-w-full object-contain"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-2 text-slate-500 p-8 text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center text-slate-400">
+                      {getCategoryIcon(lightboxMedia.category)}
+                    </div>
+                    <span className="text-xs font-medium text-slate-400">
+                      Pré-visualização gerada para categoria: {lightboxMedia.category}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Metadados Auditáveis */}
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">
+                    {lightboxMedia.title}
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 flex items-center gap-1 shrink-0">
+                    {getCategoryIcon(lightboxMedia.category)}
+                    <span>{lightboxMedia.category}</span>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] pt-1.5 border-t border-slate-200/60 dark:border-slate-800/60">
+                  {lightboxMedia.exactDate && (
+                    <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                      <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                      <span>{lightboxMedia.exactDate}</span>
+                    </div>
+                  )}
+                  {lightboxMedia.exactTime && (
+                    <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-mono">
+                      <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      <span>{lightboxMedia.exactTime}</span>
+                    </div>
+                  )}
+                  {lightboxMedia.viewsCount !== undefined && (
+                    <div className="flex items-center gap-1 text-blue-500 font-semibold">
+                      <Eye className="w-3.5 h-3.5 shrink-0" />
+                      <span>{lightboxMedia.viewsCount} visualizações</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <button
+                onClick={() => setLightboxMedia(null)}
+                className="px-4 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================= */}
+      {/* 8. MODAL DE TUTORIAL INTERATIVO PARA GESTORES                          */}
+      {/* ======================================================================= */}
+      {isTutorialOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-600/10 border border-blue-600/30 flex items-center justify-center text-blue-500">
+                  <GraduationCap className="w-5 h-5 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Guia Rápido: Radar de Stories & Status
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Aprenda a transformar visualizadores silenciosos em vendas reais do Agronegócio.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsTutorialOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Stepper Tabs */}
+            <div className="grid grid-cols-4 border-b border-slate-100 dark:border-slate-800 text-xs font-semibold">
+              {[
+                { step: 1, title: "1. Postagem", icon: <Upload className="w-3.5 h-3.5" /> },
+                { step: 2, title: "2. Captura", icon: <Radio className="w-3.5 h-3.5" /> },
+                { step: 3, title: "3. Cruzamento", icon: <TrendingUp className="w-3.5 h-3.5" /> },
+                { step: 4, title: "4. Abordagem", icon: <Sparkles className="w-3.5 h-3.5" /> },
+              ].map((item) => (
+                <button
+                  key={item.step}
+                  onClick={() => setTutorialStep(item.step)}
+                  className={`py-3 px-2 flex items-center justify-center gap-1.5 transition-colors border-b-2 cursor-pointer ${
+                    tutorialStep === item.step
+                      ? "border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20 font-bold"
+                      : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
+                  }`}
+                >
+                  {item.icon}
+                  <span className="hidden sm:inline">{item.title}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Step Body */}
+            <div className="p-6 space-y-4 overflow-y-auto">
+              {tutorialStep === 1 && (
+                <div className="space-y-3.5 animate-in fade-in duration-150">
+                  <div className="p-4 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40">
+                    <h4 className="text-sm font-bold text-blue-900 dark:text-blue-300 flex items-center gap-2">
+                      <Upload className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span>Passo 1: Postagem Estratégica</span>
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                      Você pode postar status diretamente pelo aplicativo WhatsApp do seu celular corporativo ou utilizar o botão <strong>Publicar Story</strong> no topo desta página.
+                    </p>
+                  </div>
+                  <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span><strong>Segmentação por Categoria:</strong> Ao publicar fotos de maquinários, insumos ou cotações de grãos, o sistema categoriza automaticamente o interesse técnico.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span><strong>Zero Sobrecarga:</strong> O sistema não armazena fotos pesadas no banco de dados. Os arquivos são transmitidos em streaming para o WhatsApp.</span>
+                    </li>
+                  </ul>
+                </div>
+              )}
+
+              {tutorialStep === 2 && (
+                <div className="space-y-3.5 animate-in fade-in duration-150">
+                  <div className="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40">
+                    <h4 className="text-sm font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-2">
+                      <Radio className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span>Passo 2: Captura Silenciosa e 100% Auditável</span>
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                      Quando um produtor ou cliente abre o Story no WhatsApp, os webhooks do sistema registram silenciosamente a interação.
+                    </p>
+                  </div>
+                  <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <Clock className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                      <span><strong>Data, Minuto e Segundo:</strong> Registro com fuso de Brasília do momento exato em que o contato visualizou.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span><strong>Totalmente Invisível:</strong> O cliente não sabe que o sistema está registrando. Para ele, foi uma visualização comum de WhatsApp.</span>
+                    </li>
+                  </ul>
+                </div>
+              )}
+
+              {tutorialStep === 3 && (
+                <div className="space-y-3.5 animate-in fade-in duration-150">
+                  <div className="p-4 rounded-xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/40">
+                    <h4 className="text-sm font-bold text-purple-900 dark:text-purple-300 flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      <span>Passo 3: Cruzamento Instantâneo com o CRM</span>
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                      O número do WhatsApp é imediatamente cruzado com a base de dados comercial do tenant (6.647 contatos reais).
+                    </p>
+                  </div>
+                  <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span><strong>Identificação da Posição no Funil:</strong> O sistema aponta se o contato é Cliente Ativo, Oportunidade em Espera ou Cotação em Aberto.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span><strong>Histórico de Faturamento:</strong> Exibe quanto o produtor já comprou na carteira e qual vendedor é o responsável pela conta.</span>
+                    </li>
+                  </ul>
+                </div>
+              )}
+
+              {tutorialStep === 4 && (
+                <div className="space-y-3.5 animate-in fade-in duration-150">
+                  <div className="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40">
+                    <h4 className="text-sm font-bold text-amber-900 dark:text-amber-300 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                      <span>Passo 4: Abordagem Comercial com IA (Regra de Ouro)</span>
+                    </h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                      Ao clicar no botão <strong>Abordagem IA</strong>, a inteligência artificial gera uma mensagem casual para WhatsApp.
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs text-rose-700 dark:text-rose-300 space-y-1">
+                    <span className="font-bold block">Regra Crítica para Vendedores:</span>
+                    <p className="text-[11px] leading-relaxed">
+                      <strong>NUNCA</strong> inicie a conversa dizendo "Vi que você visualizou meu status". A IA cria um pretexto natural e sutil de coincidência (ex: novidade técnica do produto, cotação do dia ou oportunidade de safra).
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Box de Ação Interativa de Teste */}
+              <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                  <PlayCircle className="w-4 h-4 text-blue-500 shrink-0" />
+                  <span>Deseja testar o rastreamento em tempo real com seu número?</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsTutorialOpen(false);
+                    setIsTestModalOpen(true);
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm cursor-pointer whitespace-nowrap"
+                >
+                  Testar Reconhecimento Agora
+                </button>
+              </div>
+            </div>
+
+            {/* Footer do Tutorial */}
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/30">
+              <button
+                disabled={tutorialStep === 1}
+                onClick={() => setTutorialStep((prev) => Math.max(prev - 1, 1))}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 disabled:opacity-30 cursor-pointer"
+              >
+                Voltar
+              </button>
+              {tutorialStep < 4 ? (
+                <button
+                  onClick={() => setTutorialStep((prev) => Math.min(prev + 1, 4))}
+                  className="flex items-center gap-1 px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  <span>Próximo Passo</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsTutorialOpen(false)}
+                  className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  Entendi Tudo! Fechar Guia
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================= */}
+      {/* 9. MODAL DE PUBLICAR / AGENDAR STORY (SEM BLOBS NO POSTGRESQL)          */}
+      {/* ======================================================================= */}
+      {isPublishModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/30 flex items-center justify-center text-blue-500">
+                  <Upload className="w-4 h-4 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Publicar Story no WhatsApp Corporativo
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Transmita novidades e acompanhe quais clientes visualizaram.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPublishModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handlePublishStory} className="p-5 space-y-4">
+              {/* Alerta de Zero Bloat */}
+              <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                <span className="text-[11px] leading-relaxed">
+                  <strong>Zero Sobrecarga:</strong> O arquivo de imagem é transmitido diretamente para a Evolution API (status@broadcast) sem salvar dados pesados no PostgreSQL.
+                </span>
+              </div>
+
+              {/* Upload de Imagem */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Foto / Mídia do Story:
+                </label>
+                <div className="relative border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:border-blue-500/50 transition-colors bg-slate-50/50 dark:bg-slate-900/30">
+                  {publishImagePreview ? (
+                    <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-slate-950 flex items-center justify-center">
+                      <img src={publishImagePreview} alt="Preview" className="max-h-40 w-auto object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPublishImageBase64("");
+                          setPublishImagePreview("");
+                        }}
+                        className="absolute top-2 right-2 p-1 rounded-md bg-black/60 text-white hover:bg-black/80 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-2 cursor-pointer w-full py-4">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                        Clique para escolher a imagem
+                      </span>
+                      <span className="text-[10px] text-slate-400">PNG, JPEG ou WebP (máx. 8MB)</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Título / Legenda */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Título / Legenda do Story (Texto no WhatsApp):
+                </label>
+                <input
+                  type="text"
+                  value={publishTitle}
+                  onChange={(e) => setPublishTitle(e.target.value)}
+                  placeholder="Ex: Chegaram novas colheitadeiras 2026 com condições especiais de safra"
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Categoria Técnica */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Categoria Técnica:
+                </label>
+                <select
+                  value={publishCategory}
+                  onChange={(e) => setPublishCategory(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500 cursor-pointer"
+                >
+                  <option value="Maquinários">Maquinários & Implementos</option>
+                  <option value="Insumos">Insumos & Defensivos</option>
+                  <option value="Cotações">Cotações de Safra & Grãos</option>
+                  <option value="Peças & Serviços">Peças & Serviços</option>
+                  <option value="Geral">Geral</option>
+                </select>
+              </div>
+
+              {/* Modo: Postar Agora vs Agendar */}
+              <div className="space-y-2 pt-1">
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                  Momento do Disparo:
+                </label>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setPublishMode("now")}
+                    className={`py-2 px-3 rounded-lg border font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                      publishMode === "now"
+                        ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
+                        : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400"
+                    }`}
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Postar Imediatamente</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPublishMode("schedule")}
+                    className={`py-2 px-3 rounded-lg border font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                      publishMode === "schedule"
+                        ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
+                        : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400"
+                    }`}
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>Agendar Horário</span>
+                  </button>
+                </div>
+
+                {publishMode === "schedule" && (
+                  <div className="pt-2 animate-in fade-in duration-150">
+                    <label className="block text-[10px] font-bold text-slate-500 mb-1">
+                      Data e Horário para Publicação:
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={publishScheduleDate}
+                      onChange={(e) => setPublishScheduleDate(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Botões do Formulário */}
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsPublishModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPublishing || !publishImageBase64}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                >
+                  {isPublishing ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : publishMode === "schedule" ? (
+                    <Calendar className="w-3.5 h-3.5" />
+                  ) : (
+                    <Send className="w-3.5 h-3.5" />
+                  )}
+                  <span>{publishMode === "schedule" ? "Confirmar Agendamento" : "Publicar no WhatsApp"}</span>
                 </button>
               </div>
             </form>

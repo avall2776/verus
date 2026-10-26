@@ -792,7 +792,7 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
                         await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_views"
                ("id", "tenantId", "contactId", "phone", "contactName", "city", "state", "statusMessageId", "storyTitle", "category", "mediaUrl", "viewedAt")
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`, viewId, tenantId, contact.id, cleanPhone, contact.name, null, null, storyMessageId || 'broadcast', storyTitle, category, mediaUrl, viewedAt);
-                        this.logger.log(`👁️ [Radar Stories] Visualização gravada: ${cleanPhone} (${contact.name}) viu "${storyTitle}" às ${viewedAt.toISOString()}`);
+                        this.logger.log(`[Radar Stories] Visualização gravada: ${cleanPhone} (${contact.name}) viu "${storyTitle}" às ${viewedAt.toISOString()}`);
                         this.chatGateway.emitStoryViewed(tenantId, {
                             viewId,
                             contactId: contact.id,

@@ -4,9 +4,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { 
   X, Plus, Trash2, FileText, DollarSign, Calendar, User, 
   Building2, Mail, Phone, ShieldCheck, Sparkles, CheckCircle2, 
-  Edit3, Upload, Image as ImageIcon, MapPin
+  Edit3, Upload, Image as ImageIcon, MapPin, Package, Cloud,
+  ExternalLink, Search, Folder, Check
 } from "lucide-react";
-import { Proposal, ProposalItem, CompanyIssuer, ProposalStatus } from "@/types/commercial";
+import { Proposal, ProposalItem, CompanyIssuer, ProposalStatus, ProposalProduct } from "@/types/commercial";
+import api from "@/lib/api";
+import { extractGoogleDriveId, getDriveThumbnailUrl } from "@/lib/googleDriveHelper";
 import toast from "react-hot-toast";
 import ModalPortal from "@/components/ui/ModalPortal";
 
@@ -19,6 +22,15 @@ interface ProposalModalProps {
 
 export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: ProposalModalProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Catálogo de Produtos e Fotos do Google Drive
+  const [catalogProducts, setCatalogProducts] = useState<ProposalProduct[]>([]);
+  const [activeSuggestionItemId, setActiveSuggestionItemId] = useState<string | null>(null);
+  const [isCatalogPickerOpen, setIsCatalogPickerOpen] = useState(false);
+  const [catalogPickerSearch, setCatalogPickerSearch] = useState("");
+  const [catalogPickerFolder, setCatalogPickerFolder] = useState("ALL");
+  const [photoModalItemId, setPhotoModalItemId] = useState<string | null>(null);
+  const [photoModalUrl, setPhotoModalUrl] = useState("");
 
   // Código da proposta
   const [code, setCode] = useState(() => `PROP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
@@ -61,6 +73,21 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
 
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Carregar produtos cadastrados do catálogo ao abrir
+  useEffect(() => {
+    if (isOpen) {
+      api.get("/proposals/products")
+        .then((res) => {
+          if (Array.isArray(res.data)) {
+            setCatalogProducts(res.data);
+          }
+        })
+        .catch((err) => {
+          console.error("[PROPOSAL_PRODUCTS_LOAD_ERROR]", err);
+        });
+    }
+  }, [isOpen]);
 
   // Sincronizar estado caso haja proposta em edição ou resetar 100% limpo para nova proposta
   useEffect(() => {
@@ -261,6 +288,77 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
       return;
     }
     setItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  // Abrir modal de foto do Drive para um item específico
+  const openPhotoModal = (itemId: string, currentUrl?: string) => {
+    setPhotoModalItemId(itemId);
+    setPhotoModalUrl(currentUrl || "");
+  };
+
+  const closePhotoModal = () => {
+    setPhotoModalItemId(null);
+    setPhotoModalUrl("");
+  };
+
+  const savePhotoModal = () => {
+    if (!photoModalItemId) return;
+    const cleanUrl = photoModalUrl.trim();
+    updateItem(photoModalItemId, "imageUrl", cleanUrl || undefined);
+    if (cleanUrl) {
+      toast.success("Foto do Google Drive vinculada ao item!");
+    } else {
+      toast("Foto removida do item.");
+    }
+    closePhotoModal();
+  };
+
+  // Selecionar produto do catálogo para preencher um item existente
+  const selectCatalogProductForItem = (itemId: string, product: ProposalProduct) => {
+    setItems((prev) =>
+      prev.map((item) => {
+        if (item.id !== itemId) return item;
+        const qty = Number(item.quantity) || 1;
+        const price = Number(product.price) || item.unitPrice || 0;
+        const disc = Number(item.discountPercent) || 0;
+        const total = (qty * price) * (1 - disc / 100);
+        return {
+          ...item,
+          name: product.name,
+          description: product.description || item.description || "",
+          unitPrice: price,
+          imageUrl: product.driveUrl || undefined,
+          total: Math.max(0, total),
+        };
+      })
+    );
+    setActiveSuggestionItemId(null);
+    toast.success(`"${product.name}" vinculado com foto do Drive!`);
+  };
+
+  // Adicionar produto do catálogo como um novo item
+  const addCatalogProductAsNewItem = (product: ProposalProduct) => {
+    const qty = 1;
+    const price = Number(product.price) || 0;
+    const newItem: ProposalItem = {
+      id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      name: product.name,
+      description: product.description || "",
+      imageUrl: product.driveUrl || undefined,
+      quantity: qty,
+      unitPrice: price,
+      discountPercent: 0,
+      total: price,
+    };
+
+    setItems((prev) => {
+      if (prev.length === 1 && !prev[0].name.trim() && !prev[0].unitPrice) {
+        return [newItem];
+      }
+      return [...prev, newItem];
+    });
+
+    toast.success(`"${product.name}" adicionado à proposta!`);
   };
 
   // Totais calculados automaticamente
@@ -654,19 +752,38 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
 
           {/* Seção 2: Itens do Orçamento */}
           <div className="p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-800 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                Itens & Serviços Orçados
-              </h3>
-              <button
-                type="button"
-                onClick={addItem}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors cursor-pointer shadow-sm"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Adicionar Item
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-xs font-bold text-slate-800 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  Itens & Serviços Orçados
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Vincule fotos diretamente do Google Drive ou escolha produtos cadastrados no catálogo
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {catalogProducts.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsCatalogPickerOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors cursor-pointer shadow-sm"
+                    title="Escolher itens salvos do catálogo do Google Drive"
+                  >
+                    <Package className="w-3.5 h-3.5" />
+                    Catálogo / Drive ({catalogProducts.length})
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors cursor-pointer shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Adicionar Item
+                </button>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -676,16 +793,136 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
                   className="p-3.5 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 grid grid-cols-1 md:grid-cols-12 gap-3 items-center shadow-sm"
                 >
                   <div className="md:col-span-4">
-                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                      Item / Serviço #{index + 1}
-                    </label>
-                    <input
-                      type="text"
-                      value={item.name}
-                      onChange={(e) => updateItem(item.id, "name", e.target.value)}
-                      placeholder="Nome do produto ou serviço"
-                      className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500"
-                    />
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                        Item / Serviço #{index + 1}
+                      </label>
+                      {item.imageUrl && (
+                        <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                          <Cloud className="w-3 h-3" /> Foto do Drive
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {/* Slot da Foto do Google Drive */}
+                      <div className="relative shrink-0">
+                        {item.imageUrl ? (
+                          <div className="relative w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs group">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={getDriveThumbnailUrl(item.imageUrl, 200) || item.imageUrl}
+                              alt={item.name || "Foto"}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => openPhotoModal(item.id, item.imageUrl)}
+                                className="p-1 text-white hover:text-blue-300"
+                                title="Alterar foto do Drive"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => updateItem(item.id, "imageUrl", undefined)}
+                                className="p-1 text-white hover:text-rose-400"
+                                title="Remover foto"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => openPhotoModal(item.id)}
+                            className="w-9 h-9 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 text-slate-400 hover:text-blue-500 flex flex-col items-center justify-center transition-colors bg-slate-50 dark:bg-slate-900/50 cursor-pointer"
+                            title="Vincular foto do Google Drive ou catálogo"
+                          >
+                            <Cloud className="w-3.5 h-3.5 text-blue-500" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Input com Autocomplete inteligente do Catálogo */}
+                      <div className="relative flex-1">
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(e) => {
+                            updateItem(item.id, "name", e.target.value);
+                            setActiveSuggestionItemId(item.id);
+                          }}
+                          onFocus={() => setActiveSuggestionItemId(item.id)}
+                          placeholder="Nome do produto ou serviço"
+                          className="w-full px-2.5 py-1.5 text-sm rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                        />
+
+                        {/* Dropdown de sugestão do Catálogo */}
+                        {activeSuggestionItemId === item.id && catalogProducts.length > 0 && (
+                          (() => {
+                            const query = (item.name || "").toLowerCase().trim();
+                            const matches = catalogProducts.filter((p) =>
+                              !query || p.name.toLowerCase().includes(query) || (p.folderName && p.folderName.toLowerCase().includes(query))
+                            ).slice(0, 5);
+
+                            if (matches.length === 0) return null;
+
+                            return (
+                              <div className="absolute left-0 right-0 top-full mt-1 z-30 rounded-xl bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden py-1 max-h-56 overflow-y-auto">
+                                <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                  <span className="flex items-center gap-1">
+                                    <Package className="w-3 h-3 text-blue-500" /> Catálogo de Produtos
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveSuggestionItemId(null)}
+                                    className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                                {matches.map((product) => {
+                                  const thumb = getDriveThumbnailUrl(product.driveUrl, 120);
+                                  return (
+                                    <div
+                                      key={product.id}
+                                      onClick={() => selectCatalogProductForItem(item.id, product)}
+                                      className="px-2.5 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer flex items-center gap-2.5 transition-colors border-b border-slate-100 dark:border-slate-800/50 last:border-0"
+                                    >
+                                      <div className="w-7 h-7 rounded bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center">
+                                        {thumb ? (
+                                          // eslint-disable-next-line @next/next/no-img-element
+                                          <img src={thumb} alt={product.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                          <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
+                                        )}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                          {product.name}
+                                        </div>
+                                        <div className="text-[10px] text-slate-400 flex items-center gap-1.5">
+                                          <span>{product.folderName || "Geral"}</span>
+                                          {product.driveUrl && <span className="text-emerald-500 font-semibold">• Foto Drive</span>}
+                                        </div>
+                                      </div>
+                                      {Number(product.price || 0) > 0 && (
+                                        <div className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 shrink-0">
+                                          R$ {Number(product.price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="md:col-span-2">
@@ -874,6 +1111,284 @@ export function ProposalModal({ isOpen, onClose, onSave, proposalToEdit }: Propo
         </div>
       </div>
     </div>
+
+    {/* SUB-MODAL 1: VINCULAR FOTO DO GOOGLE DRIVE AO ITEM */}
+    {photoModalItemId && (
+      <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+        <div 
+          className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/80 shadow-2xl p-6 space-y-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                <Cloud className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Vincular Foto do Google Drive
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Armazenamento 100% no Google Drive (sem pesar o banco de dados)
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={closePhotoModal}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Link de Compartilhamento da Foto no Google Drive
+              </label>
+              <input
+                type="text"
+                value={photoModalUrl}
+                onChange={(e) => setPhotoModalUrl(e.target.value)}
+                placeholder="https://drive.google.com/file/d/1.../view?usp=sharing"
+                className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+              />
+              <p className="text-[11px] text-slate-400 mt-1">
+                Copie o link de compartilhamento da imagem no seu Drive e cole aqui.
+              </p>
+            </div>
+
+            {/* Preview Instantâneo */}
+            {photoModalUrl && getDriveThumbnailUrl(photoModalUrl) && (
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                <div className="w-14 h-14 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0 flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={getDriveThumbnailUrl(photoModalUrl, 300) || photoModalUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="text-xs">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Miniatura carregada com sucesso!
+                  </span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    A foto será exibida no layout da proposta, PDF e aceite do cliente.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Ou selecionar dos produtos cadastrados no catálogo */}
+            {catalogProducts.length > 0 && (
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">
+                  Ou selecione a foto de um produto já cadastrado:
+                </label>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto no-scrollbar">
+                  {catalogProducts.filter((p) => Boolean(p.driveUrl)).map((prod) => {
+                    const thumb = getDriveThumbnailUrl(prod.driveUrl, 120);
+                    return (
+                      <button
+                        key={prod.id}
+                        type="button"
+                        onClick={() => {
+                          setPhotoModalUrl(prod.driveUrl || "");
+                        }}
+                        className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500 text-left flex items-center gap-2 bg-slate-50/50 dark:bg-slate-900/50 transition-colors cursor-pointer"
+                      >
+                        <div className="w-8 h-8 rounded bg-white dark:bg-slate-800 overflow-hidden shrink-0">
+                          {thumb ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={thumb} alt={prod.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <ImageIcon className="w-4 h-4 text-slate-400" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[11px] font-bold text-slate-900 dark:text-white truncate">
+                            {prod.name}
+                          </div>
+                          <div className="text-[10px] text-slate-400 truncate">{prod.folderName || "Geral"}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
+            {photoModalUrl ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setPhotoModalUrl("");
+                  savePhotoModal();
+                }}
+                className="text-xs text-rose-500 hover:text-rose-600 font-semibold"
+              >
+                Remover Foto
+              </button>
+            ) : <div />}
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={closePhotoModal}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={savePhotoModal}
+                className="px-4 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-sm"
+              >
+                Salvar Foto
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* SUB-MODAL 2: ESCOLHER ITENS DO CATÁLOGO / DRIVE */}
+    {isCatalogPickerOpen && (
+      <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+        <div
+          className="relative w-full max-w-2xl max-h-[85vh] rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/80 shadow-2xl flex flex-col overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <Package className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Catálogo de Produtos & Fotos do Drive
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Clique em um produto para adicioná-lo automaticamente com preço e foto
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsCatalogPickerOpen(false)}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Filtros */}
+          <div className="p-4 border-b border-slate-200 dark:border-slate-800 space-y-3">
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                value={catalogPickerSearch}
+                onChange={(e) => setCatalogPickerSearch(e.target.value)}
+                placeholder="Pesquisar por nome ou especificação..."
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Lista de Produtos */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            {catalogProducts
+              .filter((p) => {
+                const q = catalogPickerSearch.toLowerCase().trim();
+                return (
+                  !q ||
+                  p.name.toLowerCase().includes(q) ||
+                  (p.description && p.description.toLowerCase().includes(q)) ||
+                  (p.folderName && p.folderName.toLowerCase().includes(q))
+                );
+              })
+              .map((prod) => {
+                const thumb = getDriveThumbnailUrl(prod.driveUrl, 160);
+                return (
+                  <div
+                    key={prod.id}
+                    className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/40 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-12 h-12 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0 flex items-center justify-center shadow-xs">
+                        {thumb ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={thumb} alt={prod.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <ImageIcon className="w-5 h-5 text-slate-400" />
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400">
+                            {prod.folderName || "Geral"}
+                          </span>
+                          {prod.driveUrl && (
+                            <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                              <Cloud className="w-2.5 h-2.5" /> Drive
+                            </span>
+                          )}
+                        </div>
+                        <h5 className="text-xs font-bold text-slate-900 dark:text-white truncate mt-0.5">
+                          {prod.name}
+                        </h5>
+                        {prod.description && (
+                          <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{prod.description}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      {Number(prod.price || 0) > 0 && (
+                        <div className="text-xs font-mono font-bold text-slate-900 dark:text-white">
+                          R$ {Number(prod.price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          addCatalogProductAsNewItem(prod);
+                        }}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Adicionar</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 flex items-center justify-between text-xs">
+            <span className="text-slate-500 dark:text-slate-400">
+              Total de itens no catálogo: {catalogProducts.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsCatalogPickerOpen(false)}
+              className="px-4 py-1.5 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+            >
+              Concluir
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </ModalPortal>
   );
 }

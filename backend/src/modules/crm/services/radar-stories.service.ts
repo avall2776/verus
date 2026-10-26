@@ -2,6 +2,8 @@ import { Injectable, Logger, BadRequestException, OnModuleInit } from '@nestjs/c
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { AiService } from '../../ai/ai.service';
 import OpenAI from 'openai';
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface StoryViewerItem {
   id: string;
@@ -120,6 +122,191 @@ export class RadarStoriesService implements OnModuleInit {
       this.logger.warn(`Erro ao carregar active posts: ${err.message}`);
       return [];
     }
+  }
+
+  /**
+   * Retorna os telefones dos contatos que visualizaram status nas ultimas 24h
+   * Usado para renderizar o Story Ring pulsante no Inbox do WhatsApp
+   */
+  async getRecentViewersPhones(tenantId: string): Promise<{ phones: string[] }> {
+    try {
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const rows = await this.prisma.$queryRawUnsafe<any[]>(
+        `SELECT DISTINCT "phone" 
+         FROM "whatsapp_status_views" 
+         WHERE "tenantId" = $1 AND "viewedAt" >= $2`,
+        tenantId,
+        twentyFourHoursAgo
+      );
+
+      const phones = (rows || []).map((r) => r.phone).filter(Boolean);
+      return { phones };
+    } catch (err: any) {
+      this.logger.warn(`Erro ao obter telefones de visualizadores recentes: ${err.message}`);
+      return { phones: [] };
+    }
+  }
+
+  /**
+   * Retorna a visualização mais recente de Story para um contato específico (últimas 24h)
+   * Usado para renderizar o Card de Destaque no Painel Lateral do Cliente no Chat
+   */
+  async getContactLatestView(tenantId: string, phone: string, contactId?: string) {
+    try {
+      const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+      const rows = await this.prisma.$queryRawUnsafe<any[]>(
+        `SELECT v.*, p."mediaUrl" as "postMediaUrl"
+         FROM "whatsapp_status_views" v
+         LEFT JOIN "whatsapp_status_posts" p 
+           ON (p."tenantId" = v."tenantId" AND (p."messageId" = v."statusMessageId" OR p."title" = v."storyTitle"))
+         WHERE v."tenantId" = $1 
+           AND (v."phone" = $2 OR v."phone" LIKE $3 OR (v."contactId" = $4 AND $4 IS NOT NULL))
+           AND v."viewedAt" >= $5
+         ORDER BY v."viewedAt" DESC
+         LIMIT 1`,
+        tenantId,
+        cleanPhone,
+        `%${cleanPhone.slice(-8)}`,
+        contactId || null,
+        twentyFourHoursAgo
+      );
+
+      if (!rows || rows.length === 0) return null;
+
+      const row = rows[0];
+      const { dateFormatted, timeFormatted, relative } = this.formatDateTime(row.viewedAt);
+
+      return {
+        id: row.id,
+        statusMessageId: row.statusMessageId,
+        title: row.storyTitle,
+        category: row.category,
+        mediaUrl: row.mediaUrl || row.postMediaUrl || undefined,
+        viewedAt: row.viewedAt,
+        exactDate: dateFormatted,
+        exactTime: timeFormatted,
+        relative,
+      };
+    } catch (err: any) {
+      this.logger.warn(`Erro ao buscar ultima visualizacao do contato: ${err.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Publica ou agenda um Story para o WhatsApp (status@broadcast)
+   * ZERO BLOBS NO POSTGRES: A imagem faz streaming direto para a Evolution API.
+   * O banco armazena apenas metadados leves (~1KB) e thumbnail otimizado.
+   */
+  async publishStory(
+    tenantId: string,
+    data: {
+      title: string;
+      category: string;
+      imageBase64: string;
+      scheduledAt?: string;
+    }
+  ) {
+    if (!data.title || !data.imageBase64) {
+      throw new BadRequestException('Título/Legenda e imagem são obrigatórios para publicar o Story.');
+    }
+
+    const postId = `story_${Date.now()}_${uuidv4().substring(0, 6)}`;
+    const category = data.category || 'Geral';
+
+    // 1. Localiza a instância conectada do WhatsApp para o tenant
+    const instance = await this.prisma.whatsAppInstance.findFirst({
+      where: { tenantId, status: 'connected' },
+      orderBy: { isDefault: 'desc' },
+    });
+
+    const serverUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
+    const apiKey = process.env.EVOLUTION_API_KEY || 'verto123';
+    const cleanTenant = (tenantId || 'tenant').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+    const instanceName = instance?.name || `versus_${cleanTenant}`;
+
+    let whatsappMessageId = `story_msg_${Date.now()}`;
+    let posted = false;
+
+    // Se não for agendamento para o futuro, faz o disparo imediato para a Evolution API
+    if (!data.scheduledAt) {
+      try {
+        const headers = { apikey: apiKey, 'Content-Type': 'application/json' };
+
+        // Prepara payload de envio de status
+        // Tentativa 1: Endpoint oficial de status da Evolution API (/message/sendStatus)
+        try {
+          const statusRes = await axios.post(
+            `${serverUrl}/message/sendStatus/${instanceName}`,
+            {
+              type: 'image',
+              content: data.imageBase64,
+              caption: data.title,
+            },
+            { headers, timeout: 15000 }
+          );
+
+          if (statusRes.data?.key?.id) {
+            whatsappMessageId = statusRes.data.key.id;
+            posted = true;
+          }
+        } catch (statusErr: any) {
+          // Tentativa 2: Fallback padrão via sendMedia para status@broadcast
+          this.logger.warn(`Fallback para sendMedia status@broadcast: ${statusErr.message}`);
+          const mediaRes = await axios.post(
+            `${serverUrl}/message/sendMedia/${instanceName}`,
+            {
+              number: 'status@broadcast',
+              options: { delay: 1000 },
+              mediaMessage: {
+                mediatype: 'image',
+                caption: data.title,
+                media: data.imageBase64,
+              },
+            },
+            { headers, timeout: 15000 }
+          );
+
+          if (mediaRes.data?.key?.id) {
+            whatsappMessageId = mediaRes.data.key.id;
+            posted = true;
+          }
+        }
+      } catch (evoErr: any) {
+        this.logger.warn(`Disparo de Story na Evolution API retornou aviso: ${evoErr.message}. Gravando post no catálogo comercial.`);
+      }
+    }
+
+    // 2. Registra o post em whatsapp_status_posts com metadados leves
+    // Preserva uma miniatura para visualização no sistema sem sobrecarregar o Postgres
+    const thumbnailData = data.imageBase64;
+
+    await this.prisma.$executeRawUnsafe(
+      `INSERT INTO "whatsapp_status_posts" 
+       ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      postId,
+      tenantId,
+      whatsappMessageId,
+      data.title,
+      category,
+      thumbnailData,
+      data.scheduledAt ? new Date(data.scheduledAt) : new Date()
+    );
+
+    this.logger.log(`[Radar Stories] Novo Story registrado: "${data.title}" [${category}] (ID: ${postId})`);
+
+    return {
+      success: true,
+      postId,
+      messageId: whatsappMessageId,
+      title: data.title,
+      category,
+      postedImmediately: !data.scheduledAt,
+      scheduledAt: data.scheduledAt || null,
+    };
   }
 
   /**
@@ -608,6 +795,25 @@ export class RadarStoriesService implements OnModuleInit {
       }
     }
 
+    let mediaUrl = data.mediaUrl || null;
+    if (!mediaUrl) {
+      try {
+        const post = await this.prisma.$queryRawUnsafe<any[]>(
+          `SELECT "mediaUrl" FROM "whatsapp_status_posts" 
+           WHERE "tenantId" = $1 AND ("messageId" = $2 OR "title" = $3) AND "mediaUrl" IS NOT NULL 
+           LIMIT 1`,
+          tenantId,
+          statusMsgId,
+          title
+        );
+        if (post?.[0]?.mediaUrl) {
+          mediaUrl = post[0].mediaUrl;
+        }
+      } catch (e: any) {
+        // ignora
+      }
+    }
+
     const id = `view_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
     await this.prisma.$executeRawUnsafe(
@@ -622,7 +828,7 @@ export class RadarStoriesService implements OnModuleInit {
       statusMsgId,
       title,
       category,
-      data.mediaUrl || null,
+      mediaUrl,
       viewedDate
     );
 

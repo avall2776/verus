@@ -46,6 +46,34 @@ export declare class RadarStoriesService implements OnModuleInit {
         postedAtTime: string;
         viewsCount: number;
     }[]>;
+    getRecentViewersPhones(tenantId: string): Promise<{
+        phones: string[];
+    }>;
+    getContactLatestView(tenantId: string, phone: string, contactId?: string): Promise<{
+        id: any;
+        statusMessageId: any;
+        title: any;
+        category: any;
+        mediaUrl: any;
+        viewedAt: any;
+        exactDate: string;
+        exactTime: string;
+        relative: string;
+    }>;
+    publishStory(tenantId: string, data: {
+        title: string;
+        category: string;
+        imageBase64: string;
+        scheduledAt?: string;
+    }): Promise<{
+        success: boolean;
+        postId: string;
+        messageId: string;
+        title: string;
+        category: string;
+        postedImmediately: boolean;
+        scheduledAt: string;
+    }>;
     private formatDateTime;
     getMetrics(tenantId: string): Promise<{
         kpis: {

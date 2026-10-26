@@ -15,6 +15,8 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../../shared/database/prisma.service");
 const ai_service_1 = require("../../ai/ai.service");
 const openai_1 = require("openai");
+const axios_1 = require("axios");
+const uuid_1 = require("uuid");
 let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
     constructor(prisma, aiService) {
         this.prisma = prisma;
@@ -94,6 +96,120 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
             this.logger.warn(`Erro ao carregar active posts: ${err.message}`);
             return [];
         }
+    }
+    async getRecentViewersPhones(tenantId) {
+        try {
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const rows = await this.prisma.$queryRawUnsafe(`SELECT DISTINCT "phone" 
+         FROM "whatsapp_status_views" 
+         WHERE "tenantId" = $1 AND "viewedAt" >= $2`, tenantId, twentyFourHoursAgo);
+            const phones = (rows || []).map((r) => r.phone).filter(Boolean);
+            return { phones };
+        }
+        catch (err) {
+            this.logger.warn(`Erro ao obter telefones de visualizadores recentes: ${err.message}`);
+            return { phones: [] };
+        }
+    }
+    async getContactLatestView(tenantId, phone, contactId) {
+        try {
+            const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const rows = await this.prisma.$queryRawUnsafe(`SELECT v.*, p."mediaUrl" as "postMediaUrl"
+         FROM "whatsapp_status_views" v
+         LEFT JOIN "whatsapp_status_posts" p 
+           ON (p."tenantId" = v."tenantId" AND (p."messageId" = v."statusMessageId" OR p."title" = v."storyTitle"))
+         WHERE v."tenantId" = $1 
+           AND (v."phone" = $2 OR v."phone" LIKE $3 OR (v."contactId" = $4 AND $4 IS NOT NULL))
+           AND v."viewedAt" >= $5
+         ORDER BY v."viewedAt" DESC
+         LIMIT 1`, tenantId, cleanPhone, `%${cleanPhone.slice(-8)}`, contactId || null, twentyFourHoursAgo);
+            if (!rows || rows.length === 0)
+                return null;
+            const row = rows[0];
+            const { dateFormatted, timeFormatted, relative } = this.formatDateTime(row.viewedAt);
+            return {
+                id: row.id,
+                statusMessageId: row.statusMessageId,
+                title: row.storyTitle,
+                category: row.category,
+                mediaUrl: row.mediaUrl || row.postMediaUrl || undefined,
+                viewedAt: row.viewedAt,
+                exactDate: dateFormatted,
+                exactTime: timeFormatted,
+                relative,
+            };
+        }
+        catch (err) {
+            this.logger.warn(`Erro ao buscar ultima visualizacao do contato: ${err.message}`);
+            return null;
+        }
+    }
+    async publishStory(tenantId, data) {
+        if (!data.title || !data.imageBase64) {
+            throw new common_1.BadRequestException('Título/Legenda e imagem são obrigatórios para publicar o Story.');
+        }
+        const postId = `story_${Date.now()}_${(0, uuid_1.v4)().substring(0, 6)}`;
+        const category = data.category || 'Geral';
+        const instance = await this.prisma.whatsAppInstance.findFirst({
+            where: { tenantId, status: 'connected' },
+            orderBy: { isDefault: 'desc' },
+        });
+        const serverUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
+        const apiKey = process.env.EVOLUTION_API_KEY || 'verto123';
+        const cleanTenant = (tenantId || 'tenant').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+        const instanceName = instance?.name || `versus_${cleanTenant}`;
+        let whatsappMessageId = `story_msg_${Date.now()}`;
+        let posted = false;
+        if (!data.scheduledAt) {
+            try {
+                const headers = { apikey: apiKey, 'Content-Type': 'application/json' };
+                try {
+                    const statusRes = await axios_1.default.post(`${serverUrl}/message/sendStatus/${instanceName}`, {
+                        type: 'image',
+                        content: data.imageBase64,
+                        caption: data.title,
+                    }, { headers, timeout: 15000 });
+                    if (statusRes.data?.key?.id) {
+                        whatsappMessageId = statusRes.data.key.id;
+                        posted = true;
+                    }
+                }
+                catch (statusErr) {
+                    this.logger.warn(`Fallback para sendMedia status@broadcast: ${statusErr.message}`);
+                    const mediaRes = await axios_1.default.post(`${serverUrl}/message/sendMedia/${instanceName}`, {
+                        number: 'status@broadcast',
+                        options: { delay: 1000 },
+                        mediaMessage: {
+                            mediatype: 'image',
+                            caption: data.title,
+                            media: data.imageBase64,
+                        },
+                    }, { headers, timeout: 15000 });
+                    if (mediaRes.data?.key?.id) {
+                        whatsappMessageId = mediaRes.data.key.id;
+                        posted = true;
+                    }
+                }
+            }
+            catch (evoErr) {
+                this.logger.warn(`Disparo de Story na Evolution API retornou aviso: ${evoErr.message}. Gravando post no catálogo comercial.`);
+            }
+        }
+        const thumbnailData = data.imageBase64;
+        await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_posts" 
+       ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`, postId, tenantId, whatsappMessageId, data.title, category, thumbnailData, data.scheduledAt ? new Date(data.scheduledAt) : new Date());
+        this.logger.log(`[Radar Stories] Novo Story registrado: "${data.title}" [${category}] (ID: ${postId})`);
+        return {
+            success: true,
+            postId,
+            messageId: whatsappMessageId,
+            title: data.title,
+            category,
+            postedImmediately: !data.scheduledAt,
+            scheduledAt: data.scheduledAt || null,
+        };
     }
     formatDateTime(date) {
         const d = new Date(date);
@@ -475,10 +591,23 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                 contactName = created.name;
             }
         }
+        let mediaUrl = data.mediaUrl || null;
+        if (!mediaUrl) {
+            try {
+                const post = await this.prisma.$queryRawUnsafe(`SELECT "mediaUrl" FROM "whatsapp_status_posts" 
+           WHERE "tenantId" = $1 AND ("messageId" = $2 OR "title" = $3) AND "mediaUrl" IS NOT NULL 
+           LIMIT 1`, tenantId, statusMsgId, title);
+                if (post?.[0]?.mediaUrl) {
+                    mediaUrl = post[0].mediaUrl;
+                }
+            }
+            catch (e) {
+            }
+        }
         const id = `view_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
         await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_views"
        ("id", "tenantId", "contactId", "phone", "contactName", "statusMessageId", "storyTitle", "category", "mediaUrl", "viewedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`, id, tenantId, contactId || null, cleanPhone, contactName || `Contato (${cleanPhone})`, statusMsgId, title, category, data.mediaUrl || null, viewedDate);
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`, id, tenantId, contactId || null, cleanPhone, contactName || `Contato (${cleanPhone})`, statusMsgId, title, category, mediaUrl, viewedDate);
         this.logger.log(`[Radar Stories] Visualização registrada: ${cleanPhone} (${contactName}) viu "${title}" em ${viewedDate.toISOString()}`);
         return {
             success: true,

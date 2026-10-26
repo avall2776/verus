@@ -6,9 +6,10 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { 
   FileText, CheckCircle2, Clock, Printer, Download, 
-  Building2, User, Calendar, DollarSign, Check, AlertCircle, Loader2
+  Building2, User, Calendar, DollarSign, Check, AlertCircle, Loader2, X, Image as ImageIcon
 } from "lucide-react";
 import api from "@/lib/api";
+import { getDriveThumbnailUrl } from "@/lib/googleDriveHelper";
 import { toast } from "sonner";
 
 export default function PublicProposalViewPage() {
@@ -19,6 +20,7 @@ export default function PublicProposalViewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accepting, setAccepting] = useState(false);
+  const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!code) return;
@@ -207,23 +209,42 @@ export default function PublicProposalViewPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 print:divide-slate-200">
-                {(proposal.items || []).map((item: any) => (
-                  <tr key={item.id} className="hover:bg-slate-800/30 print:text-black">
-                    <td className="p-3">
-                      <div className="font-semibold text-white print:text-black">{item.name || item.description}</div>
-                      {item.description && item.description !== item.name && (
-                        <div className="text-[11px] text-slate-400 print:text-slate-600">{item.description}</div>
-                      )}
-                    </td>
-                    <td className="p-3 text-center text-slate-300 print:text-black">{item.quantity}</td>
-                    <td className="p-3 text-right font-mono text-slate-300 print:text-black">
-                      R$ {Number(item.unitPrice || 0).toFixed(2)}
-                    </td>
-                    <td className="p-3 text-right font-mono font-bold text-white print:text-black">
-                      R$ {Number(item.total || item.totalPrice || 0).toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
+                {(proposal.items || []).map((item: any) => {
+                  const thumb = item.imageUrl ? (getDriveThumbnailUrl(item.imageUrl, 200) || item.imageUrl) : null;
+                  const highResThumb = item.imageUrl ? (getDriveThumbnailUrl(item.imageUrl, 1200) || item.imageUrl) : null;
+
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-800/30 print:text-black">
+                      <td className="p-3">
+                        <div className="flex items-center gap-3">
+                          {thumb && (
+                            <div
+                              onClick={() => setZoomImageUrl(highResThumb)}
+                              className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 overflow-hidden shrink-0 flex items-center justify-center cursor-pointer hover:opacity-90 hover:scale-105 transition-all shadow-md print:w-10 print:h-10 print:rounded-md print:border-slate-300"
+                              title="Clique para ampliar a foto do produto"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={thumb} alt={item.name || item.description} className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="font-semibold text-white print:text-black">{item.name || item.description}</div>
+                            {item.description && item.description !== item.name && (
+                              <div className="text-[11px] text-slate-400 print:text-slate-600 line-clamp-2">{item.description}</div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-3 text-center text-slate-300 print:text-black">{item.quantity}</td>
+                      <td className="p-3 text-right font-mono text-slate-300 print:text-black">
+                        R$ {Number(item.unitPrice || 0).toFixed(2)}
+                      </td>
+                      <td className="p-3 text-right font-mono font-bold text-white print:text-black">
+                        R$ {Number(item.total || item.totalPrice || 0).toFixed(2)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -270,6 +291,31 @@ export default function PublicProposalViewPage() {
           </div>
         )}
       </div>
+
+      {/* Lightbox de ampliação da imagem do produto */}
+      {zoomImageUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in"
+          onClick={() => setZoomImageUrl(null)}
+        >
+          <div className="relative max-w-3xl max-h-[85vh] p-2 flex flex-col items-center">
+            <button
+              onClick={() => setZoomImageUrl(null)}
+              className="absolute -top-10 right-0 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+              title="Fechar ampliação"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={zoomImageUrl}
+              alt="Foto do produto em alta resolução"
+              className="max-w-full max-h-[80vh] rounded-2xl object-contain shadow-2xl border border-white/10"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

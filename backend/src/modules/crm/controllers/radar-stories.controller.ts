@@ -21,6 +21,34 @@ export class RadarStoriesController {
     return this.radarStoriesService.getActivePosts(tenantId);
   }
 
+  @Get('recent-viewers-phones')
+  async getRecentViewersPhones(@CurrentTenant() tenantId: string) {
+    return this.radarStoriesService.getRecentViewersPhones(tenantId);
+  }
+
+  @Get('contact-latest-view')
+  async getContactLatestView(
+    @CurrentTenant() tenantId: string,
+    @Query('phone') phone: string,
+    @Query('contactId') contactId?: string,
+  ) {
+    return this.radarStoriesService.getContactLatestView(tenantId, phone, contactId);
+  }
+
+  @Post('publish')
+  async publishStory(
+    @CurrentTenant() tenantId: string,
+    @Body()
+    body: {
+      title: string;
+      category: string;
+      imageBase64: string;
+      scheduledAt?: string;
+    },
+  ) {
+    return this.radarStoriesService.publishStory(tenantId, body);
+  }
+
   @Get('viewers')
   async getViewers(
     @CurrentTenant() tenantId: string,

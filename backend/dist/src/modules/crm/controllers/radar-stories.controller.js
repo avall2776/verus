@@ -29,6 +29,15 @@ let RadarStoriesController = class RadarStoriesController {
     async getActivePosts(tenantId) {
         return this.radarStoriesService.getActivePosts(tenantId);
     }
+    async getRecentViewersPhones(tenantId) {
+        return this.radarStoriesService.getRecentViewersPhones(tenantId);
+    }
+    async getContactLatestView(tenantId, phone, contactId) {
+        return this.radarStoriesService.getContactLatestView(tenantId, phone, contactId);
+    }
+    async publishStory(tenantId, body) {
+        return this.radarStoriesService.publishStory(tenantId, body);
+    }
     async getViewers(tenantId, status, category, search) {
         return this.radarStoriesService.getViewers(tenantId, { status, category, search });
     }
@@ -54,6 +63,30 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], RadarStoriesController.prototype, "getActivePosts", null);
+__decorate([
+    (0, common_1.Get)('recent-viewers-phones'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], RadarStoriesController.prototype, "getRecentViewersPhones", null);
+__decorate([
+    (0, common_1.Get)('contact-latest-view'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('phone')),
+    __param(2, (0, common_1.Query)('contactId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", Promise)
+], RadarStoriesController.prototype, "getContactLatestView", null);
+__decorate([
+    (0, common_1.Post)('publish'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], RadarStoriesController.prototype, "publishStory", null);
 __decorate([
     (0, common_1.Get)('viewers'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

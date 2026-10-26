@@ -4,9 +4,10 @@ import React from "react";
 import { 
   X, Copy, Check, Printer, Send, ExternalLink, Calendar, 
   User, CheckCircle2, XCircle, Clock, ShieldCheck, FileText, ArrowUpRight,
-  Edit3, Building2, MapPin, Phone, Mail
+  Edit3, Building2, MapPin, Phone, Mail, Image as ImageIcon, ZoomIn
 } from "lucide-react";
 import { Proposal } from "@/types/commercial";
+import { getDriveThumbnailUrl } from "@/lib/googleDriveHelper";
 import toast from "react-hot-toast";
 import ModalPortal from "@/components/ui/ModalPortal";
 
@@ -26,6 +27,7 @@ export function ProposalPreviewModal({
   onEdit
 }: ProposalPreviewModalProps) {
   const [copied, setCopied] = React.useState(false);
+  const [zoomImageUrl, setZoomImageUrl] = React.useState<string | null>(null);
 
   if (!isOpen || !proposal) return null;
 
@@ -293,30 +295,56 @@ export function ProposalPreviewModal({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 print:divide-slate-200">
-                  {proposal.items.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 print:text-slate-900">
-                      <td className="p-3">
-                        <div className="font-semibold text-slate-900 dark:text-slate-100 print:text-black">{item.name}</div>
-                        {item.description && item.description !== item.name && (
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400 print:text-slate-600 mt-0.5">
-                            {item.description}
+                  {proposal.items.map((item) => {
+                    const thumb = item.imageUrl ? (getDriveThumbnailUrl(item.imageUrl, 200) || item.imageUrl) : null;
+                    const highResThumb = item.imageUrl ? (getDriveThumbnailUrl(item.imageUrl, 1200) || item.imageUrl) : null;
+
+                    return (
+                      <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 print:text-slate-900">
+                        <td className="p-3">
+                          <div className="flex items-center gap-3">
+                            {thumb && (
+                              <div
+                                onClick={() => setZoomImageUrl(highResThumb)}
+                                className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 overflow-hidden shrink-0 flex items-center justify-center cursor-pointer hover:opacity-90 hover:scale-105 transition-all shadow-xs print:w-10 print:h-10 print:rounded-md"
+                                title="Clique para ampliar a foto do produto"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={thumb}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
+
+                            <div className="min-w-0">
+                              <div className="font-semibold text-slate-900 dark:text-slate-100 print:text-black">
+                                {item.name}
+                              </div>
+                              {item.description && item.description !== item.name && (
+                                <div className="text-[10px] text-slate-500 dark:text-slate-400 print:text-slate-600 mt-0.5 line-clamp-2">
+                                  {item.description}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        )}
-                      </td>
-                      <td className="p-3 text-center text-slate-700 dark:text-slate-300 print:text-slate-900 font-mono">
-                        {item.quantity}
-                      </td>
-                      <td className="p-3 text-right text-slate-700 dark:text-slate-300 print:text-slate-900 font-mono">
-                        R$ {item.unitPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="p-3 text-right text-slate-500 dark:text-slate-400 print:text-slate-600 font-mono">
-                        {item.discountPercent ? `${item.discountPercent}%` : "-"}
-                      </td>
-                      <td className="p-3 text-right font-bold text-blue-600 dark:text-blue-400 print:text-black font-mono">
-                        R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="p-3 text-center text-slate-700 dark:text-slate-300 print:text-slate-900 font-mono">
+                          {item.quantity}
+                        </td>
+                        <td className="p-3 text-right text-slate-700 dark:text-slate-300 print:text-slate-900 font-mono">
+                          R$ {item.unitPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="p-3 text-right text-slate-500 dark:text-slate-400 print:text-slate-600 font-mono">
+                          {item.discountPercent ? `${item.discountPercent}%` : "-"}
+                        </td>
+                        <td className="p-3 text-right font-bold text-blue-600 dark:text-blue-400 print:text-black font-mono">
+                          R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -416,6 +444,31 @@ export function ProposalPreviewModal({
         </div>
       </div>
     </div>
+
+    {/* LIGHTBOX DE VISUALIZAÇÃO AMPLIADA DA FOTO DO PRODUTO */}
+    {zoomImageUrl && (
+      <div
+        className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in"
+        onClick={() => setZoomImageUrl(null)}
+      >
+        <div className="relative max-w-3xl max-h-[85vh] p-2 flex flex-col items-center">
+          <button
+            onClick={() => setZoomImageUrl(null)}
+            className="absolute -top-10 right-0 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            title="Fechar ampliação"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={zoomImageUrl}
+            alt="Foto do produto em alta resolução"
+            className="max-w-full max-h-[80vh] rounded-2xl object-contain shadow-2xl border border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      </div>
+    )}
     </ModalPortal>
   );
 }
