@@ -366,7 +366,14 @@ let DashboardService = DashboardService_1 = class DashboardService {
                             source: true,
                             tags: true,
                             conversations: {
-                                select: { id: true, status: true, updatedAt: true },
+                                select: {
+                                    id: true,
+                                    status: true,
+                                    updatedAt: true,
+                                    _count: {
+                                        select: { messages: true }
+                                    }
+                                },
                                 orderBy: { updatedAt: 'desc' },
                                 take: 1
                             }
@@ -517,7 +524,10 @@ let DashboardService = DashboardService_1 = class DashboardService {
             else {
                 entry.organicTrafficCount += 1;
             }
-            const conversationId = deal.contact?.conversations?.[0]?.id || null;
+            const latestConv = deal.contact?.conversations?.[0];
+            const conversationId = latestConv?.id || null;
+            const messageCount = latestConv?._count?.messages || 0;
+            const hasActiveChat = messageCount > 0;
             const isLiveDeal = deal.contact?.id ? liveContactIds.has(deal.contact.id) : false;
             if (isLiveDeal) {
                 entry.isLiveNow = true;
@@ -528,6 +538,8 @@ let DashboardService = DashboardService_1 = class DashboardService {
                 clientName: deal.contact?.name || 'Cliente Sem Nome',
                 contactId: deal.contact?.id || null,
                 conversationId,
+                messageCount,
+                hasActiveChat,
                 contactPhone: deal.contact?.phone || null,
                 value: dealVal,
                 status: deal.status,

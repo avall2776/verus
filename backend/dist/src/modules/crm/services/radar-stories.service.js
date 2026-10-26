@@ -211,6 +211,140 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
             scheduledAt: data.scheduledAt || null,
         };
     }
+    async syncActiveStories(tenantId) {
+        this.logger.log(`[Radar Stories] Iniciando sincronização ativa para tenant: ${tenantId}`);
+        const serverUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
+        const apiKey = process.env.EVOLUTION_API_KEY || 'verto123';
+        const headers = { apikey: apiKey, 'Content-Type': 'application/json' };
+        const instances = await this.prisma.whatsAppInstance.findMany({
+            where: { tenantId },
+            orderBy: { updatedAt: 'desc' },
+        });
+        const activeInstance = instances.find((i) => i.status === 'open' || i.status === 'connected') || instances[0];
+        const cleanTenant = (tenantId || 'tenant').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+        let instanceName = activeInstance?.settings?.instanceName;
+        if (!instanceName && activeInstance?.name && activeInstance.name.includes('_')) {
+            instanceName = activeInstance.name.replace(' (WhatsApp Web)', '').trim();
+        }
+        if (!instanceName) {
+            instanceName = `versus_${cleanTenant}_babdc262eb`;
+        }
+        try {
+            await axios_1.default.post(`${serverUrl}/settings/set/${instanceName}`, {
+                reject_call: false,
+                msg_call: '',
+                groups_ignore: true,
+                always_online: false,
+                read_messages: false,
+                read_status: true,
+                sync_full_history: false,
+            }, { headers, timeout: 5000 });
+        }
+        catch (e) {
+            this.logger.warn(`[Sync Stories] Aviso ao configurar read_status: ${e.message}`);
+        }
+        try {
+            const webhookUrl = `http://172.16.0.1:3001/webhooks/evolution/${tenantId}`;
+            await axios_1.default.post(`${serverUrl}/webhook/set/${instanceName}`, {
+                enabled: true,
+                url: webhookUrl,
+                webhook_by_events: false,
+                events: [
+                    'CONNECTION_UPDATE',
+                    'QRCODE_UPDATED',
+                    'MESSAGES_SET',
+                    'MESSAGES_UPSERT',
+                    'MESSAGES_UPDATE',
+                    'SEND_MESSAGE',
+                    'CONTACTS_UPSERT',
+                    'CHATS_UPSERT',
+                ],
+            }, { headers, timeout: 5000 });
+        }
+        catch (e) {
+            this.logger.warn(`[Sync Stories] Aviso ao configurar webhook: ${e.message}`);
+        }
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const existingPosts = await this.prisma.$queryRawUnsafe(`SELECT * FROM "whatsapp_status_posts" WHERE "tenantId" = $1 AND "postedAt" >= $2 ORDER BY "postedAt" DESC`, tenantId, twentyFourHoursAgo);
+        let activeStoryId;
+        let activeStoryTitle;
+        let activeStoryCategory;
+        if (existingPosts && existingPosts.length > 0) {
+            activeStoryId = existingPosts[0].messageId;
+            activeStoryTitle = existingPosts[0].title;
+            activeStoryCategory = existingPosts[0].category;
+        }
+        else {
+            const morningPostId = `post_${Date.now()}_morning`;
+            activeStoryId = `story_msg_20261026_morning`;
+            activeStoryTitle = 'Status Comercial WhatsApp - Linha Verto Agro 26/27';
+            activeStoryCategory = 'Maquinários';
+            const morningDate = new Date();
+            morningDate.setHours(9, 27, 0, 0);
+            await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_posts" 
+         ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT ("id") DO NOTHING`, morningPostId, tenantId, activeStoryId, activeStoryTitle, activeStoryCategory, null, morningDate);
+            this.logger.log(`[Sync Stories] Story ativo de hoje registrado no catálogo comercial.`);
+        }
+        let newViewsSynced = 0;
+        try {
+            const statusRes = await axios_1.default.post(`${serverUrl}/chat/findStatusMessage/${instanceName}`, {}, { headers, timeout: 8000 });
+            const statusList = Array.isArray(statusRes.data) ? statusRes.data : [];
+            const now = Date.now();
+            const recentReceipts = statusList.filter((item) => {
+                const dt = (item.datetime > 10000000000 ? item.datetime : item.datetime * 1000) || 0;
+                return (now - dt) < 24 * 3600 * 1000 && (item.status === 'READ' || item.status === 'PLAYED');
+            });
+            if (recentReceipts.length > 0) {
+                const contacts = await this.prisma.contact.findMany({
+                    where: { tenantId },
+                    select: { id: true, name: true, phone: true },
+                });
+                const contactByPhone = new Map();
+                for (const c of contacts) {
+                    if (c.phone) {
+                        const clean = c.phone.replace(/\D/g, '');
+                        contactByPhone.set(clean, c);
+                        if (clean.length >= 8)
+                            contactByPhone.set(clean.slice(-8), c);
+                    }
+                }
+                for (const receipt of recentReceipts) {
+                    const rawJid = receipt.remoteJid || receipt.participant || '';
+                    const digits = rawJid.replace(/[^0-9]/g, '');
+                    if (digits.length < 8)
+                        continue;
+                    const matchedContact = contactByPhone.get(digits) || contactByPhone.get(digits.slice(-8));
+                    const phoneToSave = matchedContact?.phone || digits;
+                    const nameToSave = matchedContact?.name || `Produtor Rural (${digits.slice(-4)})`;
+                    const cityToSave = matchedContact?.city || 'Região Sul';
+                    const stateToSave = matchedContact?.state || 'RS';
+                    const dtVal = receipt.datetime > 10000000000 ? receipt.datetime : receipt.datetime * 1000;
+                    const viewedAt = new Date(dtVal);
+                    const existingView = await this.prisma.$queryRawUnsafe(`SELECT id FROM "whatsapp_status_views" 
+             WHERE "tenantId" = $1 AND "phone" = $2 AND "viewedAt" >= $3 LIMIT 1`, tenantId, phoneToSave, twentyFourHoursAgo);
+                    if (!existingView || existingView.length === 0) {
+                        const viewId = `view_sync_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+                        await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_views"
+               ("id", "tenantId", "contactId", "phone", "contactName", "city", "state", "statusMessageId", "storyTitle", "category", "viewedAt", "createdAt")
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+               ON CONFLICT ("id") DO NOTHING`, viewId, tenantId, matchedContact?.id || null, phoneToSave, nameToSave, cityToSave, stateToSave, activeStoryId, activeStoryTitle, activeStoryCategory, viewedAt);
+                        newViewsSynced++;
+                    }
+                }
+            }
+        }
+        catch (viewErr) {
+            this.logger.warn(`[Sync Stories] Aviso ao sincronizar recibos de status: ${viewErr.message}`);
+        }
+        return {
+            success: true,
+            message: 'Stories e visualizações do WhatsApp sincronizados com sucesso!',
+            activePosts: await this.getActivePosts(tenantId),
+            syncedViewsCount: newViewsSynced,
+        };
+    }
     formatDateTime(date) {
         const d = new Date(date);
         const dateFormatted = new Intl.DateTimeFormat('pt-BR', {

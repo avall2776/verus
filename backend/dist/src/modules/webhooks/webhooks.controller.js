@@ -665,57 +665,64 @@ let WebhooksController = WebhooksController_1 = class WebhooksController {
     }
     async handleWhatsAppStatusEvent(tenantId, event, payload) {
         try {
-            if (event === 'messages.upsert' || event === 'MESSAGES_UPSERT') {
-                const data = payload.data;
-                const key = data?.key;
-                if (key && (key.remoteJid === 'status@broadcast' || key.remoteJid?.includes('status@broadcast')) && key.fromMe) {
-                    const messageObj = data?.message;
-                    const caption = messageObj?.imageMessage?.caption ||
-                        messageObj?.videoMessage?.caption ||
-                        messageObj?.extendedTextMessage?.text ||
-                        messageObj?.conversation ||
-                        'Status Corporativo';
-                    let category = 'Geral';
-                    const lower = caption.toLowerCase();
-                    if (lower.includes('trator') || lower.includes('plantadeira') || lower.includes('semeadeira') || lower.includes('máquina') || lower.includes('implemento') || lower.includes('pulverizador')) {
-                        category = 'Maquinários';
-                    }
-                    else if (lower.includes('adubo') || lower.includes('semente') || lower.includes('defensivo') || lower.includes('químico') || lower.includes('nutri') || lower.includes('npk')) {
-                        category = 'Insumos';
-                    }
-                    else if (lower.includes('safra') || lower.includes('cotação') || lower.includes('saca') || lower.includes('soja') || lower.includes('milho') || lower.includes('balcão')) {
-                        category = 'Cotações';
-                    }
-                    else if (lower.includes('peça') || lower.includes('filtro') || lower.includes('manutenção') || lower.includes('serviço') || lower.includes('oficina')) {
-                        category = 'Peças & Serviços';
-                    }
-                    const rawJpeg = messageObj?.imageMessage?.jpegThumbnail || messageObj?.videoMessage?.jpegThumbnail;
-                    let thumbnailBase64 = null;
-                    if (rawJpeg) {
-                        if (Buffer.isBuffer(rawJpeg)) {
-                            thumbnailBase64 = `data:image/jpeg;base64,${rawJpeg.toString('base64')}`;
+            const isPostEvent = event === 'messages.upsert' ||
+                event === 'MESSAGES_UPSERT' ||
+                event === 'send.message' ||
+                event === 'SEND_MESSAGE' ||
+                event === 'messages.set' ||
+                event === 'MESSAGES_SET';
+            if (isPostEvent) {
+                const items = Array.isArray(payload.data) ? payload.data : [payload.data];
+                for (const data of items) {
+                    const key = data?.key;
+                    if (key && (key.remoteJid === 'status@broadcast' || key.remoteJid?.includes('status@broadcast')) && key.fromMe) {
+                        const messageObj = data?.message;
+                        const caption = messageObj?.imageMessage?.caption ||
+                            messageObj?.videoMessage?.caption ||
+                            messageObj?.extendedTextMessage?.text ||
+                            messageObj?.conversation ||
+                            'Status Corporativo';
+                        let category = 'Geral';
+                        const lower = caption.toLowerCase();
+                        if (lower.includes('trator') || lower.includes('plantadeira') || lower.includes('semeadeira') || lower.includes('máquina') || lower.includes('implemento') || lower.includes('pulverizador')) {
+                            category = 'Maquinários';
                         }
-                        else if (typeof rawJpeg === 'string' && rawJpeg.length > 20) {
-                            thumbnailBase64 = rawJpeg.startsWith('data:') ? rawJpeg : `data:image/jpeg;base64,${rawJpeg}`;
+                        else if (lower.includes('adubo') || lower.includes('semente') || lower.includes('defensivo') || lower.includes('químico') || lower.includes('nutri') || lower.includes('npk')) {
+                            category = 'Insumos';
                         }
-                    }
-                    const mediaUrl = data?.mediaUrl ||
-                        payload?.mediaUrl ||
-                        messageObj?.imageMessage?.url ||
-                        thumbnailBase64 ||
-                        null;
-                    const postId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-                    await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
+                        else if (lower.includes('safra') || lower.includes('cotação') || lower.includes('saca') || lower.includes('soja') || lower.includes('milho') || lower.includes('balcão')) {
+                            category = 'Cotações';
+                        }
+                        else if (lower.includes('peça') || lower.includes('filtro') || lower.includes('manutenção') || lower.includes('serviço') || lower.includes('oficina')) {
+                            category = 'Peças & Serviços';
+                        }
+                        const rawJpeg = messageObj?.imageMessage?.jpegThumbnail || messageObj?.videoMessage?.jpegThumbnail;
+                        let thumbnailBase64 = null;
+                        if (rawJpeg) {
+                            if (Buffer.isBuffer(rawJpeg)) {
+                                thumbnailBase64 = `data:image/jpeg;base64,${rawJpeg.toString('base64')}`;
+                            }
+                            else if (typeof rawJpeg === 'string' && rawJpeg.length > 20) {
+                                thumbnailBase64 = rawJpeg.startsWith('data:') ? rawJpeg : `data:image/jpeg;base64,${rawJpeg}`;
+                            }
+                        }
+                        const mediaUrl = data?.mediaUrl ||
+                            payload?.mediaUrl ||
+                            messageObj?.imageMessage?.url ||
+                            thumbnailBase64 ||
+                            null;
+                        const postId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+                        await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
              VALUES ($1, $2, $3, $4, $5, $6, $7)
              ON CONFLICT ("id") DO NOTHING`, postId, tenantId, key.id, caption.slice(0, 150), category, mediaUrl, new Date());
-                    this.logger.log(`[Radar Stories] Novo Story postado detectado no WhatsApp: [${key.id}] "${caption}" (${category})`);
-                    this.chatGateway.emitStoryPosted(tenantId, {
-                        messageId: key.id,
-                        title: caption,
-                        category,
-                        mediaUrl,
-                    });
-                    return true;
+                        this.logger.log(`[Radar Stories] Novo Story postado detectado no WhatsApp: [${key.id}] "${caption}" (${category})`);
+                        this.chatGateway.emitStoryPosted(tenantId, {
+                            messageId: key.id,
+                            title: caption,
+                            category,
+                            mediaUrl,
+                        });
+                    }
                 }
             }
             const isStatusReceipt = event === 'receipt.update' ||

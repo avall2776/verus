@@ -30,6 +30,23 @@ export declare class RadarStoriesController {
         postedAtTime: string;
         viewsCount: number;
     }[]>;
+    syncStories(tenantId: string): Promise<{
+        success: boolean;
+        message: string;
+        activePosts: {
+            id: any;
+            messageId: any;
+            title: any;
+            category: any;
+            mediaUrl: any;
+            postedAt: any;
+            postedAtRelative: string;
+            postedAtDate: string;
+            postedAtTime: string;
+            viewsCount: number;
+        }[];
+        syncedViewsCount: number;
+    }>;
     getRecentViewersPhones(tenantId: string): Promise<{
         phones: string[];
     }>;

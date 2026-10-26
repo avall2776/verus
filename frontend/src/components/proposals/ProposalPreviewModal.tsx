@@ -227,47 +227,47 @@ export function ProposalPreviewModal({
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-5 print:p-0 print:space-y-3 print:overflow-visible print:block">
           {/* Header da Proposta Comercial com Logotipo e Dados do Emitente (Sua Marca) */}
           <div className="flex flex-row justify-between items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-4 print:border-slate-300 print:pb-3 print-avoid-break">
-            {/* Bloco do Emitente (Logotipo + Informações da Empresa Vendedora) */}
-            <div className="space-y-1.5 max-w-md">
+            {/* Bloco do Emitente (Logotipo Maior + Informações da Empresa Vendedora com Alto Contraste) */}
+            <div className="space-y-2 max-w-md">
               {issuer.logoUrl ? (
-                <div className="h-12 flex items-center">
+                <div className="h-16 sm:h-20 flex items-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={issuer.logoUrl}
                     alt={issuer.name}
-                    className="max-h-full max-w-[200px] object-contain rounded"
+                    className="max-h-full max-w-[260px] object-contain rounded"
                   />
                 </div>
               ) : (
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-sm print:border-slate-400 print:text-black">
+                  <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-base print:border-slate-400 print:text-black">
                     {issuer.name.slice(0, 2).toUpperCase()}
                   </div>
-                  <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white print:text-black">
+                  <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white print:text-black">
                     {issuer.name}
                   </h3>
                 </div>
               )}
 
               {issuer.logoUrl && (
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white print:text-black">
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white print:text-black">
                   {issuer.name}
                 </h3>
               )}
 
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 print:text-slate-600 space-y-0.5">
+              <div className="text-xs text-slate-700 dark:text-slate-300 font-medium print:text-slate-900 space-y-0.5">
                 {issuer.document && (
-                  <p>CNPJ/CPF: <strong className="text-slate-700 dark:text-slate-300 print:text-black">{issuer.document}</strong></p>
+                  <p>CNPJ/CPF: <strong className="text-slate-900 dark:text-white print:text-black font-bold">{issuer.document}</strong></p>
                 )}
                 {(issuer.phone || issuer.email) && (
                   <p>
-                    {issuer.phone && <span>{issuer.phone}</span>}
+                    {issuer.phone && <span><strong>Tel:</strong> {issuer.phone}</span>}
                     {issuer.phone && issuer.email && <span> • </span>}
-                    {issuer.email && <span>{issuer.email}</span>}
+                    {issuer.email && <span><strong>E-mail:</strong> {issuer.email}</span>}
                   </p>
                 )}
                 {issuer.address && (
-                  <p className="text-[10px] text-slate-500 print:text-slate-500">
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 print:text-slate-700">
                     {issuer.address}
                   </p>
                 )}
@@ -276,59 +276,63 @@ export function ProposalPreviewModal({
 
             {/* Identificação e Validade da Proposta */}
             <div className="text-right">
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold print:text-slate-600">
+              <span className="inline-block px-3 py-1 rounded-md bg-slate-900 text-white text-[10.5px] uppercase tracking-wider font-extrabold print:bg-slate-900 print:text-white">
                 Proposta Comercial Oficial
               </span>
-              <p className="text-lg font-mono font-extrabold text-slate-900 dark:text-white print:text-black">
+              <p className="text-xl font-mono font-black text-slate-900 dark:text-white print:text-black mt-1">
                 {proposal.code}
               </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 print:text-slate-600 mt-0.5">
+              <p className="text-xs text-slate-700 dark:text-slate-300 font-semibold print:text-slate-800 mt-1">
                 Data: {new Date(proposal.createdAt).toLocaleDateString("pt-BR")}
               </p>
-              <p className="text-[11px] text-amber-600 dark:text-amber-400 font-bold print:text-slate-800">
+              <p className="text-xs text-amber-700 dark:text-amber-400 font-extrabold print:text-slate-900">
                 Válida até: {new Date(proposal.validUntil).toLocaleDateString("pt-BR")}
               </p>
             </div>
           </div>
 
-          {/* Dados do Cliente / Contratante */}
-          <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 print:bg-transparent print:border-slate-300 print:p-2.5 print-avoid-break">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 print:text-slate-600">
-                Destinatário / Contratante
+          {/* Dados do Cliente / Contratante com Cores e Destaque Executivo */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:p-0 print-avoid-break">
+            <div className="p-4 rounded-xl bg-blue-50/80 dark:bg-blue-950/25 border-l-4 border-l-blue-600 border border-blue-200 dark:border-blue-900/40 print:bg-blue-50/40 print:border-blue-300">
+              <span className="text-xs font-black uppercase tracking-wider text-blue-700 dark:text-blue-400 print:text-blue-900 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5" /> Destinatário / Contratante
               </span>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white print:text-black mt-0.5">
+              <h4 className="text-base font-extrabold text-slate-900 dark:text-white print:text-black mt-1">
                 {proposal.clientName}
               </h4>
               {proposal.clientCompany && (
-                <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold print:text-slate-700">
+                <p className="text-xs text-blue-700 dark:text-blue-400 font-bold print:text-blue-900">
                   {proposal.clientCompany}
                 </p>
               )}
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 print:text-slate-600 mt-1">
-                {proposal.clientEmail} {proposal.clientPhone && `• ${proposal.clientPhone}`}
-              </p>
+              <div className="text-xs text-slate-700 dark:text-slate-300 font-medium print:text-slate-900 mt-1 space-y-0.5">
+                {proposal.clientEmail && <div><strong>E-mail:</strong> {proposal.clientEmail}</div>}
+                {proposal.clientPhone && <div><strong>Tel/WhatsApp:</strong> {proposal.clientPhone}</div>}
+              </div>
               {(proposal.clientCep || proposal.clientAddress) && (
-                <div className="text-[11px] text-slate-600 dark:text-slate-400 print:text-slate-800 mt-1 flex items-start gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5 print:hidden" />
+                <div className="text-xs text-slate-800 dark:text-slate-200 font-semibold print:text-black mt-2 pt-2 border-t border-dashed border-blue-200 dark:border-blue-900/50 flex items-start gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5 print:hidden" />
                   <span>
-                    {proposal.clientCep && <strong className="text-slate-800 dark:text-slate-200 print:text-black">CEP {proposal.clientCep} </strong>}
+                    {proposal.clientCep && <strong>CEP: {proposal.clientCep} </strong>}
                     {proposal.clientAddress && <span>• {proposal.clientAddress}</span>}
                   </span>
                 </div>
               )}
             </div>
 
-            <div className="text-right">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 print:text-slate-600">
-                Consultor Responsável
+            <div className="p-4 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/25 border-l-4 border-l-emerald-600 border border-emerald-200 dark:border-emerald-900/40 print:bg-emerald-50/40 print:border-emerald-300">
+              <span className="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 print:text-emerald-900 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5" /> Consultor & Condições
               </span>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white print:text-black mt-0.5">
-                {proposal.sellerName}
+              <h4 className="text-base font-extrabold text-slate-900 dark:text-white print:text-black mt-1">
+                {proposal.sellerName || "Equipe Comercial"}
               </h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 print:text-slate-600 mt-1">
-                Condição: <span className="text-slate-800 dark:text-slate-200 font-semibold print:text-black">{proposal.paymentMethod}</span>
-              </p>
+              <div className="mt-2 text-xs">
+                <span className="text-emerald-800 dark:text-emerald-400 font-bold">Condição de Pagamento:</span>
+                <p className="text-slate-900 dark:text-white font-extrabold print:text-black mt-0.5 text-sm">
+                  {proposal.paymentMethod || "A combinar"}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -450,7 +454,7 @@ export function ProposalPreviewModal({
             <div className="hidden sm:block text-right print:hidden">
               <span className="text-[10px] text-slate-500 block uppercase font-mono">Link de Acesso Seguro</span>
               <a
-                href={proposal.publicLink || `${getOrigin()}/p/${proposal.code.toLowerCase()}`}
+                href={proposal.publicLink || `${typeof window !== "undefined" ? window.location.origin : ""}/p/${proposal.code.toLowerCase()}`}
                 target="_blank"
                 rel="noreferrer"
                 className="text-xs font-medium text-blue-400 hover:underline flex items-center gap-1 justify-end"

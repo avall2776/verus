@@ -6,7 +6,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { 
   FileText, CheckCircle2, Clock, Printer, Download, 
-  Building2, User, Calendar, DollarSign, Check, AlertCircle, Loader2, X, Image as ImageIcon
+  Building2, User, Calendar, DollarSign, Check, AlertCircle, Loader2, X, Image as ImageIcon, ArrowLeft
 } from "lucide-react";
 import api from "@/lib/api";
 import { getDriveThumbnailUrl } from "@/lib/googleDriveHelper";
@@ -116,15 +116,15 @@ export default function PublicProposalViewPage() {
                 <img
                   src={proposal.issuer?.logoUrl || proposal.logoUrl}
                   alt={proposal.issuer?.name || "Logo da Empresa"}
-                  className="max-h-12 max-w-[160px] object-contain rounded-lg"
+                  className="max-h-16 max-w-[220px] object-contain rounded-lg"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-500/20 to-cyan-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-black text-lg print:border-slate-400 print:text-black">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-500/20 to-cyan-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-black text-xl print:border-slate-400 print:text-black">
                   {proposal.issuer?.name?.slice(0, 2).toUpperCase() || "VE"}
                 </div>
               )}
               <div>
-                <h1 className="text-lg font-bold text-white print:text-black tracking-tight">
+                <h1 className="text-xl font-bold text-white print:text-black tracking-tight">
                   {proposal.issuer?.name || "Vallor Comercial"}
                 </h1>
                 <p className="text-xs text-slate-400 print:text-slate-600">
@@ -134,13 +134,33 @@ export default function PublicProposalViewPage() {
               </div>
             </div>
 
-            <button
-              onClick={handlePrintPdf}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 transition-colors print:hidden cursor-pointer"
-            >
-              <Printer className="w-4 h-4 text-cyan-400" />
-              Imprimir / PDF
-            </button>
+            <div className="flex items-center gap-2 print:hidden">
+              <button
+                onClick={handlePrintPdf}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 transition-colors cursor-pointer shadow-sm"
+                title="Imprimir ou Salvar como PDF"
+              >
+                <Printer className="w-4 h-4 text-cyan-400" />
+                Imprimir / PDF
+              </button>
+
+              <button
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    if (window.history.length > 1) {
+                      window.history.back();
+                    } else {
+                      window.close();
+                    }
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 hover:text-white text-xs font-semibold text-slate-300 border border-slate-700 transition-colors cursor-pointer shadow-sm"
+                title="Voltar para a página anterior ou fechar aba"
+              >
+                <ArrowLeft className="w-4 h-4 text-slate-400" />
+                Voltar / Fechar
+              </button>
+            </div>
           </div>
 
           <div className="pt-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

@@ -29,6 +29,9 @@ let RadarStoriesController = class RadarStoriesController {
     async getActivePosts(tenantId) {
         return this.radarStoriesService.getActivePosts(tenantId);
     }
+    async syncStories(tenantId) {
+        return this.radarStoriesService.syncActiveStories(tenantId);
+    }
     async getRecentViewersPhones(tenantId) {
         return this.radarStoriesService.getRecentViewersPhones(tenantId);
     }
@@ -63,6 +66,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], RadarStoriesController.prototype, "getActivePosts", null);
+__decorate([
+    (0, common_1.Post)('sync'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], RadarStoriesController.prototype, "syncStories", null);
 __decorate([
     (0, common_1.Get)('recent-viewers-phones'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

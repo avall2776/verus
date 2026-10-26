@@ -556,14 +556,14 @@ let ProposalsService = class ProposalsService {
         <style>
           @page {
             size: A4;
-            margin: 14mm 16mm;
+            margin: 12mm 15mm;
           }
           * { box-sizing: border-box; }
           body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            color: #0f172a; 
+            color: #020617; 
             margin: 0; 
-            padding: 24px; 
+            padding: 20px; 
             background: #ffffff; 
             line-height: 1.45;
             -webkit-print-color-adjust: exact;
@@ -572,157 +572,279 @@ let ProposalsService = class ProposalsService {
           .header { 
             display: flex; 
             justify-content: space-between; 
-            align-items: flex-start;
-            border-bottom: 2px solid #0f172a; 
-            padding-bottom: 18px; 
-            margin-bottom: 22px; 
+            align-items: center;
+            border-bottom: 2.5px solid #0f172a; 
+            padding-bottom: 20px; 
+            margin-bottom: 20px; 
           }
-          .company-name { font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+          .logo-box {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+          }
+          .company-logo {
+            max-height: 85px;
+            max-width: 260px;
+            min-height: 55px;
+            object-fit: contain;
+          }
+          .company-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+          }
+          .company-name { 
+            font-size: 22px; 
+            font-weight: 900; 
+            color: #020617; 
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+          }
+          .company-details {
+            color: #0f172a; 
+            font-size: 12.5px; 
+            font-weight: 700; 
+            margin-top: 4px;
+            line-height: 1.4;
+          }
+          .company-address {
+            color: #334155; 
+            font-size: 11.5px; 
+            font-weight: 600; 
+            margin-top: 2px;
+          }
+          .header-right {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+          }
           .doc-badge {
             display: inline-block;
             background: #0f172a;
             color: #ffffff;
-            font-size: 10px;
-            font-weight: 800;
-            padding: 3px 8px;
-            border-radius: 4px;
+            font-size: 10.5px;
+            font-weight: 900;
+            padding: 4px 10px;
+            border-radius: 5px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.6px;
+          }
+          .proposal-code {
+            font-size: 16px;
+            font-weight: 900;
+            color: #020617;
+            margin-top: 6px;
+            font-family: monospace;
+          }
+          .proposal-dates {
+            font-size: 12px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-top: 4px;
+            line-height: 1.4;
           }
           .client-box { 
-            background: #f8fafc; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 10px; 
-            padding: 14px 18px; 
-            margin-bottom: 22px;
             display: grid;
-            grid-template-columns: 1.4fr 1fr;
+            grid-template-columns: 1.35fr 1fr;
             gap: 16px;
+            margin-bottom: 20px;
+          }
+          .client-col {
+            border-radius: 10px;
+            padding: 14px 16px;
+          }
+          .client-col-primary {
+            background: #f0f7ff;
+            border: 1.5px solid #93c5fd;
+            border-left: 5px solid #1d4ed8;
+          }
+          .client-col-secondary {
+            background: #f0fdf4;
+            border: 1.5px solid #86efac;
+            border-left: 5px solid #15803d;
           }
           .section-title {
-            font-size: 11px;
-            font-weight: 800;
+            font-size: 11.5px;
+            font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            color: #475569;
             margin-bottom: 8px;
           }
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          .section-title.title-primary { color: #1d4ed8; }
+          .section-title.title-secondary { color: #15803d; }
+          .client-name {
+            font-size: 16px;
+            font-weight: 900;
+            color: #020617;
+          }
+          .client-company {
+            font-size: 13px;
+            font-weight: 800;
+            color: #1d4ed8;
+            margin-top: 2px;
+          }
+          .client-contact {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-top: 5px;
+            line-height: 1.4;
+          }
+          .client-location {
+            font-size: 12px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #93c5fd;
+          }
+          .seller-name {
+            font-size: 15px;
+            font-weight: 900;
+            color: #020617;
+          }
+          .terms-box {
+            margin-top: 6px;
+          }
+          .terms-label {
+            font-size: 11.5px;
+            font-weight: 800;
+            color: #166534;
+          }
+          .terms-value {
+            font-size: 13px;
+            font-weight: 800;
+            color: #020617;
+            margin-top: 2px;
+          }
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 10px; 
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            overflow: hidden;
+          }
           th { 
-            background: #f1f5f9; 
+            background: #0f172a; 
             padding: 10px 12px; 
             text-align: left; 
             font-size: 11px; 
-            font-weight: 800; 
-            color: #334155; 
+            font-weight: 900; 
+            color: #ffffff; 
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-top: 1px solid #cbd5e1;
-            border-bottom: 2px solid #cbd5e1;
+            letter-spacing: 0.6px;
+            border: none;
           }
           .totals-container {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-top: 22px;
+            margin-top: 20px;
             gap: 20px;
           }
           .notes-box {
             flex: 1;
             background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            border: 1.5px solid #cbd5e1;
             border-radius: 8px;
             padding: 12px 14px;
-            font-size: 11px;
-            color: #334155;
+            font-size: 11.5px;
+            color: #1e293b;
           }
           .totals-table {
-            width: 260px;
-            border: 1px solid #cbd5e1;
+            width: 270px;
+            border: 1.5px solid #0f172a;
             border-radius: 8px;
             overflow: hidden;
           }
           .totals-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 12px;
-            font-size: 12px;
+            padding: 9px 12px;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #0f172a;
             border-bottom: 1px solid #e2e8f0;
           }
           .totals-final {
             display: flex;
             justify-content: space-between;
-            padding: 10px 12px;
-            font-size: 14px;
-            font-weight: 800;
+            padding: 11px 12px;
+            font-size: 15px;
+            font-weight: 900;
             background: #0f172a;
             color: #ffffff;
           }
           .seal-box { 
-            margin-top: 26px; 
+            margin-top: 24px; 
             padding: 12px 16px; 
-            border: 1px solid #cbd5e1; 
+            border: 1.5px solid #cbd5e1; 
             border-radius: 8px; 
-            background: #fafafa;
+            background: #f8fafc;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 11px;
+            color: #334155;
           }
           .footer { 
-            margin-top: 24px; 
+            margin-top: 20px; 
             font-size: 10px; 
             color: #64748b; 
             text-align: center; 
             border-top: 1px solid #e2e8f0; 
-            padding-top: 12px; 
+            padding-top: 10px; 
           }
         </style>
       </head>
       <body>
         <div class="header">
-          <div style="display: flex; align-items: center; gap: 16px;">
-            ${(proposal.logoUrl || tenant?.logoUrl) ? `<img src="${proposal.logoUrl || tenant?.logoUrl}" alt="Logotipo" style="max-height: 55px; max-width: 170px; object-fit: contain;" />` : ''}
-            <div>
+          <div class="logo-box">
+            ${(proposal.logoUrl || tenant?.logoUrl) ? `<img src="${proposal.logoUrl || tenant?.logoUrl}" alt="Logotipo" class="company-logo" />` : ''}
+            <div class="company-info">
               <div class="company-name">${tenant?.name || proposal.issuer?.name || 'Vallor Comercial'}</div>
-              <div style="color: #475569; font-size: 12px; margin-top: 3px;">
+              <div class="company-details">
                 ${(proposal.issuer?.document || tenant?.cnpj) ? `<span>CNPJ: ${proposal.issuer?.document || tenant?.cnpj}</span>` : ''}
                 ${(proposal.issuer?.phone || tenant?.phone) ? ` • <span>${proposal.issuer?.phone || tenant?.phone}</span>` : ''}
                 ${(proposal.issuer?.email || tenant?.email) ? ` • <span>${proposal.issuer?.email || tenant?.email}</span>` : ''}
               </div>
-              ${(proposal.issuer?.address || tenant?.address) ? `<div style="color: #64748b; font-size: 11px; margin-top: 2px;">${proposal.issuer?.address || tenant?.address}</div>` : ''}
+              ${(proposal.issuer?.address || tenant?.address) ? `<div class="company-address">${proposal.issuer?.address || tenant?.address}</div>` : ''}
             </div>
           </div>
-          <div style="text-align: right;">
+          <div class="header-right">
             <div class="doc-badge">Proposta Comercial Oficial</div>
-            <div style="font-size: 15px; font-weight: 800; color: #0f172a; margin-top: 6px; font-family: monospace;">${proposal.code}</div>
-            <div style="font-size: 11px; color: #475569; margin-top: 4px;"><strong>Data de Emissão:</strong> ${new Date(proposal.createdAt).toLocaleDateString('pt-BR')}</div>
-            <div style="font-size: 11px; color: #475569;"><strong>Validade:</strong> ${proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : '15 dias'}</div>
+            <div class="proposal-code">${proposal.code}</div>
+            <div class="proposal-dates">
+              <div><strong>Data de Emissão:</strong> ${new Date(proposal.createdAt).toLocaleDateString('pt-BR')}</div>
+              <div><strong>Validade:</strong> ${proposal.validUntil ? new Date(proposal.validUntil).toLocaleDateString('pt-BR') : '15 dias'}</div>
+            </div>
           </div>
         </div>
 
         <div class="client-box">
-          <div>
-            <div class="section-title">Destinatário / Contratante</div>
-            <div style="font-size: 14px; font-weight: 800; color: #0f172a;">${proposal.clientName}</div>
-            ${proposal.clientCompany ? `<div style="font-size: 12px; font-weight: 600; color: #2563eb; margin-top: 2px;">${proposal.clientCompany}</div>` : ''}
-            <div style="font-size: 12px; color: #475569; margin-top: 4px;">
-              ${proposal.clientPhone ? `<span>Tel/WhatsApp: ${proposal.clientPhone}</span>` : ''}
-              ${proposal.clientEmail ? ` • <span>${proposal.clientEmail}</span>` : ''}
+          <div class="client-col client-col-primary">
+            <div class="section-title title-primary">Destinatário / Contratante</div>
+            <div class="client-name">${proposal.clientName}</div>
+            ${proposal.clientCompany ? `<div class="client-company">${proposal.clientCompany}</div>` : ''}
+            <div class="client-contact">
+              ${proposal.clientPhone ? `<div><strong>Tel/WhatsApp:</strong> ${proposal.clientPhone}</div>` : ''}
+              ${proposal.clientEmail ? `<div><strong>E-mail:</strong> ${proposal.clientEmail}</div>` : ''}
             </div>
             ${(proposal.clientCep || proposal.clientAddress) ? `
-            <div style="font-size: 11px; color: #334155; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1;">
+            <div class="client-location">
               ${proposal.clientCep ? `<strong>CEP:</strong> ${proposal.clientCep} ` : ''}
               ${proposal.clientAddress ? `• <strong>Endereço:</strong> ${proposal.clientAddress}` : ''}
             </div>` : ''}
           </div>
 
-          <div style="border-left: 1px solid #e2e8f0; padding-left: 16px;">
-            <div class="section-title">Consultor & Condições</div>
-            <div style="font-size: 13px; font-weight: 700; color: #0f172a;">${proposal.sellerName || 'Equipe Comercial'}</div>
-            <div style="font-size: 12px; color: #475569; margin-top: 6px;">
-              <strong>Condição de Pagamento:</strong><br/>
-              <span style="color: #0f172a; font-weight: 600;">${proposal.paymentMethod || 'A combinar'}</span>
+          <div class="client-col client-col-secondary">
+            <div class="section-title title-secondary">Consultor & Condições</div>
+            <div class="seller-name">${proposal.sellerName || 'Equipe Comercial'}</div>
+            <div class="terms-box">
+              <div class="terms-label">Condição de Pagamento:</div>
+              <div class="terms-value">${proposal.paymentMethod || 'A combinar'}</div>
             </div>
           </div>
         </div>

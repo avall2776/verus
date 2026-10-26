@@ -74,6 +74,23 @@ export declare class RadarStoriesService implements OnModuleInit {
         postedImmediately: boolean;
         scheduledAt: string;
     }>;
+    syncActiveStories(tenantId: string): Promise<{
+        success: boolean;
+        message: string;
+        activePosts: {
+            id: any;
+            messageId: any;
+            title: any;
+            category: any;
+            mediaUrl: any;
+            postedAt: any;
+            postedAtRelative: string;
+            postedAtDate: string;
+            postedAtTime: string;
+            viewsCount: number;
+        }[];
+        syncedViewsCount: number;
+    }>;
     private formatDateTime;
     getMetrics(tenantId: string): Promise<{
         kpis: {
