@@ -927,7 +927,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
     });
 
     return {
-      type: "FeatureCollection",
+      type: "FeatureCollection" as const,
       features
     };
   }, [filteredPoints, municipalitiesGeoJson, selectedStatus]);
