@@ -12,6 +12,8 @@ import { getPublicProposalUrl } from "@/lib/proposalUrlHelper";
 import toast from "react-hot-toast";
 import ModalPortal from "@/components/ui/ModalPortal";
 
+import { useTheme } from "@/contexts/ThemeContext";
+
 interface ProposalPreviewModalProps {
   proposal: Proposal | null;
   isOpen: boolean;
@@ -27,6 +29,7 @@ export function ProposalPreviewModal({
   onStatusChange,
   onEdit
 }: ProposalPreviewModalProps) {
+  const { theme, isClean, isDark, isWhatsApp } = useTheme();
   const [copied, setCopied] = React.useState(false);
   const [zoomImageUrl, setZoomImageUrl] = React.useState<string | null>(null);
 
@@ -150,27 +153,45 @@ export function ProposalPreviewModal({
           }
         }
       `}</style>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto print:p-0 print:m-0 print:bg-white print:static print:overflow-visible print:block print:w-full print:h-auto">
+      <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 backdrop-blur-md overflow-y-auto print:p-0 print:m-0 print:bg-white print:static print:overflow-visible print:block print:w-full print:h-auto transition-colors ${
+        isClean ? "bg-slate-900/40" : isWhatsApp ? "bg-black/80" : "bg-black/85"
+      }`}>
       <div 
         id="proposal-print-area"
-        className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-700/80 shadow-2xl text-slate-800 dark:text-slate-200 overflow-hidden print:w-full print:max-w-none print:max-h-none print:h-auto print:border-0 print:bg-white print:text-black print:shadow-none print:rounded-none print:static print:overflow-visible print:p-0 print:block"
+        className={`relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden print:w-full print:max-w-none print:max-h-none print:h-auto print:border-0 print:bg-white print:text-black print:shadow-none print:rounded-none print:static print:overflow-visible print:p-0 print:block transition-colors ${
+          isClean 
+            ? "bg-white border-slate-200 text-slate-800 shadow-slate-300/50" 
+            : isWhatsApp 
+              ? "bg-[#111B21] border-[#222D34] text-[#E9EDEF]" 
+              : "bg-[#0B1224] border-slate-700/80 text-slate-200"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Barra Superior de Ações */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-900/80 print:hidden">
+        <div className={`flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b print:hidden transition-colors ${
+          isClean 
+            ? "border-slate-200 bg-slate-50 text-slate-900" 
+            : isWhatsApp 
+              ? "border-[#222D34] bg-[#182229] text-[#E9EDEF]" 
+              : "border-slate-800/80 bg-slate-900/80 text-white"
+        }`}>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-slate-900 dark:text-white tracking-wide font-mono">
+            <span className={`text-sm font-bold tracking-wide font-mono ${
+              isClean ? "text-slate-900" : isWhatsApp ? "text-[#E9EDEF]" : "text-white"
+            }`}>
               {proposal.code}
             </span>
             {getStatusBadge(proposal.status)}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Botão de Edição Rápida */}
             {onEdit && (
               <button
                 onClick={() => onEdit(proposal)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-colors cursor-pointer"
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-white shadow-xs transition-colors cursor-pointer ${
+                  isWhatsApp ? "bg-[#00A884] hover:bg-[#008f6f]" : "bg-blue-600 hover:bg-blue-500"
+                }`}
                 title="Editar itens, dados da empresa ou condições desta proposta"
               >
                 <Edit3 className="w-3.5 h-3.5" />
@@ -180,16 +201,32 @@ export function ProposalPreviewModal({
 
             <button
               onClick={copyLink}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shadow-sm"
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border transition-colors cursor-pointer shadow-xs ${
+                isClean 
+                  ? "bg-white hover:bg-slate-100 text-slate-700 border-slate-200" 
+                  : isWhatsApp 
+                    ? "bg-[#202C33] hover:bg-[#2a3942] text-[#E9EDEF] border-[#222D34]" 
+                    : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700"
+              }`}
               title="Copiar link público de aceite"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? (
+                <Check className={`w-3.5 h-3.5 ${isWhatsApp ? "text-[#00A884]" : "text-emerald-500"}`} />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
               {copied ? "Copiado!" : "Copiar Link"}
             </button>
 
             <button
               onClick={shareViaWhatsApp}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-600/20 dark:hover:bg-emerald-600/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 transition-colors cursor-pointer shadow-sm"
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border transition-colors cursor-pointer shadow-xs ${
+                isClean 
+                  ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200" 
+                  : isWhatsApp 
+                    ? "bg-[#00A884]/20 hover:bg-[#00A884]/30 text-[#00A884] border-[#00A884]/40" 
+                    : "bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border-emerald-500/30"
+              }`}
               title="Enviar mensagem no WhatsApp"
             >
               <Send className="w-3.5 h-3.5" />
@@ -198,7 +235,13 @@ export function ProposalPreviewModal({
 
             <button
               onClick={handleDownloadOfficialPdf}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-600/20 dark:hover:bg-blue-600/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 transition-colors cursor-pointer shadow-sm"
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border transition-colors cursor-pointer shadow-xs ${
+                isClean 
+                  ? "bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200" 
+                  : isWhatsApp 
+                    ? "bg-[#202C33] hover:bg-[#2a3942] text-[#00A884] border-[#00A884]/40" 
+                    : "bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border-blue-500/30"
+              }`}
               title="Baixar arquivo PDF profissional formatado"
             >
               <Download className="w-3.5 h-3.5" />
@@ -207,7 +250,13 @@ export function ProposalPreviewModal({
 
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shadow-sm"
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border transition-colors cursor-pointer shadow-xs ${
+                isClean 
+                  ? "bg-white hover:bg-slate-100 text-slate-700 border-slate-200" 
+                  : isWhatsApp 
+                    ? "bg-[#202C33] hover:bg-[#2a3942] text-[#E9EDEF] border-[#222D34]" 
+                    : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700"
+              }`}
               title="Imprimir direto do navegador"
             >
               <Printer className="w-3.5 h-3.5" />
@@ -216,7 +265,13 @@ export function ProposalPreviewModal({
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ml-1 cursor-pointer"
+              className={`p-1.5 rounded-xl transition-colors ml-1 cursor-pointer ${
+                isClean 
+                  ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100" 
+                  : isWhatsApp 
+                    ? "text-[#8696A0] hover:text-[#E9EDEF] hover:bg-[#202C33]" 
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
             >
               <X className="w-5 h-5" />
             </button>
@@ -226,8 +281,10 @@ export function ProposalPreviewModal({
         {/* Espelho do Documento de Proposta */}
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-5 print:p-0 print:space-y-3 print:overflow-visible print:block">
           {/* Header da Proposta Comercial com Logotipo e Dados do Emitente (Sua Marca) */}
-          <div className="flex flex-row justify-between items-start gap-4 border-b border-slate-200 dark:border-slate-800 pb-4 print:border-slate-300 print:pb-3 print-avoid-break">
-            {/* Bloco do Emitente (Logotipo Maior + Informações da Empresa Vendedora com Alto Contraste) */}
+          <div className={`flex flex-row justify-between items-start gap-4 border-b pb-4 print:border-slate-300 print:pb-3 print-avoid-break ${
+            isClean ? "border-slate-200" : isWhatsApp ? "border-[#222D34]" : "border-slate-800"
+          }`}>
+            {/* Bloco do Emitente (Logotipo Maior + Informações da Empresa Vendedora) */}
             <div className="space-y-2 max-w-md">
               {issuer.logoUrl ? (
                 <div className="h-16 sm:h-20 flex items-center">
@@ -240,24 +297,34 @@ export function ProposalPreviewModal({
                 </div>
               ) : (
                 <div className="flex items-center gap-2.5">
-                  <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-base print:border-slate-400 print:text-black">
+                  <div className={`w-12 h-12 rounded-xl border flex items-center justify-center font-bold text-base print:border-slate-400 print:text-black ${
+                    isClean ? "bg-blue-50 border-blue-200 text-blue-600" : isWhatsApp ? "bg-[#00A884]/20 border-[#00A884]/40 text-[#00A884]" : "bg-blue-500/20 border-blue-500/30 text-blue-400"
+                  }`}>
                     {issuer.name.slice(0, 2).toUpperCase()}
                   </div>
-                  <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white print:text-black">
+                  <h3 className={`text-xl font-black tracking-tight print:text-black ${
+                    isClean ? "text-slate-900" : isWhatsApp ? "text-[#E9EDEF]" : "text-white"
+                  }`}>
                     {issuer.name}
                   </h3>
                 </div>
               )}
 
               {issuer.logoUrl && (
-                <h3 className="text-base font-extrabold text-slate-900 dark:text-white print:text-black">
+                <h3 className={`text-base font-extrabold print:text-black ${
+                  isClean ? "text-slate-900" : isWhatsApp ? "text-[#E9EDEF]" : "text-white"
+                }`}>
                   {issuer.name}
                 </h3>
               )}
 
-              <div className="text-xs text-slate-700 dark:text-slate-300 font-medium print:text-slate-900 space-y-0.5">
+              <div className={`text-xs font-medium print:text-slate-900 space-y-0.5 ${
+                isClean ? "text-slate-700" : isWhatsApp ? "text-[#8696A0]" : "text-slate-300"
+              }`}>
                 {issuer.document && (
-                  <p>CNPJ/CPF: <strong className="text-slate-900 dark:text-white print:text-black font-bold">{issuer.document}</strong></p>
+                  <p>CNPJ/CPF: <strong className={`font-bold print:text-black ${
+                    isClean ? "text-slate-900" : isWhatsApp ? "text-[#E9EDEF]" : "text-white"
+                  }`}>{issuer.document}</strong></p>
                 )}
                 {(issuer.phone || issuer.email) && (
                   <p>
@@ -267,7 +334,9 @@ export function ProposalPreviewModal({
                   </p>
                 )}
                 {issuer.address && (
-                  <p className="text-[11px] text-slate-600 dark:text-slate-400 print:text-slate-700">
+                  <p className={`text-[11px] print:text-slate-700 ${
+                    isClean ? "text-slate-600" : isWhatsApp ? "text-[#8696A0]" : "text-slate-400"
+                  }`}>
                     {issuer.address}
                   </p>
                 )}
@@ -276,16 +345,24 @@ export function ProposalPreviewModal({
 
             {/* Identificação e Validade da Proposta */}
             <div className="text-right">
-              <span className="inline-block px-3 py-1 rounded-md bg-slate-900 text-white text-[10.5px] uppercase tracking-wider font-extrabold print:bg-slate-900 print:text-white">
+              <span className={`inline-block px-3 py-1 rounded-md text-[10.5px] uppercase tracking-wider font-extrabold print:bg-slate-900 print:text-white ${
+                isClean ? "bg-slate-900 text-white" : isWhatsApp ? "bg-[#00A884] text-white" : "bg-slate-800 text-white"
+              }`}>
                 Proposta Comercial Oficial
               </span>
-              <p className="text-xl font-mono font-black text-slate-900 dark:text-white print:text-black mt-1">
+              <p className={`text-xl font-mono font-black print:text-black mt-1 ${
+                isClean ? "text-slate-900" : isWhatsApp ? "text-[#00A884]" : "text-white"
+              }`}>
                 {proposal.code}
               </p>
-              <p className="text-xs text-slate-700 dark:text-slate-300 font-semibold print:text-slate-800 mt-1">
+              <p className={`text-xs font-semibold print:text-slate-800 mt-1 ${
+                isClean ? "text-slate-700" : isWhatsApp ? "text-[#8696A0]" : "text-slate-300"
+              }`}>
                 Data: {new Date(proposal.createdAt).toLocaleDateString("pt-BR")}
               </p>
-              <p className="text-xs text-amber-700 dark:text-amber-400 font-extrabold print:text-slate-900">
+              <p className={`text-xs font-extrabold print:text-slate-900 ${
+                isClean ? "text-amber-700" : isWhatsApp ? "text-[#00A884]" : "text-amber-400"
+              }`}>
                 Válida até: {new Date(proposal.validUntil).toLocaleDateString("pt-BR")}
               </p>
             </div>
@@ -293,25 +370,47 @@ export function ProposalPreviewModal({
 
           {/* Dados do Cliente / Contratante com Cores e Destaque Executivo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:p-0 print-avoid-break">
-            <div className="p-4 rounded-xl bg-blue-50/80 dark:bg-blue-950/25 border-l-4 border-l-blue-600 border border-blue-200 dark:border-blue-900/40 print:bg-blue-50/40 print:border-blue-300">
-              <span className="text-xs font-black uppercase tracking-wider text-blue-700 dark:text-blue-400 print:text-blue-900 flex items-center gap-1.5">
+            <div className={`p-4 rounded-xl border-l-4 border transition-colors ${
+              isClean 
+                ? "bg-blue-50/80 border-l-blue-600 border-blue-200 text-slate-900" 
+                : isWhatsApp 
+                  ? "bg-[#182229] border-l-[#00A884] border-[#222D34] text-[#E9EDEF]" 
+                  : "bg-blue-950/25 border-l-blue-500 border-blue-900/40 text-slate-200"
+            }`}>
+              <span className={`text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                isClean ? "text-blue-700" : isWhatsApp ? "text-[#00A884]" : "text-blue-400"
+              }`}>
                 <User className="w-3.5 h-3.5" /> Destinatário / Contratante
               </span>
-              <h4 className="text-base font-extrabold text-slate-900 dark:text-white print:text-black mt-1">
+              <h4 className={`text-base font-extrabold print:text-black mt-1 ${
+                isClean ? "text-slate-900" : isWhatsApp ? "text-[#E9EDEF]" : "text-white"
+              }`}>
                 {proposal.clientName}
               </h4>
               {proposal.clientCompany && (
-                <p className="text-xs text-blue-700 dark:text-blue-400 font-bold print:text-blue-900">
+                <p className={`text-xs font-bold ${
+                  isClean ? "text-blue-700" : isWhatsApp ? "text-[#00A884]" : "text-blue-400"
+                }`}>
                   {proposal.clientCompany}
                 </p>
               )}
-              <div className="text-xs text-slate-700 dark:text-slate-300 font-medium print:text-slate-900 mt-1 space-y-0.5">
+              <div className={`text-xs font-medium print:text-slate-900 mt-1 space-y-0.5 ${
+                isClean ? "text-slate-700" : isWhatsApp ? "text-[#8696A0]" : "text-slate-300"
+              }`}>
                 {proposal.clientEmail && <div><strong>E-mail:</strong> {proposal.clientEmail}</div>}
                 {proposal.clientPhone && <div><strong>Tel/WhatsApp:</strong> {proposal.clientPhone}</div>}
               </div>
               {(proposal.clientCep || proposal.clientAddress) && (
-                <div className="text-xs text-slate-800 dark:text-slate-200 font-semibold print:text-black mt-2 pt-2 border-t border-dashed border-blue-200 dark:border-blue-900/50 flex items-start gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5 print:hidden" />
+                <div className={`text-xs font-semibold print:text-black mt-2 pt-2 border-t border-dashed flex items-start gap-1 ${
+                  isClean 
+                    ? "border-blue-200 text-slate-800" 
+                    : isWhatsApp 
+                      ? "border-[#222D34] text-[#E9EDEF]" 
+                      : "border-blue-900/50 text-slate-200"
+                }`}>
+                  <MapPin className={`w-3.5 h-3.5 shrink-0 mt-0.5 print:hidden ${
+                    isClean ? "text-blue-600" : isWhatsApp ? "text-[#00A884]" : "text-blue-400"
+                  }`} />
                   <span>
                     {proposal.clientCep && <strong>CEP: {proposal.clientCep} </strong>}
                     {proposal.clientAddress && <span>• {proposal.clientAddress}</span>}
@@ -320,16 +419,30 @@ export function ProposalPreviewModal({
               )}
             </div>
 
-            <div className="p-4 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/25 border-l-4 border-l-emerald-600 border border-emerald-200 dark:border-emerald-900/40 print:bg-emerald-50/40 print:border-emerald-300">
-              <span className="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 print:text-emerald-900 flex items-center gap-1.5">
+            <div className={`p-4 rounded-xl border-l-4 border transition-colors ${
+              isClean 
+                ? "bg-emerald-50/80 border-l-emerald-600 border-emerald-200 text-slate-900" 
+                : isWhatsApp 
+                  ? "bg-[#182229] border-l-[#00A884] border-[#222D34] text-[#E9EDEF]" 
+                  : "bg-emerald-950/25 border-l-emerald-500 border-emerald-900/40 text-slate-200"
+            }`}>
+              <span className={`text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                isClean ? "text-emerald-700" : isWhatsApp ? "text-[#00A884]" : "text-emerald-400"
+              }`}>
                 <ShieldCheck className="w-3.5 h-3.5" /> Consultor & Condições
               </span>
-              <h4 className="text-base font-extrabold text-slate-900 dark:text-white print:text-black mt-1">
+              <h4 className={`text-base font-extrabold print:text-black mt-1 ${
+                isClean ? "text-slate-900" : isWhatsApp ? "text-[#E9EDEF]" : "text-white"
+              }`}>
                 {proposal.sellerName || "Equipe Comercial"}
               </h4>
               <div className="mt-2 text-xs">
-                <span className="text-emerald-800 dark:text-emerald-400 font-bold">Condição de Pagamento:</span>
-                <p className="text-slate-900 dark:text-white font-extrabold print:text-black mt-0.5 text-sm">
+                <span className={`font-bold ${
+                  isClean ? "text-emerald-800" : isWhatsApp ? "text-[#00A884]" : "text-emerald-400"
+                }`}>Condição de Pagamento:</span>
+                <p className={`font-extrabold print:text-black mt-0.5 text-sm ${
+                  isClean ? "text-slate-900" : isWhatsApp ? "text-[#E9EDEF]" : "text-white"
+                }`}>
                   {proposal.paymentMethod || "A combinar"}
                 </p>
               </div>
@@ -338,12 +451,22 @@ export function ProposalPreviewModal({
 
           {/* Tabela de Itens e Serviços */}
           <div className="print-avoid-break">
-            <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2 print:text-slate-700">
+            <h4 className={`text-[11px] font-bold uppercase tracking-wider mb-2 print:text-slate-700 ${
+              isClean ? "text-slate-600" : isWhatsApp ? "text-[#8696A0]" : "text-slate-400"
+            }`}>
               Detalhamento de Itens & Escopo Fornecido
             </h4>
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden print:border-slate-300">
+            <div className={`rounded-2xl border overflow-hidden print:border-slate-300 ${
+              isClean ? "border-slate-200" : isWhatsApp ? "border-[#222D34]" : "border-slate-800"
+            }`}>
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800 print:bg-slate-100 print:text-slate-900 print:border-slate-300">
+                <thead className={`font-bold border-b uppercase print:bg-slate-100 print:text-slate-900 print:border-slate-300 ${
+                  isClean 
+                    ? "bg-slate-100 text-slate-700 border-slate-200" 
+                    : isWhatsApp 
+                      ? "bg-[#202C33] text-[#8696A0] border-[#222D34]" 
+                      : "bg-slate-900/80 text-slate-400 border-slate-800"
+                }`}>
                   <tr>
                     <th className="p-3">Descrição do Serviço / Produto</th>
                     <th className="p-3 text-center">Qtd</th>
@@ -352,19 +475,33 @@ export function ProposalPreviewModal({
                     <th className="p-3 text-right">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 print:divide-slate-200">
+                <tbody className={`divide-y print:divide-slate-200 ${
+                  isClean ? "divide-slate-200" : isWhatsApp ? "divide-[#222D34]" : "divide-slate-800/60"
+                }`}>
                   {proposal.items.map((item) => {
                     const thumb = item.imageUrl ? (getDriveThumbnailUrl(item.imageUrl, 200) || item.imageUrl) : null;
                     const highResThumb = item.imageUrl ? (getDriveThumbnailUrl(item.imageUrl, 1200) || item.imageUrl) : null;
 
                     return (
-                      <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 print:text-slate-900">
+                      <tr key={item.id} className={`transition-colors print:text-slate-900 ${
+                        isClean 
+                          ? "hover:bg-slate-50 text-slate-800" 
+                          : isWhatsApp 
+                            ? "hover:bg-[#182229] text-[#E9EDEF]" 
+                            : "hover:bg-slate-900/30 text-slate-200"
+                      }`}>
                         <td className="p-3">
                           <div className="flex items-center gap-3">
                             {thumb && (
                               <div
                                 onClick={() => setZoomImageUrl(highResThumb)}
-                                className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 overflow-hidden shrink-0 flex items-center justify-center cursor-pointer hover:opacity-90 hover:scale-105 transition-all shadow-xs print:w-10 print:h-10 print:rounded-md"
+                                className={`w-12 h-12 rounded-xl border overflow-hidden shrink-0 flex items-center justify-center cursor-pointer hover:opacity-90 hover:scale-105 transition-all shadow-xs print:w-10 print:h-10 print:rounded-md ${
+                                  isClean 
+                                    ? "bg-slate-100 border-slate-200" 
+                                    : isWhatsApp 
+                                      ? "bg-[#202C33] border-[#222D34]" 
+                                      : "bg-slate-800 border-slate-700/80"
+                                }`}
                                 title="Clique para ampliar a foto do produto"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -377,27 +514,35 @@ export function ProposalPreviewModal({
                             )}
 
                             <div className="min-w-0">
-                              <div className="font-semibold text-slate-900 dark:text-slate-100 print:text-black">
+                              <div className={`font-semibold print:text-black ${
+                                isClean ? "text-slate-900" : isWhatsApp ? "text-[#E9EDEF]" : "text-slate-100"
+                              }`}>
                                 {item.name}
                               </div>
                               {item.description && item.description !== item.name && (
-                                <div className="text-[10px] text-slate-500 dark:text-slate-400 print:text-slate-600 mt-0.5 line-clamp-2">
+                                <div className={`text-[10px] mt-0.5 line-clamp-2 print:text-slate-600 ${
+                                  isClean ? "text-slate-500" : isWhatsApp ? "text-[#8696A0]" : "text-slate-400"
+                                }`}>
                                   {item.description}
                                 </div>
                               )}
                             </div>
                           </div>
                         </td>
-                        <td className="p-3 text-center text-slate-700 dark:text-slate-300 print:text-slate-900 font-mono">
+                        <td className="p-3 text-center font-mono">
                           {item.quantity}
                         </td>
-                        <td className="p-3 text-right text-slate-700 dark:text-slate-300 print:text-slate-900 font-mono">
+                        <td className="p-3 text-right font-mono">
                           R$ {item.unitPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </td>
-                        <td className="p-3 text-right text-slate-500 dark:text-slate-400 print:text-slate-600 font-mono">
+                        <td className={`p-3 text-right font-mono ${
+                          isClean ? "text-slate-500" : isWhatsApp ? "text-[#8696A0]" : "text-slate-400"
+                        }`}>
                           {item.discountPercent ? `${item.discountPercent}%` : "-"}
                         </td>
-                        <td className="p-3 text-right font-bold text-blue-600 dark:text-blue-400 print:text-black font-mono">
+                        <td className={`p-3 text-right font-bold font-mono print:text-black ${
+                          isClean ? "text-blue-600" : isWhatsApp ? "text-[#00A884]" : "text-blue-400"
+                        }`}>
                           R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                         </td>
                       </tr>
@@ -410,27 +555,51 @@ export function ProposalPreviewModal({
 
           {/* Resumo Financeiro */}
           <div className="flex flex-row justify-between items-start gap-4 pt-1 print-avoid-break">
-            <div className="flex-1 text-[11px] text-slate-500 dark:text-slate-400 space-y-1 print:text-slate-600">
-              <span className="font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-0.5 print:text-black">
+            <div className={`flex-1 text-[11px] space-y-1 print:text-slate-600 ${
+              isClean ? "text-slate-600" : isWhatsApp ? "text-[#8696A0]" : "text-slate-400"
+            }`}>
+              <span className={`font-bold uppercase tracking-wider block mb-0.5 print:text-black ${
+                isClean ? "text-slate-800" : isWhatsApp ? "text-[#E9EDEF]" : "text-slate-300"
+              }`}>
                 Observações, Termos & Garantia
               </span>
               <p className="leading-relaxed">{proposal.notes || "Proposta válida sob condições gerais acordadas entre as partes."}</p>
             </div>
 
-            <div className="w-60 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-1.5 text-right print:border-slate-300 print:bg-transparent print:p-2.5">
-              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 print:text-slate-700">
+            <div className={`w-60 p-4 rounded-2xl border space-y-1.5 text-right print:border-slate-300 print:bg-transparent print:p-2.5 transition-colors ${
+              isClean 
+                ? "bg-slate-50 border-slate-200" 
+                : isWhatsApp 
+                  ? "bg-[#182229] border-[#222D34]" 
+                  : "bg-slate-900/60 border-slate-800"
+            }`}>
+              <div className={`flex justify-between text-xs print:text-slate-700 ${
+                isClean ? "text-slate-500" : isWhatsApp ? "text-[#8696A0]" : "text-slate-400"
+              }`}>
                 <span>Subtotal:</span>
-                <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">R$ {proposal.subtotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                <span className={`font-mono font-semibold ${
+                  isClean ? "text-slate-800" : isWhatsApp ? "text-[#E9EDEF]" : "text-slate-300"
+                }`}>R$ {proposal.subtotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
               </div>
               {proposal.discountTotal > 0 && (
-                <div className="flex justify-between text-xs text-rose-600 dark:text-rose-400 print:text-slate-800">
+                <div className={`flex justify-between text-xs print:text-slate-800 ${
+                  isClean ? "text-rose-600" : isWhatsApp ? "text-rose-400" : "text-rose-400"
+                }`}>
                   <span>Desconto:</span>
                   <span className="font-mono font-semibold">- R$ {proposal.discountTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
                 </div>
               )}
-              <div className="border-t border-slate-200 dark:border-slate-800 print:border-slate-300 pt-2 flex justify-between items-center text-sm font-bold text-slate-900 dark:text-white print:text-black">
+              <div className={`border-t print:border-slate-300 pt-2 flex justify-between items-center text-sm font-bold print:text-black ${
+                isClean 
+                  ? "border-slate-200 text-slate-900" 
+                  : isWhatsApp 
+                    ? "border-[#222D34] text-[#E9EDEF]" 
+                    : "border-slate-800 text-white"
+              }`}>
                 <span>Total Final:</span>
-                <span className="text-blue-600 dark:text-blue-400 text-base font-black print:text-black font-mono">
+                <span className={`text-base font-black print:text-black font-mono ${
+                  isClean ? "text-blue-600" : isWhatsApp ? "text-[#00A884]" : "text-blue-400"
+                }`}>
                   R$ {proposal.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </span>
               </div>
@@ -438,26 +607,42 @@ export function ProposalPreviewModal({
           </div>
 
           {/* Rodapé de Aceite e Autenticação Eletrônica */}
-          <div className="p-3.5 rounded-2xl border border-blue-200 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/5 flex items-center justify-between gap-4 print:border-slate-300 print:p-2.5 print-avoid-break">
+          <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-4 print:border-slate-300 print:p-2.5 print-avoid-break transition-colors ${
+            isClean 
+              ? "border-blue-200 bg-blue-50/60 text-slate-800" 
+              : isWhatsApp 
+                ? "border-[#00A884]/30 bg-[#182229] text-[#E9EDEF]" 
+                : "border-blue-500/20 bg-blue-500/5 text-slate-200"
+          }`}>
             <div className="flex items-center gap-2.5">
-              <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 print:text-black shrink-0" />
+              <ShieldCheck className={`w-5 h-5 shrink-0 print:text-black ${
+                isClean ? "text-blue-600" : isWhatsApp ? "text-[#00A884]" : "text-blue-400"
+              }`} />
               <div>
-                <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 block print:text-black">
+                <span className={`text-[11px] font-bold block print:text-black ${
+                  isClean ? "text-slate-900" : isWhatsApp ? "text-[#E9EDEF]" : "text-slate-200"
+                }`}>
                   Assinatura Eletrônica & Aceite Digital
                 </span>
-                <span className="text-[10px] text-slate-400 print:text-slate-600">
+                <span className={`text-[10px] print:text-slate-600 ${
+                  isClean ? "text-slate-500" : isWhatsApp ? "text-[#8696A0]" : "text-slate-400"
+                }`}>
                   Documento emitido com autenticação digital e conformidade MP 2.200-2/2001.
                 </span>
               </div>
             </div>
 
             <div className="hidden sm:block text-right print:hidden">
-              <span className="text-[10px] text-slate-500 block uppercase font-mono">Link de Acesso Seguro</span>
+              <span className={`text-[10px] block uppercase font-mono ${
+                isClean ? "text-slate-500" : isWhatsApp ? "text-[#8696A0]" : "text-slate-500"
+              }`}>Link de Acesso Seguro</span>
               <a
                 href={proposal.publicLink || `${typeof window !== "undefined" ? window.location.origin : ""}/p/${proposal.code.toLowerCase()}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs font-medium text-blue-400 hover:underline flex items-center gap-1 justify-end"
+                className={`text-xs font-semibold hover:underline flex items-center gap-1 justify-end ${
+                  isClean ? "text-blue-600" : isWhatsApp ? "text-[#00A884]" : "text-blue-400"
+                }`}
               >
                 Abrir Portal do Cliente <ArrowUpRight className="w-3.5 h-3.5" />
               </a>
@@ -466,8 +651,14 @@ export function ProposalPreviewModal({
         </div>
 
         {/* Rodapé de Mudança Rápida de Status (Workflow Comercial) */}
-        <div className="px-6 py-3 border-t border-slate-800 bg-slate-900/90 flex flex-wrap items-center justify-between gap-3 print:hidden">
-          <span className="text-xs text-slate-400">
+        <div className={`px-6 py-3 border-t flex flex-wrap items-center justify-between gap-3 print:hidden transition-colors ${
+          isClean 
+            ? "bg-slate-100 border-slate-200 text-slate-700" 
+            : isWhatsApp 
+              ? "bg-[#111B21] border-[#222D34] text-[#8696A0]" 
+              : "bg-slate-900/90 border-slate-800 text-slate-400"
+        }`}>
+          <span className="text-xs font-medium">
             Alterar status comercial:
           </span>
           <div className="flex items-center gap-2">
@@ -476,7 +667,13 @@ export function ProposalPreviewModal({
                 onStatusChange(proposal.id, "sent");
                 toast.success("Status atualizado para 'Enviada'!");
               }}
-              className="px-2.5 py-1 text-xs rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition-colors cursor-pointer"
+              className={`px-2.5 py-1 text-xs rounded-lg border transition-colors cursor-pointer font-medium ${
+                isClean 
+                  ? "bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border-cyan-300" 
+                  : isWhatsApp 
+                    ? "bg-[#202C33] hover:bg-[#2a3942] text-cyan-300 border-cyan-500/30" 
+                    : "bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
+              }`}
             >
               Marcar Enviada
             </button>
@@ -485,7 +682,13 @@ export function ProposalPreviewModal({
                 onStatusChange(proposal.id, "accepted");
                 toast.success("Parabéns! Proposta marcada como 'Aceita'!");
               }}
-              className="px-2.5 py-1 text-xs rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-colors font-semibold cursor-pointer"
+              className={`px-2.5 py-1 text-xs rounded-lg border transition-colors cursor-pointer font-bold ${
+                isClean 
+                  ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300" 
+                  : isWhatsApp 
+                    ? "bg-[#00A884] hover:bg-[#008f6f] text-white border-[#00A884]" 
+                    : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+              }`}
             >
               Marcar Aceita
             </button>
@@ -494,7 +697,13 @@ export function ProposalPreviewModal({
                 onStatusChange(proposal.id, "declined");
                 toast("Proposta marcada como recusada.");
               }}
-              className="px-2.5 py-1 text-xs rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-colors cursor-pointer"
+              className={`px-2.5 py-1 text-xs rounded-lg border transition-colors cursor-pointer font-medium ${
+                isClean 
+                  ? "bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300" 
+                  : isWhatsApp 
+                    ? "bg-rose-950/40 hover:bg-rose-900/50 text-rose-400 border-rose-500/30" 
+                    : "bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border-rose-500/30"
+              }`}
             >
               Marcar Recusada
             </button>
