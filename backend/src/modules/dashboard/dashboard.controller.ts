@@ -27,4 +27,9 @@ export class DashboardController {
   async getGeoMapData(@CurrentTenant() tenantId: string) {
     return this.dashboardService.getGeoMapData(tenantId);
   }
+
+  @Get('geo-map/ai-strategy')
+  async getStrategicAiReport(@CurrentTenant() tenantId: string) {
+    return this.dashboardService.getStrategicAiReport(tenantId);
+  }
 }

@@ -16,6 +16,11 @@ export class RadarStoriesController {
     return this.radarStoriesService.getMetrics(tenantId);
   }
 
+  @Get('active-posts')
+  async getActivePosts(@CurrentTenant() tenantId: string) {
+    return this.radarStoriesService.getActivePosts(tenantId);
+  }
+
   @Get('viewers')
   async getViewers(
     @CurrentTenant() tenantId: string,

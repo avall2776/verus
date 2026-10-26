@@ -1,3 +1,4 @@
+import { OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { AiService } from '../../ai/ai.service';
 export interface StoryViewerItem {
@@ -27,11 +28,24 @@ export interface StoryViewerItem {
         thumbnailUrl?: string;
     };
 }
-export declare class RadarStoriesService {
+export declare class RadarStoriesService implements OnModuleInit {
     private readonly prisma;
     private readonly aiService;
     private readonly logger;
     constructor(prisma: PrismaService, aiService: AiService);
+    onModuleInit(): Promise<void>;
+    getActivePosts(tenantId: string): Promise<{
+        id: any;
+        messageId: any;
+        title: any;
+        category: any;
+        mediaUrl: any;
+        postedAt: any;
+        postedAtRelative: string;
+        postedAtDate: string;
+        postedAtTime: string;
+        viewsCount: number;
+    }[]>;
     private formatDateTime;
     getMetrics(tenantId: string): Promise<{
         kpis: {

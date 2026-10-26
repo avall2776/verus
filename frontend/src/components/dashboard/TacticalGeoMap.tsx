@@ -26,7 +26,17 @@ import {
   Shield,
   MessageSquare,
   Loader2,
-  CheckCheck
+  CheckCheck,
+  Sparkles,
+  Target,
+  TrendingUp,
+  BarChart3,
+  AlertTriangle,
+  CheckCircle2,
+  RefreshCw,
+  FileText,
+  Copy,
+  Check
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
@@ -41,6 +51,7 @@ export interface GeoCityDeal {
   contactPhone?: string | null;
   value: number;
   status: string;
+  statusCategory?: "won" | "in_attendance" | "lost";
   stageLabel: string;
   source: string;
   sellerName: string;
@@ -56,10 +67,13 @@ export interface GeoCityPoint {
   region: "Sul" | "Sudeste" | "Centro-Oeste" | "Nordeste" | "Norte" | "Paraguai";
   lat: number;
   lng: number;
-  status: "closed" | "in_attendance" | "unexplored";
+  status: "closed" | "in_attendance" | "lost" | "unexplored";
   salesCount: number;
   salesVolume: number;
   inAttendanceCount: number;
+  lostCount: number;
+  lostVolume: number;
+  totalDeals: number;
   isLiveNow: boolean;
   assignedSellers: string[];
   trafficSource: {
@@ -74,10 +88,22 @@ export interface GeoMapResponse {
     totalSalesCount: number;
     totalRevenue: number;
     totalInAttendance: number;
+    totalLostCount: number;
+    totalLostVolume: number;
     totalCitiesMapped: number;
+    closedCitiesCount: number;
+    inAttendanceCitiesCount: number;
+    lostCitiesCount: number;
+    unexploredCitiesCount: number;
+    dominancePercentage: number;
+    inAttendancePercentage: number;
+    lostPercentage: number;
+    unexploredPercentage: number;
     activeLiveAttendances: number;
     conversionRate: number;
     topRegion: string;
+    tenantName?: string;
+    tenantNiche?: string;
   };
   regions: Array<{
     name: string;
@@ -304,6 +330,39 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
   // Polo / Cidade Selecionado para a Gaveta Lateral
   const [selectedPoint, setSelectedPoint] = useState<GeoCityPoint | null>(null);
 
+  // Opção de Marcar / Desmarcar Polígonos de Georreferenciamento de Território (Estilo CAR)
+  const [showTerritoryZones, setShowTerritoryZones] = useState<boolean>(true);
+
+  // Modal do Relatório Estratégico com IA (Comercial Verto)
+  const [isAiReportOpen, setIsAiReportOpen] = useState<boolean>(false);
+  const [aiReportData, setAiReportData] = useState<any>(null);
+  const [loadingAiReport, setLoadingAiReport] = useState<boolean>(false);
+
+  // Filtro de Negócios dentro do Modal da Cidade (Todos, Vendas, Em Atendimento, Perdidos)
+  const [dealModalFilter, setDealModalFilter] = useState<"all" | "won" | "in_attendance" | "lost">("all");
+  const [copiedScript, setCopiedScript] = useState<boolean>(false);
+
+  // Buscar Análise Estratégica da IA da Comercial Verto
+  const fetchAiReport = async () => {
+    setIsAiReportOpen(true);
+    if (aiReportData) return;
+    try {
+      setLoadingAiReport(true);
+      const res = await api.get("/metrics/geo-map/ai-strategy");
+      setAiReportData(res.data);
+    } catch (err) {
+      console.error("Erro ao carregar relatório estratégico de IA:", err);
+    } finally {
+      setLoadingAiReport(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedScript(true);
+    setTimeout(() => setCopiedScript(false), 2500);
+  };
+
   // Espiar Atendimento do Vendedor Ao Vivo (Sala de Guerra Geotática)
   const [spyingDeal, setSpyingDeal] = useState<GeoCityDeal | null>(null);
   const [spyMessages, setSpyMessages] = useState<any[]>([]);
@@ -505,13 +564,17 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
     });
   }, [geoData, selectedStatus, selectedRegion, selectedSeller, selectedTraffic, searchQuery]);
 
-  // Contagens para os Badges
+  // Contagens para os Badges e Percentuais de Dominância Territorial
   const closedCount = useMemo(
     () => geoData?.points.filter((p) => p.status === "closed").length || 0,
     [geoData]
   );
   const inAttendanceCount = useMemo(
     () => geoData?.points.filter((p) => p.status === "in_attendance").length || 0,
+    [geoData]
+  );
+  const lostCount = useMemo(
+    () => geoData?.points.filter((p) => p.status === "lost").length || 0,
     [geoData]
   );
   const unexploredCount = useMemo(
@@ -523,7 +586,38 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
     [geoData]
   );
 
-  // 8. Renderização dos Marcadores Táticos no WebGL
+  const dominancePercentage = useMemo(() => {
+    if (geoData?.summary?.dominancePercentage !== undefined) {
+      return geoData.summary.dominancePercentage;
+    }
+    const total = geoData?.points.length || 0;
+    return total > 0 ? Math.round((closedCount / total) * 100) : 0;
+  }, [geoData, closedCount]);
+
+  const inAttendancePercentage = useMemo(() => {
+    if (geoData?.summary?.inAttendancePercentage !== undefined) {
+      return geoData.summary.inAttendancePercentage;
+    }
+    const total = geoData?.points.length || 0;
+    return total > 0 ? Math.round((inAttendanceCount / total) * 100) : 0;
+  }, [geoData, inAttendanceCount]);
+
+  const lostPercentage = useMemo(() => {
+    if (geoData?.summary?.lostPercentage !== undefined) {
+      return geoData.summary.lostPercentage;
+    }
+    const total = geoData?.points.length || 0;
+    return total > 0 ? Math.round((lostCount / total) * 100) : 0;
+  }, [geoData, lostCount]);
+
+  const unexploredPercentage = useMemo(() => {
+    if (geoData?.summary?.unexploredPercentage !== undefined) {
+      return geoData.summary.unexploredPercentage;
+    }
+    return Math.max(0, 100 - dominancePercentage - inAttendancePercentage - lostPercentage);
+  }, [geoData, dominancePercentage, inAttendancePercentage, lostPercentage]);
+
+  // 8. Renderização dos Marcadores Táticos no WebGL (Visualização 100% Sincronizada com CRM Verto)
   useEffect(() => {
     const mapInstance = mapRef.current;
     if (!mapInstance) return;
@@ -540,21 +634,20 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
 
       let glowColor = "rgba(100, 116, 139, 0.4)";
       let pinColor = isLightMode ? "#64748B" : "#94A3B8"; // Mercado Aberto
-      let badgeBg = isLightMode
-        ? "bg-slate-200 text-slate-800 border-slate-300"
-        : "bg-slate-700 text-slate-200 border-slate-600";
 
       if (point.status === "closed") {
-        glowColor = "rgba(16, 185, 129, 0.6)";
+        glowColor = "rgba(16, 185, 129, 0.7)";
         pinColor = "#10B981"; // Negócio Fechado (Verde)
-        badgeBg = "bg-emerald-500 text-white border-emerald-400";
       } else if (point.status === "in_attendance") {
-        glowColor = "rgba(234, 179, 8, 0.6)";
+        glowColor = "rgba(234, 179, 8, 0.7)";
         pinColor = "#F59E0B"; // Em Atendimento (Amarelo)
-        badgeBg = "bg-amber-500 text-black font-bold border-amber-300";
+      } else if (point.status === "lost") {
+        glowColor = "rgba(239, 68, 68, 0.7)";
+        pinColor = "#EF4444"; // Perdido / Repescagem (Vermelho)
       }
 
       const pinBg = isLightMode ? "#FFFFFF" : "#0B1224";
+      const hasDeals = (point.totalDeals || point.recentDeals?.length || 0) > 0;
 
       el.innerHTML = `
         <div class="relative flex flex-col items-center">
@@ -574,35 +667,40 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
           <div class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] -mt-[1px]"
                style="border-t-color: ${pinColor}"></div>
           
-          <!-- Badge Numérico de Vendas / Atendimentos -->
+          <!-- Badge Numérico Multistatus (Total & Segmentação CRM) -->
           ${
-            point.salesCount > 0
-              ? `<div class="absolute -top-2.5 -right-2 px-1.5 py-0.2 rounded-full text-[10px] font-bold border shadow-lg ${badgeBg}">
-                  ${point.salesCount}
-                 </div>`
-              : point.inAttendanceCount > 0
-              ? `<div class="absolute -top-2.5 -right-2 px-1.5 py-0.2 rounded-full text-[10px] font-bold border shadow-lg ${badgeBg}">
-                  ${point.inAttendanceCount}
-                 </div>`
+            hasDeals
+              ? `<div class="absolute -top-3 -right-3 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black border shadow-xl ${
+                  isLightMode ? "bg-white text-slate-800 border-slate-300" : "bg-[#0B1224] text-white border-slate-700"
+                }">
+                  ${point.salesCount > 0 ? `<span class="text-emerald-500 font-extrabold flex items-center">●${point.salesCount}</span>` : ""}
+                  ${point.inAttendanceCount > 0 ? `<span class="text-amber-500 font-extrabold flex items-center">●${point.inAttendanceCount}</span>` : ""}
+                  ${point.lostCount > 0 ? `<span class="text-rose-500 font-extrabold flex items-center">●${point.lostCount}</span>` : ""}
+                </div>`
               : ""
           }
 
-          <!-- Micro-Tooltip Hover -->
+          <!-- Micro-Tooltip Hover Tático -->
           <div class="pointer-events-none absolute bottom-9 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${
             isLightMode
               ? "bg-white/95 text-slate-800 border-slate-300"
               : "bg-[#0B1224]/95 text-white border-slate-700/80"
-          } border rounded-lg px-2.5 py-1 text-xs whitespace-nowrap shadow-xl backdrop-blur-md flex flex-col items-center">
-            <span class="font-bold">${point.cityName} - ${point.state}</span>
-            <span class="text-[10px] opacity-80">
-              ${
-                point.salesCount > 0
-                  ? `${point.salesCount} vendas • R$ ${(point.salesVolume / 1000).toFixed(0)}k`
-                  : point.inAttendanceCount > 0
-                  ? `${point.inAttendanceCount} em atendimento`
-                  : "Mercado em Prospecção"
-              }
-            </span>
+          } border rounded-xl px-3 py-1.5 text-xs whitespace-nowrap shadow-2xl backdrop-blur-md flex flex-col items-center">
+            <span class="font-extrabold text-[12px]">${point.cityName} - ${point.state}</span>
+            ${
+              hasDeals
+                ? `
+                  <div class="flex items-center gap-2 mt-1 text-[10px] font-bold">
+                    ${point.salesCount > 0 ? `<span class="text-emerald-400">🟢 ${point.salesCount} vendas</span>` : ""}
+                    ${point.inAttendanceCount > 0 ? `<span class="text-amber-400">🟡 ${point.inAttendanceCount} atend.</span>` : ""}
+                    ${point.lostCount > 0 ? `<span class="text-rose-400">🔴 ${point.lostCount} perdidos</span>` : ""}
+                  </div>
+                  <span class="text-[9px] text-slate-300 mt-0.5">
+                    Total: <b>${point.totalDeals || point.recentDeals?.length} negociações</b> ${point.salesVolume > 0 ? `• R$ ${(point.salesVolume / 1000).toFixed(0)}k` : ""}
+                  </span>
+                `
+                : `<span class="text-[10px] text-slate-400">Mercado em Aberto (Névoa Agro)</span>`
+            }
           </div>
         </div>
       `;
@@ -611,6 +709,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
         e.stopPropagation();
         setSelectedPoint(point);
         setSpyingDeal(null);
+        setDealModalFilter("all");
 
         if (mapRef.current) {
           mapRef.current.flyTo({
@@ -655,37 +754,42 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
     return coords;
   };
 
-  // 9. Cálculo Dinâmico do Georreferenciamento de Área (Dominância de Território)
-  // Verde: Vendas Concluídas (Passo Fundo e entorno dominado)
+  // 9. Cálculo Dinâmico do Georreferenciamento de Área (Dominância de Território / CAR)
+  // Verde: Vendas Concluídas da Comercial Verto (Passo Fundo, Pelotas e entorno dominado)
   // Amarelo: Em Atendimento Ativo (Chapecó e praças em negociação)
+  // Vermelho: Negócios Perdidos / Ação de Repescagem
   // Cinza: Mercado em Aberto (Névoa de Guerra / Território a ser Descoberto)
   const territoryGeoJson = useMemo(() => {
     const features = filteredPoints.map((pt) => {
       let radiusKm = 24;
       let color = "#64748B";
       let borderColor = "#475569";
-      let opacity = 0.16;
+      let opacity = 0.12;
 
       if (pt.status === "closed") {
-        // Território Dominado (Vendas Concluídas)
-        // Passo Fundo e praças com vendas dominam raio de até 55km (abrangendo Mato Castelhano, Marau, etc.)
-        radiusKm = Math.min(55, 38 + pt.salesCount * 1.5);
+        // Território Dominado (Vendas Concluídas da Comercial Verto - ex: Pelotas)
+        radiusKm = Math.min(58, 42 + (pt.salesCount || 1) * 2);
         color = "#10B981";
         borderColor = "#059669";
-        opacity = 0.28;
+        opacity = 0.32;
       } else if (pt.status === "in_attendance") {
         // Território em Atendimento Ativo
-        // Chapecó e polos em atendimento ficam com toda a área ao redor amarela
-        radiusKm = Math.min(46, 32 + pt.inAttendanceCount * 0.4);
+        radiusKm = Math.min(48, 34 + (pt.inAttendanceCount || 1) * 0.8);
         color = "#F59E0B";
         borderColor = "#D97706";
         opacity = 0.24;
+      } else if (pt.status === "lost") {
+        // Território com Oportunidades Perdidas (Ação de Repescagem)
+        radiusKm = Math.min(42, 30 + (pt.lostCount || 1) * 0.8);
+        color = "#EF4444";
+        borderColor = "#DC2626";
+        opacity = 0.22;
       } else {
-        // Mercado em Aberto / Névoa de Guerra a ser Descoberto pela Equipe
+        // Mercado em Aberto / Névoa de Guerra
         radiusKm = 24;
         color = "#64748B";
         borderColor = "#475569";
-        opacity = 0.15;
+        opacity = 0.12;
       }
 
       return {
@@ -699,7 +803,8 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
           borderColor,
           opacity,
           salesCount: pt.salesCount,
-          inAttendanceCount: pt.inAttendanceCount
+          inAttendanceCount: pt.inAttendanceCount,
+          lostCount: pt.lostCount
         },
         geometry: {
           type: "Polygon" as const,
@@ -738,6 +843,9 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
         id: "tactical-territory-fill",
         type: "fill",
         source: "tactical-territory-zones",
+        layout: {
+          visibility: showTerritoryZones ? "visible" : "none"
+        },
         paint: {
           "fill-color": ["get", "color"],
           "fill-opacity": ["get", "opacity"]
@@ -749,9 +857,19 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
         id: "tactical-territory-line",
         type: "line",
         source: "tactical-territory-zones",
+        layout: {
+          visibility: showTerritoryZones ? "visible" : "none"
+        },
         paint: {
           "line-color": ["get", "borderColor"],
-          "line-width": ["case", ["==", ["get", "status"], "unexplored"], 1.2, 2],
+          "line-width": [
+            "case",
+            ["==", ["get", "status"], "closed"],
+            2.5,
+            ["==", ["get", "status"], "unexplored"],
+            1,
+            2
+          ],
           "line-opacity": 0.85
         }
       });
@@ -764,6 +882,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
           if (target) {
             setSelectedPoint(target);
             setSpyingDeal(null);
+            setDealModalFilter("all");
             map.flyTo({
               center: [target.lng, target.lat],
               zoom: 7.5,
@@ -788,6 +907,30 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
       map.once("load", setupTerritoryLayers);
     }
   }, [territoryGeoJson, filteredPoints]);
+
+  // Alternância Dinâmica de Visibilidade dos Polígonos de Demarcação Territorial (CAR)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    try {
+      if (map.getLayer("tactical-territory-fill")) {
+        map.setLayoutProperty(
+          "tactical-territory-fill",
+          "visibility",
+          showTerritoryZones ? "visible" : "none"
+        );
+      }
+      if (map.getLayer("tactical-territory-line")) {
+        map.setLayoutProperty(
+          "tactical-territory-line",
+          "visibility",
+          showTerritoryZones ? "visible" : "none"
+        );
+      }
+    } catch (err) {
+      console.warn("Transição de camada territorial:", err);
+    }
+  }, [showTerritoryZones]);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -843,7 +986,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                 theme === "light" ? "text-slate-800" : "text-white"
               }`}
             >
-              SALA DE GUERRA GEOTÁTICA
+              SALA DE GUERRA GEOTÁTICA • COMERCIAL VERTO (AGRO)
             </span>
           </div>
 
@@ -869,6 +1012,27 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
             </span>
           </button>
 
+          {/* Botão de Ligar / Desligar Demarcação Georreferenciada (CAR / Territórios) */}
+          <button
+            type="button"
+            className={`btn-map-control ${showTerritoryZones ? "active" : ""}`}
+            onClick={() => setShowTerritoryZones(!showTerritoryZones)}
+            title="Ativar ou desativar os polígonos de demarcação georreferenciada (CAR / limites de cidades)"
+          >
+            <Shield className={`w-3.5 h-3.5 ${showTerritoryZones ? "text-emerald-400" : "text-slate-400"}`} />
+            <span>{showTerritoryZones ? "Demarcação CAR (Ativa)" : "Demarcação CAR (Oculta)"}</span>
+          </button>
+
+          {/* Botão de Relatório Estratégico com Análise por IA */}
+          <button
+            type="button"
+            className="btn-map-control btn-outline-cyan font-bold"
+            onClick={fetchAiReport}
+            title="Abrir Análise Estratégica com Inteligência Artificial da Comercial Verto"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-spin-slow" />
+            <span>Relatório IA Verto</span>
+          </button>
 
           {/* Centralizar Brasil */}
           <button
@@ -898,7 +1062,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
             type="button"
             className={`btn-map-control ${selectedStatus === "closed" ? "active" : ""}`}
             onClick={() => setSelectedStatus(selectedStatus === "closed" ? "all" : "closed")}
-            title="Filtrar Negócios Fechados"
+            title="Filtrar Territórios Dominados (Vendas Concluídas)"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#10B981]"></span>
             <span>Fechados ({closedCount})</span>
@@ -910,10 +1074,22 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
             onClick={() =>
               setSelectedStatus(selectedStatus === "in_attendance" ? "all" : "in_attendance")
             }
-            title="Filtrar Em Atendimento"
+            title="Filtrar Em Atendimento Ativo"
           >
             <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_#F59E0B]"></span>
             <span>Atendimento ({inAttendanceCount})</span>
+          </button>
+
+          <button
+            type="button"
+            className={`btn-map-control ${selectedStatus === "lost" ? "active" : ""}`}
+            onClick={() =>
+              setSelectedStatus(selectedStatus === "lost" ? "all" : "lost")
+            }
+            title="Filtrar Negócios Perdidos / Ação de Repescagem"
+          >
+            <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_6px_#EF4444]"></span>
+            <span>Perdidos ({lostCount})</span>
           </button>
 
           <button
@@ -922,7 +1098,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
             onClick={() =>
               setSelectedStatus(selectedStatus === "unexplored" ? "all" : "unexplored")
             }
-            title="Filtrar Mercado Aberto"
+            title="Filtrar Mercado em Aberto (Névoa Agro)"
           >
             <span className="w-2 h-2 rounded-full bg-slate-400"></span>
             <span>Em Aberto ({unexploredCount})</span>
@@ -1057,6 +1233,58 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
           </div>
 
           <div className="legend-content custom-scrollbar">
+            {/* 0. PAINEL EXECUTIVO DE DOMINÂNCIA TERRITORIAL & IA (COMERCIAL VERTO - AGRO) */}
+            <div className="p-3 mb-2 rounded-xl border border-slate-700/60 bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-[#070D1B]/95 shadow-lg backdrop-blur-md">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] uppercase font-extrabold tracking-wider text-emerald-400 flex items-center gap-1.5">
+                  <Target className="w-3.5 h-3.5 text-emerald-400" />
+                  Dominância Comercial Verto
+                </span>
+                <span className="text-[9px] font-bold text-slate-400 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700">
+                  Agro
+                </span>
+              </div>
+
+              {/* Barra de Progresso Multissegmentada de Território */}
+              <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden flex my-2 border border-slate-700/50">
+                <div style={{ width: `${dominancePercentage}%` }} className="bg-emerald-500 h-full transition-all" title={`Dominado com Vendas: ${dominancePercentage}%`} />
+                <div style={{ width: `${inAttendancePercentage}%` }} className="bg-amber-400 h-full transition-all" title={`Em Atendimento Ativo: ${inAttendancePercentage}%`} />
+                <div style={{ width: `${lostPercentage}%` }} className="bg-rose-500 h-full transition-all" title={`Perdidos / Repescagem: ${lostPercentage}%`} />
+                <div style={{ width: `${unexploredPercentage}%` }} className="bg-slate-600 h-full transition-all" title={`Mercado em Aberto: ${unexploredPercentage}%`} />
+              </div>
+
+              {/* Grid de Percentuais */}
+              <div className="grid grid-cols-4 gap-1 text-center my-1.5">
+                <div className="bg-emerald-950/40 border border-emerald-800/40 rounded-lg p-1">
+                  <div className="text-[8px] text-emerald-400 font-bold uppercase">Dominado</div>
+                  <div className="text-xs font-black text-emerald-300">{dominancePercentage}%</div>
+                </div>
+                <div className="bg-amber-950/40 border border-amber-800/40 rounded-lg p-1">
+                  <div className="text-[8px] text-amber-400 font-bold uppercase">Atendimento</div>
+                  <div className="text-xs font-black text-amber-300">{inAttendancePercentage}%</div>
+                </div>
+                <div className="bg-rose-950/40 border border-rose-800/40 rounded-lg p-1">
+                  <div className="text-[8px] text-rose-400 font-bold uppercase">Perdas</div>
+                  <div className="text-xs font-black text-rose-300">{lostPercentage}%</div>
+                </div>
+                <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg p-1">
+                  <div className="text-[8px] text-slate-400 font-bold uppercase">Névoa</div>
+                  <div className="text-xs font-black text-slate-200">{unexploredPercentage}%</div>
+                </div>
+              </div>
+
+              {/* Botão de Leitura Estratégica com IA */}
+              <button
+                type="button"
+                onClick={fetchAiReport}
+                className="w-full mt-2 py-1.5 px-2.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white shadow-md shadow-emerald-950/50 flex items-center justify-center gap-1.5 transition-all group"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-spin-slow group-hover:scale-110 transition-transform" />
+                <span>Relatório Estratégico & IA</span>
+                <ArrowUpRight className="w-3 h-3 opacity-80" />
+              </button>
+            </div>
+
             {/* Accordion 1: Status Comercial (Pins) */}
             <div className="legend-accordion-group">
               <div
@@ -1103,7 +1331,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                         <span>Área Dominada & Vendas Concluídas</span>
                       </div>
                       <div className="spatial-tooltip-body">
-                        Polos com vendas confirmadas. A área ao redor fica verde no mapa (ex: Passo Fundo cobrindo municípios vizinhos como Mato Castelhano e Marau).
+                        Polos com vendas confirmadas. A área ao redor fica verde no mapa (ex: Pelotas e Passo Fundo cobrindo municípios agro vizinhos).
                       </div>
                     </div>
                   </div>
@@ -1133,6 +1361,35 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                       </div>
                       <div className="spatial-tooltip-body">
                         Cidades com propostas em aberto ou leads em atendimento. Toda a área ao redor fica amarela no mapa (ex: Chapecó).
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Oportunidades Perdidas */}
+                  <div
+                    className={`leg-item leg-item-tooltip-wrap cursor-pointer ${
+                      selectedStatus === "lost" ? "bg-rose-500/15" : ""
+                    }`}
+                    onClick={() =>
+                      setSelectedStatus(
+                        selectedStatus === "lost" ? "all" : "lost"
+                      )
+                    }
+                  >
+                    <span className="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] flex-shrink-0"></span>
+                    <span className="text-[11px] leading-tight flex-1">
+                      <strong className="text-rose-400">Negócios Perdidos (Repescagem)</strong>
+                    </span>
+                    <span className="text-[10px] font-bold text-rose-400">
+                      {lostCount}
+                    </span>
+                    <div className="spatial-legend-tooltip">
+                      <div className="spatial-tooltip-title text-rose-400">
+                        <span className="spatial-tooltip-dot bg-rose-500 shadow-[0_0_6px_rgba(239,68,68,0.8)]"></span>
+                        <span>Área com Perdas Registradas</span>
+                      </div>
+                      <div className="spatial-tooltip-body">
+                        Polos com oportunidades perdidas no CRM. Permite ações comerciais de repescagem com condições especiais pós-safra.
                       </div>
                     </div>
                   </div>
@@ -1169,7 +1426,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                         <span>Mercado em Aberto / Névoa de Guerra</span>
                       </div>
                       <div className="spatial-tooltip-body">
-                        Polos estratégicos em cinza ainda não loteados, aguardando prospecção e descoberta pela equipe comercial.
+                        Polos estratégicos do agronegócio em cinza ainda não loteados, aguardando prospecção e campanhas de Meta Ads.
                       </div>
                     </div>
                   </div>
@@ -1768,61 +2025,69 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                     </span>
                   </div>
 
-                  {/* Cards de Métricas Operacionais da Praça */}
-                  <div className="grid grid-cols-2 gap-2.5">
+                  {/* Cards de Métricas Operacionais da Praça (Vendas, Atendimentos e Perdidos) */}
+                  <div className="grid grid-cols-3 gap-2">
                     <div
-                      className={`p-3.5 rounded-xl border backdrop-blur-md ${
+                      className={`p-3 rounded-xl border backdrop-blur-md ${
                         theme === "light"
-                          ? "bg-slate-50 border-slate-200"
+                          ? "bg-emerald-50/80 border-emerald-200"
                           : theme === "whatsapp"
                           ? "bg-[#202C33]/95 border-[#2A3942]"
-                          : "bg-[#0e1628]/95 border-slate-700/70"
+                          : "bg-emerald-950/20 border-emerald-800/40"
                       }`}
                     >
-                      <div
-                        className={`text-[10px] uppercase font-bold ${
-                          theme === "light" ? "text-slate-500" : "text-slate-400"
-                        }`}
-                      >
-                        Vendas Fechadas
+                      <div className="text-[9px] uppercase font-bold text-emerald-500">
+                        Vendas (Ganho)
                       </div>
                       <div
-                        className={`text-xl font-bold mt-0.5 ${
+                        className={`text-lg font-black mt-0.5 ${
                           theme === "light" ? "text-slate-900" : "text-white"
                         }`}
                       >
                         {selectedPoint.salesCount}
                       </div>
-                      <div className="text-xs text-emerald-500 font-semibold mt-0.5">
+                      <div className="text-[10px] text-emerald-500 font-semibold truncate">
                         {formatCurrency(selectedPoint.salesVolume)}
                       </div>
                     </div>
 
                     <div
-                      className={`p-3.5 rounded-xl border backdrop-blur-md ${
+                      className={`p-3 rounded-xl border backdrop-blur-md ${
                         theme === "light"
-                          ? "bg-slate-50 border-slate-200"
+                          ? "bg-amber-50/80 border-amber-200"
                           : theme === "whatsapp"
                           ? "bg-[#202C33]/95 border-[#2A3942]"
-                          : "bg-[#0e1628]/95 border-slate-700/70"
+                          : "bg-amber-950/20 border-amber-800/40"
                       }`}
                     >
-                      <div
-                        className={`text-[10px] uppercase font-bold ${
-                          theme === "light" ? "text-slate-500" : "text-slate-400"
-                        }`}
-                      >
-                        Em Negociação
+                      <div className="text-[9px] uppercase font-bold text-amber-500">
+                        Em Atendimento
                       </div>
-                      <div className="text-xl font-bold text-amber-500 mt-0.5">
+                      <div className="text-lg font-black text-amber-500 mt-0.5">
                         {selectedPoint.inAttendanceCount}
                       </div>
-                      <div
-                        className={`text-xs mt-0.5 ${
-                          theme === "light" ? "text-slate-500" : "text-slate-400"
-                        }`}
-                      >
-                        Leads em Follow-up
+                      <div className="text-[10px] text-amber-400/90 font-medium truncate">
+                        Follow-up Ativo
+                      </div>
+                    </div>
+
+                    <div
+                      className={`p-3 rounded-xl border backdrop-blur-md ${
+                        theme === "light"
+                          ? "bg-rose-50/80 border-rose-200"
+                          : theme === "whatsapp"
+                          ? "bg-[#202C33]/95 border-[#2A3942]"
+                          : "bg-rose-950/20 border-rose-800/40"
+                      }`}
+                    >
+                      <div className="text-[9px] uppercase font-bold text-rose-400">
+                        Perdidos
+                      </div>
+                      <div className="text-lg font-black text-rose-500 mt-0.5">
+                        {selectedPoint.lostCount || 0}
+                      </div>
+                      <div className="text-[10px] text-rose-400/90 font-medium truncate">
+                        Repescagem
                       </div>
                     </div>
                   </div>
@@ -1933,7 +2198,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                           theme === "light" ? "text-slate-500" : "text-slate-400"
                         }`}
                       >
-                        Clientes & Negócios na Praça ({selectedPoint.recentDeals.length})
+                        Clientes & Negócios no CRM ({selectedPoint.recentDeals.length})
                       </span>
                       <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
                         <Eye className="w-3 h-3" />
@@ -1941,97 +2206,210 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                       </span>
                     </div>
 
+                    {/* Filtros Rápidos de Status no Modal */}
+                    <div className="flex items-center gap-1 overflow-x-auto py-1 scrollbar-none">
+                      <button
+                        type="button"
+                        onClick={() => setDealModalFilter("all")}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${
+                          dealModalFilter === "all"
+                            ? "bg-slate-700 text-white shadow"
+                            : "bg-slate-800/50 text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Todos ({selectedPoint.recentDeals.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDealModalFilter("won")}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${
+                          dealModalFilter === "won"
+                            ? "bg-emerald-600 text-white shadow"
+                            : "bg-emerald-950/30 text-emerald-400 hover:bg-emerald-900/40"
+                        }`}
+                      >
+                        Vendas ({selectedPoint.salesCount})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDealModalFilter("in_attendance")}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${
+                          dealModalFilter === "in_attendance"
+                            ? "bg-amber-600 text-white shadow"
+                            : "bg-amber-950/30 text-amber-400 hover:bg-amber-900/40"
+                        }`}
+                      >
+                        Atendimento ({selectedPoint.inAttendanceCount})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDealModalFilter("lost")}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${
+                          dealModalFilter === "lost"
+                            ? "bg-rose-600 text-white shadow"
+                            : "bg-rose-950/30 text-rose-400 hover:bg-rose-900/40"
+                        }`}
+                      >
+                        Perdidos ({selectedPoint.lostCount || 0})
+                      </button>
+                    </div>
+
                     {selectedPoint.recentDeals.length > 0 ? (
                       <div className="space-y-2.5">
-                        {selectedPoint.recentDeals.map((deal) => (
-                          <div
-                            key={deal.id}
-                            onClick={() => handleSpyDeal(deal)}
-                            className={`p-3.5 rounded-xl border transition-all backdrop-blur-md cursor-pointer group hover:scale-[1.01] ${
-                              theme === "light"
-                                ? "bg-white hover:bg-emerald-50/50 hover:border-emerald-300 border-slate-200 text-slate-800 shadow-sm"
-                                : theme === "whatsapp"
-                                ? "bg-[#202C33]/95 hover:bg-[#202C33] hover:border-[#00A884]/60 border-[#2A3942] text-[#E9EDEF]"
-                                : "bg-[#0e1628]/95 hover:bg-[#131f37] hover:border-emerald-500/50 border-slate-700/70 text-slate-200"
-                            }`}
-                          >
-                            {/* Linha 1: Nome do Cliente e Valor */}
-                            <div className="flex items-start justify-between gap-2">
+                        {selectedPoint.recentDeals
+                          .filter((deal) => {
+                            const isWon =
+                              deal.status === "won" ||
+                              deal.statusCategory === "won" ||
+                              deal.stageLabel.toLowerCase().includes("vendido") ||
+                              deal.stageLabel.toLowerCase().includes("fechado");
+                            const isLost =
+                              deal.status === "lost" ||
+                              deal.statusCategory === "lost" ||
+                              deal.stageLabel.toLowerCase().includes("perdido");
+                            const isInAttendance = !isWon && !isLost;
+
+                            if (dealModalFilter === "won") return isWon;
+                            if (dealModalFilter === "in_attendance") return isInAttendance;
+                            if (dealModalFilter === "lost") return isLost;
+                            return true;
+                          })
+                          .map((deal) => {
+                            const isWon =
+                              deal.status === "won" ||
+                              deal.statusCategory === "won" ||
+                              deal.stageLabel.toLowerCase().includes("vendido") ||
+                              deal.stageLabel.toLowerCase().includes("fechado");
+                            const isLost =
+                              deal.status === "lost" ||
+                              deal.statusCategory === "lost" ||
+                              deal.stageLabel.toLowerCase().includes("perdido");
+
+                            return (
                               <div
-                                className={`font-bold text-sm leading-snug break-words group-hover:text-emerald-400 transition-colors ${
-                                  theme === "light" ? "text-slate-900" : "text-white"
+                                key={deal.id}
+                                onClick={() => handleSpyDeal(deal)}
+                                className={`p-3.5 rounded-xl border transition-all backdrop-blur-md cursor-pointer group hover:scale-[1.01] ${
+                                  isLost
+                                    ? "bg-rose-950/20 hover:bg-rose-950/35 border-rose-800/40 text-rose-200"
+                                    : isWon
+                                    ? "bg-emerald-950/20 hover:bg-emerald-950/35 border-emerald-800/40 text-emerald-200"
+                                    : theme === "light"
+                                    ? "bg-white hover:bg-amber-50/50 hover:border-amber-300 border-slate-200 text-slate-800 shadow-sm"
+                                    : theme === "whatsapp"
+                                    ? "bg-[#202C33]/95 hover:bg-[#202C33] hover:border-[#00A884]/60 border-[#2A3942] text-[#E9EDEF]"
+                                    : "bg-[#0e1628]/95 hover:bg-[#131f37] hover:border-amber-500/50 border-slate-700/70 text-slate-200"
                                 }`}
                               >
-                                {deal.clientName}
+                                {/* Linha 1: Nome do Cliente e Valor */}
+                                <div className="flex items-start justify-between gap-2">
+                                  <div
+                                    className={`font-bold text-sm leading-snug break-words transition-colors ${
+                                      isLost
+                                        ? "text-rose-200 group-hover:text-rose-300"
+                                        : isWon
+                                        ? "text-emerald-200 group-hover:text-emerald-300"
+                                        : theme === "light"
+                                        ? "text-slate-900 group-hover:text-amber-600"
+                                        : "text-white group-hover:text-amber-400"
+                                    }`}
+                                  >
+                                    {deal.clientName}
+                                  </div>
+                                  <div
+                                    className={`text-sm font-extrabold shrink-0 ${
+                                      isLost
+                                        ? "text-rose-400"
+                                        : isWon
+                                        ? "text-emerald-400"
+                                        : "text-amber-400"
+                                    }`}
+                                  >
+                                    {formatCurrency(deal.value)}
+                                  </div>
+                                </div>
+
+                                {/* Linha 2: Vendedor Real atendendo este Cliente */}
+                                <div className="text-xs mt-1.5 flex items-center gap-1.5 font-medium">
+                                  <Users className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                                  <span className="text-slate-400">Atendente:</span>
+                                  <span
+                                    className={`font-bold ${
+                                      isLost
+                                        ? "text-rose-300"
+                                        : isWon
+                                        ? "text-emerald-400"
+                                        : "text-amber-400"
+                                    }`}
+                                  >
+                                    {deal.sellerName}
+                                  </span>
+                                </div>
+
+                                {/* Linha 3: Proposta / Título */}
+                                <div
+                                  className={`text-xs mt-1 break-words ${
+                                    theme === "light" ? "text-slate-600" : "text-slate-400"
+                                  }`}
+                                >
+                                  {deal.title}
+                                </div>
+
+                                {/* Linha 4: Badges de Estágio, Vendedor e Origem */}
+                                <div className="flex flex-wrap items-center gap-2 mt-2.5 pt-2 border-t border-slate-700/20">
+                                  <span
+                                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                      isWon
+                                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                        : isLost
+                                        ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                                        : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                                    }`}
+                                  >
+                                    {isWon ? "Fechado / Vendido" : isLost ? "Perdido (Repescagem)" : "Em Atendimento"}
+                                  </span>
+
+                                  {deal.isLive && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                      Ao Vivo Agora
+                                    </span>
+                                  )}
+
+                                  <span
+                                    className={`text-[10px] px-1.5 py-0.5 rounded ml-auto font-medium ${
+                                      deal.source === "paid"
+                                        ? "bg-blue-500/15 text-blue-400"
+                                        : "bg-emerald-500/15 text-emerald-400"
+                                    }`}
+                                  >
+                                    {deal.source === "paid" ? "Meta Ads" : "Orgânico"}
+                                  </span>
+                                </div>
+
+                                {/* Linha 5: Botão de Chamada para Ação */}
+                                <div
+                                  className={`mt-2.5 pt-2 border-t flex items-center justify-between text-xs font-bold transition-colors ${
+                                    isLost
+                                      ? "border-rose-900/40 text-rose-300 group-hover:text-rose-200"
+                                      : isWon
+                                      ? "border-emerald-900/40 text-emerald-400 group-hover:text-emerald-300"
+                                      : "border-slate-700/40 text-amber-400 group-hover:text-amber-300"
+                                  }`}
+                                >
+                                  <span className="flex items-center gap-1.5">
+                                    <Eye className="w-3.5 h-3.5" />
+                                    <span>
+                                      {isLost
+                                        ? "Espiar Objeções / Repescagem"
+                                        : "Espiar Atendimento do Vendedor"}
+                                    </span>
+                                  </span>
+                                  <ChevronRight className="w-4 h-4 opacity-70 group-hover:translate-x-1 transition-transform" />
+                                </div>
                               </div>
-                              <div className="text-sm font-extrabold text-emerald-500 shrink-0">
-                                {formatCurrency(deal.value)}
-                              </div>
-                            </div>
-
-                            {/* Linha 2: Vendedor Real atendendo este Cliente */}
-                            <div className="text-xs mt-1.5 flex items-center gap-1.5 font-medium">
-                              <Users className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                              <span className="text-slate-400">Atendente:</span>
-                              <span className="text-emerald-400 font-bold">{deal.sellerName}</span>
-                              <span className="text-slate-400">está atendendo</span>
-                            </div>
-
-                            {/* Linha 3: Proposta / Título */}
-                            <div
-                              className={`text-xs mt-1 break-words ${
-                                theme === "light" ? "text-slate-600" : "text-slate-400"
-                              }`}
-                            >
-                              {deal.title}
-                            </div>
-
-                            {/* Linha 4: Badges de Estágio, Vendedor e Origem */}
-                            <div className="flex flex-wrap items-center gap-2 mt-2.5 pt-2 border-t border-slate-700/20">
-                              <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                  deal.status === "won"
-                                    ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"
-                                    : "bg-amber-500/15 text-amber-500 border border-amber-500/30"
-                                }`}
-                              >
-                                {deal.stageLabel}
-                              </span>
-
-                              {deal.isLive && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                                  Ao Vivo Agora
-                                </span>
-                              )}
-
-                              <span
-                                className={`text-[10px] px-1.5 py-0.5 rounded ml-auto font-medium ${
-                                  deal.source === "paid"
-                                    ? "bg-blue-500/15 text-blue-500"
-                                    : "bg-emerald-500/15 text-emerald-500"
-                                }`}
-                              >
-                                {deal.source === "paid" ? "Meta Ads" : "Orgânico"}
-                              </span>
-                            </div>
-
-                            {/* Linha 5: Botão de Chamada para Espiar o Atendimento */}
-                            <div
-                              className={`mt-2.5 pt-2 border-t flex items-center justify-between text-xs font-bold transition-colors ${
-                                theme === "light"
-                                  ? "border-slate-200 text-blue-600 group-hover:text-emerald-600"
-                                  : "border-slate-700/40 text-emerald-400 group-hover:text-emerald-300"
-                              }`}
-                            >
-                              <span className="flex items-center gap-1.5">
-                                <Eye className="w-3.5 h-3.5" />
-                                <span>Espiar Atendimento do Vendedor</span>
-                              </span>
-                              <ChevronRight className="w-4 h-4 opacity-70 group-hover:translate-x-1 transition-transform" />
-                            </div>
-                          </div>
-                        ))}
+                            );
+                          })}
                       </div>
                     ) : (
                       <div
@@ -2072,6 +2450,316 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
               </div>
             )}
           </aside>
+        )}
+
+        {/* ========================================================================= */}
+        {/* 5. MODAL EXECUTIVO: RELATÓRIO DE DOMINÂNCIA & IA DA COMERCIAL VERTO (AGRO) */}
+        {/* ========================================================================= */}
+        {isAiReportOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in">
+            <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-700/80 bg-[#0B1224] text-white shadow-2xl overflow-hidden">
+              {/* Header do Relatório */}
+              <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-slate-900 via-[#0B1224] to-[#0A1A2F]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <Sparkles className="w-5 h-5 text-white animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base sm:text-lg font-black tracking-wide">
+                        Relatório de Dominância & IA Comercial Verto
+                      </h2>
+                      <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        Setor Agro
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      Geomarketing e Estratégia de Expansão Territorial • Máquinas e Equipamentos de Plantio
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAiReportData(null);
+                      fetchAiReport();
+                    }}
+                    title="Recalcular Análise com IA"
+                    className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors border border-slate-700/50"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loadingAiReport ? "animate-spin text-emerald-400" : ""}`} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAiReportOpen(false)}
+                    className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors border border-slate-700/50"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Corpo do Relatório com Scroll */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-5">
+                {loadingAiReport ? (
+                  <div className="py-20 flex flex-col items-center justify-center space-y-4">
+                    <div className="relative">
+                      <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
+                      <Sparkles className="w-5 h-5 text-yellow-300 absolute -top-1 -right-1 animate-pulse" />
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-sm font-bold text-white">
+                        Analisando Malha Geográfica da Comercial Verto...
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-1 max-w-sm">
+                        Processando dados de Pelotas, Passo Fundo, taxa de fechamento e polos de grãos no Brasil.
+                      </p>
+                    </div>
+                  </div>
+                ) : aiReportData ? (
+                  <>
+                    {/* Linha de KPIs de Dominância */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="p-3.5 rounded-xl border border-emerald-800/50 bg-emerald-950/20 backdrop-blur-md">
+                        <div className="text-[10px] uppercase font-bold text-emerald-400">
+                          Territórios Dominados
+                        </div>
+                        <div className="text-xl font-black text-emerald-300 mt-0.5">
+                          {aiReportData.metrics.dominancePercentage}%
+                        </div>
+                        <div className="text-[11px] text-emerald-400/90 font-medium mt-0.5">
+                          {aiReportData.metrics.closedCities} polos • {aiReportData.metrics.wonCount} vendas
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl border border-amber-800/50 bg-amber-950/20 backdrop-blur-md">
+                        <div className="text-[10px] uppercase font-bold text-amber-400">
+                          Em Disputa Ativa
+                        </div>
+                        <div className="text-xl font-black text-amber-300 mt-0.5">
+                          {aiReportData.metrics.inAttendancePercentage}%
+                        </div>
+                        <div className="text-[11px] text-amber-400/90 font-medium mt-0.5">
+                          {aiReportData.metrics.inAttendanceCities} polos • {aiReportData.metrics.inAttendanceCount} leads
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl border border-rose-800/50 bg-rose-950/20 backdrop-blur-md">
+                        <div className="text-[10px] uppercase font-bold text-rose-400">
+                          Perdas / Repescagem
+                        </div>
+                        <div className="text-xl font-black text-rose-300 mt-0.5">
+                          {aiReportData.metrics.lostPercentage}%
+                        </div>
+                        <div className="text-[11px] text-rose-400/90 font-medium mt-0.5">
+                          {aiReportData.metrics.lostCities} polos • {aiReportData.metrics.lostCount} perdas
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-md">
+                        <div className="text-[10px] uppercase font-bold text-slate-400">
+                          Faturamento Fechado
+                        </div>
+                        <div className="text-xl font-black text-white mt-0.5">
+                          {formatCurrency(aiReportData.metrics.totalRevenue)}
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-medium mt-0.5">
+                          {aiReportData.metrics.unexploredCities} polos a conquistar
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Resumo Executivo */}
+                    <div className="p-4 rounded-xl border border-emerald-800/40 bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-950">
+                      <div className="flex items-center gap-2 mb-2">
+                        <BarChart3 className="w-4 h-4 text-emerald-400" />
+                        <h3 className="text-xs uppercase font-extrabold tracking-wider text-emerald-300">
+                          Diagnóstico Executivo da Comercial Verto
+                        </h3>
+                      </div>
+                      <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                        {aiReportData.executiveSummary}
+                      </p>
+                    </div>
+
+                    {/* Grade de Estratégias */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Card 1: Avanço Comercial */}
+                      <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/70 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Target className="w-4 h-4 text-emerald-400" />
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                            {aiReportData.commercialStrategy.title}
+                          </h4>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {aiReportData.commercialStrategy.description}
+                        </p>
+                        <div className="space-y-1.5 pt-1">
+                          <div className="text-[10px] font-bold uppercase text-emerald-400">
+                            Ações Táticas Recomendadas:
+                          </div>
+                          {aiReportData.commercialStrategy.actionItems.map((item: string, idx: number) => (
+                            <div key={idx} className="flex items-start gap-2 text-xs text-slate-300">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                              <span>{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {aiReportData.commercialStrategy.priorityCities?.length > 0 && (
+                          <div className="pt-2 border-t border-slate-800 flex flex-wrap items-center gap-1.5">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">Praças Alvo:</span>
+                            {aiReportData.commercialStrategy.priorityCities.map((c: string, idx: number) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                              >
+                                {c}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card 2: Marketing & Meta Ads */}
+                      <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/70 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-cyan-400" />
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                            {aiReportData.marketingStrategy.title}
+                          </h4>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {aiReportData.marketingStrategy.description}
+                        </p>
+                        <div className="space-y-1.5 pt-1">
+                          <div className="text-[10px] font-bold uppercase text-cyan-400">
+                            Distribuição Recomendada de Orçamento:
+                          </div>
+                          {aiReportData.marketingStrategy.suggestedBudgetDistribution?.map((dist: any, idx: number) => (
+                            <div key={idx} className="space-y-1">
+                              <div className="flex justify-between text-xs">
+                                <span className="font-semibold text-slate-200">{dist.region}</span>
+                                <span className="font-extrabold text-cyan-400">{dist.percentage}%</span>
+                              </div>
+                              <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-cyan-500 to-blue-500"
+                                  style={{ width: `${dist.percentage}%` }}
+                                ></div>
+                              </div>
+                              <div className="text-[10px] text-slate-400">{dist.focus}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Card 3: Plano de Repescagem */}
+                      <div className="p-4 rounded-xl border border-rose-900/40 bg-gradient-to-br from-rose-950/20 to-slate-900/80 space-y-3 md:col-span-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 text-rose-400" />
+                            <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                              {aiReportData.lostRecoveryPlan.title}
+                            </h4>
+                          </div>
+                          <span className="text-[10px] font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30">
+                            Foco: Pelotas & Polos de Perdas
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {aiReportData.lostRecoveryPlan.diagnosis}
+                        </p>
+
+                        <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-emerald-400 uppercase flex items-center gap-1.5">
+                              <FileText className="w-3.5 h-3.5" />
+                              Script Sugerido para WhatsApp (Abordagem Consultiva Verto):
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(aiReportData.lostRecoveryPlan.reengagementScript)}
+                              className="px-2 py-1 rounded-md text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1 transition-all"
+                            >
+                              {copiedScript ? (
+                                <>
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                  <span className="text-emerald-400">Copiado!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copiar Mensagem</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                          <p className="text-xs italic text-slate-300 leading-relaxed font-sans border-l-2 border-emerald-500 pl-2.5">
+                            "{aiReportData.lostRecoveryPlan.reengagementScript}"
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Card 4: Tabela de Expansão dos Polos Agro */}
+                      <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/70 space-y-3 md:col-span-2">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-emerald-400" />
+                          <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                            Polos Agro Prioritários para Penetração da Comercial Verto
+                          </h4>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                          {aiReportData.expansionHubs?.map((hub: any, idx: number) => (
+                            <div
+                              key={idx}
+                              className="p-3 rounded-xl border border-slate-800 bg-slate-950/60 space-y-1.5 hover:border-emerald-500/40 transition-colors"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-extrabold text-xs text-white">
+                                  {hub.city} - {hub.state}
+                                </span>
+                                <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                                  {hub.status}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-400 leading-snug">
+                                {hub.potentialReason}
+                              </p>
+                              <div className="pt-1.5 border-t border-slate-800/80 text-[10px] text-emerald-300 font-semibold flex items-center gap-1">
+                                <span>🎯 Ação:</span>
+                                <span>{hub.tacticalAction}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="py-12 text-center text-xs text-slate-400">
+                    Não foi possível carregar os dados estratégicos. Tente novamente em instantes.
+                  </div>
+                )}
+              </div>
+
+              {/* Rodapé do Modal */}
+              <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-between">
+                <span className="text-[11px] text-slate-400">
+                  Comercial Verto • Inteligência Geoanalítica Integrada ao CRM
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsAiReportOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white transition-all border border-slate-700"
+                >
+                  Fechar Relatório
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

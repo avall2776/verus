@@ -3,6 +3,7 @@ import { ProposalsService } from './proposals.service';
 import { CreateProposalDto } from './dto/create-proposal.dto';
 import { UpdateProposalDto } from './dto/update-proposal.dto';
 import { UpdateProposalStatusDto } from './dto/update-proposal-status.dto';
+import { CreateProposalProductDto, UpdateProposalProductDto, UpdateDriveConfigDto } from './dto/proposal-product.dto';
 export declare class ProposalsController {
     private readonly proposalsService;
     constructor(proposalsService: ProposalsService);
@@ -32,6 +33,58 @@ export declare class ProposalsController {
         cnpj: string;
         logoUrl: string;
         address: string;
+    }>;
+    getProducts(tenantId: string, folder?: string): Promise<{
+        price: number;
+        id: string;
+        name: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        description: string | null;
+        driveId: string | null;
+        driveUrl: string | null;
+        folderName: string | null;
+        unit: string | null;
+    }[]>;
+    createProduct(tenantId: string, dto: CreateProposalProductDto): Promise<{
+        price: number;
+        id: string;
+        name: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        description: string | null;
+        driveId: string | null;
+        driveUrl: string | null;
+        folderName: string | null;
+        unit: string | null;
+    }>;
+    updateProduct(tenantId: string, id: string, dto: UpdateProposalProductDto): Promise<{
+        price: number;
+        id: string;
+        name: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        description: string | null;
+        driveId: string | null;
+        driveUrl: string | null;
+        folderName: string | null;
+        unit: string | null;
+    }>;
+    deleteProduct(tenantId: string, id: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    getDriveConfig(tenantId: string): Promise<{
+        driveFolder: string;
+    }>;
+    updateDriveConfig(tenantId: string, body: UpdateDriveConfigDto): Promise<{
+        driveFolder: string;
     }>;
     findOne(tenantId: string, id: string): Promise<any>;
     update(tenantId: string, id: string, dto: UpdateProposalDto): Promise<any>;

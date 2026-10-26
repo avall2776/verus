@@ -54,6 +54,16 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateProposalItemDto.prototype, "total", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProposalItemDto.prototype, "imageUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateProposalItemDto.prototype, "imageDriveId", void 0);
 class CreateProposalDto {
 }
 exports.CreateProposalDto = CreateProposalDto;

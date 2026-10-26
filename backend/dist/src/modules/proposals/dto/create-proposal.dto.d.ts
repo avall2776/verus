@@ -6,6 +6,8 @@ export declare class CreateProposalItemDto {
     unitPrice?: number;
     discountPercent?: number;
     total?: number;
+    imageUrl?: string;
+    imageDriveId?: string;
 }
 export declare class CreateProposalDto {
     id?: string;

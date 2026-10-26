@@ -18,6 +18,18 @@ export declare class RadarStoriesController {
             percentage: number;
         }[];
     }>;
+    getActivePosts(tenantId: string): Promise<{
+        id: any;
+        messageId: any;
+        title: any;
+        category: any;
+        mediaUrl: any;
+        postedAt: any;
+        postedAtRelative: string;
+        postedAtDate: string;
+        postedAtTime: string;
+        viewsCount: number;
+    }[]>;
     getViewers(tenantId: string, status?: string, category?: string, search?: string): Promise<import("../services/radar-stories.service").StoryViewerItem[]>;
     recordStatusView(tenantId: string, body: {
         phone: string;

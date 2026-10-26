@@ -847,24 +847,43 @@ export class WebhooksController {
             category = 'Peças & Serviços';
           }
 
+          const rawJpeg = messageObj?.imageMessage?.jpegThumbnail || messageObj?.videoMessage?.jpegThumbnail;
+          let thumbnailBase64: string | null = null;
+          if (rawJpeg) {
+            if (Buffer.isBuffer(rawJpeg)) {
+              thumbnailBase64 = `data:image/jpeg;base64,${rawJpeg.toString('base64')}`;
+            } else if (typeof rawJpeg === 'string' && rawJpeg.length > 20) {
+              thumbnailBase64 = rawJpeg.startsWith('data:') ? rawJpeg : `data:image/jpeg;base64,${rawJpeg}`;
+            }
+          }
+
+          const mediaUrl =
+            data?.mediaUrl ||
+            payload?.mediaUrl ||
+            messageObj?.imageMessage?.url ||
+            thumbnailBase64 ||
+            null;
+
           const postId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
           await this.prisma.$executeRawUnsafe(
-            `INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "postedAt")
-             VALUES ($1, $2, $3, $4, $5, $6)
-             ON CONFLICT DO NOTHING`,
+            `INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT ("id") DO NOTHING`,
             postId,
             tenantId,
             key.id,
             caption.slice(0, 150),
             category,
+            mediaUrl,
             new Date()
           );
 
-          this.logger.log(`📢 [Radar Stories] Novo Story postado detectado no WhatsApp: [${key.id}] "${caption}" (${category})`);
+          this.logger.log(`[Radar Stories] Novo Story postado detectado no WhatsApp: [${key.id}] "${caption}" (${category})`);
           this.chatGateway.emitStoryPosted(tenantId, {
             messageId: key.id,
             title: caption,
             category,
+            mediaUrl,
           });
           return true;
         }
@@ -983,7 +1002,7 @@ export class WebhooksController {
               viewedAt
             );
 
-            this.logger.log(`👁️ [Radar Stories] Visualização gravada: ${cleanPhone} (${contact.name}) viu "${storyTitle}" às ${viewedAt.toISOString()}`);
+            this.logger.log(`[Radar Stories] Visualização gravada: ${cleanPhone} (${contact.name}) viu "${storyTitle}" às ${viewedAt.toISOString()}`);
 
             this.chatGateway.emitStoryViewed(tenantId, {
               viewId,

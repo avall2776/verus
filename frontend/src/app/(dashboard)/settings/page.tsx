@@ -14,6 +14,7 @@ import {
   CreditCard,
   Sparkles,
   KeyRound,
+  PackageCheck,
 } from "lucide-react";
 
 import CompanySettingsTab from "@/components/settings/CompanySettingsTab";
@@ -24,6 +25,7 @@ import DepartmentsSettingsTab from "@/components/settings/DepartmentsSettingsTab
 import QuickRepliesSettingsTab from "@/components/settings/QuickRepliesSettingsTab";
 import AutomationsSettingsTab from "@/components/settings/AutomationsSettingsTab";
 import ApiSettingsTab from "@/components/settings/ApiSettingsTab";
+import ProposalProductsSettingsTab from "@/components/settings/ProposalProductsSettingsTab";
 
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -33,6 +35,7 @@ type TabId =
   | "ai"
   | "users"
   | "departments"
+  | "products"
   | "quick-replies"
   | "automations"
   | "api";
@@ -74,6 +77,12 @@ const SETTINGS_TABS: TabConfig[] = [
     label: "Departamentos & Filas",
     description: "Segmentação de atendimento, roteamento de filas e filiais",
     icon: Network,
+  },
+  {
+    id: "products",
+    label: "Catálogo & Drive (Propostas)",
+    description: "Pasta do Drive e catálogo de produtos com fotos integradas para orçamentos e propostas",
+    icon: PackageCheck,
   },
   {
     id: "quick-replies",
@@ -172,6 +181,7 @@ function SettingsContent() {
           {activeTab === "ai" && <AiSettingsTab />}
           {activeTab === "users" && <UsersSettingsTab />}
           {activeTab === "departments" && <DepartmentsSettingsTab />}
+          {activeTab === "products" && <ProposalProductsSettingsTab />}
           {activeTab === "quick-replies" && <QuickRepliesSettingsTab />}
           {activeTab === "automations" && <AutomationsSettingsTab />}
           {activeTab === "api" && <ApiSettingsTab />}

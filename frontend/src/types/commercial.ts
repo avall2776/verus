@@ -10,10 +10,26 @@ export interface ProposalItem {
   id: string;
   name: string;
   description?: string;
+  imageUrl?: string;
+  imageDriveId?: string;
   quantity: number;
   unitPrice: number;
   discountPercent?: number;
   total: number;
+}
+
+export interface ProposalProduct {
+  id: string;
+  name: string;
+  description?: string | null;
+  price?: number | null;
+  driveUrl?: string | null;
+  driveId?: string | null;
+  folderName?: string | null;
+  unit?: string | null;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CompanyIssuer {

@@ -335,6 +335,7 @@ export declare class SupportService {
             leadNotificationPhone: string | null;
             address: string | null;
             isActive: boolean;
+            proposalDriveFolder: string | null;
             aiEnabled: boolean;
             aiName: string | null;
             aiModel: string;
@@ -452,6 +453,7 @@ export declare class SupportService {
                 leadNotificationPhone: string | null;
                 address: string | null;
                 isActive: boolean;
+                proposalDriveFolder: string | null;
                 aiEnabled: boolean;
                 aiName: string | null;
                 aiModel: string;

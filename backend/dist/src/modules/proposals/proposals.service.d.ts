@@ -2,6 +2,7 @@ import { PrismaService } from '../../shared/database/prisma.service';
 import { CreateProposalDto } from './dto/create-proposal.dto';
 import { UpdateProposalStatusDto } from './dto/update-proposal-status.dto';
 import { UpdateProposalDto } from './dto/update-proposal.dto';
+import { CreateProposalProductDto, UpdateProposalProductDto } from './dto/proposal-product.dto';
 export declare class ProposalsService {
     private readonly prisma;
     constructor(prisma: PrismaService);
@@ -54,4 +55,56 @@ export declare class ProposalsService {
         address: string;
     }>;
     generatePdfHtml(id: string, tenantId?: string): Promise<string>;
+    findAllProducts(tenantId: string, folderName?: string): Promise<{
+        price: number;
+        id: string;
+        name: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        description: string | null;
+        driveId: string | null;
+        driveUrl: string | null;
+        folderName: string | null;
+        unit: string | null;
+    }[]>;
+    createProduct(tenantId: string, dto: CreateProposalProductDto): Promise<{
+        price: number;
+        id: string;
+        name: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        description: string | null;
+        driveId: string | null;
+        driveUrl: string | null;
+        folderName: string | null;
+        unit: string | null;
+    }>;
+    updateProduct(tenantId: string, id: string, dto: UpdateProposalProductDto): Promise<{
+        price: number;
+        id: string;
+        name: string;
+        tenantId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        description: string | null;
+        driveId: string | null;
+        driveUrl: string | null;
+        folderName: string | null;
+        unit: string | null;
+    }>;
+    deleteProduct(tenantId: string, id: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    getDriveConfig(tenantId: string): Promise<{
+        driveFolder: string;
+    }>;
+    updateDriveConfig(tenantId: string, driveFolder: string): Promise<{
+        driveFolder: string;
+    }>;
 }

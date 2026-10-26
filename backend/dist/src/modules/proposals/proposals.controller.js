@@ -18,6 +18,7 @@ const proposals_service_1 = require("./proposals.service");
 const create_proposal_dto_1 = require("./dto/create-proposal.dto");
 const update_proposal_dto_1 = require("./dto/update-proposal.dto");
 const update_proposal_status_dto_1 = require("./dto/update-proposal-status.dto");
+const proposal_product_dto_1 = require("./dto/proposal-product.dto");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
 const plan_guard_1 = require("../../shared/guards/plan.guard");
 const require_module_decorator_1 = require("../../shared/decorators/require-module.decorator");
@@ -37,6 +38,24 @@ let ProposalsController = class ProposalsController {
     }
     async updateCompanyProfile(tenantId, body) {
         return this.proposalsService.updateCompanyProfile(tenantId, body);
+    }
+    async getProducts(tenantId, folder) {
+        return this.proposalsService.findAllProducts(tenantId, folder);
+    }
+    async createProduct(tenantId, dto) {
+        return this.proposalsService.createProduct(tenantId, dto);
+    }
+    async updateProduct(tenantId, id, dto) {
+        return this.proposalsService.updateProduct(tenantId, id, dto);
+    }
+    async deleteProduct(tenantId, id) {
+        return this.proposalsService.deleteProduct(tenantId, id);
+    }
+    async getDriveConfig(tenantId) {
+        return this.proposalsService.getDriveConfig(tenantId);
+    }
+    async updateDriveConfig(tenantId, body) {
+        return this.proposalsService.updateDriveConfig(tenantId, body.driveFolder || '');
     }
     async findOne(tenantId, id) {
         return this.proposalsService.findOne(tenantId, id);
@@ -109,6 +128,66 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], ProposalsController.prototype, "updateCompanyProfile", null);
+__decorate([
+    (0, common_1.Get)('products'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('folder')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "getProducts", null);
+__decorate([
+    (0, common_1.Post)('products'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, proposal_product_dto_1.CreateProposalProductDto]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "createProduct", null);
+__decorate([
+    (0, common_1.Patch)('products/:id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, proposal_product_dto_1.UpdateProposalProductDto]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "updateProduct", null);
+__decorate([
+    (0, common_1.Delete)('products/:id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "deleteProduct", null);
+__decorate([
+    (0, common_1.Get)('drive-config'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "getDriveConfig", null);
+__decorate([
+    (0, common_1.Patch)('drive-config'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),
+    (0, require_module_decorator_1.RequireModule)('proposalsContracts'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, proposal_product_dto_1.UpdateDriveConfigDto]),
+    __metadata("design:returntype", Promise)
+], ProposalsController.prototype, "updateDriveConfig", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, plan_guard_1.PlanGuard),

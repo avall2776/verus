@@ -40,10 +40,22 @@ export declare class DashboardController {
             totalSalesCount: number;
             totalRevenue: number;
             totalInAttendance: number;
+            totalLostCount: number;
+            totalLostVolume: number;
             totalCitiesMapped: number;
+            closedCitiesCount: number;
+            inAttendanceCitiesCount: number;
+            lostCitiesCount: number;
+            unexploredCitiesCount: number;
+            dominancePercentage: number;
+            inAttendancePercentage: number;
+            lostPercentage: number;
+            unexploredPercentage: number;
             activeLiveAttendances: number;
             conversionRate: number;
             topRegion: string;
+            tenantName: string;
+            tenantNiche: string;
         };
         regions: {
             name: string;
@@ -68,10 +80,13 @@ export declare class DashboardController {
             region: string;
             lat: number;
             lng: number;
-            status: "closed" | "in_attendance" | "unexplored";
+            status: "closed" | "lost" | "in_attendance" | "unexplored";
             salesCount: number;
             salesVolume: number;
             inAttendanceCount: number;
+            lostCount: number;
+            lostVolume: number;
+            totalDeals: number;
             isLiveNow: boolean;
             assignedSellers: string[];
             trafficSource: {
@@ -81,4 +96,5 @@ export declare class DashboardController {
             recentDeals: any[];
         }[];
     }>;
+    getStrategicAiReport(tenantId: string): Promise<any>;
 }

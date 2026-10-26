@@ -4,6 +4,7 @@ import { ProposalsService } from './proposals.service';
 import { CreateProposalDto } from './dto/create-proposal.dto';
 import { UpdateProposalDto } from './dto/update-proposal.dto';
 import { UpdateProposalStatusDto } from './dto/update-proposal-status.dto';
+import { CreateProposalProductDto, UpdateProposalProductDto, UpdateDriveConfigDto } from './dto/proposal-product.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { PlanGuard } from '../../shared/guards/plan.guard';
 import { RequireModule } from '../../shared/decorators/require-module.decorator';
@@ -48,6 +49,66 @@ export class ProposalsController {
     @Body() body: { name?: string; cnpj?: string; logoUrl?: string; phone?: string; address?: string; email?: string },
   ) {
     return this.proposalsService.updateCompanyProfile(tenantId, body);
+  }
+
+  // --- CATÁLOGO DE PRODUTOS & FOTOS DO DRIVE ---
+  @Get('products')
+  @UseGuards(JwtAuthGuard, PlanGuard)
+  @RequireModule('proposalsContracts')
+  async getProducts(
+    @CurrentTenant() tenantId: string,
+    @Query('folder') folder?: string,
+  ) {
+    return this.proposalsService.findAllProducts(tenantId, folder);
+  }
+
+  @Post('products')
+  @UseGuards(JwtAuthGuard, PlanGuard)
+  @RequireModule('proposalsContracts')
+  async createProduct(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: CreateProposalProductDto,
+  ) {
+    return this.proposalsService.createProduct(tenantId, dto);
+  }
+
+  @Patch('products/:id')
+  @UseGuards(JwtAuthGuard, PlanGuard)
+  @RequireModule('proposalsContracts')
+  async updateProduct(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateProposalProductDto,
+  ) {
+    return this.proposalsService.updateProduct(tenantId, id, dto);
+  }
+
+  @Delete('products/:id')
+  @UseGuards(JwtAuthGuard, PlanGuard)
+  @RequireModule('proposalsContracts')
+  async deleteProduct(
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.proposalsService.deleteProduct(tenantId, id);
+  }
+
+  // --- CONFIGURAÇÃO DA PASTA DO GOOGLE DRIVE ---
+  @Get('drive-config')
+  @UseGuards(JwtAuthGuard, PlanGuard)
+  @RequireModule('proposalsContracts')
+  async getDriveConfig(@CurrentTenant() tenantId: string) {
+    return this.proposalsService.getDriveConfig(tenantId);
+  }
+
+  @Patch('drive-config')
+  @UseGuards(JwtAuthGuard, PlanGuard)
+  @RequireModule('proposalsContracts')
+  async updateDriveConfig(
+    @CurrentTenant() tenantId: string,
+    @Body() body: UpdateDriveConfigDto,
+  ) {
+    return this.proposalsService.updateDriveConfig(tenantId, body.driveFolder || '');
   }
 
   @Get(':id')

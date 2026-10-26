@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { AiService } from '../../ai/ai.service';
 import OpenAI from 'openai';
@@ -32,13 +32,95 @@ export interface StoryViewerItem {
 }
 
 @Injectable()
-export class RadarStoriesService {
+export class RadarStoriesService implements OnModuleInit {
   private readonly logger = new Logger(RadarStoriesService.name);
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly aiService: AiService
   ) {}
+
+  async onModuleInit() {
+    try {
+      await this.prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "whatsapp_status_posts" (
+          "id" TEXT PRIMARY KEY,
+          "tenantId" TEXT NOT NULL,
+          "messageId" TEXT NOT NULL,
+          "title" TEXT NOT NULL,
+          "category" TEXT NOT NULL,
+          "mediaUrl" TEXT,
+          "postedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+      `);
+      await this.prisma.$executeRawUnsafe(`
+        ALTER TABLE "whatsapp_status_posts" ADD COLUMN IF NOT EXISTS "mediaUrl" TEXT;
+      `);
+      await this.prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "whatsapp_status_views" (
+          "id" TEXT PRIMARY KEY,
+          "tenantId" TEXT NOT NULL,
+          "contactId" TEXT,
+          "phone" TEXT NOT NULL,
+          "contactName" TEXT,
+          "city" TEXT,
+          "state" TEXT,
+          "statusMessageId" TEXT NOT NULL,
+          "storyTitle" TEXT NOT NULL,
+          "category" TEXT NOT NULL,
+          "mediaUrl" TEXT,
+          "viewedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+      `);
+      await this.prisma.$executeRawUnsafe(`
+        ALTER TABLE "whatsapp_status_views" ADD COLUMN IF NOT EXISTS "mediaUrl" TEXT;
+      `);
+    } catch (err: any) {
+      this.logger.warn(`Verificacao tabelas status posts/views: ${err.message}`);
+    }
+  }
+
+  /**
+   * Retorna os Stories ativos postados nas ultimas 24h com a contagem de visualizacoes
+   */
+  async getActivePosts(tenantId: string) {
+    try {
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const posts = await this.prisma.$queryRawUnsafe<any[]>(
+        `SELECT p.*, 
+                COUNT(v.id)::int as "viewsCount"
+         FROM "whatsapp_status_posts" p
+         LEFT JOIN "whatsapp_status_views" v 
+           ON (v."tenantId" = p."tenantId" AND (v."statusMessageId" = p."messageId" OR v."storyTitle" = p."title"))
+         WHERE p."tenantId" = $1 AND p."postedAt" >= $2
+         GROUP BY p.id
+         ORDER BY p."postedAt" DESC
+         LIMIT 20`,
+        tenantId,
+        twentyFourHoursAgo
+      );
+
+      return (posts || []).map((p) => {
+        const { dateFormatted, timeFormatted, relative } = this.formatDateTime(p.postedAt);
+        return {
+          id: p.id,
+          messageId: p.messageId,
+          title: p.title,
+          category: p.category,
+          mediaUrl: p.mediaUrl,
+          postedAt: p.postedAt,
+          postedAtRelative: relative,
+          postedAtDate: dateFormatted,
+          postedAtTime: timeFormatted,
+          viewsCount: Number(p.viewsCount) || 0,
+        };
+      });
+    } catch (err: any) {
+      this.logger.warn(`Erro ao carregar active posts: ${err.message}`);
+      return [];
+    }
+  }
 
   /**
    * Helper para formatar data e hora com fuso de Brasília (America/Sao_Paulo)

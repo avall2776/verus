@@ -283,6 +283,7 @@ export declare class SupportController {
             leadNotificationPhone: string | null;
             address: string | null;
             isActive: boolean;
+            proposalDriveFolder: string | null;
             aiEnabled: boolean;
             aiName: string | null;
             aiModel: string;
@@ -400,6 +401,7 @@ export declare class SupportController {
                 leadNotificationPhone: string | null;
                 address: string | null;
                 isActive: boolean;
+                proposalDriveFolder: string | null;
                 aiEnabled: boolean;
                 aiName: string | null;
                 aiModel: string;

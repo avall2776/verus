@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProposalsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../shared/database/prisma.service");
+const google_drive_helper_1 = require("../../shared/helpers/google-drive.helper");
 const client_1 = require("@prisma/client");
 let ProposalsService = class ProposalsService {
     constructor(prisma) {
@@ -27,6 +28,8 @@ let ProposalsService = class ProposalsService {
             id: item.id,
             name: item.name || item.description,
             description: item.description,
+            imageUrl: item.imageUrl || null,
+            imageDriveId: item.imageDriveId || null,
             quantity: item.quantity,
             unitPrice: Number(item.unitPrice || 0),
             discountPercent: Number(item.discountPercent || 0),
@@ -176,9 +179,12 @@ let ProposalsService = class ProposalsService {
             const u = Number(item.unitPrice) || 0;
             const t = item.total ? Number(item.total) : q * u;
             calculatedTotal += t;
+            const mediaDriveId = item.imageDriveId || (item.imageUrl ? (0, google_drive_helper_1.extractGoogleDriveId)(item.imageUrl) : null);
             return {
                 name: item.name || item.description || 'Item',
                 description: item.description || item.name || 'Item de Proposta',
+                imageUrl: item.imageUrl || null,
+                imageDriveId: mediaDriveId,
                 quantity: q,
                 unitPrice: new client_1.Prisma.Decimal(u),
                 discountPercent: item.discountPercent ? new client_1.Prisma.Decimal(item.discountPercent) : new client_1.Prisma.Decimal(0),
@@ -257,10 +263,13 @@ let ProposalsService = class ProposalsService {
                     const u = Number(item.unitPrice) || 0;
                     const t = item.total ? Number(item.total) : q * u;
                     calculatedTotal += t;
+                    const mediaDriveId = item.imageDriveId || (item.imageUrl ? (0, google_drive_helper_1.extractGoogleDriveId)(item.imageUrl) : null);
                     return {
                         proposalId: existing.id,
                         name: item.name || item.description || 'Item',
                         description: item.description || item.name || 'Item de Proposta',
+                        imageUrl: item.imageUrl || null,
+                        imageDriveId: mediaDriveId,
                         quantity: q,
                         unitPrice: new client_1.Prisma.Decimal(u),
                         discountPercent: item.discountPercent ? new client_1.Prisma.Decimal(item.discountPercent) : new client_1.Prisma.Decimal(0),
@@ -499,14 +508,31 @@ let ProposalsService = class ProposalsService {
         const proposal = this.formatProposal(rawProposal);
         const tenant = rawProposal.tenant;
         const itemsRows = (proposal.items || [])
-            .map((item) => `
-        <tr>
-          <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${item.name || item.description}</td>
-          <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${item.quantity}</td>
-          <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">R$ ${Number(item.unitPrice).toFixed(2)}</td>
-          <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: bold;">R$ ${Number(item.total || item.totalPrice).toFixed(2)}</td>
-        </tr>
-      `)
+            .map((item) => {
+            const driveId = item.imageDriveId || (item.imageUrl ? (0, google_drive_helper_1.extractGoogleDriveId)(item.imageUrl) : null);
+            const thumbUrl = driveId
+                ? `https://drive.google.com/thumbnail?id=${driveId}&sz=w400`
+                : item.imageUrl;
+            const imgTag = thumbUrl
+                ? `<img src="${thumbUrl}" alt="${item.name || ''}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; margin-right: 12px; vertical-align: middle;" />`
+                : '';
+            return `
+          <tr>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+              <div style="display: flex; align-items: center;">
+                ${imgTag}
+                <div>
+                  <div style="font-weight: 600; color: #1a202c;">${item.name || item.description}</div>
+                  ${item.description && item.description !== item.name ? `<div style="font-size: 11px; color: #718096; margin-top: 2px;">${item.description}</div>` : ''}
+                </div>
+              </div>
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${item.quantity}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">R$ ${Number(item.unitPrice).toFixed(2)}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: bold;">R$ ${Number(item.total || item.totalPrice).toFixed(2)}</td>
+          </tr>
+          `;
+        })
             .join('');
         return `
       <!DOCTYPE html>
@@ -577,6 +603,113 @@ let ProposalsService = class ProposalsService {
       </body>
       </html>
     `;
+    }
+    async findAllProducts(tenantId, folderName) {
+        const where = { tenantId, isActive: true };
+        if (folderName && folderName !== 'ALL') {
+            where.folderName = folderName;
+        }
+        const products = await this.prisma.proposalProduct.findMany({
+            where,
+            orderBy: [{ folderName: 'asc' }, { name: 'asc' }],
+        });
+        return products.map((p) => ({
+            ...p,
+            price: Number(p.price || 0),
+        }));
+    }
+    async createProduct(tenantId, dto) {
+        const driveUrl = dto.driveUrl ? dto.driveUrl.trim() : null;
+        const driveId = driveUrl ? (0, google_drive_helper_1.extractGoogleDriveId)(driveUrl) : (dto.driveId || null);
+        const product = await this.prisma.proposalProduct.create({
+            data: {
+                tenantId,
+                name: dto.name.trim(),
+                description: dto.description?.trim() || null,
+                price: dto.price !== undefined ? new client_1.Prisma.Decimal(dto.price) : new client_1.Prisma.Decimal(0),
+                driveUrl,
+                driveId,
+                folderName: dto.folderName?.trim() || 'Geral',
+                unit: dto.unit?.trim() || 'un',
+                isActive: dto.isActive !== undefined ? dto.isActive : true,
+            },
+        });
+        return {
+            ...product,
+            price: Number(product.price || 0),
+        };
+    }
+    async updateProduct(tenantId, id, dto) {
+        const existing = await this.prisma.proposalProduct.findFirst({
+            where: { id, tenantId },
+        });
+        if (!existing) {
+            throw new common_1.NotFoundException('Produto não encontrado.');
+        }
+        const data = {};
+        if (dto.name !== undefined)
+            data.name = dto.name.trim();
+        if (dto.description !== undefined)
+            data.description = dto.description?.trim() || null;
+        if (dto.price !== undefined)
+            data.price = new client_1.Prisma.Decimal(dto.price);
+        if (dto.folderName !== undefined)
+            data.folderName = dto.folderName?.trim() || 'Geral';
+        if (dto.unit !== undefined)
+            data.unit = dto.unit?.trim() || 'un';
+        if (dto.isActive !== undefined)
+            data.isActive = dto.isActive;
+        if (dto.driveUrl !== undefined) {
+            const driveUrl = dto.driveUrl ? dto.driveUrl.trim() : null;
+            data.driveUrl = driveUrl;
+            data.driveId = driveUrl ? (0, google_drive_helper_1.extractGoogleDriveId)(driveUrl) : null;
+        }
+        const updated = await this.prisma.proposalProduct.update({
+            where: { id },
+            data,
+        });
+        return {
+            ...updated,
+            price: Number(updated.price || 0),
+        };
+    }
+    async deleteProduct(tenantId, id) {
+        const existing = await this.prisma.proposalProduct.findFirst({
+            where: { id, tenantId },
+        });
+        if (!existing) {
+            throw new common_1.NotFoundException('Produto não encontrado.');
+        }
+        await this.prisma.proposalProduct.delete({
+            where: { id },
+        });
+        return { success: true, message: 'Produto removido do catálogo com sucesso.' };
+    }
+    async getDriveConfig(tenantId) {
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: {
+                proposalDriveFolder: true,
+            },
+        });
+        return {
+            driveFolder: tenant?.proposalDriveFolder || process.env.GOOGLE_DRIVE_ROOT_FOLDER || '',
+        };
+    }
+    async updateDriveConfig(tenantId, driveFolder) {
+        const cleanFolder = driveFolder ? driveFolder.trim() : null;
+        const updated = await this.prisma.tenant.update({
+            where: { id: tenantId },
+            data: {
+                proposalDriveFolder: cleanFolder,
+            },
+            select: {
+                proposalDriveFolder: true,
+            },
+        });
+        return {
+            driveFolder: updated.proposalDriveFolder || '',
+        };
     }
 };
 exports.ProposalsService = ProposalsService;

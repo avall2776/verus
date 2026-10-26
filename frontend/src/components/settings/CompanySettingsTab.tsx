@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Save, ShieldCheck, CreditCard, Users, FileText, Phone, Mail, MapPin, Loader2, ChevronRight, BellRing } from "lucide-react";
+import { Building2, Save, ShieldCheck, CreditCard, Users, FileText, Phone, Mail, MapPin, Loader2, ChevronRight, BellRing, PackageCheck } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -310,6 +310,32 @@ export default function CompanySettingsTab() {
           </button>
         </div>
       </form>
+
+      {/* Atalho Integrado: Catálogo & Google Drive de Produtos */}
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-slate-500/5 to-transparent border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/15 border border-blue-200 dark:border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+            <PackageCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              Catálogo de Produtos & Fotos no Google Drive (Propostas)
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Configure a pasta do Drive e seus produtos para puxar as fotos automaticamente ao gerar orçamentos e propostas comerciais.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => router.push("/settings?tab=products")}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${primaryBtnClass}`}
+        >
+          <span>Configurar Catálogo & Drive</span>
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }

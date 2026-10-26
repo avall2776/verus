@@ -61,6 +61,8 @@ model Tenant {
   businessHours         BusinessHours[]
   whatsappInstances     WhatsAppInstance[]
   proposals             Proposal[]
+  proposalProducts      ProposalProduct[]
+  proposalDriveFolder   String?
   goals                 Goal[]
   contracts             Contract[]
   emails                EmailMessage[]
@@ -566,6 +568,8 @@ model ProposalItem {
   proposalId      String
   name            String?
   description     String
+  imageUrl        String?
+  imageDriveId    String?
   quantity        Int      @default(1)
   unitPrice       Decimal  @default(0)
   discountPercent Decimal? @default(0)
@@ -575,6 +579,26 @@ model ProposalItem {
   proposal Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   @@index([proposalId])
+}
+
+model ProposalProduct {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?
+  price       Decimal? @default(0)
+  driveUrl    String?
+  driveId     String?
+  folderName  String?
+  unit        String?  @default("un")
+  isActive    Boolean  @default(true)
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, name])
+  @@index([tenantId, folderName])
 }
 
 model Goal {
@@ -941,4 +965,38 @@ model ApiToken {
 
   @@index([tenantId])
   @@index([token])
+}
+
+// ------------------------------------------------------
+// WHATSAPP STORIES & STATUS TRACKING
+// ------------------------------------------------------
+
+model WhatsAppStatusPost {
+  id        String   @id @default(uuid())
+  tenantId  String
+  messageId String
+  title     String
+  category  String
+  mediaUrl  String?
+  postedAt  DateTime
+
+  @@map("whatsapp_status_posts")
+}
+
+model WhatsAppStatusView {
+  id              String   @id @default(uuid())
+  tenantId        String
+  contactId       String?
+  phone           String
+  contactName     String?
+  city            String?
+  state           String?
+  statusMessageId String?
+  storyTitle      String
+  category        String
+  mediaUrl        String?
+  viewedAt        DateTime
+  createdAt       DateTime @default(now())
+
+  @@map("whatsapp_status_views")
 }

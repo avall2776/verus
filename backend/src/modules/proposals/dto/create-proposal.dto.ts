@@ -33,6 +33,14 @@ export class CreateProposalItemDto {
   @Type(() => Number)
   @IsOptional()
   total?: number;
+
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  imageDriveId?: string;
 }
 
 export class CreateProposalDto {
