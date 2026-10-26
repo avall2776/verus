@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentTenant } from '../../shared/decorators/tenant.decorator';
@@ -31,5 +31,13 @@ export class DashboardController {
   @Get('geo-map/ai-strategy')
   async getStrategicAiReport(@CurrentTenant() tenantId: string) {
     return this.dashboardService.getStrategicAiReport(tenantId);
+  }
+
+  @Get('geo-map/deal-audit/:dealId')
+  async auditDealWithAi(
+    @CurrentTenant() tenantId: string,
+    @Param('dealId') dealId: string
+  ) {
+    return this.dashboardService.auditDealWithAi(tenantId, dealId);
   }
 }

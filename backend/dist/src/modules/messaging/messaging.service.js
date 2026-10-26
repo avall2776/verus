@@ -82,7 +82,9 @@ let MessagingService = MessagingService_1 = class MessagingService {
                 evolutionInstanceName = `versus_${shortTenant}_${shortInst}`;
             }
         }
-        const evolutionApiKey = instance?.token || evolutionGlobalKey;
+        const isInternalVersusToken = typeof instance?.token === 'string' && instance.token.startsWith('tok_versus_');
+        const settingsApiKey = instance?.settings?.apiKey || instance?.settings?.token;
+        const evolutionApiKey = (!isInternalVersusToken && instance?.token) ? instance.token : (settingsApiKey || evolutionGlobalKey);
         return {
             instance,
             preferredProvider,
@@ -189,8 +191,8 @@ let MessagingService = MessagingService_1 = class MessagingService {
         }
     }
     async sendEvolutionText(evoConfig, cleanPhone, content) {
+        const url = `${evoConfig.url}/message/sendText/${evoConfig.instanceName}`;
         try {
-            const url = `${evoConfig.url}/message/sendText/${evoConfig.instanceName}`;
             this.logger.log(`Disparando mensagem Evolution API [${evoConfig.instanceName}] para ${cleanPhone}...`);
             const response = await axios_1.default.post(url, {
                 number: cleanPhone,
@@ -219,6 +221,39 @@ let MessagingService = MessagingService_1 = class MessagingService {
             };
         }
         catch (err) {
+            if (err.response?.status === 401 && evoConfig.apiKey !== 'verto123') {
+                this.logger.warn(`Evolution API retornou 401 com chave configurada. Retentando envio com chave global verto123 para ${cleanPhone}...`);
+                try {
+                    const retryRes = await axios_1.default.post(url, {
+                        number: cleanPhone,
+                        options: {
+                            delay: 1200,
+                            presence: 'composing',
+                            linkPreview: false,
+                        },
+                        textMessage: {
+                            text: content,
+                        },
+                    }, {
+                        headers: {
+                            apikey: 'verto123',
+                            'Content-Type': 'application/json',
+                        },
+                        timeout: 15000,
+                    });
+                    const messageId = retryRes.data?.key?.id || retryRes.data?.id || `evo_${Date.now()}`;
+                    this.logger.log(`Mensagem enviada com sucesso no retry com chave global para ${cleanPhone}. ID: ${messageId}`);
+                    return {
+                        success: true,
+                        messageId,
+                        provider: 'evolution',
+                        raw: retryRes.data,
+                    };
+                }
+                catch (retryErr) {
+                    this.logger.error(`Retry de envio com chave global também falhou: ${retryErr.message}`);
+                }
+            }
             const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
             const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
             this.logger.error(`Erro no envio Evolution API para ${cleanPhone}: ${errorMsg}`);
@@ -307,8 +342,8 @@ let MessagingService = MessagingService_1 = class MessagingService {
         }
     }
     async sendEvolutionMedia(evoConfig, cleanPhone, payload, fullMediaUrl, base64Media) {
+        const url = `${evoConfig.url}/message/sendMedia/${evoConfig.instanceName}`;
         try {
-            const url = `${evoConfig.url}/message/sendMedia/${evoConfig.instanceName}`;
             const isDocument = payload.type === 'document';
             const isVideo = payload.type === 'video';
             const mediatype = isDocument ? 'document' : isVideo ? 'video' : 'image';
@@ -337,6 +372,31 @@ let MessagingService = MessagingService_1 = class MessagingService {
             return { success: true, messageId, provider: 'evolution', raw: response.data };
         }
         catch (err) {
+            if (err.response?.status === 401 && evoConfig.apiKey !== 'verto123') {
+                this.logger.warn(`Evolution API retornou 401 em mídia. Retentando com chave global verto123 para ${cleanPhone}...`);
+                try {
+                    const isDocument = payload.type === 'document';
+                    const isVideo = payload.type === 'video';
+                    const mediatype = isDocument ? 'document' : isVideo ? 'video' : 'image';
+                    const fileName = payload.filename || (isDocument ? 'documento.pdf' : isVideo ? 'video.mp4' : 'imagem.jpg');
+                    const retryRes = await axios_1.default.post(url, {
+                        number: cleanPhone,
+                        options: { delay: 1200, presence: 'composing' },
+                        mediaMessage: {
+                            mediatype,
+                            media: base64Media || fullMediaUrl,
+                            caption: payload.content || '',
+                            fileName,
+                        },
+                    }, {
+                        headers: { apikey: 'verto123', 'Content-Type': 'application/json' },
+                        timeout: 25000,
+                    });
+                    const messageId = retryRes.data?.key?.id || retryRes.data?.id || `evo_media_${Date.now()}`;
+                    return { success: true, messageId, provider: 'evolution', raw: retryRes.data };
+                }
+                catch (retryErr) { }
+            }
             const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
             const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
             this.logger.error(`Erro ao enviar mídia Evolution API: ${errorMsg}`);
@@ -408,8 +468,8 @@ let MessagingService = MessagingService_1 = class MessagingService {
         }
     }
     async sendEvolutionAudio(evoConfig, cleanPhone, payload, fullAudioUrl) {
+        const url = `${evoConfig.url}/message/sendWhatsAppAudio/${evoConfig.instanceName}`;
         try {
-            const url = `${evoConfig.url}/message/sendWhatsAppAudio/${evoConfig.instanceName}`;
             const audioData = payload.audioBuffer
                 ? payload.audioBuffer.toString('base64')
                 : fullAudioUrl;
@@ -438,6 +498,23 @@ let MessagingService = MessagingService_1 = class MessagingService {
             return { success: true, messageId, provider: 'evolution', raw: response.data };
         }
         catch (err) {
+            if (err.response?.status === 401 && evoConfig.apiKey !== 'verto123') {
+                this.logger.warn(`Evolution API retornou 401 em áudio. Retentando com chave global verto123 para ${cleanPhone}...`);
+                try {
+                    const audioData = payload.audioBuffer ? payload.audioBuffer.toString('base64') : fullAudioUrl;
+                    const retryRes = await axios_1.default.post(url, {
+                        number: cleanPhone,
+                        options: { delay: 1200, presence: 'recording', encoding: true },
+                        audioMessage: { audio: audioData },
+                    }, {
+                        headers: { apikey: 'verto123', 'Content-Type': 'application/json' },
+                        timeout: 20000,
+                    });
+                    const messageId = retryRes.data?.key?.id || retryRes.data?.id || `evo_audio_${Date.now()}`;
+                    return { success: true, messageId, provider: 'evolution', raw: retryRes.data };
+                }
+                catch (retryErr) { }
+            }
             const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
             const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
             this.logger.error(`Erro ao enviar áudio Evolution API: ${errorMsg}`);

@@ -30,6 +30,57 @@ export declare class RadarStoriesController {
         postedAtTime: string;
         viewsCount: number;
     }[]>;
+    updatePost(tenantId: string, postId: string, body: {
+        title?: string;
+        category?: string;
+        mediaUrl?: string;
+        postedAt?: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+        activePosts: {
+            id: any;
+            messageId: any;
+            title: any;
+            category: any;
+            mediaUrl: any;
+            postedAt: any;
+            postedAtRelative: string;
+            postedAtDate: string;
+            postedAtTime: string;
+            viewsCount: number;
+        }[];
+    }>;
+    updateViewerContact(tenantId: string, viewId: string, body: {
+        phone?: string;
+        contactName?: string;
+        contactId?: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    exportMetaAudience(tenantId: string, body: {
+        viewerIds?: string[];
+    }): Promise<{
+        success: boolean;
+        filename: string;
+        totalContacts: number;
+        csvContent: string;
+    }>;
+    createCampaignFromViewers(tenantId: string, body: {
+        campaignName: string;
+        objective: string;
+        viewerIds: string[];
+        messageTemplate?: string;
+    }): Promise<{
+        success: boolean;
+        campaignId: string;
+        campaignName: string;
+        objective: string;
+        totalAudience: number;
+        createdAt: string;
+        message: string;
+    }>;
     syncStories(tenantId: string): Promise<{
         success: boolean;
         message: string;

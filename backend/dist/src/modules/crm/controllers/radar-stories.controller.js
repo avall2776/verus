@@ -29,6 +29,18 @@ let RadarStoriesController = class RadarStoriesController {
     async getActivePosts(tenantId) {
         return this.radarStoriesService.getActivePosts(tenantId);
     }
+    async updatePost(tenantId, postId, body) {
+        return this.radarStoriesService.updatePost(tenantId, postId, body);
+    }
+    async updateViewerContact(tenantId, viewId, body) {
+        return this.radarStoriesService.updateViewerContact(tenantId, viewId, body);
+    }
+    async exportMetaAudience(tenantId, body) {
+        return this.radarStoriesService.exportMetaAudience(tenantId, body?.viewerIds);
+    }
+    async createCampaignFromViewers(tenantId, body) {
+        return this.radarStoriesService.createCampaignFromViewers(tenantId, body);
+    }
     async syncStories(tenantId) {
         return this.radarStoriesService.syncActiveStories(tenantId);
     }
@@ -66,6 +78,40 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], RadarStoriesController.prototype, "getActivePosts", null);
+__decorate([
+    (0, common_1.Patch)('posts/:id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], RadarStoriesController.prototype, "updatePost", null);
+__decorate([
+    (0, common_1.Patch)('viewers/:id/contact'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], RadarStoriesController.prototype, "updateViewerContact", null);
+__decorate([
+    (0, common_1.Post)('meta-audience/export'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], RadarStoriesController.prototype, "exportMetaAudience", null);
+__decorate([
+    (0, common_1.Post)('campaigns/create'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], RadarStoriesController.prototype, "createCampaignFromViewers", null);
 __decorate([
     (0, common_1.Post)('sync'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),

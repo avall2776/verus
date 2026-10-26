@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { RadarStoriesService } from '../services/radar-stories.service';
 import { JwtAuthGuard } from '../../../shared/guards/jwt-auth.guard';
 import { PlanGuard } from '../../../shared/guards/plan.guard';
@@ -19,6 +19,40 @@ export class RadarStoriesController {
   @Get('active-posts')
   async getActivePosts(@CurrentTenant() tenantId: string) {
     return this.radarStoriesService.getActivePosts(tenantId);
+  }
+
+  @Patch('posts/:id')
+  async updatePost(
+    @CurrentTenant() tenantId: string,
+    @Param('id') postId: string,
+    @Body() body: { title?: string; category?: string; mediaUrl?: string; postedAt?: string },
+  ) {
+    return this.radarStoriesService.updatePost(tenantId, postId, body);
+  }
+
+  @Patch('viewers/:id/contact')
+  async updateViewerContact(
+    @CurrentTenant() tenantId: string,
+    @Param('id') viewId: string,
+    @Body() body: { phone?: string; contactName?: string; contactId?: string },
+  ) {
+    return this.radarStoriesService.updateViewerContact(tenantId, viewId, body);
+  }
+
+  @Post('meta-audience/export')
+  async exportMetaAudience(
+    @CurrentTenant() tenantId: string,
+    @Body() body: { viewerIds?: string[] },
+  ) {
+    return this.radarStoriesService.exportMetaAudience(tenantId, body?.viewerIds);
+  }
+
+  @Post('campaigns/create')
+  async createCampaignFromViewers(
+    @CurrentTenant() tenantId: string,
+    @Body() body: { campaignName: string; objective: string; viewerIds: string[]; messageTemplate?: string },
+  ) {
+    return this.radarStoriesService.createCampaignFromViewers(tenantId, body);
   }
 
   @Post('sync')

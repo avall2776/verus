@@ -205,7 +205,9 @@ export class ChatService {
       whereClause.status = { in: ['resolved', 'closed'] };
     } else if (tab === 'mine') {
       whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
-      whereClause.assignedTo = userId;
+      if (!isMaster) {
+        whereClause.assignedTo = userId;
+      }
     } else {
       // tab === 'waiting' (Fila de espera compartilhada)
       whereClause.status = { in: ['waiting', 'bot_active'] };

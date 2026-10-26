@@ -7,11 +7,16 @@ export interface StoryViewerItem {
     name: string;
     companyOrFarm: string;
     phone: string;
+    phoneFormatted: string;
+    isLidOnly?: boolean;
     city: string;
     state: string;
     crmStatus: 'active_client' | 'inactive_client' | 'open_deal' | 'prospect';
     crmStatusLabel: string;
     totalPurchased: number;
+    dealTitle?: string;
+    dealValue?: number;
+    aiInsight?: string;
     lastPurchaseDate?: string;
     daysInactive: number;
     assignedSeller: string;
@@ -92,6 +97,11 @@ export declare class RadarStoriesService implements OnModuleInit {
         syncedViewsCount: number;
     }>;
     private formatDateTime;
+    formatBrazilianPhone(phone: string): {
+        formatted: string;
+        isLidOnly: boolean;
+        cleanDigits: string;
+    };
     getMetrics(tenantId: string): Promise<{
         kpis: {
             totalViewsToday: number;
@@ -150,5 +160,54 @@ export declare class RadarStoriesService implements OnModuleInit {
             suggestedTiming: any;
             suggestedProduct: any;
         };
+    }>;
+    updatePost(tenantId: string, postId: string, data: {
+        title?: string;
+        category?: string;
+        mediaUrl?: string;
+        postedAt?: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+        activePosts: {
+            id: any;
+            messageId: any;
+            title: any;
+            category: any;
+            mediaUrl: any;
+            postedAt: any;
+            postedAtRelative: string;
+            postedAtDate: string;
+            postedAtTime: string;
+            viewsCount: number;
+        }[];
+    }>;
+    updateViewerContact(tenantId: string, viewId: string, data: {
+        phone?: string;
+        contactName?: string;
+        contactId?: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    exportMetaAudience(tenantId: string, viewerIds?: string[]): Promise<{
+        success: boolean;
+        filename: string;
+        totalContacts: number;
+        csvContent: string;
+    }>;
+    createCampaignFromViewers(tenantId: string, data: {
+        campaignName: string;
+        objective: string;
+        viewerIds: string[];
+        messageTemplate?: string;
+    }): Promise<{
+        success: boolean;
+        campaignId: string;
+        campaignName: string;
+        objective: string;
+        totalAudience: number;
+        createdAt: string;
+        message: string;
     }>;
 }

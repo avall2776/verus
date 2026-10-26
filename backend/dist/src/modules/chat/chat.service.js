@@ -189,7 +189,9 @@ let ChatService = ChatService_1 = class ChatService {
         }
         else if (tab === 'mine') {
             whereClause.status = { in: ['open', 'human_takeover', 'in_progress'] };
-            whereClause.assignedTo = userId;
+            if (!isMaster) {
+                whereClause.assignedTo = userId;
+            }
         }
         else {
             whereClause.status = { in: ['waiting', 'bot_active'] };

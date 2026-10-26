@@ -914,6 +914,216 @@ Gere um JSON com as seguintes chaves:
             ]
         };
     }
+    async auditDealWithAi(tenantId, dealId) {
+        const deal = await this.prisma.deal.findFirst({
+            where: { id: dealId, tenantId },
+            include: {
+                contact: {
+                    select: {
+                        id: true,
+                        name: true,
+                        phone: true,
+                        email: true,
+                        source: true,
+                        tags: true,
+                        conversations: {
+                            take: 1,
+                            orderBy: { updatedAt: 'desc' },
+                            include: {
+                                messages: {
+                                    where: { isInternal: false },
+                                    orderBy: { createdAt: 'asc' },
+                                    take: 60,
+                                    select: {
+                                        id: true,
+                                        content: true,
+                                        fromMe: true,
+                                        direction: true,
+                                        type: true,
+                                        mediaUrl: true,
+                                        audioTranscription: true,
+                                        createdAt: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                assignee: {
+                    select: { id: true, name: true, email: true }
+                }
+            }
+        });
+        if (!deal) {
+            throw new common_1.NotFoundException('Oportunidade comercial não encontrada para auditoria.');
+        }
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { name: true, aiModel: true }
+        });
+        const tenantName = tenant?.name || 'Comercial Verto';
+        const clientName = deal.contact?.name || 'Cliente';
+        const sellerName = deal.assignee?.name || 'Vendedor Não Atribuído';
+        const dealValue = Number(deal.value) || 0;
+        const dealTitle = deal.title || 'Negócio Comercial';
+        const dealStatus = (deal.status || 'in_attendance').toLowerCase();
+        const isWon = dealStatus === 'won' || dealStatus === 'fechado' || dealStatus === 'ganho';
+        const isLost = dealStatus === 'lost' || dealStatus === 'perdido' || dealStatus === 'disqualified';
+        const isInAttendance = !isWon && !isLost;
+        const messages = deal.contact?.conversations?.[0]?.messages || [];
+        const hasMessages = messages.length > 0;
+        const chatTranscript = messages.map(m => {
+            const sender = (m.fromMe || m.direction === 'OUTBOUND') ? `[Vendedor ${sellerName}]` : `[Cliente ${clientName}]`;
+            const time = new Date(m.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const text = m.type === 'audio' && m.audioTranscription ? `[Áudio: "${m.audioTranscription}"]` : m.content;
+            return `${time} ${sender}: ${text}`;
+        }).join('\n');
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (apiKey && apiKey.trim().length > 5) {
+            try {
+                const client = new openai_1.default({ apiKey });
+                const systemPrompt = `Você é o Diretor Comercial Executivo e Especialista Sênior em Auditoria de Vendas e Negociações da empresa "${tenantName}", atuando no mercado do Agronegócio (máquinas agrícolas, implementos, semeadoras e insumos).
+Sua missão é realizar uma auditoria cirúrgica e imparcial de uma oportunidade comercial específica, identificando com precisão técnica:
+1. GARGALOS NO ATENDIMENTO (falhas de postura, demora de retorno, falta de perguntas abertas, envio prematuro de preço sem ancoragem de valor, etc.);
+2. RISCOS DE PERDA (se o lead está esfriando ou se a concorrência está ganhando espaço);
+3. INSTRUÇÕES DIRETAS PARA O GESTOR (o que o gestor deve falar para o vendedor ou como ele próprio deve intervir);
+4. SCRIPT CONSULTIVO DE ALTA PERSUASÃO para WhatsApp (texto pronto, elegante, sem jargões forçados, ideal para o produtor rural).
+
+Responda ESTRITAMENTE em formato JSON com esta estrutura:
+{
+  "healthScore": 65,
+  "statusCategory": "saudavel",
+  "statusBadge": "Negócio em Risco",
+  "riskLevel": "Baixo",
+  "winProbability": 55,
+  "executiveSummary": "Resumo executivo de 2 a 3 frases direto ao ponto para o Gestor Comercial.",
+  "sellerPerformance": "Diagnóstico do desempenho do vendedor responsável nesta negociação.",
+  "bottlenecks": [
+    "Gargalo ou falha 1",
+    "Gargalo ou falha 2"
+  ],
+  "keyObjections": [
+    "Objeção detectada 1",
+    "Objeção detectada 2"
+  ],
+  "managerActionPlan": [
+    "Ação recomendada para o gestor intervir 1",
+    "Ação recomendada para o gestor intervir 2"
+  ],
+  "whatsappRecoveryScript": "Texto pronto e persuasivo para WhatsApp contornando a objeção ou avançando no fechamento.",
+  "closingTip": "Recomendação tática final para acelerar o fechamento."
+}`;
+                const userPrompt = `DADOS DA OPORTUNIDADE:
+- Cliente: ${clientName}
+- Telefone: ${deal.contact?.phone || 'Não informado'}
+- Valor da Proposta: R$ ${dealValue.toLocaleString('pt-BR')}
+- Título do Negócio: ${dealTitle}
+- Status Atual no CRM: ${isWon ? 'Fechado/Vendido' : isLost ? 'Perdido' : 'Em Atendimento'}
+- Vendedor: ${sellerName}
+- Notas do CRM: ${deal.notes || 'Nenhuma nota registrada'}
+- Histórico WhatsApp (${messages.length} mensagens trocadas):
+${hasMessages ? chatTranscript : 'Nenhuma mensagem trocada ainda via WhatsApp. O cliente foi cadastrado no funil do CRM mas ainda não recebeu o primeiro contato.'}`;
+                const completion = await client.chat.completions.create({
+                    model: tenant?.aiModel || 'gpt-4o-mini',
+                    temperature: 0.5,
+                    response_format: { type: 'json_object' },
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ]
+                });
+                const raw = completion.choices[0]?.message?.content;
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    return {
+                        dealId: deal.id,
+                        clientName,
+                        sellerName,
+                        dealValue,
+                        status: deal.status,
+                        messageCount: messages.length,
+                        hasMessages,
+                        isAiGenerated: true,
+                        model: tenant?.aiModel || 'gpt-4o-mini',
+                        auditedAt: new Date().toISOString(),
+                        ...parsed
+                    };
+                }
+            }
+            catch (err) {
+                this.logger.warn(`Falha na OpenAI para auditoria do deal ${dealId}: ${err.message}. Ativando auditoria algorítmica especializada.`);
+            }
+        }
+        const fallbackStatusCategory = isWon
+            ? 'saudavel'
+            : isLost
+                ? 'perdido'
+                : !hasMessages
+                    ? 'novo_lead'
+                    : messages.length < 4
+                        ? 'atencao'
+                        : 'critico';
+        const fallbackBadge = isWon
+            ? 'Negócio Concluído com Sucesso'
+            : isLost
+                ? 'Oportunidade para Repescagem Tática'
+                : !hasMessages
+                    ? 'Novo Lead - Aguardando 1º Contato'
+                    : 'Gargalo Identificado no Atendimento';
+        return {
+            dealId: deal.id,
+            clientName,
+            sellerName,
+            dealValue,
+            status: deal.status,
+            messageCount: messages.length,
+            hasMessages,
+            isAiGenerated: false,
+            model: 'Verto-Audit-Engine v2.0',
+            auditedAt: new Date().toISOString(),
+            healthScore: isWon ? 95 : isLost ? 25 : !hasMessages ? 70 : 48,
+            statusCategory: fallbackStatusCategory,
+            statusBadge: fallbackBadge,
+            riskLevel: isWon ? 'Baixo' : isLost ? 'Crítico' : !hasMessages ? 'Médio' : 'Alto',
+            winProbability: isWon ? 100 : isLost ? 20 : !hasMessages ? 65 : 42,
+            executiveSummary: isLost
+                ? `Oportunidade de R$ ${dealValue.toLocaleString('pt-BR')} com ${clientName} não foi concluída. No mercado agrícola, perdas costumam decorrer de falta de condições de pagamento vinculadas à safra ou follow-up demorado. Recomenda-se repescagem consultiva.`
+                : !hasMessages
+                    ? `Lead ${clientName} cadastrado no funil sob responsabilidade de ${sellerName}, aguardando o primeiro contato via WhatsApp. O tempo de resposta nas primeiras horas é determinante para taxa de conversão.`
+                    : `Negociação em andamento com ${messages.length} mensagens. Detectamos necessidade de intervenção para acelerar o fechamento e evitar esfriamento da proposta.`,
+            sellerPerformance: hasMessages
+                ? `${sellerName} iniciou o atendimento, mas há oportunidade de melhorar a condução consultiva com foco nos ganhos de produtividade e segurança de plantio.`
+                : `${sellerName} ainda não efetuou o primeiro contato via WhatsApp com o lead.`,
+            bottlenecks: isLost
+                ? ['Negociação encerrada sem contraproposta flexível de pagamento safra.', 'Ausência de contato de segundo nível (gestor ou especialista técnico).']
+                : !hasMessages
+                    ? ['Lead aguardando primeiro contato no WhatsApp.', 'Risco de esfriamento do interesse do produtor.']
+                    : ['Intervalo elevado entre as mensagens trocadas.', 'Falta de apresentação de vídeo de demonstração em campo.'],
+            keyObjections: isLost
+                ? ['Condições de parcelamento e indexação à soja/milho.', 'Orçamento apertado para a safra atual.']
+                : ['Prazo de entrega do equipamento.', 'Comparativo técnico de produtividade por hectare.'],
+            managerActionPlan: isLost
+                ? [
+                    `Instruir ${sellerName} a enviar mensagem de reativação com condição especial de safra.`,
+                    'Disponibilizar visita técnica presencial na propriedade rural do cliente.'
+                ]
+                : !hasMessages
+                    ? [
+                        `Acionar ${sellerName} para realizar o primeiro contato imediato no WhatsApp.`,
+                        'Utilizar o script de abertura sugerido abaixo.'
+                    ]
+                    : [
+                        `Alinhar com ${sellerName} uma ligação de alinhamento com o produtor rural ainda hoje.`,
+                        'Apresentar proposta com opção de carência até a colheita.'
+                    ],
+            whatsappRecoveryScript: isLost
+                ? `Olá ${clientName}, tudo bem? Aqui é o gestor comercial da ${tenantName}. Estávamos revisando nosso cronograma de produção para o próximo plantio e separamos uma condição exclusiva pós-safra para a sua fazenda. Conseguimos conversar 5 minutos hoje?`
+                : !hasMessages
+                    ? `Olá ${clientName}, tudo bem? Aqui é da ${tenantName}. Recebemos seu interesse em nossas semeadoras e kits de plantio. Gostaria de entender o tamanho da sua área para indicar a configuração exata de máxima produtividade. Como está sua janela de plantio?`
+                    : `Olá ${clientName}! Passando para saber se conseguiu avaliar a proposta da Semeadora. Conseguimos ajustar o plano de parcelamento para casar perfeitamente com o fluxo da sua safra. Podemos conversar?`,
+            closingTip: 'Produtores rurais valorizam segurança operacional e facilidade de pagamento no ciclo da colheita. Ancore o valor na economia de sementes e semeadura sem falhas.'
+        };
+    }
 };
 exports.DashboardService = DashboardService;
 exports.DashboardService = DashboardService = DashboardService_1 = __decorate([

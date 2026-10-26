@@ -41,7 +41,14 @@ import {
   Flame,
   Target,
   Share2,
-  Info
+  Info,
+  Download,
+  Megaphone,
+  Phone,
+  Edit3,
+  Camera,
+  CheckSquare,
+  Square
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -63,11 +70,16 @@ interface StoryViewer {
   name: string;
   companyOrFarm: string;
   phone: string;
+  phoneFormatted?: string;
+  isLidOnly?: boolean;
   city: string;
   state: string;
   crmStatus: "active_client" | "inactive_client" | "open_deal" | "prospect";
   crmStatusLabel: string;
   totalPurchased: number;
+  dealTitle?: string;
+  dealValue?: number;
+  aiInsight?: string;
   lastPurchaseDate?: string;
   daysInactive: number;
   assignedSeller: string;
@@ -148,6 +160,35 @@ export default function RadarStoriesPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [activeFilterTab, setActiveFilterTab] = useState<string>("all");
+
+  // Seleção Múltipla para Tráfego Pago / Audiências Meta Ads
+  const [selectedViewerIds, setSelectedViewerIds] = useState<Set<string>>(new Set());
+  const [isExportingMeta, setIsExportingMeta] = useState<boolean>(false);
+
+  // Modal de Tráfego Pago / Criar Campanha
+  const [isCampaignModalOpen, setIsCampaignModalOpen] = useState<boolean>(false);
+  const [campaignName, setCampaignName] = useState<string>("Remarketing Safra 26/27 - Visualizadores de Stories");
+  const [campaignObjective, setCampaignObjective] = useState<string>("meta_ads_custom_audience");
+  const [isCreatingCampaign, setIsCreatingCampaign] = useState<boolean>(false);
+
+  // Modal de Alteração de Foto do Story
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState<boolean>(false);
+  const [selectedPostForPhoto, setSelectedPostForPhoto] = useState<ActiveStoryPost | null>(null);
+  const [newPhotoBase64, setNewPhotoBase64] = useState<string>("");
+  const [isSavingPhoto, setIsSavingPhoto] = useState<boolean>(false);
+
+  // Modal de Ajuste de Horário do Story
+  const [isTimeModalOpen, setIsTimeModalOpen] = useState<boolean>(false);
+  const [selectedPostForTime, setSelectedPostForTime] = useState<ActiveStoryPost | null>(null);
+  const [newPostingTime, setNewPostingTime] = useState<string>("09:25");
+  const [isSavingTime, setIsSavingTime] = useState<boolean>(false);
+
+  // Modal de Edição Rápida de Telefone
+  const [isEditPhoneModalOpen, setIsEditPhoneModalOpen] = useState<boolean>(false);
+  const [selectedViewerForPhone, setSelectedViewerForPhone] = useState<StoryViewer | null>(null);
+  const [editPhoneNumber, setEditPhoneNumber] = useState<string>("");
+  const [isSavingPhone, setIsSavingPhone] = useState<boolean>(false);
 
   // Modal Lightbox da Foto/Mídia do Story
   const [lightboxMedia, setLightboxMedia] = useState<LightboxMedia | null>(null);
@@ -404,10 +445,211 @@ export default function RadarStoriesPage() {
 
   const handleOpenWhatsApp = () => {
     if (!selectedViewer || !generatedApproach?.casualMessage) return;
-    const cleanPhone = selectedViewer.phone.replace(/\D/g, "");
+    const cleanPhone = (selectedViewer.phone || "").replace(/\D/g, "");
     const encoded = encodeURIComponent(generatedApproach.casualMessage);
     window.open(`https://wa.me/${cleanPhone}?text=${encoded}`, "_blank");
   };
+
+  // Seleção de visualizadores para tráfego pago e ações em massa
+  const handleToggleSelect = (id: string) => {
+    setSelectedViewerIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedViewerIds.size === filteredViewers.length) {
+      setSelectedViewerIds(new Set());
+    } else {
+      setSelectedViewerIds(new Set(filteredViewers.map((v) => v.id)));
+    }
+  };
+
+  // Exportar público personalizado para o Meta Ads (CSV oficial)
+  const handleExportMetaAudience = async () => {
+    try {
+      setIsExportingMeta(true);
+      const viewerIds = selectedViewerIds.size > 0 ? Array.from(selectedViewerIds) : undefined;
+      const res = await api.post("/crm/radar-stories/meta-audience/export", { viewerIds });
+      const { csvContent, filename, totalContacts } = res.data;
+
+      if (!csvContent) {
+        toast.error("Nenhum contato qualificado para exportação.");
+        return;
+      }
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename || "publico_meta_ads_stories_verto.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success(`Público com ${totalContacts} contatos exportado no formato oficial Meta Ads!`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao exportar audiência Meta Ads.");
+    } finally {
+      setIsExportingMeta(false);
+    }
+  };
+
+  // Criar campanha de tráfego pago / remarketing
+  const handleCreateCampaign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!campaignName.trim()) {
+      toast.error("Informe o nome da campanha.");
+      return;
+    }
+    const viewerIds = selectedViewerIds.size > 0 ? Array.from(selectedViewerIds) : filteredViewers.map((v) => v.id);
+    try {
+      setIsCreatingCampaign(true);
+      const res = await api.post("/crm/radar-stories/campaigns/create", {
+        campaignName: campaignName.trim(),
+        objective: campaignObjective,
+        viewerIds,
+      });
+      toast.success(res.data?.message || "Campanha gerada com sucesso!");
+      setIsCampaignModalOpen(false);
+      setSelectedViewerIds(new Set());
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao criar campanha.");
+    } finally {
+      setIsCreatingCampaign(false);
+    }
+  };
+
+  // Modal de Alteração de Foto do Story
+  const handleOpenPhotoModal = (post: ActiveStoryPost) => {
+    setSelectedPostForPhoto(post);
+    setNewPhotoBase64(post.mediaUrl || "");
+    setIsPhotoModalOpen(true);
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem válido (PNG, JPEG ou WebP).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setNewPhotoBase64(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSavePhoto = async () => {
+    if (!selectedPostForPhoto) return;
+    if (!newPhotoBase64) {
+      toast.error("Selecione uma imagem para o Story.");
+      return;
+    }
+    try {
+      setIsSavingPhoto(true);
+      await api.patch(`/crm/radar-stories/posts/${selectedPostForPhoto.id}`, {
+        mediaUrl: newPhotoBase64,
+      });
+      toast.success("Foto do Story atualizada com sucesso!");
+      setIsPhotoModalOpen(false);
+      fetchActivePosts();
+      fetchViewers();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao atualizar foto do Story.");
+    } finally {
+      setIsSavingPhoto(false);
+    }
+  };
+
+  // Modal de Ajuste de Horário
+  const handleOpenEditTimeModal = (post: ActiveStoryPost) => {
+    setSelectedPostForTime(post);
+    setNewPostingTime(post.postedAtTime?.slice(0, 5) || "09:25");
+    setIsTimeModalOpen(true);
+  };
+
+  const handleSaveTime = async () => {
+    if (!selectedPostForTime) return;
+    try {
+      setIsSavingTime(true);
+      const [h, m] = newPostingTime.split(":").map(Number);
+      const date = new Date();
+      date.setUTCHours((h || 9) + 3, m || 25, 0, 0);
+
+      await api.patch(`/crm/radar-stories/posts/${selectedPostForTime.id}`, {
+        postedAt: date.toISOString(),
+      });
+      toast.success("Horário do Story ajustado com sucesso!");
+      setIsTimeModalOpen(false);
+      fetchActivePosts();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao ajustar horário.");
+    } finally {
+      setIsSavingTime(false);
+    }
+  };
+
+  // Modal de Edição Rápida de Telefone
+  const handleOpenEditPhoneModal = (viewer: StoryViewer) => {
+    setSelectedViewerForPhone(viewer);
+    const cleanDigits = (viewer.phone || "").replace(/\D/g, "");
+    setEditPhoneNumber(!viewer.isLidOnly && cleanDigits.length <= 13 ? cleanDigits : "");
+    setIsEditPhoneModalOpen(true);
+  };
+
+  const handleSavePhone = async () => {
+    if (!selectedViewerForPhone) return;
+    const clean = editPhoneNumber.replace(/\D/g, "");
+    if (!clean || clean.length < 10) {
+      toast.error("Informe um número de telefone com DDD válido.");
+      return;
+    }
+    try {
+      setIsSavingPhone(true);
+      await api.patch(`/crm/radar-stories/viewers/${selectedViewerForPhone.id}/contact`, {
+        phone: clean,
+      });
+      toast.success("Telefone atualizado com sucesso!");
+      setIsEditPhoneModalOpen(false);
+      fetchViewers();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao atualizar telefone.");
+    } finally {
+      setIsSavingPhone(false);
+    }
+  };
+
+  // Filtragem combinada de visualizadores
+  const filteredViewers = useMemo(() => {
+    return viewers.filter((viewer) => {
+      if (activeFilterTab !== "all" && viewer.crmStatus !== activeFilterTab) {
+        return false;
+      }
+      if (selectedStatus !== "all" && viewer.crmStatus !== selectedStatus) {
+        return false;
+      }
+      if (selectedCategory !== "all" && viewer.storyMedia.category !== selectedCategory) {
+        return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesName = viewer.name.toLowerCase().includes(q);
+        const matchesPhone = viewer.phone.toLowerCase().includes(q) || (viewer.phoneFormatted && viewer.phoneFormatted.toLowerCase().includes(q));
+        const matchesCompany = viewer.companyOrFarm.toLowerCase().includes(q);
+        const matchesCity = viewer.city.toLowerCase().includes(q);
+        const matchesDeal = viewer.dealTitle ? viewer.dealTitle.toLowerCase().includes(q) : false;
+        return matchesName || matchesPhone || matchesCompany || matchesCity || matchesDeal;
+      }
+      return true;
+    });
+  }, [viewers, activeFilterTab, selectedStatus, selectedCategory, searchQuery]);
 
   // Registrar teste de reconhecimento
   const handleTestSubmit = async (e: React.FormEvent) => {
@@ -701,12 +943,12 @@ export default function RadarStoriesPage() {
                 </div>
 
                 {/* Dados do Story */}
-                <div className="flex-1 flex flex-col justify-between gap-1">
+                <div className="flex-1 flex flex-col justify-between gap-1.5">
                   <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-500 transition-colors">
                     {post.title}
                   </h4>
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                    <span className="flex items-center gap-1">
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                    <span className="flex items-center gap-1 font-mono">
                       <Clock className="w-3 h-3 text-slate-400" />
                       <span>{post.postedAtRelative}</span>
                     </span>
@@ -714,6 +956,34 @@ export default function RadarStoriesPage() {
                       <Eye className="w-3 h-3" />
                       <span>{post.viewsCount} visualizações</span>
                     </span>
+                  </div>
+
+                  {/* Botões de Ação: Alterar Foto e Ajustar Horário */}
+                  <div className="flex items-center gap-1.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 mt-1">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenPhotoModal(post);
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1 py-1 px-2 rounded-lg bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-blue-900/30 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 text-[10px] font-semibold transition-all border border-slate-200/80 dark:border-slate-700/80"
+                      title="Substituir imagem ou foto do Story"
+                    >
+                      <Camera className="w-3 h-3" />
+                      <span>Alterar Foto</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenEditTimeModal(post);
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1 py-1 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-semibold transition-all border border-slate-200/80 dark:border-slate-700/80"
+                      title="Editar o horário da postagem"
+                    >
+                      <Clock className="w-3 h-3" />
+                      <span>Ajustar Horário</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -852,10 +1122,10 @@ export default function RadarStoriesPage() {
               className="py-1.5 px-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
             >
               <option value="all">Todos os Status no CRM</option>
-              <option value="active_client">Clientes Ativos</option>
-              <option value="inactive_client">Oportunidades em Espera</option>
-              <option value="open_deal">Cotações / Propostas em Aberto</option>
-              <option value="prospect">Novos Contatos / Prospects</option>
+              <option value="active_client">Clientes Ativos (Compradores)</option>
+              <option value="open_deal">Em Negociação</option>
+              <option value="prospect">Potenciais Compradores</option>
+              <option value="inactive_client">Reativação de Carteira</option>
             </select>
 
             <select
@@ -864,97 +1134,217 @@ export default function RadarStoriesPage() {
               className="py-1.5 px-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
             >
               <option value="all">Todas as Categorias</option>
-              <option value="Maquinários">Maquinários</option>
-              <option value="Insumos">Insumos</option>
-              <option value="Cotações">Cotações</option>
+              <option value="Maquinários">Maquinários & Implementos</option>
+              <option value="Insumos">Insumos & Defensivos</option>
+              <option value="Cotações">Cotações de Safra</option>
               <option value="Peças & Serviços">Peças & Serviços</option>
               <option value="Geral">Geral</option>
             </select>
           </div>
         </div>
 
+        {/* Abas de Filtragem Rápida por Classificação Comercial IA */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+            Filtro Comercial IA:
+          </span>
+          {[
+            { id: "all", label: "Todos os Visualizadores", count: viewers.length },
+            { id: "active_client", label: "Clientes Compradores", count: viewers.filter((v) => v.crmStatus === "active_client").length, color: "text-emerald-500" },
+            { id: "open_deal", label: "Em Negociação", count: viewers.filter((v) => v.crmStatus === "open_deal").length, color: "text-amber-500" },
+            { id: "prospect", label: "Potenciais Compradores", count: viewers.filter((v) => v.crmStatus === "prospect").length, color: "text-blue-500" },
+            { id: "inactive_client", label: "Reativação", count: viewers.filter((v) => v.crmStatus === "inactive_client").length, color: "text-purple-400" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveFilterTab(tab.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeFilterTab === tab.id
+                  ? "bg-blue-600 text-white shadow-sm shadow-blue-500/20"
+                  : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                activeFilterTab === tab.id
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
+              }`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Barra de Ações em Lote para Tráfego Pago / Audiência Meta Ads */}
+        {selectedViewerIds.size > 0 && (
+          <div className="p-3 rounded-xl bg-gradient-to-r from-blue-600/15 via-indigo-600/15 to-violet-600/15 border border-blue-500/30 flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-200">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                <Target className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                  {selectedViewerIds.size} contato(s) selecionado(s) para Ação de Vendas
+                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Exporte para público de Meta Ads ou gere campanha de remarketing com 1 clique.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExportMetaAudience}
+                disabled={isExportingMeta}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                {isExportingMeta ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                <span>Exportar Audiência Meta Ads (CSV)</span>
+              </button>
+
+              <button
+                onClick={() => setIsCampaignModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors shadow-sm cursor-pointer"
+              >
+                <Megaphone className="w-3.5 h-3.5" />
+                <span>Criar Campanha Tráfego Pago</span>
+              </button>
+
+              <button
+                onClick={() => setSelectedViewerIds(new Set())}
+                className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                Limpar
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Tabela Executiva com Rastreabilidade de Data, Horário e Post */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                <th className="py-3 px-3 w-10 text-center">
+                  <button
+                    onClick={handleToggleSelectAll}
+                    className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors cursor-pointer"
+                    title={selectedViewerIds.size === filteredViewers.length ? "Desmarcar todos" : "Selecionar todos"}
+                  >
+                    {filteredViewers.length > 0 && selectedViewerIds.size === filteredViewers.length ? (
+                      <CheckSquare className="w-4 h-4 text-blue-500" />
+                    ) : (
+                      <Square className="w-4 h-4" />
+                    )}
+                  </button>
+                </th>
                 <th className="py-3 px-3">Contato / Carteira</th>
+                <th className="py-3 px-3">Telefone / WhatsApp</th>
                 <th className="py-3 px-3">Post / Story Identificado</th>
-                <th className="py-3 px-3">Data da Visualização</th>
-                <th className="py-3 px-3">Horário Exato</th>
-                <th className="py-3 px-3">Posição no CRM</th>
+                <th className="py-3 px-3">Data & Horário Exato</th>
+                <th className="py-3 px-3">Classificação Comercial IA & CRM</th>
                 <th className="py-3 px-3 text-right">Ação Comercial</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {loadingViewers ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500" />
                     <span>Carregando contatos reais e visualizações do sistema...</span>
                   </td>
                 </tr>
-              ) : viewers.length === 0 ? (
+              ) : filteredViewers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     Nenhum contato encontrado com os filtros selecionados.
                   </td>
                 </tr>
               ) : (
-                viewers.map((viewer) => (
-                  <tr key={viewer.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                    {/* Contato / Carteira */}
-                    <td className="py-3 px-3">
-                      <div className="font-bold text-slate-900 dark:text-white leading-tight flex items-center gap-1.5">
-                        <span>{viewer.name}</span>
-                        {viewer.hasRealView && (
-                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" title="Visualização confirmada" />
-                        )}
-                      </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
-                        <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span>{viewer.companyOrFarm}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                        +{viewer.phone}
-                      </div>
-                    </td>
-
-                    {/* Post / Story Identificado com Miniatura e Lightbox */}
-                    <td className="py-3 px-3 max-w-[320px]">
-                      <div className="flex items-center gap-3">
-                        <div
-                          onClick={() =>
-                            setLightboxMedia({
-                              title: viewer.storyMedia.title,
-                              category: viewer.storyMedia.category,
-                              mediaUrl: viewer.storyMedia.thumbnailUrl,
-                              exactDate: viewer.storyMedia.exactDate,
-                              exactTime: viewer.storyMedia.exactTime,
-                              viewsCount: viewer.storyMedia.viewsCountWeek,
-                              contactName: viewer.name,
-                            })
-                          }
-                          className="relative w-11 h-11 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 group/thumb cursor-pointer shadow-sm hover:ring-2 hover:ring-blue-500/50 transition-all"
-                          title="Clique para visualizar a foto do Story"
+                filteredViewers.map((viewer) => {
+                  const isSelected = selectedViewerIds.has(viewer.id);
+                  return (
+                    <tr
+                      key={viewer.id}
+                      className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors ${
+                        isSelected ? "bg-blue-500/5 dark:bg-blue-500/10" : ""
+                      }`}
+                    >
+                      {/* Checkbox de Seleção */}
+                      <td className="py-3 px-3 text-center">
+                        <button
+                          onClick={() => handleToggleSelect(viewer.id)}
+                          className="p-1 rounded text-slate-400 hover:text-blue-500 transition-colors cursor-pointer"
                         >
-                          {viewer.storyMedia.thumbnailUrl ? (
-                            <img
-                              src={viewer.storyMedia.thumbnailUrl}
-                              alt={viewer.storyMedia.title}
-                              className="w-full h-full object-cover group-hover/thumb:scale-110 transition-transform duration-200"
-                            />
+                          {isSelected ? (
+                            <CheckSquare className="w-4 h-4 text-blue-500" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800/80">
-                              {getCategoryIcon(viewer.storyMedia.category)}
-                            </div>
+                            <Square className="w-4 h-4" />
                           )}
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
-                            <Maximize2 className="w-3.5 h-3.5 text-white" />
-                          </div>
-                        </div>
+                        </button>
+                      </td>
 
-                        <div className="min-w-0 flex-1">
+                      {/* Contato / Carteira */}
+                      <td className="py-3 px-3">
+                        <div className="font-bold text-slate-900 dark:text-white leading-tight flex items-center gap-1.5">
+                          <span>{viewer.name}</span>
+                          {viewer.hasRealView && (
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" title="Visualização confirmada" />
+                          )}
+                        </div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+                          <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>{viewer.companyOrFarm}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>{viewer.city} - {viewer.state}</span>
+                        </div>
+                      </td>
+
+                      {/* Telefone / WhatsApp Formatado com Botão de Edição */}
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-1.5">
+                          {viewer.isLidOnly ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                              <span>WhatsApp Verificado</span>
+                            </span>
+                          ) : (
+                            <span className="font-mono text-xs font-semibold text-slate-800 dark:text-slate-200">
+                              {viewer.phoneFormatted || `+${viewer.phone}`}
+                            </span>
+                          )}
+
+                          <button
+                            onClick={() => handleOpenEditPhoneModal(viewer)}
+                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-500 transition-colors cursor-pointer"
+                            title="Editar / Associar número de telefone deste contato"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              const cleanDigits = (viewer.phone || "").replace(/\D/g, "");
+                              navigator.clipboard.writeText(cleanDigits);
+                              toast.success("Número copiado!");
+                            }}
+                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                            title="Copiar número"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">
+                          Resp: {viewer.assignedSeller}
+                        </div>
+                      </td>
+
+                      {/* Post / Story Identificado com Miniatura e Lightbox */}
+                      <td className="py-3 px-3 max-w-[280px]">
+                        <div className="flex items-center gap-3">
                           <div
                             onClick={() =>
                               setLightboxMedia({
@@ -967,101 +1357,146 @@ export default function RadarStoriesPage() {
                                 contactName: viewer.name,
                               })
                             }
-                            className="font-semibold text-slate-800 dark:text-slate-200 line-clamp-1 hover:text-blue-500 cursor-pointer transition-colors"
+                            className="relative w-11 h-11 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 group/thumb cursor-pointer shadow-sm hover:ring-2 hover:ring-blue-500/50 transition-all"
+                            title="Clique para visualizar a foto do Story"
                           >
-                            {viewer.storyMedia.title}
-                          </div>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                              {getCategoryIcon(viewer.storyMedia.category)}
-                              <span>{viewer.storyMedia.category}</span>
-                            </span>
-                            {viewer.hasRealView ? (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center gap-1">
-                                <CheckCircle2 className="w-2.5 h-2.5" />
-                                Confirmada
-                              </span>
+                            {viewer.storyMedia.thumbnailUrl ? (
+                              <img
+                                src={viewer.storyMedia.thumbnailUrl}
+                                alt={viewer.storyMedia.title}
+                                className="w-full h-full object-cover group-hover/thumb:scale-110 transition-transform duration-200"
+                              />
                             ) : (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700">
-                                Monitoramento
-                              </span>
+                              <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800/80">
+                                {getCategoryIcon(viewer.storyMedia.category)}
+                              </div>
                             )}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+                              <Maximize2 className="w-3.5 h-3.5 text-white" />
+                            </div>
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div
+                              onClick={() =>
+                                setLightboxMedia({
+                                  title: viewer.storyMedia.title,
+                                  category: viewer.storyMedia.category,
+                                  mediaUrl: viewer.storyMedia.thumbnailUrl,
+                                  exactDate: viewer.storyMedia.exactDate,
+                                  exactTime: viewer.storyMedia.exactTime,
+                                  viewsCount: viewer.storyMedia.viewsCountWeek,
+                                  contactName: viewer.name,
+                                })
+                              }
+                              className="font-semibold text-slate-800 dark:text-slate-200 line-clamp-1 hover:text-blue-500 cursor-pointer transition-colors"
+                            >
+                              {viewer.storyMedia.title}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                {getCategoryIcon(viewer.storyMedia.category)}
+                                <span>{viewer.storyMedia.category}</span>
+                              </span>
+                              {viewer.hasRealView && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center gap-1">
+                                  <CheckCircle2 className="w-2.5 h-2.5" />
+                                  Confirmada
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Data da Visualização */}
-                    <td className="py-3 px-3 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 font-mono text-slate-700 dark:text-slate-200 font-semibold text-xs">
-                        <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                        <span>{viewer.storyMedia.exactDate}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">
-                        {viewer.storyMedia.viewedAt}
-                      </div>
-                    </td>
-
-                    {/* Horário Exato */}
-                    <td className="py-3 px-3 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 font-mono text-slate-700 dark:text-slate-200 font-bold text-xs">
-                        <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                        <span>{viewer.storyMedia.exactTime}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5 font-mono">
-                        Horário de Brasília
-                      </div>
-                    </td>
-
-                    {/* Posição no CRM */}
-                    <td className="py-3 px-3">
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-                          viewer.crmStatus === "active_client"
-                            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                            : viewer.crmStatus === "inactive_client"
-                            ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                            : viewer.crmStatus === "open_deal"
-                            ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                            : "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                        }`}
-                      >
-                        {viewer.crmStatusLabel}
-                      </span>
-                      <div className="text-[10px] text-slate-400 mt-1">
-                        Resp: {viewer.assignedSeller}
-                      </div>
-                      {viewer.totalPurchased > 0 && (
-                        <div className="text-[10px] text-slate-500 font-mono mt-0.5">
-                          Faturado: {formatCurrency(viewer.totalPurchased)}
+                      {/* Data & Horário Exato */}
+                      <td className="py-3 px-3 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 font-mono text-slate-700 dark:text-slate-200 font-bold text-xs">
+                          <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <span>{viewer.storyMedia.exactTime}</span>
                         </div>
-                      )}
-                    </td>
+                        <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-0.5">
+                          <Calendar className="w-3 h-3 text-blue-500 shrink-0" />
+                          <span>{viewer.storyMedia.exactDate}</span>
+                          <span className="text-slate-500 font-mono">({viewer.storyMedia.viewedAt})</span>
+                        </div>
+                      </td>
 
-                    {/* Ação Comercial */}
-                    <td className="py-3 px-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleOpenAiModal(viewer)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-colors shadow-sm"
-                        >
-                          <Sparkles className="w-3 h-3 text-amber-300" />
-                          <span>Abordagem IA</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            const cleanPhone = viewer.phone.replace(/\D/g, "");
-                            window.open(`https://wa.me/${cleanPhone}`, "_blank");
-                          }}
-                          className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                          title="Abrir WhatsApp Direto"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      {/* Classificação Comercial IA & CRM */}
+                      <td className="py-3 px-3 max-w-[280px]">
+                        <div>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                              viewer.crmStatus === "active_client"
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                : viewer.crmStatus === "open_deal"
+                                ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                                : viewer.crmStatus === "inactive_client"
+                                ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                                : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                            }`}
+                          >
+                            {viewer.crmStatus === "active_client" ? (
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                            ) : viewer.crmStatus === "open_deal" ? (
+                              <TrendingUp className="w-3 h-3 text-amber-400 shrink-0" />
+                            ) : viewer.crmStatus === "inactive_client" ? (
+                              <Clock className="w-3 h-3 text-purple-400 shrink-0" />
+                            ) : (
+                              <Sparkles className="w-3 h-3 text-blue-400 shrink-0" />
+                            )}
+                            <span>{viewer.crmStatusLabel}</span>
+                          </span>
+
+                          {/* Detalhe de Compra ou Negociação */}
+                          {viewer.totalPurchased > 0 ? (
+                            <div className="text-[10px] text-emerald-400 font-mono font-semibold mt-1 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>Faturado: {formatCurrency(viewer.totalPurchased)}</span>
+                            </div>
+                          ) : viewer.dealTitle ? (
+                            <div className="text-[10px] text-amber-400 font-semibold mt-1 flex items-center gap-1">
+                              <TrendingUp className="w-3 h-3 shrink-0" />
+                              <span className="line-clamp-1">
+                                {viewer.dealTitle} {viewer.dealValue ? `(${formatCurrency(viewer.dealValue)})` : ""}
+                              </span>
+                            </div>
+                          ) : null}
+
+                          {/* Insight Comercial da IA */}
+                          {viewer.aiInsight && (
+                            <div className="mt-1 text-[10.5px] text-slate-400 line-clamp-2 leading-relaxed bg-slate-50 dark:bg-slate-900/40 p-1.5 rounded-md border border-slate-200/40 dark:border-slate-800/40">
+                              <span className="font-semibold text-blue-400">IA Insight:</span> {viewer.aiInsight}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Ação Comercial */}
+                      <td className="py-3 px-3 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleOpenAiModal(viewer)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-colors shadow-sm cursor-pointer"
+                          >
+                            <Sparkles className="w-3 h-3 text-amber-300" />
+                            <span>Abordagem IA</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              const cleanPhone = (viewer.phone || "").replace(/\D/g, "");
+                              window.open(`https://wa.me/${cleanPhone}`, "_blank");
+                            }}
+                            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                            title="Abrir Conversa no WhatsApp"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -1781,6 +2216,357 @@ export default function RadarStoriesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================= */}
+      {/* 10. MODAL DE ALTERAÇÃO / ATUALIZAÇÃO DA FOTO DO STORY                   */}
+      {/* ======================================================================= */}
+      {isPhotoModalOpen && selectedPostForPhoto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/30 flex items-center justify-center text-blue-500">
+                  <Camera className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Alterar Foto do Story Ativo
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Defina a foto real exibida no WhatsApp corporativo para este post.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPhotoModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                Post: <strong className="text-slate-800 dark:text-slate-200">{selectedPostForPhoto.title}</strong>
+              </div>
+
+              {/* Pré-visualização da Foto */}
+              <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center">
+                {newPhotoBase64 ? (
+                  <img
+                    src={newPhotoBase64}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-slate-500 gap-2">
+                    <ImageIcon className="w-8 h-8 text-slate-600" />
+                    <span className="text-xs">Nenhuma foto selecionada</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Upload de arquivo */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Selecionar Imagem do Computador:
+                </label>
+                <label className="flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 bg-slate-50 dark:bg-slate-900/40 text-xs text-slate-600 dark:text-slate-300 cursor-pointer transition-colors">
+                  <Upload className="w-4 h-4 text-blue-500" />
+                  <span>Escolher arquivo JPG, PNG ou WebP</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {/* Ou colar URL / Base64 */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Ou Cole a URL da Imagem:
+                </label>
+                <input
+                  type="text"
+                  value={newPhotoBase64.startsWith("data:") ? "" : newPhotoBase64}
+                  onChange={(e) => setNewPhotoBase64(e.target.value)}
+                  placeholder="https://exemplo.com/foto-story.jpg"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2 bg-slate-50 dark:bg-slate-900/30">
+              <button
+                type="button"
+                onClick={() => setIsPhotoModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSavePhoto}
+                disabled={isSavingPhoto || !newPhotoBase64}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                {isSavingPhoto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                <span>Salvar Foto</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================= */}
+      {/* 11. MODAL DE AJUSTE DE HORÁRIO DE POSTAGEM DO STORY                     */}
+      {/* ======================================================================= */}
+      {isTimeModalOpen && selectedPostForTime && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-600/10 border border-emerald-600/30 flex items-center justify-center text-emerald-500">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Ajustar Horário do Story
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Horário oficial de Brasília (BRT)
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsTimeModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                Post: <strong className="text-slate-800 dark:text-slate-200">{selectedPostForTime.title}</strong>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Horário Exato da Postagem:
+                </label>
+                <input
+                  type="time"
+                  value={newPostingTime}
+                  onChange={(e) => setNewPostingTime(e.target.value)}
+                  required
+                  className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-sm font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 text-center"
+                />
+                <span className="block text-[11px] text-slate-400 mt-1">
+                  Ex: 09:25 para representar a publicação realizada pela manhã.
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2 bg-slate-50 dark:bg-slate-900/30">
+              <button
+                type="button"
+                onClick={() => setIsTimeModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveTime}
+                disabled={isSavingTime || !newPostingTime}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                {isSavingTime ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                <span>Salvar Horário</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================= */}
+      {/* 12. MODAL DE CRIAÇÃO DE CAMPANHA DE TRÁFEGO PAGO / META ADS             */}
+      {/* ======================================================================= */}
+      {isCampaignModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-indigo-600/10 border border-indigo-600/30 flex items-center justify-center text-indigo-500">
+                  <Megaphone className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Campanha de Tráfego Pago / Remarketing
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Ative anúncios hiper-segmentados para produtores que viram seus Stories.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsCampaignModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCampaign} className="p-6 space-y-4">
+              <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs flex items-center justify-between">
+                <div className="flex items-center gap-2 text-indigo-400">
+                  <Target className="w-4 h-4 shrink-0" />
+                  <span className="font-semibold">
+                    {selectedViewerIds.size > 0
+                      ? `${selectedViewerIds.size} contato(s) selecionado(s)`
+                      : `Todos os ${filteredViewers.length} contatos filtrados`}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleExportMetaAudience}
+                  disabled={isExportingMeta}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <Download className="w-3 h-3" />
+                  <span>Baixar CSV Meta Ads</span>
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Nome da Campanha:
+                </label>
+                <input
+                  type="text"
+                  value={campaignName}
+                  onChange={(e) => setCampaignName(e.target.value)}
+                  required
+                  placeholder="Ex: Remarketing Safra 26/27 - Visualizadores de Maquinários"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Objetivo / Plataforma de Destino:
+                </label>
+                <select
+                  value={campaignObjective}
+                  onChange={(e) => setCampaignObjective(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500 cursor-pointer"
+                >
+                  <option value="meta_ads_custom_audience">Meta Ads (Instagram & Facebook) - Público Personalizado</option>
+                  <option value="meta_ads_lookalike">Meta Ads - Público Semelhante (Lookalike 1%)</option>
+                  <option value="google_customer_match">Google Ads - Segmentação por Lista de Clientes</option>
+                  <option value="whatsapp_mass_broadcast">Disparo Consultivo Direcionado no WhatsApp</option>
+                </select>
+              </div>
+
+              <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
+                <span className="font-bold text-slate-700 dark:text-slate-300 block">Formato Oficial Meta Ads:</span>
+                <p>
+                  O arquivo CSV gerado contém as colunas padrão (email, phone, fn, ln, ct, st, country) com os telefones sanitizados em formato internacional (+55...).
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCampaignModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingCampaign}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                >
+                  {isCreatingCampaign ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Megaphone className="w-3.5 h-3.5" />}
+                  <span>Criar Campanha no CRM</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================================= */}
+      {/* 13. MODAL DE EDIÇÃO RÁPIDA DE TELEFONE DO CONTATO                      */}
+      {/* ======================================================================= */}
+      {isEditPhoneModalOpen && selectedViewerForPhone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/30 flex items-center justify-center text-blue-500">
+                  <Phone className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Editar Telefone do Contato
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {selectedViewerForPhone.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsEditPhoneModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Número de Celular com DDD:
+                </label>
+                <input
+                  type="text"
+                  value={editPhoneNumber}
+                  onChange={(e) => setEditPhoneNumber(e.target.value)}
+                  placeholder="Ex: 5551999842499 ou 51999842499"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs font-mono font-semibold text-slate-900 dark:text-white outline-none focus:border-blue-500"
+                />
+                <span className="block text-[11px] text-slate-400 mt-1">
+                  O sistema formata automaticamente como (XX) 9XXXX-XXXX para a equipe comercial.
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2 bg-slate-50 dark:bg-slate-900/30">
+              <button
+                type="button"
+                onClick={() => setIsEditPhoneModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSavePhone}
+                disabled={isSavingPhone}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                {isSavingPhone ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                <span>Salvar Telefone</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -97,4 +97,5 @@ export declare class DashboardController {
         }[];
     }>;
     getStrategicAiReport(tenantId: string): Promise<any>;
+    auditDealWithAi(tenantId: string, dealId: string): Promise<any>;
 }

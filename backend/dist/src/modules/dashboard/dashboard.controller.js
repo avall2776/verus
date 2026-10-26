@@ -36,6 +36,9 @@ let DashboardController = class DashboardController {
     async getStrategicAiReport(tenantId) {
         return this.dashboardService.getStrategicAiReport(tenantId);
     }
+    async auditDealWithAi(tenantId, dealId) {
+        return this.dashboardService.auditDealWithAi(tenantId, dealId);
+    }
 };
 exports.DashboardController = DashboardController;
 __decorate([
@@ -73,6 +76,14 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], DashboardController.prototype, "getStrategicAiReport", null);
+__decorate([
+    (0, common_1.Get)('geo-map/deal-audit/:dealId'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('dealId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], DashboardController.prototype, "auditDealWithAi", null);
 exports.DashboardController = DashboardController = __decorate([
     (0, common_1.Controller)('metrics'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

@@ -150,7 +150,10 @@ export class MessagingService {
         evolutionInstanceName = `versus_${shortTenant}_${shortInst}`;
       }
     }
-    const evolutionApiKey = instance?.token || evolutionGlobalKey;
+    // Se o token for um token interno do Versus (tok_versus_...), usa a chave global ou a chave do settings
+    const isInternalVersusToken = typeof instance?.token === 'string' && instance.token.startsWith('tok_versus_');
+    const settingsApiKey = (instance?.settings as any)?.apiKey || (instance?.settings as any)?.token;
+    const evolutionApiKey = (!isInternalVersusToken && instance?.token) ? instance.token : (settingsApiKey || evolutionGlobalKey);
 
     return {
       instance,
@@ -305,8 +308,8 @@ export class MessagingService {
     cleanPhone: string,
     content: string,
   ): Promise<SendResult> {
+    const url = `${evoConfig.url}/message/sendText/${evoConfig.instanceName}`;
     try {
-      const url = `${evoConfig.url}/message/sendText/${evoConfig.instanceName}`;
       this.logger.log(`Disparando mensagem Evolution API [${evoConfig.instanceName}] para ${cleanPhone}...`);
 
       const response = await axios.post(
@@ -340,6 +343,42 @@ export class MessagingService {
         raw: response.data,
       };
     } catch (err: any) {
+      if (err.response?.status === 401 && evoConfig.apiKey !== 'verto123') {
+        this.logger.warn(`Evolution API retornou 401 com chave configurada. Retentando envio com chave global verto123 para ${cleanPhone}...`);
+        try {
+          const retryRes = await axios.post(
+            url,
+            {
+              number: cleanPhone,
+              options: {
+                delay: 1200,
+                presence: 'composing',
+                linkPreview: false,
+              },
+              textMessage: {
+                text: content,
+              },
+            },
+            {
+              headers: {
+                apikey: 'verto123',
+                'Content-Type': 'application/json',
+              },
+              timeout: 15000,
+            },
+          );
+          const messageId = retryRes.data?.key?.id || retryRes.data?.id || `evo_${Date.now()}`;
+          this.logger.log(`Mensagem enviada com sucesso no retry com chave global para ${cleanPhone}. ID: ${messageId}`);
+          return {
+            success: true,
+            messageId,
+            provider: 'evolution',
+            raw: retryRes.data,
+          };
+        } catch (retryErr: any) {
+          this.logger.error(`Retry de envio com chave global também falhou: ${retryErr.message}`);
+        }
+      }
       const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
       const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
       this.logger.error(`Erro no envio Evolution API para ${cleanPhone}: ${errorMsg}`);
@@ -457,8 +496,8 @@ export class MessagingService {
     fullMediaUrl: string,
     base64Media?: string | null,
   ): Promise<SendResult> {
+    const url = `${evoConfig.url}/message/sendMedia/${evoConfig.instanceName}`;
     try {
-      const url = `${evoConfig.url}/message/sendMedia/${evoConfig.instanceName}`;
       const isDocument = payload.type === 'document';
       const isVideo = payload.type === 'video';
       const mediatype = isDocument ? 'document' : isVideo ? 'video' : 'image';
@@ -492,6 +531,34 @@ export class MessagingService {
       this.logger.log(`Mídia [${payload.type}] enviada via Evolution API para ${cleanPhone}. ID: ${messageId}`);
       return { success: true, messageId, provider: 'evolution', raw: response.data };
     } catch (err: any) {
+      if (err.response?.status === 401 && evoConfig.apiKey !== 'verto123') {
+        this.logger.warn(`Evolution API retornou 401 em mídia. Retentando com chave global verto123 para ${cleanPhone}...`);
+        try {
+          const isDocument = payload.type === 'document';
+          const isVideo = payload.type === 'video';
+          const mediatype = isDocument ? 'document' : isVideo ? 'video' : 'image';
+          const fileName = payload.filename || (isDocument ? 'documento.pdf' : isVideo ? 'video.mp4' : 'imagem.jpg');
+          const retryRes = await axios.post(
+            url,
+            {
+              number: cleanPhone,
+              options: { delay: 1200, presence: 'composing' },
+              mediaMessage: {
+                mediatype,
+                media: base64Media || fullMediaUrl,
+                caption: payload.content || '',
+                fileName,
+              },
+            },
+            {
+              headers: { apikey: 'verto123', 'Content-Type': 'application/json' },
+              timeout: 25000,
+            },
+          );
+          const messageId = retryRes.data?.key?.id || retryRes.data?.id || `evo_media_${Date.now()}`;
+          return { success: true, messageId, provider: 'evolution', raw: retryRes.data };
+        } catch (retryErr: any) {}
+      }
       const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
       const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
       this.logger.error(`Erro ao enviar mídia Evolution API: ${errorMsg}`);
@@ -588,8 +655,8 @@ export class MessagingService {
     payload: SendAudioPayload,
     fullAudioUrl?: string,
   ): Promise<SendResult> {
+    const url = `${evoConfig.url}/message/sendWhatsAppAudio/${evoConfig.instanceName}`;
     try {
-      const url = `${evoConfig.url}/message/sendWhatsAppAudio/${evoConfig.instanceName}`;
       const audioData = payload.audioBuffer
         ? payload.audioBuffer.toString('base64')
         : fullAudioUrl;
@@ -624,6 +691,26 @@ export class MessagingService {
       this.logger.log(`Áudio enviado com sucesso via Evolution API para ${cleanPhone}. ID: ${messageId}`);
       return { success: true, messageId, provider: 'evolution', raw: response.data };
     } catch (err: any) {
+      if (err.response?.status === 401 && evoConfig.apiKey !== 'verto123') {
+        this.logger.warn(`Evolution API retornou 401 em áudio. Retentando com chave global verto123 para ${cleanPhone}...`);
+        try {
+          const audioData = payload.audioBuffer ? payload.audioBuffer.toString('base64') : fullAudioUrl;
+          const retryRes = await axios.post(
+            url,
+            {
+              number: cleanPhone,
+              options: { delay: 1200, presence: 'recording', encoding: true },
+              audioMessage: { audio: audioData },
+            },
+            {
+              headers: { apikey: 'verto123', 'Content-Type': 'application/json' },
+              timeout: 20000,
+            },
+          );
+          const messageId = retryRes.data?.key?.id || retryRes.data?.id || `evo_audio_${Date.now()}`;
+          return { success: true, messageId, provider: 'evolution', raw: retryRes.data };
+        } catch (retryErr: any) {}
+      }
       const rawError = err.response?.data?.response?.message || err.response?.data?.message || err.message;
       const errorMsg = typeof rawError === 'object' ? JSON.stringify(rawError) : String(rawError);
       this.logger.error(`Erro ao enviar áudio Evolution API: ${errorMsg}`);
