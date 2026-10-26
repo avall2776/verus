@@ -330,7 +330,11 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
   // Polo / Cidade Selecionado para a Gaveta Lateral
   const [selectedPoint, setSelectedPoint] = useState<GeoCityPoint | null>(null);
 
-  // Opção de Marcar / Desmarcar Polígonos de Georreferenciamento de Território (Estilo CAR)
+  // Malhas Geográficas Reais dos Municípios (IBGE) e Contorno dos Estados Brasileiros
+  const [municipalitiesGeoJson, setMunicipalitiesGeoJson] = useState<any>(null);
+  const [brStatesGeoJson, setBrStatesGeoJson] = useState<any>(null);
+
+  // Opção de Marcar / Desmarcar Polígonos de Delimitação Territorial
   const [showTerritoryZones, setShowTerritoryZones] = useState<boolean>(true);
 
   // Modal do Relatório Estratégico com IA (Comercial Verto)
@@ -421,6 +425,22 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
 
   useEffect(() => {
     fetchGeoData();
+
+    // Carrega a malha oficial dos municípios (IBGE) para demarcação territorial real
+    fetch("/geo/ibge-municipalities.json")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setMunicipalitiesGeoJson(data);
+      })
+      .catch((err) => console.warn("Aviso ao carregar malha municipal:", err));
+
+    // Carrega o contorno dos estados do Brasil para contexto geográfico
+    fetch("/geo/br-states.json")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setBrStatesGeoJson(data);
+      })
+      .catch((err) => console.warn("Aviso ao carregar malha de estados:", err));
   }, []);
 
   // 1. Inicialização do Mapa MapLibre GL JS
@@ -754,70 +774,156 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
     return coords;
   };
 
-  // 9. Cálculo Dinâmico do Georreferenciamento de Área (Dominância de Território / CAR)
-  // Verde: Vendas Concluídas da Comercial Verto (Passo Fundo, Pelotas e entorno dominado)
-  // Amarelo: Em Atendimento Ativo (Chapecó e praças em negociação)
+  // 9. Cálculo Dinâmico da Delimitação Territorial Municipal Real (IBGE)
+  // Verde: Vendas Concluídas (ex: Pelotas/RS e Passo Fundo/RS com perímetro municipal 100% verde)
+  // Amarelo: Em Atendimento Ativo (polos em negociação)
   // Vermelho: Negócios Perdidos / Ação de Repescagem
-  // Cinza: Mercado em Aberto (Névoa de Guerra / Território a ser Descoberto)
+  // Cinza: Mercado em Aberto (Névoa de Guerra / Território a Conquistar)
   const territoryGeoJson = useMemo(() => {
-    const features = filteredPoints.map((pt) => {
-      let radiusKm = 24;
-      let color = "#64748B";
-      let borderColor = "#475569";
-      let opacity = 0.12;
+    const normalize = (str: string) =>
+      (str || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
 
-      if (pt.status === "closed") {
-        // Território Dominado (Vendas Concluídas da Comercial Verto - ex: Pelotas)
-        radiusKm = Math.min(58, 42 + (pt.salesCount || 1) * 2);
-        color = "#10B981";
-        borderColor = "#059669";
-        opacity = 0.32;
-      } else if (pt.status === "in_attendance") {
-        // Território em Atendimento Ativo
-        radiusKm = Math.min(48, 34 + (pt.inAttendanceCount || 1) * 0.8);
-        color = "#F59E0B";
-        borderColor = "#D97706";
-        opacity = 0.24;
-      } else if (pt.status === "lost") {
-        // Território com Oportunidades Perdidas (Ação de Repescagem)
-        radiusKm = Math.min(42, 30 + (pt.lostCount || 1) * 0.8);
-        color = "#EF4444";
-        borderColor = "#DC2626";
-        opacity = 0.22;
-      } else {
-        // Mercado em Aberto / Névoa de Guerra
-        radiusKm = 24;
-        color = "#64748B";
-        borderColor = "#475569";
-        opacity = 0.12;
-      }
+    const pointByCityState = new Map<string, GeoCityPoint>();
+    const matchedPointIds = new Set<string>();
 
-      return {
-        type: "Feature" as const,
-        properties: {
-          id: pt.id,
-          cityName: pt.cityName,
-          state: pt.state,
-          status: pt.status,
-          color,
-          borderColor,
-          opacity,
-          salesCount: pt.salesCount,
-          inAttendanceCount: pt.inAttendanceCount,
-          lostCount: pt.lostCount
-        },
-        geometry: {
-          type: "Polygon" as const,
-          coordinates: [createTerritoryCircle(pt.lng, pt.lat, radiusKm)]
+    filteredPoints.forEach((pt) => {
+      const key = `${normalize(pt.cityName)}|${pt.state.toUpperCase().trim()}`;
+      pointByCityState.set(key, pt);
+    });
+
+    const features: any[] = [];
+
+    // Se a malha oficial do IBGE estiver carregada, utilizamos os polígonos reais dos municípios
+    if (municipalitiesGeoJson?.features) {
+      municipalitiesGeoJson.features.forEach((feat: any) => {
+        const featCity = feat.properties?.cityName || "";
+        const featState = (feat.properties?.state || "").toUpperCase().trim();
+        const key = `${normalize(featCity)}|${featState}`;
+        const pt = pointByCityState.get(key);
+
+        let color = "#334155";
+        let borderColor = "#475569";
+        let opacity = 0.22;
+        let status = "unexplored";
+        let salesCount = 0;
+        let inAttendanceCount = 0;
+        let lostCount = 0;
+        let id = `ibge-${feat.properties?.ibgeId || featCity}`;
+
+        if (pt) {
+          matchedPointIds.add(pt.id);
+          id = pt.id;
+          status = pt.status;
+          salesCount = pt.salesCount || 0;
+          inAttendanceCount = pt.inAttendanceCount || 0;
+          lostCount = pt.lostCount || 0;
+
+          if (pt.status === "closed") {
+            // Território Dominado (Vendas Concluídas - ex: Pelotas/RS com município 100% verde)
+            color = "#10B981";
+            borderColor = "#047857";
+            opacity = 0.58;
+          } else if (pt.status === "in_attendance") {
+            // Território em Atendimento Ativo
+            color = "#F59E0B";
+            borderColor = "#B45309";
+            opacity = 0.46;
+          } else if (pt.status === "lost") {
+            // Território com Oportunidades Perdidas
+            color = "#EF4444";
+            borderColor = "#B91C1C";
+            opacity = 0.44;
+          } else {
+            // Mercado em Aberto
+            color = "#475569";
+            borderColor = "#64748B";
+            opacity = 0.26;
+          }
+        } else {
+          // Se houver um filtro de status ativo (ex: apenas "closed"), oculta os outros
+          if (selectedStatus !== "all") {
+            return;
+          }
+          color = "#1E293B";
+          borderColor = "#334155";
+          opacity = 0.18;
         }
-      };
+
+        features.push({
+          type: "Feature",
+          properties: {
+            id,
+            cityName: pt ? pt.cityName : featCity,
+            state: pt ? pt.state : featState,
+            status,
+            color,
+            borderColor,
+            opacity,
+            salesCount,
+            inAttendanceCount,
+            lostCount
+          },
+          geometry: feat.geometry
+        });
+      });
+    }
+
+    // Para pontos que não tenham correspondência direta no IBGE (ex: Santa Rita PY ou pequenos polos)
+    filteredPoints.forEach((pt) => {
+      if (!matchedPointIds.has(pt.id)) {
+        let color = "#475569";
+        let borderColor = "#64748B";
+        let opacity = 0.25;
+        let radiusKm = 28;
+
+        if (pt.status === "closed") {
+          color = "#10B981";
+          borderColor = "#047857";
+          opacity = 0.58;
+          radiusKm = 45;
+        } else if (pt.status === "in_attendance") {
+          color = "#F59E0B";
+          borderColor = "#B45309";
+          opacity = 0.46;
+          radiusKm = 36;
+        } else if (pt.status === "lost") {
+          color = "#EF4444";
+          borderColor = "#B91C1C";
+          opacity = 0.44;
+          radiusKm = 32;
+        }
+
+        features.push({
+          type: "Feature",
+          properties: {
+            id: pt.id,
+            cityName: pt.cityName,
+            state: pt.state,
+            status: pt.status,
+            color,
+            borderColor,
+            opacity,
+            salesCount: pt.salesCount,
+            inAttendanceCount: pt.inAttendanceCount,
+            lostCount: pt.lostCount
+          },
+          geometry: {
+            type: "Polygon",
+            coordinates: [createTerritoryCircle(pt.lng, pt.lat, radiusKm)]
+          }
+        });
+      }
     });
 
     return {
-      type: "FeatureCollection" as const,
+      type: "FeatureCollection",
       features
     };
-  }, [filteredPoints]);
+  }, [filteredPoints, municipalitiesGeoJson, selectedStatus]);
 
   // 10. Atualização das Camadas de Área Territorial no MapLibre GL
   useEffect(() => {
@@ -825,6 +931,53 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
     if (!map) return;
 
     const setupTerritoryLayers = () => {
+      // 1. Camada de Fundo dos Estados Brasileiros
+      if (brStatesGeoJson) {
+        const existingStates = map.getSource("brazil-states-base") as maplibregl.GeoJSONSource | undefined;
+        if (existingStates) {
+          existingStates.setData(brStatesGeoJson);
+        } else if (map.isStyleLoaded()) {
+          map.addSource("brazil-states-base", {
+            type: "geojson",
+            data: brStatesGeoJson
+          });
+
+          map.addLayer(
+            {
+              id: "brazil-states-fill",
+              type: "fill",
+              source: "brazil-states-base",
+              layout: {
+                visibility: showTerritoryZones ? "visible" : "none"
+              },
+              paint: {
+                "fill-color": "#0B1224",
+                "fill-opacity": 0.35
+              }
+            },
+            map.getLayer("tactical-territory-fill") ? "tactical-territory-fill" : undefined
+          );
+
+          map.addLayer(
+            {
+              id: "brazil-states-line",
+              type: "line",
+              source: "brazil-states-base",
+              layout: {
+                visibility: showTerritoryZones ? "visible" : "none"
+              },
+              paint: {
+                "line-color": "#1E293B",
+                "line-width": 1,
+                "line-opacity": 0.6
+              }
+            },
+            map.getLayer("tactical-territory-line") ? "tactical-territory-line" : undefined
+          );
+        }
+      }
+
+      // 2. Camada dos Polígonos Municipais
       const existingSource = map.getSource("tactical-territory-zones") as maplibregl.GeoJSONSource | undefined;
       if (existingSource) {
         existingSource.setData(territoryGeoJson);
@@ -838,7 +991,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
         data: territoryGeoJson
       });
 
-      // Camada de Preenchimento da Área Territorial
+      // Camada de Preenchimento da Delimitação Territorial
       map.addLayer({
         id: "tactical-territory-fill",
         type: "fill",
@@ -852,7 +1005,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
         }
       });
 
-      // Linha de Limite do Georreferenciamento
+      // Linha de Limite Territorial
       map.addLayer({
         id: "tactical-territory-line",
         type: "line",
@@ -877,15 +1030,20 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
       // Interatividade ao Clicar na Área Territorial
       map.on("click", "tactical-territory-fill", (e) => {
         if (e.features && e.features[0]) {
-          const featId = e.features[0].properties?.id;
-          const target = filteredPoints.find((p) => p.id === featId);
+          const featProps = e.features[0].properties;
+          const featId = featProps?.id;
+          let target = filteredPoints.find((p) => p.id === featId);
+          if (!target && featProps?.cityName) {
+            const norm = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+            target = filteredPoints.find((p) => norm(p.cityName) === norm(featProps.cityName));
+          }
           if (target) {
             setSelectedPoint(target);
             setSpyingDeal(null);
             setDealModalFilter("all");
             map.flyTo({
               center: [target.lng, target.lat],
-              zoom: 7.5,
+              zoom: 8,
               pitch: 0,
               duration: 1200
             });
@@ -906,27 +1064,18 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
     } else {
       map.once("load", setupTerritoryLayers);
     }
-  }, [territoryGeoJson, filteredPoints]);
+  }, [territoryGeoJson, filteredPoints, brStatesGeoJson]);
 
-  // Alternância Dinâmica de Visibilidade dos Polígonos de Demarcação Territorial (CAR)
+  // Alternância Dinâmica de Visibilidade dos Polígonos de Delimitação Territorial
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
     try {
-      if (map.getLayer("tactical-territory-fill")) {
-        map.setLayoutProperty(
-          "tactical-territory-fill",
-          "visibility",
-          showTerritoryZones ? "visible" : "none"
-        );
-      }
-      if (map.getLayer("tactical-territory-line")) {
-        map.setLayoutProperty(
-          "tactical-territory-line",
-          "visibility",
-          showTerritoryZones ? "visible" : "none"
-        );
-      }
+      ["tactical-territory-fill", "tactical-territory-line", "brazil-states-fill", "brazil-states-line"].forEach((layerId) => {
+        if (map.getLayer(layerId)) {
+          map.setLayoutProperty(layerId, "visibility", showTerritoryZones ? "visible" : "none");
+        }
+      });
     } catch (err) {
       console.warn("Transição de camada territorial:", err);
     }
@@ -986,7 +1135,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                 theme === "light" ? "text-slate-800" : "text-white"
               }`}
             >
-              SALA DE GUERRA GEOTÁTICA • COMERCIAL VERTO (AGRO)
+              SALA DE GUERRA GEOTÁTICA • {geoData?.summary.tenantName?.toUpperCase() || "DOMINÂNCIA DO AGRO"}
             </span>
           </div>
 
@@ -1012,15 +1161,15 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
             </span>
           </button>
 
-          {/* Botão de Ligar / Desligar Demarcação Georreferenciada (CAR / Territórios) */}
+          {/* Botão de Ligar / Desligar Demarcação Territorial Municipal */}
           <button
             type="button"
             className={`btn-map-control ${showTerritoryZones ? "active" : ""}`}
             onClick={() => setShowTerritoryZones(!showTerritoryZones)}
-            title="Ativar ou desativar os polígonos de demarcação georreferenciada (CAR / limites de cidades)"
+            title="Ativar ou desativar os polígonos de delimitação territorial dos municípios"
           >
             <Shield className={`w-3.5 h-3.5 ${showTerritoryZones ? "text-emerald-400" : "text-slate-400"}`} />
-            <span>{showTerritoryZones ? "Demarcação CAR (Ativa)" : "Demarcação CAR (Oculta)"}</span>
+            <span>{showTerritoryZones ? "Demarcação Territorial (Ativa)" : "Demarcação Territorial (Oculta)"}</span>
           </button>
 
           {/* Botão de Relatório Estratégico com Análise por IA */}
@@ -1028,10 +1177,10 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
             type="button"
             className="btn-map-control btn-outline-cyan font-bold"
             onClick={fetchAiReport}
-            title="Abrir Análise Estratégica com Inteligência Artificial da Comercial Verto"
+            title="Abrir Análise Estratégica com Inteligência Artificial"
           >
             <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-spin-slow" />
-            <span>Relatório IA Verto</span>
+            <span>Relatório de IA</span>
           </button>
 
           {/* Centralizar Brasil */}
@@ -1233,14 +1382,14 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
           </div>
 
           <div className="legend-content custom-scrollbar">
-            {/* 0. PAINEL EXECUTIVO DE DOMINÂNCIA TERRITORIAL & IA (COMERCIAL VERTO - AGRO) */}
-            <div className="p-3 mb-2 rounded-xl border border-slate-700/60 bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-[#070D1B]/95 shadow-lg backdrop-blur-md">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] uppercase font-extrabold tracking-wider text-emerald-400 flex items-center gap-1.5">
-                  <Target className="w-3.5 h-3.5 text-emerald-400" />
-                  Dominância Comercial Verto
+            {/* 0. PAINEL EXECUTIVO DE DOMINÂNCIA TERRITORIAL & IA (MULTI-TENANT AGRO) */}
+            <div className="p-3 mb-2 rounded-xl border border-slate-700/80 bg-slate-900/95 shadow-md backdrop-blur-md">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] uppercase font-extrabold tracking-wider text-slate-200 flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-emerald-400/50 shadow-[0_0_6px_#10B981]" />
+                  Dominância Comercial do Agro
                 </span>
-                <span className="text-[9px] font-bold text-slate-400 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700">
+                <span className="text-[9px] font-bold text-slate-300 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
                   Agro
                 </span>
               </div>
@@ -1253,31 +1402,70 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                 <div style={{ width: `${unexploredPercentage}%` }} className="bg-slate-600 h-full transition-all" title={`Mercado em Aberto: ${unexploredPercentage}%`} />
               </div>
 
-              {/* Grid de Percentuais */}
-              <div className="grid grid-cols-4 gap-1 text-center my-1.5">
-                <div className="bg-emerald-950/40 border border-emerald-800/40 rounded-lg p-1">
+              {/* Grid de Percentuais com Botões Clicáveis e Filtros Ativos */}
+              <div className="grid grid-cols-4 gap-1.5 text-center my-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedStatus(selectedStatus === "closed" ? "all" : "closed")}
+                  title="Filtrar polos com vendas fechadas (Dominado)"
+                  className={`rounded-lg p-1.5 transition-all border flex flex-col items-center justify-center cursor-pointer ${
+                    selectedStatus === "closed"
+                      ? "bg-emerald-950 border-emerald-400 ring-2 ring-emerald-400/70 shadow-md shadow-emerald-950"
+                      : "bg-emerald-950/30 border-emerald-800/40 hover:bg-emerald-950/60"
+                  }`}
+                >
                   <div className="text-[8px] text-emerald-400 font-bold uppercase">Dominado</div>
                   <div className="text-xs font-black text-emerald-300">{dominancePercentage}%</div>
-                </div>
-                <div className="bg-amber-950/40 border border-amber-800/40 rounded-lg p-1">
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedStatus(selectedStatus === "in_attendance" ? "all" : "in_attendance")}
+                  title="Filtrar polos em atendimento ativo"
+                  className={`rounded-lg p-1.5 transition-all border flex flex-col items-center justify-center cursor-pointer ${
+                    selectedStatus === "in_attendance"
+                      ? "bg-amber-950 border-amber-400 ring-2 ring-amber-400/70 shadow-md shadow-amber-950"
+                      : "bg-amber-950/30 border-amber-800/40 hover:bg-amber-950/60"
+                  }`}
+                >
                   <div className="text-[8px] text-amber-400 font-bold uppercase">Atendimento</div>
                   <div className="text-xs font-black text-amber-300">{inAttendancePercentage}%</div>
-                </div>
-                <div className="bg-rose-950/40 border border-rose-800/40 rounded-lg p-1">
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedStatus(selectedStatus === "lost" ? "all" : "lost")}
+                  title="Filtrar polos de oportunidades perdidas (Repescagem)"
+                  className={`rounded-lg p-1.5 transition-all border flex flex-col items-center justify-center cursor-pointer ${
+                    selectedStatus === "lost"
+                      ? "bg-rose-950 border-rose-400 ring-2 ring-rose-400/70 shadow-md shadow-rose-950"
+                      : "bg-rose-950/30 border-rose-800/40 hover:bg-rose-950/60"
+                  }`}
+                >
                   <div className="text-[8px] text-rose-400 font-bold uppercase">Perdas</div>
                   <div className="text-xs font-black text-rose-300">{lostPercentage}%</div>
-                </div>
-                <div className="bg-slate-800/60 border border-slate-700/60 rounded-lg p-1">
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedStatus(selectedStatus === "unexplored" ? "all" : "unexplored")}
+                  title="Filtrar mercado em aberto (Névoa de Guerra)"
+                  className={`rounded-lg p-1.5 transition-all border flex flex-col items-center justify-center cursor-pointer ${
+                    selectedStatus === "unexplored"
+                      ? "bg-slate-800 border-slate-300 ring-2 ring-slate-400/70 shadow-md"
+                      : "bg-slate-800/60 border-slate-700/60 hover:bg-slate-800"
+                  }`}
+                >
                   <div className="text-[8px] text-slate-400 font-bold uppercase">Névoa</div>
                   <div className="text-xs font-black text-slate-200">{unexploredPercentage}%</div>
-                </div>
+                </button>
               </div>
 
               {/* Botão de Leitura Estratégica com IA */}
               <button
                 type="button"
                 onClick={fetchAiReport}
-                className="w-full mt-2 py-1.5 px-2.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white shadow-md shadow-emerald-950/50 flex items-center justify-center gap-1.5 transition-all group"
+                className="w-full mt-1.5 py-1.5 px-2.5 rounded-lg text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-600/40 flex items-center justify-center gap-1.5 transition-all shadow-sm group"
               >
                 <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-spin-slow group-hover:scale-110 transition-transform" />
                 <span>Relatório Estratégico & IA</span>
@@ -2467,14 +2655,14 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                   <div>
                     <div className="flex items-center gap-2">
                       <h2 className="text-base sm:text-lg font-black tracking-wide">
-                        Relatório de Dominância & IA Comercial Verto
+                        Relatório Estratégico de Inteligência Artificial
                       </h2>
                       <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                         Setor Agro
                       </span>
                     </div>
                     <p className="text-xs text-slate-400">
-                      Geomarketing e Estratégia de Expansão Territorial • Máquinas e Equipamentos de Plantio
+                      Geomarketing e Estratégia de Expansão Territorial • Inteligência Comercial
                     </p>
                   </div>
                 </div>
@@ -2576,7 +2764,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                       <div className="flex items-center gap-2 mb-2">
                         <BarChart3 className="w-4 h-4 text-emerald-400" />
                         <h3 className="text-xs uppercase font-extrabold tracking-wider text-emerald-300">
-                          Diagnóstico Executivo da Comercial Verto
+                          Diagnóstico Executivo Territorial
                         </h3>
                       </div>
                       <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
@@ -2677,7 +2865,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold text-emerald-400 uppercase flex items-center gap-1.5">
                               <FileText className="w-3.5 h-3.5" />
-                              Script Sugerido para WhatsApp (Abordagem Consultiva Verto):
+                              Script Sugerido para WhatsApp (Abordagem Consultiva):
                             </span>
                             <button
                               type="button"
@@ -2708,7 +2896,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-emerald-400" />
                           <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-                            Polos Agro Prioritários para Penetração da Comercial Verto
+                            Polos Agro Prioritários para Expansão Territorial
                           </h4>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
@@ -2748,7 +2936,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
               {/* Rodapé do Modal */}
               <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-between">
                 <span className="text-[11px] text-slate-400">
-                  Comercial Verto • Inteligência Geoanalítica Integrada ao CRM
+                  Inteligência Geoanalítica Integrada ao CRM Vallor
                 </span>
                 <button
                   type="button"
