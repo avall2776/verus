@@ -365,6 +365,7 @@ let DashboardService = DashboardService_1 = class DashboardService {
                             email: true,
                             source: true,
                             tags: true,
+                            address: true,
                             conversations: {
                                 select: {
                                     id: true,
@@ -451,6 +452,15 @@ let DashboardService = DashboardService_1 = class DashboardService {
                 const cleanMetaCity = normalizeName((meta.city || meta.cidade).split('-')[0].split('/')[0]);
                 if (GEO_CITY_COORDS[cleanMetaCity]) {
                     geoInfo = GEO_CITY_COORDS[cleanMetaCity];
+                }
+            }
+            if (!geoInfo && deal.contact?.address) {
+                const cleanAddr = normalizeName(deal.contact.address);
+                for (const [cityName, info] of Object.entries(GEO_CITY_COORDS)) {
+                    if (cleanAddr.includes(cityName)) {
+                        geoInfo = info;
+                        break;
+                    }
                 }
             }
             if (!geoInfo && (rawPhone.startsWith('595') || rawPhone.startsWith('0595'))) {
@@ -574,19 +584,17 @@ let DashboardService = DashboardService_1 = class DashboardService {
                 });
             }
         }
-        const points = Array.from(cityMap.values()).map(p => {
-            let status = 'unexplored';
+        const activeCityEntries = Array.from(cityMap.values()).filter(p => p.dealsList.length > 0 || p.salesCount > 0 || p.inAttendanceCount > 0 || p.lostCount > 0);
+        const points = activeCityEntries.map(p => {
+            let status = 'in_attendance';
             if (p.salesCount > 0) {
                 status = 'closed';
             }
             else if (p.inAttendanceCount > 0) {
                 status = 'in_attendance';
             }
-            else if (p.lostCount > 0) {
-                status = 'lost';
-            }
             else {
-                status = 'unexplored';
+                status = 'lost';
             }
             return {
                 id: `${p.cityName}-${p.state}`.toLowerCase().replace(/\s+/g, '-'),
@@ -654,11 +662,12 @@ let DashboardService = DashboardService_1 = class DashboardService {
             if (pt.isLiveNow)
                 activeLiveAttendances += 1;
         });
-        const totalCities = points.length;
-        const dominancePercentage = totalCities > 0 ? Math.round((closedCitiesCount / totalCities) * 100) : 0;
-        const inAttendancePercentage = totalCities > 0 ? Math.round((inAttendanceCitiesCount / totalCities) * 100) : 0;
-        const lostPercentage = totalCities > 0 ? Math.round((lostCitiesCount / totalCities) * 100) : 0;
-        const unexploredPercentage = totalCities > 0 ? Math.max(0, 100 - dominancePercentage - inAttendancePercentage - lostPercentage) : 100;
+        const totalMonitoredCities = Object.keys(GEO_CITY_COORDS).length;
+        unexploredCitiesCount = Math.max(0, totalMonitoredCities - closedCitiesCount - inAttendanceCitiesCount - lostCitiesCount);
+        const dominancePercentage = totalMonitoredCities > 0 ? Math.round((closedCitiesCount / totalMonitoredCities) * 100) : 0;
+        const inAttendancePercentage = totalMonitoredCities > 0 ? Math.round((inAttendanceCitiesCount / totalMonitoredCities) * 100) : 0;
+        const lostPercentage = totalMonitoredCities > 0 ? Math.round((lostCitiesCount / totalMonitoredCities) * 100) : 0;
+        const unexploredPercentage = Math.max(0, 100 - dominancePercentage - inAttendancePercentage - lostPercentage);
         const regions = Object.entries(regionalTotals)
             .filter(([_, data]) => data.salesCount > 0 || data.inAttendanceCount > 0)
             .map(([name, data]) => ({

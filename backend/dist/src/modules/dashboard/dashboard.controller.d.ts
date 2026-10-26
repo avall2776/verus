@@ -80,7 +80,7 @@ export declare class DashboardController {
             region: string;
             lat: number;
             lng: number;
-            status: "closed" | "lost" | "in_attendance" | "unexplored";
+            status: "closed" | "lost" | "in_attendance";
             salesCount: number;
             salesVolume: number;
             inAttendanceCount: number;

@@ -697,22 +697,28 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
 
     const isLightMode = theme === "light";
 
-    filteredPoints.forEach((point) => {
+    // REGRA DE OURO: Apenas cidades com atividade comercial real recebem alfinete.
+    // NENHUM alfinete cinza de névoa é renderizado no mapa, pois todo o resto é território a conquistar.
+    const activePoints = filteredPoints.filter(
+      (point) => point.status !== "unexplored" && (point.salesCount > 0 || point.inAttendanceCount > 0 || point.lostCount > 0)
+    );
+
+    activePoints.forEach((point) => {
       const el = document.createElement("div");
       el.className =
         "group relative cursor-pointer select-none transition-transform duration-300 hover:scale-125 z-10 hover:z-50";
 
-      let glowColor = "rgba(100, 116, 139, 0.4)";
-      let pinColor = isLightMode ? "#64748B" : "#94A3B8"; // Mercado Aberto
+      let glowColor = "rgba(16, 185, 129, 0.7)";
+      let pinColor = "#10B981"; // Padrão Verde Dominado
 
-      if (point.status === "closed") {
-        glowColor = "rgba(16, 185, 129, 0.7)";
-        pinColor = "#10B981"; // Negócio Fechado (Verde)
-      } else if (point.status === "in_attendance") {
-        glowColor = "rgba(234, 179, 8, 0.7)";
-        pinColor = "#F59E0B"; // Em Atendimento (Amarelo)
-      } else if (point.status === "lost") {
-        glowColor = "rgba(239, 68, 68, 0.7)";
+      if (point.salesCount > 0 || point.status === "closed") {
+        glowColor = "rgba(16, 185, 129, 0.85)";
+        pinColor = "#10B981"; // Negócio Fechado / Dominado (Verde)
+      } else if (point.inAttendanceCount > 0 || point.status === "in_attendance") {
+        glowColor = "rgba(245, 158, 11, 0.85)";
+        pinColor = "#F59E0B"; // Em Atendimento Ativo (Amarelo)
+      } else if (point.lostCount > 0 || point.status === "lost") {
+        glowColor = "rgba(239, 68, 68, 0.85)";
         pinColor = "#EF4444"; // Perdido / Repescagem (Vermelho)
       }
 
@@ -830,6 +836,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
   // Vermelho: Negócios Perdidos / Ação de Repescagem
   // Cinza: Mercado em Aberto (Névoa de Guerra / Território a Conquistar)
   const territoryGeoJson = useMemo(() => {
+    const isLightMode = theme === "light";
     const normalize = (str: string) =>
       (str || "")
         .toLowerCase()
@@ -864,43 +871,42 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
         let lostCount = 0;
         let id = `ibge-${feat.properties?.ibgeId || featCity}`;
 
-        if (pt) {
+        const hasActivity = pt && (pt.salesCount > 0 || pt.inAttendanceCount > 0 || pt.lostCount > 0);
+        if (hasActivity) {
           matchedPointIds.add(pt.id);
           id = pt.id;
-          status = pt.status;
           salesCount = pt.salesCount || 0;
           inAttendanceCount = pt.inAttendanceCount || 0;
           lostCount = pt.lostCount || 0;
 
-          if (pt.status === "closed") {
-            // Território Dominado (Vendas Concluídas - ex: Pelotas/RS com município 100% verde)
+          if (salesCount > 0 || pt.status === "closed") {
+            // Território Dominado (Havendo pelo menos 1 venda ganha, a demarcação da terra fica 100% VERDE VÍVIDO estilo distrito de jogo)
+            status = "closed";
             color = "#10B981";
             borderColor = "#047857";
-            opacity = 0.58;
-          } else if (pt.status === "in_attendance") {
-            // Território em Atendimento Ativo
+            opacity = 0.75;
+          } else if (inAttendanceCount > 0 || pt.status === "in_attendance") {
+            // Território em Atendimento Ativo (Amarelo)
+            status = "in_attendance";
             color = "#F59E0B";
             borderColor = "#B45309";
-            opacity = 0.46;
-          } else if (pt.status === "lost") {
-            // Território com Oportunidades Perdidas
+            opacity = 0.65;
+          } else if (lostCount > 0 || pt.status === "lost") {
+            // Território com Oportunidades Perdidas (Vermelho)
+            status = "lost";
             color = "#EF4444";
             borderColor = "#B91C1C";
-            opacity = 0.44;
-          } else {
-            // Mercado em Aberto
-            color = "#475569";
-            borderColor = "#64748B";
-            opacity = 0.26;
+            opacity = 0.65;
           }
         } else {
-          // Se houver um filtro de status ativo (ex: apenas "closed"), oculta os outros
-          if (selectedStatus !== "all") {
+          // Território Não Explorado (Névoa de Guerra / Território a Conquistar - sem alfinete)
+          if (selectedStatus !== "all" && selectedStatus !== "unexplored") {
             return;
           }
-          color = "#1E293B";
-          borderColor = "#334155";
-          opacity = 0.18;
+          status = "unexplored";
+          color = isLightMode ? "#CBD5E1" : "#1E293B";
+          borderColor = isLightMode ? "#94A3B8" : "#334155";
+          opacity = isLightMode ? 0.22 : 0.18;
         }
 
         features.push({
@@ -922,28 +928,29 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
       });
     }
 
-    // Para pontos que não tenham correspondência direta no IBGE (ex: Santa Rita PY ou pequenos polos)
+    // Para pontos com negócios reais que não tenham correspondência direta no IBGE (ex: Santa Rita PY ou pequenos polos)
     filteredPoints.forEach((pt) => {
-      if (!matchedPointIds.has(pt.id)) {
-        let color = "#475569";
-        let borderColor = "#64748B";
-        let opacity = 0.25;
-        let radiusKm = 28;
+      const hasRealDeals = pt.salesCount > 0 || pt.inAttendanceCount > 0 || pt.lostCount > 0;
+      if (!matchedPointIds.has(pt.id) && hasRealDeals) {
+        let color = "#10B981";
+        let borderColor = "#047857";
+        let opacity = 0.72;
+        let radiusKm = 40;
 
-        if (pt.status === "closed") {
+        if (pt.salesCount > 0 || pt.status === "closed") {
           color = "#10B981";
           borderColor = "#047857";
-          opacity = 0.58;
+          opacity = 0.75;
           radiusKm = 45;
-        } else if (pt.status === "in_attendance") {
+        } else if (pt.inAttendanceCount > 0 || pt.status === "in_attendance") {
           color = "#F59E0B";
           borderColor = "#B45309";
-          opacity = 0.46;
+          opacity = 0.65;
           radiusKm = 36;
-        } else if (pt.status === "lost") {
+        } else if (pt.lostCount > 0 || pt.status === "lost") {
           color = "#EF4444";
           borderColor = "#B91C1C";
-          opacity = 0.44;
+          opacity = 0.65;
           radiusKm = 32;
         }
 
@@ -973,7 +980,7 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
       type: "FeatureCollection" as const,
       features
     };
-  }, [filteredPoints, municipalitiesGeoJson, selectedStatus]);
+  }, [filteredPoints, municipalitiesGeoJson, selectedStatus, theme]);
 
   // 10. Atualização das Camadas de Área Territorial no MapLibre GL
   useEffect(() => {
@@ -1068,12 +1075,14 @@ export default function TacticalGeoMap({ onViewChange, currentView = "map" }: Ta
           "line-width": [
             "case",
             ["==", ["get", "status"], "closed"],
+            3.5,
+            ["==", ["get", "status"], "in_attendance"],
             2.5,
-            ["==", ["get", "status"], "unexplored"],
-            1,
-            2
+            ["==", ["get", "status"], "lost"],
+            2.5,
+            1
           ],
-          "line-opacity": 0.85
+          "line-opacity": 0.95
         }
       });
 

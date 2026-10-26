@@ -583,14 +583,28 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                 const effectivePhone = contact?.phone && !contact.phone.includes('@lid') ? contact.phone : view.phone;
                 const phoneInfo = this.formatBrazilianPhone(effectivePhone);
                 const { dateFormatted, timeFormatted, relative } = this.formatDateTime(view.viewedAt);
+                const nameLower = (contact?.name || view.contactName || '').toLowerCase();
+                const companyLower = (contact?.tags?.join(' ') || '').toLowerCase();
+                const isInternalTeam = nameLower.includes('verto') ||
+                    companyLower.includes('verto') ||
+                    nameLower.includes('plinio parisotto') ||
+                    nameLower.includes('junior verto') ||
+                    nameLower.includes('colaborador') ||
+                    nameLower.includes('funcionario') ||
+                    nameLower.includes('institucional');
                 let crmStatus = 'prospect';
-                let crmStatusLabel = 'Potencial Comprador (Lead Quente)';
+                let crmStatusLabel = 'Potencial Comprador';
                 let totalPurchased = 0;
                 let assignedSeller = 'Equipe Comercial Verto';
                 let dealTitle = undefined;
                 let dealValue = undefined;
-                let aiInsight = 'Novo lead com visualização ativa de Story. Recomendada abordagem consultiva com foco em maquinários.';
-                if (contact?.deals && contact.deals.length > 0) {
+                let aiInsight = 'Novo lead qualificado com visualização ativa de Story. Recomendada abordagem consultiva com foco em maquinários.';
+                if (isInternalTeam) {
+                    crmStatus = 'internal_team';
+                    crmStatusLabel = 'Equipe Interna (Verto)';
+                    aiInsight = 'Colaborador / Perfil institucional da Verto Agrícola acompanhando as publicações e o engajamento dos stories no WhatsApp corporativo.';
+                }
+                else if (contact?.deals && contact.deals.length > 0) {
                     const topDeal = contact.deals[0];
                     assignedSeller = topDeal.assignee?.name || assignedSeller;
                     dealTitle = topDeal.title;
@@ -599,18 +613,18 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                     totalPurchased = wonDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
                     if (wonDeals.length > 0) {
                         crmStatus = 'active_client';
-                        crmStatusLabel = 'Cliente Ativo (Comprador Confirmado)';
-                        aiInsight = `Comprador fidelizado com ${wonDeals.length} pedido(s) faturado(s) (${totalPurchased > 0 ? 'R$ ' + totalPurchased.toLocaleString('pt-BR') : ''}). Visualizou ${view.category || 'produtos'}. Alto potencial de recompra.`;
+                        crmStatusLabel = 'Cliente Comprador';
+                        aiInsight = `Comprador fidelizado com histórico faturado (${totalPurchased > 0 ? 'R$ ' + totalPurchased.toLocaleString('pt-BR') : ''}). Visualizou ${view.category || 'produtos'}. Alto potencial de recompra.`;
                     }
                     else if (['proposal', 'negotiation', 'follow-up'].includes(topDeal.status)) {
                         crmStatus = 'open_deal';
-                        crmStatusLabel = `Em Negociação (${topDeal.title})`;
-                        aiInsight = `Negociação em andamento: "${topDeal.title}". O Story funciona como gancho de timing perfeito para avançar a proposta.`;
+                        crmStatusLabel = 'Em Negociação';
+                        aiInsight = `Negociação em andamento: "${topDeal.title}" (${dealValue > 0 ? 'R$ ' + dealValue.toLocaleString('pt-BR') : ''}). O Story funciona como gancho de timing perfeito para avançar a proposta.`;
                     }
                     else if (['lost', 'disqualified'].includes(topDeal.status)) {
                         crmStatus = 'inactive_client';
-                        crmStatusLabel = 'Cliente Inativo (Reativação)';
-                        aiInsight = 'Produtor reaquecido espontaneamente pelo Story após período sem compras. Momento ideal para reaproximação comercial.';
+                        crmStatusLabel = 'Reativação de Carteira';
+                        aiInsight = 'Produtor reaquecido espontaneamente pelo Story após período sem compras. Momento ideal para reaproximação comercial consultiva.';
                     }
                 }
                 const weekCountRes = await this.prisma.$queryRawUnsafe(`SELECT count(*)::int as count 
@@ -622,7 +636,7 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                     id: view.id,
                     contactId: contact?.id || view.contactId || view.id,
                     name: contact?.name || view.contactName || `Produtor Rural (${phoneInfo.cleanDigits.slice(-4) || 'WhatsApp'})`,
-                    companyOrFarm: contact?.tags?.find((t) => t.toLowerCase().includes('fazenda') || t.toLowerCase().includes('agro')) || contact?.name || 'Cliente Verto',
+                    companyOrFarm: contact?.tags?.find((t) => t.toLowerCase().includes('fazenda') || t.toLowerCase().includes('agro')) || (isInternalTeam ? 'Verto Agrícola' : 'Cliente Verto'),
                     phone: effectivePhone,
                     phoneFormatted: phoneInfo.formatted,
                     isLidOnly: phoneInfo.isLidOnly,
@@ -654,92 +668,6 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
         }
         catch (err) {
             this.logger.error(`Erro ao carregar whatsapp_status_views: ${err.message}`);
-        }
-        try {
-            const realContacts = await this.prisma.contact.findMany({
-                where: { tenantId },
-                include: {
-                    deals: {
-                        include: { assignee: { select: { name: true } } },
-                        orderBy: { updatedAt: 'desc' },
-                        take: 2,
-                    },
-                },
-                orderBy: [
-                    { updatedAt: 'desc' },
-                ],
-                take: 50,
-            });
-            for (const contact of realContacts) {
-                if (registeredPhones.has(contact.phone))
-                    continue;
-                let crmStatus = 'prospect';
-                let crmStatusLabel = 'Cadastrado no CRM';
-                let totalPurchased = 0;
-                let assignedSeller = 'Equipe Comercial Verto';
-                const phoneInfo = this.formatBrazilianPhone(contact.phone || '');
-                let dealTitle = undefined;
-                let dealValue = undefined;
-                let aiInsight = 'Contato cadastrado na carteira do CRM. Em monitoramento para novos status.';
-                if (contact.deals && contact.deals.length > 0) {
-                    const topDeal = contact.deals[0];
-                    assignedSeller = topDeal.assignee?.name || assignedSeller;
-                    dealTitle = topDeal.title;
-                    dealValue = Number(topDeal.value) || 0;
-                    const wonDeals = contact.deals.filter((d) => d.status === 'won');
-                    totalPurchased = wonDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
-                    if (wonDeals.length > 0) {
-                        crmStatus = 'active_client';
-                        crmStatusLabel = 'Cliente Ativo (Comprador)';
-                        aiInsight = `Comprador com histórico faturado (${totalPurchased > 0 ? 'R$ ' + totalPurchased.toLocaleString('pt-BR') : ''}).`;
-                    }
-                    else if (['proposal', 'negotiation', 'follow-up'].includes(topDeal.status)) {
-                        crmStatus = 'open_deal';
-                        crmStatusLabel = `Negociação Ativa (${topDeal.title})`;
-                        aiInsight = `Cotação aberta: ${topDeal.title}. Monitorando engajamento.`;
-                    }
-                    else if (['lost', 'disqualified'].includes(topDeal.status)) {
-                        crmStatus = 'inactive_client';
-                        crmStatusLabel = 'Inativo / Arquivado';
-                        aiInsight = 'Oportunidade arquivada no CRM.';
-                    }
-                }
-                const { dateFormatted, timeFormatted } = this.formatDateTime(contact.updatedAt || contact.createdAt);
-                list.push({
-                    id: `contact-monitor-${contact.id}`,
-                    contactId: contact.id,
-                    name: contact.name,
-                    companyOrFarm: contact.tags?.find((t) => t.toLowerCase().includes('fazenda') || t.toLowerCase().includes('agro')) || 'Cliente Verto',
-                    phone: contact.phone || '',
-                    phoneFormatted: phoneInfo.formatted,
-                    isLidOnly: phoneInfo.isLidOnly,
-                    city: 'Região Comercial',
-                    state: 'BR',
-                    crmStatus,
-                    crmStatusLabel,
-                    totalPurchased,
-                    dealTitle,
-                    dealValue,
-                    aiInsight,
-                    lastPurchaseDate: totalPurchased > 0 ? 'Faturado no CRM' : undefined,
-                    daysInactive: Math.floor((Date.now() - new Date(contact.updatedAt).getTime()) / (1000 * 60 * 60 * 24)),
-                    assignedSeller,
-                    hasRealView: false,
-                    storyMedia: {
-                        id: 'monitoramento',
-                        title: 'Linha WhatsApp Conectada (Aguardando novo status)',
-                        category: 'Geral',
-                        viewedAt: 'Aguardando visualização',
-                        exactDate: dateFormatted,
-                        exactTime: timeFormatted,
-                        viewsCountWeek: 0,
-                        interestLevel: 'Aguardando Visualização',
-                    },
-                });
-            }
-        }
-        catch (err) {
-            this.logger.error(`Erro ao carregar contatos reais do CRM: ${err.message}`);
         }
         let filtered = list;
         if (filter?.status && filter.status !== 'all') {

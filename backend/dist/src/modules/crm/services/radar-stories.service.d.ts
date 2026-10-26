@@ -11,7 +11,7 @@ export interface StoryViewerItem {
     isLidOnly?: boolean;
     city: string;
     state: string;
-    crmStatus: 'active_client' | 'inactive_client' | 'open_deal' | 'prospect';
+    crmStatus: 'active_client' | 'inactive_client' | 'open_deal' | 'prospect' | 'internal_team';
     crmStatusLabel: string;
     totalPurchased: number;
     dealTitle?: string;
