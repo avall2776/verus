@@ -6,7 +6,7 @@ export declare class GoalsService {
     private readonly prisma;
     constructor(prisma: PrismaService);
     private isWon;
-    getSummary(tenantId: string, channel?: string): Promise<{
+    getSummary(tenantId: string, channel?: string, monthStr?: string, yearStr?: string): Promise<{
         monthName: string;
         totalDays: number;
         daysPassed: number;
@@ -43,11 +43,13 @@ export declare class GoalsService {
             email: string;
             role: string;
             avatarUrl: any;
+            departments: string[];
             totalDeals: number;
             dealsWon: number;
             dealsCount: number;
             revenueWon: number;
             achievedValue: number;
+            totalRevenueWon: number;
             targetValue: number;
             percentAchieved: number;
             conversionRate: number;
@@ -120,7 +122,9 @@ export declare class GoalsService {
         success: boolean;
         message: string;
     }>;
-    getLeaderboard(tenantId: string): Promise<{
+    private getPeriodDateRange;
+    private isCommercialUser;
+    getLeaderboard(tenantId: string, period?: string, monthStr?: string, yearStr?: string): Promise<{
         rank: number;
         badgeTier: "gold" | "silver" | "bronze" | "participant";
         badges: {
@@ -136,24 +140,28 @@ export declare class GoalsService {
         email: string;
         role: string;
         avatarUrl: any;
+        departments: string[];
         totalDeals: number;
         dealsWon: number;
         dealsCount: number;
         revenueWon: number;
         achievedValue: number;
+        totalRevenueWon: number;
         targetValue: number;
         percentAchieved: number;
         conversionRate: number;
         avgTicket: number;
     }[]>;
-    getSellerDetails(tenantId: string, userId: string): Promise<{
+    getSellerDetails(tenantId: string, userId: string, period?: string, monthStr?: string, yearStr?: string): Promise<{
         user: {
             id: string;
             name: string;
             email: string;
-            createdAt: Date;
             role: string;
+            createdAt: Date;
+            departments: string[];
         };
+        period: string;
         metrics: {
             totalDeals: number;
             dealsWon: number;

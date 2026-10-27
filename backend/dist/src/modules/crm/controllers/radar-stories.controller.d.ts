@@ -51,12 +51,24 @@ export declare class RadarStoriesController {
             viewsCount: number;
         }[];
     }>;
+    deletePost(tenantId: string, postId: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
     updateViewerContact(tenantId: string, viewId: string, body: {
         phone?: string;
         contactName?: string;
         contactId?: string;
     }): Promise<{
         success: boolean;
+        message: string;
+    }>;
+    updateViewerClassification(tenantId: string, viewId: string, body: {
+        crmStatus: string;
+        contactId?: string;
+    }): Promise<{
+        success: boolean;
+        crmStatus: string;
         message: string;
     }>;
     exportMetaAudience(tenantId: string, body: {
@@ -123,6 +135,7 @@ export declare class RadarStoriesController {
         messageId: string;
         title: string;
         category: string;
+        mediaUrl: string;
         postedImmediately: boolean;
         scheduledAt: string;
     }>;

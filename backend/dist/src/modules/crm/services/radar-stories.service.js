@@ -18,14 +18,16 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../../shared/database/prisma.service");
 const ai_service_1 = require("../../ai/ai.service");
 const chat_gateway_1 = require("../../chat/chat.gateway");
+const storage_service_1 = require("../../../shared/storage/storage.service");
 const openai_1 = require("openai");
 const axios_1 = require("axios");
 const crypto_1 = require("crypto");
 let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
-    constructor(prisma, aiService, chatGateway) {
+    constructor(prisma, aiService, chatGateway, storageService) {
         this.prisma = prisma;
         this.aiService = aiService;
         this.chatGateway = chatGateway;
+        this.storageService = storageService;
         this.logger = new common_1.Logger(RadarStoriesService_1.name);
         this.syncInterval = null;
     }
@@ -201,61 +203,114 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
         const postId = `story_${Date.now()}_${(0, crypto_1.randomUUID)().substring(0, 6)}`;
         const category = data.category || 'Geral';
         const instance = await this.prisma.whatsAppInstance.findFirst({
-            where: { tenantId, status: 'connected' },
+            where: { tenantId, status: { in: ['open', 'connected'] } },
             orderBy: { isDefault: 'desc' },
         });
         const serverUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
         const apiKey = process.env.EVOLUTION_API_KEY || 'verto123';
         const cleanTenant = (tenantId || 'tenant').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
-        const instanceName = instance?.name || `versus_${cleanTenant}`;
+        let instanceName = instance?.settings?.instanceName;
+        if (!instanceName && instance?.name && instance.name.includes('_')) {
+            instanceName = instance.name.replace(' (WhatsApp Web)', '').trim();
+        }
+        if (!instanceName) {
+            instanceName = `versus_${cleanTenant}_babdc262eb`;
+        }
         let whatsappMessageId = `story_msg_${Date.now()}`;
         let posted = false;
-        if (!data.scheduledAt) {
+        let publicMediaUrl = '';
+        const thumbnailData = data.imageBase64;
+        if (this.storageService && data.imageBase64) {
             try {
-                const headers = { apikey: apiKey, 'Content-Type': 'application/json' };
-                try {
-                    const statusRes = await axios_1.default.post(`${serverUrl}/message/sendStatus/${instanceName}`, {
-                        type: 'image',
-                        content: data.imageBase64,
-                        caption: data.title,
-                    }, { headers, timeout: 15000 });
-                    if (statusRes.data?.key?.id) {
-                        whatsappMessageId = statusRes.data.key.id;
-                        posted = true;
+                const matches = data.imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+                let buffer;
+                let mimetype = 'image/jpeg';
+                if (matches && matches.length === 3) {
+                    mimetype = matches[1];
+                    buffer = Buffer.from(matches[2], 'base64');
+                }
+                else {
+                    buffer = Buffer.from(data.imageBase64, 'base64');
+                }
+                const uploadRes = await this.storageService.uploadFile({ buffer, originalname: `story_${Date.now()}.jpg`, mimetype }, 'stories');
+                if (uploadRes?.url) {
+                    if (uploadRes.url.startsWith('http://') || uploadRes.url.startsWith('https://')) {
+                        publicMediaUrl = uploadRes.url;
+                    }
+                    else {
+                        publicMediaUrl = `http://172.16.0.1:3001${uploadRes.url.replace('/api-backend', '')}`;
                     }
                 }
-                catch (statusErr) {
-                    this.logger.warn(`Fallback para sendMedia status@broadcast: ${statusErr.message}`);
-                    const mediaRes = await axios_1.default.post(`${serverUrl}/message/sendMedia/${instanceName}`, {
-                        number: 'status@broadcast',
-                        options: { delay: 1000 },
-                        mediaMessage: {
-                            mediatype: 'image',
-                            caption: data.title,
-                            media: data.imageBase64,
-                        },
-                    }, { headers, timeout: 15000 });
-                    if (mediaRes.data?.key?.id) {
-                        whatsappMessageId = mediaRes.data.key.id;
-                        posted = true;
+            }
+            catch (uploadErr) {
+                this.logger.warn(`[Radar Stories] Falha no upload da mídia do Story: ${uploadErr.message}`);
+            }
+        }
+        if (!publicMediaUrl && (data.imageBase64.startsWith('http://') || data.imageBase64.startsWith('https://'))) {
+            publicMediaUrl = data.imageBase64;
+        }
+        if (!data.scheduledAt && publicMediaUrl) {
+            try {
+                const headers = { apikey: apiKey, 'Content-Type': 'application/json' };
+                const contacts = await this.prisma.contact.findMany({
+                    where: { tenantId, phone: { not: null } },
+                    select: { phone: true },
+                    take: 1000,
+                });
+                const statusJids = [];
+                for (const c of contacts) {
+                    const digits = (c.phone || '').replace(/\D/g, '');
+                    if (digits.length >= 10 && digits.length <= 13) {
+                        statusJids.push(digits.startsWith('55') ? `${digits}@s.whatsapp.net` : `55${digits}@s.whatsapp.net`);
                     }
+                }
+                if (instance?.phoneNumber) {
+                    const selfDigits = instance.phoneNumber.replace(/\D/g, '');
+                    if (selfDigits.length >= 10) {
+                        statusJids.push(selfDigits.startsWith('55') ? `${selfDigits}@s.whatsapp.net` : `55${selfDigits}@s.whatsapp.net`);
+                    }
+                }
+                const uniqueJids = Array.from(new Set(statusJids));
+                const statusPayload = {
+                    statusMessage: {
+                        type: 'image',
+                        content: publicMediaUrl,
+                        caption: data.title,
+                        statusJidList: uniqueJids.length > 0 ? uniqueJids : undefined,
+                        allContacts: uniqueJids.length === 0,
+                    },
+                };
+                const statusRes = await axios_1.default.post(`${serverUrl}/message/sendStatus/${instanceName}`, statusPayload, { headers, timeout: 25000 });
+                if (statusRes.data?.key?.id) {
+                    whatsappMessageId = statusRes.data.key.id;
+                    posted = true;
+                    this.logger.log(`[Radar Stories] Story publicado no WhatsApp via Evolution API! MsgID: ${whatsappMessageId}`);
                 }
             }
             catch (evoErr) {
-                this.logger.warn(`Disparo de Story na Evolution API retornou aviso: ${evoErr.message}. Gravando post no catálogo comercial.`);
+                this.logger.error(`[Radar Stories] Erro ao disparar Story na Evolution API: ${evoErr.response?.data?.message || evoErr.message}`);
             }
         }
-        const thumbnailData = data.imageBase64;
+        const finalMediaUrl = publicMediaUrl || thumbnailData;
         await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_posts" 
        ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`, postId, tenantId, whatsappMessageId, data.title, category, thumbnailData, data.scheduledAt ? new Date(data.scheduledAt) : new Date());
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`, postId, tenantId, whatsappMessageId, data.title, category, finalMediaUrl, data.scheduledAt ? new Date(data.scheduledAt) : new Date());
         this.logger.log(`[Radar Stories] Novo Story registrado: "${data.title}" [${category}] (ID: ${postId})`);
+        if (this.chatGateway) {
+            this.chatGateway.emitStoryPosted(tenantId, {
+                messageId: whatsappMessageId,
+                title: data.title,
+                category,
+                mediaUrl: finalMediaUrl,
+            });
+        }
         return {
             success: true,
             postId,
             messageId: whatsappMessageId,
             title: data.title,
             category,
+            mediaUrl: finalMediaUrl,
             postedImmediately: !data.scheduledAt,
             scheduledAt: data.scheduledAt || null,
         };
@@ -313,141 +368,12 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
         catch (e) {
             this.logger.warn(`[Sync Stories] Aviso ao configurar webhook: ${e.message}`);
         }
-        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        const existingPosts = await this.prisma.$queryRawUnsafe(`SELECT * FROM "whatsapp_status_posts" WHERE "tenantId" = $1 AND "postedAt" >= $2 ORDER BY "postedAt" DESC`, tenantId, twentyFourHoursAgo);
-        let activeStoryId;
-        let activeStoryTitle;
-        let activeStoryCategory;
-        if (existingPosts && existingPosts.length > 0) {
-            activeStoryId = existingPosts[0].messageId;
-            activeStoryTitle = existingPosts[0].title;
-            activeStoryCategory = existingPosts[0].category;
-        }
-        else {
-            const morningPostId = `post_${Date.now()}_morning`;
-            activeStoryId = `story_msg_20261026_morning`;
-            activeStoryTitle = 'Status Comercial WhatsApp - Linha Verto Agro 26/27';
-            activeStoryCategory = 'Maquinários';
-            const morningDate = new Date();
-            morningDate.setHours(9, 27, 0, 0);
-            await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_posts" 
-         ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         ON CONFLICT ("id") DO NOTHING`, morningPostId, tenantId, activeStoryId, activeStoryTitle, activeStoryCategory, null, morningDate);
-            this.logger.log(`[Sync Stories] Story ativo de hoje registrado no catálogo comercial.`);
-        }
-        let newViewsSynced = 0;
-        try {
-            const statusRes = await axios_1.default.post(`${serverUrl}/chat/findStatusMessage/${instanceName}`, {}, { headers, timeout: 8000 });
-            const statusList = Array.isArray(statusRes.data) ? statusRes.data : [];
-            const now = Date.now();
-            const recentReceipts = statusList.filter((item) => {
-                const dt = (item.datetime > 10000000000 ? item.datetime : item.datetime * 1000) || 0;
-                return (now - dt) < 24 * 3600 * 1000 && (item.status === 'READ' || item.status === 'PLAYED');
-            });
-            if (recentReceipts.length > 0) {
-                const evoContactsMap = new Map();
-                try {
-                    const evoContactsRes = await axios_1.default.post(`${serverUrl}/chat/findContacts/${instanceName}`, {}, { headers, timeout: 10000 });
-                    if (Array.isArray(evoContactsRes.data)) {
-                        for (const c of evoContactsRes.data) {
-                            if (c.id) {
-                                evoContactsMap.set(c.id, {
-                                    pushName: c.pushName || c.name,
-                                    profilePictureUrl: c.profilePictureUrl,
-                                });
-                            }
-                        }
-                    }
-                }
-                catch (evoErr) {
-                    this.logger.warn(`[Sync Stories] Aviso ao carregar contatos da Evolution API: ${evoErr.message}`);
-                }
-                const crmContacts = await this.prisma.contact.findMany({
-                    where: { tenantId },
-                    select: { id: true, name: true, phone: true, address: true, whatsappLid: true },
-                });
-                const contactByPhone = new Map();
-                const contactByName = new Map();
-                for (const c of crmContacts) {
-                    if (c.phone) {
-                        const clean = c.phone.replace(/\D/g, '');
-                        contactByPhone.set(clean, c);
-                        if (clean.length >= 8)
-                            contactByPhone.set(clean.slice(-8), c);
-                    }
-                    if (c.name) {
-                        contactByName.set(c.name.trim().toLowerCase(), c);
-                    }
-                }
-                for (const receipt of recentReceipts) {
-                    const rawJid = receipt.remoteJid || receipt.participant || '';
-                    const digits = rawJid.replace(/[^0-9]/g, '');
-                    if (digits.length < 8)
-                        continue;
-                    const evoInfo = evoContactsMap.get(rawJid) || evoContactsMap.get(`${digits}@lid`);
-                    const pushName = evoInfo?.pushName?.trim() || '';
-                    let matchedContact = contactByPhone.get(digits) || contactByPhone.get(digits.slice(-8));
-                    if (!matchedContact && pushName && pushName !== 'SEM NOME' && pushName !== 'Comercial Verto') {
-                        const cleanPush = pushName.toLowerCase();
-                        matchedContact = contactByName.get(cleanPush) ||
-                            crmContacts.find((c) => {
-                                const cName = c.name?.toLowerCase().trim();
-                                return cName && (cName === cleanPush || cName.includes(cleanPush) || cleanPush.includes(cName));
-                            });
-                    }
-                    const isVertoTeam = pushName.toLowerCase().includes('verto') ||
-                        (matchedContact?.name && matchedContact.name.toLowerCase().includes('verto')) ||
-                        pushName === 'Comercial Verto';
-                    const phoneToSave = matchedContact?.phone || (digits.length >= 10 && digits.length <= 13 ? digits : digits);
-                    let nameToSave = matchedContact?.name;
-                    if (!nameToSave) {
-                        if (pushName && pushName !== 'SEM NOME') {
-                            nameToSave = isVertoTeam && !pushName.toLowerCase().includes('verto') ? `${pushName} (Verto)` : pushName;
-                        }
-                        else if (isVertoTeam) {
-                            nameToSave = 'Comercial Verto (Equipe Interna)';
-                        }
-                        else {
-                            nameToSave = `Produtor Rural (${digits.slice(-4)})`;
-                        }
-                    }
-                    const cityToSave = matchedContact?.city || matchedContact?.address || 'Região Sul';
-                    const stateToSave = matchedContact?.state || 'RS';
-                    const dtVal = receipt.datetime > 10000000000 ? receipt.datetime : receipt.datetime * 1000;
-                    const viewedAt = new Date(dtVal);
-                    const existingView = await this.prisma.$queryRawUnsafe(`SELECT id FROM "whatsapp_status_views" 
-             WHERE "tenantId" = $1 AND ("phone" = $2 OR ("statusMessageId" = $3 AND "contactName" = $4)) AND "viewedAt" >= $5 LIMIT 1`, tenantId, phoneToSave, activeStoryId, nameToSave, twentyFourHoursAgo);
-                    if (!existingView || existingView.length === 0) {
-                        const viewId = `view_sync_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-                        await this.prisma.$executeRawUnsafe(`INSERT INTO "whatsapp_status_views"
-               ("id", "tenantId", "contactId", "phone", "contactName", "city", "state", "statusMessageId", "storyTitle", "category", "mediaUrl", "viewedAt", "createdAt")
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
-               ON CONFLICT ("id") DO NOTHING`, viewId, tenantId, matchedContact?.id || null, phoneToSave, nameToSave, cityToSave, stateToSave, activeStoryId, activeStoryTitle, activeStoryCategory, evoInfo?.profilePictureUrl || null, viewedAt);
-                        newViewsSynced++;
-                        if (this.chatGateway) {
-                            this.chatGateway.emitStoryViewed(tenantId, {
-                                viewId,
-                                contactId: matchedContact?.id || null,
-                                phone: phoneToSave,
-                                contactName: nameToSave,
-                                storyTitle: activeStoryTitle,
-                                category: activeStoryCategory,
-                                viewedAt: viewedAt.toISOString(),
-                            });
-                        }
-                    }
-                }
-            }
-        }
-        catch (viewErr) {
-            this.logger.warn(`[Sync Stories] Aviso ao sincronizar recibos de status: ${viewErr.message}`);
-        }
+        const activePosts = await this.getActivePosts(tenantId);
         return {
             success: true,
-            message: 'Stories e visualizações do WhatsApp sincronizados com sucesso!',
-            activePosts: await this.getActivePosts(tenantId),
-            syncedViewsCount: newViewsSynced,
+            message: 'Stories e conexão do WhatsApp sincronizados com sucesso!',
+            activePosts,
+            syncedViewsCount: 0,
         };
     }
     formatDateTime(date) {
@@ -690,14 +616,12 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                 const phoneInfo = this.formatBrazilianPhone(effectivePhone);
                 const { dateFormatted, timeFormatted, relative } = this.formatDateTime(view.viewedAt);
                 const nameLower = (contact?.name || view.contactName || '').toLowerCase();
-                const companyLower = (contact?.tags?.join(' ') || '').toLowerCase();
-                const isInternalTeam = nameLower.includes('verto') ||
-                    companyLower.includes('verto') ||
-                    nameLower.includes('plinio parisotto') ||
-                    nameLower.includes('junior verto') ||
-                    nameLower.includes('colaborador') ||
-                    nameLower.includes('funcionario') ||
-                    nameLower.includes('institucional');
+                const contactTags = (contact?.tags || []).map((t) => t.toLowerCase());
+                const isInternalTeam = contactTags.includes('equipe interna') ||
+                    contactTags.includes('colaborador') ||
+                    nameLower === 'junior verto' ||
+                    nameLower === 'plinio parisotto' ||
+                    effectivePhone.includes('555499112550');
                 const dedupeKey = contact?.id
                     ? `cid:${contact.id}`
                     : nameLower && nameLower !== 'sem nome' && !nameLower.startsWith('produtor rural')
@@ -741,6 +665,21 @@ let RadarStoriesService = RadarStoriesService_1 = class RadarStoriesService {
                         crmStatusLabel = 'Reativação de Carteira';
                         aiInsight = 'Produtor reaquecido espontaneamente pelo Story após período sem compras. Momento ideal para reaproximação comercial consultiva.';
                     }
+                }
+                else if (contactTags.includes('cliente comprador')) {
+                    crmStatus = 'active_client';
+                    crmStatusLabel = 'Cliente Comprador';
+                    aiInsight = 'Cliente comprador identificado. Visualizou novidades no Story. Alto potencial de recompra.';
+                }
+                else if (contactTags.includes('em negociação')) {
+                    crmStatus = 'open_deal';
+                    crmStatusLabel = 'Em Negociação';
+                    aiInsight = 'Produtor em negociação ativa. O Story serve como excelente gatilho de timing para avançar a proposta.';
+                }
+                else if (contactTags.includes('reativação')) {
+                    crmStatus = 'inactive_client';
+                    crmStatusLabel = 'Reativação de Carteira';
+                    aiInsight = 'Cliente em fase de reativação de carteira reaquecido pelo Story.';
                 }
                 const weekCountRes = await this.prisma.$queryRawUnsafe(`SELECT count(*)::int as count 
            FROM "whatsapp_status_views" 
@@ -1057,13 +996,65 @@ Elabore a abordagem executiva.`;
             message: `Campanha "${data.campaignName}" gerada com sucesso para ${data.viewerIds.length} produtores qualificados!`,
         };
     }
+    async deletePost(tenantId, postId) {
+        this.logger.log(`[RadarStories] Excluindo post [${postId}] do tenant [${tenantId}]`);
+        await this.prisma.$executeRawUnsafe(`DELETE FROM "whatsapp_status_posts" WHERE "tenantId" = $1 AND ("id" = $2 OR "messageId" = $2)`, tenantId, postId);
+        return { success: true, message: 'Story excluído com sucesso da vitrine!' };
+    }
+    async updateViewerClassification(tenantId, viewId, body) {
+        const { crmStatus, contactId } = body;
+        this.logger.log(`[RadarStories] Atualizando classificação do visualizador [${viewId}], contactId [${contactId}] para [${crmStatus}]`);
+        if (contactId) {
+            const contact = await this.prisma.contact.findFirst({
+                where: { id: contactId, tenantId },
+            });
+            if (contact) {
+                let tags = Array.isArray(contact.tags) ? [...contact.tags] : [];
+                tags = tags.filter((t) => ![
+                    'equipe interna',
+                    'colaborador',
+                    'cliente comprador',
+                    'em negociação',
+                    'potencial comprador',
+                    'reativação',
+                    'não categorizado',
+                ].includes(t.toLowerCase()));
+                if (crmStatus === 'internal_team') {
+                    tags.push('Equipe Interna');
+                }
+                else if (crmStatus === 'active_client') {
+                    tags.push('Cliente Comprador');
+                }
+                else if (crmStatus === 'open_deal') {
+                    tags.push('Em Negociação');
+                }
+                else if (crmStatus === 'inactive_client') {
+                    tags.push('Reativação');
+                }
+                else {
+                    tags.push('Potencial Comprador');
+                }
+                await this.prisma.contact.update({
+                    where: { id: contactId },
+                    data: { tags },
+                });
+            }
+        }
+        return {
+            success: true,
+            crmStatus,
+            message: 'Classificação comercial do contato atualizada e salva com sucesso!',
+        };
+    }
 };
 exports.RadarStoriesService = RadarStoriesService;
 exports.RadarStoriesService = RadarStoriesService = RadarStoriesService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(2, (0, common_1.Optional)()),
+    __param(3, (0, common_1.Optional)()),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         ai_service_1.AiService,
-        chat_gateway_1.ChatGateway])
+        chat_gateway_1.ChatGateway,
+        storage_service_1.StorageService])
 ], RadarStoriesService);
 //# sourceMappingURL=radar-stories.service.js.map

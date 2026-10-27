@@ -33,6 +33,7 @@ import {
   Wrench,
   Maximize2,
   ChevronRight,
+  ChevronDown,
   Image as ImageIcon,
   GraduationCap,
   Plus,
@@ -48,7 +49,9 @@ import {
   Edit3,
   Camera,
   CheckSquare,
-  Square
+  Square,
+  Trash2,
+  Smartphone
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -600,6 +603,54 @@ export default function RadarStoriesPage() {
     }
   };
 
+  // Excluir post de Story da vitrine
+  const handleDeletePost = async (postId: string) => {
+    if (!confirm("Deseja realmente excluir este Story da vitrine ativa?")) return;
+    try {
+      await api.delete(`/crm/radar-stories/posts/${postId}`);
+      toast.success("Story excluído com sucesso da vitrine!");
+      setActivePosts((prev) => prev.filter((p) => p.id !== postId && p.messageId !== postId));
+      fetchMetrics();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao excluir Story.");
+    }
+  };
+
+  // Atualizar classificação comercial de visualizador
+  const handleUpdateViewerClassification = async (viewer: StoryViewer, newStatus: string) => {
+    try {
+      await api.patch(`/crm/radar-stories/viewers/${viewer.id}/classification`, {
+        crmStatus: newStatus,
+        contactId: viewer.contactId,
+      });
+
+      const labelMap: Record<string, string> = {
+        active_client: "Cliente Comprador",
+        open_deal: "Em Negociação",
+        prospect: "Potencial Comprador",
+        inactive_client: "Reativação de Carteira",
+        internal_team: "Equipe Interna (Verto)",
+      };
+
+      setViewers((prev) =>
+        prev.map((v) =>
+          v.id === viewer.id
+            ? {
+                ...v,
+                crmStatus: newStatus as any,
+                crmStatusLabel: labelMap[newStatus] || v.crmStatusLabel,
+              }
+            : v
+        )
+      );
+
+      toast.success(`Classificação de ${viewer.name} atualizada para "${labelMap[newStatus]}"!`);
+      fetchMetrics();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Erro ao atualizar classificação.");
+    }
+  };
+
   // Modal de Edição Rápida de Telefone
   const handleOpenEditPhoneModal = (viewer: StoryViewer) => {
     setSelectedViewerForPhone(viewer);
@@ -968,7 +1019,7 @@ export default function RadarStoriesPage() {
                     </span>
                   </div>
 
-                  {/* Botões de Ação: Alterar Foto e Ajustar Horário */}
+                  {/* Botões de Ação: Alterar Foto, Ajustar Horário e Excluir */}
                   <div className="flex items-center gap-1.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 mt-1">
                     <button
                       type="button"
@@ -993,6 +1044,17 @@ export default function RadarStoriesPage() {
                     >
                       <Clock className="w-3 h-3 shrink-0" />
                       <span className="truncate">Horário</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeletePost(post.id);
+                      }}
+                      className="p-1 px-2 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-[10px] font-semibold transition-all border border-rose-200/80 dark:border-rose-900/50 cursor-pointer"
+                      title="Excluir este Story da vitrine"
+                    >
+                      <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
                 </div>
@@ -1436,35 +1498,49 @@ export default function RadarStoriesPage() {
                         </div>
                       </td>
 
-                      {/* Classificação Comercial IA & CRM */}
-                      <td className="py-3 px-3 min-w-[200px] max-w-[260px]">
+                      {/* Classificação Comercial IA & CRM (Com Seletor Interativo Manual) */}
+                      <td className="py-3 px-3 min-w-[210px] max-w-[280px]">
                         <div className="flex flex-col gap-1.5 items-start">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border whitespace-nowrap ${
-                              viewer.crmStatus === "active_client"
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
-                                : viewer.crmStatus === "open_deal"
-                                ? "bg-amber-500/10 text-amber-400 border-amber-500/25"
-                                : viewer.crmStatus === "internal_team"
-                                ? "bg-slate-500/15 text-slate-300 border-slate-500/30"
-                                : viewer.crmStatus === "inactive_client"
-                                ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
-                                : "bg-blue-500/10 text-blue-400 border-blue-500/25"
-                            }`}
-                          >
-                            {viewer.crmStatus === "active_client" ? (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                            ) : viewer.crmStatus === "open_deal" ? (
-                              <TrendingUp className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                            ) : viewer.crmStatus === "internal_team" ? (
-                              <ShieldCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            ) : viewer.crmStatus === "inactive_client" ? (
-                              <Clock className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                            ) : (
-                              <Sparkles className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                            )}
-                            <span>{viewer.crmStatusLabel}</span>
-                          </span>
+                          <div className="relative inline-flex items-center">
+                            <select
+                              value={viewer.crmStatus}
+                              onChange={(e) => handleUpdateViewerClassification(viewer, e.target.value)}
+                              className={`appearance-none pl-7 pr-6 py-1 rounded-full text-[11px] font-bold border outline-none cursor-pointer transition-all shadow-sm ${
+                                viewer.crmStatus === "active_client"
+                                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:border-emerald-400 dark:bg-emerald-950/40"
+                                  : viewer.crmStatus === "open_deal"
+                                  ? "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:border-amber-400 dark:bg-amber-950/40"
+                                  : viewer.crmStatus === "internal_team"
+                                  ? "bg-slate-500/15 text-slate-300 border-slate-500/30 hover:border-slate-400 dark:bg-slate-800/60"
+                                  : viewer.crmStatus === "inactive_client"
+                                  ? "bg-purple-500/10 text-purple-400 border-purple-500/30 hover:border-purple-400 dark:bg-purple-950/40"
+                                  : "bg-blue-500/10 text-blue-400 border-blue-500/30 hover:border-blue-400 dark:bg-blue-950/40"
+                              }`}
+                              title="Clique para alterar a classificação comercial deste contato"
+                            >
+                              <option value="active_client" className="bg-slate-900 text-emerald-400 font-semibold">Cliente Comprador</option>
+                              <option value="open_deal" className="bg-slate-900 text-amber-400 font-semibold">Em Negociação</option>
+                              <option value="prospect" className="bg-slate-900 text-blue-400 font-semibold">Potencial Comprador</option>
+                              <option value="inactive_client" className="bg-slate-900 text-purple-400 font-semibold">Reativação de Carteira</option>
+                              <option value="internal_team" className="bg-slate-900 text-slate-300 font-semibold">Equipe Interna (Verto)</option>
+                            </select>
+                            <div className="absolute left-2 pointer-events-none">
+                              {viewer.crmStatus === "active_client" ? (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                              ) : viewer.crmStatus === "open_deal" ? (
+                                <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
+                              ) : viewer.crmStatus === "internal_team" ? (
+                                <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                              ) : viewer.crmStatus === "inactive_client" ? (
+                                <Clock className="w-3.5 h-3.5 text-purple-400" />
+                              ) : (
+                                <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                              )}
+                            </div>
+                            <div className="absolute right-2 pointer-events-none text-slate-400">
+                              <ChevronDown className="w-3 h-3" />
+                            </div>
+                          </div>
 
                           {/* Detalhe de Compra ou Negociação */}
                           {viewer.totalPurchased > 0 ? (
@@ -2319,88 +2395,135 @@ export default function RadarStoriesPage() {
       {/* ======================================================================= */}
       {/* 9. MODAL DE PUBLICAR / AGENDAR STORY (SEM BLOBS NO POSTGRESQL)          */}
       {/* ======================================================================= */}
+      {/* ======================================================================= */}
+      {/* 9. MODAL DE PUBLICAR / AGENDAR STORY (ESTÚDIO EM 2 COLUNAS 9:16)        */}
+      {/* ======================================================================= */}
       {isPublishModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/30 flex items-center justify-center text-blue-500">
-                  <Upload className="w-4 h-4 text-blue-500" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-[#070D1B]/50">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-600/10 border border-blue-600/30 flex items-center justify-center text-blue-500 shadow-sm">
+                  <Smartphone className="w-5 h-5 text-blue-500" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                     Publicar Story no WhatsApp Corporativo
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Transmita novidades e acompanhe quais clientes visualizaram.
+                    Transmita novidades diretamente aos clientes e monitore quem visualizou em tempo real.
                   </p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsPublishModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handlePublishStory} className="p-5 space-y-4">
-              {/* Alerta de Zero Bloat */}
-              <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                <span className="text-[11px] leading-relaxed">
-                  <strong>Zero Sobrecarga:</strong> O arquivo de imagem é transmitido diretamente para a Evolution API (status@broadcast) sem salvar dados pesados no PostgreSQL.
-                </span>
-              </div>
+            <form onSubmit={handlePublishStory} className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                {/* COLUNA ESQUERDA: Prévia no Celular (9:16) */}
+                <div className="md:col-span-5 flex flex-col items-center gap-3">
+                  <div className="flex items-center justify-between w-full px-1">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                      <Smartphone className="w-3.5 h-3.5 text-blue-500" />
+                      Prévia no Celular (9:16)
+                    </span>
+                    <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                      Status WhatsApp
+                    </span>
+                  </div>
 
-              {/* Upload de Imagem na Dimensão Vertical de Story (9:16) */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Foto / Mídia do Story (Dimensão Vertical 9:16):
-                </label>
-                <div className="relative border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 hover:border-blue-500/50 transition-colors bg-slate-50/50 dark:bg-slate-900/30">
-                  {publishImagePreview ? (
-                    <div className="relative w-[210px] aspect-[9/16] rounded-2xl overflow-hidden bg-black border-2 border-slate-700/80 shadow-2xl flex items-center justify-center group">
+                  {/* Mockup do Smartphone */}
+                  <div className="relative w-[210px] sm:w-[220px] aspect-[9/16] rounded-[2.2rem] p-2 bg-slate-950 border-[3px] border-slate-700/80 shadow-2xl flex flex-col select-none overflow-hidden group">
+                    {/* Notch / Speaker */}
+                    <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-16 h-3 bg-black rounded-full z-30 pointer-events-none"></div>
+
+                    {/* Área de Tela do Celular */}
+                    <div className="relative w-full h-full rounded-[1.8rem] overflow-hidden bg-slate-900 flex flex-col justify-between">
                       {/* Barra superior de status do Story */}
-                      <div className="absolute top-2 left-2 right-2 flex gap-1 z-10 pointer-events-none">
-                        <div className="h-0.5 flex-1 bg-white/70 rounded-full shadow-sm"></div>
+                      <div className="absolute top-0 inset-x-0 p-2.5 pt-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent z-20 flex flex-col gap-1.5 pointer-events-none">
+                        <div className="w-full h-0.5 bg-white/40 rounded-full overflow-hidden">
+                          <div className="w-2/3 h-full bg-white rounded-full"></div>
+                        </div>
+                        <div className="flex items-center justify-between text-white">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-[9px] font-bold text-white border border-white/40">
+                              V
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-bold leading-none drop-shadow">Verto Agrícola</span>
+                              <span className="text-[8px] text-white/80 leading-tight">Agora</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
-                      <img src={publishImagePreview} alt="Preview do Story" className="w-full h-full object-cover" />
-
-                      {/* Legenda digitada refletida em tempo real sobre o Story */}
-                      {publishTitle && (
-                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-3 pt-6 text-[10px] text-white font-medium line-clamp-3 leading-tight drop-shadow">
-                          {publishTitle}
-                        </div>
+                      {/* Mídia do Story */}
+                      {publishImagePreview ? (
+                        <>
+                          <img
+                            src={publishImagePreview}
+                            alt="Preview do Story"
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPublishImageBase64("");
+                              setPublishImagePreview("");
+                            }}
+                            className="absolute top-8 right-2 p-1.5 rounded-full bg-black/70 hover:bg-black text-white transition-colors z-30 cursor-pointer shadow-lg"
+                            title="Remover foto"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      ) : (
+                        <label className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center cursor-pointer hover:bg-slate-800/60 transition-colors">
+                          <div className="w-12 h-16 rounded-xl border-2 border-dashed border-blue-500/50 bg-blue-500/10 text-blue-400 flex flex-col items-center justify-center gap-1 shadow-inner">
+                            <ImageIcon className="w-5 h-5" />
+                            <span className="text-[9px] font-bold">9:16</span>
+                          </div>
+                          <span className="text-[11px] font-semibold text-slate-200">
+                            Clique para escolher a imagem
+                          </span>
+                          <span className="text-[9px] text-slate-400">
+                            Formato Vertical 9:16 (1080×1920)
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                          />
+                        </label>
                       )}
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPublishImageBase64("");
-                          setPublishImagePreview("");
-                        }}
-                        className="absolute top-2.5 right-2.5 p-1 rounded-full bg-black/70 hover:bg-black text-white transition-colors z-20 cursor-pointer shadow-md"
-                        title="Remover foto"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
+                      {/* Legenda digitada refletida em tempo real sobre o Story (estilo WhatsApp) */}
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-3 pt-8 z-20 pointer-events-none">
+                        {publishTitle.trim() ? (
+                          <p className="text-[11px] text-white font-medium line-clamp-4 leading-snug drop-shadow-md break-words">
+                            {publishTitle}
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-white/50 italic line-clamp-2 leading-tight">
+                            Sua legenda aparecerá aqui em tempo real...
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center gap-2.5 cursor-pointer w-full py-5 text-center">
-                      <div className="w-12 h-16 rounded-xl border-2 border-dashed border-blue-500/50 bg-blue-500/10 text-blue-500 flex flex-col items-center justify-center gap-0.5 shadow-sm">
-                        <ImageIcon className="w-5 h-5" />
-                        <span className="text-[9px] font-bold">9:16</span>
-                      </div>
-                      <div>
-                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
-                          Clique para escolher a imagem do Story
-                        </span>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">
-                          Formato Vertical 9:16 (Ex: 1080x1920) • PNG, JPG ou WebP
-                        </span>
-                      </div>
+                  </div>
+
+                  {/* Botão de substituição abaixo da prévia */}
+                  {publishImagePreview && (
+                    <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-blue-500 hover:border-blue-500 text-xs font-semibold cursor-pointer transition-colors shadow-sm">
+                      <Upload className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Substituir imagem</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -2410,115 +2533,169 @@ export default function RadarStoriesPage() {
                     </label>
                   )}
                 </div>
-              </div>
 
-              {/* Título / Legenda */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Título / Legenda do Story (Texto no WhatsApp):
-                </label>
-                <input
-                  type="text"
-                  value={publishTitle}
-                  onChange={(e) => setPublishTitle(e.target.value)}
-                  placeholder="Ex: Chegaram novas colheitadeiras 2026 com condições especiais de safra"
-                  required
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500"
-                />
-              </div>
-
-              {/* Categoria Técnica */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Categoria Técnica:
-                </label>
-                <select
-                  value={publishCategory}
-                  onChange={(e) => setPublishCategory(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500 cursor-pointer"
-                >
-                  <option value="Maquinários">Maquinários & Implementos</option>
-                  <option value="Insumos">Insumos & Defensivos</option>
-                  <option value="Cotações">Cotações de Safra & Grãos</option>
-                  <option value="Peças & Serviços">Peças & Serviços</option>
-                  <option value="Geral">Geral</option>
-                </select>
-              </div>
-
-              {/* Modo: Postar Agora vs Agendar */}
-              <div className="space-y-2 pt-1">
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                  Momento do Disparo:
-                </label>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setPublishMode("now")}
-                    className={`py-2 px-3 rounded-lg border font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-                      publishMode === "now"
-                        ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
-                        : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400"
-                    }`}
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Postar Imediatamente</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPublishMode("schedule")}
-                    className={`py-2 px-3 rounded-lg border font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-                      publishMode === "schedule"
-                        ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
-                        : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400"
-                    }`}
-                  >
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>Agendar Horário</span>
-                  </button>
-                </div>
-
-                {publishMode === "schedule" && (
-                  <div className="pt-2 animate-in fade-in duration-150">
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1">
-                      Data e Horário para Publicação:
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={publishScheduleDate}
-                      onChange={(e) => setPublishScheduleDate(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500"
-                    />
+                {/* COLUNA DIREITA: Formulário e Parâmetros */}
+                <div className="md:col-span-7 flex flex-col gap-4">
+                  {/* Alerta de Transmissão Direta */}
+                  <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span className="text-[11px] leading-relaxed">
+                      <strong>Transmissão Direta:</strong> A imagem é enviada com alta fidelidade para o canal corporativo do WhatsApp (status@broadcast) sem salvar dados pesados no PostgreSQL.
+                    </span>
                   </div>
-                )}
-              </div>
 
-              {/* Botões do Formulário */}
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
+                  {/* Upload seletor se ainda não houver imagem */}
+                  {!publishImagePreview && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
+                        1. Imagem do Story (Dimensão 9:16):
+                      </label>
+                      <label className="flex items-center gap-3 p-3.5 rounded-xl border-2 border-dashed border-blue-500/30 hover:border-blue-500/70 bg-blue-50/20 dark:bg-blue-950/20 cursor-pointer transition-colors">
+                        <div className="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+                          <Upload className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                            Escolher arquivo do computador
+                          </span>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">
+                            JPG, PNG ou WebP vertical (até 8MB)
+                          </span>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Título / Legenda do Story */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                        Título / Legenda do Story (Texto no WhatsApp):
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {publishTitle.length} caracteres
+                      </span>
+                    </div>
+                    <textarea
+                      value={publishTitle}
+                      onChange={(e) => setPublishTitle(e.target.value)}
+                      placeholder="Ex: Chegaram novas colheitadeiras 2026 com condições especiais de safra e entrega imediata!"
+                      required
+                      rows={3}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#070D1B] text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 leading-relaxed transition-all resize-none font-medium"
+                    />
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                      Este texto será exibido como legenda da foto no status do WhatsApp e atualiza a prévia ao lado em tempo real.
+                    </p>
+                  </div>
+
+                  {/* Categoria Técnica */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                      Categoria Técnica do Equipamento / Tema:
+                    </label>
+                    <select
+                      value={publishCategory}
+                      onChange={(e) => setPublishCategory(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#070D1B] text-xs sm:text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 cursor-pointer font-medium"
+                    >
+                      <option value="Maquinários">Maquinários & Implementos</option>
+                      <option value="Insumos">Insumos & Defensivos</option>
+                      <option value="Cotações">Cotações de Safra & Grãos</option>
+                      <option value="Peças & Serviços">Peças & Serviços</option>
+                      <option value="Geral">Geral</option>
+                    </select>
+                  </div>
+
+                  {/* Momento do Disparo */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                      Momento do Disparo:
+                    </label>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setPublishMode("now")}
+                        className={`py-2.5 px-3 rounded-xl border font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                          publishMode === "now"
+                            ? "border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shadow-sm"
+                            : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40"
+                        }`}
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Postar Imediatamente</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPublishMode("schedule")}
+                        className={`py-2.5 px-3 rounded-xl border font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                          publishMode === "schedule"
+                            ? "border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shadow-sm"
+                            : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40"
+                        }`}
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Agendar Horário</span>
+                      </button>
+                    </div>
+
+                    {publishMode === "schedule" && (
+                      <div className="pt-2 animate-in fade-in duration-150">
+                        <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                          Data e Horário para Publicação Automática:
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={publishScheduleDate}
+                          onChange={(e) => setPublishScheduleDate(e.target.value)}
+                          required
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#070D1B] text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500 font-medium"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            {/* Footer Fixo do Modal */}
+            <div className="p-4 px-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-[#070D1B]/50 shrink-0">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Canal: WhatsApp Corporativo Verto</span>
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setIsPublishModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handlePublishStory}
                   disabled={isPublishing || !publishImageBase64}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer"
                 >
                   {isPublishing ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : publishMode === "schedule" ? (
-                    <Calendar className="w-3.5 h-3.5" />
+                    <Calendar className="w-4 h-4" />
                   ) : (
-                    <Send className="w-3.5 h-3.5" />
+                    <Send className="w-4 h-4" />
                   )}
                   <span>{publishMode === "schedule" ? "Confirmar Agendamento" : "Publicar no WhatsApp"}</span>
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -2528,8 +2705,8 @@ export default function RadarStoriesPage() {
       {/* ======================================================================= */}
       {isPhotoModalOpen && selectedPostForPhoto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg max-h-[92vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/30 flex items-center justify-center text-blue-500">
                   <Camera className="w-4 h-4" />
@@ -2551,7 +2728,7 @@ export default function RadarStoriesPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
               <div className="text-xs text-slate-500 dark:text-slate-400">
                 Post: <strong className="text-slate-800 dark:text-slate-200">{selectedPostForPhoto.title}</strong>
               </div>

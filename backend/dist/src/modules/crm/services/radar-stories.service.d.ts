@@ -2,6 +2,7 @@ import { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { AiService } from '../../ai/ai.service';
 import { ChatGateway } from '../../chat/chat.gateway';
+import { StorageService } from '../../../shared/storage/storage.service';
 export interface StoryViewerItem {
     id: string;
     contactId: string;
@@ -38,9 +39,10 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
     private readonly prisma;
     private readonly aiService;
     private readonly chatGateway?;
+    private readonly storageService?;
     private readonly logger;
     private syncInterval;
-    constructor(prisma: PrismaService, aiService: AiService, chatGateway?: ChatGateway);
+    constructor(prisma: PrismaService, aiService: AiService, chatGateway?: ChatGateway, storageService?: StorageService);
     onModuleInit(): Promise<void>;
     onModuleDestroy(): void;
     private startBackgroundSync;
@@ -82,6 +84,7 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
         messageId: string;
         title: string;
         category: string;
+        mediaUrl: string;
         postedImmediately: boolean;
         scheduledAt: string;
     }>;
@@ -214,6 +217,18 @@ export declare class RadarStoriesService implements OnModuleInit, OnModuleDestro
         objective: string;
         totalAudience: number;
         createdAt: string;
+        message: string;
+    }>;
+    deletePost(tenantId: string, postId: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    updateViewerClassification(tenantId: string, viewId: string, body: {
+        crmStatus: string;
+        contactId?: string;
+    }): Promise<{
+        success: boolean;
+        crmStatus: string;
         message: string;
     }>;
 }

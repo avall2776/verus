@@ -26,7 +26,7 @@ export declare class GoalsController {
         };
         createdAt: string;
     }[]>;
-    getSummary(tenantId: string, channel?: string): Promise<{
+    getSummary(tenantId: string, channel?: string, month?: string, year?: string): Promise<{
         monthName: string;
         totalDays: number;
         daysPassed: number;
@@ -63,11 +63,13 @@ export declare class GoalsController {
             email: string;
             role: string;
             avatarUrl: any;
+            departments: string[];
             totalDeals: number;
             dealsWon: number;
             dealsCount: number;
             revenueWon: number;
             achievedValue: number;
+            totalRevenueWon: number;
             targetValue: number;
             percentAchieved: number;
             conversionRate: number;
@@ -118,7 +120,7 @@ export declare class GoalsController {
         success: boolean;
         message: string;
     }>;
-    getLeaderboard(tenantId: string): Promise<{
+    getLeaderboard(tenantId: string, period?: string, month?: string, year?: string): Promise<{
         rank: number;
         badgeTier: "gold" | "silver" | "bronze" | "participant";
         badges: {
@@ -134,24 +136,28 @@ export declare class GoalsController {
         email: string;
         role: string;
         avatarUrl: any;
+        departments: string[];
         totalDeals: number;
         dealsWon: number;
         dealsCount: number;
         revenueWon: number;
         achievedValue: number;
+        totalRevenueWon: number;
         targetValue: number;
         percentAchieved: number;
         conversionRate: number;
         avgTicket: number;
     }[]>;
-    getSellerDetails(tenantId: string, userId: string): Promise<{
+    getSellerDetails(tenantId: string, userId: string, period?: string, month?: string, year?: string): Promise<{
         user: {
             id: string;
             name: string;
             email: string;
-            createdAt: Date;
             role: string;
+            createdAt: Date;
+            departments: string[];
         };
+        period: string;
         metrics: {
             totalDeals: number;
             dealsWon: number;

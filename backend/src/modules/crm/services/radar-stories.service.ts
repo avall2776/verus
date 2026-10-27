@@ -835,17 +835,15 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
 
         const { dateFormatted, timeFormatted, relative } = this.formatDateTime(view.viewedAt);
 
-        // Detecta se o contato pertence à própria Verto ou é colaborador interno
+        // Detecta se o contato pertence estritamente à equipe interna (sem regras ingênuas por nome)
         const nameLower = (contact?.name || view.contactName || '').toLowerCase();
-        const companyLower = (contact?.tags?.join(' ') || '').toLowerCase();
+        const contactTags = (contact?.tags || []).map((t: string) => t.toLowerCase());
         const isInternalTeam =
-          nameLower.includes('verto') ||
-          companyLower.includes('verto') ||
-          nameLower.includes('plinio parisotto') ||
-          nameLower.includes('junior verto') ||
-          nameLower.includes('colaborador') ||
-          nameLower.includes('funcionario') ||
-          nameLower.includes('institucional');
+          contactTags.includes('equipe interna') ||
+          contactTags.includes('colaborador') ||
+          nameLower === 'junior verto' ||
+          nameLower === 'plinio parisotto' ||
+          effectivePhone.includes('555499112550');
 
         // Deduplica para que cada pessoa apareça uma única vez com a sua visualização mais recente
         const dedupeKey = contact?.id
@@ -859,7 +857,7 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
         }
         seenIdentities.add(dedupeKey);
 
-        // Classificação real no CRM baseada em negócios
+        // Classificação real no CRM baseada em negócios ou tags explícitas
         let crmStatus: StoryViewerItem['crmStatus'] = 'prospect';
         let crmStatusLabel = 'Potencial Comprador';
         let totalPurchased = 0;
@@ -894,6 +892,18 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
             crmStatusLabel = 'Reativação de Carteira';
             aiInsight = 'Produtor reaquecido espontaneamente pelo Story após período sem compras. Momento ideal para reaproximação comercial consultiva.';
           }
+        } else if (contactTags.includes('cliente comprador')) {
+          crmStatus = 'active_client';
+          crmStatusLabel = 'Cliente Comprador';
+          aiInsight = 'Cliente comprador identificado. Visualizou novidades no Story. Alto potencial de recompra.';
+        } else if (contactTags.includes('em negociação')) {
+          crmStatus = 'open_deal';
+          crmStatusLabel = 'Em Negociação';
+          aiInsight = 'Produtor em negociação ativa. O Story serve como excelente gatilho de timing para avançar a proposta.';
+        } else if (contactTags.includes('reativação')) {
+          crmStatus = 'inactive_client';
+          crmStatusLabel = 'Reativação de Carteira';
+          aiInsight = 'Cliente em fase de reativação de carteira reaquecido pelo Story.';
         }
 
         // Frequência de visualização semanal real
@@ -1362,6 +1372,78 @@ Elabore a abordagem executiva.`;
       totalAudience: data.viewerIds.length,
       createdAt: new Date().toISOString(),
       message: `Campanha "${data.campaignName}" gerada com sucesso para ${data.viewerIds.length} produtores qualificados!`,
+    };
+  }
+
+  /**
+   * Exclui um post de Story da vitrine ativa e limpa referências
+   */
+  async deletePost(tenantId: string, postId: string) {
+    this.logger.log(`[RadarStories] Excluindo post [${postId}] do tenant [${tenantId}]`);
+    await this.prisma.$executeRawUnsafe(
+      `DELETE FROM "whatsapp_status_posts" WHERE "tenantId" = $1 AND ("id" = $2 OR "messageId" = $2)`,
+      tenantId,
+      postId
+    );
+    return { success: true, message: 'Story excluído com sucesso da vitrine!' };
+  }
+
+  /**
+   * Atualiza a classificação manual de CRM de um visualizador e persiste na ficha do contato
+   */
+  async updateViewerClassification(
+    tenantId: string,
+    viewId: string,
+    body: { crmStatus: string; contactId?: string }
+  ) {
+    const { crmStatus, contactId } = body;
+    this.logger.log(
+      `[RadarStories] Atualizando classificação do visualizador [${viewId}], contactId [${contactId}] para [${crmStatus}]`
+    );
+
+    if (contactId) {
+      const contact = await this.prisma.contact.findFirst({
+        where: { id: contactId, tenantId },
+      });
+      if (contact) {
+        let tags = Array.isArray(contact.tags) ? [...contact.tags] : [];
+        // Limpa tags antigas de status comercial
+        tags = tags.filter(
+          (t) =>
+            ![
+              'equipe interna',
+              'colaborador',
+              'cliente comprador',
+              'em negociação',
+              'potencial comprador',
+              'reativação',
+              'não categorizado',
+            ].includes(t.toLowerCase())
+        );
+
+        if (crmStatus === 'internal_team') {
+          tags.push('Equipe Interna');
+        } else if (crmStatus === 'active_client') {
+          tags.push('Cliente Comprador');
+        } else if (crmStatus === 'open_deal') {
+          tags.push('Em Negociação');
+        } else if (crmStatus === 'inactive_client') {
+          tags.push('Reativação');
+        } else {
+          tags.push('Potencial Comprador');
+        }
+
+        await this.prisma.contact.update({
+          where: { id: contactId },
+          data: { tags },
+        });
+      }
+    }
+
+    return {
+      success: true,
+      crmStatus,
+      message: 'Classificação comercial do contato atualizada e salva com sucesso!',
     };
   }
 }

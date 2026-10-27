@@ -21,15 +21,16 @@ let GoalsService = class GoalsService {
         const s = (status || '').toLowerCase();
         return s === 'won' || s === 'ganho' || s === 'closed_won' || s === 'aprovado' || s === 'concluido' || s === 'signed';
     }
-    async getSummary(tenantId, channel) {
+    async getSummary(tenantId, channel, monthStr, yearStr) {
         const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
+        const year = yearStr ? parseInt(yearStr, 10) : now.getFullYear();
+        const month = monthStr !== undefined && monthStr !== '' ? parseInt(monthStr, 10) : now.getMonth();
         const startOfMonth = new Date(year, month, 1);
         const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
         const totalDays = endOfMonth.getDate();
-        const daysPassed = Math.max(1, now.getDate());
-        const daysRemaining = Math.max(0, totalDays - daysPassed);
+        const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+        const daysPassed = isCurrentMonth ? Math.max(1, now.getDate()) : totalDays;
+        const daysRemaining = isCurrentMonth ? Math.max(0, totalDays - daysPassed) : 0;
         const revenueGoals = await this.prisma.goal.findMany({
             where: {
                 tenantId,
@@ -89,7 +90,7 @@ let GoalsService = class GoalsService {
         else {
             healthStatus = 'behind';
         }
-        const leaderboard = await this.getLeaderboard(tenantId);
+        const leaderboard = await this.getLeaderboard(tenantId, 'month', String(month), String(year));
         const topSeller = leaderboard[0] || null;
         const expectedPacePercentage = totalDays > 0 ? Math.round((daysPassed / totalDays) * 100) : 0;
         const paceGap = +(progressPercentage - expectedPacePercentage).toFixed(1);
@@ -261,16 +262,91 @@ let GoalsService = class GoalsService {
         });
         return { success: true, message: 'Meta removida com sucesso.' };
     }
-    async getLeaderboard(tenantId) {
+    getPeriodDateRange(period, monthStr, yearStr) {
+        const now = new Date();
+        const cleanPeriod = (period || 'month').toLowerCase().trim();
+        if (cleanPeriod === 'all' || cleanPeriod === 'total' || cleanPeriod === 'geral' || cleanPeriod === 'tudo') {
+            return { startDate: undefined, endDate: undefined };
+        }
+        const targetYear = yearStr ? parseInt(yearStr, 10) : now.getFullYear();
+        const targetMonth = monthStr !== undefined && monthStr !== '' ? parseInt(monthStr, 10) : now.getMonth();
+        if (cleanPeriod === 'day' || cleanPeriod === 'today' || cleanPeriod === 'hoje' || cleanPeriod === 'dia') {
+            const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+            const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+            return { startDate, endDate };
+        }
+        if (cleanPeriod === 'week' || cleanPeriod === 'semana') {
+            const dayOfWeek = now.getDay();
+            const diffToMonday = (dayOfWeek + 6) % 7;
+            const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMonday, 0, 0, 0, 0);
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+            endDate.setHours(23, 59, 59, 999);
+            return { startDate, endDate };
+        }
+        const startDate = new Date(targetYear, targetMonth, 1, 0, 0, 0, 0);
+        const endDate = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+        return { startDate, endDate };
+    }
+    isCommercialUser(user) {
+        const email = (user.email || '').toLowerCase().trim();
+        const deptNames = (user.departments || [])
+            .map((d) => (d.department?.name || '').trim().toLowerCase())
+            .filter(Boolean);
+        const hasCommercialDept = deptNames.some((name) => name.includes('comercial') ||
+            name.includes('venda') ||
+            name.includes('sales') ||
+            name.includes('closer') ||
+            name.includes('sdr') ||
+            name.includes('bdr') ||
+            name.includes('executivo') ||
+            name.includes('representante') ||
+            name.includes('região') ||
+            name.includes('regiao'));
+        if (hasCommercialDept) {
+            return true;
+        }
+        const hasMarketingDept = deptNames.some((name) => name.includes('marketing') || name === 'mkt');
+        if (hasMarketingDept || user.canAccessMarketing) {
+            return false;
+        }
+        if (email.includes('marketing@') || email.includes('.marketing@')) {
+            return false;
+        }
+        const nonCommercialDepts = [
+            'suporte',
+            'support',
+            'financeiro',
+            'finance',
+            'rh',
+            'recursos humanos',
+            'administrativo',
+            'ia',
+        ];
+        const hasOtherNonCommercial = deptNames.some((name) => nonCommercialDepts.some((nc) => name.includes(nc)));
+        if (hasOtherNonCommercial && !hasCommercialDept) {
+            return false;
+        }
+        return true;
+    }
+    async getLeaderboard(tenantId, period = 'month', monthStr, yearStr) {
+        const { startDate, endDate } = this.getPeriodDateRange(period, monthStr, yearStr);
         const users = await this.prisma.user.findMany({
-            where: { tenantId },
+            where: { tenantId, isActive: true },
             select: {
                 id: true,
                 name: true,
                 email: true,
                 role: true,
+                canAccessMarketing: true,
+                departments: {
+                    include: {
+                        department: true,
+                    },
+                },
             },
         });
+        const commercialUsers = users.filter((u) => this.isCommercialUser(u));
         const userGoals = await this.prisma.goal.findMany({
             where: {
                 tenantId,
@@ -282,8 +358,15 @@ let GoalsService = class GoalsService {
                 targetValue: true,
             },
         });
+        const dealWhere = { tenantId };
+        if (startDate && endDate) {
+            dealWhere.createdAt = {
+                gte: startDate,
+                lte: endDate,
+            };
+        }
         const deals = await this.prisma.deal.findMany({
-            where: { tenantId },
+            where: dealWhere,
             select: {
                 id: true,
                 assignedTo: true,
@@ -292,7 +375,7 @@ let GoalsService = class GoalsService {
                 createdAt: true,
             },
         });
-        const userStats = users.map((u) => {
+        const userStats = commercialUsers.map((u) => {
             const userDeals = deals.filter((d) => d.assignedTo === u.id);
             const wonDeals = userDeals.filter((d) => this.isWon(d.status));
             const totalRevenueWon = wonDeals.reduce((acc, d) => acc + Number(d.value || 0), 0);
@@ -309,11 +392,13 @@ let GoalsService = class GoalsService {
                 email: u.email,
                 role: u.role || 'Consultor de Vendas',
                 avatarUrl: null,
+                departments: (u.departments || []).map((d) => d.department?.name).filter(Boolean),
                 totalDeals,
                 dealsWon: wonDeals.length,
                 dealsCount: wonDeals.length,
                 revenueWon: totalRevenueWon,
                 achievedValue: totalRevenueWon,
+                totalRevenueWon,
                 targetValue,
                 percentAchieved,
                 conversionRate,
@@ -328,11 +413,11 @@ let GoalsService = class GoalsService {
         });
         return userStats.map((stat, index) => {
             let badgeTier = 'participant';
-            if (index === 0)
+            if (index === 0 && stat.revenueWon > 0)
                 badgeTier = 'gold';
-            else if (index === 1)
+            else if (index === 1 && stat.revenueWon > 0)
                 badgeTier = 'silver';
-            else if (index === 2)
+            else if (index === 2 && stat.revenueWon > 0)
                 badgeTier = 'bronze';
             const rank = index + 1;
             const badges = this.computeBadges({
@@ -352,7 +437,7 @@ let GoalsService = class GoalsService {
             };
         });
     }
-    async getSellerDetails(tenantId, userId) {
+    async getSellerDetails(tenantId, userId, period = 'month', monthStr, yearStr) {
         const user = await this.prisma.user.findFirst({
             where: { id: userId, tenantId },
             select: {
@@ -361,13 +446,26 @@ let GoalsService = class GoalsService {
                 email: true,
                 role: true,
                 createdAt: true,
+                departments: {
+                    include: {
+                        department: true,
+                    },
+                },
             },
         });
         if (!user) {
             throw new common_1.NotFoundException('Vendedor não encontrado no tenant.');
         }
+        const { startDate, endDate } = this.getPeriodDateRange(period, monthStr, yearStr);
+        const dealWhere = { tenantId, assignedTo: userId };
+        if (startDate && endDate) {
+            dealWhere.createdAt = {
+                gte: startDate,
+                lte: endDate,
+            };
+        }
         const allUserDeals = await this.prisma.deal.findMany({
-            where: { tenantId, assignedTo: userId },
+            where: dealWhere,
             select: {
                 id: true,
                 status: true,
@@ -408,7 +506,15 @@ let GoalsService = class GoalsService {
             take: 20,
         });
         return {
-            user,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                createdAt: user.createdAt,
+                departments: (user.departments || []).map((d) => d.department?.name).filter(Boolean),
+            },
+            period: period || 'month',
             metrics: {
                 totalDeals,
                 dealsWon: wonDeals.length,

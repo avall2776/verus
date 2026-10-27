@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { RadarStoriesService } from '../services/radar-stories.service';
 import { JwtAuthGuard } from '../../../shared/guards/jwt-auth.guard';
 import { PlanGuard } from '../../../shared/guards/plan.guard';
@@ -30,6 +30,14 @@ export class RadarStoriesController {
     return this.radarStoriesService.updatePost(tenantId, postId, body);
   }
 
+  @Delete('posts/:id')
+  async deletePost(
+    @CurrentTenant() tenantId: string,
+    @Param('id') postId: string,
+  ) {
+    return this.radarStoriesService.deletePost(tenantId, postId);
+  }
+
   @Patch('viewers/:id/contact')
   async updateViewerContact(
     @CurrentTenant() tenantId: string,
@@ -37,6 +45,15 @@ export class RadarStoriesController {
     @Body() body: { phone?: string; contactName?: string; contactId?: string },
   ) {
     return this.radarStoriesService.updateViewerContact(tenantId, viewId, body);
+  }
+
+  @Patch('viewers/:id/classification')
+  async updateViewerClassification(
+    @CurrentTenant() tenantId: string,
+    @Param('id') viewId: string,
+    @Body() body: { crmStatus: string; contactId?: string },
+  ) {
+    return this.radarStoriesService.updateViewerClassification(tenantId, viewId, body);
   }
 
   @Post('meta-audience/export')

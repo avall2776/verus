@@ -28,8 +28,8 @@ let GoalsController = class GoalsController {
     async findAll(tenantId) {
         return this.goalsService.findAll(tenantId);
     }
-    async getSummary(tenantId, channel) {
-        return this.goalsService.getSummary(tenantId, channel);
+    async getSummary(tenantId, channel, month, year) {
+        return this.goalsService.getSummary(tenantId, channel, month, year);
     }
     async create(tenantId, dto) {
         return this.goalsService.create(tenantId, dto);
@@ -40,11 +40,11 @@ let GoalsController = class GoalsController {
     async delete(tenantId, id) {
         return this.goalsService.delete(tenantId, id);
     }
-    async getLeaderboard(tenantId) {
-        return this.goalsService.getLeaderboard(tenantId);
+    async getLeaderboard(tenantId, period, month, year) {
+        return this.goalsService.getLeaderboard(tenantId, period, month, year);
     }
-    async getSellerDetails(tenantId, userId) {
-        return this.goalsService.getSellerDetails(tenantId, userId);
+    async getSellerDetails(tenantId, userId, period, month, year) {
+        return this.goalsService.getSellerDetails(tenantId, userId, period, month, year);
     }
 };
 exports.GoalsController = GoalsController;
@@ -59,8 +59,10 @@ __decorate([
     (0, common_1.Get)('summary'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)('channel')),
+    __param(2, (0, common_1.Query)('month')),
+    __param(3, (0, common_1.Query)('year')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], GoalsController.prototype, "getSummary", null);
 __decorate([
@@ -91,16 +93,22 @@ __decorate([
 __decorate([
     (0, common_1.Get)('leaderboard'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)('period')),
+    __param(2, (0, common_1.Query)('month')),
+    __param(3, (0, common_1.Query)('year')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], GoalsController.prototype, "getLeaderboard", null);
 __decorate([
     (0, common_1.Get)('leaderboard/:userId/details'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('userId')),
+    __param(2, (0, common_1.Query)('period')),
+    __param(3, (0, common_1.Query)('month')),
+    __param(4, (0, common_1.Query)('year')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], GoalsController.prototype, "getSellerDetails", null);
 exports.GoalsController = GoalsController = __decorate([

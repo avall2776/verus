@@ -32,8 +32,14 @@ let RadarStoriesController = class RadarStoriesController {
     async updatePost(tenantId, postId, body) {
         return this.radarStoriesService.updatePost(tenantId, postId, body);
     }
+    async deletePost(tenantId, postId) {
+        return this.radarStoriesService.deletePost(tenantId, postId);
+    }
     async updateViewerContact(tenantId, viewId, body) {
         return this.radarStoriesService.updateViewerContact(tenantId, viewId, body);
+    }
+    async updateViewerClassification(tenantId, viewId, body) {
+        return this.radarStoriesService.updateViewerClassification(tenantId, viewId, body);
     }
     async exportMetaAudience(tenantId, body) {
         return this.radarStoriesService.exportMetaAudience(tenantId, body?.viewerIds);
@@ -88,6 +94,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], RadarStoriesController.prototype, "updatePost", null);
 __decorate([
+    (0, common_1.Delete)('posts/:id'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], RadarStoriesController.prototype, "deletePost", null);
+__decorate([
     (0, common_1.Patch)('viewers/:id/contact'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
@@ -96,6 +110,15 @@ __decorate([
     __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], RadarStoriesController.prototype, "updateViewerContact", null);
+__decorate([
+    (0, common_1.Patch)('viewers/:id/classification'),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], RadarStoriesController.prototype, "updateViewerClassification", null);
 __decorate([
     (0, common_1.Post)('meta-audience/export'),
     __param(0, (0, tenant_decorator_1.CurrentTenant)()),
