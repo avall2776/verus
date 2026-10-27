@@ -16,6 +16,7 @@ import {
   Sparkles,
   KeyRound,
   PackageCheck,
+  User,
 } from "lucide-react";
 
 import CompanySettingsTab from "@/components/settings/CompanySettingsTab";
@@ -27,6 +28,7 @@ import QuickRepliesSettingsTab from "@/components/settings/QuickRepliesSettingsT
 import AutomationsSettingsTab from "@/components/settings/AutomationsSettingsTab";
 import ApiSettingsTab from "@/components/settings/ApiSettingsTab";
 import ProposalProductsSettingsTab from "@/components/settings/ProposalProductsSettingsTab";
+import AccountSettingsTab from "@/components/settings/AccountSettingsTab";
 
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -39,7 +41,8 @@ type TabId =
   | "products"
   | "quick-replies"
   | "automations"
-  | "api";
+  | "api"
+  | "account";
 
 interface TabConfig {
   id: TabId;
@@ -103,6 +106,12 @@ const SETTINGS_TABS: TabConfig[] = [
     description: "Tokens de acesso, documentação da API e webhook de tráfego pago (Meta Ads)",
     icon: KeyRound,
   },
+  {
+    id: "account",
+    label: "Minha Conta",
+    description: "Informações pessoais, foto de perfil, credenciais de acesso e preferências",
+    icon: User,
+  },
 ];
 
 function SettingsContent() {
@@ -161,6 +170,10 @@ function SettingsContent() {
       if (tab.id === "api") {
         if (menus?.webhooks !== undefined) return menus.webhooks;
         return perms.settings === true;
+      }
+      if (tab.id === "account") {
+        if (menus?.my_account !== undefined) return menus.my_account;
+        return true;
       }
       return true;
     });
@@ -245,6 +258,7 @@ function SettingsContent() {
           {activeTab === "quick-replies" && <QuickRepliesSettingsTab />}
           {activeTab === "automations" && <AutomationsSettingsTab />}
           {activeTab === "api" && <ApiSettingsTab />}
+          {activeTab === "account" && <AccountSettingsTab />}
         </div>
       </div>
     </div>

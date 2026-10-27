@@ -44,6 +44,10 @@ import {
   Network,
   Compass,
   Radio,
+  KeyRound,
+  CreditCard,
+  PackageCheck,
+  Workflow,
 } from "lucide-react";
 import { useSocket } from "@/components/ui/SocketProvider";
 import { useWhatsApp } from "@/components/ui/WhatsAppProvider";
@@ -119,9 +123,15 @@ const NAV_GROUPS = [
       { name: "Automações & Regras", icon: Zap, href: "/settings?tab=automations" },
       { name: "Usuários & Acessos", icon: Users, href: "/settings?tab=users" },
       { name: "Departamentos e Filas", icon: Network, href: "/settings?tab=departments" },
+      { name: "Catálogo & Produtos", icon: PackageCheck, href: "/settings?tab=products" },
+      { name: "Respostas Rápidas", icon: MessageSquare, href: "/settings?tab=quick-replies" },
       { name: "Conexões WhatsApp", icon: Smartphone, href: "/settings/whatsapp" },
+      { name: "Integrações", icon: Workflow, href: "/integrations" },
+      { name: "APIs & Webhooks", icon: KeyRound, href: "/settings?tab=api" },
+      { name: "Plano & Assinatura", icon: CreditCard, href: "/settings?tab=plan" },
       { name: "Central de Suporte", icon: LifeBuoy, href: "/support" },
       { name: "Configurações Gerais", icon: Settings, href: "/settings" },
+      { name: "Minha Conta", icon: User, href: "/settings?tab=account" },
     ]
   }
 ];
@@ -687,9 +697,14 @@ export default function Sidebar() {
       return perms.settings === true;
     }
 
-    if (href.includes('tab=integrations')) {
+    if (base === '/integrations' || href.includes('tab=integrations')) {
       if (menus?.integrations !== undefined) return menus.integrations;
       return perms.settings === true;
+    }
+
+    if (href.includes('tab=account') || href.includes('tab=my_account')) {
+      if (menus?.my_account !== undefined) return menus.my_account;
+      return true;
     }
 
     if (base === '/settings/whatsapp' || href.includes('tab=connections')) {
@@ -697,7 +712,7 @@ export default function Sidebar() {
       return perms.settings === true;
     }
 
-    if (base === '/settings') {
+    if (base === '/settings' && !href.includes('tab=')) {
       if (menus?.settings !== undefined) return menus.settings;
       return perms.settings === true;
     }
