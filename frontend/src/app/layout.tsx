@@ -22,7 +22,7 @@ export const metadata: Metadata = {
       { url: "/vallor/favicon.ico?v=4", sizes: "any" },
     ],
     shortcut: "/vallor/Favicon_vallor.svg?v=4",
-    apple: "/vallor/Favicon_vallor.svg?v=4",
+    apple: "/vallor/icon-512x512.png",
   },
 };
 
@@ -43,7 +43,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/vallor/Favicon_vallor.svg?v=4" type="image/svg+xml" />
         <link rel="alternate icon" href="/vallor/favicon.ico?v=4" />
-        <link rel="apple-touch-icon" href="/vallor/Favicon_vallor.svg?v=4" />
+        <link rel="apple-touch-icon" href="/vallor/icon-512x512.png" />
         <link rel="manifest" href="/vallor/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

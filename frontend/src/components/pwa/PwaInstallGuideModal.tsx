@@ -37,10 +37,9 @@ export default function PwaInstallGuideModal({
 
         {/* Cabeçalho */}
         <div className="flex items-center gap-3.5 mb-5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 p-0.5 shadow-lg shadow-blue-500/20 shrink-0">
-            <div className="w-full h-full bg-[#0B1224] rounded-[14px] flex items-center justify-center">
-              <Smartphone className="w-6 h-6 text-blue-400 animate-pulse" />
-            </div>
+          <div className="w-12 h-12 rounded-2xl bg-white p-1 border border-slate-700/60 shadow-lg shrink-0 flex items-center justify-center overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/vallor/icon-192x192.png" alt="Vallor" className="w-full h-full object-contain" />
           </div>
           <div>
             <h3 className="text-base font-bold text-white tracking-tight">

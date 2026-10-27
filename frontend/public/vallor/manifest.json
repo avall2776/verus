@@ -3,7 +3,7 @@
   "short_name": "Vallor",
   "description": "Plataforma de IA, Atendimento Omnichannel e CRM",
   "theme_color": "#0B1224",
-  "background_color": "#0B1224",
+  "background_color": "#FFFFFF",
   "display": "standalone",
   "orientation": "portrait",
   "scope": "/vallor/",
@@ -14,13 +14,25 @@
       "src": "/vallor/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/vallor/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/vallor/icon-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/vallor/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

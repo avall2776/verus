@@ -34,21 +34,14 @@ export default function MobileAppInstallBanner({ isWhatsApp }: MobileAppInstallB
           />
 
           <div className="flex items-start gap-3.5 relative z-10">
-            {/* Ícone estilizado do App */}
-            <div
-              className={`w-11 h-11 rounded-xl p-0.5 shrink-0 shadow-md ${
-                isWhatsApp
-                  ? "bg-gradient-to-tr from-emerald-600 to-teal-400 shadow-emerald-500/20"
-                  : "bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 shadow-blue-500/20"
-              }`}
-            >
-              <div className="w-full h-full bg-[#0B1224] rounded-[10px] flex items-center justify-center">
-                <Smartphone
-                  className={`w-5 h-5 animate-pulse ${
-                    isWhatsApp ? "text-emerald-400" : "text-blue-400"
-                  }`}
-                />
-              </div>
+            {/* Ícone oficial do App */}
+            <div className="w-12 h-12 rounded-2xl overflow-hidden shrink-0 shadow-md border border-slate-700/60 bg-white p-1 flex items-center justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/vallor/icon-192x192.png"
+                alt="Vallor App"
+                className="w-full h-full object-contain"
+              />
             </div>
 
             {/* Textos explicativos */}
