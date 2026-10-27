@@ -46,6 +46,21 @@ const getInitials = (name?: string | null) => {
   return (parts[0][0] + (parts[1]?.[0] || "")).toUpperCase();
 };
 
+const MONTHS_LIST = [
+  { value: 0, label: "Janeiro" },
+  { value: 1, label: "Fevereiro" },
+  { value: 2, label: "Março" },
+  { value: 3, label: "Abril" },
+  { value: 4, label: "Maio" },
+  { value: 5, label: "Junho" },
+  { value: 6, label: "Julho" },
+  { value: 7, label: "Agosto" },
+  { value: 8, label: "Setembro" },
+  { value: 9, label: "Outubro" },
+  { value: 10, label: "Novembro" },
+  { value: 11, label: "Dezembro" },
+];
+
 export default function GoalsPage() {
   const [goals, setGoals] = useState<CommercialGoal[]>([]);
   const [ranking, setRanking] = useState<SalesRepRanking[]>([]);
@@ -56,6 +71,12 @@ export default function GoalsPage() {
   // Filtro por canal de origem
   const [selectedChannel, setSelectedChannel] = useState<string>("all");
 
+  // Filtro de Período para o Leaderboard Gamificado (Dia, Semana, Meses, Total)
+  const [rankingPeriod, setRankingPeriod] = useState<"day" | "week" | "month" | "all">("month");
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+
   // Modais
   const [isNewGoalOpen, setIsNewGoalOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<CommercialGoal | null>(null);
@@ -65,7 +86,33 @@ export default function GoalsPage() {
   // Simulador de ritmo diário
   const [dailyPaceBonus, setDailyPaceBonus] = useState<number>(0);
 
-  // Carregar dados reais da API
+  // Carregamento dedicado e rápido do Leaderboard ao alternar período
+  const loadLeaderboard = useCallback(async (period?: string, month?: number, year?: number) => {
+    setLeaderboardLoading(true);
+    const p = period !== undefined ? period : rankingPeriod;
+    const m = month !== undefined ? month : selectedMonth;
+    const y = year !== undefined ? year : selectedYear;
+
+    try {
+      const res = await api.get("/goals/leaderboard", {
+        params: {
+          period: p,
+          month: m,
+          year: y,
+        },
+      });
+      if (Array.isArray(res?.data)) {
+        setRanking(res.data);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar leaderboard:", err);
+      toast.error("Erro ao atualizar classificação da equipe comercial.");
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  }, [rankingPeriod, selectedMonth, selectedYear]);
+
+  // Carregar dados gerais da API
   const loadData = useCallback(async (isSilent = false, channel?: string) => {
     if (!isSilent) setLoading(true);
     else setRefreshing(true);
@@ -74,7 +121,13 @@ export default function GoalsPage() {
 
     try {
       const [summaryRes, goalsRes, rankingRes] = await Promise.all([
-        api.get("/goals/summary", { params: { channel: activeChannel } }).catch((err) => {
+        api.get("/goals/summary", { 
+          params: { 
+            channel: activeChannel,
+            month: selectedMonth,
+            year: selectedYear,
+          } 
+        }).catch((err) => {
           console.error("Erro summary:", err);
           return { data: null };
         }),
@@ -82,7 +135,13 @@ export default function GoalsPage() {
           console.error("Erro goals:", err);
           return { data: [] };
         }),
-        api.get("/goals/leaderboard").catch((err) => {
+        api.get("/goals/leaderboard", {
+          params: {
+            period: rankingPeriod,
+            month: selectedMonth,
+            year: selectedYear,
+          },
+        }).catch((err) => {
           console.error("Erro leaderboard:", err);
           return { data: [] };
         }),
@@ -106,7 +165,7 @@ export default function GoalsPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [selectedChannel]);
+  }, [selectedChannel, rankingPeriod, selectedMonth, selectedYear]);
 
   useEffect(() => {
     loadData();
@@ -236,6 +295,36 @@ export default function GoalsPage() {
       toast.error(err?.response?.data?.message || "Erro ao excluir meta.");
     }
   };
+
+  const handlePeriodChange = (period: "day" | "week" | "month" | "all") => {
+    setRankingPeriod(period);
+    loadLeaderboard(period, selectedMonth, selectedYear);
+  };
+
+  const handleMonthChange = (month: number) => {
+    setSelectedMonth(month);
+    setRankingPeriod("month");
+    loadLeaderboard("month", month, selectedYear);
+  };
+
+  const periodStats = useMemo(() => {
+    const totalRevenue = ranking.reduce(
+      (acc, r) => acc + Number(r.revenueWon ?? r.totalRevenueWon ?? r.achievedValue ?? 0),
+      0
+    );
+    const totalDeals = ranking.reduce(
+      (acc, r) => acc + Number(r.dealsWon ?? r.dealsCount ?? 0),
+      0
+    );
+    const activeSellers = ranking.filter(
+      (r) => Number(r.dealsWon ?? r.dealsCount ?? 0) > 0
+    ).length;
+    return {
+      totalRevenue,
+      totalDeals,
+      activeSellers,
+    };
+  }, [ranking]);
 
   return (
     <div className="space-y-4 sm:space-y-8 pb-10 sm:pb-12 animate-in fade-in duration-300">
@@ -661,22 +750,130 @@ export default function GoalsPage() {
 
       {/* Leaderboard Gamificado & Pódio dos Top 3 */}
       <div className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 shadow-sm space-y-4 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800/80">
           <div className="flex items-center gap-2.5 sm:gap-3">
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
               <Trophy className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <span>Leaderboard da Equipe</span>
+                <span>Leaderboard Gamificado da Equipe</span>
                 <span className="hidden sm:inline-flex text-xs px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-semibold">
-                  Top Closers
+                  Equipe Comercial
                 </span>
               </h3>
               <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-                Classificação em tempo real por contratos fechados e receita
+                Classificação em tempo real por contratos fechados, receita acumulada e taxa de conversão
               </p>
             </div>
+          </div>
+
+          {/* Filtros de Classificação: Dia, Semana, Meses e Total */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 shadow-xs">
+              <button
+                type="button"
+                onClick={() => handlePeriodChange("day")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  rankingPeriod === "day"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <span>Dia</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handlePeriodChange("week")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  rankingPeriod === "week"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <span>Semana</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handlePeriodChange("month")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  rankingPeriod === "month"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <span>Mês</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handlePeriodChange("all")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  rankingPeriod === "all"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <span>Total</span>
+              </button>
+            </div>
+
+            {/* Seletor de Mês Específico quando período for Mês */}
+            {rankingPeriod === "month" && (
+              <div className="relative">
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => handleMonthChange(Number(e.target.value))}
+                  className="appearance-none px-3 py-1.5 pr-7 rounded-xl bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer shadow-sm"
+                >
+                  {MONTHS_LIST.map((m) => (
+                    <option key={m.value} value={m.value} className="bg-white dark:bg-[#0B1224] text-slate-900 dark:text-white">
+                      {m.label} / {selectedYear}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                  <ChevronRight className="w-3.5 h-3.5 rotate-90" />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Barra Informativa de Contexto do Período */}
+        <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800/80 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-slate-700 dark:text-slate-300">
+              {rankingPeriod === "day" && "📅 Classificação de Hoje (Dia atual)"}
+              {rankingPeriod === "week" && "📆 Classificação desta Semana"}
+              {rankingPeriod === "month" && `🗓️ Classificação de ${MONTHS_LIST[selectedMonth]?.label} de ${selectedYear}`}
+              {rankingPeriod === "all" && "⚡ Classificação Geral Acumulada (Histórico de Todas as Vendas)"}
+            </span>
+            {leaderboardLoading && (
+              <RefreshCw className="w-3 h-3 animate-spin text-blue-500" />
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+            <span>
+              Faturamento no período:{" "}
+              <strong className="text-slate-900 dark:text-white font-mono">
+                R$ {formatMoney(periodStats.totalRevenue)}
+              </strong>
+            </span>
+            <span>•</span>
+            <span>
+              Vendas no período:{" "}
+              <strong className="text-slate-900 dark:text-white font-mono">
+                {periodStats.totalDeals}
+              </strong>
+            </span>
+            <span className="hidden sm:inline">•</span>
+            <span className="hidden sm:inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+              <CheckCircle2 className="w-3 h-3" /> Apenas Equipe Comercial
+            </span>
           </div>
         </div>
 
@@ -882,11 +1079,12 @@ export default function GoalsPage() {
                   <tr>
                     <th className="p-3.5">Posição</th>
                     <th className="p-3.5">Consultor Comercial</th>
+                    <th className="p-3.5">Setor / Tag</th>
                     <th className="p-3.5">Conquistas</th>
                     <th className="p-3.5 text-center">Vendas Fechadas</th>
                     <th className="p-3.5 text-center">Taxa de Conversão</th>
                     <th className="p-3.5 text-right">Ticket Médio</th>
-                    <th className="p-3.5 text-right">Faturamento Total</th>
+                    <th className="p-3.5 text-right">Faturamento no Período</th>
                     <th className="p-3.5 text-right">Ação</th>
                   </tr>
                 </thead>
@@ -913,6 +1111,24 @@ export default function GoalsPage() {
                       <td className="p-3.5">
                         <div className="font-semibold text-slate-900 dark:text-white">{rep.name || "Consultor"}</div>
                         <div className="text-[11px] text-slate-500 dark:text-slate-400">{rep.email || "Consultor"}</div>
+                      </td>
+                      <td className="p-3.5">
+                        {(rep as any).departments && (rep as any).departments.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {(rep as any).departments.map((dept: string) => (
+                              <span
+                                key={dept}
+                                className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                              >
+                                {dept}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            Comercial Geral
+                          </span>
+                        )}
                       </td>
                       <td className="p-3.5">
                         <div className="flex items-center gap-1">
@@ -988,6 +1204,17 @@ export default function GoalsPage() {
                       <div className="min-w-0">
                         <div className="font-semibold text-slate-900 dark:text-white text-xs truncate">{rep.name || "Consultor"}</div>
                         <div className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate">{rep.email || "Consultor"}</div>
+                        <div className="mt-0.5">
+                          {(rep as any).departments && (rep as any).departments.length > 0 ? (
+                            <span className="px-1.5 py-0.5 rounded text-[9.5px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                              {(rep as any).departments.join(', ')}
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 rounded text-[9.5px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                              Comercial Geral
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -1029,6 +1256,9 @@ export default function GoalsPage() {
         onClose={() => setSelectedSellerId(null)}
         userId={selectedSellerId}
         userName={selectedSellerName}
+        initialPeriod={rankingPeriod}
+        selectedMonth={selectedMonth}
+        selectedYear={selectedYear}
       />
     </div>
   );

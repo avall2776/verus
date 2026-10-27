@@ -920,8 +920,13 @@ export default function RadarStoriesPage() {
                 }
                 className="group relative rounded-xl border border-slate-200 dark:border-slate-800/80 bg-slate-50/60 dark:bg-[#070D1B] p-3 flex flex-col gap-2.5 hover:border-blue-500/50 hover:shadow-md transition-all cursor-pointer"
               >
-                {/* Topo do Card: Miniatura / Imagem */}
-                <div className="relative w-full h-32 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                {/* Topo do Card: Miniatura / Imagem em Formato Vertical de Story (9:14) */}
+                <div className="relative w-full aspect-[9/14] rounded-xl overflow-hidden bg-slate-950 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center shadow-inner">
+                  {/* Barra superior de status do Story (estilo WhatsApp) */}
+                  <div className="absolute top-2.5 left-2.5 right-2.5 flex gap-1 z-10 pointer-events-none">
+                    <div className="h-0.5 flex-1 bg-white/80 rounded-full shadow-sm"></div>
+                  </div>
+
                   {post.mediaUrl ? (
                     <img
                       src={post.mediaUrl}
@@ -929,19 +934,19 @@ export default function RadarStoriesPage() {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                    <div className="flex flex-col items-center justify-center gap-1.5 text-slate-400 p-3 text-center">
                       {getCategoryIcon(post.category)}
                       <span className="text-[10px] font-semibold">{post.category}</span>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span className="px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-md text-white text-[11px] font-semibold flex items-center gap-1.5">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                    <span className="px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-md text-white text-[11px] font-semibold flex items-center gap-1.5 shadow-sm">
                       <Maximize2 className="w-3.5 h-3.5" />
-                      <span>Ver Mídia</span>
+                      <span>Ver Story</span>
                     </span>
                   </div>
                   {/* Badge de Categoria */}
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-bold bg-black/60 backdrop-blur-md text-white border border-white/20 flex items-center gap-1">
+                  <div className="absolute top-4 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-black/60 backdrop-blur-md text-white border border-white/20 flex items-center gap-1 z-10">
                     {getCategoryIcon(post.category)}
                     <span>{post.category}</span>
                   </div>
@@ -2039,95 +2044,79 @@ export default function RadarStoriesPage() {
       {/* 7. MODAL LIGHTBOX DE FOTO DO STORY (SEM EMOJIS - VETORES DE ALTO PADRÃO)*/}
       {/* ======================================================================= */}
       {lightboxMedia && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl flex flex-col">
-            {/* Header do Lightbox */}
-            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
-                  <Eye className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">
-                    Visualização de Mídia do Story
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {lightboxMedia.contactName ? `Visualizado por ${lightboxMedia.contactName}` : "Story publicado no WhatsApp"}
-                  </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative w-full max-w-[360px] rounded-3xl overflow-hidden shadow-2xl border border-slate-700/80 bg-black flex flex-col">
+            {/* Story Container em Dimensão Vertical 9:16 */}
+            <div className="relative w-full aspect-[9/16] bg-black overflow-hidden flex items-center justify-center select-none">
+              {/* Barra superior de status do Story (estilo WhatsApp) */}
+              <div className="absolute top-3 left-3 right-3 flex items-center gap-1.5 z-20 pointer-events-none">
+                <div className="h-1 flex-1 bg-white/40 rounded-full overflow-hidden shadow-sm">
+                  <div className="h-full bg-white w-full"></div>
                 </div>
               </div>
-              <button
-                onClick={() => setLightboxMedia(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Conteúdo / Foto */}
-            <div className="p-4 flex flex-col gap-3">
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center border border-slate-200 dark:border-slate-800">
-                {lightboxMedia.mediaUrl ? (
-                  <img
-                    src={lightboxMedia.mediaUrl}
-                    alt={lightboxMedia.title}
-                    className="max-h-[380px] w-auto max-w-full object-contain"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 text-slate-500 p-8 text-center">
-                    <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center text-slate-400">
-                      {getCategoryIcon(lightboxMedia.category)}
-                    </div>
-                    <span className="text-xs font-medium text-slate-400">
-                      Pré-visualização gerada para categoria: {lightboxMedia.category}
-                    </span>
+              {/* Header do Story: Autor, Data, Horário e Botão Fechar */}
+              <div className="absolute top-6 left-3 right-3 flex items-center justify-between z-20 bg-gradient-to-b from-black/80 via-black/40 to-transparent p-2.5 rounded-2xl backdrop-blur-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white/40 shrink-0">
+                    <Radio className="w-4 h-4 text-white" />
                   </div>
-                )}
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-white block drop-shadow truncate">
+                      {lightboxMedia.contactName ? lightboxMedia.contactName : "Status Comercial WhatsApp"}
+                    </span>
+                    <div className="flex items-center gap-1.5 text-[10px] text-white/80">
+                      {lightboxMedia.exactDate && <span>{lightboxMedia.exactDate}</span>}
+                      {lightboxMedia.exactTime && <span className="font-mono">às {lightboxMedia.exactTime}</span>}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setLightboxMedia(null)}
+                  className="p-1.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition-colors cursor-pointer shrink-0 ml-2"
+                  title="Fechar"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              {/* Metadados Auditáveis */}
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white">
-                    {lightboxMedia.title}
+              {/* Mídia do Story em Dimensão Real */}
+              {lightboxMedia.mediaUrl ? (
+                <img
+                  src={lightboxMedia.mediaUrl}
+                  alt={lightboxMedia.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-3 text-slate-400 p-8 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-800/90 border border-slate-700 flex items-center justify-center text-slate-300">
+                    {getCategoryIcon(lightboxMedia.category)}
+                  </div>
+                  <span className="text-xs font-medium text-slate-300">
+                    {lightboxMedia.category}
                   </span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 flex items-center gap-1 shrink-0">
+                  <span className="text-[10px] text-slate-500">Mídia em formato 9:16</span>
+                </div>
+              )}
+
+              {/* Overlay Inferior estilo WhatsApp Story com Categoria, Visualizações e Título */}
+              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-4 pt-12 text-white z-20 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-white/20 backdrop-blur-md text-white border border-white/20 flex items-center gap-1">
                     {getCategoryIcon(lightboxMedia.category)}
                     <span>{lightboxMedia.category}</span>
                   </span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] pt-1.5 border-t border-slate-200/60 dark:border-slate-800/60">
-                  {lightboxMedia.exactDate && (
-                    <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                      <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                      <span>{lightboxMedia.exactDate}</span>
-                    </div>
-                  )}
-                  {lightboxMedia.exactTime && (
-                    <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-mono">
-                      <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                      <span>{lightboxMedia.exactTime}</span>
-                    </div>
-                  )}
                   {lightboxMedia.viewsCount !== undefined && (
-                    <div className="flex items-center gap-1 text-blue-500 font-semibold">
-                      <Eye className="w-3.5 h-3.5 shrink-0" />
+                    <span className="flex items-center gap-1 text-xs font-bold text-emerald-400 drop-shadow">
+                      <Eye className="w-3.5 h-3.5" />
                       <span>{lightboxMedia.viewsCount} visualizações</span>
-                    </div>
+                    </span>
                   )}
                 </div>
+                <p className="text-xs font-medium leading-relaxed drop-shadow line-clamp-3">
+                  {lightboxMedia.title}
+                </p>
               </div>
-            </div>
-
-            {/* Footer */}
-            <div className="p-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-              <button
-                onClick={() => setLightboxMedia(null)}
-                className="px-4 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
-              >
-                Fechar
-              </button>
             </div>
           </div>
         </div>
@@ -2364,35 +2353,54 @@ export default function RadarStoriesPage() {
                 </span>
               </div>
 
-              {/* Upload de Imagem */}
+              {/* Upload de Imagem na Dimensão Vertical de Story (9:16) */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Foto / Mídia do Story:
+                  Foto / Mídia do Story (Dimensão Vertical 9:16):
                 </label>
-                <div className="relative border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:border-blue-500/50 transition-colors bg-slate-50/50 dark:bg-slate-900/30">
+                <div className="relative border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 hover:border-blue-500/50 transition-colors bg-slate-50/50 dark:bg-slate-900/30">
                   {publishImagePreview ? (
-                    <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-slate-950 flex items-center justify-center">
-                      <img src={publishImagePreview} alt="Preview" className="max-h-40 w-auto object-contain" />
+                    <div className="relative w-[210px] aspect-[9/16] rounded-2xl overflow-hidden bg-black border-2 border-slate-700/80 shadow-2xl flex items-center justify-center group">
+                      {/* Barra superior de status do Story */}
+                      <div className="absolute top-2 left-2 right-2 flex gap-1 z-10 pointer-events-none">
+                        <div className="h-0.5 flex-1 bg-white/70 rounded-full shadow-sm"></div>
+                      </div>
+
+                      <img src={publishImagePreview} alt="Preview do Story" className="w-full h-full object-cover" />
+
+                      {/* Legenda digitada refletida em tempo real sobre o Story */}
+                      {publishTitle && (
+                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-3 pt-6 text-[10px] text-white font-medium line-clamp-3 leading-tight drop-shadow">
+                          {publishTitle}
+                        </div>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => {
                           setPublishImageBase64("");
                           setPublishImagePreview("");
                         }}
-                        className="absolute top-2 right-2 p-1 rounded-md bg-black/60 text-white hover:bg-black/80 transition-colors"
+                        className="absolute top-2.5 right-2.5 p-1 rounded-full bg-black/70 hover:bg-black text-white transition-colors z-20 cursor-pointer shadow-md"
+                        title="Remover foto"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center gap-2 cursor-pointer w-full py-4">
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                    <label className="flex flex-col items-center justify-center gap-2.5 cursor-pointer w-full py-5 text-center">
+                      <div className="w-12 h-16 rounded-xl border-2 border-dashed border-blue-500/50 bg-blue-500/10 text-blue-500 flex flex-col items-center justify-center gap-0.5 shadow-sm">
                         <ImageIcon className="w-5 h-5" />
+                        <span className="text-[9px] font-bold">9:16</span>
                       </div>
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                        Clique para escolher a imagem
-                      </span>
-                      <span className="text-[10px] text-slate-400">PNG, JPEG ou WebP (máx. 8MB)</span>
+                      <div>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
+                          Clique para escolher a imagem do Story
+                        </span>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">
+                          Formato Vertical 9:16 (Ex: 1080x1920) • PNG, JPG ou WebP
+                        </span>
+                      </div>
                       <input
                         type="file"
                         accept="image/*"
@@ -2548,8 +2556,13 @@ export default function RadarStoriesPage() {
                 Post: <strong className="text-slate-800 dark:text-slate-200">{selectedPostForPhoto.title}</strong>
               </div>
 
-              {/* Pré-visualização da Foto */}
-              <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center">
+              {/* Pré-visualização da Foto na Dimensão Vertical de Story (9:16) */}
+              <div className="relative w-[190px] aspect-[9/16] mx-auto rounded-2xl overflow-hidden bg-black border-2 border-slate-700/80 shadow-2xl flex items-center justify-center">
+                {/* Barra superior de status do Story */}
+                <div className="absolute top-2 left-2 right-2 flex gap-1 z-10 pointer-events-none">
+                  <div className="h-0.5 flex-1 bg-white/70 rounded-full shadow-sm"></div>
+                </div>
+
                 {newPhotoBase64 ? (
                   <img
                     src={newPhotoBase64}
@@ -2557,9 +2570,10 @@ export default function RadarStoriesPage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-slate-500 gap-2">
+                  <div className="flex flex-col items-center justify-center text-slate-500 gap-2 p-4 text-center">
                     <ImageIcon className="w-8 h-8 text-slate-600" />
-                    <span className="text-xs">Nenhuma foto selecionada</span>
+                    <span className="text-[11px]">Nenhuma foto selecionada</span>
+                    <span className="text-[9px] text-slate-600 font-bold">Formato 9:16 Vertical</span>
                   </div>
                 )}
               </div>

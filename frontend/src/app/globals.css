@@ -1582,3 +1582,13 @@ html.light .spatial-tooltip-body,
 .light .spatial-tooltip-body {
   color: #475569;
 }
+
+/* Elimina fundo branco/cinza injetado por padrão pelo Recharts no hover de gráficos */
+.recharts-tooltip-cursor,
+.recharts-bar-cursor,
+.recharts-rectangle.recharts-tooltip-cursor {
+  fill: transparent !important;
+  opacity: 0 !important;
+  stroke: none !important;
+}
+

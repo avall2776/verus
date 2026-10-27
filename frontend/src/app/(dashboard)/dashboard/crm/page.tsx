@@ -108,6 +108,7 @@ interface KpiPopoverProps {
   periodLabel: string;
   detail: string;
   position?: 'left' | 'center' | 'right';
+  onClose?: () => void;
   extraMetrics?: {
     label: string;
     current: string;
@@ -126,6 +127,7 @@ function KpiPopover({
   periodLabel,
   detail,
   position = 'center',
+  onClose,
   extraMetrics
 }: KpiPopoverProps) {
   const isPositive = isInverse ? diff < 0 : diff >= 0;
@@ -136,63 +138,87 @@ function KpiPopover({
     : 'left-1/2 -translate-x-1/2';
 
   return (
-    <div className={`absolute top-[calc(100%+8px)] ${posClasses} w-72 md:w-80 bg-slate-100 dark:bg-[#0d1117] border border-gray-800 text-gray-200 text-xs shadow-2xl rounded-xl p-3 z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-150`}>
-      <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-800/80">
-        <span className="font-bold text-white truncate text-[11px] uppercase tracking-wider">{title}</span>
-        <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold flex items-center gap-0.5 ${
-          isPositive 
-            ? 'bg-emerald-950/70 text-emerald-400 border border-emerald-800/50' 
-            : 'bg-rose-950/70 text-rose-400 border border-rose-800/50'
-        }`}>
-          {diff >= 0 ? `+${diff}%` : `${diff}%`}
-        </span>
-      </div>
-
-      <div className="space-y-1.5 font-sans">
-        <div className="flex items-center justify-between">
-          <span className="text-gray-400">Período Atual:</span>
-          <span className="font-mono font-bold text-white">{currentVal}</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-gray-400">Período Anterior:</span>
-          <span className="font-mono text-gray-300">{prevVal}</span>
-        </div>
-        <p className="text-[10px] text-gray-400 italic">
-          (Período anterior de mesma duração de {periodLabel})
-        </p>
-
-        {extraMetrics && extraMetrics.length > 0 && (
-          <div className="pt-2 mt-2 border-t border-gray-800/60 space-y-2">
-            {extraMetrics.map((em, idx) => {
-              const emPos = em.diff !== undefined 
-                ? (em.isInverse ? em.diff < 0 : em.diff >= 0) 
-                : true;
-              return (
-                <div key={idx} className="space-y-0.5">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-gray-300 font-semibold">{em.label}:</span>
-                    {em.diff !== undefined && (
-                      <span className={`font-mono text-[10px] ${emPos ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {em.diff >= 0 ? `+${em.diff}` : em.diff}{typeof em.diff === 'number' && em.label.includes('Taxa') ? '%' : ''}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-gray-400">
-                    <span>Atual: <strong className="text-white font-mono">{em.current}</strong></span>
-                    <span>Anterior: <span className="text-gray-400 font-mono">{em.prev}</span></span>
-                  </div>
-                </div>
-              );
-            })}
+    <>
+      {/* Backdrop para fechar em telas mobile */}
+      <div 
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs md:hidden" 
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose?.();
+        }} 
+      />
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className={`fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-xs mx-auto md:max-w-none md:inset-x-auto md:top-[calc(100%+8px)] ${posClasses} w-auto md:w-80 bg-white dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 text-slate-800 dark:text-gray-200 text-xs shadow-2xl rounded-2xl p-3.5 z-50 animate-in fade-in zoom-in-95 duration-150`}
+      >
+        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 dark:border-gray-800/80">
+          <span className="font-bold text-slate-900 dark:text-white truncate text-[11px] uppercase tracking-wider">{title}</span>
+          <div className="flex items-center gap-1.5">
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold flex items-center gap-0.5 ${
+              isPositive 
+                ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50' 
+                : 'bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50'
+            }`}>
+              {diff >= 0 ? `+${diff}%` : `${diff}%`}
+            </span>
+            {onClose && (
+              <button 
+                type="button" 
+                onClick={onClose}
+                className="md:hidden p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
-        )}
-      </div>
+        </div>
 
-      <div className="mt-2.5 pt-2 border-t border-gray-800/80 text-[11px] text-gray-300 flex items-center gap-1.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-        <span className="truncate">{detail}</span>
+        <div className="space-y-1.5 font-sans">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 dark:text-gray-400">Período Atual:</span>
+            <span className="font-mono font-bold text-slate-900 dark:text-white">{currentVal}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 dark:text-gray-400">Período Anterior:</span>
+            <span className="font-mono text-slate-700 dark:text-gray-300">{prevVal}</span>
+          </div>
+          <p className="text-[10px] text-slate-400 dark:text-gray-400 italic">
+            (Período anterior de mesma duração de {periodLabel})
+          </p>
+
+          {extraMetrics && extraMetrics.length > 0 && (
+            <div className="pt-2 mt-2 border-t border-slate-200 dark:border-gray-800/60 space-y-2">
+              {extraMetrics.map((em, idx) => {
+                const emPos = em.diff !== undefined 
+                  ? (em.isInverse ? em.diff < 0 : em.diff >= 0) 
+                  : true;
+                return (
+                  <div key={idx} className="space-y-0.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-700 dark:text-gray-300 font-semibold">{em.label}:</span>
+                      {em.diff !== undefined && (
+                        <span className={`font-mono text-[10px] ${emPos ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                          {em.diff >= 0 ? `+${em.diff}` : em.diff}{typeof em.diff === 'number' && em.label.includes('Taxa') ? '%' : ''}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-gray-400">
+                      <span>Atual: <strong className="text-slate-900 dark:text-white font-mono">{em.current}</strong></span>
+                      <span>Anterior: <span className="text-slate-600 dark:text-gray-400 font-mono">{em.prev}</span></span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-2.5 pt-2 border-t border-slate-200 dark:border-gray-800/80 text-[11px] text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+          <span className="truncate">{detail}</span>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -291,19 +317,35 @@ export default function CrmDashboardPage() {
   const analyticsData = useMemo(() => {
     const now = new Date();
     let days = 30;
-    if (period === 'today') days = 1;
-    else if (period === '7d') days = 7;
-    else if (period === '15d') days = 15;
-    else if (period === '30d') days = 30;
-    else if (period === '90d') days = 90;
-    else if (period === 'custom' && customStartDate && customEndDate) {
-      const diffMs = new Date(customEndDate).getTime() - new Date(customStartDate).getTime();
-      days = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
-    }
+    let currentStart: Date;
+    let currentEnd: Date = now;
+    let prevStart: Date;
+    let prevEnd: Date;
 
-    const currentStart = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-    const prevStart = new Date(now.getTime() - days * 2 * 24 * 60 * 60 * 1000);
-    const prevEnd = currentStart;
+    if (period === 'today') {
+      currentStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      currentEnd = now;
+      prevStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0, 0);
+      prevEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999);
+      days = 1;
+    } else if (period === 'custom' && customStartDate && customEndDate) {
+      currentStart = new Date(`${customStartDate}T00:00:00`);
+      currentEnd = new Date(`${customEndDate}T23:59:59`);
+      const diffMs = Math.max(1, currentEnd.getTime() - currentStart.getTime());
+      days = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
+      prevStart = new Date(currentStart.getTime() - diffMs);
+      prevEnd = new Date(currentStart.getTime() - 1);
+    } else {
+      if (period === '7d') days = 7;
+      else if (period === '15d') days = 15;
+      else if (period === '30d') days = 30;
+      else if (period === '90d') days = 90;
+
+      currentStart = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      currentEnd = now;
+      prevStart = new Date(now.getTime() - days * 2 * 24 * 60 * 60 * 1000);
+      prevEnd = currentStart;
+    }
 
     // Filtros de Status, Usuário e CRM
     const baseFiltered = deals.filter(d => {
@@ -318,7 +360,7 @@ export default function CrmDashboardPage() {
         if (assignedId !== selectedUserFilter) return false;
       }
       if (selectedCrmFilter !== 'all') {
-        const funnel = (d.funnelName || d.funnelId || d.pipeline || '').toLowerCase();
+        const funnel = (d.metadata?.funnelName || d.metadata?.pipeline || d.funnelName || d.funnelId || d.pipeline || '').toLowerCase();
         if (selectedCrmFilter === 'principal' && !funnel.includes('principal') && funnel !== '') return false;
         if (selectedCrmFilter === 'inbound' && !funnel.includes('inbound')) return false;
         if (selectedCrmFilter === 'outbound' && !funnel.includes('outbound')) return false;
@@ -334,12 +376,12 @@ export default function CrmDashboardPage() {
 
     const currentPeriodDeals = baseFiltered.filter(d => {
       const dt = getDealDate(d);
-      return dt >= currentStart && dt <= now;
+      return dt >= currentStart && dt <= currentEnd;
     });
 
     const prevPeriodDeals = baseFiltered.filter(d => {
       const dt = getDealDate(d);
-      return dt >= prevStart && dt < prevEnd;
+      return dt >= prevStart && dt <= prevEnd;
     });
 
     const isWon = (d: any) => {
@@ -390,6 +432,9 @@ export default function CrmDashboardPage() {
     return {
       days,
       periodLabel,
+      currentStart,
+      currentEnd,
+      currentPeriodDeals,
       opportunities: {
         current: currentPeriodDeals.length,
         prev: prevPeriodDeals.length,
@@ -523,49 +568,133 @@ export default function CrmDashboardPage() {
     toast.success("Relatório CSV exportado com sucesso!");
   };
 
-  // Dados para Gráfico de Pizza (Status)
+  // Dados dinâmicos para Gráfico de Pizza (Status)
   const statusPieData = useMemo(() => {
-    if (!metrics) return [];
+    const won = analyticsData.won.current;
+    const lost = analyticsData.lost.current;
+    const open = analyticsData.open.current;
+    if (won === 0 && lost === 0 && open === 0 && metrics) {
+      return [
+        { name: "Ganhos", value: metrics.wonCount, color: "#10b981" },
+        { name: "Perdidos", value: metrics.lostCount, color: "#f43f5e" },
+        { name: "Em Aberto", value: metrics.openCount, color: "#3b82f6" },
+      ];
+    }
     return [
-      { name: "Ganhos", value: metrics.wonCount, color: "#10b981" },
-      { name: "Perdidos", value: metrics.lostCount, color: "#f43f5e" },
-      { name: "Em Aberto", value: metrics.openCount, color: "#3b82f6" },
+      { name: "Ganhos", value: won, color: "#10b981" },
+      { name: "Perdidos", value: lost, color: "#f43f5e" },
+      { name: "Em Aberto", value: open, color: "#3b82f6" },
     ];
-  }, [metrics]);
+  }, [analyticsData, metrics]);
 
-  // Dados traduzidos para o gráfico de funil (PT-BR)
+  // Dados traduzidos e dinâmicos para o gráfico de funil (PT-BR)
   const translatedFunnelData = useMemo(() => {
-    const raw = metrics?.funnelData || [];
-    const translationMap: Record<string, string> = {
-      NEW: "Novo Contato",
-      "NOVO CONTATO": "Novo Contato",
-      "FOLLOW-UP": "Em Qualificação",
-      FOLLOWUP: "Em Qualificação",
-      "EM QUALIFICAÇÃO": "Em Qualificação",
-      QUALIFIED: "Qualificado",
-      QUALIFICADO: "Qualificado",
-      SEED: "Leads Seed",
-      "LEADS SEED": "Leads Seed",
-      PROPOSAL: "Proposta",
-      PROPOSTA: "Proposta",
-      NEGOTIATION: "Negociação",
-      NEGOCIAÇÃO: "Negociação",
-      WON: "Fechado / Ganho",
-      "FECHADO/GANHO": "Fechado / Ganho",
-      "FECHADO / GANHO": "Fechado / Ganho",
-      LOST: "Fechado / Perdido",
-      "FECHADO/PERDIDO": "Fechado / Perdido",
-      "FECHADO / PERDIDO": "Fechado / Perdido"
+    const dealsList = analyticsData.currentPeriodDeals;
+    if (!dealsList || dealsList.length === 0) {
+      const raw = metrics?.funnelData || [];
+      const translationMap: Record<string, string> = {
+        NEW: "Novo Contato",
+        "NOVO CONTATO": "Novo Contato",
+        "FOLLOW-UP": "Em Qualificação",
+        FOLLOWUP: "Em Qualificação",
+        "EM QUALIFICAÇÃO": "Em Qualificação",
+        QUALIFIED: "Qualificado",
+        QUALIFICADO: "Qualificado",
+        SEED: "Leads Seed",
+        "LEADS SEED": "Leads Seed",
+        PROPOSAL: "Proposta",
+        PROPOSTA: "Proposta",
+        NEGOTIATION: "Negociação",
+        NEGOCIAÇÃO: "Negociação",
+        WON: "Fechado / Ganho",
+        "FECHADO/GANHO": "Fechado / Ganho",
+        "FECHADO / GANHO": "Fechado / Ganho",
+        LOST: "Fechado / Perdido",
+        "FECHADO/PERDIDO": "Fechado / Perdido",
+        "FECHADO / PERDIDO": "Fechado / Perdido"
+      };
+
+      return raw.map(item => {
+        const key = item.name?.toUpperCase().trim() || "";
+        return {
+          ...item,
+          name: translationMap[key] || item.name
+        };
+      });
+    }
+
+    const stageCounts: Record<string, number> = {
+      "Novo Contato": 0,
+      "Em Qualificação": 0,
+      "Qualificado": 0,
+      "Proposta": 0,
+      "Negociação": 0,
+      "Fechado / Ganho": 0,
+      "Fechado / Perdido": 0,
     };
 
-    return raw.map(item => {
-      const key = item.name?.toUpperCase().trim() || "";
-      return {
-        ...item,
-        name: translationMap[key] || item.name
-      };
+    dealsList.forEach(d => {
+      const raw = d.stage?.name || d.stage || d.status || 'NEW';
+      const translated = translateStage(raw);
+      if (stageCounts[translated] !== undefined) {
+        stageCounts[translated]++;
+      } else {
+        stageCounts[translated] = (stageCounts[translated] || 0) + 1;
+      }
     });
-  }, [metrics]);
+
+    return Object.entries(stageCounts).map(([name, value]) => ({
+      name,
+      value
+    }));
+  }, [analyticsData.currentPeriodDeals, metrics]);
+
+  // Comparativo de Receita Semanal Dinâmico (4 Fatias Temporais do Período)
+  const dynamicWeeklyComparison = useMemo(() => {
+    const dealsList = analyticsData.currentPeriodDeals;
+    if (!dealsList || dealsList.length === 0) {
+      return metrics?.weeklyComparison || [
+        { name: 'Sem 1', ganho: 3200, perdido: 900 },
+        { name: 'Sem 2', ganho: 4800, perdido: 1200 },
+        { name: 'Sem 3', ganho: 4100, perdido: 1500 },
+        { name: 'Sem 4', ganho: 6400, perdido: 850 }
+      ];
+    }
+
+    const { currentStart, currentEnd } = analyticsData;
+    const startMs = currentStart.getTime();
+    const endMs = currentEnd.getTime();
+    const duration = Math.max(1, endMs - startMs);
+    const bucketDuration = duration / 4;
+
+    const buckets = [
+      { name: 'Sem 1', ganho: 0, perdido: 0 },
+      { name: 'Sem 2', ganho: 0, perdido: 0 },
+      { name: 'Sem 3', ganho: 0, perdido: 0 },
+      { name: 'Sem 4', ganho: 0, perdido: 0 }
+    ];
+
+    dealsList.forEach(d => {
+      const field = dateCriterion === 'updatedAt' ? d.updatedAt : d.createdAt;
+      const dt = field ? new Date(field) : new Date();
+      const val = Number(d.value) || 0;
+      const s = (d.status || '').toLowerCase();
+      const isW = s === 'won' || s === 'ganho';
+      const isL = s === 'lost' || s === 'perdido';
+
+      if (!isW && !isL) return;
+
+      const offset = dt.getTime() - startMs;
+      let bucketIdx = Math.floor(offset / bucketDuration);
+      if (bucketIdx < 0) bucketIdx = 0;
+      if (bucketIdx > 3) bucketIdx = 3;
+
+      if (isW) buckets[bucketIdx].ganho += val;
+      if (isL) buckets[bucketIdx].perdido += val;
+    });
+
+    return buckets;
+  }, [analyticsData, dateCriterion, metrics]);
 
   return (
     <div className="flex flex-col min-h-full w-full bg-slate-50 dark:bg-[#0a0c10] text-slate-900 dark:text-white p-4 md:p-6 lg:p-8 space-y-6">
@@ -603,11 +732,11 @@ export default function CrmDashboardPage() {
         </div>
 
         {/* ABAS: GRÁFICOS VS RELATÓRIOS */}
-        <div className="flex items-center p-1 bg-slate-100 dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl self-start md:self-auto shadow-xs">
+        <div className="w-full sm:w-auto grid grid-cols-2 sm:flex items-center p-1 bg-slate-100 dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl shadow-xs">
           <button
             type="button"
             onClick={() => setActiveTab('charts')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'charts'
                 ? 'bg-blue-600 text-white shadow-sm border border-blue-600'
                 : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-gray-800/50'
@@ -620,7 +749,7 @@ export default function CrmDashboardPage() {
           <button
             type="button"
             onClick={() => setActiveTab('reports')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'reports'
                 ? 'bg-blue-600 text-white shadow-sm border border-blue-600'
                 : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-gray-800/50'
@@ -639,13 +768,13 @@ export default function CrmDashboardPage() {
         </div>
       </div>
 
-      {/* BARRA DE FILTROS AVANÇADOS (PERÍODO, CRITÉRIO TEMPORAL, STATUS, CRMs, EQUIPE & RECARREGAR) */}
+      {/* BARRA DE FILTROS AVANÇADOS (PERÍODO COM SCROLL, 2X2 GRID NO CELULAR & RECARREGAR) */}
       <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-2xl p-3 md:p-3.5 flex flex-col xl:flex-row xl:items-center justify-between gap-3 shadow-xs">
         
-        {/* LADO ESQUERDO: Filtros Temporais + Critério Temporal + Status + CRMs + Equipe perfeitamente alinhados */}
-        <div className="flex flex-wrap items-center gap-2 md:gap-2.5">
-          {/* Pílulas de Período Temporal */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#0d1117] p-1 border border-slate-200 dark:border-gray-800 rounded-xl overflow-visible relative">
+        {/* LADO ESQUERDO: Filtros Temporais com scroll horizontal + Seletores em grid 2x2 responsivo */}
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2.5 w-full xl:w-auto">
+          {/* Pílulas de Período Temporal com rolagem horizontal suave no celular */}
+          <div className="overflow-x-auto no-scrollbar scroll-smooth flex items-center gap-1 bg-slate-100 dark:bg-[#0d1117] p-1 border border-slate-200 dark:border-gray-800 rounded-xl w-full sm:w-auto shrink-0">
             {PERIOD_OPTIONS.filter(opt => opt.id !== 'custom').map(opt => (
               <button
                 key={opt.id}
@@ -654,7 +783,7 @@ export default function CrmDashboardPage() {
                   setPeriod(opt.id);
                   setIsCustomDateOpen(false);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 ${
                   period === opt.id
                     ? 'bg-blue-600 text-white font-semibold shadow-xs border border-blue-600'
                     : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-gray-800/50'
@@ -664,215 +793,108 @@ export default function CrmDashboardPage() {
               </button>
             ))}
 
-            {/* Pílula Especial 'Personalizado' com Popover Flutuante */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => {
-                  setPeriod('custom');
-                  setIsCustomDateOpen(prev => !prev);
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  period === 'custom'
-                    ? 'bg-blue-600 text-white font-semibold shadow-xs border border-blue-600'
-                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-gray-800/50'
-                }`}
+            {/* Pílula Especial 'Personalizado' */}
+            <button
+              type="button"
+              onClick={() => {
+                setPeriod('custom');
+                setIsCustomDateOpen(prev => !prev);
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                period === 'custom'
+                  ? 'bg-blue-600 text-white font-semibold shadow-xs border border-blue-600'
+                  : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-gray-800/50'
+              }`}
+            >
+              <Calendar size={12} className={period === 'custom' ? 'text-white' : 'text-slate-500 dark:text-gray-400'} />
+              <span>
+                {period === 'custom' && customStartDate && customEndDate
+                  ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
+                  : 'Personalizado'}
+              </span>
+              <ChevronDown size={11} className={`transition-transform duration-200 ${isCustomDateOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+
+          {/* Seletores: Grid 2x2 no mobile, linha flex no desktop */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full xl:w-auto">
+            {/* Critério Temporal (Última Movimentação vs Criação) */}
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 dark:text-gray-300 w-full sm:w-auto">
+              <Clock size={13} className="text-slate-500 dark:text-gray-400 shrink-0" />
+              <select
+                value={dateCriterion}
+                onChange={e => setDateCriterion(e.target.value as "updatedAt" | "createdAt")}
+                className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer pr-1 font-medium w-full text-xs"
               >
-                <Calendar size={12} className={period === 'custom' ? 'text-white' : 'text-slate-500 dark:text-gray-400'} />
-                <span>
-                  {period === 'custom' && customStartDate && customEndDate
-                    ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
-                    : 'Personalizado'}
-                </span>
-                <ChevronDown size={11} className={`transition-transform duration-200 ${isCustomDateOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isCustomDateOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-72 md:w-80 bg-white dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 text-slate-800 dark:text-gray-200 text-xs shadow-2xl rounded-2xl p-4 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-xl">
-                  {/* Cabeçalho do Popover */}
-                  <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-200 dark:border-gray-800">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-blue-600 dark:text-blue-400" />
-                      <span className="font-bold text-slate-900 dark:text-white text-xs">Período Personalizado</span>
-                    </div>
-                    <button 
-                      type="button"
-                      onClick={() => setIsCustomDateOpen(false)}
-                      className="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1 rounded-md hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <X size={13} />
-                    </button>
-                  </div>
-
-                  {/* Seletores Rápidos Interativos */}
-                  <div className="grid grid-cols-2 gap-1.5 mb-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const end = new Date();
-                        const start = new Date();
-                        start.setDate(end.getDate() - 7);
-                        setCustomStartDate(start.toISOString().split('T')[0]);
-                        setCustomEndDate(end.toISOString().split('T')[0]);
-                      }}
-                      className="px-2 py-1.5 bg-slate-50 dark:bg-[#161b22] hover:bg-slate-100 dark:hover:bg-[#21262d] border border-slate-200 dark:border-gray-800 rounded-lg text-[11px] text-slate-700 dark:text-gray-300 text-center transition-colors hover:text-slate-900 dark:hover:text-white"
-                    >
-                      Últimos 7 dias
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const end = new Date();
-                        const start = new Date();
-                        start.setDate(end.getDate() - 15);
-                        setCustomStartDate(start.toISOString().split('T')[0]);
-                        setCustomEndDate(end.toISOString().split('T')[0]);
-                      }}
-                      className="px-2 py-1.5 bg-slate-50 dark:bg-[#161b22] hover:bg-slate-100 dark:hover:bg-[#21262d] border border-slate-200 dark:border-gray-800 rounded-lg text-[11px] text-slate-700 dark:text-gray-300 text-center transition-colors hover:text-slate-900 dark:hover:text-white"
-                    >
-                      Últimos 15 dias
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const end = new Date();
-                        const start = new Date(end.getFullYear(), end.getMonth(), 1);
-                        setCustomStartDate(start.toISOString().split('T')[0]);
-                        setCustomEndDate(end.toISOString().split('T')[0]);
-                      }}
-                      className="px-2 py-1.5 bg-slate-50 dark:bg-[#161b22] hover:bg-slate-100 dark:hover:bg-[#21262d] border border-slate-200 dark:border-gray-800 rounded-lg text-[11px] text-slate-700 dark:text-gray-300 text-center transition-colors hover:text-slate-900 dark:hover:text-white"
-                    >
-                      Este mês
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const d = new Date();
-                        const start = new Date(d.getFullYear(), d.getMonth() - 1, 1);
-                        const end = new Date(d.getFullYear(), d.getMonth(), 0);
-                        setCustomStartDate(start.toISOString().split('T')[0]);
-                        setCustomEndDate(end.toISOString().split('T')[0]);
-                      }}
-                      className="px-2 py-1.5 bg-slate-50 dark:bg-[#161b22] hover:bg-slate-100 dark:hover:bg-[#21262d] border border-slate-200 dark:border-gray-800 rounded-lg text-[11px] text-slate-700 dark:text-gray-300 text-center transition-colors hover:text-slate-900 dark:hover:text-white"
-                    >
-                      Mês anterior
-                    </button>
-                  </div>
-
-                  {/* Dois Inputs de Data Formatados */}
-                  <div className="space-y-2 mb-3.5">
-                    <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-600 dark:text-gray-400 block mb-1">Data Inicial (De)</label>
-                      <input 
-                        type="date" 
-                        value={customStartDate} 
-                        onChange={e => setCustomStartDate(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl px-3 py-1.5 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-600 transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] uppercase font-bold text-slate-600 dark:text-gray-400 block mb-1">Data Final (Até)</label>
-                      <input 
-                        type="date" 
-                        value={customEndDate} 
-                        onChange={e => setCustomEndDate(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl px-3 py-1.5 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-600 transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Botão de Ação */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsCustomDateOpen(false);
-                      loadData(true);
-                    }}
-                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition-all shadow-md shadow-emerald-950/40 text-center"
-                  >
-                    Aplicar Intervalo
-                  </button>
-                </div>
-              )}
+                <option value="updatedAt" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Última Movimentação</option>
+                <option value="createdAt" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Data de Criação</option>
+              </select>
             </div>
-          </div>
 
-          {/* Critério Temporal (Última Movimentação vs Criação) */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 dark:text-gray-300">
-            <Clock size={13} className="text-slate-500 dark:text-gray-400" />
-            <select
-              value={dateCriterion}
-              onChange={e => setDateCriterion(e.target.value as "updatedAt" | "createdAt")}
-              className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer pr-1 font-medium"
-            >
-              <option value="updatedAt" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Última Movimentação</option>
-              <option value="createdAt" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Data de Criação</option>
-            </select>
-          </div>
+            {/* Filtro de Status */}
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 dark:text-gray-300 w-full sm:w-auto">
+              <Filter size={13} className="text-slate-500 dark:text-gray-400 shrink-0" />
+              <select
+                value={selectedStatusFilter}
+                onChange={e => {
+                  setSelectedStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer pr-1 font-medium w-full text-xs"
+              >
+                <option value="all" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Todos os Status</option>
+                <option value="open" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Em Aberto</option>
+                <option value="won" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Fechado / Ganho</option>
+                <option value="lost" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Fechado / Perdido</option>
+              </select>
+            </div>
 
-          {/* Filtro de Status */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 dark:text-gray-300">
-            <Filter size={13} className="text-slate-500 dark:text-gray-400" />
-            <select
-              value={selectedStatusFilter}
-              onChange={e => {
-                setSelectedStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer pr-1 font-medium"
-            >
-              <option value="all" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Todos os Status</option>
-              <option value="open" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Em Aberto</option>
-              <option value="won" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Fechado / Ganho</option>
-              <option value="lost" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Fechado / Perdido</option>
-            </select>
-          </div>
+            {/* Filtro de Todos os CRMs */}
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 dark:text-gray-300 w-full sm:w-auto">
+              <Briefcase size={13} className="text-slate-500 dark:text-gray-400 shrink-0" />
+              <select
+                value={selectedCrmFilter}
+                onChange={e => {
+                  setSelectedCrmFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer pr-1 font-medium w-full text-xs"
+              >
+                <option value="all" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Todos os CRMs</option>
+                <option value="principal" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Funil Principal</option>
+                <option value="inbound" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Vendas Inbound</option>
+                <option value="outbound" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Outbound B2B</option>
+                <option value="partners" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Parcerias</option>
+              </select>
+            </div>
 
-          {/* Filtro de Todos os CRMs */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 dark:text-gray-300">
-            <Briefcase size={13} className="text-slate-500 dark:text-gray-400" />
-            <select
-              value={selectedCrmFilter}
-              onChange={e => {
-                setSelectedCrmFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer pr-1 font-medium"
-            >
-              <option value="all" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Todos os CRMs</option>
-              <option value="principal" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Funil Principal</option>
-              <option value="inbound" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Vendas Inbound</option>
-              <option value="outbound" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Outbound B2B</option>
-              <option value="partners" className="bg-white dark:bg-[#161b22] text-slate-900 dark:text-white">Parcerias</option>
-            </select>
-          </div>
-
-          {/* Filtro de Equipe / Atendente */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 dark:text-gray-300">
-            <Users size={13} className="text-slate-500 dark:text-gray-400" />
-            <select
-              value={selectedUserFilter}
-              onChange={e => {
-                setSelectedUserFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer pr-1 max-w-[130px] truncate font-medium"
-            >
-              <option value="all" className="bg-white dark:bg-[#161b22]">Todos os Responsáveis</option>
-              {users.map(u => (
-                <option key={u.id} value={u.id} className="bg-white dark:bg-[#161b22]">{u.name}</option>
-              ))}
-            </select>
+            {/* Filtro de Equipe / Atendente */}
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 dark:text-gray-300 w-full sm:w-auto">
+              <Users size={13} className="text-slate-500 dark:text-gray-400 shrink-0" />
+              <select
+                value={selectedUserFilter}
+                onChange={e => {
+                  setSelectedUserFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer pr-1 truncate font-medium w-full text-xs"
+              >
+                <option value="all" className="bg-white dark:bg-[#161b22]">Todos os Responsáveis</option>
+                {users.map(u => (
+                  <option key={u.id} value={u.id} className="bg-white dark:bg-[#161b22]">{u.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
         {/* LADO DIREITO: Botão "Gerar / Recarregar" destacado à direita */}
-        <div className="flex items-center self-end xl:self-auto">
+        <div className="flex items-center w-full xl:w-auto">
           <button
             type="button"
             onClick={() => loadData(true)}
             disabled={isRefreshing}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-[#21262d] hover:bg-[#30363d] text-emerald-400 hover:text-emerald-300 border border-emerald-800/40 hover:border-emerald-700/60 text-xs font-semibold rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
+            className="flex items-center justify-center gap-2 w-full xl:w-auto px-4 py-2 bg-slate-100 dark:bg-[#21262d] hover:bg-[#30363d] text-emerald-400 hover:text-emerald-300 border border-emerald-800/40 hover:border-emerald-700/60 text-xs font-semibold rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
             title="Atualizar métricas agora"
           >
             <RefreshCw size={13} className={isRefreshing ? "animate-spin text-emerald-400" : "text-emerald-400"} />
@@ -881,16 +903,128 @@ export default function CrmDashboardPage() {
         </div>
       </div>
 
+      {/* MODAL CENTRALIZADO PARA PERÍODO PERSONALIZADO (100% BLINDADO CONTRA CORTES) */}
+      {isCustomDateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-sm bg-white dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 text-slate-800 dark:text-gray-200 text-xs shadow-2xl rounded-2xl p-4 animate-in zoom-in-95 duration-150">
+            {/* Cabeçalho do Modal */}
+            <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-200 dark:border-gray-800">
+              <div className="flex items-center gap-2">
+                <Calendar size={14} className="text-blue-600 dark:text-blue-400" />
+                <span className="font-bold text-slate-900 dark:text-white text-xs">Período Personalizado</span>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsCustomDateOpen(false)}
+                className="text-slate-400 hover:text-slate-800 dark:hover:text-white p-1 rounded-md hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Seletores Rápidos Interativos */}
+            <div className="grid grid-cols-2 gap-1.5 mb-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const end = new Date();
+                  const start = new Date();
+                  start.setDate(end.getDate() - 7);
+                  setCustomStartDate(start.toISOString().split('T')[0]);
+                  setCustomEndDate(end.toISOString().split('T')[0]);
+                }}
+                className="px-2 py-1.5 bg-slate-50 dark:bg-[#161b22] hover:bg-slate-100 dark:hover:bg-[#21262d] border border-slate-200 dark:border-gray-800 rounded-lg text-[11px] text-slate-700 dark:text-gray-300 text-center transition-colors hover:text-slate-900 dark:hover:text-white"
+              >
+                Últimos 7 dias
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const end = new Date();
+                  const start = new Date();
+                  start.setDate(end.getDate() - 15);
+                  setCustomStartDate(start.toISOString().split('T')[0]);
+                  setCustomEndDate(end.toISOString().split('T')[0]);
+                }}
+                className="px-2 py-1.5 bg-slate-50 dark:bg-[#161b22] hover:bg-slate-100 dark:hover:bg-[#21262d] border border-slate-200 dark:border-gray-800 rounded-lg text-[11px] text-slate-700 dark:text-gray-300 text-center transition-colors hover:text-slate-900 dark:hover:text-white"
+              >
+                Últimos 15 dias
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const end = new Date();
+                  const start = new Date(end.getFullYear(), end.getMonth(), 1);
+                  setCustomStartDate(start.toISOString().split('T')[0]);
+                  setCustomEndDate(end.toISOString().split('T')[0]);
+                }}
+                className="px-2 py-1.5 bg-slate-50 dark:bg-[#161b22] hover:bg-slate-100 dark:hover:bg-[#21262d] border border-slate-200 dark:border-gray-800 rounded-lg text-[11px] text-slate-700 dark:text-gray-300 text-center transition-colors hover:text-slate-900 dark:hover:text-white"
+              >
+                Este mês
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const d = new Date();
+                  const start = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+                  const end = new Date(d.getFullYear(), d.getMonth(), 0);
+                  setCustomStartDate(start.toISOString().split('T')[0]);
+                  setCustomEndDate(end.toISOString().split('T')[0]);
+                }}
+                className="px-2 py-1.5 bg-slate-50 dark:bg-[#161b22] hover:bg-slate-100 dark:hover:bg-[#21262d] border border-slate-200 dark:border-gray-800 rounded-lg text-[11px] text-slate-700 dark:text-gray-300 text-center transition-colors hover:text-slate-900 dark:hover:text-white"
+              >
+                Mês anterior
+              </button>
+            </div>
+
+            {/* Dois Inputs de Data Formatados */}
+            <div className="space-y-2 mb-3.5">
+              <div>
+                <label className="text-[10px] uppercase font-bold text-slate-600 dark:text-gray-400 block mb-1">Data Inicial (De)</label>
+                <input 
+                  type="date" 
+                  value={customStartDate} 
+                  onChange={e => setCustomStartDate(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl px-3 py-1.5 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-600 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase font-bold text-slate-600 dark:text-gray-400 block mb-1">Data Final (Até)</label>
+                <input 
+                  type="date" 
+                  value={customEndDate} 
+                  onChange={e => setCustomEndDate(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-[#161b22] border border-slate-200 dark:border-gray-800 rounded-xl px-3 py-1.5 text-slate-900 dark:text-white text-xs outline-none focus:border-blue-600 transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Botão de Ação */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsCustomDateOpen(false);
+                loadData(true);
+              }}
+              className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition-all shadow-md shadow-emerald-950/40 text-center"
+            >
+              Aplicar Intervalo
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ========================================================================= */}
       {/* 6 CARDS SUPERIORES PRINCIPAIS COM SUBDIVISÕES E PARIDADE EXATA COM O LERO */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 w-full relative">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3 w-full relative">
         
         {/* Card 1: Oportunidades Criadas */}
         <div 
+          onClick={() => setHoveredCard(hoveredCard === 'opportunities' ? null : 'opportunities')}
           onMouseEnter={() => setHoveredCard('opportunities')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Oportunidades</span>
@@ -899,7 +1033,7 @@ export default function CrmDashboardPage() {
             </div>
           </div>
           <div className="flex items-baseline justify-between mb-1">
-            <p className="text-2xl font-extrabold text-slate-900 dark:text-white font-mono">
+            <p className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white font-mono">
               {analyticsData.opportunities.current}
             </p>
             <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
@@ -910,9 +1044,9 @@ export default function CrmDashboardPage() {
               {analyticsData.opportunities.diff >= 0 ? `+${analyticsData.opportunities.diff}%` : `${analyticsData.opportunities.diff}%`}
             </span>
           </div>
-          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[11px]">
+          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[10px] sm:text-[11px]">
             <span className="text-slate-500 dark:text-gray-400">Total:</span>
-            <span className="font-mono font-semibold text-slate-800 dark:text-gray-200">{formatCurrency(analyticsData.opportunities.revenue)}</span>
+            <span className="font-mono font-semibold text-slate-800 dark:text-gray-200 truncate">{formatCurrency(analyticsData.opportunities.revenue)}</span>
           </div>
 
           {hoveredCard === 'opportunities' && (
@@ -924,15 +1058,17 @@ export default function CrmDashboardPage() {
               periodLabel={analyticsData.periodLabel}
               detail={analyticsData.opportunities.detail}
               position="left"
+              onClose={() => setHoveredCard(null)}
             />
           )}
         </div>
 
         {/* Card 2: Em Aberto */}
         <div 
+          onClick={() => setHoveredCard(hoveredCard === 'open' ? null : 'open')}
           onMouseEnter={() => setHoveredCard('open')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Em Aberto</span>
@@ -941,7 +1077,7 @@ export default function CrmDashboardPage() {
             </div>
           </div>
           <div className="flex items-baseline justify-between mb-1">
-            <p className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 font-mono">
+            <p className="text-xl sm:text-2xl font-extrabold text-blue-600 dark:text-blue-400 font-mono">
               {analyticsData.open.current}
             </p>
             <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
@@ -952,9 +1088,9 @@ export default function CrmDashboardPage() {
               {analyticsData.open.diff >= 0 ? `+${analyticsData.open.diff}%` : `${analyticsData.open.diff}%`}
             </span>
           </div>
-          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[11px]">
+          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[10px] sm:text-[11px]">
             <span className="text-slate-500 dark:text-gray-400">Pipeline:</span>
-            <span className="font-mono font-semibold text-blue-600 dark:text-blue-300">{formatCurrency(analyticsData.open.revenue)}</span>
+            <span className="font-mono font-semibold text-blue-600 dark:text-blue-300 truncate">{formatCurrency(analyticsData.open.revenue)}</span>
           </div>
 
           {hoveredCard === 'open' && (
@@ -966,15 +1102,17 @@ export default function CrmDashboardPage() {
               periodLabel={analyticsData.periodLabel}
               detail={analyticsData.open.detail}
               position="left"
+              onClose={() => setHoveredCard(null)}
             />
           )}
         </div>
 
         {/* Card 3: Ganhas */}
         <div 
+          onClick={() => setHoveredCard(hoveredCard === 'won' ? null : 'won')}
           onMouseEnter={() => setHoveredCard('won')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Ganhas</span>
@@ -983,7 +1121,7 @@ export default function CrmDashboardPage() {
             </div>
           </div>
           <div className="flex items-baseline justify-between mb-1">
-            <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
+            <p className="text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
               {analyticsData.won.current}
             </p>
             <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
@@ -994,9 +1132,9 @@ export default function CrmDashboardPage() {
               {analyticsData.won.diff >= 0 ? `+${analyticsData.won.diff}%` : `${analyticsData.won.diff}%`}
             </span>
           </div>
-          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[11px]">
+          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[10px] sm:text-[11px]">
             <span className="text-slate-500 dark:text-gray-400">Receita:</span>
-            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(analyticsData.won.revenue)}</span>
+            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 truncate">{formatCurrency(analyticsData.won.revenue)}</span>
           </div>
 
           {hoveredCard === 'won' && (
@@ -1008,15 +1146,17 @@ export default function CrmDashboardPage() {
               periodLabel={analyticsData.periodLabel}
               detail={analyticsData.won.detail}
               position="center"
+              onClose={() => setHoveredCard(null)}
             />
           )}
         </div>
 
         {/* Card 4: Perdidas */}
         <div 
+          onClick={() => setHoveredCard(hoveredCard === 'lost' ? null : 'lost')}
           onMouseEnter={() => setHoveredCard('lost')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">Perdidas</span>
@@ -1025,7 +1165,7 @@ export default function CrmDashboardPage() {
             </div>
           </div>
           <div className="flex items-baseline justify-between mb-1">
-            <p className="text-2xl font-extrabold text-rose-600 dark:text-rose-400 font-mono">
+            <p className="text-xl sm:text-2xl font-extrabold text-rose-600 dark:text-rose-400 font-mono">
               {analyticsData.lost.current}
             </p>
             <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
@@ -1036,9 +1176,9 @@ export default function CrmDashboardPage() {
               {analyticsData.lost.diff >= 0 ? `+${analyticsData.lost.diff}%` : `${analyticsData.lost.diff}%`}
             </span>
           </div>
-          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[11px]">
+          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[10px] sm:text-[11px]">
             <span className="text-slate-500 dark:text-gray-400">Perda:</span>
-            <span className="font-mono font-bold text-rose-600 dark:text-rose-400">-{formatCurrency(analyticsData.lost.revenue)}</span>
+            <span className="font-mono font-bold text-rose-600 dark:text-rose-400 truncate">-{formatCurrency(analyticsData.lost.revenue)}</span>
           </div>
 
           {hoveredCard === 'lost' && (
@@ -1051,15 +1191,17 @@ export default function CrmDashboardPage() {
               periodLabel={analyticsData.periodLabel}
               detail={analyticsData.lost.detail}
               position="center"
+              onClose={() => setHoveredCard(null)}
             />
           )}
         </div>
 
         {/* Card 5: Ticket Médio */}
         <div 
+          onClick={() => setHoveredCard(hoveredCard === 'ticket' ? null : 'ticket')}
           onMouseEnter={() => setHoveredCard('ticket')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
+          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Ticket Médio</span>
@@ -1068,7 +1210,7 @@ export default function CrmDashboardPage() {
             </div>
           </div>
           <div className="flex items-baseline justify-between mb-1">
-            <p className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-white font-mono truncate">
+            <p className="text-base sm:text-xl md:text-2xl font-extrabold text-slate-900 dark:text-white font-mono truncate">
               {formatCurrency(analyticsData.ticket.current)}
             </p>
             <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
@@ -1079,8 +1221,8 @@ export default function CrmDashboardPage() {
               {analyticsData.ticket.diff >= 0 ? `+${analyticsData.ticket.diff}%` : `${analyticsData.ticket.diff}%`}
             </span>
           </div>
-          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[11px] text-slate-500 dark:text-gray-400">
-            <span className="truncate">Por venda fechada</span>
+          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-500 dark:text-gray-400">
+            <span className="truncate">Por venda</span>
             <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-semibold">Ganhas</span>
           </div>
 
@@ -1093,15 +1235,17 @@ export default function CrmDashboardPage() {
               periodLabel={analyticsData.periodLabel}
               detail={analyticsData.ticket.detail}
               position="right"
+              onClose={() => setHoveredCard(null)}
             />
           )}
         </div>
 
         {/* Card 6: Taxa de Ganho & Ciclo/Movimentação (Composto Padrão Lero) */}
         <div 
+          onClick={() => setHoveredCard(hoveredCard === 'winrate_cycle' ? null : 'winrate_cycle')}
           onMouseEnter={() => setHoveredCard('winrate_cycle')}
           onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
+          className="col-span-2 sm:col-span-1 relative bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-500 dark:text-gray-400 mb-1">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Taxa & Ciclo</span>
@@ -1126,7 +1270,7 @@ export default function CrmDashboardPage() {
             </div>
           </div>
 
-          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[11px]">
+          <div className="pt-2 border-t border-slate-200 dark:border-gray-800/60 flex items-center justify-between text-[10px] sm:text-[11px]">
             <span className="text-slate-500 dark:text-gray-400">Conversão:</span>
             <span className={`font-mono font-semibold text-[10px] ${analyticsData.winRate.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {analyticsData.winRate.diff >= 0 ? `+${analyticsData.winRate.diff}%` : `${analyticsData.winRate.diff}%`} vs ant.
@@ -1142,6 +1286,7 @@ export default function CrmDashboardPage() {
               periodLabel={analyticsData.periodLabel}
               detail="Eficiência comercial e velocidade de fechamento"
               position="right"
+              onClose={() => setHoveredCard(null)}
               extraMetrics={[
                 {
                   label: "Ciclo Médio de Venda",
@@ -1190,11 +1335,12 @@ export default function CrmDashboardPage() {
 
               <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={metrics?.weeklyComparison || []} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <BarChart data={dynamicWeeklyComparison} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#21262d" vertical={false} />
                     <XAxis dataKey="name" stroke="#8b949e" tick={{ fill: '#8b949e', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis stroke="#8b949e" tick={{ fill: '#8b949e', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={val => `R$ ${val/1000}k`} />
+                    <YAxis stroke="#8b949e" tick={{ fill: '#8b949e', fontSize: 10 }} axisLine={false} tickLine={false} width={45} tickFormatter={val => `R$ ${val >= 1000 ? `${Math.round(val/1000)}k` : val}`} />
                     <Tooltip 
+                      cursor={false}
                       content={({ active, payload, label }) => {
                         if (active && payload && payload.length) {
                           const ganho = payload.find(p => p.dataKey === 'ganho')?.value || 0;
@@ -1267,6 +1413,7 @@ export default function CrmDashboardPage() {
                       ))}
                     </Pie>
                     <Tooltip 
+                      cursor={false}
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
                           const item = payload[0];
@@ -1295,7 +1442,7 @@ export default function CrmDashboardPage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-xl font-extrabold text-slate-900 dark:text-white">{metrics?.totalDeals || deals.length}</span>
+                  <span className="text-xl font-extrabold text-slate-900 dark:text-white">{analyticsData.opportunities.current}</span>
                   <span className="text-[10px] text-slate-500 dark:text-gray-400 uppercase tracking-wider">Total Cards</span>
                 </div>
               </div>
@@ -1307,21 +1454,21 @@ export default function CrmDashboardPage() {
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
                     <span>Ganhos</span>
                   </div>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{metrics?.wonCount || 0}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{analyticsData.won.current}</p>
                 </div>
                 <div>
                   <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-gray-400">
                     <span className="w-2 h-2 rounded-full bg-rose-500" />
                     <span>Perdidos</span>
                   </div>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{metrics?.lostCount || 0}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{analyticsData.lost.current}</p>
                 </div>
                 <div>
                   <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-gray-400">
                     <span className="w-2 h-2 rounded-full bg-blue-500" />
                     <span>Abertos</span>
                   </div>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{metrics?.openCount || 0}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{analyticsData.open.current}</p>
                 </div>
               </div>
             </div>
@@ -1345,11 +1492,12 @@ export default function CrmDashboardPage() {
 
               <div className="h-[270px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={translatedFunnelData} layout="vertical" margin={{ top: 5, right: 25, left: 10, bottom: 5 }}>
+                  <BarChart data={translatedFunnelData} layout="vertical" margin={{ top: 5, right: 25, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#21262d" horizontal={true} vertical={false} />
                     <XAxis type="number" stroke="#8b949e" tick={{ fill: '#8b949e', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis dataKey="name" type="category" stroke="#8b949e" tick={{ fill: '#8b949e', fontSize: 11 }} axisLine={false} tickLine={false} width={130} />
+                    <YAxis dataKey="name" type="category" stroke="#8b949e" tick={{ fill: '#8b949e', fontSize: 10 }} axisLine={false} tickLine={false} width={105} />
                     <Tooltip 
+                      cursor={false}
                       content={({ active, payload, label }) => {
                         if (active && payload && payload.length) {
                           return (
@@ -1413,27 +1561,27 @@ export default function CrmDashboardPage() {
                     const userWinRate = userDeals.length > 0 ? Math.round((userWon / userDeals.length) * 100) : 60;
 
                     return (
-                      <div key={u.id} className="p-3 bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl flex items-center justify-between hover:border-slate-300 dark:hover:border-gray-700 transition-colors shadow-xs">
+                      <div key={u.id} className="p-3 bg-slate-50 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:border-slate-300 dark:hover:border-gray-700 transition-colors shadow-xs">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gray-800 border border-slate-300 dark:border-gray-700 flex items-center justify-center font-bold text-xs text-slate-800 dark:text-white">
+                          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gray-800 border border-slate-300 dark:border-gray-700 flex items-center justify-center font-bold text-xs text-slate-800 dark:text-white shrink-0">
                             {u.name?.[0]?.toUpperCase() || "A"}
                           </div>
-                          <div>
-                            <h4 className="text-xs font-bold text-white">{u.name}</h4>
-                            <p className="text-[10px] text-gray-400">{userDeals.length} oportunidades atribuídas</p>
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{u.name}</h4>
+                            <p className="text-[10px] text-slate-500 dark:text-gray-400">{userDeals.length} oportunidades atribuídas</p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-4 text-right">
+                        <div className="flex items-center justify-between sm:justify-end gap-4 text-right pt-2 sm:pt-0 border-t border-slate-200/60 dark:border-gray-800/60 sm:border-0">
                           <div>
-                            <span className="text-[10px] text-gray-400 uppercase tracking-wider block">Volume</span>
-                            <span className="text-xs font-mono font-bold text-emerald-400">
+                            <span className="text-[10px] text-slate-400 dark:text-gray-400 uppercase tracking-wider block">Volume</span>
+                            <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
                               {formatCurrency(userRevenue || 12400)}
                             </span>
                           </div>
                           <div>
-                            <span className="text-[10px] text-gray-400 uppercase tracking-wider block">Conversão</span>
-                            <span className="text-xs font-bold text-purple-400">
+                            <span className="text-[10px] text-slate-400 dark:text-gray-400 uppercase tracking-wider block">Conversão</span>
+                            <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
                               {userWinRate}%
                             </span>
                           </div>
@@ -1462,8 +1610,8 @@ export default function CrmDashboardPage() {
         <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-gray-800/80 rounded-2xl overflow-hidden shadow-sm flex flex-col">
           
           {/* BARRA SUPERIOR DA TABELA: BUSCA, CONTADOR E EXPORTAÇÃO */}
-          <div className="p-4 bg-white dark:bg-[#161b22] border-b border-slate-200 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3">
-            <div className="relative flex-1 min-w-[240px] max-w-md">
+          <div className="p-3.5 sm:p-4 bg-white dark:bg-[#161b22] border-b border-slate-200 dark:border-gray-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="relative flex-1 min-w-0 sm:max-w-md">
               <Search size={14} className="absolute left-3 top-3 text-slate-400 dark:text-gray-500" />
               <input
                 type="text"
@@ -1477,15 +1625,15 @@ export default function CrmDashboardPage() {
               />
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-slate-500 dark:text-gray-400 hidden sm:inline-block">
-                Mostrando <strong className="text-slate-900 dark:text-white">{filteredDeals.length}</strong> oportunidades
+            <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+              <span className="text-xs text-slate-500 dark:text-gray-400">
+                Mostrando <strong className="text-slate-900 dark:text-white">{filteredDeals.length}</strong> {filteredDeals.length === 1 ? 'oportunidade' : 'oportunidades'}
               </span>
 
               <button
                 type="button"
                 onClick={handleExportCSV}
-                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition-all shadow-md"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition-all shadow-md shrink-0"
               >
                 <Download size={14} />
                 <span>Exportar CSV</span>
@@ -1493,8 +1641,104 @@ export default function CrmDashboardPage() {
             </div>
           </div>
 
-          {/* TABELA ANALÍTICA DENSA */}
-          <div className="overflow-x-auto custom-scrollbar">
+          {/* LISTA EM CARDS PARA MOBILE (MD:HIDDEN) */}
+          <div className="md:hidden divide-y divide-slate-100 dark:divide-gray-800/60">
+            {paginatedDeals.length === 0 ? (
+              <div className="py-12 px-4 text-center text-slate-500 dark:text-gray-500 italic text-xs">
+                Nenhuma oportunidade encontrada com os filtros selecionados.
+              </div>
+            ) : (
+              paginatedDeals.map(deal => {
+                const rawStage = deal.stage?.name || deal.stage || deal.status || 'NEW';
+                const translatedStage = translateStage(rawStage);
+                const statusStyle = getStatusStyle(rawStage);
+                const statusKey = (deal.status || '').toLowerCase();
+                const isWon = statusKey === 'won' || statusKey === 'ganho' || String(rawStage).toUpperCase().includes('WON') || String(rawStage).toUpperCase().includes('GANH');
+                const isLost = statusKey === 'lost' || statusKey === 'perdido' || String(rawStage).toUpperCase().includes('LOST') || String(rawStage).toUpperCase().includes('PERDID');
+
+                return (
+                  <div
+                    key={`mobile-deal-${deal.id}`}
+                    onClick={() => setSelectedDeal(deal)}
+                    className="p-3.5 space-y-2.5 active:bg-slate-50 dark:active:bg-[#1f2530] transition-colors cursor-pointer"
+                  >
+                    {/* Linha 1: Contato e Status */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gray-800 border border-slate-300 dark:border-gray-700 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-gray-200 shrink-0">
+                          {deal.contact?.name?.[0]?.toUpperCase() || "?"}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                            {deal.contact?.name || "Contato não informado"}
+                          </h4>
+                          <span className="text-[10px] text-slate-500 dark:text-gray-400 flex items-center gap-1">
+                            <MessageCircle size={10} className="text-[#25D366] shrink-0" />
+                            <span className="truncate">{deal.contact?.phone || "-"}</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Badge de Status */}
+                      <div className="shrink-0">
+                        {isWon ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            <CheckCircle2 size={11} /> Ganho
+                          </span>
+                        ) : isLost ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                            <XCircle size={11} /> Perdido
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                            <Clock size={11} /> Em Aberto
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Linha 2: Título da oportunidade e Etapa do funil */}
+                    <div className="flex items-center justify-between gap-2 pt-0.5">
+                      <div className="min-w-0 flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-slate-800 dark:text-gray-200 truncate">
+                          {deal.title || "Oportunidade Comercial"}
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-400 dark:text-gray-500 shrink-0">
+                          #{deal.id?.slice(0, 7)}
+                        </span>
+                      </div>
+
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider shrink-0 ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
+                        {translatedStage}
+                      </span>
+                    </div>
+
+                    {/* Linha 3: Responsável, Valor e Ação */}
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-gray-800/60 text-xs">
+                      <div className="flex items-center gap-1 text-slate-500 dark:text-gray-400 min-w-0">
+                        <UserIcon size={12} className="text-slate-400 shrink-0" />
+                        <span className="truncate text-[11px]">
+                          {deal.assignedTo?.name || deal.assignee?.name || "Fila Geral"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        <span className="font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">
+                          {formatCurrency(Number(deal.value || 0))}
+                        </span>
+                        <div className="p-1 rounded-md bg-slate-100 dark:bg-[#0d1117] border border-slate-200 dark:border-gray-800 text-slate-500 dark:text-gray-400">
+                          <ArrowUpRight size={13} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* TABELA ANALÍTICA DENSA PARA DESKTOP (HIDDEN MD:BLOCK) */}
+          <div className="hidden md:block overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse text-xs">
               <thead className="bg-slate-100 dark:bg-[#12161f] border-b border-slate-200 dark:border-gray-800 text-[11px] font-bold text-slate-600 dark:text-gray-400 uppercase tracking-wider select-none">
                 <tr>

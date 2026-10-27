@@ -381,7 +381,7 @@ export default function AnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.6} className="dark:stroke-slate-800" vertical={false} />
                 <XAxis dataKey="stage" stroke="#64748b" fontSize={11} tickLine={false} />
                 <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
-                <Tooltip content={<CustomChartTooltip />} />
+                <Tooltip cursor={false} content={<CustomChartTooltip />} />
                 <Bar dataKey="count" name="Volume de Leads/Contratos" radius={[8, 8, 0, 0]}>
                   {funnelData?.stages?.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill || "#06B6D4"} />
@@ -481,7 +481,7 @@ export default function AnalyticsPage() {
                         <Cell key={`channel-pie-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip content={<CustomChartTooltip />} />
+                    <Tooltip cursor={false} content={<CustomChartTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
               )}
@@ -586,7 +586,7 @@ export default function AnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.6} className="dark:stroke-slate-800" vertical={false} />
                   <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
                   <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
-                  <Tooltip content={<CustomChartTooltip />} />
+                  <Tooltip cursor={false} content={<CustomChartTooltip />} />
                   <Legend wrapperStyle={{ fontSize: "11px", color: "#64748b", paddingTop: "10px" }} />
                   <Bar dataKey="frtMin" name="FRT (1ª Resposta Min)" fill="#06B6D4" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="tmaMin" name="TMA (Resolução Min)" fill="#3B82F6" radius={[4, 4, 0, 0]} />
@@ -659,7 +659,7 @@ export default function AnalyticsPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" strokeOpacity={0.6} className="dark:stroke-slate-800" vertical={false} />
                     <XAxis dataKey="hour" stroke="#64748b" fontSize={10} tickLine={false} />
                     <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
-                    <Tooltip content={<CustomChartTooltip />} />
+                    <Tooltip cursor={false} content={<CustomChartTooltip />} />
                     <Area 
                       type="monotone" 
                       dataKey="volume" 
