@@ -457,9 +457,12 @@ export default function ProposalProductsSettingsTab() {
                   </div>
 
                   {product.description && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                      {product.description}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Modelo:</span>
+                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-500/20 truncate">
+                        {product.description}
+                      </span>
+                    </div>
                   )}
 
                   {/* Ações */}
@@ -640,15 +643,18 @@ export default function ProposalProductsSettingsTab() {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Descrição / Especificações Técnicas (Opcional)
+                      Modelo / Variação / Descrição (Opcional)
                     </label>
                     <textarea
-                      rows={3}
+                      rows={2}
                       value={form.description}
                       onChange={(e) => setForm({ ...form, description: e.target.value })}
-                      placeholder="Especificações, material, itens inclusos..."
+                      placeholder="Ex: Verto, Case, Stara, 12 Linhas... (Será vinculado automaticamente ao nome na proposta)"
                       className={`w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none transition-all ${focusBorderClass}`}
                     />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      O modelo cadastrado aqui aparecerá destacado no catálogo e será preenchido na proposta comercial.
+                    </p>
                   </div>
                 </div>
 
