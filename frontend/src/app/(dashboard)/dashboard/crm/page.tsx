@@ -51,7 +51,7 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }
   "follow-up": { bg: "bg-yellow-950/40", text: "text-yellow-400", border: "border-yellow-800/40" },
   proposal: { bg: "bg-emerald-950/40", text: "text-emerald-400", border: "border-emerald-800/40" },
   negotiation: { bg: "bg-orange-950/40", text: "text-orange-400", border: "border-orange-800/40" },
-  disqualified: { bg: "bg-gray-800/40", text: "text-gray-400", border: "border-gray-700/40" }
+  disqualified: { bg: "bg-gray-800/40", text: "text-slate-400", border: "border-gray-700/40" }
 };
 
 const STAGE_TRANSLATIONS: Record<string, string> = {
@@ -99,129 +99,6 @@ function getStatusStyle(rawKey?: string) {
   return STATUS_COLORS[key] || STATUS_COLORS.new;
 }
 
-interface KpiPopoverProps {
-  title: string;
-  currentVal: string | number;
-  prevVal: string | number;
-  diff: number;
-  isInverse?: boolean;
-  periodLabel: string;
-  detail: string;
-  position?: 'left' | 'center' | 'right';
-  onClose?: () => void;
-  extraMetrics?: {
-    label: string;
-    current: string;
-    prev: string;
-    diff?: number;
-    isInverse?: boolean;
-  }[];
-}
-
-function KpiPopover({
-  title,
-  currentVal,
-  prevVal,
-  diff,
-  isInverse = false,
-  periodLabel,
-  detail,
-  position = 'center',
-  onClose,
-  extraMetrics
-}: KpiPopoverProps) {
-  const isPositive = isInverse ? diff < 0 : diff >= 0;
-  const posClasses = position === 'left' 
-    ? 'left-0' 
-    : position === 'right' 
-    ? 'right-0' 
-    : 'left-1/2 -translate-x-1/2';
-
-  return (
-    <>
-      {/* Backdrop para fechar em telas mobile */}
-      <div 
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs md:hidden" 
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose?.();
-        }} 
-      />
-      <div 
-        onClick={(e) => e.stopPropagation()}
-        className={`fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-xs mx-auto md:max-w-none md:inset-x-auto md:top-[calc(100%+8px)] ${posClasses} w-auto md:w-80 bg-white dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs shadow-2xl rounded-2xl p-3.5 z-50 animate-in fade-in zoom-in-95 duration-150`}
-      >
-        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 dark:border-slate-800/80">
-          <span className="font-bold text-slate-900 dark:text-white truncate text-[11px] uppercase tracking-wider">{title}</span>
-          <div className="flex items-center gap-1.5">
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold flex items-center gap-0.5 ${
-              isPositive 
-                ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50' 
-                : 'bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50'
-            }`}>
-              {diff >= 0 ? `+${diff}%` : `${diff}%`}
-            </span>
-            {onClose && (
-              <button 
-                type="button" 
-                onClick={onClose}
-                className="md:hidden p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-1.5 font-sans">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500 dark:text-slate-400">Período Atual:</span>
-            <span className="font-mono font-bold text-slate-900 dark:text-white">{currentVal}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500 dark:text-slate-400">Período Anterior:</span>
-            <span className="font-mono text-slate-700 dark:text-slate-300">{prevVal}</span>
-          </div>
-          <p className="text-[10px] text-slate-400 dark:text-slate-400 italic">
-            (Período anterior de mesma duração de {periodLabel})
-          </p>
-
-          {extraMetrics && extraMetrics.length > 0 && (
-            <div className="pt-2 mt-2 border-t border-slate-200 dark:border-slate-800/60 space-y-2">
-              {extraMetrics.map((em, idx) => {
-                const emPos = em.diff !== undefined 
-                  ? (em.isInverse ? em.diff < 0 : em.diff >= 0) 
-                  : true;
-                return (
-                  <div key={idx} className="space-y-0.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-700 dark:text-slate-300 font-semibold">{em.label}:</span>
-                      {em.diff !== undefined && (
-                        <span className={`font-mono text-[10px] ${emPos ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                          {em.diff >= 0 ? `+${em.diff}` : em.diff}{typeof em.diff === 'number' && em.label.includes('Taxa') ? '%' : ''}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
-                      <span>Atual: <strong className="text-slate-900 dark:text-white font-mono">{em.current}</strong></span>
-                      <span>Anterior: <span className="text-slate-600 dark:text-slate-400 font-mono">{em.prev}</span></span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-          <span className="truncate">{detail}</span>
-        </div>
-      </div>
-    </>
-  );
-}
-
 export default function CrmDashboardPage() {
   const [activeTab, setActiveTab] = useState<'charts' | 'reports'>('charts');
   const [period, setPeriod] = useState<string>("30d");
@@ -231,8 +108,7 @@ export default function CrmDashboardPage() {
   const [selectedUserFilter, setSelectedUserFilter] = useState("all");
   const [selectedCrmFilter, setSelectedCrmFilter] = useState("all");
   const [dateCriterion, setDateCriterion] = useState<"updatedAt" | "createdAt">("updatedAt");
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
-  const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
+    const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
 
   const [metrics, setMetrics] = useState<CrmMetrics | null>(() => {
     if (typeof window === 'undefined') return null;
@@ -768,13 +644,7 @@ export default function CrmDashboardPage() {
           >
             <TableIcon size={14} className={activeTab === 'reports' ? 'text-white' : 'text-slate-400 dark:text-slate-400'} />
             <span>Relatórios em Tabela</span>
-            <span className={`ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold ${
-              activeTab === 'reports'
-                ? 'bg-blue-700 text-white'
-                : 'bg-slate-200 dark:bg-gray-800 text-slate-700 dark:text-slate-300'
-            }`}>
-              {filteredDeals.length}
-            </span>
+            <span className="ml-1 text-[11px] font-bold opacity-80">({filteredDeals.length})</span>
           </button>
         </div>
       </div>
@@ -1031,12 +901,7 @@ export default function CrmDashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3 w-full relative">
         
         {/* Card 1: Oportunidades Criadas */}
-        <div 
-          onClick={() => setHoveredCard(hoveredCard === 'opportunities' ? null : 'opportunities')}
-          onMouseEnter={() => setHoveredCard('opportunities')}
-          onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
-        >
+        <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all group">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Oportunidades</span>
             <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -1047,10 +912,10 @@ export default function CrmDashboardPage() {
             <p className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white font-mono">
               {analyticsData.opportunities.current}
             </p>
-            <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
+            <span className={`text-[11px] font-mono font-bold ${
               analyticsData.opportunities.diff >= 0 
-                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40' 
-                : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
+                ? 'text-emerald-600 dark:text-emerald-400' 
+                : 'text-rose-600 dark:text-rose-400'
             }`}>
               {analyticsData.opportunities.diff >= 0 ? `+${analyticsData.opportunities.diff}%` : `${analyticsData.opportunities.diff}%`}
             </span>
@@ -1059,28 +924,10 @@ export default function CrmDashboardPage() {
             <span className="text-slate-500 dark:text-slate-400">Total:</span>
             <span className="font-mono font-semibold text-slate-800 dark:text-slate-200 truncate">{formatCurrency(analyticsData.opportunities.revenue)}</span>
           </div>
-
-          {hoveredCard === 'opportunities' && (
-            <KpiPopover 
-              title="Oportunidades Criadas"
-              currentVal={`${analyticsData.opportunities.current} (${formatCurrency(analyticsData.opportunities.revenue)})`}
-              prevVal={`${analyticsData.opportunities.prev} (${formatCurrency(analyticsData.opportunities.prevRevenue)})`}
-              diff={analyticsData.opportunities.diff}
-              periodLabel={analyticsData.periodLabel}
-              detail={analyticsData.opportunities.detail}
-              position="left"
-              onClose={() => setHoveredCard(null)}
-            />
-          )}
         </div>
 
         {/* Card 2: Em Aberto */}
-        <div 
-          onClick={() => setHoveredCard(hoveredCard === 'open' ? null : 'open')}
-          onMouseEnter={() => setHoveredCard('open')}
-          onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
-        >
+        <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all group">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Em Aberto</span>
             <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
@@ -1091,10 +938,10 @@ export default function CrmDashboardPage() {
             <p className="text-xl sm:text-2xl font-extrabold text-blue-600 dark:text-blue-400 font-mono">
               {analyticsData.open.current}
             </p>
-            <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
+            <span className={`text-[11px] font-mono font-bold ${
               analyticsData.open.diff >= 0 
-                ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40' 
-                : 'bg-slate-100 dark:bg-gray-800/60 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/40'
+                ? 'text-blue-600 dark:text-blue-400' 
+                : 'text-slate-500 dark:text-slate-400'
             }`}>
               {analyticsData.open.diff >= 0 ? `+${analyticsData.open.diff}%` : `${analyticsData.open.diff}%`}
             </span>
@@ -1103,28 +950,10 @@ export default function CrmDashboardPage() {
             <span className="text-slate-500 dark:text-slate-400">Pipeline:</span>
             <span className="font-mono font-semibold text-blue-600 dark:text-blue-300 truncate">{formatCurrency(analyticsData.open.revenue)}</span>
           </div>
-
-          {hoveredCard === 'open' && (
-            <KpiPopover 
-              title="Oportunidades em Aberto"
-              currentVal={`${analyticsData.open.current} (${formatCurrency(analyticsData.open.revenue)})`}
-              prevVal={`${analyticsData.open.prev} (${formatCurrency(analyticsData.open.prevRevenue)})`}
-              diff={analyticsData.open.diff}
-              periodLabel={analyticsData.periodLabel}
-              detail={analyticsData.open.detail}
-              position="left"
-              onClose={() => setHoveredCard(null)}
-            />
-          )}
         </div>
 
         {/* Card 3: Ganhas */}
-        <div 
-          onClick={() => setHoveredCard(hoveredCard === 'won' ? null : 'won')}
-          onMouseEnter={() => setHoveredCard('won')}
-          onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
-        >
+        <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all group">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Ganhas</span>
             <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
@@ -1135,10 +964,10 @@ export default function CrmDashboardPage() {
             <p className="text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
               {analyticsData.won.current}
             </p>
-            <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
+            <span className={`text-[11px] font-mono font-bold ${
               analyticsData.won.diff >= 0 
-                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40' 
-                : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
+                ? 'text-emerald-600 dark:text-emerald-400' 
+                : 'text-rose-600 dark:text-rose-400'
             }`}>
               {analyticsData.won.diff >= 0 ? `+${analyticsData.won.diff}%` : `${analyticsData.won.diff}%`}
             </span>
@@ -1147,28 +976,10 @@ export default function CrmDashboardPage() {
             <span className="text-slate-500 dark:text-slate-400">Receita:</span>
             <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 truncate">{formatCurrency(analyticsData.won.revenue)}</span>
           </div>
-
-          {hoveredCard === 'won' && (
-            <KpiPopover 
-              title="Vendas Ganhas"
-              currentVal={`${analyticsData.won.current} (${formatCurrency(analyticsData.won.revenue)})`}
-              prevVal={`${analyticsData.won.prev} (${formatCurrency(analyticsData.won.prevRevenue)})`}
-              diff={analyticsData.won.diff}
-              periodLabel={analyticsData.periodLabel}
-              detail={analyticsData.won.detail}
-              position="center"
-              onClose={() => setHoveredCard(null)}
-            />
-          )}
         </div>
 
         {/* Card 4: Perdidas */}
-        <div 
-          onClick={() => setHoveredCard(hoveredCard === 'lost' ? null : 'lost')}
-          onMouseEnter={() => setHoveredCard('lost')}
-          onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
-        >
+        <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all group">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">Perdidas</span>
             <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-rose-600 dark:text-rose-400">
@@ -1179,10 +990,10 @@ export default function CrmDashboardPage() {
             <p className="text-xl sm:text-2xl font-extrabold text-rose-600 dark:text-rose-400 font-mono">
               {analyticsData.lost.current}
             </p>
-            <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
+            <span className={`text-[11px] font-mono font-bold ${
               analyticsData.lost.diff <= 0 
-                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40' 
-                : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
+                ? 'text-emerald-600 dark:text-emerald-400' 
+                : 'text-rose-600 dark:text-rose-400'
             }`}>
               {analyticsData.lost.diff >= 0 ? `+${analyticsData.lost.diff}%` : `${analyticsData.lost.diff}%`}
             </span>
@@ -1191,29 +1002,10 @@ export default function CrmDashboardPage() {
             <span className="text-slate-500 dark:text-slate-400">Perda:</span>
             <span className="font-mono font-bold text-rose-600 dark:text-rose-400 truncate">-{formatCurrency(analyticsData.lost.revenue)}</span>
           </div>
-
-          {hoveredCard === 'lost' && (
-            <KpiPopover 
-              title="Oportunidades Perdidas"
-              currentVal={`${analyticsData.lost.current} (-${formatCurrency(analyticsData.lost.revenue)})`}
-              prevVal={`${analyticsData.lost.prev} (-${formatCurrency(analyticsData.lost.prevRevenue)})`}
-              diff={analyticsData.lost.diff}
-              isInverse={true}
-              periodLabel={analyticsData.periodLabel}
-              detail={analyticsData.lost.detail}
-              position="center"
-              onClose={() => setHoveredCard(null)}
-            />
-          )}
         </div>
 
         {/* Card 5: Ticket Médio */}
-        <div 
-          onClick={() => setHoveredCard(hoveredCard === 'ticket' ? null : 'ticket')}
-          onMouseEnter={() => setHoveredCard('ticket')}
-          onMouseLeave={() => setHoveredCard(null)}
-          className="relative bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
-        >
+        <div className="bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all group">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Ticket Médio</span>
             <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
@@ -1221,13 +1013,13 @@ export default function CrmDashboardPage() {
             </div>
           </div>
           <div className="flex items-baseline justify-between mb-1">
-            <p className="text-base sm:text-xl md:text-2xl font-extrabold text-slate-900 dark:text-white font-mono truncate">
+            <p className="text-base sm:text-xl font-extrabold text-slate-900 dark:text-white font-mono">
               {formatCurrency(analyticsData.ticket.current)}
             </p>
-            <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${
+            <span className={`text-[11px] font-mono font-bold shrink-0 ml-1.5 ${
               analyticsData.ticket.diff >= 0 
-                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40' 
-                : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
+                ? 'text-emerald-600 dark:text-emerald-400' 
+                : 'text-rose-600 dark:text-rose-400'
             }`}>
               {analyticsData.ticket.diff >= 0 ? `+${analyticsData.ticket.diff}%` : `${analyticsData.ticket.diff}%`}
             </span>
@@ -1236,28 +1028,10 @@ export default function CrmDashboardPage() {
             <span className="truncate">Por venda</span>
             <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-semibold">Ganhas</span>
           </div>
-
-          {hoveredCard === 'ticket' && (
-            <KpiPopover 
-              title="Ticket Médio"
-              currentVal={formatCurrency(analyticsData.ticket.current)}
-              prevVal={formatCurrency(analyticsData.ticket.prev)}
-              diff={analyticsData.ticket.diff}
-              periodLabel={analyticsData.periodLabel}
-              detail={analyticsData.ticket.detail}
-              position="right"
-              onClose={() => setHoveredCard(null)}
-            />
-          )}
         </div>
 
         {/* Card 6: Taxa de Ganho & Ciclo/Movimentação (Composto Padrão Lero) */}
-        <div 
-          onClick={() => setHoveredCard(hoveredCard === 'winrate_cycle' ? null : 'winrate_cycle')}
-          onMouseEnter={() => setHoveredCard('winrate_cycle')}
-          onMouseLeave={() => setHoveredCard(null)}
-          className="col-span-2 sm:col-span-1 relative bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-gray-700 transition-all cursor-pointer group"
-        >
+        <div className="col-span-2 sm:col-span-1 bg-white dark:bg-[#0B1224] border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all group">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1">
             <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Taxa & Ciclo</span>
             <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
@@ -1265,13 +1039,12 @@ export default function CrmDashboardPage() {
             </div>
           </div>
           
-          {/* Subdivisão interna de 3 colunas: Win Rate, Ciclo Médio e Movimentação */}
-          <div className="grid grid-cols-3 gap-1 py-1.5 my-0.5 bg-slate-100 dark:bg-[#070D1B]/80 rounded-lg border border-slate-200 dark:border-slate-800/80 text-center">
+          <div className="grid grid-cols-3 gap-1 py-1.5 my-0.5 bg-slate-50 dark:bg-[#070D1B] rounded-lg border border-slate-200 dark:border-slate-800 text-center">
             <div className="flex flex-col items-center">
               <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">Ganho</span>
               <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">{analyticsData.winRate.current}%</span>
             </div>
-            <div className="flex flex-col items-center border-x border-slate-200 dark:border-slate-800/80 px-1">
+            <div className="flex flex-col items-center border-x border-slate-200 dark:border-slate-800 px-1">
               <span className="text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">Ciclo</span>
               <span className="text-sm font-extrabold text-slate-900 dark:text-white font-mono">{analyticsData.cycle.current}d</span>
             </div>
@@ -1283,39 +1056,10 @@ export default function CrmDashboardPage() {
 
           <div className="pt-2 border-t border-slate-200 dark:border-slate-800/60 flex items-center justify-between text-[10px] sm:text-[11px]">
             <span className="text-slate-500 dark:text-slate-400">Conversão:</span>
-            <span className={`font-mono font-semibold text-[10px] ${analyticsData.winRate.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className={`font-mono font-semibold text-[10px] ${analyticsData.winRate.diff >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
               {analyticsData.winRate.diff >= 0 ? `+${analyticsData.winRate.diff}%` : `${analyticsData.winRate.diff}%`} vs ant.
             </span>
           </div>
-
-          {hoveredCard === 'winrate_cycle' && (
-            <KpiPopover 
-              title="Taxa de Ganho & Ciclos"
-              currentVal={`${analyticsData.winRate.current}% Win Rate`}
-              prevVal={`${analyticsData.winRate.prev}% Win Rate`}
-              diff={analyticsData.winRate.diff}
-              periodLabel={analyticsData.periodLabel}
-              detail="Eficiência comercial e velocidade de fechamento"
-              position="right"
-              onClose={() => setHoveredCard(null)}
-              extraMetrics={[
-                {
-                  label: "Ciclo Médio de Venda",
-                  current: `${analyticsData.cycle.current} dias`,
-                  prev: `${analyticsData.cycle.prev} dias`,
-                  diff: analyticsData.cycle.diff,
-                  isInverse: true
-                },
-                {
-                  label: "Tempo até Movimentação",
-                  current: `~${analyticsData.movement.current}h / etapa`,
-                  prev: `~${analyticsData.movement.prev}h / etapa`,
-                  diff: analyticsData.movement.diff,
-                  isInverse: true
-                }
-              ]}
-            />
-          )}
         </div>
 
       </div>
@@ -1565,45 +1309,59 @@ export default function CrmDashboardPage() {
                 </div>
 
                 <div className="space-y-3">
-                  {(users.length > 0 ? users : [{ id: "u-1", name: "Atendente Comercial", role: "Vendedor" }]).map(u => {
-                    const userDeals = deals.filter(d => (d.assignedTo?.id || d.assignedTo) === u.id);
-                    const userWon = userDeals.filter(d => (d.status || '').toLowerCase() === 'won' || (d.status || '').toLowerCase() === 'ganho').length;
-                    const userRevenue = userDeals.reduce((acc, d) => acc + (d.value ? Number(d.value) : 0), 0);
-                    const userWinRate = userDeals.length > 0 ? Math.round((userWon / userDeals.length) * 100) : 60;
+                  {(() => {
+                    const activeTeam = commercialUsers
+                      .map(u => {
+                        const userDeals = deals.filter(d => (d.assignedTo?.id || d.assignedTo) === u.id);
+                        const userWon = userDeals.filter(d => (d.status || '').toLowerCase() === 'won' || (d.status || '').toLowerCase() === 'ganho').length;
+                        const userRevenue = userDeals.reduce((acc, d) => acc + (d.value ? Number(d.value) : 0), 0);
+                        const userWinRate = userDeals.length > 0 ? Math.round((userWon / userDeals.length) * 100) : 0;
+                        return { user: u, dealsCount: userDeals.length, userWon, userRevenue, userWinRate };
+                      })
+                      .filter(item => item.dealsCount > 0)
+                      .sort((a, b) => b.userRevenue - a.userRevenue);
 
-                    return (
-                      <div key={u.id} className="p-3 bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:border-slate-300 dark:hover:border-gray-700 transition-colors shadow-xs">
+                    if (activeTeam.length === 0) {
+                      return (
+                        <div className="p-6 text-center text-xs text-slate-500 dark:text-slate-400 italic">
+                          Nenhum membro comercial com oportunidades ativas no período.
+                        </div>
+                      );
+                    }
+
+                    return activeTeam.map(({ user: u, dealsCount, userRevenue, userWinRate }) => (
+                      <div key={u.id} className="p-3 bg-slate-50 dark:bg-[#070D1B] border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-xs">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gray-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-xs text-slate-800 dark:text-white shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-xs text-slate-800 dark:text-white shrink-0">
                             {u.name?.[0]?.toUpperCase() || "A"}
                           </div>
                           <div className="min-w-0">
                             <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{u.name}</h4>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400">{userDeals.length} oportunidades atribuídas</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">{dealsCount} {dealsCount === 1 ? 'oportunidade atribuída' : 'oportunidades atribuídas'}</p>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between sm:justify-end gap-4 text-right pt-2 sm:pt-0 border-t border-slate-200/60 dark:border-slate-800/60 sm:border-0">
                           <div>
-                            <span className="text-[10px] text-slate-400 dark:text-slate-400 uppercase tracking-wider block">Volume</span>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Volume</span>
                             <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                              {formatCurrency(userRevenue || 12400)}
+                              {formatCurrency(userRevenue)}
                             </span>
                           </div>
                           <div>
-                            <span className="text-[10px] text-slate-400 dark:text-slate-400 uppercase tracking-wider block">Conversão</span>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Conversão</span>
                             <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
                               {userWinRate}%
                             </span>
                           </div>
                         </div>
                       </div>
-                    );
-                  })}
+                    ));
+                  })()}
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-800/80 flex items-center justify-between text-xs text-gray-400">
+              <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
                 <span>Tempo médio de resposta do time:</span>
                 <span className="text-white font-semibold">12 minutos</span>
               </div>
@@ -1676,7 +1434,7 @@ export default function CrmDashboardPage() {
                     {/* Linha 1: Contato e Status */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-gray-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-slate-200 shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-slate-200 shrink-0">
                           {deal.contact?.name?.[0]?.toUpperCase() || "?"}
                         </div>
                         <div className="min-w-0">
@@ -1789,7 +1547,7 @@ export default function CrmDashboardPage() {
                         {/* 1. Contato */}
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-gray-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-[10px] text-slate-700 dark:text-slate-200 shrink-0">
+                            <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-[10px] text-slate-700 dark:text-slate-200 shrink-0">
                               {deal.contact?.name?.[0]?.toUpperCase() || "?"}
                             </div>
                             <div className="flex flex-col min-w-0">
