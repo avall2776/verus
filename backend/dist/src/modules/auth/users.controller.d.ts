@@ -4,6 +4,7 @@ export declare class UsersController {
     private readonly prisma;
     private readonly emailsService;
     constructor(prisma: PrismaService, emailsService: EmailsService);
+    private getEffectiveTenantId;
     findAll(req: any): Promise<{
         id: string;
         name: string;

@@ -2,7 +2,7 @@ import { DepartmentsService } from './departments.service';
 export declare class DepartmentsController {
     private readonly departmentsService;
     constructor(departmentsService: DepartmentsService);
-    create(req: any, body: {
+    create(tenantId: string, body: {
         name: string;
         color?: string;
     }): Promise<{
@@ -13,7 +13,7 @@ export declare class DepartmentsController {
         updatedAt: Date;
         color: string | null;
     }>;
-    findAll(req: any): Promise<({
+    findAll(tenantId: string): Promise<({
         users: ({
             user: {
                 id: string;
@@ -44,17 +44,17 @@ export declare class DepartmentsController {
         updatedAt: Date;
         color: string | null;
     })[]>;
-    addUser(req: any, id: string, body: {
+    addUser(tenantId: string, id: string, body: {
         userId: string;
     }): Promise<{
         departmentId: string;
         userId: string;
     }>;
-    removeUser(req: any, id: string, userId: string): Promise<{
+    removeUser(tenantId: string, id: string, userId: string): Promise<{
         departmentId: string;
         userId: string;
     }>;
-    update(req: any, id: string, body: {
+    update(tenantId: string, id: string, body: {
         name?: string;
         color?: string;
     }): Promise<{
@@ -65,7 +65,7 @@ export declare class DepartmentsController {
         updatedAt: Date;
         color: string | null;
     }>;
-    delete(req: any, id: string): Promise<{
+    delete(tenantId: string, id: string): Promise<{
         id: string;
         name: string;
         tenantId: string;

@@ -16,78 +16,79 @@ exports.DepartmentsController = void 0;
 const common_1 = require("@nestjs/common");
 const departments_service_1 = require("./departments.service");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 let DepartmentsController = class DepartmentsController {
     constructor(departmentsService) {
         this.departmentsService = departmentsService;
     }
-    async create(req, body) {
-        return this.departmentsService.create(req.user.tenantId, body.name, body.color || '#cccccc');
+    async create(tenantId, body) {
+        return this.departmentsService.create(tenantId, body.name, body.color || '#cccccc');
     }
-    async findAll(req) {
-        return this.departmentsService.findAll(req.user.tenantId);
+    async findAll(tenantId) {
+        return this.departmentsService.findAll(tenantId);
     }
-    async addUser(req, id, body) {
-        return this.departmentsService.addUserToDepartment(req.user.tenantId, id, body.userId);
+    async addUser(tenantId, id, body) {
+        return this.departmentsService.addUserToDepartment(tenantId, id, body.userId);
     }
-    async removeUser(req, id, userId) {
-        return this.departmentsService.removeUserFromDepartment(req.user.tenantId, id, userId);
+    async removeUser(tenantId, id, userId) {
+        return this.departmentsService.removeUserFromDepartment(tenantId, id, userId);
     }
-    async update(req, id, body) {
-        return this.departmentsService.update(req.user.tenantId, id, body);
+    async update(tenantId, id, body) {
+        return this.departmentsService.update(tenantId, id, body);
     }
-    async delete(req, id) {
-        return this.departmentsService.delete(req.user.tenantId, id);
+    async delete(tenantId, id) {
+        return this.departmentsService.delete(tenantId, id);
     }
 };
 exports.DepartmentsController = DepartmentsController;
 __decorate([
     (0, common_1.Post)(),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], DepartmentsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], DepartmentsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Post)(':id/users'),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], DepartmentsController.prototype, "addUser", null);
 __decorate([
     (0, common_1.Delete)(':id/users/:userId'),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Param)('userId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], DepartmentsController.prototype, "removeUser", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], DepartmentsController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], DepartmentsController.prototype, "delete", null);
 exports.DepartmentsController = DepartmentsController = __decorate([

@@ -54,12 +54,22 @@ let DepartmentsService = class DepartmentsService {
         });
     }
     async update(tenantId, id, data) {
-        return this.prisma.department.update({
+        const dept = await this.prisma.department.findFirst({
             where: { id, tenantId },
+        });
+        if (!dept)
+            throw new common_1.NotFoundException('Department not found');
+        return this.prisma.department.update({
+            where: { id },
             data,
         });
     }
     async delete(tenantId, id) {
+        const dept = await this.prisma.department.findFirst({
+            where: { id, tenantId },
+        });
+        if (!dept)
+            throw new common_1.NotFoundException('Department not found');
         await this.prisma.userDepartment.deleteMany({
             where: { departmentId: id }
         });
@@ -68,7 +78,7 @@ let DepartmentsService = class DepartmentsService {
             data: { departmentId: null }
         });
         return this.prisma.department.delete({
-            where: { id, tenantId }
+            where: { id }
         });
     }
 };

@@ -15,23 +15,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationsController = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_auth_guard_1 = require("../../shared/guards/jwt-auth.guard");
+const tenant_decorator_1 = require("../../shared/decorators/tenant.decorator");
 const notifications_service_1 = require("./notifications.service");
 let NotificationsController = class NotificationsController {
     constructor(notificationsService) {
         this.notificationsService = notificationsService;
     }
-    async getNotifications(req) {
-        const tenantId = req.user.tenantId;
+    async getNotifications(tenantId, req) {
         const userId = req.user.id || req.user.userId;
         return this.notificationsService.getNotifications(tenantId, userId);
     }
-    async markAllAsRead(req) {
-        const tenantId = req.user.tenantId;
+    async markAllAsRead(tenantId, req) {
         const userId = req.user.id || req.user.userId;
         return this.notificationsService.markAllAsRead(tenantId, userId);
     }
-    async markAsRead(req, id) {
-        const tenantId = req.user.tenantId;
+    async markAsRead(tenantId, req, id) {
         const userId = req.user.id || req.user.userId;
         return this.notificationsService.markAsRead(tenantId, userId, id);
     }
@@ -39,24 +37,27 @@ let NotificationsController = class NotificationsController {
 exports.NotificationsController = NotificationsController;
 __decorate([
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], NotificationsController.prototype, "getNotifications", null);
 __decorate([
     (0, common_1.Post)('mark-all-read'),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], NotificationsController.prototype, "markAllAsRead", null);
 __decorate([
     (0, common_1.Patch)(':id/read'),
-    __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Param)('id')),
+    __param(0, (0, tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [String, Object, String]),
     __metadata("design:returntype", Promise)
 ], NotificationsController.prototype, "markAsRead", null);
 exports.NotificationsController = NotificationsController = __decorate([

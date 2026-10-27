@@ -49,13 +49,23 @@ export class DepartmentsService {
   }
 
   async update(tenantId: string, id: string, data: { name?: string, color?: string }) {
-    return this.prisma.department.update({
+    const dept = await this.prisma.department.findFirst({
       where: { id, tenantId },
+    });
+    if (!dept) throw new NotFoundException('Department not found');
+
+    return this.prisma.department.update({
+      where: { id },
       data,
     });
   }
 
   async delete(tenantId: string, id: string) {
+    const dept = await this.prisma.department.findFirst({
+      where: { id, tenantId },
+    });
+    if (!dept) throw new NotFoundException('Department not found');
+
     // First, delete all UserDepartment relations
     await this.prisma.userDepartment.deleteMany({
       where: { departmentId: id }
@@ -69,7 +79,7 @@ export class DepartmentsService {
 
     // Finally delete the department
     return this.prisma.department.delete({
-      where: { id, tenantId }
+      where: { id }
     });
   }
 }

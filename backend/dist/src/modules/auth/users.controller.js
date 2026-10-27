@@ -24,10 +24,30 @@ let UsersController = class UsersController {
         this.emailsService = emailsService;
         this.meCache = new Map();
     }
+    getEffectiveTenantId(req) {
+        const user = req.user;
+        const isSuperAdmin = Boolean(user?.isSuperAdmin === true ||
+            String(user?.role).toUpperCase() === 'SUPER_ADMIN' ||
+            String(user?.role).toUpperCase() === 'SUPERADMIN');
+        if (isSuperAdmin) {
+            const rawTarget = req.headers['x-target-tenant-id'] ||
+                req.headers['x-tenant-id'] ||
+                req.query?.tenantId;
+            const targetTenantId = Array.isArray(rawTarget) ? rawTarget[0] : rawTarget;
+            if (targetTenantId && typeof targetTenantId === 'string' && targetTenantId.trim()) {
+                return targetTenantId.trim();
+            }
+        }
+        return user?.tenantId;
+    }
     async findAll(req) {
+        const tenantId = this.getEffectiveTenantId(req);
+        if (!tenantId) {
+            return [];
+        }
         return this.prisma.user.findMany({
             where: {
-                tenantId: req.user.tenantId,
+                tenantId,
                 isSuperAdmin: false,
                 role: { not: 'SUPER_ADMIN' },
             },
@@ -187,9 +207,13 @@ let UsersController = class UsersController {
         });
     }
     async updatePermissions(req, id, body) {
-        const tenantId = req.user?.tenantId;
+        this.meCache.clear();
+        const tenantId = this.getEffectiveTenantId(req);
+        const isSuperAdmin = Boolean(req.user?.isSuperAdmin === true ||
+            String(req.user?.role).toUpperCase() === 'SUPER_ADMIN' ||
+            String(req.user?.role).toUpperCase() === 'SUPERADMIN');
         const targetUser = await this.prisma.user.findFirst({
-            where: { id, tenantId },
+            where: isSuperAdmin ? { id } : { id, tenantId },
         });
         if (!targetUser) {
             throw new common_1.BadRequestException('Usuário não encontrado na sua empresa.');
@@ -223,10 +247,14 @@ let UsersController = class UsersController {
         };
     }
     async update(req, id, body) {
-        const tenantId = req.user?.tenantId;
+        this.meCache.clear();
+        const tenantId = this.getEffectiveTenantId(req);
+        const isSuperAdmin = Boolean(req.user?.isSuperAdmin === true ||
+            String(req.user?.role).toUpperCase() === 'SUPER_ADMIN' ||
+            String(req.user?.role).toUpperCase() === 'SUPERADMIN');
         const currentUserId = req.user?.id || req.user?.userId;
         const targetUser = await this.prisma.user.findFirst({
-            where: { id, tenantId },
+            where: isSuperAdmin ? { id } : { id, tenantId },
         });
         if (!targetUser) {
             throw new common_1.BadRequestException('Usuário não encontrado na sua empresa.');
@@ -246,9 +274,9 @@ let UsersController = class UsersController {
             if (role !== 'ADMIN' && role !== 'SUPERVISOR' && role !== 'AGENT') {
                 throw new common_1.BadRequestException('Cargo inválido. Utilize ADMIN, SUPERVISOR ou AGENT.');
             }
-            if (id === currentUserId && role !== 'ADMIN') {
+            if (id === currentUserId && role !== 'ADMIN' && !isSuperAdmin) {
                 const adminCount = await this.prisma.user.count({
-                    where: { tenantId, role: 'ADMIN', isActive: true },
+                    where: { tenantId: targetUser.tenantId || tenantId, role: 'ADMIN', isActive: true },
                 });
                 if (adminCount <= 1) {
                     throw new common_1.BadRequestException('Você é o único Administrador ativo da empresa e não pode alterar seu cargo.');
@@ -269,7 +297,7 @@ let UsersController = class UsersController {
             }
         }
         if (body.isActive !== undefined) {
-            if (id === currentUserId && body.isActive === false) {
+            if (id === currentUserId && body.isActive === false && !isSuperAdmin) {
                 throw new common_1.BadRequestException('Você não pode desativar o seu próprio usuário.');
             }
             updateData.isActive = Boolean(body.isActive);
@@ -290,7 +318,7 @@ let UsersController = class UsersController {
             const validDepts = await this.prisma.department.findMany({
                 where: {
                     id: { in: body.departmentIds },
-                    tenantId,
+                    tenantId: targetUser.tenantId || tenantId,
                 },
                 select: { id: true },
             });
@@ -331,7 +359,7 @@ let UsersController = class UsersController {
         };
     }
     async create(req, body) {
-        const tenantId = req.user?.tenantId;
+        const tenantId = this.getEffectiveTenantId(req);
         if (!tenantId)
             throw new common_1.BadRequestException('Tenant não identificado.');
         const tenant = await this.prisma.tenant.findUnique({
@@ -450,13 +478,17 @@ let UsersController = class UsersController {
         };
     }
     async deleteUser(req, id) {
-        const tenantId = req.user?.tenantId;
+        this.meCache.clear();
+        const tenantId = this.getEffectiveTenantId(req);
+        const isSuperAdmin = Boolean(req.user?.isSuperAdmin === true ||
+            String(req.user?.role).toUpperCase() === 'SUPER_ADMIN' ||
+            String(req.user?.role).toUpperCase() === 'SUPERADMIN');
         const currentUserId = req.user?.id || req.user?.userId;
-        if (id === currentUserId) {
+        if (id === currentUserId && !isSuperAdmin) {
             throw new common_1.BadRequestException('Você não pode excluir o seu próprio usuário.');
         }
         const targetUser = await this.prisma.user.findFirst({
-            where: { id, tenantId },
+            where: isSuperAdmin ? { id } : { id, tenantId },
         });
         if (!targetUser) {
             throw new common_1.BadRequestException('Usuário não encontrado na sua empresa.');
