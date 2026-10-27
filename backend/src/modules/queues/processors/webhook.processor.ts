@@ -235,6 +235,19 @@ export class WebhookProcessor extends WorkerHost {
 
     const lidId = evolutionMetadata?.remoteJid || (isLid ? remoteJid : null);
 
+    const isFromMe = Boolean(message?.fromMe || evolutionMetadata?.key?.fromMe);
+    let contactSearchPushName = isFromMe ? undefined : (pushName || evolutionMetadata?.pushName);
+
+    if (isFromMe && (isLid || (lidId && lidId.includes('@lid')))) {
+      const dbLidContact = await this.prisma.contact.findFirst({
+        where: { tenantId, OR: [{ whatsappLid: lidId || remoteJid }, { phone: lidId || remoteJid }] },
+        select: { name: true }
+      });
+      if (dbLidContact?.name && !dbLidContact.name.includes('@lid') && dbLidContact.name !== 'Cliente WhatsApp' && !/^\d+$/.test(dbLidContact.name.replace(/\D/g, ''))) {
+        contactSearchPushName = dbLidContact.name;
+      }
+    }
+
     // Se ainda não tiver número real e for LID, busca síncronamente na agenda da Evolution API e cross-tenant
     let resolvedCustomerName: string | null = null;
     if (!realPhone && (isLid || (lidId && lidId.includes('@lid')))) {
@@ -242,7 +255,7 @@ export class WebhookProcessor extends WorkerHost {
         tenantId,
         evolutionMetadata?.instanceName,
         lidId || remoteJid,
-        pushName || evolutionMetadata?.pushName,
+        contactSearchPushName,
         evolutionMetadata?.profilePictureUrl
       );
       if (resolved.realPhone) {
@@ -265,7 +278,6 @@ export class WebhookProcessor extends WorkerHost {
       },
     });
 
-    const isFromMe = Boolean(message?.fromMe || evolutionMetadata?.key?.fromMe);
     // IMPORTANTE: Se a mensagem foi enviada pelo operador (isFromMe), o pushName recebido no webhook
     // pertence ao próprio operador/atendente! NUNCA use o pushName do operador como nome do contato!
     const rawPushName = pushName || evolutionMetadata?.pushName;

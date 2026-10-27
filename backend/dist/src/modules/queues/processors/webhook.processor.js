@@ -227,9 +227,20 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
             ? evolutionMetadata.realPhone
             : null;
         const lidId = evolutionMetadata?.remoteJid || (isLid ? remoteJid : null);
+        const isFromMe = Boolean(message?.fromMe || evolutionMetadata?.key?.fromMe);
+        let contactSearchPushName = isFromMe ? undefined : (pushName || evolutionMetadata?.pushName);
+        if (isFromMe && (isLid || (lidId && lidId.includes('@lid')))) {
+            const dbLidContact = await this.prisma.contact.findFirst({
+                where: { tenantId, OR: [{ whatsappLid: lidId || remoteJid }, { phone: lidId || remoteJid }] },
+                select: { name: true }
+            });
+            if (dbLidContact?.name && !dbLidContact.name.includes('@lid') && dbLidContact.name !== 'Cliente WhatsApp' && !/^\d+$/.test(dbLidContact.name.replace(/\D/g, ''))) {
+                contactSearchPushName = dbLidContact.name;
+            }
+        }
         let resolvedCustomerName = null;
         if (!realPhone && (isLid || (lidId && lidId.includes('@lid')))) {
-            const resolved = await this.whatsappService.resolveContactFromEvolution(tenantId, evolutionMetadata?.instanceName, lidId || remoteJid, pushName || evolutionMetadata?.pushName, evolutionMetadata?.profilePictureUrl);
+            const resolved = await this.whatsappService.resolveContactFromEvolution(tenantId, evolutionMetadata?.instanceName, lidId || remoteJid, contactSearchPushName, evolutionMetadata?.profilePictureUrl);
             if (resolved.realPhone) {
                 realPhone = resolved.realPhone;
             }
@@ -247,7 +258,6 @@ let WebhookProcessor = WebhookProcessor_1 = class WebhookProcessor extends bullm
                 ],
             },
         });
-        const isFromMe = Boolean(message?.fromMe || evolutionMetadata?.key?.fromMe);
         const rawPushName = pushName || evolutionMetadata?.pushName;
         const effectiveCustomerPushName = isFromMe
             ? resolvedCustomerName

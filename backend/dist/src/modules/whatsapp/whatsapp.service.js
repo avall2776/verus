@@ -1342,11 +1342,11 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             const now = Date.now();
             let contacts = this.evoContactsCache.get(targetInstanceName)?.contacts;
             const cacheTimestamp = this.evoContactsCache.get(targetInstanceName)?.timestamp || 0;
-            if (!contacts || (now - cacheTimestamp > 90 * 1000)) {
+            if (!contacts || (now - cacheTimestamp > 10 * 60 * 1000)) {
                 try {
                     const res = await axios_1.default.post(`${serverUrl}/chat/findContacts/${targetInstanceName}`, {}, {
                         headers: { apikey: apiKey, 'Content-Type': 'application/json' },
-                        timeout: 5000,
+                        timeout: 25000,
                     });
                     if (Array.isArray(res.data) && res.data.length > 0) {
                         contacts = res.data;
@@ -1357,12 +1357,10 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                     this.logger.warn(`[LID Sync] Falha ao consultar findContacts na instância ${targetInstanceName}: ${fetchErr.message}`);
                 }
             }
-            if (!contacts || !contacts.length) {
-                return { realPhone: null, realName: pushName || null, avatarUrl: profilePictureUrl || null };
-            }
+            const safeContacts = contacts || [];
             if (remoteJid && isLid) {
                 const cleanRemoteDigits = remoteJid.replace(/\D/g, '');
-                const directLidMatch = contacts.find(ec => ec.id && ec.id.replace(/\D/g, '') === cleanRemoteDigits);
+                const directLidMatch = safeContacts.find(ec => ec.id && ec.id.replace(/\D/g, '') === cleanRemoteDigits);
                 if (directLidMatch) {
                     const directName = (directLidMatch.pushName || directLidMatch.name || directLidMatch.verifiedName || '').trim();
                     if (directName && (!pushName || pushName === 'Cliente WhatsApp' || pushName.includes('@lid') || /^\d+$/.test(pushName))) {
@@ -1375,7 +1373,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             }
             const picToContactMap = new Map();
             const nameToContactMap = new Map();
-            for (const ec of contacts) {
+            for (const ec of safeContacts) {
                 if (!ec.id || ec.id.includes('@lid'))
                     continue;
                 const realPhone = ec.id.replace('@s.whatsapp.net', '').replace('@c.us', '').replace(/\D/g, '');
@@ -1478,8 +1476,15 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                         { name: { contains: 'lid' } },
                         { whatsappLid: { not: null } },
                         { phone: { startsWith: '17' } },
+                        { phone: { startsWith: '69' } },
+                        { phone: { startsWith: '78' } },
+                        { phone: { startsWith: '15' } },
+                        { phone: { startsWith: '21' } },
+                        { phone: { startsWith: '23' } },
+                        { phone: { startsWith: '81' } },
                         { phone: null },
                         { name: 'Cliente WhatsApp' },
+                        { name: 'Cliente Verto' },
                     ],
                 },
             });
@@ -1622,6 +1627,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
             const evoContacts = Array.isArray(res.data) ? res.data : [];
             if (!evoContacts.length)
                 return { created: 0, updated: 0 };
+            this.evoContactsCache.set(targetInstanceName, { timestamp: Date.now(), contacts: evoContacts });
             this.logger.log(`[Auto-Sync Evolution] Sincronizando ${evoContacts.length} contatos da agenda para tenant ${tenantId}...`);
             const dbContacts = await this.prisma.contact.findMany({
                 where: { tenantId },

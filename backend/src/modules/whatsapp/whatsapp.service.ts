@@ -1680,7 +1680,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       // 4.1 Se o contato direto na lista da Evolution API tem o mesmo LID, extrai nome e avatar imediatamente
       if (remoteJid && isLid) {
         const cleanRemoteDigits = remoteJid.replace(/\D/g, '');
-        const directLidMatch = contacts.find(ec => ec.id && ec.id.replace(/\D/g, '') === cleanRemoteDigits);
+        const directLidMatch = safeContacts.find(ec => ec.id && ec.id.replace(/\D/g, '') === cleanRemoteDigits);
         if (directLidMatch) {
           const directName = (directLidMatch.pushName || directLidMatch.name || (directLidMatch as any).verifiedName || '').trim();
           if (directName && (!pushName || pushName === 'Cliente WhatsApp' || pushName.includes('@lid') || /^\d+$/.test(pushName))) {
@@ -1696,7 +1696,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       const picToContactMap = new Map<string, { realPhone: string; name?: string; avatarUrl?: string | null }>();
       const nameToContactMap = new Map<string, { realPhone: string; name?: string; avatarUrl?: string | null }>();
 
-      for (const ec of contacts) {
+      for (const ec of safeContacts) {
         if (!ec.id || ec.id.includes('@lid')) continue;
         const realPhone = ec.id.replace('@s.whatsapp.net', '').replace('@c.us', '').replace(/\D/g, '');
         if (realPhone.length < 10 || realPhone.length > 13) continue;
@@ -1814,8 +1814,15 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
             { name: { contains: 'lid' } },
             { whatsappLid: { not: null } },
             { phone: { startsWith: '17' } },
+            { phone: { startsWith: '69' } },
+            { phone: { startsWith: '78' } },
+            { phone: { startsWith: '15' } },
+            { phone: { startsWith: '21' } },
+            { phone: { startsWith: '23' } },
+            { phone: { startsWith: '81' } },
             { phone: null },
             { name: 'Cliente WhatsApp' },
+            { name: 'Cliente Verto' },
           ],
         },
       });
@@ -1996,6 +2003,8 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
 
       const evoContacts: any[] = Array.isArray(res.data) ? res.data : [];
       if (!evoContacts.length) return { created: 0, updated: 0 };
+
+      this.evoContactsCache.set(targetInstanceName, { timestamp: Date.now(), contacts: evoContacts });
 
       this.logger.log(`[Auto-Sync Evolution] Sincronizando ${evoContacts.length} contatos da agenda para tenant ${tenantId}...`);
 
