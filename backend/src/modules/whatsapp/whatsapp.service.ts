@@ -1735,13 +1735,57 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
         };
       }
 
-      // Estratégia B: Cruzamento por Nome Exato da Agenda / PushName
+      // Estratégia B: Cruzamento por Nome da Agenda (Exato e Prefixo Inteligente)
       if (pushName && !pushName.includes('@lid') && pushName !== 'Cliente WhatsApp' && !/^\d+$/.test(pushName)) {
         const inNormName = this.normalizeContactName(pushName);
-        const match = nameToContactMap.get(inNormName);
+        let match = nameToContactMap.get(inNormName);
+
+        // Se não achou exato, busca por prefixo inteligente (ex: "Marlon Z. Alves" casando com "Marlon Z. Alves Cliente Gabe")
+        if (!match && inNormName.split(' ').length >= 2 && inNormName.length >= 6) {
+          for (const [candNorm, candData] of nameToContactMap.entries()) {
+            if (candNorm.startsWith(inNormName + ' ') || inNormName.startsWith(candNorm + ' ')) {
+              match = candData;
+              this.logger.log(`[LID Mapeado por Prefixo da Agenda] Remetente [${remoteJid}] (${pushName}) -> Telefone Real: ${match.realPhone} (${match.name})`);
+              break;
+            }
+          }
+        }
+
+        // Estratégia C: Cruzamento com a base de Contatos do próprio CRM (prisma.contact)
+        if (!match && inNormName.split(' ').length >= 2 && inNormName.length >= 6) {
+          try {
+            const crmCandidates = await this.prisma.contact.findMany({
+              where: {
+                tenantId,
+                phone: { not: null },
+                NOT: { phone: { contains: 'lid' } },
+              },
+              select: { id: true, name: true, phone: true, avatarUrl: true },
+              orderBy: { updatedAt: 'desc' },
+              take: 500,
+            });
+
+            for (const rc of crmCandidates) {
+              const rcNorm = this.normalizeContactName(rc.name);
+              if (rcNorm === inNormName || rcNorm.startsWith(inNormName + ' ') || inNormName.startsWith(rcNorm + ' ')) {
+                const cleanRcPhone = (rc.phone || '').replace(/\D/g, '');
+                if (cleanRcPhone.length >= 10 && cleanRcPhone.length <= 13) {
+                  match = {
+                    realPhone: cleanRcPhone,
+                    name: rc.name,
+                    avatarUrl: rc.avatarUrl,
+                  };
+                  this.logger.log(`[LID Mapeado por Base CRM] Remetente [${remoteJid}] (${pushName}) -> Telefone Real: ${match.realPhone} (${match.name})`);
+                  break;
+                }
+              }
+            }
+          } catch (crmErr: any) {
+            this.logger.warn(`[LID CRM Fallback] Erro na consulta ao CRM: ${crmErr.message}`);
+          }
+        }
 
         if (match) {
-          this.logger.log(`[LID Mapeado por Nome Exato] Remetente [${remoteJid}] (${pushName}) -> Telefone Real: ${match.realPhone} (${match.name})`);
           return {
             realPhone: match.realPhone,
             realName: pushName || match.name || null,

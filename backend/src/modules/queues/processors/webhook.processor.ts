@@ -319,7 +319,52 @@ export class WebhookProcessor extends WorkerHost {
         dataToUpdate.whatsappLid = lidId;
       }
       if (realPhone && (existingContact.phone?.includes('@lid') || existingContact.phone?.replace(/\D/g, '').length > 13)) {
-        dataToUpdate.phone = realPhone;
+        const existingReal = await this.prisma.contact.findFirst({
+          where: {
+            tenantId,
+            phone: realPhone,
+            id: { not: existingContact.id }
+          }
+        });
+
+        if (existingReal) {
+          // Mescla conversas, mensagens e registros do contato temporário LID no contato real
+          await this.prisma.conversation.updateMany({
+            where: { contactId: existingContact.id },
+            data: { contactId: existingReal.id }
+          }).catch(() => {});
+          await this.prisma.message.updateMany({
+            where: { contactId: existingContact.id },
+            data: { contactId: existingReal.id }
+          }).catch(() => {});
+          await this.prisma.deal.updateMany({
+            where: { contactId: existingContact.id },
+            data: { contactId: existingReal.id }
+          }).catch(() => {});
+          await this.prisma.supportTicket.updateMany({
+            where: { contactId: existingContact.id },
+            data: { contactId: existingReal.id }
+          }).catch(() => {});
+
+          const realUpdate: any = {};
+          if (lidId && !existingReal.whatsappLid) {
+            realUpdate.whatsappLid = lidId;
+          }
+          if (evolutionMetadata?.profilePictureUrl && !existingReal.avatarUrl) {
+            realUpdate.avatarUrl = evolutionMetadata.profilePictureUrl;
+          }
+          if (Object.keys(realUpdate).length > 0) {
+            await this.prisma.contact.update({
+              where: { id: existingReal.id },
+              data: realUpdate
+            }).catch(() => {});
+          }
+
+          await this.prisma.contact.delete({ where: { id: existingContact.id } }).catch(() => {});
+          existingContact = existingReal;
+        } else {
+          dataToUpdate.phone = realPhone;
+        }
       }
       const isCurrentNameGeneric = 
         !existingContact.name ||
