@@ -523,28 +523,84 @@ export default function Sidebar() {
     const menus = perms.menus;
     const subPerms = perms.subPermissions;
 
-    // Visão Geral / Dashboard & Mapa Tático
-    if (base === '/dashboard' || base === '/dashboard/mapa') {
+    // Visão Geral / Dashboard
+    if (base === '/dashboard') {
       if (menus?.dashboard !== undefined) return menus.dashboard;
       return true;
     }
 
-    // Atendimento & WhatsApp
-    if (base === '/inbox' || base === '/monitor' || base === '/dashboard/atendimento' || base === '/email-inbox') {
+    // Mapa Tático Operacional
+    if (base === '/dashboard/mapa') {
+      if (menus?.tactical_map !== undefined) return menus.tactical_map;
+      if (menus?.dashboard !== undefined) return menus.dashboard;
+      return true;
+    }
+
+    // Monitor em Tempo Real
+    if (base === '/monitor') {
+      if (menus?.monitor !== undefined) return menus.monitor;
       if (menus?.whatsapp !== undefined) return menus.whatsapp;
       return perms.inbox !== false;
     }
 
-    // CRM / Comercial
-    if (
-      base === '/crm' ||
-      base === '/crm/radar-stories' ||
-      base === '/dashboard/crm' ||
-      base === '/proposals' ||
-      base === '/contracts' ||
-      base === '/dashboard/goals' ||
-      base === '/dashboard/analytics'
-    ) {
+    // Métricas de Atendimento
+    if (base === '/dashboard/atendimento') {
+      if (menus?.service_metrics !== undefined) return menus.service_metrics;
+      if (menus?.whatsapp !== undefined) return menus.whatsapp;
+      return perms.inbox !== false;
+    }
+
+    // Inbox de E-mail
+    if (base === '/email-inbox') {
+      if (menus?.email_inbox !== undefined) return menus.email_inbox;
+      if (menus?.whatsapp !== undefined) return menus.whatsapp;
+      return perms.inbox !== false;
+    }
+
+    // Atendimento & WhatsApp
+    if (base === '/inbox') {
+      if (menus?.whatsapp !== undefined) return menus.whatsapp;
+      return perms.inbox !== false;
+    }
+
+    // CRM / Comercial & Sub-rotas
+    if (base === '/crm') {
+      if (subPerms?.crm_enabled !== undefined) return subPerms.crm_enabled;
+      return perms.crm !== false;
+    }
+
+    if (base === '/crm/radar-stories') {
+      if (menus?.radar_stories !== undefined) return menus.radar_stories;
+      if (subPerms?.crm_enabled !== undefined) return subPerms.crm_enabled;
+      return perms.crm !== false;
+    }
+
+    if (base === '/proposals') {
+      if (menus?.proposals !== undefined) return menus.proposals;
+      if (subPerms?.crm_enabled !== undefined) return subPerms.crm_enabled;
+      return perms.crm !== false;
+    }
+
+    if (base === '/contracts') {
+      if (menus?.contracts !== undefined) return menus.contracts;
+      if (subPerms?.crm_enabled !== undefined) return subPerms.crm_enabled;
+      return perms.crm !== false;
+    }
+
+    if (base === '/dashboard/goals') {
+      if (menus?.sales_goals !== undefined) return menus.sales_goals;
+      if (subPerms?.crm_enabled !== undefined) return subPerms.crm_enabled;
+      return perms.crm !== false;
+    }
+
+    if (base === '/dashboard/crm') {
+      if (menus?.sales_metrics !== undefined) return menus.sales_metrics;
+      if (subPerms?.crm_enabled !== undefined) return subPerms.crm_enabled;
+      return perms.crm !== false;
+    }
+
+    if (base === '/dashboard/analytics') {
+      if (menus?.advanced_analytics !== undefined) return menus.advanced_analytics;
       if (subPerms?.crm_enabled !== undefined) return subPerms.crm_enabled;
       return perms.crm !== false;
     }
@@ -562,22 +618,41 @@ export default function Sidebar() {
       return perms.chat !== false;
     }
 
-    // Automações & Agentes IA
-    if (href.includes('tab=automations') || href.includes('tab=ai') || base === '/agent') {
-      if (menus?.ai_agents !== undefined) return menus.ai_agents;
-      if (menus?.chatbots !== undefined) return menus.chatbots;
-      return perms.automations === true;
-    }
-
     // Central de Suporte
-    if (base === '/support') {
+    if (base === '/support' || href.includes('tab=support')) {
+      if (menus?.support !== undefined) return menus.support;
       return perms.support !== false;
     }
 
     // Operações de Marketing da Agência
     if (base === '/agency/marketing' || base.startsWith('/agency/marketing')) {
       if (isSuperAdmin || user.role === 'ADMIN') return true;
+      if (subPerms?.marketing_enabled === false) return false;
+      if (base === '/agency/marketing/clients') {
+        if (subPerms?.marketing_clients !== undefined) return subPerms.marketing_clients;
+      }
+      if (base === '/agency/marketing/schedule') {
+        if (subPerms?.marketing_schedule !== undefined) return subPerms.marketing_schedule;
+      }
+      if (base === '/agency/marketing/media') {
+        if (subPerms?.marketing_media !== undefined) return subPerms.marketing_media;
+      }
+      if (base === '/agency/marketing') {
+        if (subPerms?.marketing_kanban !== undefined) return subPerms.marketing_kanban;
+      }
+      if (subPerms?.marketing_enabled !== undefined) return subPerms.marketing_enabled;
       return Boolean(user.canAccessMarketing === true || perms.marketing === true);
+    }
+
+    // Automações & Agentes IA
+    if (href.includes('tab=automations')) {
+      if (menus?.automations !== undefined) return menus.automations;
+      return perms.automations === true;
+    }
+
+    if (href.includes('tab=ai') || base === '/agent') {
+      if (menus?.ai_agents !== undefined) return menus.ai_agents;
+      return perms.automations === true;
     }
 
     // Configurações Gerais e Abas Específicas
@@ -588,6 +663,31 @@ export default function Sidebar() {
 
     if (href.includes('tab=departments')) {
       if (menus?.departments !== undefined) return menus.departments;
+      return perms.settings === true;
+    }
+
+    if (href.includes('tab=products')) {
+      if (menus?.products !== undefined) return menus.products;
+      return perms.settings === true;
+    }
+
+    if (href.includes('tab=quick-replies')) {
+      if (menus?.quick_replies !== undefined) return menus.quick_replies;
+      return perms.settings === true;
+    }
+
+    if (href.includes('tab=plan') || href.includes('tab=billing')) {
+      if (menus?.billing !== undefined) return menus.billing;
+      return perms.settings === true;
+    }
+
+    if (href.includes('tab=api') || href.includes('tab=webhooks')) {
+      if (menus?.webhooks !== undefined) return menus.webhooks;
+      return perms.settings === true;
+    }
+
+    if (href.includes('tab=integrations')) {
+      if (menus?.integrations !== undefined) return menus.integrations;
       return perms.settings === true;
     }
 

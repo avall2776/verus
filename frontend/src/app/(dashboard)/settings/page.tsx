@@ -1,7 +1,8 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React, { Suspense, useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getStoredUserSync, getCachedUser } from "@/lib/userCache";
 import {
   Building,
   Users,
@@ -108,10 +109,69 @@ function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isWhatsApp, isClean } = useTheme();
+  const [currentUser, setCurrentUser] = useState<any>(() => getStoredUserSync());
+
+  useEffect(() => {
+    getCachedUser().then((u) => {
+      if (u) setCurrentUser(u);
+    });
+  }, []);
+
+  const visibleTabs = useMemo(() => {
+    if (!currentUser || currentUser.role === "ADMIN" || currentUser.isSuperAdmin) {
+      return SETTINGS_TABS;
+    }
+
+    const perms = currentUser.permissions || {};
+    const menus = perms.menus;
+
+    return SETTINGS_TABS.filter((tab) => {
+      if (tab.id === "company") {
+        if (menus?.settings !== undefined) return menus.settings;
+        return perms.settings === true;
+      }
+      if (tab.id === "plan") {
+        if (menus?.billing !== undefined) return menus.billing;
+        return perms.settings === true;
+      }
+      if (tab.id === "ai") {
+        if (menus?.ai_agents !== undefined) return menus.ai_agents;
+        return perms.automations === true;
+      }
+      if (tab.id === "users") {
+        if (menus?.users !== undefined) return menus.users;
+        return perms.settings === true;
+      }
+      if (tab.id === "departments") {
+        if (menus?.departments !== undefined) return menus.departments;
+        return perms.settings === true;
+      }
+      if (tab.id === "products") {
+        if (menus?.products !== undefined) return menus.products;
+        return perms.settings === true;
+      }
+      if (tab.id === "quick-replies") {
+        if (menus?.quick_replies !== undefined) return menus.quick_replies;
+        return perms.settings === true;
+      }
+      if (tab.id === "automations") {
+        if (menus?.automations !== undefined) return menus.automations;
+        return perms.automations === true;
+      }
+      if (tab.id === "api") {
+        if (menus?.webhooks !== undefined) return menus.webhooks;
+        return perms.settings === true;
+      }
+      return true;
+    });
+  }, [currentUser]);
+
   const rawTab = searchParams.get("tab") as TabId | null;
 
   const activeTab: TabId =
-    rawTab && SETTINGS_TABS.some((t) => t.id === rawTab) ? rawTab : "company";
+    rawTab && visibleTabs.some((t) => t.id === rawTab)
+      ? rawTab
+      : visibleTabs[0]?.id || "company";
 
   const handleSelectTab = (tabId: TabId) => {
     router.push(`/settings?tab=${tabId}`, { scroll: false });
@@ -140,7 +200,7 @@ function SettingsContent() {
       {/* Barra de Abas Superior Horizontal Unificada para Todas as Abas */}
       <div className="flex flex-col gap-4 flex-1">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 no-scrollbar border-b border-slate-200 dark:border-slate-800/80">
-          {SETTINGS_TABS.map((tab) => {
+          {visibleTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
 
