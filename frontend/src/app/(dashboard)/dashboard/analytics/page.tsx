@@ -175,175 +175,169 @@ export default function AnalyticsPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan-50 dark:bg-gradient-to-tr dark:from-cyan-500/20 dark:to-blue-600/20 border border-cyan-200 dark:border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/20 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shadow-xs shrink-0">
             <TrendingUp className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
               Analytics Avançado
-              <span className="text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/30 font-bold">
-                PRO • BI & SLAs
-              </span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Inteligência de aquisição, taxa de drop-off por etapa do funil e auditoria de SLAs por setor
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Seletor de Período */}
-          <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-xs shadow-inner">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full sm:w-auto">
+          {/* Seletor de Período e Botão Atualizar */}
+          <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+            <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-xs shadow-inner flex-1 sm:flex-initial">
+              <button
+                type="button"
+                onClick={() => setSelectedPeriod("7d")}
+                className={`flex-1 sm:flex-initial text-center px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  selectedPeriod === "7d"
+                    ? "bg-white dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-bold border border-slate-200 dark:border-cyan-500/40 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                }`}
+              >
+                7 Dias
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedPeriod("30d")}
+                className={`flex-1 sm:flex-initial text-center px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  selectedPeriod === "30d"
+                    ? "bg-white dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-bold border border-slate-200 dark:border-cyan-500/40 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                }`}
+              >
+                30 Dias
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedPeriod("90d")}
+                className={`flex-1 sm:flex-initial text-center px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  selectedPeriod === "90d"
+                    ? "bg-white dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-bold border border-slate-200 dark:border-cyan-500/40 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                }`}
+              >
+                Trimestre
+              </button>
+            </div>
+
+            {/* Botão de Atualizar */}
             <button
-              onClick={() => setSelectedPeriod("7d")}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                selectedPeriod === "7d"
-                  ? "bg-white dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-bold border border-slate-200 dark:border-cyan-500/40 shadow-sm"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-              }`}
+              type="button"
+              onClick={() => loadAnalyticsData(true)}
+              disabled={isRefreshing || isLoading}
+              className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs transition-all disabled:opacity-50 shrink-0"
+              title="Atualizar métricas agora"
             >
-              7 Dias
-            </button>
-            <button
-              onClick={() => setSelectedPeriod("30d")}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                selectedPeriod === "30d"
-                  ? "bg-white dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-bold border border-slate-200 dark:border-cyan-500/40 shadow-sm"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-              }`}
-            >
-              30 Dias
-            </button>
-            <button
-              onClick={() => setSelectedPeriod("90d")}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-                selectedPeriod === "90d"
-                  ? "bg-white dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-bold border border-slate-200 dark:border-cyan-500/40 shadow-sm"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-              }`}
-            >
-              Trimestre
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-cyan-600 dark:text-cyan-400" : ""}`} />
             </button>
           </div>
 
-          {/* Botão de Atualizar */}
-          <button
-            onClick={() => loadAnalyticsData(true)}
-            disabled={isRefreshing || isLoading}
-            className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all disabled:opacity-50"
-            title="Atualizar métricas agora"
-          >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-cyan-600 dark:text-cyan-400" : ""}`} />
-          </button>
+          {/* Botões de Ação: Lado a lado no mobile (grid-cols-2) */}
+          <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setIsAuditModalOpen(true)}
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 text-xs font-semibold transition-all shadow-xs"
+            >
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Auditoria</span>
+            </button>
 
-          {/* Botão de Auditoria de Gargalos */}
-          <button
-            onClick={() => setIsAuditModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 text-xs font-semibold transition-all shadow-sm"
-          >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            Auditoria de Gargalos
-          </button>
-
-          {/* Botão de Exportar */}
-          <button
-            onClick={handleExportConsolidatedCSV}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20 transition-all active:scale-[0.98]"
-          >
-            <Download className="w-4 h-4" />
-            Exportar Relatório
-          </button>
+            <button
+              type="button"
+              onClick={handleExportConsolidatedCSV}
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-xs transition-all active:scale-[0.98]"
+            >
+              <Download className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Exportar Relatório</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Cards de KPIs Principais do Topo */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Cards de KPIs Principais: 2 colunas no celular e 4 no desktop, sem balões */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Card 1: Conversão Geral do Funil */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md relative overflow-hidden group hover:border-cyan-500/50 transition-all shadow-sm">
-          <div className="flex justify-between items-start">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Conversão Geral do Funil
-            </span>
-            <div className="p-2 rounded-xl bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/20">
-              <Flame className="w-4 h-4" />
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md relative overflow-hidden group hover:border-cyan-500/50 transition-all shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-1 mb-2">
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                Conversão do Funil
+              </span>
+              <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
             </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-3xl font-black font-mono text-slate-900 dark:text-white">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-black font-mono text-slate-900 dark:text-white">
               {isLoading ? "--" : `${funnelData?.overallConversion || 0}%`}
             </div>
-            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span>+{funnelData?.benchmarkComparison?.delta || 0}% vs. média de mercado (8.5%)</span>
-            </div>
           </div>
-          <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-cyan-500/5 rounded-full blur-xl group-hover:bg-cyan-500/10 pointer-events-none" />
+          <div className="flex items-center gap-1 mt-2 text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-semibold truncate">
+            <TrendingUp className="w-3 h-3 shrink-0" />
+            <span className="truncate">+{funnelData?.benchmarkComparison?.delta || 0}% vs. mercado</span>
+          </div>
         </div>
 
         {/* Card 2: Faturamento Total Originado */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md relative overflow-hidden group hover:border-emerald-500/50 transition-all shadow-sm">
-          <div className="flex justify-between items-start">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Receita Total Originada
-            </span>
-            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
-              <DollarSign className="w-4 h-4" />
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md relative overflow-hidden group hover:border-emerald-500/50 transition-all shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-1 mb-2">
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                Receita Originada
+              </span>
+              <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">
+            <div className="text-lg sm:text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 truncate">
               {isLoading ? "--" : `R$ ${(funnelData?.totalRevenue || channelsData?.totalRevenue || 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`}
             </div>
-            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-600 dark:text-slate-300">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-              <span>Canal Campeão: <strong className="text-slate-900 dark:text-white">{channelsData?.topChannel || "WhatsApp"}</strong></span>
-            </div>
           </div>
-          <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 pointer-events-none" />
+          <div className="flex items-center gap-1 mt-2 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
+            <Sparkles className="w-3 h-3 text-cyan-600 dark:text-cyan-400 shrink-0" />
+            <span className="truncate">Top: <strong className="text-slate-900 dark:text-white">{channelsData?.topChannel || "WhatsApp"}</strong></span>
+          </div>
         </div>
 
         {/* Card 3: Conformidade de SLA Geral */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md relative overflow-hidden group hover:border-blue-500/50 transition-all shadow-sm">
-          <div className="flex justify-between items-start">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Conformidade Geral de SLA
-            </span>
-            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
-              <ShieldCheck className="w-4 h-4" />
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md relative overflow-hidden group hover:border-blue-500/50 transition-all shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-1 mb-2">
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                Conformidade SLA
+              </span>
+              <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400 shrink-0" />
             </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-3xl font-black font-mono text-slate-900 dark:text-white">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-black font-mono text-slate-900 dark:text-white">
               {isLoading ? "--" : `${bottlenecksData?.slaCompliancePercent || 95.8}%`}
             </div>
-            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-cyan-600 dark:text-cyan-400 font-semibold">
-              <Clock className="w-3.5 h-3.5" />
-              <span>FRT Médio: <strong className="text-slate-900 dark:text-white">{bottlenecksData?.frtMinutes || 2.4} min</strong></span>
-            </div>
           </div>
-          <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-blue-500/5 rounded-full blur-xl group-hover:bg-blue-500/10 pointer-events-none" />
+          <div className="flex items-center gap-1 mt-2 text-[10px] sm:text-xs text-cyan-600 dark:text-cyan-400 font-semibold truncate">
+            <Clock className="w-3 h-3 shrink-0" />
+            <span className="truncate">FRT: <strong className="text-slate-900 dark:text-white">{bottlenecksData?.frtMinutes || 2.4} min</strong></span>
+          </div>
         </div>
 
         {/* Card 4: TMA Consolidado */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md relative overflow-hidden group hover:border-purple-500/50 transition-all shadow-sm">
-          <div className="flex justify-between items-start">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              TMA Médio de Resolução
-            </span>
-            <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20">
-              <Zap className="w-4 h-4" />
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md relative overflow-hidden group hover:border-purple-500/50 transition-all shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-1 mb-2">
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+                TMA de Resolução
+              </span>
+              <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600 dark:text-purple-400 shrink-0" />
             </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-3xl font-black font-mono text-slate-900 dark:text-white">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-black font-mono text-slate-900 dark:text-white">
               {isLoading ? "--" : `${bottlenecksData?.tmaMinutes || 14.5} min`}
             </div>
-            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Ciclo comercial: ~{funnelData?.avgSalesCycleHours || 82}h</span>
-            </div>
           </div>
-          <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-purple-500/5 rounded-full blur-xl group-hover:bg-purple-500/10 pointer-events-none" />
+          <div className="flex items-center gap-1 mt-2 text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-semibold truncate">
+            <CheckCircle2 className="w-3 h-3 shrink-0" />
+            <span className="truncate">Ciclo: ~{funnelData?.avgSalesCycleHours || 82}h</span>
+          </div>
         </div>
       </div>
 
@@ -351,9 +345,9 @@ export default function AnalyticsPage() {
       <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md space-y-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800/80 pb-4">
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex flex-wrap items-center gap-2">
               Funil de Conversão Comercial (End-to-End)
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/30 font-semibold">
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/30">
                 Drop-off por Estágio
               </span>
             </h3>
@@ -393,7 +387,8 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Tabela de Detalhamento com Taxas de Drop-off */}
-        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
+        {/* Desktop Table (hidden md:block) */}
+        <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
               <tr>
@@ -415,12 +410,12 @@ export default function AnalyticsPage() {
                     {item.count.toLocaleString("pt-BR")}
                   </td>
                   <td className="p-3.5 text-center">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 font-mono">
+                    <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 font-mono">
                       {item.conversion}
                     </span>
                   </td>
                   <td className="p-3.5 text-center">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold font-mono ${
+                    <span className={`px-2.5 py-0.5 rounded-md text-xs font-semibold font-mono ${
                       item.dropoff === "0%"
                         ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                         : "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30"
@@ -435,6 +430,39 @@ export default function AnalyticsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Stage Cards (md:hidden) */}
+        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
+          {funnelData?.stages?.map((item, i) => (
+            <div key={`mobile-stage-${i}`} className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.fill }} />
+                  <span className="font-bold text-xs text-slate-900 dark:text-white truncate">{item.stage}</span>
+                </div>
+                <span className="font-mono font-bold text-xs text-slate-900 dark:text-white shrink-0">
+                  {item.count.toLocaleString("pt-BR")} leads
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800/40">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500 dark:text-slate-400">Conversão:</span>
+                  <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{item.conversion}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500 dark:text-slate-400">Perda:</span>
+                  <span className={`font-mono font-semibold ${item.dropoff === "0%" ? "text-slate-400" : "text-rose-600 dark:text-rose-400"}`}>
+                    {item.dropoff}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 font-mono text-slate-500 dark:text-slate-400 text-[10px]">
+                  <Clock size={10} />
+                  <span>{item.duration}</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -495,57 +523,92 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Tabela de Canais com Ações de Drilldown */}
-          <div className="lg:col-span-2 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th className="p-3">Canal</th>
-                  <th className="p-3 text-center">Leads</th>
-                  <th className="p-3 text-center">Oportunidades</th>
-                  <th className="p-3 text-center">Contratos</th>
-                  <th className="p-3 text-right">Faturamento</th>
-                  <th className="p-3 text-center">Conversão</th>
-                  <th className="p-3 text-right">Ação</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {channelsData?.channels?.map((channel) => (
-                  <tr key={channel.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                    <td className="p-3 font-semibold text-slate-900 dark:text-white">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: channel.color }} />
-                        <span>{channel.name}</span>
-                      </div>
-                    </td>
-                    <td className="p-3 text-center font-mono font-bold text-slate-800 dark:text-slate-200">
-                      {channel.leadsCount}
-                    </td>
-                    <td className="p-3 text-center font-mono text-slate-600 dark:text-slate-300">
-                      {channel.dealsCount}
-                    </td>
-                    <td className="p-3 text-center font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                      {channel.contractsSignedCount}
-                    </td>
-                    <td className="p-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      R$ {channel.totalRevenue.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
-                    </td>
-                    <td className="p-3 text-center">
-                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-mono">
-                        {channel.conversionRate}%
-                      </span>
-                    </td>
-                    <td className="p-3 text-right">
-                      <button
-                        onClick={() => setSelectedChannel(channel)}
-                        className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-cyan-700 dark:text-cyan-400 hover:text-cyan-800 dark:hover:text-cyan-300 border border-slate-200 dark:border-slate-700 font-semibold text-[11px] transition-all"
-                      >
-                        Detalhes
-                      </button>
-                    </td>
+          <div className="lg:col-span-2">
+            {/* Desktop Table (hidden md:block) */}
+            <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th className="p-3">Canal</th>
+                    <th className="p-3 text-center">Leads</th>
+                    <th className="p-3 text-center">Oportunidades</th>
+                    <th className="p-3 text-center">Contratos</th>
+                    <th className="p-3 text-right">Faturamento</th>
+                    <th className="p-3 text-center">Conversão</th>
+                    <th className="p-3 text-right">Ação</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {channelsData?.channels?.map((channel) => (
+                    <tr key={channel.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                      <td className="p-3 font-semibold text-slate-900 dark:text-white">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: channel.color }} />
+                          <span>{channel.name}</span>
+                        </div>
+                      </td>
+                      <td className="p-3 text-center font-mono font-bold text-slate-800 dark:text-slate-200">
+                        {channel.leadsCount}
+                      </td>
+                      <td className="p-3 text-center font-mono text-slate-600 dark:text-slate-300">
+                        {channel.dealsCount}
+                      </td>
+                      <td className="p-3 text-center font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                        {channel.contractsSignedCount}
+                      </td>
+                      <td className="p-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        R$ {channel.totalRevenue.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
+                      </td>
+                      <td className="p-3 text-center">
+                        <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 font-mono">
+                          {channel.conversionRate}%
+                        </span>
+                      </td>
+                      <td className="p-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedChannel(channel)}
+                          className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-cyan-700 dark:text-cyan-400 hover:text-cyan-800 dark:hover:text-cyan-300 border border-slate-200 dark:border-slate-700 font-semibold text-[11px] transition-all"
+                        >
+                          Detalhes
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards (md:hidden) */}
+            <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40">
+              {channelsData?.channels?.map((channel) => (
+                <div key={`mobile-channel-${channel.id}`} className="p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: channel.color }} />
+                      <span className="font-bold text-xs text-slate-900 dark:text-white truncate">{channel.name}</span>
+                    </div>
+                    <span className="font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400 shrink-0">
+                      R$ {channel.totalRevenue.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800/40">
+                    <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                      <span>Leads: <strong className="text-slate-900 dark:text-white">{channel.leadsCount}</strong></span>
+                      <span>Contratos: <strong className="text-emerald-600 dark:text-emerald-400">{channel.contractsSignedCount}</strong></span>
+                      <span>Conv: <strong className="text-blue-600 dark:text-blue-400">{channel.conversionRate}%</strong></span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedChannel(channel)}
+                      className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-cyan-700 dark:text-cyan-400 border border-slate-200 dark:border-slate-700 font-semibold text-[10px]"
+                    >
+                      Detalhes
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -631,7 +694,7 @@ export default function AnalyticsPage() {
                 <Flame className="w-5 h-5 text-amber-500 dark:text-amber-400" />
                 Saturação de Fila por Faixa de Horário
               </h3>
-              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400">
+              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-md bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400">
                 Pico: 14h - 16h
               </span>
             </div>
