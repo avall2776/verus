@@ -130,6 +130,7 @@ export interface SalesRepRanking {
   dealsCount: number;
   dealsWon?: number;
   totalDeals?: number;
+  revenueWon?: number;
   totalRevenueWon?: number;
   conversionRate?: number;
   avgTicket?: number;
