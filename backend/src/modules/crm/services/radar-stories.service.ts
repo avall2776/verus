@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException, OnModuleInit, OnModuleDestroy,
 import { PrismaService } from '../../../shared/database/prisma.service';
 import { AiService } from '../../ai/ai.service';
 import { ChatGateway } from '../../chat/chat.gateway';
+import { StorageService } from '../../../shared/storage/storage.service';
 import OpenAI from 'openai';
 import axios from 'axios';
 import { randomUUID } from 'crypto';
@@ -47,7 +48,8 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly prisma: PrismaService,
     private readonly aiService: AiService,
-    @Optional() private readonly chatGateway?: ChatGateway
+    @Optional() private readonly chatGateway?: ChatGateway,
+    @Optional() private readonly storageService?: StorageService
   ) {}
 
   async onModuleInit() {
@@ -289,71 +291,117 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
 
     // 1. Localiza a instância conectada do WhatsApp para o tenant
     const instance = await this.prisma.whatsAppInstance.findFirst({
-      where: { tenantId, status: 'connected' },
+      where: { tenantId, status: { in: ['open', 'connected'] } },
       orderBy: { isDefault: 'desc' },
     });
 
     const serverUrl = process.env.EVOLUTION_API_URL || 'http://localhost:8080';
     const apiKey = process.env.EVOLUTION_API_KEY || 'verto123';
     const cleanTenant = (tenantId || 'tenant').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
-    const instanceName = instance?.name || `versus_${cleanTenant}`;
+    let instanceName = (instance?.settings as any)?.instanceName;
+    if (!instanceName && instance?.name && instance.name.includes('_')) {
+      instanceName = instance.name.replace(' (WhatsApp Web)', '').trim();
+    }
+    if (!instanceName) {
+      instanceName = `versus_${cleanTenant}_babdc262eb`;
+    }
 
     let whatsappMessageId = `story_msg_${Date.now()}`;
     let posted = false;
+    let publicMediaUrl = '';
+    const thumbnailData = data.imageBase64;
 
-    // Se não for agendamento para o futuro, faz o disparo imediato para a Evolution API
-    if (!data.scheduledAt) {
+    // Converte base64 e realiza upload para gerar URL acessível para a Evolution API / Baileys
+    if (this.storageService && data.imageBase64) {
       try {
-        const headers = { apikey: apiKey, 'Content-Type': 'application/json' };
+        const matches = data.imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        let buffer: Buffer;
+        let mimetype = 'image/jpeg';
+        if (matches && matches.length === 3) {
+          mimetype = matches[1];
+          buffer = Buffer.from(matches[2], 'base64');
+        } else {
+          buffer = Buffer.from(data.imageBase64, 'base64');
+        }
 
-        // Prepara payload de envio de status
-        // Tentativa 1: Endpoint oficial de status da Evolution API (/message/sendStatus)
-        try {
-          const statusRes = await axios.post(
-            `${serverUrl}/message/sendStatus/${instanceName}`,
-            {
-              type: 'image',
-              content: data.imageBase64,
-              caption: data.title,
-            },
-            { headers, timeout: 15000 }
-          );
+        const uploadRes = await this.storageService.uploadFile(
+          { buffer, originalname: `story_${Date.now()}.jpg`, mimetype },
+          'stories'
+        );
 
-          if (statusRes.data?.key?.id) {
-            whatsappMessageId = statusRes.data.key.id;
-            posted = true;
-          }
-        } catch (statusErr: any) {
-          // Tentativa 2: Fallback padrão via sendMedia para status@broadcast
-          this.logger.warn(`Fallback para sendMedia status@broadcast: ${statusErr.message}`);
-          const mediaRes = await axios.post(
-            `${serverUrl}/message/sendMedia/${instanceName}`,
-            {
-              number: 'status@broadcast',
-              options: { delay: 1000 },
-              mediaMessage: {
-                mediatype: 'image',
-                caption: data.title,
-                media: data.imageBase64,
-              },
-            },
-            { headers, timeout: 15000 }
-          );
-
-          if (mediaRes.data?.key?.id) {
-            whatsappMessageId = mediaRes.data.key.id;
-            posted = true;
+        if (uploadRes?.url) {
+          if (uploadRes.url.startsWith('http://') || uploadRes.url.startsWith('https://')) {
+            publicMediaUrl = uploadRes.url;
+          } else {
+            publicMediaUrl = `http://172.16.0.1:3001${uploadRes.url.replace('/api-backend', '')}`;
           }
         }
-      } catch (evoErr: any) {
-        this.logger.warn(`Disparo de Story na Evolution API retornou aviso: ${evoErr.message}. Gravando post no catálogo comercial.`);
+      } catch (uploadErr: any) {
+        this.logger.warn(`[Radar Stories] Falha no upload da mídia do Story: ${uploadErr.message}`);
       }
     }
 
-    // 2. Registra o post em whatsapp_status_posts com metadados leves
-    // Preserva uma miniatura para visualização no sistema sem sobrecarregar o Postgres
-    const thumbnailData = data.imageBase64;
+    if (!publicMediaUrl && (data.imageBase64.startsWith('http://') || data.imageBase64.startsWith('https://'))) {
+      publicMediaUrl = data.imageBase64;
+    }
 
+    // Se não for agendamento para o futuro, faz o disparo imediato para a Evolution API
+    if (!data.scheduledAt && publicMediaUrl) {
+      try {
+        const headers = { apikey: apiKey, 'Content-Type': 'application/json' };
+
+        // Monta a lista de contatos do tenant que receberão o broadcast de status
+        const contacts = await this.prisma.contact.findMany({
+          where: { tenantId, phone: { not: null } },
+          select: { phone: true },
+          take: 1000,
+        });
+
+        const statusJids: string[] = [];
+        for (const c of contacts) {
+          const digits = (c.phone || '').replace(/\D/g, '');
+          if (digits.length >= 10 && digits.length <= 13) {
+            statusJids.push(digits.startsWith('55') ? `${digits}@s.whatsapp.net` : `55${digits}@s.whatsapp.net`);
+          }
+        }
+
+        if (instance?.phoneNumber) {
+          const selfDigits = instance.phoneNumber.replace(/\D/g, '');
+          if (selfDigits.length >= 10) {
+            statusJids.push(selfDigits.startsWith('55') ? `${selfDigits}@s.whatsapp.net` : `55${selfDigits}@s.whatsapp.net`);
+          }
+        }
+
+        const uniqueJids = Array.from(new Set(statusJids));
+
+        const statusPayload = {
+          statusMessage: {
+            type: 'image',
+            content: publicMediaUrl,
+            caption: data.title,
+            statusJidList: uniqueJids.length > 0 ? uniqueJids : undefined,
+            allContacts: uniqueJids.length === 0,
+          },
+        };
+
+        const statusRes = await axios.post(
+          `${serverUrl}/message/sendStatus/${instanceName}`,
+          statusPayload,
+          { headers, timeout: 25000 }
+        );
+
+        if (statusRes.data?.key?.id) {
+          whatsappMessageId = statusRes.data.key.id;
+          posted = true;
+          this.logger.log(`[Radar Stories] Story publicado no WhatsApp via Evolution API! MsgID: ${whatsappMessageId}`);
+        }
+      } catch (evoErr: any) {
+        this.logger.error(`[Radar Stories] Erro ao disparar Story na Evolution API: ${evoErr.response?.data?.message || evoErr.message}`);
+      }
+    }
+
+    // 2. Registra o post em whatsapp_status_posts com metadados leves e foto real
+    const finalMediaUrl = publicMediaUrl || thumbnailData;
     await this.prisma.$executeRawUnsafe(
       `INSERT INTO "whatsapp_status_posts" 
        ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
@@ -363,11 +411,20 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
       whatsappMessageId,
       data.title,
       category,
-      thumbnailData,
+      finalMediaUrl,
       data.scheduledAt ? new Date(data.scheduledAt) : new Date()
     );
 
     this.logger.log(`[Radar Stories] Novo Story registrado: "${data.title}" [${category}] (ID: ${postId})`);
+
+    if (this.chatGateway) {
+      this.chatGateway.emitStoryPosted(tenantId, {
+        messageId: whatsappMessageId,
+        title: data.title,
+        category,
+        mediaUrl: finalMediaUrl,
+      });
+    }
 
     return {
       success: true,
@@ -375,6 +432,7 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
       messageId: whatsappMessageId,
       title: data.title,
       category,
+      mediaUrl: finalMediaUrl,
       postedImmediately: !data.scheduledAt,
       scheduledAt: data.scheduledAt || null,
     };
@@ -383,8 +441,8 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
   /**
    * Sincronização Ativa de Stories & Status com o WhatsApp / Evolution API
    * 1. Reconcilia instâncias conectadas e garante flags (read_status: true)
-   * 2. Recupera ou registra o Story ativo postado nas últimas 24h
-   * 3. Reconcilia as visualizações reais registradas no Baileys / Evolution API
+   * 2. Garante configuração de webhooks
+   * 3. Retorna os posts ativos reais das últimas 24h sem mockups
    */
   async syncActiveStories(tenantId: string) {
     this.logger.log(`[Radar Stories] Iniciando sincronização ativa para tenant: ${tenantId}`);
@@ -430,7 +488,7 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(`[Sync Stories] Aviso ao configurar read_status: ${e.message}`);
     }
 
-    // 3. Garante webhook events com RECEIPT_UPDATE
+    // 3. Garante webhook events
     try {
       const webhookUrl = `http://172.16.0.1:3001/webhooks/evolution/${tenantId}`;
       await axios.post(
@@ -456,211 +514,14 @@ export class RadarStoriesService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(`[Sync Stories] Aviso ao configurar webhook: ${e.message}`);
     }
 
-    // 4. Verifica se já existem posts ativos nas últimas 24h no banco
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const existingPosts = await this.prisma.$queryRawUnsafe<any[]>(
-      `SELECT * FROM "whatsapp_status_posts" WHERE "tenantId" = $1 AND "postedAt" >= $2 ORDER BY "postedAt" DESC`,
-      tenantId,
-      twentyFourHoursAgo
-    );
-
-    let activeStoryId: string;
-    let activeStoryTitle: string;
-    let activeStoryCategory: string;
-
-    if (existingPosts && existingPosts.length > 0) {
-      activeStoryId = existingPosts[0].messageId;
-      activeStoryTitle = existingPosts[0].title;
-      activeStoryCategory = existingPosts[0].category;
-    } else {
-      // Reconciliação do Story postado hoje de manhã
-      const morningPostId = `post_${Date.now()}_morning`;
-      activeStoryId = `story_msg_20261026_morning`;
-      activeStoryTitle = 'Status Comercial WhatsApp - Linha Verto Agro 26/27';
-      activeStoryCategory = 'Maquinários';
-
-      // Horário da manhã de hoje (09:27 local time = 12:27 UTC)
-      const morningDate = new Date();
-      morningDate.setHours(9, 27, 0, 0);
-
-      await this.prisma.$executeRawUnsafe(
-        `INSERT INTO "whatsapp_status_posts" 
-         ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         ON CONFLICT ("id") DO NOTHING`,
-        morningPostId,
-        tenantId,
-        activeStoryId,
-        activeStoryTitle,
-        activeStoryCategory,
-        null,
-        morningDate
-      );
-      this.logger.log(`[Sync Stories] Story ativo de hoje registrado no catálogo comercial.`);
-    }
-
-    // 5. Reconcilia as visualizações da Evolution API
-    let newViewsSynced = 0;
-    try {
-      // Busca recibos de status da Evolution API
-      const statusRes = await axios.post(
-        `${serverUrl}/chat/findStatusMessage/${instanceName}`,
-        {},
-        { headers, timeout: 8000 }
-      );
-
-      const statusList = Array.isArray(statusRes.data) ? statusRes.data : [];
-      const now = Date.now();
-      const recentReceipts = statusList.filter((item: any) => {
-        const dt = (item.datetime > 10000000000 ? item.datetime : item.datetime * 1000) || 0;
-        return (now - dt) < 24 * 3600 * 1000 && (item.status === 'READ' || item.status === 'PLAYED');
-      });
-
-      if (recentReceipts.length > 0) {
-        // Carrega contatos da Evolution API para mapear nomes de perfil (pushName) e fotos de LIDs
-        const evoContactsMap = new Map<string, { pushName?: string; profilePictureUrl?: string }>();
-        try {
-          const evoContactsRes = await axios.post(
-            `${serverUrl}/chat/findContacts/${instanceName}`,
-            {},
-            { headers, timeout: 10000 }
-          );
-          if (Array.isArray(evoContactsRes.data)) {
-            for (const c of evoContactsRes.data) {
-              if (c.id) {
-                evoContactsMap.set(c.id, {
-                  pushName: c.pushName || c.name,
-                  profilePictureUrl: c.profilePictureUrl,
-                });
-              }
-            }
-          }
-        } catch (evoErr: any) {
-          this.logger.warn(`[Sync Stories] Aviso ao carregar contatos da Evolution API: ${evoErr.message}`);
-        }
-
-        // Carrega contatos do CRM do tenant para cruzamento rápido
-        const crmContacts = await this.prisma.contact.findMany({
-          where: { tenantId },
-          select: { id: true, name: true, phone: true, address: true, whatsappLid: true },
-        });
-
-        const contactByPhone = new Map<string, any>();
-        const contactByName = new Map<string, any>();
-        for (const c of crmContacts) {
-          if (c.phone) {
-            const clean = c.phone.replace(/\D/g, '');
-            contactByPhone.set(clean, c);
-            if (clean.length >= 8) contactByPhone.set(clean.slice(-8), c);
-          }
-          if (c.name) {
-            contactByName.set(c.name.trim().toLowerCase(), c);
-          }
-        }
-
-        for (const receipt of recentReceipts) {
-          const rawJid = receipt.remoteJid || receipt.participant || '';
-          const digits = rawJid.replace(/[^0-9]/g, '');
-          if (digits.length < 8) continue;
-
-          // Busca dados de perfil da Evolution API
-          const evoInfo = evoContactsMap.get(rawJid) || evoContactsMap.get(`${digits}@lid`);
-          const pushName = evoInfo?.pushName?.trim() || '';
-
-          // 1. Tenta correspondência direta por telefone no CRM
-          let matchedContact = contactByPhone.get(digits) || contactByPhone.get(digits.slice(-8));
-
-          // 2. Se não encontrou por telefone e temos pushName, busca no CRM por nome
-          if (!matchedContact && pushName && pushName !== 'SEM NOME' && pushName !== 'Comercial Verto') {
-            const cleanPush = pushName.toLowerCase();
-            matchedContact = contactByName.get(cleanPush) ||
-              crmContacts.find((c) => {
-                const cName = c.name?.toLowerCase().trim();
-                return cName && (cName === cleanPush || cName.includes(cleanPush) || cleanPush.includes(cName));
-              });
-          }
-
-          // Identifica se é equipe interna Verto
-          const isVertoTeam =
-            pushName.toLowerCase().includes('verto') ||
-            (matchedContact?.name && matchedContact.name.toLowerCase().includes('verto')) ||
-            pushName === 'Comercial Verto';
-
-          const phoneToSave = matchedContact?.phone || (digits.length >= 10 && digits.length <= 13 ? digits : digits);
-          let nameToSave = matchedContact?.name;
-          if (!nameToSave) {
-            if (pushName && pushName !== 'SEM NOME') {
-              nameToSave = isVertoTeam && !pushName.toLowerCase().includes('verto') ? `${pushName} (Verto)` : pushName;
-            } else if (isVertoTeam) {
-              nameToSave = 'Comercial Verto (Equipe Interna)';
-            } else {
-              nameToSave = `Produtor Rural (${digits.slice(-4)})`;
-            }
-          }
-
-          const cityToSave = (matchedContact as any)?.city || matchedContact?.address || 'Região Sul';
-          const stateToSave = (matchedContact as any)?.state || 'RS';
-
-          const dtVal = receipt.datetime > 10000000000 ? receipt.datetime : receipt.datetime * 1000;
-          const viewedAt = new Date(dtVal);
-
-          // Verifica se já existe visualização deste contato/telefone para este status nas últimas 24h
-          const existingView = await this.prisma.$queryRawUnsafe<any[]>(
-            `SELECT id FROM "whatsapp_status_views" 
-             WHERE "tenantId" = $1 AND ("phone" = $2 OR ("statusMessageId" = $3 AND "contactName" = $4)) AND "viewedAt" >= $5 LIMIT 1`,
-            tenantId,
-            phoneToSave,
-            activeStoryId,
-            nameToSave,
-            twentyFourHoursAgo
-          );
-
-          if (!existingView || existingView.length === 0) {
-            const viewId = `view_sync_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-            await this.prisma.$executeRawUnsafe(
-              `INSERT INTO "whatsapp_status_views"
-               ("id", "tenantId", "contactId", "phone", "contactName", "city", "state", "statusMessageId", "storyTitle", "category", "mediaUrl", "viewedAt", "createdAt")
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
-               ON CONFLICT ("id") DO NOTHING`,
-              viewId,
-              tenantId,
-              matchedContact?.id || null,
-              phoneToSave,
-              nameToSave,
-              cityToSave,
-              stateToSave,
-              activeStoryId,
-              activeStoryTitle,
-              activeStoryCategory,
-              evoInfo?.profilePictureUrl || null,
-              viewedAt
-            );
-            newViewsSynced++;
-
-            // Emite notificação via WebSocket em tempo real para o frontend atualizar o feed automaticamente
-            if (this.chatGateway) {
-              this.chatGateway.emitStoryViewed(tenantId, {
-                viewId,
-                contactId: matchedContact?.id || null,
-                phone: phoneToSave,
-                contactName: nameToSave,
-                storyTitle: activeStoryTitle,
-                category: activeStoryCategory,
-                viewedAt: viewedAt.toISOString(),
-              });
-            }
-          }
-        }
-      }
-    } catch (viewErr: any) {
-      this.logger.warn(`[Sync Stories] Aviso ao sincronizar recibos de status: ${viewErr.message}`);
-    }
+    // 4. Retorna os Stories ativos postados nas últimas 24h a partir do banco real
+    const activePosts = await this.getActivePosts(tenantId);
 
     return {
       success: true,
-      message: 'Stories e visualizações do WhatsApp sincronizados com sucesso!',
-      activePosts: await this.getActivePosts(tenantId),
-      syncedViewsCount: newViewsSynced,
+      message: 'Stories e conexão do WhatsApp sincronizados com sucesso!',
+      activePosts,
+      syncedViewsCount: 0,
     };
   }
 

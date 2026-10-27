@@ -822,7 +822,7 @@ export class WebhooksController {
    */
   private async handleWhatsAppStatusEvent(tenantId: string, event: string, payload: any) {
     try {
-      // 1. Story postado pela empresa (messages.upsert, SEND_MESSAGE, MESSAGES_SET com status@broadcast e fromMe)
+      // 1. Story postado pela empresa (messages.upsert, SEND_MESSAGE, MESSAGES_SET com status@broadcast e fromMe/número próprio)
       const isPostEvent =
         event === 'messages.upsert' ||
         event === 'MESSAGES_UPSERT' ||
@@ -832,12 +832,41 @@ export class WebhooksController {
         event === 'MESSAGES_SET';
 
       if (isPostEvent) {
-        const items = Array.isArray(payload.data) ? payload.data : [payload.data];
+        let items: any[] = [];
+        if (Array.isArray(payload.data)) {
+          items = payload.data;
+        } else if (payload.data?.messages && Array.isArray(payload.data.messages)) {
+          items = payload.data.messages;
+        } else if (payload.data) {
+          items = [payload.data];
+        }
+
+        // Obtém o número da instância ativa para conferir se o post partiu do WhatsApp próprio
+        const activeInst = await this.prisma.whatsAppInstance.findFirst({
+          where: { tenantId, status: { in: ['open', 'connected'] } },
+          orderBy: { isDefault: 'desc' },
+        });
+        const selfDigits = activeInst?.phoneNumber ? activeInst.phoneNumber.replace(/\D/g, '') : null;
+
         for (const data of items) {
           const key = data?.key;
-          if (key && (key.remoteJid === 'status@broadcast' || key.remoteJid?.includes('status@broadcast')) && key.fromMe) {
-            const messageObj = data?.message;
-            const caption =
+          if (!key) continue;
+
+          const remoteJid = key.remoteJid || data.remoteJid || '';
+          if (!remoteJid.includes('status@broadcast')) continue;
+
+          const participant = String(key.participant || data.participant || '').replace(/\D/g, '');
+          const isOwn =
+            Boolean(key.fromMe) ||
+            (selfDigits && participant && (participant.includes(selfDigits) || selfDigits.includes(participant)));
+
+          // Se NÃO for post próprio da empresa, é um status postado por cliente/fornecedor. Ignora.
+          if (!isOwn) {
+            continue;
+          }
+
+          const messageObj = data?.message;
+          const caption =
             messageObj?.imageMessage?.caption ||
             messageObj?.videoMessage?.caption ||
             messageObj?.extendedTextMessage?.text ||
@@ -846,13 +875,42 @@ export class WebhooksController {
 
           let category = 'Geral';
           const lower = caption.toLowerCase();
-          if (lower.includes('trator') || lower.includes('plantadeira') || lower.includes('semeadeira') || lower.includes('máquina') || lower.includes('implemento') || lower.includes('pulverizador')) {
+          if (
+            lower.includes('trator') ||
+            lower.includes('plantadeira') ||
+            lower.includes('semeadeira') ||
+            lower.includes('máquina') ||
+            lower.includes('implemento') ||
+            lower.includes('pulverizador') ||
+            lower.includes('colheitadeira')
+          ) {
             category = 'Maquinários';
-          } else if (lower.includes('adubo') || lower.includes('semente') || lower.includes('defensivo') || lower.includes('químico') || lower.includes('nutri') || lower.includes('npk')) {
+          } else if (
+            lower.includes('adubo') ||
+            lower.includes('semente') ||
+            lower.includes('defensivo') ||
+            lower.includes('químico') ||
+            lower.includes('nutri') ||
+            lower.includes('npk') ||
+            lower.includes('fertilizante')
+          ) {
             category = 'Insumos';
-          } else if (lower.includes('safra') || lower.includes('cotação') || lower.includes('saca') || lower.includes('soja') || lower.includes('milho') || lower.includes('balcão')) {
+          } else if (
+            lower.includes('safra') ||
+            lower.includes('cotação') ||
+            lower.includes('saca') ||
+            lower.includes('soja') ||
+            lower.includes('milho') ||
+            lower.includes('balcão')
+          ) {
             category = 'Cotações';
-          } else if (lower.includes('peça') || lower.includes('filtro') || lower.includes('manutenção') || lower.includes('serviço') || lower.includes('oficina')) {
+          } else if (
+            lower.includes('peça') ||
+            lower.includes('filtro') ||
+            lower.includes('manutenção') ||
+            lower.includes('serviço') ||
+            lower.includes('oficina')
+          ) {
             category = 'Peças & Serviços';
           }
 
@@ -866,35 +924,56 @@ export class WebhooksController {
             }
           }
 
-          const mediaUrl =
-            data?.mediaUrl ||
-            payload?.mediaUrl ||
-            messageObj?.imageMessage?.url ||
-            thumbnailBase64 ||
-            null;
+          // Prioriza o thumbnail base64 legível no navegador ou URL pública direta
+          // (evita URL crua do mmg.whatsapp.net que dá 403 no browser)
+          let mediaUrl: string | null = null;
+          if (data?.mediaUrl && !data.mediaUrl.includes('mmg.whatsapp.net')) {
+            mediaUrl = data.mediaUrl;
+          } else if (thumbnailBase64) {
+            mediaUrl = thumbnailBase64;
+          }
 
-          const postId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-          await this.prisma.$executeRawUnsafe(
-            `INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
-             ON CONFLICT ("id") DO NOTHING`,
-            postId,
+          const tsVal = data?.messageTimestamp?.low || data?.messageTimestamp;
+          const postedDate = tsVal ? new Date(Number(tsVal) * 1000) : new Date();
+
+          // Verifica se o post já foi cadastrado para evitar duplicatas
+          const existing = await this.prisma.$queryRawUnsafe<any[]>(
+            `SELECT id, "mediaUrl" FROM "whatsapp_status_posts" WHERE "tenantId" = $1 AND "messageId" = $2 LIMIT 1`,
             tenantId,
-            key.id,
-            caption.slice(0, 150),
-            category,
-            mediaUrl,
-            new Date()
+            key.id
           );
 
-          this.logger.log(`[Radar Stories] Novo Story postado detectado no WhatsApp: [${key.id}] "${caption}" (${category})`);
+          let finalPostId = existing?.[0]?.id;
+          if (existing && existing.length > 0) {
+            if (mediaUrl && !existing[0].mediaUrl) {
+              await this.prisma.$executeRawUnsafe(
+                `UPDATE "whatsapp_status_posts" SET "mediaUrl" = $1 WHERE "id" = $2`,
+                mediaUrl,
+                existing[0].id
+              );
+            }
+          } else {
+            finalPostId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+            await this.prisma.$executeRawUnsafe(
+              `INSERT INTO "whatsapp_status_posts" ("id", "tenantId", "messageId", "title", "category", "mediaUrl", "postedAt")
+               VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+              finalPostId,
+              tenantId,
+              key.id,
+              caption.slice(0, 150),
+              category,
+              mediaUrl,
+              postedDate
+            );
+            this.logger.log(`[Radar Stories] Novo Story postado detectado no WhatsApp: [${key.id}] "${caption}" (${category})`);
+          }
+
           this.chatGateway.emitStoryPosted(tenantId, {
             messageId: key.id,
             title: caption,
             category,
             mediaUrl,
           });
-          }
         }
       }
 
@@ -907,13 +986,42 @@ export class WebhooksController {
         event === 'MESSAGES_UPDATE';
 
       if (isStatusReceipt) {
-        const items = Array.isArray(payload.data) ? payload.data : [payload.data];
+        let items: any[] = [];
+        if (Array.isArray(payload.data)) {
+          items = payload.data;
+        } else if (payload.data?.messages && Array.isArray(payload.data.messages)) {
+          items = payload.data.messages;
+        } else if (payload.data) {
+          items = [payload.data];
+        }
 
         for (const item of items) {
           const remoteJid = item?.key?.remoteJid || item?.remoteJid || payload?.data?.key?.remoteJid || '';
           if (!remoteJid.includes('status@broadcast')) continue;
 
           const storyMessageId = item?.key?.id || item?.id || payload?.data?.key?.id;
+          if (!storyMessageId) continue;
+
+          // IDENTIFICAÇÃO ESTRITA: O recibo deve pertencer a um Story DA EMPRESA!
+          // Se o post não estiver em whatsapp_status_posts, NÃO cria visualização.
+          // Isso elimina 100% o problema de clientes aparecendo como se tivessem visto status de outros.
+          let matchedPost: any = null;
+          try {
+            const posts = await this.prisma.$queryRawUnsafe<any[]>(
+              `SELECT * FROM "whatsapp_status_posts" WHERE "tenantId" = $1 AND "messageId" = $2 LIMIT 1`,
+              tenantId,
+              storyMessageId
+            );
+            if (posts && posts.length > 0) {
+              matchedPost = posts[0];
+            }
+          } catch (e) {}
+
+          if (!matchedPost) {
+            // Recibo pertence a um status que não é da empresa (post de terceiro)
+            continue;
+          }
+
           const rawParticipant =
             item?.participant ||
             item?.key?.participant ||
@@ -924,8 +1032,26 @@ export class WebhooksController {
 
           if (!rawParticipant) continue;
 
-          const cleanPhone = String(rawParticipant).replace('@s.whatsapp.net', '').replace('@c.us', '').replace('@lid', '').replace(/\D/g, '');
-          if (cleanPhone.length < 10) continue;
+          let cleanPhone = String(rawParticipant)
+            .replace('@s.whatsapp.net', '')
+            .replace('@c.us', '')
+            .replace('@lid', '')
+            .replace(/\D/g, '');
+
+          let resolvedName: string | null = null;
+
+          // Resolução inteligente e ativa de LIDs para número de telefone e nome reais
+          if (rawParticipant.includes('@lid') || cleanPhone.length > 13) {
+            try {
+              const lidMatch = await this.whatsappService.resolveLidFromAllTenants(rawParticipant);
+              if (lidMatch?.realPhone) {
+                cleanPhone = lidMatch.realPhone;
+                resolvedName = lidMatch.realName;
+              }
+            } catch (e) {}
+          }
+
+          if (cleanPhone.length < 8) continue;
 
           const timestampVal =
             item?.update?.readTimestamp ||
@@ -936,59 +1062,50 @@ export class WebhooksController {
 
           const viewedAt = timestampVal ? new Date(Number(timestampVal) * 1000) : new Date();
 
-          // Identifica o post visualizado
-          let storyTitle = 'Status Corporativo WhatsApp';
-          let category = 'Geral';
-          let mediaUrl: string | null = null;
-
-          if (storyMessageId) {
-            try {
-              const posts = await this.prisma.$queryRawUnsafe<any[]>(
-                `SELECT * FROM "whatsapp_status_posts" WHERE "tenantId" = $1 AND "messageId" = $2 LIMIT 1`,
-                tenantId,
-                storyMessageId
-              );
-              if (posts && posts.length > 0) {
-                storyTitle = posts[0].title;
-                category = posts[0].category;
-                mediaUrl = posts[0].mediaUrl;
-              } else {
-                storyTitle = `Status WhatsApp #${storyMessageId.slice(0, 8)}`;
-              }
-            } catch (e) {}
-          }
-
-          // Busca ou vincula contato real no banco de dados do tenant
+          // Busca ou vincula contato real no CRM do tenant
           let contact = await this.prisma.contact.findFirst({
             where: {
               tenantId,
               OR: [
                 { phone: cleanPhone },
                 { phone: { endsWith: cleanPhone.slice(-8) } },
+                ...(rawParticipant.includes('@lid')
+                  ? [{ whatsappLid: rawParticipant }, { whatsappLid: { contains: cleanPhone } }]
+                  : []),
               ],
             },
           });
 
           if (!contact) {
+            const formattedPhone = cleanPhone.length >= 10 && cleanPhone.length <= 13 ? cleanPhone : rawParticipant;
             contact = await this.prisma.contact.create({
               data: {
                 tenant: { connect: { id: tenantId } },
-                name: `Contato WhatsApp (${cleanPhone})`,
-                phone: cleanPhone,
+                name: resolvedName || `Contato WhatsApp (${cleanPhone.slice(-4)})`,
+                phone: formattedPhone,
+                whatsappLid: rawParticipant.includes('@lid') ? rawParticipant : null,
                 source: 'WhatsApp',
                 tags: ['Radar Stories', 'Visualizou Status'],
               },
             });
+          } else if (rawParticipant.includes('@lid') && !contact.whatsappLid) {
+            await this.prisma.contact
+              .update({
+                where: { id: contact.id },
+                data: { whatsappLid: rawParticipant },
+              })
+              .catch(() => {});
           }
 
-          // Salva visualização sem duplicar no mesmo dia
+          // Salva visualização sem duplicar no mesmo post
           const existing = await this.prisma.$queryRawUnsafe<any[]>(
             `SELECT id FROM "whatsapp_status_views"
-             WHERE "tenantId" = $1 AND "phone" = $2 AND "statusMessageId" = $3
+             WHERE "tenantId" = $1 AND ("phone" = $2 OR "phone" = $3) AND "statusMessageId" = $4
              LIMIT 1`,
             tenantId,
             cleanPhone,
-            storyMessageId || 'broadcast'
+            rawParticipant,
+            storyMessageId
           );
 
           if (!existing || existing.length === 0) {
@@ -1002,24 +1119,26 @@ export class WebhooksController {
               contact.id,
               cleanPhone,
               contact.name,
-              null,
-              null,
-              storyMessageId || 'broadcast',
-              storyTitle,
-              category,
-              mediaUrl,
+              contact.address || 'Região Sul',
+              'RS',
+              storyMessageId,
+              matchedPost.title,
+              matchedPost.category,
+              matchedPost.mediaUrl,
               viewedAt
             );
 
-            this.logger.log(`[Radar Stories] Visualização gravada: ${cleanPhone} (${contact.name}) viu "${storyTitle}" às ${viewedAt.toISOString()}`);
+            this.logger.log(
+              `[Radar Stories] Visualização auditada: ${cleanPhone} (${contact.name}) viu "${matchedPost.title}" às ${viewedAt.toISOString()}`
+            );
 
             this.chatGateway.emitStoryViewed(tenantId, {
               viewId,
               contactId: contact.id,
               phone: cleanPhone,
               contactName: contact.name,
-              storyTitle,
-              category,
+              storyTitle: matchedPost.title,
+              category: matchedPost.category,
               viewedAt: viewedAt.toISOString(),
             });
           }
